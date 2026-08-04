@@ -1,13 +1,29 @@
 import { useEffect, useState } from "react"
-import { Check, ClipboardList, ImagePlus, X } from "lucide-react"
+import { Check, ClipboardList, ChevronRight, GraduationCap, Package, ImagePlus, X } from "lucide-react"
 import { PageHeader } from "../ui/shared"
 import { Field, inputCls } from "../ui/form-ui"
+
+type Category = "Skills Training" | "Livelihood Starter Kit"
+
+const CATEGORY_ITEMS: { value: Category; label: string; desc: string; icon: typeof GraduationCap }[] = [
+  {
+    value: "Skills Training",
+    label: "Skills Training / Certification",
+    desc: "TESDA-partnered short courses and technical-vocational training",
+    icon: GraduationCap,
+  },
+  {
+    value: "Livelihood Starter Kit",
+    label: "Livelihood Starter Kit",
+    desc: "Tools and materials grant to start a small business or livelihood",
+    icon: Package,
+  },
+]
 
 const trainingPrograms = [
   "Dressmaking NC II",
   "Food processing basics",
   "Electrical installation NC II",
-  "Livelihood kit — sari-sari store",
   "No preference / open to any program",
 ]
 
@@ -17,6 +33,9 @@ function generateReference() {
 }
 
 export default function ApplyLivelihood() {
+  const [view, setView] = useState<"select" | "form">("select")
+  const [category, setCategory] = useState<Category>("Skills Training")
+
   const [name, setName] = useState("")
   const [address, setAddress] = useState("")
   const [contact, setContact] = useState("")
@@ -50,12 +69,18 @@ export default function ApplyLivelihood() {
     setPreviewUrl(null)
   }
 
+  const isSkillsTraining = category === "Skills Training"
   const canSubmit = name.trim() && address.trim() && contact.trim() && narrative.trim()
 
   const handleSubmit = () => {
     if (!canSubmit) return
     setReference(generateReference())
     setSubmitted(true)
+  }
+
+  const handleSelectCategory = (value: Category) => {
+    setCategory(value)
+    setView("form")
   }
 
   if (submitted) {
@@ -67,8 +92,8 @@ export default function ApplyLivelihood() {
           </div>
           <h2 className="text-lg font-heading font-semibold text-foreground">Application submitted</h2>
           <p className="text-sm text-muted-foreground max-w-sm">
-            Thank you, {name}. Your registration for {preferredProgram.toLowerCase()} has been received and is
-            now pending review by a social worker.
+            Thank you, {name}. Your {category.toLowerCase()} registration has been received and is now pending
+            review by a social worker.
           </p>
           <div className="mt-2 bg-muted rounded-xl px-4 py-3 w-full">
             <p className="text-xs text-muted-foreground">Reference number</p>
@@ -82,11 +107,54 @@ export default function ApplyLivelihood() {
     )
   }
 
+  if (view === "select") {
+    return (
+      <div className="p-4 md:p-6 max-w-4xl mx-auto">
+        <PageHeader
+          title="Apply for Livelihood & Training"
+          desc="Pick the type of application that applies to you to get started."
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+          {CATEGORY_ITEMS.map(({ value, label, desc, icon: Icon }) => (
+            <button
+              key={value}
+              onClick={() => handleSelectCategory(value)}
+              className="w-full flex items-center gap-3.5 bg-card border border-border rounded-2xl px-4 py-3 shadow-soft transition-all duration-150 hover:-translate-y-0.5 hover:shadow-medium hover:border-primary/35 text-left"
+            >
+              <div className="h-11 w-11 shrink-0 rounded-full bg-linear-to-br from-primary to-primary/70 shadow-lg shadow-primary/30 flex items-center justify-center">
+                <Icon className="h-5.5 w-5.5 text-white" strokeWidth={2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">{label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+              </div>
+              <ChevronRight className="h-4.5 w-4.5 text-muted-foreground shrink-0" />
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-6 bg-muted/50 border border-border rounded-2xl p-5 text-sm text-muted-foreground flex items-start gap-2.5">
+          <ClipboardList className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+          Pick a type above to start your application. Bring a valid ID and Barangay Certificate of Residency
+          when a social worker asks you to visit for skills assessment.
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-2xl mx-auto">
+      <button
+        onClick={() => setView("select")}
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        ← Back
+      </button>
+
       <PageHeader
         title="Apply for Livelihood & Training"
-        desc="Fill out this form to register for skills training, TESDA-partnered certification, or a livelihood starter kit."
+        desc="Fill out this form to register. A social worker will review your application and contact you for the next steps."
       />
 
       <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
@@ -105,13 +173,20 @@ export default function ApplyLivelihood() {
           <Field label="Address" full>
             <input value={address} onChange={(e) => setAddress(e.target.value)} className={`${inputCls} h-10`} placeholder="Barangay, City" />
           </Field>
-          <Field label="Preferred program" full>
-            <select value={preferredProgram} onChange={(e) => setPreferredProgram(e.target.value)} className={`${inputCls} h-10`}>
-              {trainingPrograms.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+          <Field label="Program category" full>
+            <div className={`${inputCls} h-10 flex items-center font-medium text-foreground bg-primary/5 border border-primary/20 cursor-not-allowed`}>
+              {category}
+            </div>
           </Field>
+          {isSkillsTraining && (
+            <Field label="Preferred program" full>
+              <select value={preferredProgram} onChange={(e) => setPreferredProgram(e.target.value)} className={`${inputCls} h-10`}>
+                {trainingPrograms.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label="Why do you want to join?" full>
             <textarea
               value={narrative}
