@@ -18,6 +18,7 @@ import {
 import { Tooltip } from "../ui/tooltip"
 import { AIChatWidget } from "../ui/ai-chat-widget"
 import { SettingsModal } from "../ui/settings-modal"
+import { ProfileModal } from "../ui/profile-modal"
 
 const residentNav = [
   { path: "/portal/aics", label: "AICS", icon: ShieldAlert },
@@ -126,6 +127,7 @@ function ResidentHeader({
   const current = residentNav.find((r) => r.path === location.pathname)
   const [menuOpen, setMenuOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [now, setNow] = useState(new Date())
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -228,7 +230,13 @@ function ResidentHeader({
 
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-medium py-1.5 z-50">
-              <button className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors">
+              <button
+                onClick={() => {
+                  setProfileOpen(true)
+                  setMenuOpen(false)
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              >
                 Profile
               </button>
               <button
@@ -255,6 +263,13 @@ function ResidentHeader({
     </header>
 
     <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    <ProfileModal
+      open={profileOpen}
+      onClose={() => setProfileOpen(false)}
+      name="Resident"
+      email="resident@example.com"
+      role="Applicant"
+    />
     </>
   )
 }

@@ -6,6 +6,7 @@ import UserLayout from "./components/layout/user-layout"
 import { moduleRoutes, defaultModulePath } from "./components/layout/routes"
 import { Login } from "./components/entry-login/Login"
 import { Register } from "./components/entry-login/Register"
+import LandingPage from "./pages/landing"
 
 import AICSUser from "./components/user-portal/aics-user"
 import ApplyPWDSenior from "./components/user-portal/apply-pwd-senior"
@@ -26,6 +27,7 @@ export default function App() {
     <LanguageProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to={homePath} replace />} />
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to={homePath} replace />} />
           <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to={homePath} replace />} />
 
@@ -56,7 +58,7 @@ export default function App() {
             </Route>
           )}
 
-          <Route path="*" element={<Navigate to={isAuthenticated ? homePath : "/login"} replace />} />
+          <Route path="*" element={<Navigate to={isAuthenticated ? homePath : "/"} replace />} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>

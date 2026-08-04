@@ -4,6 +4,7 @@ import { HelpCircle, Bell, Menu, User, Settings, Sun, Moon, ShieldAlert, Users, 
 import { moduleRoutes } from "./routes"
 import { Tooltip } from "../ui/tooltip"
 import { SettingsModal } from "../ui/settings-modal"
+import { ProfileModal } from "../ui/profile-modal"
 import { useLanguage } from "../ui/language-context"
 
 export function AppHeader({
@@ -22,6 +23,7 @@ export function AppHeader({
   const [notifOpen, setNotifOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [now, setNow] = useState(new Date())
   const menuRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
@@ -252,7 +254,13 @@ export function AppHeader({
 
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-medium py-1.5 z-50">
-              <button className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors">
+              <button
+                onClick={() => {
+                  setProfileOpen(true)
+                  setMenuOpen(false)
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              >
                 <User className="h-4 w-4 text-muted-foreground" />
                 {t("profile")}
               </button>
@@ -281,6 +289,13 @@ export function AppHeader({
     </header>
 
     <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    <ProfileModal
+      open={profileOpen}
+      onClose={() => setProfileOpen(false)}
+      name="Social Worker"
+      email="socialworker@gov.ph"
+      role="Staff"
+    />
     </>
   )
 }

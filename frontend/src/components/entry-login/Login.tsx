@@ -90,10 +90,17 @@ export const Login = () => {
         className="w-full md:w-1/2 text-white p-6 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden text-center md:text-center items-center md:items-center"
         style={{ backgroundColor: '#0F172A' }}
       >
-        <div className="flex items-center justify-center gap-2.5 z-10 w-full">
+        <div className="flex items-center justify-between z-10 w-full">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 text-xs text-slate-300 hover:text-white font-medium transition-colors shrink-0"
+          >
+            ← Back to Home
+          </Link>
           <span className="font-bold tracking-wide" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '18px' }}>
             SOCIAL SERVICES MANAGEMENT
           </span>
+          <span className="w-24 shrink-0" aria-hidden="true" />
         </div>
 
         <div className="my-auto py-8 z-10 max-w-lg text-center flex flex-col items-center">
