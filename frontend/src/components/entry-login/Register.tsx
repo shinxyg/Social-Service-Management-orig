@@ -74,10 +74,17 @@ export const Register = () => {
         style={{ backgroundColor: '#0F172A' }}
       >
         {/* Header / Logo */}
-        <div className="flex items-center justify-start gap-2.5 z-10 w-full">
+        <div className="flex items-center justify-between z-10 w-full">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 text-xs text-slate-300 hover:text-white font-medium transition-colors shrink-0"
+          >
+            ← Back to Home
+          </Link>
           <span className="font-bold tracking-wide" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '18px' }}>
             SOCIAL SERVICES MANAGEMENT
           </span>
+          <span className="w-24 shrink-0" aria-hidden="true" />
         </div>
 
         {/* Hero Content - Centered */}
