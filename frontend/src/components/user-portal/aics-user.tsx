@@ -26,20 +26,10 @@ export default function AICSUser() {
   ] as const
 
   const [selectedType, setSelectedType] = useState<string>(t(ASSIST_ITEMS[0].key))
-  const residentName = "Juan" 
+  const residentName = "Juan"
 
   if (view === "apply") {
-    return (
-      <div className="p-4 md:p-6">
-        <button
-          onClick={() => setView("info")}
-          className="mb-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {t("back")}
-        </button>
-        <ApplyAICS initialType={selectedType} />
-      </div>
-    )
+    return <ApplyAICS initialType={selectedType} onBack={() => setView("info")} />
   }
 
   return (

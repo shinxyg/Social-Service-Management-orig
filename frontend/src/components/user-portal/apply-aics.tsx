@@ -13,9 +13,13 @@ interface ApplyAICSProps {
   // "Medical Assistance"), the type is locked/fixed and shown as read-only
   // instead of a dropdown the user can change.
   initialType?: string
+  // When provided, shows a "← Back" link above the form, matching the
+  // same structure/spacing used in apply-pwd-senior.tsx / apply-solo-parent.tsx
+  // (single container, single padding/max-width, no extra wrapper divs).
+  onBack?: () => void
 }
 
-export default function ApplyAICS({ initialType }: ApplyAICSProps) {
+export default function ApplyAICS({ initialType, onBack }: ApplyAICSProps) {
   const { t } = useLanguage()
 
   const assistanceTypes = [
@@ -93,6 +97,15 @@ export default function ApplyAICS({ initialType }: ApplyAICSProps) {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-2xl mx-auto">
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          ← Back
+        </button>
+      )}
+
       <PageHeader
         title={t("applyAicsTitle")}
         desc={t("applyAicsDesc")}
