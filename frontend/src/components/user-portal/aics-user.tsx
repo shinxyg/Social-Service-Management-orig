@@ -38,11 +38,15 @@ export default function AICSUser() {
         {t("aicsWelcome", { name: residentName })}
       </p>
 
-      <h1 className="font-heading text-3xl font-extrabold tracking-tight text-primary mb-6">
+      <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-primary mb-6">
         {t("aicsAssistance")}
       </h1>
 
-      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 list-none p-0 m-0">
+      {/* 6-item grid — base: single column (compact/full-width, easy to tap
+          on mobile); sm (640px): 2 columns; lg (1024px): 3 columns. This
+          mirrors docx §15 / §7's "1 column mobile, 2 tablet, 3 desktop"
+          feature-grid behavior exactly. */}
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0 m-0">
         {ASSIST_ITEMS.map(({ key, icon: Icon }) => {
           const label = t(key)
           return (
@@ -65,7 +69,7 @@ export default function AICSUser() {
         })}
       </ul>
 
-      <div className="mt-6 bg-muted/50 border border-border rounded-2xl p-5 text-sm text-muted-foreground flex items-start gap-2.5">
+      <div className="mt-6 bg-muted/50 border border-border rounded-2xl p-4 sm:p-5 text-sm text-muted-foreground flex items-start gap-2.5">
         <ClipboardList className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
         {t("aicsFooterNote")}
       </div>

@@ -119,27 +119,28 @@ export default function SoloParentChildWelfare() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start items-stretch justify-between gap-4">
         <PageHeader
           title="Solo parent & child welfare support"
           desc="Solo parent identification, benefits enrollment, and child welfare case monitoring and referral."
         />
         <button
           onClick={() => setView("picker")}
-          className="shrink-0 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5"
+          className="shrink-0 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5"
         >
           <ClipboardCheck className="h-4 w-4" />
           Review submissions
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Base: 1 column; sm: 2 columns; lg: 4 columns (docx §15) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map((s) => <StatCard key={s.label} {...s} />)}
       </div>
 
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">Services offered</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {services.map((s) => <ServiceCard key={s.label} {...s} />)}
         </div>
       </div>
@@ -148,26 +149,28 @@ export default function SoloParentChildWelfare() {
         <div className="px-4 py-3 border-b border-border">
           <h2 className="text-sm font-semibold text-foreground">Active records</h2>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground border-b border-border">
-              <th className="px-4 py-2 font-medium">Name / case</th>
-              <th className="px-4 py-2 font-medium">Type</th>
-              <th className="px-4 py-2 font-medium">Dependents</th>
-              <th className="px-4 py-2 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cases.map((c, i) => (
-              <tr key={i} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 text-foreground">{c.name}</td>
-                <td className="px-4 py-3 text-muted-foreground">{c.type}</td>
-                <td className="px-4 py-3 text-muted-foreground">{c.dependents}</td>
-                <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                <th className="px-4 py-2 font-medium">Name / case</th>
+                <th className="px-4 py-2 font-medium">Type</th>
+                <th className="px-4 py-2 font-medium">Dependents</th>
+                <th className="px-4 py-2 font-medium">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {cases.map((c, i) => (
+                <tr key={i} className="border-b border-border last:border-0">
+                  <td className="px-4 py-3 text-foreground">{c.name}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{c.type}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{c.dependents}</td>
+                  <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

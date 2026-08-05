@@ -36,6 +36,16 @@ const moduleDetails: Record<string, ModuleInfo> = {
   }
 };
 
+// Same combined, breakpoint-driven module list used on Login.tsx so both
+// entry screens share one responsive grid pattern (docx §15).
+const moduleButtons = [
+  { key: 'aics', label: 'AICS', icon: HeartHandshake },
+  { key: 'pwd', label: 'PWD & Senior', icon: Users },
+  { key: 'soloparent', label: 'Solo Parent', icon: ShieldCheck },
+  { key: 'livelihood', label: 'Livelihood & Training', icon: CheckCircle2 },
+  { key: 'financial', label: 'Financial Aid', icon: HeartHandshake },
+] as const;
+
 export const Register = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -67,10 +77,10 @@ export const Register = () => {
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#F8FAFC] font-sans text-sm relative" style={{ fontFamily: 'Inter, sans-serif' }}>
-      
+
       {/* Left Hero Section */}
       <div
-        className="w-full md:w-1/2 text-white p-6 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden text-center md:text-center items-center md:items-center"
+        className="w-full md:w-1/2 text-white p-4 sm:p-6 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden text-center md:text-center items-center md:items-center"
         style={{ backgroundColor: '#0F172A' }}
       >
         {/* Header / Logo */}
@@ -81,65 +91,34 @@ export const Register = () => {
           >
             ← Back to Home
           </Link>
-          <span className="font-bold tracking-wide" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '18px' }}>
+          <span className="font-bold tracking-wide text-sm sm:text-base md:text-lg" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             SOCIAL SERVICES MANAGEMENT
           </span>
           <span className="w-24 shrink-0" aria-hidden="true" />
         </div>
 
-        {/* Hero Content - Centered */}
-        <div className="my-auto py-8 z-10 max-w-lg text-center flex flex-col items-center">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 leading-tight text-white text-center" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+        {/* Hero Content — same progressive scale as Login.tsx (base compact
+            -> lg largest), per docx §15. */}
+        <div className="my-auto py-6 sm:py-8 z-10 max-w-lg text-center flex flex-col items-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight mb-3 leading-tight text-white text-center" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             Social Services Management Portal
           </h1>
-          <p className="text-slate-300 text-sm md:text-base mb-6 leading-relaxed font-medium text-center">
+          <p className="text-slate-300 text-xs sm:text-sm md:text-base mb-6 leading-relaxed font-medium text-center">
             Streamlining community welfare, financial aid, and support programs for residents in need. Click any module below to learn more.
           </p>
 
-          {/* Quick Feature Grid */}
-          <div className="flex flex-col gap-2.5 w-full items-center">
-            {/* 1st Row: 3 items */}
-            <div className="grid grid-cols-3 gap-2.5 w-full">
-              <button 
-                onClick={() => setSelectedModule(moduleDetails.aics)}
+          {/* Module grid — base 1 col, sm 2 col, lg 3 col (docx §15) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 w-full">
+            {moduleButtons.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setSelectedModule(moduleDetails[key])}
                 className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white font-medium transition-all text-center cursor-pointer"
               >
-                <HeartHandshake className="w-4 h-4 text-blue-400 shrink-0" />
-                <span className="text-[11px] md:text-xs truncate">AICS</span>
+                <Icon className="w-4 h-4 text-blue-400 shrink-0" />
+                <span className="text-[11px] md:text-xs truncate">{label}</span>
               </button>
-              <button 
-                onClick={() => setSelectedModule(moduleDetails.pwd)}
-                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white font-medium transition-all text-center cursor-pointer"
-              >
-                <Users className="w-4 h-4 text-blue-400 shrink-0" />
-                <span className="text-[11px] md:text-xs truncate">PWD & Senior</span>
-              </button>
-              <button 
-                onClick={() => setSelectedModule(moduleDetails.soloparent)}
-                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white font-medium transition-all text-center cursor-pointer"
-              >
-                <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
-                <span className="text-[11px] md:text-xs truncate">Solo Parent</span>
-              </button>
-            </div>
-
-            {/* 2nd Row: 2 items centered */}
-            <div className="grid grid-cols-2 gap-2.5 w-2/3">
-              <button 
-                onClick={() => setSelectedModule(moduleDetails.livelihood)}
-                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white font-medium transition-all text-center cursor-pointer"
-              >
-                <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                <span className="text-[11px] md:text-xs truncate">Livelihood & Training</span>
-              </button>
-              <button 
-                onClick={() => setSelectedModule(moduleDetails.financial)}
-                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white font-medium transition-all text-center cursor-pointer"
-              >
-                <HeartHandshake className="w-4 h-4 text-blue-400 shrink-0" />
-                <span className="text-[11px] md:text-xs truncate">Financial Aid</span>
-              </button>
-            </div>
+            ))}
           </div>
         </div>
 
@@ -150,11 +129,11 @@ export const Register = () => {
       </div>
 
       {/* Right Register Form Section */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-10 bg-[#F8FAFC]">
-        <div className="w-full max-w-sm bg-white p-6 md:p-8 rounded-2xl shadow-xl shadow-blue-500/5 border border-slate-200">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-[#F8FAFC]">
+        <div className="w-full max-w-sm bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-xl shadow-blue-500/5 border border-slate-200">
 
           <div className="text-center mb-6">
-            <h2 className="text-xl font-bold text-slate-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
               Create Account
             </h2>
             <p className="text-xs text-slate-500 mt-1">
@@ -268,8 +247,8 @@ export const Register = () => {
       {/* Module Information Modal */}
       {selectedModule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 p-6 relative overflow-hidden text-left">
-            <button 
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 p-6 relative overflow-hidden text-left max-h-[90vh] overflow-y-auto">
+            <button
               onClick={() => setSelectedModule(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
             >
@@ -284,7 +263,7 @@ export const Register = () => {
                 <span className="text-[10px] uppercase tracking-wider font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md inline-block">
                   Module Information
                 </span>
-                <h3 className="text-lg font-bold text-slate-900 mt-1" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-1" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                   {selectedModule.title}
                 </h3>
               </div>

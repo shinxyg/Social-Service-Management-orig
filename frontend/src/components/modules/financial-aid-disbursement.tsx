@@ -28,12 +28,13 @@ export default function FinancialAidDisbursement() {
         title="Financial aid disbursement"
         desc="Consolidated release tracking for cash assistance across AICS, social pension, educational aid and livelihood funding."
       />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Base: 1 column; sm: 2 columns; lg: 4 columns (docx §15) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map((s) => <StatCard key={s.label} {...s} />)}
       </div>
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">Funding sources</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {sources.map((s) => <ServiceCard key={s.label} {...s} />)}
         </div>
       </div>
@@ -41,30 +42,31 @@ export default function FinancialAidDisbursement() {
         <div className="px-4 py-3 border-b border-border">
           <h2 className="text-sm font-semibold text-foreground">Recent disbursements</h2>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground border-b border-border">
-              <th className="px-4 py-2 font-medium">Recipient</th>
-              <th className="px-4 py-2 font-medium">Program source</th>
-              <th className="px-4 py-2 font-medium">Amount</th>
-              <th className="px-4 py-2 font-medium">Date</th>
-              <th className="px-4 py-2 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {disbursements.map((d, i) => (
-              <tr key={i} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 text-foreground">{d.recipient}</td>
-                <td className="px-4 py-3 text-muted-foreground">{d.program}</td>
-                <td className="px-4 py-3 text-foreground">{d.amount}</td>
-                <td className="px-4 py-3 text-muted-foreground">{d.date}</td>
-                <td className="px-4 py-3"><StatusBadge status={d.status} /></td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                <th className="px-4 py-2 font-medium">Recipient</th>
+                <th className="px-4 py-2 font-medium">Program source</th>
+                <th className="px-4 py-2 font-medium">Amount</th>
+                <th className="px-4 py-2 font-medium">Date</th>
+                <th className="px-4 py-2 font-medium">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {disbursements.map((d, i) => (
+                <tr key={i} className="border-b border-border last:border-0">
+                  <td className="px-4 py-3 text-foreground">{d.recipient}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{d.program}</td>
+                  <td className="px-4 py-3 text-foreground">{d.amount}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{d.date}</td>
+                  <td className="px-4 py-3"><StatusBadge status={d.status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
 }
-

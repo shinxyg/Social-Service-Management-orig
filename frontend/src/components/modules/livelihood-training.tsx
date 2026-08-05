@@ -49,7 +49,9 @@ export default function LivelihoodTraining() {
   }
 
   return (
-    <div className="space-y-6">
+    // Added the p-4 -> md:p-6 wrapper (24px at md, per docx §15) that the
+    // other module pages already use, so page padding is consistent app-wide.
+    <div className="p-4 md:p-6 space-y-6">
       <PageHeader
         title="Livelihood & Training Programs"
         subtitle="Manage skills training, starter kits, and certification assistance."
@@ -74,21 +76,22 @@ export default function LivelihoodTraining() {
         </div>
       ) : (
         <>
+          {/* Base: 1 column; sm: 2 columns; lg: 4 columns (docx §15) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((s) => (
               <StatCard key={s.label} label={s.label} value={s.value} />
             ))}
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-soft space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Pending Resident Applications</h2>
                 <p className="text-xs text-muted-foreground">Applications submitted via the resident portal awaiting staff review.</p>
               </div>
               <button
                 onClick={handleStartWizard}
-                className="h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                className="h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 shrink-0"
               >
                 <ClipboardCheck className="h-4 w-4" />
                 Process Application Wizard
@@ -138,7 +141,7 @@ export default function LivelihoodTraining() {
                       <span className="font-medium text-sm text-foreground">{b.program}</span>
                       <StatusBadge status={b.status} />
                     </div>
-                    <div className="text-xs text-muted-foreground flex justify-between">
+                    <div className="text-xs text-muted-foreground flex flex-col xs:flex-row xs:justify-between gap-0.5">
                       <span>Partner: {b.partner}</span>
                       <span>{b.slots}</span>
                     </div>
