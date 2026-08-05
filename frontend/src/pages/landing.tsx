@@ -9,21 +9,19 @@ import {
   FileCheck,
   ClipboardCheck,
   Construction,
-  Building2,
   Sun,
   Moon,
 } from 'lucide-react';
 
-// 6 capability cards — matches docx §8 "Landing Page Feature Cards" (six
-// items, one per program/module), rendered in a single reflowing grid:
-// 1 column mobile, 2 tablet, 3 desktop (docx §7 "Feature grid").
+// 5 capability cards — matches docx §8 "Landing Page Feature Cards".
+// Layout: row 1 = 3 cards, row 2 = 2 cards (centered), each card offset
+// vertically to create a zigzag rhythm down the grid (docx §7 "Feature grid").
 const features = [
   { icon: MapPin, title: 'AICS', description: 'Crisis assistance for medical, burial, and educational needs', tint: 'violet' },
   { icon: Home, title: 'PWD & Senior Citizen', description: 'ID issuance and social pension enrollment', tint: 'emerald' },
   { icon: FileCheck, title: 'Solo Parent & Child Welfare', description: 'Solo parent ID and child welfare case monitoring', tint: 'rose' },
   { icon: ClipboardCheck, title: 'Livelihood & Training', description: 'Skills training and starter kit assistance', tint: 'amber' },
   { icon: Construction, title: 'Financial Aid Disbursement', description: 'Release tracking across all assistance programs', tint: 'sky' },
-  { icon: Building2, title: 'Multi-Program Coordination', description: 'One unified system connecting every office and program', tint: 'blue' },
 ] as const;
 
 const TINT: Record<string, string> = {
@@ -32,7 +30,6 @@ const TINT: Record<string, string> = {
   rose: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
   amber: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   sky: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-  blue: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
 };
 
 const stats = [
@@ -79,7 +76,6 @@ const FLOATING = [
   { Icon: Home, top: '10%', left: '5%', color: 'text-emerald-500/20', size: 26, delay: '0s' },
   { Icon: MapPin, top: '78%', left: '92%', color: 'text-sky-500/20', size: 20, delay: '-2s' },
   { Icon: ClipboardCheck, top: '58%', left: '4%', color: 'text-primary/10', size: 18, delay: '-3s' },
-  { Icon: Building2, top: '20%', left: '90%', color: 'text-primary/10', size: 22, delay: '-2.6s' },
 ];
 
 export function LandingPage() {
@@ -176,14 +172,14 @@ export function LandingPage() {
           </Link>
         </div>
 
-        {/* Feature grid — single reflowing grid: 1 col mobile, 2 tablet, 3 desktop */}
-        <div className="mt-14 grid gap-4 max-w-4xl mx-auto sm:grid-cols-2 lg:grid-cols-3 text-left">
-          {features.map((f, i) => (
+        {/* Feature grid — single flex-wrap row; cards match a 1/2/3-col width so the
+            last row's 2 cards wrap naturally and center themselves (no manual offsets). */}
+        <div className="mt-14 flex flex-wrap justify-center gap-4 max-w-4xl mx-auto text-left">
+          {features.map((f) => (
             <div
-              key={i}
-              className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 transition-all hover:-translate-y-1 hover:shadow-medium"
+              key={f.title}
+              className="group relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 transition-all hover:-translate-y-1 hover:shadow-medium sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.6667rem)]"
             >
-              {/* Spotlight gradient tint on hover */}
               <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-primary/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className={`relative mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${TINT[f.tint]}`}>
                 <f.icon size={20} />
@@ -194,16 +190,18 @@ export function LandingPage() {
           ))}
         </div>
 
-        {/* Stats — 2 columns mobile, 4 desktop; large gradient values */}
-        <div className="mt-14 grid grid-cols-2 gap-4 md:grid-cols-4 max-w-3xl mx-auto">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-3xl md:text-4xl font-bold bg-linear-to-br from-primary to-primary/60 bg-clip-text text-transparent">
-                {stat.value}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
-            </div>
-          ))}
+        {/* Stats — bordered panel, 2 columns mobile, 4 desktop; large gradient values */}
+        <div className="mt-14 max-w-3xl mx-auto rounded-2xl border border-border/60 bg-card/60 shadow-soft">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-6 p-6 md:grid-cols-4 md:gap-x-6 md:py-8">
+            {stats.map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center justify-center gap-1">
+                <p className="whitespace-nowrap text-2xl font-bold leading-none bg-linear-to-br from-primary to-primary/60 bg-clip-text text-transparent sm:text-3xl md:text-4xl">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-muted-foreground sm:text-sm">{stat.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

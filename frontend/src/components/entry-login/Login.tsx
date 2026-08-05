@@ -42,7 +42,7 @@ const moduleDetails: Record<string, ModuleInfo> = {
 const moduleButtons = [
   { key: 'aics', label: 'AICS', icon: HeartHandshake },
   { key: 'pwd', label: 'PWD & Senior', icon: Users },
-  { key: 'soloparent', label: 'Solo Parent', icon: ShieldCheck },
+  { key: 'soloparent', label: 'Solo Parent & Child Welfare Support', icon: ShieldCheck },
   { key: 'livelihood', label: 'Livelihood & Training', icon: CheckCircle2 },
   { key: 'financial', label: 'Financial Aid', icon: HeartHandshake },
 ] as const;
@@ -124,15 +124,15 @@ export const Login = () => {
             Streamlining community welfare, financial aid, and support programs for residents in need. Click any module below to learn more.
           </p>
 
-          {/* Module quick links — base: single column (compact, easy to tap on
-              mobile); sm (640px): 2 columns; lg (1024px): 3 columns, matching
-              docx §15's "sm -> 2 columns" / "lg -> 3-4 columns" pattern. */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 w-full">
+          {/* Module quick links — single flex-wrap row so any leftover items on
+              the last line (e.g. 2 of 5) wrap and center themselves instead of
+              sitting flush-left in an uneven grid row. */}
+          <div className="flex flex-wrap justify-center gap-2.5 w-full">
             {moduleButtons.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
                 onClick={() => setSelectedModule(moduleDetails[key])}
-                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white/10 hover:bg-white/25 backdrop-blur-md border border-white/10 text-white font-medium transition-all text-center cursor-pointer"
+                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white/10 hover:bg-white/25 backdrop-blur-md border border-white/10 text-white font-medium transition-all text-center cursor-pointer w-full sm:w-[calc(50%-0.3125rem)] lg:w-[calc(33.333%-0.6667rem)]"
               >
                 <Icon className="w-4 h-4 text-blue-400 shrink-0" />
                 <span className="text-[11px] md:text-xs truncate">{label}</span>
