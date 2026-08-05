@@ -26,20 +26,23 @@ const initialApplications = [
   { name: "Aiza R. Fernandez", type: "Medical assistance", filed: "Jul 24, 2026", amount: "₱15,000", status: "For interview" },
 ]
 
+// Case notes — kept in a neutral, third-person admin/case-worker tone
+// (not the resident's own first-person wording) since this file is
+// staff/admin-only.
 const pendingSubmissions: AICSApplicantInfo[] = [
   {
     name: "Liza P. Gonzales",
     address: "Purok 3, Barangay San Isidro",
     contact: "0917 234 5678",
     type: "Medical assistance",
-    narrative: "Nahospital ang asawa ko dahil sa stroke, kailangan ng pambayad sa gamot.",
+    narrative: "Spouse was hospitalized due to a stroke; requesting assistance to cover medication costs.",
   },
   {
     name: "Noel A. Ramirez",
     address: "Zone 2, Barangay Bagong Pag-asa",
     contact: "0928 456 1230",
     type: "Educational assistance",
-    narrative: "Anak ko malapit na mag-enroll pero wala kaming pambayad ng school fees.",
+    narrative: "Child is due to enroll shortly; household is unable to cover school fees at this time.",
   },
 ]
 
@@ -98,7 +101,7 @@ export default function AICS() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground">{s.name}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{s.type} — {s.address}</p>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{s.narrative}</p>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">Case note: {s.narrative}</p>
               </div>
             </button>
           ))}
