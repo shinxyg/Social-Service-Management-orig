@@ -24,9 +24,6 @@ const initialCases = [
   { name: "Case No. CW-2026-0065", type: "Child welfare case", dependents: "2 children, ages 4 and 9", status: "For home visit" },
 ]
 
-// Mock submissions filed by residents through the online portal
-// (user-portal/apply-solo-parent.tsx). Staff pick one here to begin
-// review — UI-only for now, same pattern as AICS.
 const pendingSubmissions: SoloParentApplicantInfo[] = [
   {
     name: "Emilyn R. Salazar",
