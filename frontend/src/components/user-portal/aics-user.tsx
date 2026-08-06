@@ -25,11 +25,19 @@ export default function AICSUser() {
     { key: "aicsCashRelief", icon: Banknote },
   ] as const
 
-  const [selectedType, setSelectedType] = useState<string>(t(ASSIST_ITEMS[0].key))
+  // Keep both: the raw key (stable, used for logic like "is this Medical?")
+  // and the translated label (used purely for display / passed to ApplyAICS as text).
+  const [selectedKey, setSelectedKey] = useState<string>(ASSIST_ITEMS[0].key)
   const residentName = "Juan"
 
   if (view === "apply") {
-    return <ApplyAICS initialType={selectedType} onBack={() => setView("info")} />
+    return (
+      <ApplyAICS
+        initialType={t(selectedKey)}
+        initialTypeKey={selectedKey}
+        onBack={() => setView("info")}
+      />
+    )
   }
 
   return (
@@ -53,7 +61,7 @@ export default function AICSUser() {
             <li key={key}>
               <button
                 onClick={() => {
-                  setSelectedType(label)
+                  setSelectedKey(key)
                   setView("apply")
                 }}
                 className="w-full flex items-center gap-3.5 bg-card border border-border rounded-2xl px-4 py-3 shadow-soft transition-all duration-150 hover:-translate-y-0.5 hover:shadow-medium hover:border-primary/35 text-left"
