@@ -37,6 +37,14 @@ const SAMPLE_DOCUMENTS = [
   "AUTHORIZATION / PERSONAL LETTER",
 ]
 
+const FUNERAL_SAMPLE_DOCUMENTS = [
+  "REFERRAL FORM MULA SA BARANGAY, HOSPITAL O FUNERAL",
+  "CERTIFIED TRUE COPY NG DEATH CERTIFICATE",
+  "NOTARIZED FUNERAL CONTRACT",
+  "CERTIFICATE OF INDIGENCY (PARA SA FUNERAL/BURIAL ASSISTANCE)",
+  "VALID ID NG DECEASED AT NG INFORMANT",
+]
+
 const SAMPLE_DOCUMENT_INFO: Record<string, { images: string[]; downloadUrl?: string }> = {
   "MEDICAL CERTIFICATE / CLINICAL ABSTRACT": {
     images: ["/path/to/medical-certificate-sample.png"],
@@ -73,8 +81,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [narrative, setNarrative] = useState("")
   const [reference, setReference] = useState("")
 
-  // Reliable check based on the raw key, not translated display text
-const isMedicalAssistance = initialTypeKey === "aicsMedical"
+const isFuneralAssistance = initialTypeKey === "aicsFuneral"
 const requirements = initialTypeKey ? AICS_REQUIREMENTS[initialTypeKey] : undefined
 const hasRequirements = Boolean(requirements)
 
@@ -87,13 +94,21 @@ const [step, setStep] = useState<Step>(
   const [showInfoBanner, setShowInfoBanner] = useState(true)
   const [showSlotBanner, setShowSlotBanner] = useState(true)
 
-  // Checklist step state (Medical Assistance only)
+  // Checklist step state
   const [checklistResident, setChecklistResident] = useState(false)
   const [checklistPatient, setChecklistPatient] = useState(false)
   const [checklistPriorAid, setChecklistPriorAid] = useState<"yes" | "no">("no")
   const [priorAidOffice, setPriorAidOffice] = useState("")
   const [priorAidType, setPriorAidType] = useState("")
-  const canProceedChecklist = checklistResident && checklistPatient
+
+  // Funeral Assistance checklist fields
+  const [checklistDeceasedResident, setChecklistDeceasedResident] = useState<"yes" | "no" | "">("")
+  const [checklistRelation, setChecklistRelation] = useState("")
+  const [checklistFuneralHome, setChecklistFuneralHome] = useState("")
+
+  const canProceedChecklist = isFuneralAssistance
+    ? Boolean(checklistDeceasedResident === "yes" && checklistRelation)
+    : checklistResident && checklistPatient
 
   // ── Personal Information step state (Medical Assistance only, wizard step 2) ──
   const [qcId] = useState("110000116932100")
@@ -341,7 +356,7 @@ if (step === "requirements" && requirements) {
         requirements={requirements}
         accepted={reqAccepted}
         onAcceptedChange={setReqAccepted}
-        onContinue={() => setStep(isMedicalAssistance ? "checklist" : "form")}
+        onContinue={() => setStep(hasRequirements ? "checklist" : "form")}
         showInfoBanner={showInfoBanner}
         onCloseInfoBanner={() => setShowInfoBanner(false)}
         showSlotBanner={showSlotBanner}
@@ -388,104 +403,177 @@ if (step === "requirements" && requirements) {
           </div>
 
           <div className="p-6 space-y-6">
-            <div>
-              <h2 className="font-heading font-semibold text-foreground mb-1">MGA KINAKAILANGAN SA SERBISYO</h2>
-              <p className="text-sm font-semibold text-foreground">MGA PANGUNAHING KINAKAILANGAN</p>
-            </div>
+            {isFuneralAssistance ? (
+              <>
+                <div>
+                  <h2 className="font-heading font-semibold text-foreground mb-1">ELIGIBILITY</h2>
+                </div>
 
-            <div className="space-y-3">
-              <label className="flex items-start gap-2.5 text-sm text-primary cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={checklistResident}
-                  onChange={(e) => setChecklistResident(e.target.checked)}
-                  className="h-4 w-4 mt-0.5 rounded border-border accent-primary shrink-0"
-                />
-                <span>Ikaw ba ay isang lehitimong residente ng Quezon City? *</span>
-              </label>
-
-              <label className="flex items-start gap-2.5 text-sm text-primary cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={checklistPatient}
-                  onChange={(e) => setChecklistPatient(e.target.checked)}
-                  className="h-4 w-4 mt-0.5 rounded border-border accent-primary shrink-0"
-                />
-                <span>
-                  Ikaw ba ay isang QC citizen (o miyembro ng pamilya) na may karamdaman na nangangailangan ng
-                  tulong pinansyal para sa ospitalisasyon/gamot? *
-                </span>
-              </label>
-            </div>
-
-            <div>
-              <p className="text-sm text-foreground mb-3">
-                Nakakuha ka na ba ng tulong medikal mula sa ibang opisina ng Quezon City? *
-              </p>
-              <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2 text-sm text-primary cursor-pointer select-none">
-                  <input
-                    type="radio"
-                    name="priorAid"
-                    checked={checklistPriorAid === "yes"}
-                    onChange={() => setChecklistPriorAid("yes")}
-                    className="h-4 w-4 accent-primary"
-                  />
-                  Oo, nakakuha na ako ng tulong medikal
-                </label>
-                <label className="flex items-center gap-2 text-sm text-primary cursor-pointer select-none">
-                  <input
-                    type="radio"
-                    name="priorAid"
-                    checked={checklistPriorAid === "no"}
-                    onChange={() => {
-                      setChecklistPriorAid("no")
-                      setPriorAidOffice("")
-                      setPriorAidType("")
-                    }}
-                    className="h-4 w-4 accent-primary"
-                  />
-                  Hindi pa
-                </label>
-              </div>
-
-              {checklistPriorAid === "yes" && (
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <label className="block text-xs text-primary mb-1">Kung oo, tukuyin ang opisina</label>
-                    <input
-                      value={priorAidOffice}
-                      onChange={(e) => setPriorAidOffice(e.target.value)}
-                      placeholder="hal., QC Health Department, QC Social Services, atbp."
-                      className="w-full h-11 rounded-lg border border-primary/40 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/40"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-primary mb-1">Uri ng tulong na natanggap</label>
-                    <select
-                      value={priorAidType}
-                      onChange={(e) => setPriorAidType(e.target.value)}
-                      className="w-full h-11 rounded-lg border border-primary/40 bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/40"
-                    >
-                      <option value="" disabled>Uri ng tulong na natanggap</option>
-                      <option value="cash">Cash</option>
-                      <option value="guarantee_letter">Guarantee Letter</option>
-                      <option value="gamot">Gamot</option>
-                    </select>
+                <div>
+                  <p className="text-sm text-foreground mb-3">Ang namatay ba ay residente ng QC? *</p>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 text-sm text-primary cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="deceasedResident"
+                        checked={checklistDeceasedResident === "yes"}
+                        onChange={() => setChecklistDeceasedResident("yes")}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      Oo
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-primary cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="deceasedResident"
+                        checked={checklistDeceasedResident === "no"}
+                        onChange={() => setChecklistDeceasedResident("no")}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      Hindi
+                    </label>
                   </div>
                 </div>
-              )}
-            </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-foreground mb-2">I-CLICK ANG TYPE NG ASSISTANCE</h3>
-              <label className="block text-xs text-primary mb-1">Pumili ng Type ng Assistance **</label>
-              <div className="w-full h-11 rounded-lg border border-primary/40 bg-background px-3 flex items-center justify-between text-sm text-foreground cursor-not-allowed opacity-90">
-                Medicines / Medical Supplies
-                <span className="text-muted-foreground">▾</span>
-              </div>
-            </div>
+                <div>
+                  <p className="text-sm text-foreground mb-3">Ano ang relasyon mo sa yumao? *</p>
+                  <div className="space-y-2">
+                    {["Anak", "Magulang", "Kapatid", "Asawa", "Iba pa"].map((rel) => (
+                      <label key={rel} className="flex items-center gap-2.5 text-sm text-primary cursor-pointer select-none">
+                        <input
+                          type="radio"
+                          name="relationToDeceased"
+                          checked={checklistRelation === rel}
+                          onChange={() => setChecklistRelation(rel)}
+                          className="h-4 w-4 accent-primary"
+                        />
+                        {rel}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-primary mb-1">
+                    Kung mayroon nang nakuhang punerarya, pumili kung anong funeral ang nagserbisyo *
+                  </label>
+                  <select
+                    value={checklistFuneralHome}
+                    onChange={(e) => setChecklistFuneralHome(e.target.value)}
+                    className="w-full h-11 rounded-lg border border-primary/40 bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/40"
+                  >
+                    <option value="" disabled>Pumili ng funeral home</option>
+                    <option value="Catalonia Funeral Homes">Catalonia Funeral Homes</option>
+                    <option value="Iba pa">Iba pa</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Pumili po ng isang akreditadong partner na punerarya. Kung hindi nakalista ang inyong
+                    napiling punerarya, piliin ang 'Iba pa'.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <h2 className="font-heading font-semibold text-foreground mb-1">MGA KINAKAILANGAN SA SERBISYO</h2>
+                  <p className="text-sm font-semibold text-foreground">MGA PANGUNAHING KINAKAILANGAN</p>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="flex items-start gap-2.5 text-sm text-primary cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={checklistResident}
+                      onChange={(e) => setChecklistResident(e.target.checked)}
+                      className="h-4 w-4 mt-0.5 rounded border-border accent-primary shrink-0"
+                    />
+                    <span>Ikaw ba ay isang lehitimong residente ng Quezon City? *</span>
+                  </label>
+
+                  <label className="flex items-start gap-2.5 text-sm text-primary cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={checklistPatient}
+                      onChange={(e) => setChecklistPatient(e.target.checked)}
+                      className="h-4 w-4 mt-0.5 rounded border-border accent-primary shrink-0"
+                    />
+                    <span>
+                      Ikaw ba ay isang QC citizen (o miyembro ng pamilya) na may karamdaman na nangangailangan ng
+                      tulong pinansyal para sa ospitalisasyon/gamot? *
+                    </span>
+                  </label>
+                </div>
+
+                <div>
+                  <p className="text-sm text-foreground mb-3">
+                    Nakakuha ka na ba ng tulong medikal mula sa ibang opisina ng Quezon City? *
+                  </p>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 text-sm text-primary cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="priorAid"
+                        checked={checklistPriorAid === "yes"}
+                        onChange={() => setChecklistPriorAid("yes")}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      Oo, nakakuha na ako ng tulong medikal
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-primary cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="priorAid"
+                        checked={checklistPriorAid === "no"}
+                        onChange={() => {
+                          setChecklistPriorAid("no")
+                          setPriorAidOffice("")
+                          setPriorAidType("")
+                        }}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      Hindi pa
+                    </label>
+                  </div>
+
+                  {checklistPriorAid === "yes" && (
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <label className="block text-xs text-primary mb-1">Kung oo, tukuyin ang opisina</label>
+                        <input
+                          value={priorAidOffice}
+                          onChange={(e) => setPriorAidOffice(e.target.value)}
+                          placeholder="hal., QC Health Department, QC Social Services, atbp."
+                          className="w-full h-11 rounded-lg border border-primary/40 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/40"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-primary mb-1">Uri ng tulong na natanggap</label>
+                        <select
+                          value={priorAidType}
+                          onChange={(e) => setPriorAidType(e.target.value)}
+                          className="w-full h-11 rounded-lg border border-primary/40 bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/40"
+                        >
+                          <option value="" disabled>Uri ng tulong na natanggap</option>
+                          <option value="cash">Cash</option>
+                          <option value="guarantee_letter">Guarantee Letter</option>
+                          <option value="gamot">Gamot</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">I-CLICK ANG TYPE NG ASSISTANCE</h3>
+                  <label className="block text-xs text-primary mb-1">Pumili ng Type ng Assistance **</label>
+                  <div className="w-full h-11 rounded-lg border border-primary/40 bg-background px-3 flex items-center justify-between text-sm text-foreground cursor-not-allowed opacity-90">
+                    Medicines / Medical Supplies
+                    <span className="text-muted-foreground">▾</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="px-6 pb-6 flex justify-end">
@@ -832,13 +920,13 @@ if (step === "requirements" && requirements) {
               </p>
             </div>
 
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-3 tracking-wide">
-                PARA SA GAMOT / MEDICAL SUPPLIES
-              </h3>
+           <div>
+                <h3 className="text-sm font-bold text-foreground mb-3 tracking-wide">
+                  {isFuneralAssistance ? "PARA SA FUNERAL AND BURIAL ASSISTANCE" : "PARA SA GAMOT / MEDICAL SUPPLIES"}
+                </h3>
 
-              <div className="space-y-4">
-                {SAMPLE_DOCUMENTS.map((doc) => (
+                <div className="space-y-4">
+                  {(isFuneralAssistance ? FUNERAL_SAMPLE_DOCUMENTS : SAMPLE_DOCUMENTS).map((doc) => (
                   <div key={doc} className="space-y-2">
                     <button
                       type="button"
@@ -968,18 +1056,32 @@ if (step === "requirements" && requirements) {
                   I-EDIT
                 </button>
               </div>
-              <div className="divide-y divide-border">
-                <ReviewCheckItem ok={checklistResident} label="Ikaw ba ay isang lehitimong residente ng Quezon City?" />
-                <ReviewCheckItem
-                  ok={checklistPatient}
-                  label="Ikaw ba ay isang QC citizen (o miyembro ng pamilya) na may karamdaman na nangangailangan ng tulong pinansyal para sa ospitalisasyon/gamot?"
-                />
-                <ReviewCheckItem
-                  ok={true}
-                  label="Nakakuha ka na ba ng tulong medikal mula sa ibang opisina ng Quezon City?"
-                />
-                <ReviewCheckItem ok={hasPriorAidType} label="Uri ng tulong na natanggap:" />
-                <ReviewCheckItem ok={true} label="Type ng Assistance: Medicines / Medical Supplies" />
+             <div className="divide-y divide-border">
+                {isFuneralAssistance ? (
+                  <>
+                    <ReviewCheckItem ok={checklistDeceasedResident === "yes"} label="Ang namatay ba ay residente ng QC?" />
+                    <ReviewCheckItem ok={Boolean(checklistRelation)} label={`Relasyon sa yumao: ${checklistRelation || "—"}`} />
+                    <ReviewCheckItem
+                      ok={Boolean(checklistFuneralHome)}
+                      label={`Funeral home: ${checklistFuneralHome || "—"}`}
+                    />
+                    <ReviewCheckItem ok={true} label="Type ng Assistance: Funeral and Burial Assistance" />
+                  </>
+                ) : (
+                  <>
+                    <ReviewCheckItem ok={checklistResident} label="Ikaw ba ay isang lehitimong residente ng Quezon City?" />
+                    <ReviewCheckItem
+                      ok={checklistPatient}
+                      label="Ikaw ba ay isang QC citizen (o miyembro ng pamilya) na may karamdaman na nangangailangan ng tulong pinansyal para sa ospitalisasyon/gamot?"
+                    />
+                    <ReviewCheckItem
+                      ok={true}
+                      label="Nakakuha ka na ba ng tulong medikal mula sa ibang opisina ng Quezon City?"
+                    />
+                    <ReviewCheckItem ok={hasPriorAidType} label="Uri ng tulong na natanggap:" />
+                    <ReviewCheckItem ok={true} label="Type ng Assistance: Medicines / Medical Supplies" />
+                  </>
+                )}
               </div>
             </div>
 
