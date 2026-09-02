@@ -1,0 +1,49 @@
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const connectionString = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
+
+let poolConfig;
+
+if (connectionString) {
+  // Railway internal: postgres.railway.internal — no SSL needed
+  // Railway public: *.railway.app or *.up.railway.app — SSL needed
+  // Local: localhost / 127.0.0.1 — no SSL needed
+  const isInternalOrLocal =
+    connectionString.includes('localhost') ||
+    connectionString.includes('127.0.0.1') ||
+    connectionString.includes('railway.internal');
+
+  poolConfig = {
+    connectionString,
+    ssl: isInternalOrLocal ? false : { rejectUnauthorized: false },
+  };
+} else {
+  poolConfig = {
+    host: process.env.PGHOST || process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.PGPORT || process.env.DB_PORT || '5432', 10),
+    user: process.env.PGUSER || process.env.DB_USER || 'postgres',
+    password: process.env.PGPASSWORD || process.env.DB_PASSWORD || '',
+    database: process.env.PGDATABASE || process.env.DB_NAME || 'railway',
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  };
+}
+
+const pool = new Pool(poolConfig);
+
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle PostgreSQL client:', err.message);
+});
+
+// Non-blocking database connection test
+pool.connect((err, client, release) => {
+  if (err) {
+    console.warn('⚠️ Warning: Initial PostgreSQL connection attempt failed:', err.message);
+    console.warn('Backend will continue running and retry database queries on incoming requests.');
+  } else {
+    console.log('✅ Connected to PostgreSQL database successfully!');
+    if (typeof release === 'function') release();
+  }
+});
+
+module.exports = pool;

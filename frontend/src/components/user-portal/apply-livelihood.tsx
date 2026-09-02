@@ -1,0 +1,486 @@
+import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
+import { LivelihoodRequirementsModal } from "./livelihood-requirements-data"
+import LivelihoodApplicationWizard from "./livelihood-wizard"
+import LivelihoodStatusCard, { type LivelihoodApplicationRecord } from "./livelihood-status-card"
+import LivelihoodAssistanceView from "./livelihood-assistance-view"
+import LivelihoodMonitoringView from "./livelihood-monitoring-view"
+import { API_BASE } from "../../config/api"
+import {
+  FileText,
+  Package,
+  Activity,
+  PlusCircle,
+  Lock,
+} from "lucide-react"
+
+type LivelihoodProgramTab = "apply" | "assistance" | "monitoring"
+
+// Default mock approved application so the user can immediately test parts 2 and 3 if desired
+const DEFAULT_LIVELIHOOD_APP: LivelihoodApplicationRecord = {
+  id: 3,
+  reference_number: "LP-2026-2518",
+  user_id: "110000116932100",
+  application_status: "approved",
+  qcid: "110000116932100",
+  first_name: "CLARISA MAE",
+  middle_name: "GALIAS",
+  last_name: "DIMAL",
+  suffix: "",
+  nationality: "FILIPINO",
+  date_of_birth: "10/29/2004",
+  age: 21,
+  gender: "Female",
+  civilStatus: "Single",
+  bloodType: "O+",
+  house_building_no: "11",
+  street_name: "SAMPALOC STREET",
+  barangay: "Sauyo",
+  phone_number: "0917 234 5678",
+  email: "clarisa.dimal@example.com",
+  livelihood_type: "Sari-sari Store",
+  livelihood_status: "New Livelihood",
+  business_description: "Magtatayo ng sari-sari store upang matulungan ang pamilya at magkaroon ng tuloy-tuloy na pagkakakitaan sa Sauyo.",
+  business_location: "11 Sampaloc Street, Brgy. Sauyo, Quezon City",
+  same_as_registered_address: true,
+  assistance_needed: ["Financial / Capital Assistance", "Materials / Supplies", "Equipment"],
+  estimated_amount: 15000,
+  reason_purpose: "Pang-kapital sa mga basikong bilihin (bigas, grocery) at lagayan / timbangan.",
+  uploaded_documents: [
+    { id: "id-1", label: "Valid ID / QCID", type: "validId", original_filename: "QCID_Clarisa_Dimal.png" },
+    { id: "id-2", label: "Proof of Residency", type: "proofOfResidency", original_filename: "Brgy_Sauyo_Residency.pdf" },
+  ],
+  approved_by: "SSDD Livelihood Committee",
+  approved_date: "2026-08-16T10:00:00Z",
+  created_at: "2026-08-15T09:41:00Z",
+  assistance: {
+    reference_number: "LP-2026-2518",
+    assistance_status: "released",
+    release_status: "RELEASED",
+    approved_financial_amount: 15000,
+    approved_materials: [
+      { item: "Rice Sacks (50kg)", quantity: "2 sacks", remarks: "Sinandomeng premium grain" },
+      { item: "Canned Goods Assortment", quantity: "3 boxes", remarks: "Assorted canned goods starter pack" },
+    ],
+    approved_equipment: [
+      { equipment: "Heavy-duty Display Shelving Rack", quantity: "1 unit", remarks: "4-tier powder-coated steel" },
+      { equipment: "Digital Weighing Scale", quantity: "1 unit", remarks: "30kg capacity rechargeable" },
+    ],
+    release_date: "September 1, 2026",
+    release_time: "9:00 AM - 11:30 AM",
+    release_location: "Quezon City Hall - SSDD Livelihood Center",
+    instructions: "Please bring a valid ID and your claim voucher.",
+    released_at: "2026-09-01T09:30:00.000Z",
+    released_by: "SSDD Admin Evaluator",
+  },
+  monitoring: [
+    {
+      id: "MON-2518-1",
+      reference_number: "LP-2026-2518",
+      monitoring_status: "ACTIVE",
+      monitoring_date: "September 1, 2026",
+      inspection_date: "September 1, 2026",
+      progress_update: "Initial monitoring has started. The beneficiary has received the approved livelihood assistance.",
+      remarks: "The beneficiary has received the approved livelihood assistance and organized initial inventory.",
+      next_follow_up_date: "September 20, 2026",
+      officer_name: "SSDD Social Worker / Admin",
+      created_at: "2026-09-01T10:00:00.000Z",
+    },
+  ],
+}
+
+// Helper: parse date and time string to Date object in Philippine Standard Time (UTC+8)
+function parseDateTime(dateStr?: string, timeStr?: string): Date | null {
+  if (!dateStr) return null
+  try {
+    let year: number, month: number, day: number
+    const str = String(dateStr).trim()
+    const isoMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/)
+    if (isoMatch) {
+      year = parseInt(isoMatch[1], 10)
+      month = parseInt(isoMatch[2], 10) - 1
+      day = parseInt(isoMatch[3], 10)
+    } else {
+      const usMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/)
+      if (usMatch) {
+        month = parseInt(usMatch[1], 10) - 1
+        day = parseInt(usMatch[2], 10)
+        year = parseInt(usMatch[3], 10)
+      } else {
+        const d = new Date(dateStr)
+        if (isNaN(d.getTime())) return null
+        year = d.getFullYear()
+        month = d.getMonth()
+        day = d.getDate()
+      }
+    }
+
+    let hours = 9
+    let minutes = 0
+    if (timeStr) {
+      const match = String(timeStr).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i)
+      if (match) {
+        hours = parseInt(match[1], 10)
+        minutes = parseInt(match[2], 10)
+        const ampm = match[3]?.toUpperCase()
+        if (ampm === "PM" && hours < 12) hours += 12
+        if (ampm === "AM" && hours === 12) hours = 0
+      }
+    }
+
+    const targetUtcMs = Date.UTC(year, month, day, hours - 8, minutes, 0, 0)
+    return new Date(targetUtcMs)
+  } catch {
+    return null
+  }
+}
+
+export default function ApplyLivelihood() {
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const categoryParam = searchParams.get("category")?.toLowerCase() || "livelihood"
+  const isTraining = categoryParam === "training"
+
+  // Active Tab: 1. Apply, 2. Capital/Materials Assistance, 3. Monitoring
+  const tabParam = (searchParams.get("tab") as LivelihoodProgramTab) || "apply"
+  const [activeTab, setActiveTab] = useState<LivelihoodProgramTab>(tabParam)
+
+  // Requirements Modal visibility & acceptance
+  const [showRequirements, setShowRequirements] = useState(false)
+  const [requirementsAccepted, setRequirementsAccepted] = useState(false)
+
+  // Current Application Record
+  const [activeApplication, setActiveApplication] = useState<LivelihoodApplicationRecord | null>(null)
+  const [isWizardOpen, setIsWizardOpen] = useState(false)
+  const [isUpdatingRevision, setIsUpdatingRevision] = useState(false)
+
+  // Fetch applications from server with real-time 2s polling
+  useEffect(() => {
+    if (isTraining) return
+
+    const fetchApp = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/livelihood/applications?qcid=110000116932100`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && data.applications && data.applications.length > 0) {
+            const match = data.applications.find(
+              (a: any) =>
+                a.reference_number === "LP-2026-2518" ||
+                a.reference_number === "LP-2026-1042" ||
+                a.qcid === "110000116932100" ||
+                a.user_id === "110000116932100" ||
+                (a.first_name && a.first_name.includes("CLARISA"))
+            ) || data.applications[0]
+            setActiveApplication(match)
+            return
+          }
+          if (data.success && Array.isArray(data.applications) && data.applications.length === 0) {
+            setActiveApplication(null)
+            return
+          }
+        }
+      } catch (_) {}
+
+      // Check localStorage
+      try {
+        const stored = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
+        if (Array.isArray(stored) && stored.length > 0) {
+          const match = stored.find(
+            (a: any) =>
+              a.reference_number === "LP-2026-2518" ||
+              a.reference_number === "LP-2026-1042" ||
+              a.qcid === "110000116932100" ||
+              a.user_id === "110000116932100" ||
+              (a.first_name && a.first_name.includes("CLARISA"))
+          ) || stored[0]
+          setActiveApplication(match)
+          return
+        }
+      } catch (_) {}
+
+      // If no applications, start clean with null
+      setActiveApplication(null)
+    }
+
+    fetchApp()
+
+    // Poll every 3 seconds so status automatically syncs when Admin makes a decision
+    const interval = setInterval(fetchApp, 3000)
+
+    const handleSync = () => fetchApp()
+    window.addEventListener("storage", handleSync)
+    window.addEventListener("livelihood_status_updated", handleSync)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("storage", handleSync)
+      window.removeEventListener("livelihood_status_updated", handleSync)
+    }
+  }, [isTraining])
+
+  // Sync tab with URL
+  const handleTabChange = (tab: LivelihoodProgramTab) => {
+    setActiveTab(tab)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set("tab", tab)
+      return next
+    })
+  }
+
+  // Handle successful application submit
+  const handleSuccessSubmit = (app: LivelihoodApplicationRecord) => {
+    setActiveApplication(app)
+    setIsWizardOpen(false)
+    setIsUpdatingRevision(false)
+    setActiveTab("apply")
+  }
+
+  // Handle user starting new application
+  const handleStartNewApplication = () => {
+    setShowRequirements(true)
+    setRequirementsAccepted(false)
+  }
+
+  // Handle user accepting requirements and continuing to wizard
+  const handleProceedToWizard = () => {
+    setShowRequirements(false)
+    setIsUpdatingRevision(false)
+    setIsWizardOpen(true)
+    setActiveTab("apply")
+  }
+
+  // Handle "Revise Application" from Needs Revision
+  const handleUpdateApplication = (app: LivelihoodApplicationRecord) => {
+    setActiveApplication(app)
+    setIsUpdatingRevision(true)
+    setIsWizardOpen(true)
+    setActiveTab("apply")
+  }
+
+  // Lock states according to workflow specifications
+  const isApproved = activeApplication?.application_status === "approved"
+  const assistData = activeApplication?.assistance
+  const assistScheduledDt = parseDateTime(assistData?.release_date, assistData?.release_time)
+  const isPastOrNow = assistScheduledDt !== null && Date.now() >= assistScheduledDt.getTime()
+  const rawAssistStatus = (assistData?.assistance_status || "").toLowerCase()
+  const isAssistanceReleased =
+    rawAssistStatus === "released" ||
+    assistData?.release_status === "RELEASED" ||
+    (rawAssistStatus === "for_release" && isPastOrNow)
+
+  const [tabLockedMessage, setTabLockedMessage] = useState<string | null>(null)
+
+  // Top 3-Part Program Navigation Bar
+  const handleSelectTab = (tab: LivelihoodProgramTab) => {
+    setTabLockedMessage(null)
+    if (tab === "assistance" && !isApproved) {
+      setTabLockedMessage("Naka-lock ang Stage 2: Magiging aktibo lamang ito kapag opisyal nang naaprubahan ng SSDD Admin ang iyong Livelihood Application.")
+      return
+    }
+    if (tab === "monitoring" && !isAssistanceReleased) {
+      setTabLockedMessage("Naka-lock ang Stage 3: Magiging aktibo lamang ito sa takdang araw at oras ng release ng iyong Capital / Materials Assistance.")
+      return
+    }
+    setIsWizardOpen(false)
+    handleTabChange(tab)
+  }
+
+  // If currently on a locked tab, fallback to available tab
+  useEffect(() => {
+    if (activeTab === "assistance" && !isApproved) {
+      handleTabChange("apply")
+    } else if (activeTab === "monitoring" && !isAssistanceReleased) {
+      handleTabChange(isApproved ? "assistance" : "apply")
+    }
+  }, [activeTab, isApproved, isAssistanceReleased])
+
+  return (
+    <div className="min-h-[calc(100vh-4rem)] py-4 max-w-5xl mx-auto px-4 space-y-6">
+      {/* Tab Locked Alert Notice */}
+      {tabLockedMessage && (
+        <div className="p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 shrink-0 text-amber-600" />
+            <span className="font-semibold">{tabLockedMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTabLockedMessage(null)}
+            className="text-amber-700 hover:text-amber-900 font-bold px-2 py-0.5 cursor-pointer"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Top 3-Part Program Navigation Bar */}
+      <div className="bg-card border border-border rounded-2xl p-2 shadow-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+          {/* Tab 1 */}
+          <button
+            onClick={() => handleSelectTab("apply")}
+            id="tab-apply-livelihood"
+            className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              activeTab === "apply"
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            <span>1. APPLY FOR LIVELIHOOD</span>
+          </button>
+
+          {/* Tab 2: Capital / Materials Assistance */}
+          <button
+            onClick={() => handleSelectTab("assistance")}
+            id="tab-capital-assistance"
+            className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+              !isApproved
+                ? "opacity-60 bg-muted/30 text-muted-foreground cursor-not-allowed"
+                : activeTab === "assistance"
+                ? "bg-indigo-600 text-white shadow-sm cursor-pointer"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-pointer"
+            }`}
+          >
+            {!isApproved ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <Package className="h-4 w-4" />}
+            <span>2. CAPITAL / MATERIALS {!isApproved && "(LOCKED)"}</span>
+          </button>
+
+          {/* Tab 3: Livelihood Monitoring */}
+          <button
+            onClick={() => handleSelectTab("monitoring")}
+            id="tab-livelihood-monitoring"
+            className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+              !isAssistanceReleased
+                ? "opacity-60 bg-muted/30 text-muted-foreground cursor-not-allowed"
+                : activeTab === "monitoring"
+                ? "bg-emerald-600 text-white shadow-sm cursor-pointer"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-pointer"
+            }`}
+          >
+            {!isAssistanceReleased ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <Activity className="h-4 w-4" />}
+            <span>3. LIVELIHOOD MONITORING {!isAssistanceReleased && "(LOCKED)"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 1. APPLY FOR LIVELIHOOD CONTENT                              */}
+      {/* ============================================================ */}
+      {activeTab === "apply" && (
+        <div>
+          {isWizardOpen ? (
+            <LivelihoodApplicationWizard
+              initialData={
+                isUpdatingRevision && activeApplication
+                  ? {
+                      qcid: activeApplication.qcid,
+                      firstName: activeApplication.first_name,
+                      middleName: activeApplication.middle_name || "",
+                      lastName: activeApplication.last_name,
+                      suffix: activeApplication.suffix || "",
+                      nationality: activeApplication.nationality || "Filipino",
+                      dateOfBirth: activeApplication.date_of_birth || "",
+                      age: String(activeApplication.age || ""),
+                      gender: activeApplication.gender || "Female",
+                      civilStatus: activeApplication.civilStatus || "Single",
+                      bloodType: activeApplication.bloodType || "O+",
+                      houseBuildingNo: activeApplication.house_building_no || "",
+                      streetName: activeApplication.street_name || "",
+                      barangay: activeApplication.barangay || "",
+                      phoneNumber: activeApplication.phone_number || "",
+                      email: activeApplication.email || "",
+                      livelihoodType: activeApplication.livelihood_type || "",
+                      livelihoodStatus: (activeApplication.livelihood_status as any) || "",
+                      businessDescription: activeApplication.business_description || "",
+                      businessLocation: activeApplication.business_location || "",
+                      sameAsRegisteredAddress: activeApplication.same_as_registered_address || false,
+                      assistanceNeeded: activeApplication.assistance_needed || [],
+                      estimatedAmount: String(activeApplication.estimated_amount || ""),
+                      reasonPurpose: activeApplication.reason_purpose || "",
+                    }
+                  : undefined
+              }
+              isUpdatingRevision={isUpdatingRevision}
+              onSuccessSubmit={handleSuccessSubmit}
+              onCancel={() => setIsWizardOpen(false)}
+            />
+          ) : activeApplication ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground font-semibold">
+                  Active Application Record
+                </span>
+                <button
+                  onClick={handleStartNewApplication}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Apply for New Livelihood
+                </button>
+              </div>
+
+              <LivelihoodStatusCard
+                application={activeApplication}
+                onUpdateApplication={handleUpdateApplication}
+                onProceedToAssistance={() => handleTabChange("assistance")}
+              />
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-2xl p-12 text-center space-y-4">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto opacity-60" />
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Wala pang Livelihood Application</h2>
+                <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                  Magsimula sa pamamagitan ng pagbasa sa mga panuntunan at documentary requirements bago magsumite ng application.
+                </p>
+              </div>
+              <button
+                onClick={handleStartNewApplication}
+                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-sm cursor-pointer"
+              >
+                APPLY FOR LIVELIHOOD
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* 2. CAPITAL / MATERIALS ASSISTANCE CONTENT                     */}
+      {/* ============================================================ */}
+      {activeTab === "assistance" && (
+        <div>
+          <LivelihoodAssistanceView
+            application={activeApplication || DEFAULT_LIVELIHOOD_APP}
+            onProceedToMonitoring={() => handleTabChange("monitoring")}
+          />
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* 3. LIVELIHOOD MONITORING CONTENT                             */}
+      {/* ============================================================ */}
+      {activeTab === "monitoring" && (
+        <div>
+          <LivelihoodMonitoringView
+            application={activeApplication || DEFAULT_LIVELIHOOD_APP}
+            onBackToAssistance={() => handleTabChange("assistance")}
+          />
+        </div>
+      )}
+
+      {/* Requirements Dialog Modal */}
+      {showRequirements && (
+        <LivelihoodRequirementsModal
+          accepted={requirementsAccepted}
+          onAcceptedChange={setRequirementsAccepted}
+          onContinue={handleProceedToWizard}
+          onClose={() => setShowRequirements(false)}
+        />
+      )}
+    </div>
+  )
+}

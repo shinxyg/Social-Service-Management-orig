@@ -1,0 +1,1127 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate , useLocation } from 'react-router-dom';
+import { Mail, User, Check, ShieldCheck, Camera, Upload, X, RefreshCw } from 'lucide-react';
+import { saveProfilePhoto } from '../../utils/profilePhoto';
+
+type Step = 0 | 1 | 2;
+
+const QC_BARANGAYS = [
+  'Alicia', 'Amihan', 'Apolonio Samson', 'Baesa', 'Bagbag', 'Bagong Pag-Asa',
+  'Bagong Silangan', 'Bagumbayan', 'Bagumbuhay', 'Bahay Toro', 'Balingasa',
+  'Balong Bato', 'Batasan Hills', 'Bayanihan', 'Bagong Lipunan Ng Crame',
+  'Blue Ridge A', 'Blue Ridge B', 'Botocan', 'Bungad', 'Camp Aguinaldo',
+  'Capri', 'Central', 'Commonwealth', 'Culiat', 'Damar', 'Damayan',
+  'Damayang Lagi', 'Del Monte', 'Dioquino Zobel', 'Don Manuel', 'Aurora',
+  'Doña Imelda', 'Doña Josefa', 'Duyan-Duyan', 'E. Rodriguez', 'East Kamias',
+  'Escopa I', 'Escopa II', 'Escopa III', 'Escopa IV', 'Fairview',
+  'Greater Lagro', 'Gulod', 'Holy Spirit', 'Horseshoe',
+  'Immaculate Concepcion', 'Kaligayahan', 'Kalusugan', 'Kamuning',
+  'Katipunan', 'Kaunlaran', 'Kristong Hari', 'Krus Na Ligas', 'Laging Handa',
+  'Libis', 'Lourdes', 'Loyola Heights', 'Maharlika', 'Malaya', 'Mangga',
+  'Manresa', 'Mariana', 'Mariblo', 'Marilag', 'Masagana', 'Masambong',
+  'Matandang Balara', 'Milagrosa', 'Nagkaisang Nayon', 'Nayong Kanluran',
+  'New Era (Constitution Hills)', 'North Fairview', 'Novaliches Proper',
+  'N.S. Amoranto (Gintong Silahis)', 'Obrero', 'Old Capitol Site',
+  'Paang Bundok', 'Pag-Ibig Sa Nayon', 'Paligsahan', 'Paltok', 'Pansol',
+  'Paraiso', 'Pasong Putik Proper', 'Pasong Tamo', 'Payatas', 'Phil-Am',
+  'Pinagkaisahan', 'Pinyahan', 'Project 6', 'Quirino 2-A', 'Quirino 2-B',
+  'Quirino 2-C', 'Quirino 3-A', 'Ramon Magsaysay', 'Roxas', 'Sacred Heart',
+  'Saint Peter', 'Salvacion', 'San Agustin', 'San Antonio', 'San Bartolome',
+  'San Isidro Labrador', 'San Jose', 'San Martin De Porres', 'San Roque',
+  'San Vicente', 'Sangandaan', 'Santa Cruz', 'Santa Lucia', 'Santa Monica',
+  'Santa Teresita', 'Santo Cristo', 'Santo Domingo', 'Santo Niño', 'Santol',
+  'Sauyo', 'Sienna', 'Sikatuna Village', 'Silangan', 'Socorro',
+  'South Triangle', 'Tagumpay', 'Talayan', 'Talipapa', 'Tandang Sora',
+  'Tatalon', 'Teachers Village East', 'Teachers Village West', 'U.P. Campus',
+  'U.P. Village', 'Ugong Norte', 'Unang Sigaw', 'Valencia', 'Vasra',
+  'Veterans Village', 'Villa Maria Clara', 'West Kamias', 'West Triangle',
+  'White Plains',
+];
+
+const SUFFIX_OPTIONS = [
+  'JR.', 'JR. II', 'JR. III', 'JR. IV', 'JR. V', 'SR.',
+  'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+  'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX',
+];
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const MAX_PHOTO_SIZE_MB = 5;
+
+export const Register = () => {
+  const navigate = useNavigate();
+  const [step, setStep] = useState<Step>(0);
+  const location = useLocation();
+  const googleProfile = (location.state as { googleProfile?: { email: string; firstName: string; lastName: string } } | null)?.googleProfile;
+
+  const [email, setEmail] = useState(googleProfile?.email || '');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const otpInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const [resendMessage, setResendMessage] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [suffix, setSuffix] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [birthYear, setBirthYear] = useState('');
+
+  // Step 1 - Profile Photo
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>('');
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const [photoError, setPhotoError] = useState('');
+
+  // Live camera capture
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Step 2 - Address
+  const [city, setCity] = useState('');
+  const [specifyCity, setSpecifyCity] = useState('');
+  const [houseNo, setHouseNo] = useState('');
+  const [street, setStreet] = useState('');
+  const [barangay, setBarangay] = useState('');
+
+  // Step 2 - Employment Details
+  const [workingInQC, setWorkingInQC] = useState<'Yes' | 'No' | ''>('');
+  const [occupation, setOccupation] = useState('');
+  const [sex, setSex] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('09');
+
+  // Step 2 - Login Credentials
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmTouched, setConfirmTouched] = useState(false);
+
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isNavigatingToLogin, setIsNavigatingToLogin] = useState(false);
+
+  // Countdown ticker for the Resend Code cooldown.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  // Reset dependent fields when city changes.
+  useEffect(() => {
+    setSpecifyCity('');
+    setHouseNo('');
+    setStreet('');
+    setBarangay('');
+  }, [city]);
+
+  // Clear occupation whenever the person says they don't work in QC.
+  useEffect(() => {
+    if (workingInQC !== 'Yes') {
+      setOccupation('');
+    }
+  }, [workingInQC]);
+
+  // Palitan ang object URL kapag nagbago ang photo, at i-clean up ang luma
+  // para hindi tumagas ng memory (memory leak) sa browser.
+  useEffect(() => {
+    if (!profilePhoto) {
+      setProfilePhotoPreview('');
+      return;
+    }
+    const objectUrl = URL.createObjectURL(profilePhoto);
+    setProfilePhotoPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [profilePhoto]);
+
+  // Ihinto ang camera stream kapag na-close ang modal o umalis sa page.
+  useEffect(() => {
+    return () => {
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
+
+  const applyPhotoFile = (file: File) => {
+    setPhotoError('');
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('Mag-upload lang ng image file (JPG, PNG, atbp.).');
+      return;
+    }
+    if (file.size > MAX_PHOTO_SIZE_MB * 1024 * 1024) {
+      setPhotoError(`Dapat hindi lalagpas sa ${MAX_PHOTO_SIZE_MB}MB ang photo.`);
+      return;
+    }
+    setProfilePhoto(file);
+  };
+
+  const handlePhotoInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) applyPhotoFile(file);
+    e.target.value = '';
+  };
+
+  const handleRemovePhoto = () => {
+    setProfilePhoto(null);
+    setPhotoError('');
+  };
+
+  const openCamera = async () => {
+    setCameraError('');
+    setShowCamera(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (err) {
+      console.error(err);
+      setCameraError('Hindi ma-access ang camera. Siguraduhing pinahintulutan ang camera permission, o mag-upload na lang ng photo.');
+    }
+  };
+
+  const closeCamera = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setShowCamera(false);
+    setCameraError('');
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `profile-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      applyPhotoFile(file);
+      closeCamera();
+    }, 'image/jpeg', 0.92);
+  };
+
+  const handleSendOtp = (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+
+  if (!email || !confirmEmail) {
+    setError('Please fill in both email fields.');
+    return;
+  }
+  if (email !== confirmEmail) {
+    setError('Email addresses do not match.');
+    return;
+  }
+
+  // In production this triggers a backend call that emails a real OTP.
+  setIsSendingOtp(true);
+  setTimeout(() => {
+    setIsSendingOtp(false);
+    setOtpSent(true);
+  }, 1500);
+};
+
+  const formatCooldown = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const maskEmail = (value: string) => {
+    const [local, domain] = value.split('@');
+    if (!local || !domain) return value;
+    if (local.length <= 2) return `${local[0] ?? ''}*****@${domain}`;
+    return `${local[0]}*****${local[local.length - 1]}@${domain}`;
+  };
+
+  const handleOtpDigitChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, '').slice(-1);
+    const next = [...otpDigits];
+    next[index] = digit;
+    setOtpDigits(next);
+
+    if (digit && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+    e.preventDefault();
+    const next = [...otpDigits];
+    for (let i = 0; i < 6; i++) {
+      next[i] = pasted[i] ?? next[i] ?? '';
+    }
+    setOtpDigits(next);
+    const focusIndex = Math.min(pasted.length, 5);
+    otpInputRefs.current[focusIndex]?.focus();
+  };
+
+  const handleResendCode = () => {
+    if (resendCooldown > 0) return;
+    setOtpDigits(['', '', '', '', '', '']);
+    setResendMessage('A new code has been sent to your email.');
+    setResendCooldown(59);
+    otpInputRefs.current[0]?.focus();
+    setTimeout(() => setResendMessage(''), 4000);
+  };
+
+    const handleVerifyOtp = (e: React.FormEvent) => {
+      e.preventDefault();
+      setError('');
+
+      const otp = otpDigits.join('');
+      if (otp.length < 6) {
+        setError('Please enter the full 6-digit code.');
+        return;
+      }
+
+      setIsVerifyingOtp(true);
+      setTimeout(() => {
+        setIsVerifyingOtp(false);
+        setStep(1);
+      }, 1500);
+    };
+
+  // Password strength checks
+  const hasLower = /[a-z]/.test(password);
+  const hasUpper = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasMinLen = password.length >= 8;
+  const passwordValid = hasLower && hasUpper && hasNumber && hasMinLen;
+  const confirmMismatch = confirmTouched && confirmPassword.length > 0 && confirmPassword !== password;
+
+  const handleAccountInfoSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setConfirmTouched(true);
+
+    if (!profilePhoto) {
+      setError('Please upload or take a profile photo.');
+      return;
+    }
+    if (!firstName || !lastName) {
+      setError('Please enter your first and last name.');
+      return;
+    }
+    if (!birthMonth || !birthDay || !birthYear) {
+      setError('Please complete your birth date.');
+      return;
+    }
+    if (!city) {
+      setError('Please select your city.');
+      return;
+    }
+    if (city === 'Others' && !specifyCity) {
+      setError('Please specify your city.');
+      return;
+    }
+    if (!street || !barangay) {
+      setError('Please complete your address.');
+      return;
+    }
+    if (!workingInQC) {
+      setError('Please indicate if you work in Quezon City.');
+      return;
+    }
+    if (workingInQC === 'Yes' && !occupation) {
+      setError('Please enter your occupation.');
+      return;
+    }
+    if (!sex) {
+      setError('Please select your sex.');
+      return;
+    }
+    if (!mobileNumber || mobileNumber.length < 11) {
+      setError('Please enter a valid mobile number.');
+      return;
+    }
+    if (!password || !confirmPassword) {
+      setError('Please fill in both password fields.');
+      return;
+    }
+    if (!passwordValid) {
+      setError('Password does not meet the requirements.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    setIsSubmitting(true);
+    setTimeout(() => {
+      if (profilePhotoPreview) {
+        saveProfilePhoto(profilePhotoPreview);
+      }
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('userRole', 'user');
+      setIsSubmitting(false);
+      setStep(2);
+    }, 1500);
+  };
+
+  const handleBackToLogin = () => {
+    setIsNavigatingToLogin(true);
+    setTimeout(() => {
+      navigate('/login');
+    }, 1200);
+  };
+
+  const inputClass =
+    'w-full px-3 py-2.5 text-xs md:text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all text-slate-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed';
+  const labelClass = 'block text-xs font-semibold text-slate-700 mb-1.5';
+  const requiredMark = <span className="text-red-500">*</span>;
+
+  return (
+    <div className="min-h-screen w-full bg-[#F8FAFC] font-sans text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+
+        {/* Header */}
+        <div className="mb-10">
+          <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4">
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 font-medium transition-colors shrink-0 pt-1"
+            >
+              ← Back
+            </Link>
+
+            <div className="text-center">
+              <h1
+                className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-[#0F172A] mb-3 leading-tight"
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+              >
+                Create Your Account &amp; Start Using GovServe
+              </h1>
+              <p className="text-slate-500 text-xs sm:text-sm mb-1.5">
+                Sign up today and enjoy secure, hassle-free access to GovServe
+              </p>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Already have an account?{' '}
+                <Link to="/login" className="text-blue-600 hover:underline font-semibold">
+                  Login Here
+                </Link>
+              </p>
+            </div>
+
+            <span
+              aria-hidden="true"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium opacity-0 pointer-events-none shrink-0 pt-1"
+            >
+              ← Back
+            </span>
+          </div>
+        </div>
+
+        {/* Stepper */}
+        <div className="mb-6 px-1">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-400 mb-2">
+            <span className={step >= 0 ? 'text-[#0F172A]' : ''}>Email Verification</span>
+            <span className={step >= 1 ? 'text-[#0F172A]' : ''}>Account Information</span>
+            <span className={step >= 2 ? 'text-[#0F172A]' : ''}>Successful Registration</span>
+          </div>
+          <div className="flex items-center">
+            {[0, 1, 2].map((s, idx) => (
+              <React.Fragment key={s}>
+                <div
+                  className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-white transition-colors ${
+                    step >= s ? 'bg-[#0F172A]' : 'bg-slate-300'
+                  }`}
+                >
+                  <Check className="w-3.5 h-3.5" />
+                </div>
+                {idx < 2 && (
+                  <div
+                    className={`flex-1 h-0.5 mx-1 transition-colors ${
+                      step > s ? 'bg-[#0F172A]' : 'bg-slate-200'
+                    }`}
+                  />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+
+        {/* Card */}
+        <div className="border border-slate-200 rounded-2xl bg-white p-6 sm:p-10 min-h-105 flex flex-col items-center justify-center">
+
+          {error && (
+            <div className="w-full max-w-sm p-2.5 mb-5 text-xs text-red-600 bg-red-50 rounded-lg border border-red-200 text-center">
+              {error}
+            </div>
+          )}
+
+          {/* STEP 0: Email Verification */}
+          {step === 0 && (
+            <div className="w-full max-w-sm flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full border-2 border-[#0F172A] flex items-center justify-center mb-4">
+                <Mail className="w-6 h-6 text-[#0F172A]" />
+              </div>
+              <h2 className="text-base sm:text-lg text-slate-700 mb-6">
+                Enter your <span className="font-bold text-[#0F172A]">Email Address</span>
+              </h2>
+
+              {!otpSent ? (
+                <form onSubmit={handleSendOtp} className="w-full space-y-4 text-left">
+                  <div>
+                    <label className={labelClass}>Email Address:</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter Email Address"
+                      className={inputClass}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Confirm Email Address:</label>
+                    <input
+                      type="email"
+                      value={confirmEmail}
+                      onChange={(e) => setConfirmEmail(e.target.value)}
+                      placeholder="Enter Email Address"
+                      className={inputClass}
+                      required
+                    />
+                  </div>
+
+                  <p className="text-xs text-slate-500 text-center pt-2">
+                    Click the <span className="font-semibold text-slate-700">Send OTP</span> button below to receive the verification code in your email.
+                  </p>
+                    <button
+                      type="submit"
+                      disabled={isSendingOtp}
+                      className="w-full py-2.5 px-4 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-colors duration-200 cursor-pointer disabled:opacity-70 disabled:cursor-wait"
+                    >
+                      {isSendingOtp ? 'Sending…' : 'Send OTP'}
+                    </button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp} className="w-full space-y-5 text-left">
+                  <p className="text-xs sm:text-sm text-slate-500 text-center">
+                    Please enter the <span className="font-bold text-slate-700">six-digit code</span> sent to{' '}
+                    <span className="font-bold text-slate-700">{maskEmail(email)}</span>.
+                  </p>
+
+                  <div className="flex items-center justify-center gap-2">
+                    {otpDigits.map((digit, index) => (
+                      <input
+                        key={index}
+                        ref={(el) => { otpInputRefs.current[index] = el; }}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpDigitChange(index, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        onPaste={handleOtpPaste}
+                        className="w-10 h-12 sm:w-11 sm:h-12 text-center text-base font-semibold bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all text-slate-700"
+                        aria-label={`Digit ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isVerifyingOtp}
+                    className="w-full py-2.5 px-4 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-colors duration-200 cursor-pointer disabled:opacity-70 disabled:cursor-wait">
+                    {isVerifyingOtp ? 'Verifying…' : 'Verify Code'}
+                  </button>
+
+                  <p className="text-center text-xs text-slate-500">
+                    {resendCooldown > 0 ? (
+                      <>
+                        Resend code in <span className="font-bold text-slate-700">{formatCooldown(resendCooldown)}</span>
+                      </>
+                    ) : (
+                      <>
+                        Didn't receive a code?{' '}
+                        <button
+                          type="button"
+                          onClick={handleResendCode}
+                          className="text-blue-600 hover:underline font-semibold bg-transparent border-none cursor-pointer p-0"
+                        >
+                          Resend Code
+                        </button>
+                      </>
+                    )}
+                  </p>
+
+                  {resendMessage && (
+                    <p className="text-center text-xs text-emerald-600 font-medium">{resendMessage}</p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setOtpSent(false)}
+                    className="w-full text-center text-xs text-slate-400 hover:text-slate-600 hover:underline font-medium bg-transparent border-none cursor-pointer p-0"
+                  >
+                    Use a different email
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {/* STEP 1: Account Information */}
+          {step === 1 && (
+            <div className="w-full max-w-2xl">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-16 h-16 rounded-full border-2 border-[#0F172A] flex items-center justify-center mb-4">
+                  <User className="w-6 h-6 text-[#0F172A]" />
+                </div>
+                <h2 className="text-base sm:text-lg text-slate-700">
+                  Complete your <span className="font-bold text-[#0F172A]">Account Information</span>
+                </h2>
+              </div>
+
+              <form onSubmit={handleAccountInfoSubmit} className="w-full space-y-6 text-left">
+
+                {/* Profile Photo */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-[#0F172A] border-b border-slate-200 pb-2">
+                    {requiredMark} Profile Photo
+                  </h3>
+
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                    <div className="relative shrink-0">
+                      <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden">
+                        {profilePhotoPreview ? (
+                          <img
+                            src={profilePhotoPreview}
+                            alt="Profile preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-8 h-8 text-slate-300" />
+                        )}
+                      </div>
+                      {profilePhotoPreview && (
+                        <button
+                          type="button"
+                          onClick={handleRemovePhoto}
+                          title="Remove photo"
+                          className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white border border-slate-300 shadow-sm flex items-center justify-center text-slate-500 hover:text-red-600 hover:border-red-300 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex-1 w-full">
+                      <p className="text-xs text-slate-500 mb-2.5">
+                        Mag-upload ng malinaw na buong-mukha na larawan, o kumuha gamit ang camera.
+                      </p>
+                      <div className="flex flex-wrap gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => photoInputRef.current?.click()}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          Upload Photo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={openCamera}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Camera className="w-3.5 h-3.5" />
+                          Take Photo
+                        </button>
+                      </div>
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="user"
+                        onChange={handlePhotoInputChange}
+                        className="hidden"
+                      />
+                      {photoError && (
+                        <p className="text-[11px] text-red-500 mt-2">{photoError}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Personal Details */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-[#0F172A] border-b border-slate-200 pb-2">
+                    Personal Details
+                  </h3>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div>
+                      <label className={labelClass}>{requiredMark} First name:</label>
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Enter first name"
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>{requiredMark} Last name:</label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Enter last name"
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Middle name: (Optional)</label>
+                      <input
+                        type="text"
+                        value={middleName}
+                        onChange={(e) => setMiddleName(e.target.value)}
+                        placeholder="Enter middle name"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Suffix:</label>
+                      <select
+                        value={suffix}
+                        onChange={(e) => setSuffix(e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value=""></option>
+                        {SUFFIX_OPTIONS.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>{requiredMark} Birth Date</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      <select
+                        value={birthMonth}
+                        onChange={(e) => setBirthMonth(e.target.value)}
+                        className={inputClass}
+                        required
+                      >
+                        <option value="">Month</option>
+                        {MONTHS.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={birthDay}
+                        onChange={(e) => setBirthDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                        placeholder="Day"
+                        className={inputClass}
+                        required
+                      />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={birthYear}
+                        onChange={(e) => setBirthYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        placeholder="Year"
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-[#0F172A] border-b border-slate-200 pb-2">
+                    Address
+                  </h3>
+
+                  <div className={`grid gap-4 ${city === 'Others' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                    <div>
+                      <label className={labelClass}>{requiredMark} City:</label>
+                      <select
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        className={inputClass}
+                        required
+                      >
+                        <option value="">- Select City -</option>
+                        <option value="Quezon City">Quezon City</option>
+                        <option value="Others">Others</option>
+                      </select>
+                    </div>
+
+                    {city === 'Others' && (
+                      <div>
+                        <label className={labelClass}>{requiredMark} Specify your city:</label>
+                        <input
+                          type="text"
+                          value={specifyCity}
+                          onChange={(e) => setSpecifyCity(e.target.value)}
+                          placeholder="Specify here"
+                          className={inputClass}
+                          required
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={`grid gap-4 ${city === 'Quezon City' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+                    {city === 'Quezon City' && (
+                      <div>
+                        <label className={labelClass}>House No. (Optional)</label>
+                        <input
+                          type="text"
+                          value={houseNo}
+                          onChange={(e) => setHouseNo(e.target.value)}
+                          placeholder="Enter House No."
+                          className={inputClass}
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className={labelClass}>{requiredMark} Street:</label>
+                      <input
+                        type="text"
+                        value={street}
+                        onChange={(e) => setStreet(e.target.value)}
+                        placeholder="Enter Street"
+                        disabled={!city}
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>{requiredMark} Barangay:</label>
+                      {city === 'Quezon City' ? (
+                        <select
+                          value={barangay}
+                          onChange={(e) => setBarangay(e.target.value)}
+                          className={inputClass}
+                          required
+                        >
+                          <option value="">- Select Barangay -</option>
+                          {QC_BARANGAYS.map((b) => (
+                            <option key={b} value={b}>{b}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={barangay}
+                          onChange={(e) => setBarangay(e.target.value)}
+                          placeholder="Input barangay"
+                          disabled={!city}
+                          className={inputClass}
+                          required
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Employment Details */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-[#0F172A] border-b border-slate-200 pb-2">
+                    Employment Details
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>{requiredMark} Are you working in Quezon City?</label>
+                      <div className="flex items-center gap-5 mt-1">
+                        <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="workingInQC"
+                            checked={workingInQC === 'Yes'}
+                            onChange={() => setWorkingInQC('Yes')}
+                            className="accent-[#0F172A]"
+                          />
+                          Yes
+                        </label>
+                        <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="workingInQC"
+                            checked={workingInQC === 'No'}
+                            onChange={() => setWorkingInQC('No')}
+                            className="accent-[#0F172A]"
+                          />
+                          No
+                        </label>
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Occupation</label>
+                      <input
+                        type="text"
+                        value={occupation}
+                        onChange={(e) => setOccupation(e.target.value)}
+                        placeholder="Enter occupation"
+                        disabled={workingInQC !== 'Yes'}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>{requiredMark} Sex</label>
+                      <select
+                        value={sex}
+                        onChange={(e) => setSex(e.target.value)}
+                        className={inputClass}
+                        required
+                      >
+                        <option value="">Select Sex</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass}>{requiredMark} Mobile Number:</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={mobileNumber}
+                        onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                        placeholder="09XXXXXXXXX"
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Login Credentials */}
+                <div className="space-y-4 pt-2 border-t border-slate-200">
+                  <h3 className="text-sm font-bold text-[#0F172A] pt-4">
+                    Login Credentials
+                  </h3>
+
+                  <div>
+                    <label className={labelClass}>Email Address:</label>
+                    <input
+                      type="email"
+                      value={email}
+                      disabled
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>{requiredMark} Password:</label>
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onFocus={() => setPasswordFocused(true)}
+                        onBlur={() => setPasswordFocused(false)}
+                        placeholder="Enter password"
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>{requiredMark} Confirm Password:</label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onFocus={() => setConfirmTouched(true)}
+                        placeholder="Enter password confirmation"
+                        className={`${inputClass} ${confirmMismatch ? 'border-red-400 focus:ring-red-500' : ''}`}
+                        required
+                      />
+                      {confirmMismatch && (
+                        <p className="text-[11px] text-red-500 mt-1">Invalid.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {passwordFocused && (
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1.5">
+                      <p className="text-xs font-semibold text-slate-700">Password must contain the following:</p>
+                      <PasswordRule met={hasLower} label="A lowercase letter" />
+                      <PasswordRule met={hasUpper} label="A capital (uppercase) letter" />
+                      <PasswordRule met={hasNumber} label="A number" />
+                      <PasswordRule met={hasMinLen} label="Minimum 8 characters" />
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 px-4 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-colors duration-200 cursor-pointer mt-2 disabled:opacity-70 disabled:cursor-wait"
+                >
+                  {isSubmitting ? 'Submitting…' : 'Next'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* STEP 2: Successful Registration */}
+          {step === 2 && (
+            <div className="w-full max-w-sm flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center mb-4">
+                <ShieldCheck className="w-7 h-7 text-emerald-600" />
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold text-[#0F172A] mb-2">
+                Registration Successful
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed">
+                Your resident account has been created. You can now log in and access QC eServices.
+              </p>
+
+              {profilePhotoPreview && (
+                <img
+                  src={profilePhotoPreview}
+                  alt="Profile"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 mb-4"
+                />
+              )}
+
+              <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-left mb-6">
+                <p className="text-[11px] text-slate-400 mb-1">Registered email</p>
+                <p className="text-sm font-semibold text-[#0F172A]">{email}</p>
+              </div>
+
+              <button
+                onClick={handleBackToLogin}
+                disabled={isNavigatingToLogin}
+                className="w-full py-2.5 px-4 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-colors duration-200 cursor-pointer disabled:opacity-70 disabled:cursor-wait"
+              >
+                {isNavigatingToLogin ? 'Redirecting…' : 'Back to Login'}
+              </button>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* Camera capture modal */}
+      {showCamera && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-[1px] px-4">
+          <div className="bg-white rounded-xl shadow-lg p-5 w-full max-w-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-[#0F172A]">Take a photo</h3>
+              <button
+                type="button"
+                onClick={closeCamera}
+                className="w-7 h-7 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {cameraError ? (
+              <div className="p-3 text-xs text-red-600 bg-red-50 rounded-lg border border-red-200 text-center">
+                {cameraError}
+              </div>
+            ) : (
+              <div className="relative rounded-lg overflow-hidden bg-slate-900 aspect-square">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover -scale-x-100"
+                />
+              </div>
+            )}
+            <canvas ref={canvasRef} className="hidden" />
+
+            <div className="flex gap-2.5 mt-4">
+              <button
+                type="button"
+                onClick={closeCamera}
+                className="flex-1 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              {!cameraError && (
+                <button
+                  type="button"
+                  onClick={capturePhoto}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  Capture
+                </button>
+              )}
+              {cameraError && (
+                <button
+                  type="button"
+                  onClick={openCamera}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Try Again
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isSubmitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] px-4">
+          <div className="bg-white rounded-xl shadow-lg px-10 py-8 flex flex-col items-center text-center w-full max-w-xs">
+            <h3 className="text-xl font-semibold text-slate-700 mb-1">Loading</h3>
+            <p className="text-xs font-medium text-slate-400 tracking-widest mb-5">PLEASE WAIT</p>
+            <div className="w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PasswordRule = ({ met, label }: { met: boolean; label: string }) => (
+  <p className={`text-[11px] flex items-center gap-1.5 ${met ? 'text-emerald-600' : 'text-slate-400'}`}>
+    <Check className={`w-3 h-3 ${met ? 'opacity-100' : 'opacity-40'}`} />
+    <span>{label}</span>
+  </p>
+);
+
+export default Register;

@@ -1,0 +1,93 @@
+import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = parseInt(process.env.PORT || '5173', 10);
+
+const distPath = path.join(__dirname, 'dist');
+
+// Health check endpoint for Railway
+app.get('/health', (req, res) => res.status(200).send('OK'));
+
+// Proxy API and Uploads to backend
+let rawBackendUrl = (
+  process.env.BACKEND_URL ||
+  process.env.VITE_API_URL ||
+  process.env.VITE_API_BASE_URL ||
+  'https://backend-production-1716.up.railway.app'
+).trim();
+
+if (rawBackendUrl.startsWith('VITE_API_URL=')) {
+  rawBackendUrl = rawBackendUrl.replace(/^VITE_API_URL=/, '').trim();
+}
+if (rawBackendUrl.startsWith('VITE_API_BASE_URL=')) {
+  rawBackendUrl = rawBackendUrl.replace(/^VITE_API_BASE_URL=/, '').trim();
+}
+if (!rawBackendUrl.startsWith('http://') && !rawBackendUrl.startsWith('https://')) {
+  rawBackendUrl = `https://${rawBackendUrl}`;
+}
+const BACKEND_URL = rawBackendUrl.replace(/\/+$/, '');
+
+app.use(['/api', '/uploads'], async (req, res) => {
+  try {
+    const targetUrl = `${BACKEND_URL}${req.originalUrl}`;
+    const headers = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (key.toLowerCase() !== 'host') {
+        headers[key] = value;
+      }
+    }
+
+    const fetchOptions = {
+      method: req.method,
+      headers,
+    };
+
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      fetchOptions.body = req;
+      fetchOptions.duplex = 'half';
+    }
+
+    const proxyRes = await fetch(targetUrl, fetchOptions);
+    res.status(proxyRes.status);
+    proxyRes.headers.forEach((value, name) => {
+      res.setHeader(name, value);
+    });
+
+    const arrayBuffer = await proxyRes.arrayBuffer();
+    res.send(Buffer.from(arrayBuffer));
+  } catch (err) {
+    console.warn(`[Proxy warning] Failed to reach backend at ${BACKEND_URL}:`, err.message);
+    res.status(502).json({
+      success: false,
+      message: 'Hindi makonekta sa backend server.',
+      error: err.message,
+    });
+  }
+});
+
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    const indexPath = path.join(distPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(200).send('<h1>App is building, please refresh in a moment...</h1>');
+    }
+  });
+} else {
+  app.get('*', (req, res) => {
+    res.status(200).send('<h1>App is starting, please refresh in a moment...</h1>');
+  });
+}
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Frontend server listening on http://0.0.0.0:${PORT}`);
+  console.log(`🔗 Proxying API to: ${BACKEND_URL}`);
+});
