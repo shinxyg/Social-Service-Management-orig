@@ -1,10 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   ArrowRight,
-  MapPin,
   Home,
   FileCheck,
-  ClipboardCheck,
   Sun,
   Moon,
   ShieldAlert,
@@ -17,11 +15,8 @@ import {
   CheckCircle2,
   Search,
   Sparkles,
-  PhoneCall,
-  HelpCircle,
   ChevronDown,
   ChevronUp,
-  Layers,
   ShieldCheck,
   Building2,
   Clock,
@@ -29,10 +24,7 @@ import {
   Check,
   QrCode,
   ArrowUpRight,
-  ChevronRight,
-  Smile,
 } from 'lucide-react';
-import { useLanguage } from '../components/ui/language-context';
 
 // Comprehensive Service Modules Definition
 interface ServiceModule {
@@ -282,7 +274,6 @@ const FAQS = [
 ];
 
 export function LandingPage() {
-  const { t } = useLanguage();
   const [dark, setDark] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
