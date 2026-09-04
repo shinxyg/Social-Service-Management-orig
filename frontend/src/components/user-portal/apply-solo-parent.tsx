@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
-import { AlertCircle, FileText } from "lucide-react"
+import { AlertCircle, FileText, X } from "lucide-react"
 import SoloParentApplicationWizard from "./solo-parent-wizard"
 import ChildWelfareApplicationWizard, { CHILD_WELFARE_PROGRAMS, getLocalizedChildWelfarePrograms } from "./child-welfare-wizard"
 import { useLanguage } from "../ui/language-context"
@@ -125,19 +125,22 @@ export default function ApplySoloParent() {
 
       {/* Requirements Dialog Modal appearing over content */}
       {showRequirementsModal && !isBlocked && (
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+        <div
+          onClick={() => setShowRequirementsModal(false)}
+          className="fixed inset-0 z-60 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col relative"
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-150"
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b p-6 flex items-start justify-between z-10">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
               <div>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <h2 className="text-base md:text-lg font-bold text-foreground flex items-center gap-2">
                   <FileText className="h-5 w-5 text-blue-600" />
                   {modalTitle}
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {isChildWelfare
                     ? t("spSubChildWelfare")
                     : isRenewal
@@ -147,6 +150,14 @@ export default function ApplySoloParent() {
                     : t("spSubNew")}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowRequirementsModal(false)}
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
             {/* Modal Content */}
@@ -269,30 +280,25 @@ export default function ApplySoloParent() {
             </div>
 
             {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-white border-t p-6 flex items-center justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1">
+            <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex items-center justify-between gap-4">
+              <div className="flex items-start gap-2.5 flex-1">
                 <input
                   type="checkbox"
                   id="understand"
-                  className="mt-1 cursor-pointer"
+                  className="mt-0.5 cursor-pointer accent-blue-600 h-4 w-4"
                   checked={understood}
                   onChange={(e) => setUnderstood(e.target.checked)}
                 />
-                <label htmlFor="understand" className="text-sm text-foreground cursor-pointer select-none">
+                <label htmlFor="understand" className="text-xs md:text-sm text-foreground cursor-pointer select-none">
                   {t("requirementsAcceptCheckbox")}
                 </label>
               </div>
               <button
                 type="button"
                 onClick={() => setShowRequirementsModal(false)}
-                disabled={!canProceed}
-                className={`px-6 py-2 rounded-lg font-semibold transition-all shrink-0 ${
-                  canProceed
-                    ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-sm"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
+                className="px-5 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white transition-all shrink-0 cursor-pointer shadow-sm"
               >
-                {t("iUnderstand")}
+                {canProceed ? t("iUnderstand") : "Ipagpatuloy ang Aplikasyon"}
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
-import { AlertCircle, RefreshCw, HeartHandshake } from "lucide-react"
+import { AlertCircle, RefreshCw, HeartHandshake, X, FileText } from "lucide-react"
 import PWDApplicationWizard from "./pwd-senior-wizard"
 import SeniorCitizenApplicationWizard from "./Senior-citizen-wizard"
 import PWDSocialAssistanceWizard from "./pwd-assistance-wizard"
@@ -16,12 +16,12 @@ export default function ApplyPWDSenior() {
   const rawType = searchParams.get("type")?.toLowerCase() || "new"
   const urlType = rawType as "new" | "renewal" | "loss" | "assistance" | "medicine-booklet" | "movie-booklet" | "social-assistance"
 
-  const [showModal, setShowModal] = useState(true)
+  const [showModal, setShowModal] = useState(false)
   const [understood, setUnderstood] = useState(false)
 
-  // Reset modal state whenever the user switches links in the sidebar
+  // Keep modal closed on navigation so user can see and access the form UI directly
   useEffect(() => {
-    setShowModal(true)
+    setShowModal(false)
     setUnderstood(false)
   }, [urlCategory, urlType])
 
@@ -95,6 +95,42 @@ export default function ApplyPWDSenior() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
+      {/* Top Service Quick Info Banner */}
+      <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3">
+        <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              isSenior ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+            }`}>
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-sm md:text-base font-bold text-foreground">
+                  {modalTitle}
+                </h1>
+                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${typeBadge.color}`}>
+                  {typeBadge.label}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {isSenior
+                  ? "Opisyal na serbisyo para sa mga Senior Citizens ng Lungsod Quezon."
+                  : "Opisyal na serbisyo para sa Persons with Disability (PWD) ng Lungsod Quezon."}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
+          >
+            <span>📋</span>
+            <span>Tingnan ang Requirements</span>
+          </button>
+        </div>
+      </div>
+
       {/* Background: Direct Form Wizard */}
       {isSeniorMedicine ? (
         <SeniorBookletWizard key="senior-medicine" bookletType="medicine" />
@@ -120,21 +156,32 @@ export default function ApplyPWDSenior() {
 
       {/* Requirements Dialog Modal appearing over the content */}
       {showModal && (
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+        <div
+          onClick={() => setShowModal(false)}
+          className="fixed inset-0 z-60 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col relative"
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-150"
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
               <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
-                <h2 className="text-lg font-bold text-foreground">
+                <h2 className="text-base md:text-lg font-bold text-foreground truncate">
                   {modalTitle}
                 </h2>
-                <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full border ${typeBadge.color}`}>
+                <span className={`shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${typeBadge.color}`}>
                   {typeBadge.label}
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
             {/* Modal Content */}
@@ -480,30 +527,25 @@ export default function ApplyPWDSenior() {
             </div>
 
             {/* Modal Footer with Checkbox and Button */}
-            <div className="sticky bottom-0 bg-white border-t p-6 flex items-center justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1">
+            <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex items-center justify-between gap-4">
+              <div className="flex items-start gap-2.5 flex-1">
                 <input
                   type="checkbox"
                   id="understand"
-                  className="mt-1 cursor-pointer"
+                  className="mt-0.5 cursor-pointer accent-blue-600 h-4 w-4"
                   checked={understood}
                   onChange={(e) => setUnderstood(e.target.checked)}
                 />
-                <label htmlFor="understand" className="text-sm text-foreground cursor-pointer select-none">
+                <label htmlFor="understand" className="text-xs md:text-sm text-foreground cursor-pointer select-none">
                   {t("requirementsAcceptCheckbox")}
                 </label>
               </div>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                disabled={!understood}
-                className={`px-6 py-2 rounded-lg font-semibold transition-all shrink-0 ${
-                  understood
-                    ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-sm"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
+                className="px-5 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white transition-all shrink-0 cursor-pointer shadow-sm"
               >
-                {t("iUnderstand")}
+                {understood ? t("iUnderstand") : "Ipagpatuloy ang Aplikasyon"}
               </button>
             </div>
           </div>

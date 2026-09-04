@@ -625,11 +625,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         } catch {}
       }
 
-      // Block ONLY if status is strictly 'pending'
-      if (!bypassedBlock && activeAppStatus === "pending") {
+      // Block ONLY if status is strictly 'pending' AND user is applying for a new ID
+      const isNewFlow = !initialIdStatus || initialIdStatus === "new"
+      if (!bypassedBlock && activeAppStatus === "pending" && isNewFlow) {
         setIsBlocked(true)
       } else {
-        // If rejected, approved, bypassed, or no active application, allow user to apply freely
+        // If renewal, loss/replacement, rejected, approved, bypassed, or no active application, allow user to apply freely
         setIsBlocked(false)
       }
     }
@@ -637,7 +638,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, initialIdStatus])
 
   // Auto-redirect to pending status screen after 3 seconds on submitted
   useEffect(() => {
@@ -884,7 +885,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     }, 1200)
   }
 
-  if (isBlocked) {
+  if (isBlocked && (!initialIdStatus || initialIdStatus === "new") && !bypassedBlock) {
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
         {onBack && (
@@ -917,7 +918,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
               }}
               className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-sm"
             >
-              Magsumite ng Bagong Aplikasyon
+              Magsumite ng Bagong Aplikasyon / Buksan ang Form
             </button>
           </div>
         </div>

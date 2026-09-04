@@ -244,6 +244,7 @@ export default function SeniorCitizenApplicationWizard({
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
+  const [bypassedBlock, setBypassedBlock] = useState(false)
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
 
   // Step 1: Checklist state
@@ -426,11 +427,12 @@ export default function SeniorCitizenApplicationWizard({
         } catch {}
       }
 
-      // Block ONLY if status is strictly 'pending'
-      if (activeAppStatus === "pending") {
+      // Block ONLY if status is strictly 'pending' AND user is applying for a new ID
+      const isNewFlow = appFlow === "new"
+      if (!bypassedBlock && activeAppStatus === "pending" && isNewFlow) {
         setIsBlocked(true)
       } else {
-        // If rejected, approved, or no active application, allow user to apply freely
+        // If rejected, approved, bypassed, or no active application, allow user to apply freely
         setIsBlocked(false)
       }
     }
@@ -438,7 +440,7 @@ export default function SeniorCitizenApplicationWizard({
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow])
 
   // Auto-redirect to pending status screen after 3 seconds on submitted
   useEffect(() => {
@@ -568,7 +570,7 @@ export default function SeniorCitizenApplicationWizard({
       ? "Renewal Application"
       : "Replacement / Lost ID"
 
-  if (isBlocked) {
+  if (isBlocked && appFlow === "new" && !bypassedBlock) {
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
         {onBack && (
@@ -594,13 +596,14 @@ export default function SeniorCitizenApplicationWizard({
             <button
               type="button"
               onClick={() => {
+                setBypassedBlock(true)
                 setIsBlocked(false)
                 setStep(1)
                 setIsSubmitted(false)
               }}
               className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-sm"
             >
-              Magsumite ng Bagong Aplikasyon
+              Magsumite ng Bagong Aplikasyon / Buksan ang Form
             </button>
           </div>
         </div>
