@@ -22,7 +22,7 @@ interface ApplyAICSProps {
 type Step = "requirements" | "checklist" | "personal" | "documents" | "review" | "appointment" | "form" | "matching" | "pending"
 
 import { API_BASE } from "../../config/api"
-import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { getCurrentUserProfile, getLoggedInUserQcid, toISODateString } from "../../utils/userProfile"
 
 export default function ApplyAICS({ initialType, initialTypeKey, onBack }: ApplyAICSProps) {
   const { t } = useLanguage()
@@ -268,7 +268,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
     setPMiddleName(prof.middleName || "")
     setPLastName(prof.lastName)
     setPNationality("FILIPINO")
-    setPBirthDate(prof.birthDate || "2004-10-29")
+    setPBirthDate(toISODateString(prof.birthDate) || "2004-10-29")
     setPAge(String(prof.age || "21"))
     setPGender(prof.sex === "MALE" ? "Lalaki" : "Babae")
     setPCivilStatus(prof.civilStatus || "Single")
@@ -312,11 +312,11 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   }, [dSameAddressAsApplicant, pHouseNumber, pStreetName, pBarangay])
   useEffect(() => {
     if (dBirthDate && dDeathDate) {
-      const birth = new Date(dBirthDate)
-      const death = new Date(dDeathDate)
-      let age = death.getFullYear() - birth.getFullYear()
-      const monthDiff = death.getMonth() - birth.getMonth()
-      if (monthDiff < 0 || (monthDiff === 0 && death.getDate() < birth.getDate())) {
+      const b = new Date(dBirthDate)
+      const d = new Date(dDeathDate)
+      let age = d.getFullYear() - b.getFullYear()
+      const m = d.getMonth() - b.getMonth()
+      if (m < 0 || (m === 0 && d.getDate() < b.getDate())) {
         age--
       }
       if (age >= 0) {
@@ -340,7 +340,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
       setILastName(pLastName)
       setISuffix(pSuffix)
       setIGender(pGender)
-      setIBirthDate(pBirthDate)
+      setIBirthDate(toISODateString(pBirthDate))
       setIAge(pAge)
     }
   }, [isSelfPatient, pFirstName, pMiddleName, pLastName, pSuffix, pGender, pBirthDate, pAge])
@@ -360,7 +360,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
       setBenLastName(pLastName)
       setBenSuffix(pSuffix)
       setBenGender(pGender)
-      setBenBirthDate(pBirthDate)
+      setBenBirthDate(toISODateString(pBirthDate))
       setBenAge(pAge)
     }
   }, [benIsSelf, pFirstName, pMiddleName, pLastName, pSuffix, pGender, pBirthDate, pAge])
@@ -1492,7 +1492,20 @@ if (isBlocked) {
                     <input
                       type="date"
                       value={benBirthDate}
-                      onChange={(e) => setBenBirthDate(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setBenBirthDate(val)
+                        if (val) {
+                          const b = new Date(val)
+                          if (!isNaN(b.getTime())) {
+                            const today = new Date()
+                            let age = today.getFullYear() - b.getFullYear()
+                            const m = today.getMonth() - b.getMonth()
+                            if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--
+                            if (age >= 0 && age < 150) setBenAge(String(age))
+                          }
+                        }
+                      }}
                       disabled={benIsSelf}
                       className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`}
                     />
@@ -1684,7 +1697,20 @@ if (isBlocked) {
                   <input
                     type="date"
                     value={iBirthDate}
-                    onChange={(e) => setIBirthDate(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setIBirthDate(val)
+                      if (val) {
+                        const b = new Date(val)
+                        if (!isNaN(b.getTime())) {
+                          const today = new Date()
+                          let age = today.getFullYear() - b.getFullYear()
+                          const m = today.getMonth() - b.getMonth()
+                          if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--
+                          if (age >= 0 && age < 150) setIAge(String(age))
+                        }
+                      }
+                    }}
                     disabled={isSelfPatient}
                     className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`}
                   />
