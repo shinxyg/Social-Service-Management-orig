@@ -431,8 +431,16 @@ function OfficialIdCardModal({
 }) {
   if (!app) return null
   const isPwdApp = isPWD(app)
-  const idNumber = generateOfficialIdNumber(app)
-  const appDate = new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
+  const issueDateObj = new Date(app.approvedDate || app.submittedAt || Date.now())
+  const validIssueDate = isNaN(issueDateObj.getTime()) ? new Date() : issueDateObj
+  const appDate = validIssueDate.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+  const expiryDateObj = new Date(validIssueDate)
+  expiryDateObj.setFullYear(expiryDateObj.getFullYear() + 1)
+  const expiryDateStr = expiryDateObj.toLocaleDateString("en-PH", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -629,7 +637,11 @@ function OfficialIdCardModal({
               <div className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]">
                 <div>
                   <p className="font-mono font-bold text-slate-700 tracking-widest text-[8.5px]">|||| | || |||| | | ||| ||||</p>
-                  <p className="text-[6.5px] text-slate-400 uppercase tracking-wider">Issued: {appDate}</p>
+                  <div className="flex items-center gap-1.5 text-[6.5px] uppercase tracking-wider font-semibold">
+                    <span className="text-slate-400">Issued: {appDate}</span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-amber-800 font-bold">Expires: {expiryDateStr}</span>
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="w-18 border-b border-slate-400 mx-auto mb-0.5" />
@@ -648,14 +660,19 @@ function OfficialIdCardModal({
               }}
             >
               <div>
-                <p className="text-[9px] font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1 text-center">
-                  {isPwdApp ? "Republic Act 7277 / RA 9442 Magna Carta for PWDs" : "Republic Act 9994 Expanded Senior Citizens Act"}
-                </p>
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                  <p className="text-[9px] font-bold text-slate-900 uppercase tracking-wide">
+                    {isPwdApp ? "Republic Act 7277 / RA 9442 Magna Carta for PWDs" : "Republic Act 9994 Expanded Senior Citizens Act"}
+                  </p>
+                  <span className="text-[7px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                    VALID: 1 YEAR
+                  </span>
+                </div>
                 <ul className="text-[8px] text-slate-600 mt-2 space-y-1 list-disc pl-4">
                   <li>20% discount and VAT exemption on medicines, medical supplies, and dental services.</li>
                   <li>20% discount on public domestic transportation (air, sea, land, MRT/LRT).</li>
                   <li>20% discount on hotels, restaurants, and recreational centers.</li>
-                  <li>This card is non-transferable and valid across the Republic of the Philippines.</li>
+                  <li>Valid from <span className="font-semibold text-slate-800">{appDate}</span> until <span className="font-semibold text-slate-800">{expiryDateStr}</span> across the Philippines.</li>
                 </ul>
               </div>
 
