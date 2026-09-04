@@ -158,7 +158,7 @@ export const Login = () => {
 
       {/* Right Login Form Section — REDESIGNED */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-[#F8FAFC]">
-        <div className="w-full max-w-sm p-6 sm:p-8 rounded-2xl">
+        <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl">
 
           <div className="text-center mb-6">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
@@ -226,7 +226,7 @@ export const Login = () => {
             </button>
           </form>
 
-          <div className="mt-5 flex items-center justify-between text-[11px] sm:text-xs">
+          <div className="mt-5 flex items-center justify-between text-xs sm:text-[13px]">
             <button
               type="button"
               onClick={() => {
@@ -242,7 +242,7 @@ export const Login = () => {
               Forgot password?
             </button>
 
-            <span className="text-slate-400 whitespace-nowrap">
+            <span className="text-slate-500 whitespace-nowrap">
               Don't have an account?{' '}
               <a
                 href="/register"
