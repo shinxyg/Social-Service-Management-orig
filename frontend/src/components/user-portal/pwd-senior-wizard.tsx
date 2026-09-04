@@ -768,49 +768,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     return allApps
   }
 
-  // Auto-paste and auto-populate approved PWD ID on mount for Renewal and Loss ID
-  useEffect(() => {
-    const autoLoadApprovedId = async () => {
-      const isRenewalOrLoss = initialIdStatus === "renewal" || initialIdStatus === "loss" || idStatus === "renewal" || idStatus === "loss"
-      if (!isRenewalOrLoss) return
 
-      const apps = await fetchAllPwdApps()
-      const userQcid = (userProfile?.qcidNo || "110000116932100").trim().toLowerCase()
-      const userEmail = (userProfile?.email || "dimalmae@gmail.com").trim().toLowerCase()
-
-      // Look for approved PWD application for this resident
-      const approvedApp = apps.find(
-        (a) =>
-          a.category === "PWD" &&
-          a.status === "approved" &&
-          (
-            (a.referenceNumber && a.referenceNumber.toLowerCase() === userQcid) ||
-            (a.email && a.email.toLowerCase() === userEmail) ||
-            (a.assignedIdNumber && a.assignedIdNumber.toLowerCase() === userQcid)
-          )
-      )
-
-      if (approvedApp) {
-        const officialId = approvedApp.assignedIdNumber || approvedApp.referenceNumber || ""
-        setApprovedPwdRecord(approvedApp)
-        setFormData((prev) => ({
-          ...prev,
-          existingPwdIdNumber: officialId,
-          causeOfDisability: approvedApp.causeOfDisability || prev.causeOfDisability,
-          specificDisability: approvedApp.specificDisability || prev.specificDisability,
-        }))
-        if (approvedApp.disabilityType) setDisabilityType(approvedApp.disabilityType)
-        if (approvedApp.disabilityClass) setDisabilityClass(approvedApp.disabilityClass)
-        setIsIdVerified(true)
-        setVerifyError(null)
-      } else {
-        setApprovedPwdRecord(null)
-        setIsIdVerified(false)
-      }
-    }
-
-    autoLoadApprovedId()
-  }, [initialIdStatus, idStatus, userProfile?.qcidNo, userProfile?.email])
 
   const handleVerifyId = async () => {
     setVerifyError(null)
