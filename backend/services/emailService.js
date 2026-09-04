@@ -106,7 +106,7 @@ async function sendPwdApprovalEmail({
     <body>
       <div class="container">
         <div class="header">
-          <img src="cid:project_logo" alt="Quezon City Seal" width="60" height="60" style="margin-bottom: 10px; display: inline-block;" />
+          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="Government Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
           <h1>QUEZON CITY GOVERNMENT</h1>
           <p>Social Services &amp; Development Department (SSDD) — Persons with Disability Affairs Division</p>
         </div>
@@ -321,7 +321,7 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
     <body>
       <div class="container">
         <div class="header">
-          <img src="cid:project_logo" alt="Quezon City Seal" width="60" height="60" style="margin-bottom: 10px; display: inline-block;" />
+          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="Government Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
           <h1>QUEZON CITY GOVERNMENT</h1>
           <p>Social Services Management System (GovServe Portal)</p>
         </div>
