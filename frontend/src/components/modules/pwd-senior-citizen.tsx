@@ -57,10 +57,19 @@ interface PWDApplicationSubmission {
   disabilityClass: "apparent" | "non-apparent" | string
   causeOfDisability: string
 
-  // Family Member (if applicable)
+  // Family / Emergency Info
   applyingFor?: "myself" | "family"
   familyMemberName?: string
   familyRelationship?: string
+  emergencyFirstName?: string
+  emergencyLastName?: string
+  emergencyName?: string
+  emergencyContactNo?: string
+  emergencyRelationship?: string
+  emergencyAddress?: string
+  guardianName?: string
+  guardianContact?: string
+  guardianAddress?: string
 
   // Documents
   documents: ApplicationDocument[]
@@ -105,10 +114,19 @@ interface SeniorCitizenApplicationSubmission {
   // Vaccination Info
   vaccinatedCovid: string
 
-  // Family Member (if applicable)
+  // Family / Emergency Info
   applyingFor?: "myself" | "family"
   familyMemberName?: string
   familyRelationship?: string
+  emergencyFirstName?: string
+  emergencyLastName?: string
+  emergencyName?: string
+  emergencyContactNo?: string
+  emergencyRelationship?: string
+  emergencyAddress?: string
+  guardianName?: string
+  guardianContact?: string
+  guardianAddress?: string
 
   // Documents
   documents: ApplicationDocument[]
@@ -737,6 +755,58 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: Detaile
   const contactNumber = isPWD(app) ? app.contactNo : app.cellphoneNo
   const subLabel = subLabelForApp(app)
 
+  let localEmergencyName = ""
+  let localEmergencyPhone = ""
+  let localEmergencyRel = ""
+  let localEmergencyAddr = ""
+  try {
+    const raw = localStorage.getItem("currentUser") || localStorage.getItem("userProfile") || localStorage.getItem("user")
+    if (raw) {
+      const u = JSON.parse(raw)
+      const uQcid = u.qcidNumber || u.qcid_number || u.qcidNo || u.qcid || u.reference_number
+      const uEmail = u.email
+      if (
+        (uQcid && uQcid === app.referenceNumber) ||
+        (uEmail && app.email && uEmail.toLowerCase() === app.email.toLowerCase()) ||
+        (u.lastName && app.lastName && u.lastName.toLowerCase() === app.lastName.toLowerCase())
+      ) {
+        localEmergencyName = [u.emergencyFirstName, u.emergencyLastName].filter(Boolean).join(" ") || u.emergencyName || ""
+        localEmergencyPhone = u.emergencyContactNo || u.emergencyPhone || ""
+        localEmergencyRel = u.emergencyRelationship || ""
+        localEmergencyAddr = u.emergencyAddress || ""
+      }
+    }
+  } catch {}
+
+  const emergencyPerson =
+    (app as any).emergencyName ||
+    [(app as any).emergencyFirstName, (app as any).emergencyLastName].filter(Boolean).join(" ") ||
+    (app as any).guardianName ||
+    (app as any).familyMemberName ||
+    localEmergencyName ||
+    (isPWD(app) ? "Parent / Guardian Contact" : "Designated Emergency Contact")
+
+  const emergencyPhone =
+    (app as any).emergencyContactNo ||
+    (app as any).guardianContact ||
+    (app as any).emergencyPhone ||
+    localEmergencyPhone ||
+    contactNumber ||
+    "—"
+
+  const emergencyRelation =
+    (app as any).emergencyRelationship ||
+    (app as any).familyRelationship ||
+    localEmergencyRel ||
+    (isPWD(app) ? "Guardian / Parent" : "Immediate Family")
+
+  const emergencyAddress =
+    (app as any).emergencyAddress ||
+    (app as any).guardianAddress ||
+    localEmergencyAddr ||
+    app.address ||
+    "—"
+
   let sectionNum = 0
   const nextNum = () => String(++sectionNum).padStart(2, "0")
 
@@ -858,7 +928,46 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: Detaile
             </div>
           </div>
 
-          {/* Section 03: Documents */}
+          {/* Section: Emergency Contact Information */}
+          <div>
+            <SectionHeading number={nextNum()} icon={<Phone className="h-4 w-4" />}>
+              Emergency Contact Information
+            </SectionHeading>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+              <Field label="Emergency contact person" value={emergencyPerson} />
+              <Field
+                label="Contact number"
+                value={
+                  emergencyPhone !== "—" ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                      {emergencyPhone}
+                    </span>
+                  ) : (
+                    "—"
+                  )
+                }
+              />
+              <Field label="Relationship to applicant" value={emergencyRelation} />
+              <div className="col-span-2">
+                <Field
+                  label="Emergency residential address"
+                  value={
+                    emergencyAddress !== "—" ? (
+                      <span className="inline-flex items-start gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
+                        {emergencyAddress}
+                      </span>
+                    ) : (
+                      "—"
+                    )
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Documents */}
           <div>
             <SectionHeading number={nextNum()} icon={<Paperclip className="h-4 w-4" />}>
               Supporting Documents ({(app.documents || []).length})
