@@ -819,7 +819,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     const userEmail = (userProfile?.email || "dimalmae@gmail.com").trim().toLowerCase()
 
     if (!dontKnowId && !typed) {
-      setVerifyError("Ilagay ang inyong PWD ID number bago i-verify.")
+      setVerifyError("Please enter your PWD ID number before verifying.")
       return
     }
 
@@ -877,16 +877,16 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
           otherMarks: prev.otherMarks || "None",
         }))
       } else {
-        // WALANG NAHANAP NA APRUBADONG PWD ID RECORD
+        // NO APPROVED PWD ID RECORD FOUND
         setIsIdVerified(false)
         setApprovedPwdRecord(null)
         setVerifyError(
-          "NO PWD ID RECORD FOUND: Walang nahanap na aprubadong PWD ID record sa system. Bawal mag-apply para sa Renewal o Replacement / Lost ID kapag wala pang rehistrado at aprubadong New App PWD ID."
+          "No approved PWD ID record found in the system for this ID. You cannot apply for Renewal or Replacement / Lost ID without an existing registered and approved New PWD ID application."
         )
       }
     } catch {
       setIsIdVerified(false)
-      setVerifyError("Nagkaroon ng problema sa pag-verify. Pakisubukang muli.")
+      setVerifyError("An error occurred while verifying the ID. Please try again.")
     } finally {
       setIsVerifying(false)
     }
@@ -1266,7 +1266,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               </>
                             ) : (
                               <>
-                                <Check className="w-3.5 h-3.5" />
+<Check className="w-3.5 h-3.5" />
                                 <span>VERIFY PWD ID</span>
                               </>
                             )}
@@ -1276,9 +1276,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
                             <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                             <div>
-                              <p className="font-bold text-red-900">WALANG NAHANAP NA APRUBADONG PWD ID (NO RECORD FOUND)</p>
+                              <p className="font-bold text-red-900">NO APPROVED PWD ID RECORD FOUND</p>
                               <p className="mt-0.5 leading-relaxed">{verifyError}</p>
-                              <p className="mt-1 text-red-700 font-semibold">Paalala: Kailangan munang magparehistro at maaprubahan sa "New App PWD ID" bago makapag-renew.</p>
+                              <p className="mt-1 text-red-700 font-semibold">Reminder: You must first register and get approved for a "New App PWD ID" before applying for Renewal.</p>
                             </div>
                           </div>
                         )}
@@ -1287,7 +1287,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           <p className="text-xs text-red-500">
                             {!(formData.existingPwdIdNumber || "").trim()
                               ? t("pwdFieldRequiredNote") || "Required"
-                              : "Pindutin ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy."}
+                              : "Click VERIFY PWD ID and ensure your record is verified before proceeding."}
                           </p>
                         )}
 
@@ -1453,9 +1453,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
                             <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                             <div>
-                              <p className="font-bold text-red-900">WALANG NAHANAP NA APRUBADONG PWD ID (NO RECORD FOUND)</p>
+                              <p className="font-bold text-red-900">NO APPROVED PWD ID RECORD FOUND</p>
                               <p className="mt-0.5 leading-relaxed">{verifyError}</p>
-                              <p className="mt-1 text-red-700 font-semibold">Paalala: Kailangan munang magparehistro at maaprubahan sa "New App PWD ID" bago makapag-apply para sa Replacement / Lost ID.</p>
+                              <p className="mt-1 text-red-700 font-semibold">Reminder: You must first register and get approved for a "New App PWD ID" before applying for Replacement / Lost ID.</p>
                             </div>
                           </div>
                         )}
@@ -1464,7 +1464,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           <p className="text-xs text-red-500">
                             {!dontKnowId && !(formData.existingPwdIdNumber || "").trim()
                               ? t("pwdFieldRequiredNote") || "Required"
-                              : "Pindutin ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy."}
+                              : "Click VERIFY PWD ID and ensure your record is verified before proceeding."}
                           </p>
                         )}
 
@@ -1614,9 +1614,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
                               <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                               <div>
-                                <p className="font-bold text-red-900">WALANG NAHANAP NA APRUBADONG PWD ID (NO RECORD FOUND)</p>
+                                <p className="font-bold text-red-900">NO APPROVED PWD ID RECORD FOUND</p>
                                 <p className="mt-0.5 leading-relaxed">{verifyError}</p>
-                                <p className="mt-1 text-red-700 font-semibold">Paalala: Kailangan munang magparehistro at maaprubahan sa "New App PWD ID" bago makapag-renew.</p>
+                                <p className="mt-1 text-red-700 font-semibold">Reminder: You must first register and get approved for a "New App PWD ID" before applying for Renewal.</p>
                               </div>
                             </div>
                           )}
@@ -1625,7 +1625,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             <p className="text-xs text-red-500">
                               {!(formData.existingPwdIdNumber || "").trim()
                                 ? t("pwdFieldRequiredNote") || "Required"
-                                : "Pindutin ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy."}
+                                : "Click VERIFY PWD ID and ensure your record is verified before proceeding."}
                             </p>
                           )}
 
@@ -1781,9 +1781,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
                               <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                               <div>
-                                <p className="font-bold text-red-900">WALANG NAHANAP NA APRUBADONG PWD ID (NO RECORD FOUND)</p>
+                                <p className="font-bold text-red-900">NO APPROVED PWD ID RECORD FOUND</p>
                                 <p className="mt-0.5 leading-relaxed">{verifyError}</p>
-                                <p className="mt-1 text-red-700 font-semibold">Paalala: Kailangan munang magparehistro at maaprubahan sa "New App PWD ID" bago makapag-apply para sa Replacement / Lost ID.</p>
+                                <p className="mt-1 text-red-700 font-semibold">Reminder: You must first register and get approved for a "New App PWD ID" before applying for Replacement / Lost ID.</p>
                               </div>
                             </div>
                           )}
@@ -1792,7 +1792,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             <p className="text-xs text-red-500">
                               {!dontKnowId && !(formData.existingPwdIdNumber || "").trim()
                                 ? t("pwdFieldRequiredNote") || "Required"
-                                : "Pindutin ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy."}
+                                : "Click VERIFY PWD ID and ensure your record is verified before proceeding."}
                             </p>
                           )}
 
