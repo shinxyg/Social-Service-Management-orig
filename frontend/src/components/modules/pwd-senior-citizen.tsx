@@ -892,7 +892,6 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: Detaile
                       <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         Verified
                       </span>
-                      <span className="text-xs font-semibold text-blue-600 hover:underline">View</span>
                     </div>
                   </div>
                 ))
