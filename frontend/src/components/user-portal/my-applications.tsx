@@ -515,7 +515,7 @@ export default function MyApplications() {
             className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>{t("backToMyApplications") || "Bumalik sa My Application"}</span>
+            <span>{t("backToMyApplications") || "Bumalik sa History Application"}</span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -932,7 +932,7 @@ export default function MyApplications() {
             User Application Portal
           </span>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            {t("myApplicationsTitle") || "My Applications"}
+            {t("myApplicationsTitle") || "History Application"}
           </h1>
           <p className="text-sm text-gray-500">
             {t("myApplicationsSubtitle") || "Tingnan ang katayuan at mga detalye ng inyong mga naisumiteng aplikasyon para sa tulong at serbisyo."}

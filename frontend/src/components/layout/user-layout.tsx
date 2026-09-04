@@ -130,7 +130,7 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
       ],
     },
     { id: "financialAid", path: "/portal/financial-aid", label: "Financial Aid Disbursement", icon: Wallet },
-    { id: "myApplications", path: "/portal/my-applications", label: t("navMyApplications") || "My Applications", icon: FileText },
+    { id: "myApplications", path: "/portal/my-applications", label: t("navMyApplications") || "History Application", icon: FileText },
   ]
 }
 

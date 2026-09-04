@@ -68,7 +68,7 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   navTrainingProgram: { en: "Training Program", tl: "Programa sa Pagsasanay", bis: "Programa sa Pagbansay" },
   navOtherPrograms: { en: "Other Programs", tl: "Ibang Programa", bis: "Ubang Programa" },
   navTrackApplication: { en: "Track Application", tl: "Subaybayan ang Aplikasyon", bis: "Subaya ang Aplikasyon" },
-  navMyApplications: { en: "My Applications", tl: "Aking mga Aplikasyon", bis: "Akong mga Aplikasyon" },
+  navMyApplications: { en: "History Application", tl: "History Application", bis: "History Application" },
   navHistories: { en: "Histories", tl: "Histories", bis: "Histories" },
   newBadge: { en: "{count} new", tl: "{count} bago", bis: "{count} bag-o" },
   noNewNotifications: { en: "No new notifications.", tl: "Walang bagong notification.", bis: "Walay bag-ong pahibalo." },
@@ -141,7 +141,7 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   navSoloParent: { en: "Solo Parent & Child Welfare", tl: "Solo Parent at Kapakanan ng Bata", bis: "Solo Parent ug Kaayohan sa Bata" },
   navLivelihood: { en: "Livelihood & Training Program", tl: "Programa sa Kabuhayan at Pagsasanay", bis: "Programa sa Panginabuhi ug Pagbansay" },
   navFinancialAid: { en: "Financial Aid Disbursement", tl: "Paglabas ng Tulong Pinansyal", bis: "Paghatag og Tabang Pinansyal" },
-  navMyApplications: { en: "My Application", tl: "My Application", bis: "Akong Aplikasyon" },
+  navMyApplicationsDuplicate: { en: "History Application", tl: "History Application", bis: "History Application" },
 
   // App header (staff)
   toggleSidebar: { en: "Toggle sidebar", tl: "I-toggle ang sidebar", bis: "I-toggle ang sidebar" },
@@ -1077,10 +1077,10 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   step2ReleasedDesc: { en: "Financial aid has been disbursed", tl: "Naipagkaloob na ang ayuda", bis: "Nahatag na ang tabang pinansyal" },
   payoutReminderNotice: { en: "Appointment Reminder: Please bring your QCitizen ID or 1 Valid Government-issued ID along with original copies of your documents at the designated payout time.", tl: "Paalala sa Pagdalo sa Appointment: Dalhin ang inyong QCitizen ID o 1 Valid Government-issued ID kasama ang orihinal na kopya ng inyong mga dokumento sa takdang oras ng payout.", bis: "Pahinumdom sa Pagtambong sa Appointment: Dad-a ang imong QCitizen ID o 1 Balido nga Government ID uban ang orihinal nga kopya sa imong mga dokumento sa gitakda nga oras sa payout." },
 
-  // ── My Applications ──
-  myApplicationsTitle: { en: "My Applications", tl: "Aking mga Aplikasyon", bis: "Akong mga Aplikasyon" },
+  // ── History Applications ──
+  myApplicationsTitle: { en: "History Application", tl: "History Application", bis: "History Application" },
   myApplicationsSubtitle: { en: "Track the status, schedule, and details of all your submitted social service requests.", tl: "Subaybayan ang estado, iskedyul, at detalye ng lahat ng inyong naisumiteng kahilingan sa serbisyong panlipunan.", bis: "Subaya ang estado, iskedyul, ug detalye sa tanan nimong nasumite nga hangyo sa serbisyo sosyal." },
-  backToMyApplications: { en: "Back to My Applications", tl: "Bumalik sa Aking mga Aplikasyon", bis: "Balik sa Akong mga Aplikasyon" },
+  backToMyApplications: { en: "Back to History Application", tl: "Bumalik sa History Application", bis: "Balik sa History Application" },
   applicationDetailsTitle: { en: "Application Details", tl: "Mga Detalye ng Aplikasyon", bis: "Mga Detalye sa Aplikasyon" },
   searchApplicationsPlaceholder: { en: "Search application no., assistance, or name...", tl: "Maghanap ng application no., tulong, o pangalan...", bis: "Pangitaa ang application no., tabang, o ngalan..." },
   allApplicationsFilter: { en: "All Applications", tl: "Lahat ng Aplikasyon", bis: "Tanang Aplikasyon" },
