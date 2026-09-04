@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, User, Check, ShieldCheck } from 'lucide-react';
 import { API_BASE } from '../../config/api';
 
