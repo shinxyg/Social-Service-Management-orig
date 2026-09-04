@@ -226,7 +226,7 @@ export const Login = () => {
             </button>
           </form>
 
-          <div className="mt-5 flex items-center justify-between text-xs">
+          <div className="mt-6 pt-2 flex items-center justify-between gap-4 text-xs">
             <button
               type="button"
               onClick={() => {
@@ -237,17 +237,19 @@ export const Login = () => {
                 setResetError('');
                 setIsConfirmModalOpen(false);
               }}
-              className="text-blue-600 hover:underline font-medium bg-transparent border-none cursor-pointer p-0"
+              className="text-blue-600 hover:underline font-medium bg-transparent border-none cursor-pointer p-0 shrink-0"
             >
               Forgot password?
             </button>
 
-            <p className="text-slate-400 m-0">
+            <span className="text-slate-300 select-none">|</span>
+
+            <p className="text-slate-400 m-0 text-right">
               Don't have an account?{' '}
               <a
                 href="/register"
                 onClick={handleRegisterClick}
-                className="text-blue-600 hover:underline font-medium cursor-pointer"
+                className="text-blue-600 hover:underline font-semibold cursor-pointer whitespace-nowrap"
               >
                 Register here
               </a>
