@@ -218,6 +218,13 @@ interface UserProfile {
   addressCity: string
   contactNo?: string
   email?: string
+  emergencyFirstName?: string
+  emergencyLastName?: string
+  emergencyMiddleName?: string
+  emergencyName?: string
+  emergencyContactNo?: string
+  emergencyRelationship?: string
+  emergencyAddress?: string
 }
 
 interface PWDApplicationWizardProps {
@@ -787,7 +794,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [isVerifying, setIsVerifying] = useState(false)
   const [isIdVerified, setIsIdVerified] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
-  const [approvedPwdRecord, setApprovedPwdRecord] = useState<any | null>(null)
+  const [_approvedPwdRecord, setApprovedPwdRecord] = useState<any | null>(null)
   const [reasonForReplacement, setReasonForReplacement] = useState("")
   const [reasonForRenewal, setReasonForRenewal] = useState("")
   const [dontKnowId, setDontKnowId] = useState(false)

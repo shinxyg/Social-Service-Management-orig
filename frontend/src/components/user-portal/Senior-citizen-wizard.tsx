@@ -214,6 +214,7 @@ export interface UserProfile {
   emergencyLastName?: string
   emergencyContactNo?: string
   emergencyRelationship?: string
+  emergencyAddress?: string
 }
 
 const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
@@ -305,6 +306,7 @@ export default function SeniorCitizenApplicationWizard({
     emergencyLastName: userProfile?.emergencyLastName || "DIMAL",
     emergencyContactNo: userProfile?.emergencyContactNo || "09123456789",
     emergencyRelationship: userProfile?.emergencyRelationship || "Child",
+    emergencyAddress: userProfile?.emergencyAddress || "QUEZON CITY",
     // Family member application fields
     familyFirstName: "",
     familyMiddleName: "",
