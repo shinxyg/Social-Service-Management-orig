@@ -516,12 +516,14 @@ function SampleDocModal({
 interface PWDSocialAssistanceWizardProps {
   userProfile?: UserProfile
   onBack?: () => void
+  onStepChange?: (step: number) => void
 }
 
 // ── Main Wizard Component ──
 export default function PWDSocialAssistanceWizard({
   userProfile = MOCK_USER_PROFILE,
   onBack,
+  onStepChange,
 }: PWDSocialAssistanceWizardProps) {
   const { t } = useLanguage()
 
@@ -532,6 +534,10 @@ export default function PWDSocialAssistanceWizard({
     { id: 4, label: t("wizardReview").toUpperCase() },
   ]
   const [step, setStep] = useState(1)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<RequiredDocument | null>(null)
   const [showSampleModal, setShowSampleModal] = useState(false)

@@ -18,11 +18,13 @@ export default function ApplyPWDSenior() {
 
   const [showModal, setShowModal] = useState(false)
   const [understood, setUnderstood] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
 
   // Keep modal closed on navigation so user can see and access the form UI directly
   useEffect(() => {
     setShowModal(false)
     setUnderstood(false)
+    setCurrentStep(1)
   }, [urlCategory, urlType])
 
   const isSenior = urlCategory === "senior"
@@ -91,65 +93,68 @@ export default function ApplyPWDSenior() {
     t("seniorReq6"),
   ]
 
-
-
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {/* Top Service Quick Info Banner */}
-      <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3">
-        <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              isSenior ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
-            }`}>
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-sm md:text-base font-bold text-foreground">
-                  {modalTitle}
-                </h1>
-                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${typeBadge.color}`}>
-                  {typeBadge.label}
-                </span>
+      {/* Top Service Quick Info Banner - shown only on Step 1 (Complete Checklist) */}
+      {currentStep === 1 && (
+        <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3 animate-in fade-in duration-150">
+          <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                isSenior ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+              }`}>
+                <FileText className="w-5 h-5" />
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {isSenior
-                  ? "Opisyal na serbisyo para sa mga Senior Citizens ng Lungsod Quezon."
-                  : "Opisyal na serbisyo para sa Persons with Disability (PWD) ng Lungsod Quezon."}
-              </p>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-sm md:text-base font-bold text-foreground">
+                    {modalTitle}
+                  </h1>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${typeBadge.color}`}>
+                    {typeBadge.label}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {isSenior
+                    ? "Opisyal na serbisyo para sa mga Senior Citizens ng Lungsod Quezon."
+                    : "Opisyal na serbisyo para sa Persons with Disability (PWD) ng Lungsod Quezon."}
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
+            >
+              Tingnan ang Requirements
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowModal(true)}
-            className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
-          >
-            Tingnan ang Requirements
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Background: Direct Form Wizard */}
       {isSeniorMedicine ? (
-        <SeniorBookletWizard key="senior-medicine" bookletType="medicine" />
+        <SeniorBookletWizard key="senior-medicine" bookletType="medicine" onStepChange={setCurrentStep} />
       ) : isSeniorMovie ? (
-        <SeniorBookletWizard key="senior-movie" bookletType="movie" />
+        <SeniorBookletWizard key="senior-movie" bookletType="movie" onStepChange={setCurrentStep} />
       ) : isSeniorSocial ? (
-        <SeniorSocialAssistanceWizard key="senior-social" />
+        <SeniorSocialAssistanceWizard key="senior-social" onStepChange={setCurrentStep} />
       ) : isSenior ? (
         <SeniorCitizenApplicationWizard
           key={`senior-${urlType}`}
           initialIdStatus={urlType as "new" | "renewal" | "loss"}
+          onStepChange={setCurrentStep}
         />
       ) : isAssistance ? (
         <PWDSocialAssistanceWizard
           key="pwd-assistance"
+          onStepChange={setCurrentStep}
         />
       ) : (
         <PWDApplicationWizard
           key={`pwd-${urlType}`}
           initialIdStatus={urlType as "new" | "renewal" | "loss"}
+          onStepChange={setCurrentStep}
         />
       )}
 

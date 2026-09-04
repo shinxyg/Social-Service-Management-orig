@@ -231,6 +231,7 @@ interface PWDApplicationWizardProps {
   onBack?: () => void
   userProfile?: UserProfile
   initialIdStatus?: "new" | "renewal" | "loss"
+  onStepChange?: (step: number) => void
 }
 
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
@@ -560,7 +561,7 @@ function generateReferenceNumber(qcid?: string) {
   return getLoggedInUserQcid()
 }
 
-export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_PROFILE, initialIdStatus }: PWDApplicationWizardProps) {
+export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_PROFILE, initialIdStatus, onStepChange }: PWDApplicationWizardProps) {
   const { t } = useLanguage()
 
   const STEPS = [
@@ -578,6 +579,10 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [isBlocked, setIsBlocked] = useState(false)
   const [bypassedBlock, setBypassedBlock] = useState(false)
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
 
   const [isResident, setIsResident] = useState(false)
   const [hasDisability, setHasDisability] = useState(false)
@@ -688,6 +693,10 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         setIsBlocked(true)
       } else {
         // If renewal, loss/replacement, rejected, approved, bypassed, or no active application, allow user to apply freely
+        if (activeAppStatus === "approved" || isBlocked) {
+          setStep(1)
+          setSubmitStatus("idle")
+        }
         setIsBlocked(false)
       }
     }
@@ -695,7 +704,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, initialIdStatus])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, initialIdStatus, isBlocked])
 
   // Auto-redirect to pending status screen after 3 seconds on submitted
   useEffect(() => {

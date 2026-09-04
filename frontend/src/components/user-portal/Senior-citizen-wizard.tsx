@@ -223,12 +223,14 @@ interface SeniorCitizenApplicationWizardProps {
   onBack?: () => void
   userProfile?: UserProfile
   initialIdStatus?: "new" | "renewal" | "loss"
+  onStepChange?: (step: number) => void
 }
 
 export default function SeniorCitizenApplicationWizard({
   onBack,
   userProfile = MOCK_USER_PROFILE,
   initialIdStatus = "new",
+  onStepChange,
 }: SeniorCitizenApplicationWizardProps) {
   const { t } = useLanguage()
   const appFlow = initialIdStatus || "new"
@@ -246,6 +248,10 @@ export default function SeniorCitizenApplicationWizard({
   const [isBlocked, setIsBlocked] = useState(false)
   const [bypassedBlock, setBypassedBlock] = useState(false)
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
 
   // Step 1: Checklist state
   const [isResidencyChecked, setIsResidencyChecked] = useState(false)
@@ -427,6 +433,10 @@ export default function SeniorCitizenApplicationWizard({
         setIsBlocked(true)
       } else {
         // If rejected, approved, bypassed, or no active application, allow user to apply freely
+        if (activeAppStatus === "approved" || isBlocked) {
+          setStep(1)
+          setIsSubmitted(false)
+        }
         setIsBlocked(false)
       }
     }
@@ -434,7 +444,7 @@ export default function SeniorCitizenApplicationWizard({
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow, isBlocked])
 
   // Auto-redirect to pending status screen after 3 seconds on submitted
   useEffect(() => {

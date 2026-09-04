@@ -47,6 +47,7 @@ const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 export interface SeniorAssistanceWizardProps {
   onBack?: () => void
   userProfile?: UserProfile
+  onStepChange?: (step: number) => void
 }
 
 interface RequiredDoc {
@@ -86,7 +87,10 @@ const MONTHS = [
 
 function calculateAge(monthStr: string, dayStr: string, yearStr: string): string {
   if (!monthStr || !dayStr || !yearStr) return ""
-  const mIdx = MONTHS.indexOf(monthStr)
+  let mIdx = MONTHS.indexOf(monthStr.toUpperCase())
+  if (mIdx === -1 && !isNaN(parseInt(monthStr, 10))) {
+    mIdx = parseInt(monthStr, 10) - 1
+  }
   if (mIdx === -1) return ""
   const birthDate = new Date(parseInt(yearStr), mIdx, parseInt(dayStr))
   const today = new Date(2026, 7, 29)
@@ -164,7 +168,7 @@ function ReviewField({ label, value }: { label: string; value: string }) {
   )
 }
 
-export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOCK_USER_PROFILE }: SeniorAssistanceWizardProps) {
+export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOCK_USER_PROFILE, onStepChange }: SeniorAssistanceWizardProps) {
   const { t } = useLanguage()
 
   const STEPS = [
@@ -175,6 +179,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   ]
 
   const [step, setStep] = useState(1)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
+
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)

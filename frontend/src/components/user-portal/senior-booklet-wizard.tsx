@@ -48,6 +48,7 @@ export interface SeniorBookletWizardProps {
   bookletType?: "medicine" | "movie"
   onBack?: () => void
   userProfile?: UserProfile
+  onStepChange?: (step: number) => void
 }
 
 interface RequiredDoc {
@@ -90,6 +91,7 @@ export default function SeniorBookletWizard({
   bookletType = "medicine",
   onBack,
   userProfile = MOCK_USER_PROFILE,
+  onStepChange,
 }: SeniorBookletWizardProps) {
   const { t } = useLanguage()
   const isMedicine = bookletType === "medicine"
@@ -103,6 +105,10 @@ export default function SeniorBookletWizard({
   ]
 
   const [step, setStep] = useState(1)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
