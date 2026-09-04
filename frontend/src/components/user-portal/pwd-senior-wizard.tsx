@@ -1848,22 +1848,30 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     )}
                   </Field>
                   <Field label={`${t("pwdContactNoLabel")} *`}>
-                    <TextInput
-                      value={formData.contactNo}
-                      onChange={(v) => updateField("contactNo", v)}
-                      placeholder="09XXXXXXXXX"
-                      numbersOnly
-                      maxLength={11}
-                    />
+                    {isEditingInfo ? (
+                      <TextInput
+                        value={formData.contactNo}
+                        onChange={(v) => updateField("contactNo", v)}
+                        placeholder="09XXXXXXXXX"
+                        numbersOnly
+                        maxLength={11}
+                      />
+                    ) : (
+                      <LockedField value={formData.contactNo || userProfile?.contactNo || "09XXXXXXXXX"} />
+                    )}
                   </Field>
                 </div>
 
                 <Field label={`${t("emailLabel")} *`}>
-                  <TextInput
-                    value={formData.email}
-                    onChange={(v) => updateField("email", v)}
-                    placeholder="hal. kahit_anong_email@gmail.com"
-                  />
+                  {isEditingInfo ? (
+                    <TextInput
+                      value={formData.email}
+                      onChange={(v) => updateField("email", v)}
+                      placeholder="hal. kahit_anong_email@gmail.com"
+                    />
+                  ) : (
+                    <LockedField value={formData.email || userProfile?.email || "espelitadanny@gmail.com"} />
+                  )}
                 </Field>
               </div>
 
