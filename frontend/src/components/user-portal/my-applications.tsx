@@ -14,6 +14,10 @@ import {
   Banknote,
   MapPin,
   Trash2,
+  RotateCcw,
+  AlertTriangle,
+  FolderOpen,
+  Info,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile } from "../../utils/userProfile"
@@ -44,40 +48,161 @@ export interface ApplicationRecord {
   contactNumber: string
   email?: string
   remarks?: string
+  deletedAt?: string
 }
 
 export default function MyApplications() {
   const { t } = useLanguage()
+  const [activeTab, setActiveTab] = useState<"active" | "deleted">("active")
   const [applications, setApplications] = useState<ApplicationRecord[]>([])
+  const [deletedApplications, setDeletedApplications] = useState<ApplicationRecord[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null)
   const [copied, setCopied] = useState(false)
-  const [appToArchive, setAppToArchive] = useState<ApplicationRecord | null>(null)
-  const [isArchiving, setIsArchiving] = useState(false)
-  const [archiveSuccess, setArchiveSuccess] = useState<string | null>(null)
+  
+  // Dialog modal states
+  const [appToDelete, setAppToDelete] = useState<ApplicationRecord | null>(null)
+  const [appToPermanentDelete, setAppToPermanentDelete] = useState<ApplicationRecord | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [toastMessage, setToastMessage] = useState<{ text: string; type?: "success" | "danger" } | null>(null)
 
-  const handleConfirmArchive = async () => {
-    if (!appToArchive) return
-    setIsArchiving(true)
-    const appNo = appToArchive.applicationNo
-    const appAssistance = appToArchive.assistance
+  const showToast = (text: string, type: "success" | "danger" = "success") => {
+    setToastMessage({ text, type })
+    setTimeout(() => setToastMessage(null), 4000)
+  }
+
+  // 1. SOFT DELETE (Move to Deleted)
+  const handleConfirmDelete = async () => {
+    if (!appToDelete) return
+    setIsProcessing(true)
+    const appNo = appToDelete.applicationNo
+    const appAssistance = appToDelete.assistance
+    const deletedRecord: ApplicationRecord = {
+      ...appToDelete,
+      deletedAt: new Date().toLocaleDateString("en-PH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    }
 
     try {
-      await fetch(`${API_BASE}/api/user-applications/archive`, {
+      await fetch(`${API_BASE}/api/user-applications/delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           applicationNo: appNo,
           referenceNo: appNo,
-          category: appToArchive.assistanceCategory,
+          category: appToDelete.assistanceCategory,
           assistance: appAssistance,
-          applicantName: appToArchive.applicantName,
-          email: appToArchive.email,
-          reason: "Deleted & archived by applicant from History Application",
+          applicantName: appToDelete.applicantName,
+          email: appToDelete.email,
+          dateOfBirth: appToDelete.dateOfBirth,
+          address: appToDelete.address,
+          contactNumber: appToDelete.contactNumber,
+          status: appToDelete.status,
+          dateApplied: appToDelete.dateApplied,
+          reason: "Deleted by user from History Application",
+          payload: deletedRecord,
         }),
       })
 
-      // Clean local storage caches
+      // Update LocalStorage deleted items
+      try {
+        const storedDeleted: ApplicationRecord[] = JSON.parse(
+          localStorage.getItem("deleted_user_applications") || "[]"
+        )
+        const updatedDeleted = [deletedRecord, ...storedDeleted.filter((d) => d.applicationNo !== appNo || d.assistance !== appAssistance)]
+        localStorage.setItem("deleted_user_applications", JSON.stringify(updatedDeleted))
+      } catch {}
+
+      // Update UI state immediately
+      setApplications((prev) => prev.filter((a) => !(a.applicationNo === appNo && a.assistance === appAssistance)))
+      setDeletedApplications((prev) => [
+        deletedRecord,
+        ...prev.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance)),
+      ])
+
+      if (selectedApp?.applicationNo === appNo && selectedApp?.assistance === appAssistance) {
+        setSelectedApp(null)
+      }
+      showToast(`Nailipat sa Deleted Items ang ${appAssistance}.`)
+    } catch (err) {
+      console.error("Failed deleting application:", err)
+      showToast("Nagka-aberya sa pagbura ng aplikasyon.", "danger")
+    } finally {
+      setIsProcessing(false)
+      setAppToDelete(null)
+    }
+  }
+
+  // 2. RESTORE APPLICATION
+  const handleRestore = async (app: ApplicationRecord) => {
+    setIsProcessing(true)
+    const appNo = app.applicationNo
+    const appAssistance = app.assistance
+
+    try {
+      await fetch(`${API_BASE}/api/user-applications/restore`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          applicationNo: appNo,
+          referenceNo: appNo,
+          category: app.assistanceCategory,
+          assistance: appAssistance,
+          applicantName: app.applicantName,
+        }),
+      })
+
+      // Clean from LocalStorage deleted
+      try {
+        const storedDeleted: ApplicationRecord[] = JSON.parse(
+          localStorage.getItem("deleted_user_applications") || "[]"
+        )
+        const updatedDeleted = storedDeleted.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance))
+        localStorage.setItem("deleted_user_applications", JSON.stringify(updatedDeleted))
+      } catch {}
+
+      // Update UI state
+      setDeletedApplications((prev) => prev.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance)))
+      setApplications((prev) => [app, ...prev.filter((a) => !(a.applicationNo === appNo && a.assistance === appAssistance))])
+
+      if (selectedApp?.applicationNo === appNo && selectedApp?.assistance === appAssistance) {
+        setSelectedApp(null)
+      }
+      showToast(`Matagumpay na naibalik ang ${appAssistance} sa Aktibong Aplikasyon.`)
+    } catch (err) {
+      console.error("Failed restoring application:", err)
+      showToast("Hindi maibalik ang aplikasyon sa ngayon.", "danger")
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  // 3. PERMANENT DELETE (Hard Delete from Database)
+  const handleConfirmPermanentDelete = async () => {
+    if (!appToPermanentDelete) return
+    setIsProcessing(true)
+    const appNo = appToPermanentDelete.applicationNo
+    const appAssistance = appToPermanentDelete.assistance
+
+    try {
+      await fetch(`${API_BASE}/api/user-applications/permanent-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          applicationNo: appNo,
+          referenceNo: appNo,
+          category: appToPermanentDelete.assistanceCategory,
+          assistance: appAssistance,
+          applicantName: appToPermanentDelete.applicantName,
+        }),
+      })
+
+      // Clean local storage caches completely
       try {
         const localPwd = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
         localStorage.setItem(
@@ -102,25 +227,34 @@ export default function MyApplications() {
         )
       } catch {}
 
-      // Update UI state immediately
+      try {
+        const storedDeleted: ApplicationRecord[] = JSON.parse(
+          localStorage.getItem("deleted_user_applications") || "[]"
+        )
+        const updatedDeleted = storedDeleted.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance))
+        localStorage.setItem("deleted_user_applications", JSON.stringify(updatedDeleted))
+      } catch {}
+
+      // Update UI state
+      setDeletedApplications((prev) => prev.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance)))
       setApplications((prev) => prev.filter((a) => !(a.applicationNo === appNo && a.assistance === appAssistance)))
+
       if (selectedApp?.applicationNo === appNo && selectedApp?.assistance === appAssistance) {
         setSelectedApp(null)
       }
-      setArchiveSuccess(`Matagumpay na nai-archive at nabura ang ${appAssistance}.`)
-      setTimeout(() => setArchiveSuccess(null), 4000)
+      showToast(`Permanenteng nabura ang ${appAssistance} sa database.`, "danger")
     } catch (err) {
-      console.error("Failed archiving application:", err)
+      console.error("Failed permanent deletion:", err)
+      showToast("Nagka-aberya sa permanenteng pagbura.", "danger")
     } finally {
-      setIsArchiving(false)
-      setAppToArchive(null)
+      setIsProcessing(false)
+      setAppToPermanentDelete(null)
     }
   }
 
-  // Subaybayan ang lahat ng naisumiteng aplikasyon ng kasalukuyang naka-log in na user
+  // Load active and deleted applications
   useEffect(() => {
     const fetchUserApps = async () => {
-      // Auto-release engine check
       checkAndAutoReleaseScheduledDisbursements()
 
       const userProfile = getCurrentUserProfile()
@@ -129,6 +263,55 @@ export default function MyApplications() {
       const userEmail = (userProfile.email || "").trim().toLowerCase()
       const userFirst = (userProfile.firstName || "").trim().toLowerCase()
       const userLast = (userProfile.lastName || "").trim().toLowerCase()
+
+      // Fetch deleted list from backend & local storage
+      let initialDeleted: ApplicationRecord[] = []
+      try {
+        const storedDel = localStorage.getItem("deleted_user_applications")
+        if (storedDel) initialDeleted = JSON.parse(storedDel)
+      } catch {}
+
+      try {
+        const delRes = await fetch(
+          `${API_BASE}/api/user-applications/deleted?email=${encodeURIComponent(userEmail)}&qcid=${encodeURIComponent(qcId)}&name=${encodeURIComponent(userFirst + " " + userLast)}`
+        )
+        if (delRes.ok) {
+          const delData = await delRes.json()
+          if (delData.applications && Array.isArray(delData.applications)) {
+            const mappedDel: ApplicationRecord[] = delData.applications.map((d: any) => ({
+              applicationNo: d.referenceNo || d.applicationId || "N/A",
+              assistance: d.assistanceTitle || d.payload?.assistance || "Social Assistance",
+              assistanceCategory: d.category || d.payload?.assistanceCategory || "General",
+              dateApplied: d.payload?.dateApplied || new Date(d.archivedAt || Date.now()).toLocaleDateString("en-PH"),
+              status: d.status || d.payload?.status || "Approved",
+              applicantName: d.applicantName || d.payload?.applicantName || `${userProfile.firstName} ${userProfile.lastName}`,
+              dateOfBirth: d.payload?.dateOfBirth || userProfile.birthDateDisplay,
+              address: d.payload?.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+              contactNumber: d.payload?.contactNumber || userProfile.mobileNumber,
+              email: d.email || userProfile.email,
+              deletedAt: new Date(d.archivedAt || Date.now()).toLocaleDateString("en-PH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+            }))
+
+            // Merge unique
+            const mapKeys = new Set(initialDeleted.map((i) => i.applicationNo + i.assistance))
+            mappedDel.forEach((m) => {
+              if (!mapKeys.has(m.applicationNo + m.assistance)) {
+                initialDeleted.push(m)
+              }
+            })
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch deleted applications:", err)
+      }
+
+      setDeletedApplications(initialDeleted)
+      const deletedKeySet = new Set(initialDeleted.map((d) => (d.applicationNo + "::" + d.assistance).toLowerCase()))
+
       let allFoundApps: ApplicationRecord[] = []
 
       // 1. AICS Applications
@@ -139,6 +322,7 @@ export default function MyApplications() {
           if (data.applications && Array.isArray(data.applications)) {
             const mappedAics: ApplicationRecord[] = data.applications
               .filter((app: any) => {
+                if (app.is_archived === true) return false
                 const appQc = String(app.qc_id || app.reference_no || app.reference_number || "").trim().toLowerCase()
                 const appEmail = String(app.email || "").trim().toLowerCase()
                 const appName = String(app.full_name || "").trim().toLowerCase()
@@ -201,6 +385,7 @@ export default function MyApplications() {
 
         const mappedPwd: ApplicationRecord[] = (pwdApps || [])
           .filter((p: any) => {
+            if (p.is_archived === true) return false
             const pRef = String(p.referenceNumber || "").trim().toLowerCase()
             const pEmail = String(p.email || "").trim().toLowerCase()
             const pQc = String(p.qcidNo || "").trim().toLowerCase()
@@ -280,6 +465,7 @@ export default function MyApplications() {
           if (spData.applications && Array.isArray(spData.applications)) {
             const mappedSp: ApplicationRecord[] = spData.applications
               .filter((app: any) => {
+                if (app.is_archived === true) return false
                 const appQc = String(app.qcid_number || app.qc_id || app.reference_number || "").trim().toLowerCase()
                 const appEmail = String(app.email || "").trim().toLowerCase()
                 const uQc = qcId.toLowerCase()
@@ -324,6 +510,7 @@ export default function MyApplications() {
           if (cwData.applications && Array.isArray(cwData.applications)) {
             const mappedCw: ApplicationRecord[] = cwData.applications
               .filter((app: any) => {
+                if (app.is_archived === true) return false
                 const appQc = String(app.reference_number || app.qc_id || "").trim().toLowerCase()
                 const appEmail = String(app.email || "").trim().toLowerCase()
                 const uQc = qcId.toLowerCase()
@@ -376,6 +563,7 @@ export default function MyApplications() {
         if (Array.isArray(livApps) && livApps.length > 0) {
           const mappedLiv: ApplicationRecord[] = livApps
             .filter((l: any) => {
+              if (l.is_archived === true) return false
               const lQc = String(l.qcid || l.reference_number || "").trim().toLowerCase()
               const lEmail = String(l.email || "").trim().toLowerCase()
               const uQc = qcId.toLowerCase()
@@ -427,6 +615,7 @@ export default function MyApplications() {
         if (Array.isArray(trnApps) && trnApps.length > 0) {
           const mappedTrn: ApplicationRecord[] = trnApps
             .filter((t: any) => {
+              if (t.is_archived === true) return false
               const tQc = String(t.qcid || t.reference_number || "").trim().toLowerCase()
               const tEmail = String(t.email || "").trim().toLowerCase()
               const uQc = qcId.toLowerCase()
@@ -460,14 +649,20 @@ export default function MyApplications() {
         console.warn("Could not fetch Training applications:", err)
       }
 
-      // Set real submitted applications belonging ONLY to logged in user
-      setApplications(allFoundApps)
+      // Filter out any active applications that are already in deleted list
+      const filteredActive = allFoundApps.filter(
+        (app) => !deletedKeySet.has((app.applicationNo + "::" + app.assistance).toLowerCase())
+      )
+
+      setApplications(filteredActive)
     }
 
     fetchUserApps()
   }, [])
 
-  const filteredApplications = applications.filter((app) => {
+  const currentList = activeTab === "active" ? applications : deletedApplications
+
+  const filteredApplications = currentList.filter((app) => {
     if (!searchQuery.trim()) return true
     const q = searchQuery.toLowerCase()
     return (
@@ -533,26 +728,9 @@ export default function MyApplications() {
   // ═══════════════════════════════════════════════════════════════════════
   if (selectedApp) {
     const currentStatus = selectedApp.status
-
-    // Check status active stages based on the flow tree:
-    // Application Status
-    //    ├── Pending -> Under Review -> For Assessment
-    //    └── Approved -> For Release -> Released
-    const isPendingBranch =
-      currentStatus === "Pending" ||
-      currentStatus === "Under Review" ||
-      currentStatus === "For Assessment"
-
-    const isApprovedBranch =
-      currentStatus === "Approved" ||
-      currentStatus === "For Release" ||
-      currentStatus === "Released"
-
-    const isUnderReviewActive = currentStatus === "Under Review"
-    const isForAssessmentActive = currentStatus === "For Assessment"
-    const isForReleaseActive = currentStatus === "For Release"
-    const isReleasedActive = currentStatus === "Released"
-
+    const isDeletedItem = deletedApplications.some(
+      (d) => d.applicationNo === selectedApp.applicationNo && d.assistance === selectedApp.assistance
+    )
     const badge = getStatusBadge(currentStatus)
 
     return (
@@ -567,7 +745,7 @@ export default function MyApplications() {
             <span>{t("backToMyApplications") || "Bumalik sa History Application"}</span>
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-gray-500 font-medium">Application Status:</span>
             <span
               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${badge.bg}`}
@@ -576,15 +754,38 @@ export default function MyApplications() {
               {badge.label}
             </span>
 
-            <button
-              type="button"
-              onClick={() => setAppToArchive(selectedApp)}
-              className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
-              title="I-archive / Burahin ang Aplikasyon"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete / Archive</span>
-            </button>
+            {isDeletedItem ? (
+              <div className="flex items-center gap-2 ml-2">
+                <button
+                  type="button"
+                  disabled={isProcessing}
+                  onClick={() => handleRestore(selectedApp)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Restore</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isProcessing}
+                  onClick={() => setAppToPermanentDelete(selectedApp)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shadow-xs"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Permanent Delete</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAppToDelete(selectedApp)}
+                className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
+                title="Burahin ang Aplikasyon"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -601,308 +802,69 @@ export default function MyApplications() {
           </p>
         </div>
 
-        {/* ───────────────────────────────────────────────────────────────── */}
-        {/* ── APPLICATION STATUS FLOW TREE (The Requested User Diagram) ── */}
-        {/* ───────────────────────────────────────────────────────────────── */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-4">
+        {/* Card 1: Overview & Ref No */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
             <div>
-              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-blue-600" />
-                Application Status Flow
-              </h2>
-              <p className="text-xs text-gray-500">
-                Pagsusuri at daloy ng proseso mula sa pagsumite hanggang sa release ng tulong.
-              </p>
-            </div>
-
-            {/* Test Status Switcher to easily preview all statuses */}
-            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg text-xs">
-              <span className="text-[11px] text-gray-500 px-2 font-medium">Subukan:</span>
-              {(["Under Review", "For Assessment", "For Release", "Released"] as ApplicationStatus[]).map(
-                (st) => (
-                  <button
-                    key={st}
-                    onClick={() => setSelectedApp({ ...selectedApp, status: st })}
-                    className={`px-2 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-                      selectedApp.status === st
-                        ? "bg-white text-blue-700 shadow-xs"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
-                  >
-                    {st}
-                  </button>
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Graphical Tree Rendering */}
-          <div className="max-w-3xl mx-auto py-2">
-            {/* Root: Application Status */}
-            <div className="flex flex-col items-center">
-              <div className="px-5 py-2.5 rounded-xl bg-gray-900 text-white text-xs font-bold shadow-xs tracking-wide">
-                Application Status
-              </div>
-
-              {/* Vertical line from root */}
-              <div className="w-0.5 h-6 bg-gray-300"></div>
-
-              {/* Horizontal Splitter Line */}
-              <div className="w-full max-w-lg relative flex items-center justify-center">
-                <div className="absolute top-0 left-12 right-12 h-0.5 bg-gray-300"></div>
-                <div className="absolute top-0 left-12 w-0.5 h-4 bg-gray-300"></div>
-                <div className="absolute top-0 right-12 w-0.5 h-4 bg-gray-300"></div>
-              </div>
-
-              {/* Two Main Branches: Pending & Approved */}
-              <div className="grid grid-cols-2 gap-4 sm:gap-12 w-full max-w-2xl pt-4">
-                {/* ── LEFT BRANCH: PENDING ── */}
-                <div className="flex flex-col items-center space-y-4">
-                  <div
-                    className={`w-full max-w-[200px] text-center px-4 py-2 rounded-xl border text-xs font-bold uppercase transition-all ${
-                      isPendingBranch
-                        ? "bg-amber-100/80 border-amber-300 text-amber-900 shadow-xs ring-2 ring-amber-400/20"
-                        : "bg-gray-50 border-gray-200 text-gray-500"
-                    }`}
-                  >
-                    Pending
-                  </div>
-
-                  <div className="w-0.5 h-4 bg-gray-300"></div>
-
-                  {/* Step 1: Under Review */}
-                  <div
-                    className={`w-full max-w-[200px] p-3.5 rounded-xl border transition-all text-center space-y-1 ${
-                      isUnderReviewActive
-                        ? "bg-amber-50 border-amber-300 text-amber-900 shadow-md ring-4 ring-amber-100"
-                        : currentStatus === "For Assessment" || isApprovedBranch
-                        ? "bg-emerald-50/70 border-emerald-200 text-emerald-800"
-                        : "bg-gray-50 border-gray-200 text-gray-500"
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      {isUnderReviewActive ? (
-                        <Clock className="w-4 h-4 text-amber-600 animate-spin" />
-                      ) : currentStatus === "For Assessment" || isApprovedBranch ? (
-                        <Check className="w-4 h-4 text-emerald-600" />
-                      ) : (
-                        <div className="w-2 h-2 rounded-full bg-gray-400" />
-                      )}
-                      <span className="text-xs font-bold">Under Review</span>
-                    </div>
-                    <p className="text-[10px] text-gray-500">Kasalukuyang sinusuri ang mga dokumento</p>
-                    {isUnderReviewActive && (
-                      <span className="inline-block text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-200/80 text-amber-900">
-                        Kasalukuyan
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="w-0.5 h-4 bg-gray-300"></div>
-
-                  {/* Step 2: For Assessment */}
-                  <div
-                    className={`w-full max-w-[200px] p-3.5 rounded-xl border transition-all text-center space-y-1 ${
-                      isForAssessmentActive
-                        ? "bg-blue-50 border-blue-300 text-blue-900 shadow-md ring-4 ring-blue-100"
-                        : isApprovedBranch
-                        ? "bg-emerald-50/70 border-emerald-200 text-emerald-800"
-                        : "bg-gray-50 border-gray-200 text-gray-500"
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      {isForAssessmentActive ? (
-                        <FileText className="w-4 h-4 text-blue-600 animate-pulse" />
-                      ) : isApprovedBranch ? (
-                        <Check className="w-4 h-4 text-emerald-600" />
-                      ) : (
-                        <div className="w-2 h-2 rounded-full bg-gray-400" />
-                      )}
-                      <span className="text-xs font-bold">For Assessment</span>
-                    </div>
-                    <p className="text-[10px] text-gray-500">Panayam ng Social Worker</p>
-                    {isForAssessmentActive && (
-                      <span className="inline-block text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-200/80 text-blue-900">
-                        Kasalukuyan
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* ── RIGHT BRANCH: APPROVED ── */}
-                <div className="flex flex-col items-center space-y-4">
-                  <div
-                    className={`w-full max-w-[200px] text-center px-4 py-2 rounded-xl border text-xs font-bold uppercase transition-all ${
-                      isApprovedBranch
-                        ? "bg-emerald-100/80 border-emerald-300 text-emerald-900 shadow-xs ring-2 ring-emerald-400/20"
-                        : "bg-gray-50 border-gray-200 text-gray-500"
-                    }`}
-                  >
-                    Approved
-                  </div>
-
-                  <div className="w-0.5 h-4 bg-gray-300"></div>
-
-                  {/* Step 3: For Release */}
-                  <div
-                    className={`w-full max-w-[200px] p-3.5 rounded-xl border transition-all text-center space-y-1 ${
-                      isForReleaseActive
-                        ? "bg-purple-50 border-purple-300 text-purple-900 shadow-md ring-4 ring-purple-100"
-                        : isReleasedActive
-                        ? "bg-emerald-50/70 border-emerald-200 text-emerald-800"
-                        : "bg-gray-50 border-gray-200 text-gray-500"
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      {isForReleaseActive ? (
-                        <Sparkles className="w-4 h-4 text-purple-600 animate-pulse" />
-                      ) : isReleasedActive ? (
-                        <Check className="w-4 h-4 text-emerald-600" />
-                      ) : (
-                        <div className="w-2 h-2 rounded-full bg-gray-400" />
-                      )}
-                      <span className="text-xs font-bold">For Release</span>
-                    </div>
-                    <p className="text-[10px] text-gray-500">Ipinoproseso ang disbursement</p>
-                    {isForReleaseActive && (
-                      <span className="inline-block text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-200/80 text-purple-900">
-                        Kasalukuyan
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="w-0.5 h-4 bg-gray-300"></div>
-
-                  {/* Step 4: Released */}
-                  <div
-                    className={`w-full max-w-[200px] p-3.5 rounded-xl border transition-all text-center space-y-1 ${
-                      isReleasedActive
-                        ? "bg-teal-50 border-teal-300 text-teal-900 shadow-md ring-4 ring-teal-100"
-                        : "bg-gray-50 border-gray-200 text-gray-500"
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      {isReleasedActive ? (
-                        <CheckCircle2 className="w-4 h-4 text-teal-600" />
-                      ) : (
-                        <div className="w-2 h-2 rounded-full bg-gray-400" />
-                      )}
-                      <span className="text-xs font-bold">Released</span>
-                    </div>
-                    <p className="text-[10px] text-gray-500">Matagumpay na natanggap ng aplikante</p>
-                    {isReleasedActive && (
-                      <span className="inline-block text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-teal-200/80 text-teal-900">
-                        Kumpleto
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ───────────────────────────────────────────────────────────────── */}
-        {/* ── TWO-COLUMN DETAILS: Application Info & Applicant Info ── */}
-        {/* ───────────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Card 1: Application Information */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-blue-600" />
-                Application Information
-              </h3>
-              <span className="text-[11px] font-medium text-gray-400">Opisyal na Resibo</span>
-            </div>
-
-            <div className="space-y-3.5 text-sm">
-              <div className="flex items-center justify-between py-1 border-b border-gray-50">
-                <span className="text-xs font-medium text-gray-500">Application No.:</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-mono font-bold text-blue-700">{selectedApp.applicationNo}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyNo(selectedApp.applicationNo)}
-                    title="Kopyahin"
-                    className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors cursor-pointer"
-                  >
-                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between py-1 border-b border-gray-50">
-                <span className="text-xs font-medium text-gray-500">Assistance:</span>
-                <span className="font-semibold text-gray-900">{selectedApp.assistance}</span>
-              </div>
-
-              <div className="flex items-center justify-between py-1 border-b border-gray-50">
-                <span className="text-xs font-medium text-gray-500">Date Applied:</span>
-                <span className="text-gray-800">{selectedApp.dateApplied}</span>
-              </div>
-
-              <div className="flex items-center justify-between py-1">
-                <span className="text-xs font-medium text-gray-500">Status:</span>
-                <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${badge.bg}`}
-                >
-                  {badge.icon}
-                  {badge.label}
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
+                Reference / QC ID Number
+              </span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xl sm:text-2xl font-mono font-black text-blue-700">
+                  {selectedApp.applicationNo}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyNo(selectedApp.applicationNo)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+                  title="Kopyahin ang Reference Number"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
-            {selectedApp.remarks && (
-              <div className="bg-blue-50/60 border border-blue-200/80 rounded-xl p-3 text-xs text-blue-900">
-                <span className="font-semibold">Paunawa:</span> {selectedApp.remarks}
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 border border-gray-200">
+                {selectedApp.assistanceCategory}
+              </span>
+              <span className="text-xs text-gray-400">
+                Petsa: <strong>{selectedApp.dateApplied}</strong>
+              </span>
+            </div>
           </div>
 
-          {/* Card 2: Applicant Information */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <User className="w-4 h-4 text-blue-600" />
-                Applicant Information
-              </h3>
-              <span className="text-[11px] font-medium text-gray-400">Beripikadong Rekord</span>
+          {/* Applicant Summary */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs pt-2">
+            <div>
+              <span className="text-gray-400 block font-medium">Buong Pangalan:</span>
+              <span className="font-bold text-gray-900 text-sm uppercase">{selectedApp.applicantName}</span>
             </div>
-
-            <div className="space-y-3.5 text-sm">
-              <div className="flex items-center justify-between py-1 border-b border-gray-50">
-                <span className="text-xs font-medium text-gray-500">Full Name:</span>
-                <span className="font-semibold text-gray-900 uppercase">{selectedApp.applicantName}</span>
-              </div>
-
-              <div className="flex items-center justify-between py-1 border-b border-gray-50">
-                <span className="text-xs font-medium text-gray-500">Date of Birth:</span>
-                <span className="text-gray-800">{selectedApp.dateOfBirth}</span>
-              </div>
-
-              <div className="flex items-start justify-between py-1 border-b border-gray-50 gap-4">
-                <span className="text-xs font-medium text-gray-500 shrink-0">Address:</span>
-                <span className="text-right text-gray-800 text-xs sm:text-sm">{selectedApp.address}</span>
-              </div>
-
-              <div className="flex items-center justify-between py-1">
-                <span className="text-xs font-medium text-gray-500">Contact Number:</span>
-                <span className="font-mono text-gray-800">{selectedApp.contactNumber}</span>
-              </div>
+            <div>
+              <span className="text-gray-400 block font-medium">Petsa ng Kapanganakan:</span>
+              <span className="font-medium text-gray-900">{selectedApp.dateOfBirth}</span>
             </div>
+            <div>
+              <span className="text-gray-400 block font-medium">Contact Number:</span>
+              <span className="font-mono font-medium text-gray-900">{selectedApp.contactNumber}</span>
+            </div>
+            <div>
+              <span className="text-gray-400 block font-medium">Email Address:</span>
+              <span className="font-medium text-gray-900 truncate block">{selectedApp.email || "N/A"}</span>
+            </div>
+          </div>
 
-            {selectedApp.email && (
-              <div className="pt-1 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                <span>Email Address:</span>
-                <span className="text-gray-700">{selectedApp.email}</span>
-              </div>
-            )}
+          <div className="text-xs pt-2 border-t border-gray-100">
+            <span className="text-gray-400 block font-medium">Tirahan / Address:</span>
+            <span className="font-medium text-gray-900">{selectedApp.address}</span>
           </div>
         </div>
 
-        {/* Card 3: Financial Aid & Payout Appointment */}
+        {/* Card 2: Financial Aid & Payout Appointment */}
         {(() => {
           const rawType = (selectedApp.assistance || "").replace(/\s*assistance/gi, "").trim()
           const formattedType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
@@ -980,11 +942,11 @@ export default function MyApplications() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  // ── MY APPLICATIONS LIST (Main View - Pinagsama sa Isa)
+  // ── MY APPLICATIONS LIST (Main View na may Active at Deleted Tabs)
   // ═══════════════════════════════════════════════════════════════════════
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header na may Search Box */}
+      {/* Header na may Title at Search Box */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
@@ -1011,11 +973,67 @@ export default function MyApplications() {
         </div>
       </div>
 
+      {/* ── TOP TABS NAVIGATION (Active vs Deleted Applications) ── */}
+      <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab("active")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === "active"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+          }`}
+        >
+          <FolderOpen className="w-4 h-4" />
+          <span>Aktibong Aplikasyon</span>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+              activeTab === "active" ? "bg-white text-blue-700" : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            {applications.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("deleted")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === "deleted"
+              ? "bg-red-600 text-white shadow-xs"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+          }`}
+        >
+          <Trash2 className="w-4 h-4" />
+          <span>Deleted Applications</span>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+              activeTab === "deleted" ? "bg-white text-red-700" : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            {deletedApplications.length}
+          </span>
+        </button>
+      </div>
+
+      {/* Notice Banner for Deleted Tab */}
+      {activeTab === "deleted" && (
+        <div className="bg-red-50/80 border border-red-200 rounded-xl p-3.5 text-xs text-red-800 flex items-center justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5">
+            <Info className="w-4 h-4 text-red-600 shrink-0" />
+            <span>
+              Ang mga sumusunod ay ang mga <strong>naburang aplikasyon</strong>. Maaari mo itong ibalik (<strong>Restore</strong>) o permanenteng burahin sa database (<strong>Permanent Delete</strong>).
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ── APPLICATION CARDS LIST ── */}
       <div className="space-y-4">
         <div className="flex items-center justify-between text-xs text-gray-500 px-1">
           <span>
-            Kabuuang Aplikasyon: <strong>{filteredApplications.length}</strong>
+            {activeTab === "active" ? "Kabuuang Aktibong Aplikasyon" : "Kabuuang Nabura"}:{" "}
+            <strong>{filteredApplications.length}</strong>
           </span>
           {searchQuery && (
             <button
@@ -1030,31 +1048,43 @@ export default function MyApplications() {
         {filteredApplications.length === 0 ? (
           <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-12 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto">
-              <FileText className="w-6 h-6" />
+              {activeTab === "active" ? <FileText className="w-6 h-6" /> : <Trash2 className="w-6 h-6" />}
             </div>
-            <h3 className="text-sm font-bold text-gray-700">Walang Nahanap na Aplikasyon</h3>
+            <h3 className="text-sm font-bold text-gray-700">
+              {activeTab === "active" ? "Walang Aktibong Aplikasyon" : "Walang Naburang Aplikasyon"}
+            </h3>
             <p className="text-xs text-gray-500 max-w-sm mx-auto">
-              Wala ka pang naisumiteng aplikasyon o walang rekord na tumutugma sa inyong paghahanap.
+              {activeTab === "active"
+                ? "Wala ka pang naisumiteng aplikasyon o walang rekord na tumutugma sa inyong paghahanap."
+                : "Walang mga aplikasyon na nasa Deleted items sa kasalukuyan."}
             </p>
           </div>
         ) : (
           filteredApplications.map((app) => {
             const badge = getStatusBadge(app.status)
+            const isDeleted = activeTab === "deleted"
 
             return (
               <div
-                key={app.applicationNo}
-                className="bg-white border border-gray-200 hover:border-blue-300 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all space-y-4"
+                key={app.applicationNo + app.assistance}
+                className={`bg-white border rounded-2xl p-5 sm:p-6 shadow-xs transition-all space-y-4 ${
+                  isDeleted ? "border-red-200/80 hover:border-red-300 bg-red-50/10" : "border-gray-200 hover:border-blue-300 hover:shadow-md"
+                }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono text-sm font-bold text-blue-700">
                         {app.applicationNo}
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
                         {app.assistanceCategory}
                       </span>
+                      {isDeleted && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-bold border border-red-200">
+                          Nabura noong: {app.deletedAt || "Recently"}
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-base font-bold text-gray-900">{app.assistance}</h3>
                   </div>
@@ -1141,30 +1171,54 @@ export default function MyApplications() {
                   </div>
 
                   <div className="flex items-center gap-2 w-full sm:w-auto">
-                    {/* ┌─────────────────────────┐
-                        │     DELETE / ARCHIVE      │
-                        └─────────────────────────┘ */}
-                    <button
-                      type="button"
-                      onClick={() => setAppToArchive(app)}
-                      className="px-3.5 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs"
-                      title="I-archive / Burahin ang Aplikasyon"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Delete / Archive</span>
-                    </button>
+                    {isDeleted ? (
+                      /* ── DELETED ACTIONS (RESTORE & PERMANENT DELETE) ── */
+                      <>
+                        <button
+                          type="button"
+                          disabled={isProcessing}
+                          onClick={() => handleRestore(app)}
+                          className="px-4 h-10 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs"
+                          title="Ibalik ang aplikasyon sa aktibong listahan"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Restore</span>
+                        </button>
 
-                    {/* ┌─────────────────────────┐
-                        │    VIEW APPLICATION     │
-                        └─────────────────────────┘ */}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedApp(app)}
-                      className="flex-1 sm:flex-initial px-5 h-10 rounded-xl bg-[#3b82f6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-sm"
-                    >
-                      <span>VIEW APPLICATION</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                        <button
+                          type="button"
+                          disabled={isProcessing}
+                          onClick={() => setAppToPermanentDelete(app)}
+                          className="px-4 h-10 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs hover:shadow-sm"
+                          title="Permanenteng burahin sa database"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Permanent Delete</span>
+                        </button>
+                      </>
+                    ) : (
+                      /* ── ACTIVE ACTIONS (DELETE & VIEW) ── */
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setAppToDelete(app)}
+                          className="px-3.5 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs"
+                          title="Burahin ang Aplikasyon"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedApp(app)}
+                          className="flex-1 sm:flex-initial px-5 h-10 rounded-xl bg-[#3b82f6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-sm"
+                        >
+                          <span>VIEW APPLICATION</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1173,46 +1227,46 @@ export default function MyApplications() {
         )}
       </div>
 
-      {/* ── ARCHIVE & DELETE CONFIRMATION MODAL ── */}
-      {appToArchive && (
+      {/* ── 1. SOFT DELETE CONFIRMATION MODAL ── */}
+      {appToDelete && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
           <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-200 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
             <div className="text-center space-y-1.5">
-              <h3 className="text-base font-bold text-gray-900">I-archive / Burahin ang Aplikasyon?</h3>
+              <h3 className="text-base font-bold text-gray-900">Burahin ang Aplikasyon?</h3>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Sigurado ka bang nais mong burahin ang aplikasyon para sa <strong className="text-gray-900">{appToArchive.assistance}</strong> ({appToArchive.applicationNo})?
+                Sigurado ka bang nais mong burahin ang aplikasyon para sa <strong className="text-gray-900">{appToDelete.assistance}</strong> ({appToDelete.applicationNo})?
               </p>
-              <p className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-left">
-                Paalala: Ang talaang ito ay ilalagay sa <strong>Archive ng database</strong> at aalisin sa iyong aktibong History Application.
+              <p className="text-[11px] text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-200 text-left">
+                Paalala: Malilipat ito sa <strong>"Deleted Applications"</strong> tab sa itaas kung saan maaari mo pa itong i-restore o tuluyang burahin.
               </p>
             </div>
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
               <button
                 type="button"
-                disabled={isArchiving}
-                onClick={() => setAppToArchive(null)}
+                disabled={isProcessing}
+                onClick={() => setAppToDelete(null)}
                 className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
               >
                 Kanselahin
               </button>
               <button
                 type="button"
-                disabled={isArchiving}
-                onClick={handleConfirmArchive}
+                disabled={isProcessing}
+                onClick={handleConfirmDelete}
                 className="px-5 py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
               >
-                {isArchiving ? (
+                {isProcessing ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Ina-archive...</span>
+                    <span>Binubura...</span>
                   </>
                 ) : (
                   <>
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>Oo, I-archive at Burahin</span>
+                    <span>Oo, Burahin</span>
                   </>
                 )}
               </button>
@@ -1221,11 +1275,69 @@ export default function MyApplications() {
         </div>
       )}
 
-      {/* ── SUCCESS NOTIFICATION BANNER ── */}
-      {archiveSuccess && (
-        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <Check className="w-4 h-4" />
-          <span>{archiveSuccess}</span>
+      {/* ── 2. PERMANENT DELETE CONFIRMATION MODAL ── */}
+      {appToPermanentDelete && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.75)" }}>
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-red-300 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-700 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-base font-bold text-red-950">Permanenteng Burahin ang Aplikasyon?</h3>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Sigurado ka bang nais mong permanenteng burahin ang <strong className="text-gray-900">{appToPermanentDelete.assistance}</strong> ({appToPermanentDelete.applicationNo})?
+              </p>
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-[11px] text-red-800 text-left font-medium space-y-1">
+                <span className="font-bold flex items-center gap-1 text-red-900">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                  Babala: Hindi na ito mababawi!
+                </span>
+                <p>
+                  Tuluyang mawawala ang rekord na ito mula sa PostgreSQL database, storage, at opisyal na portal.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={() => setAppToPermanentDelete(null)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Kanselahin
+              </button>
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={handleConfirmPermanentDelete}
+                className="px-5 py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                {isProcessing ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Permanenteng binubura...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Permanent Delete</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TOAST NOTIFICATION BANNER ── */}
+      {toastMessage && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 p-4 rounded-xl text-white text-xs font-bold shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200 ${
+            toastMessage.type === "danger" ? "bg-red-600" : "bg-emerald-600"
+          }`}
+        >
+          {toastMessage.type === "danger" ? <Trash2 className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+          <span>{toastMessage.text}</span>
         </div>
       )}
     </div>
