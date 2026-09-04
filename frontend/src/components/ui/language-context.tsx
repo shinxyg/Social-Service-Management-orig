@@ -68,6 +68,8 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   navTrainingProgram: { en: "Training Program", tl: "Programa sa Pagsasanay", bis: "Programa sa Pagbansay" },
   navOtherPrograms: { en: "Other Programs", tl: "Ibang Programa", bis: "Ubang Programa" },
   navTrackApplication: { en: "Track Application", tl: "Subaybayan ang Aplikasyon", bis: "Subaya ang Aplikasyon" },
+  navMyApplications: { en: "My Applications", tl: "Aking mga Aplikasyon", bis: "Akong mga Aplikasyon" },
+  navHistories: { en: "Histories", tl: "Histories", bis: "Histories" },
   newBadge: { en: "{count} new", tl: "{count} bago", bis: "{count} bag-o" },
   noNewNotifications: { en: "No new notifications.", tl: "Walang bagong notification.", bis: "Walay bag-ong pahibalo." },
   collapseSidebar: { en: "Collapse sidebar", tl: "I-collapse ang sidebar", bis: "I-collapse ang sidebar" },

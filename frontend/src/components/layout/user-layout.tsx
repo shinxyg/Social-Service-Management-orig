@@ -130,7 +130,7 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
       ],
     },
     { id: "financialAid", path: "/portal/financial-aid", label: "Financial Aid Disbursement", icon: Wallet },
-    { id: "myApplications", path: "/portal/my-applications", label: t("navMyApplications") || "My Application", icon: FileText },
+    { id: "myApplications", path: "/portal/my-applications", label: t("navMyApplications") || "My Applications", icon: FileText },
   ]
 }
 
@@ -399,7 +399,24 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
                     )}
                   </NavLink>
                 )
-                return open ? link : <Tooltip key={path} label={item.label}>{link}</Tooltip>
+                const rendered = open ? link : <Tooltip key={path} label={item.label}>{link}</Tooltip>
+
+                // Divider + section label bago ang My Applications (Histories)
+                if (item.id === "myApplications" || path === "/portal/my-applications") {
+                  return (
+                    <div key={`section-${item.id || path}`}>
+                      <div className={`my-3 border-t border-sidebar-foreground/10 ${!open && "mx-2"}`} />
+                      {open && (
+                        <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40 select-none">
+                          {t("navHistories") || "HISTORIES"}
+                        </p>
+                      )}
+                      {rendered}
+                    </div>
+                  )
+                }
+
+                return rendered
               })}
             </div>
           </div>
