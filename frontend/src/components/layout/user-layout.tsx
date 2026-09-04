@@ -18,7 +18,7 @@ import {
   X,
   FileText,
   Wallet,
-  Sparkles,
+  LayoutDashboard,
 } from "lucide-react"
 import { Tooltip } from "../ui/tooltip"
 import { AIChatWidget } from "../ui/ai-chat-widget"
@@ -65,10 +65,10 @@ interface ResidentNavItem {
 function getResidentNav(t: (key: string, vars?: Record<string, string>) => string): ResidentNavItem[] {
   return [
     {
-      id: "overview",
-      path: "/portal/services",
-      label: "Lahat ng Serbisyo (Directory)",
-      icon: Sparkles,
+      id: "dashboard",
+      path: "/portal/dashboard",
+      label: "Portal Dashboard",
+      icon: LayoutDashboard,
     },
     {
       id: "aics",
@@ -270,8 +270,11 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
       <div className={`flex flex-col h-full ${open ? "w-64" : "w-16"}`}>
         {/* Brand + Toggle */}
         <div className={`p-5 flex items-center gap-3 ${!open ? "flex-col justify-center px-0" : "justify-between"}`}>
-          <div className={`flex items-center gap-3 ${!open && "justify-center"}`}>
-            <Tooltip label="GovServe">
+          <NavLink
+            to="/portal/dashboard"
+            className={`flex items-center gap-3 ${!open && "justify-center"} hover:opacity-90 transition-opacity cursor-pointer`}
+          >
+            <Tooltip label="GovServe Portal Dashboard">
               <div className="h-11 w-11 flex items-center justify-center shrink-0">
                 <img
                   src="/samples/Government Service Integrity Seal.png"
@@ -285,9 +288,12 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
                 <p className="text-sm font-bold text-sidebar-foreground leading-tight truncate">
                   GovServe
                 </p>
+                <p className="text-[10px] text-sidebar-foreground/60 font-semibold leading-tight truncate">
+                  Citizen Portal
+                </p>
               </div>
             )}
-          </div>
+          </NavLink>
 
           <Tooltip label={open ? t("collapseSidebar") : t("expandSidebar")}>
             <button
