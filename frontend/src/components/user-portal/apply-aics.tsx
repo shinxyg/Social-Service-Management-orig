@@ -23,6 +23,7 @@ interface ApplyAICSProps {
 type Step = "requirements" | "checklist" | "personal" | "documents" | "review" | "appointment" | "form" | "matching" | "pending"
 
 import { API_BASE } from "../../config/api"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
 export default function ApplyAICS({ initialType, initialTypeKey, onBack }: ApplyAICSProps) {
   const { t } = useLanguage()
@@ -168,7 +169,7 @@ const [step, setStep] = useState<Step>(
     ? eduEligResident && eduEligAge && eduEligSchool && eduEligIndigent
     : checklistResident && checklistPatient
 
-  const [qcId] = useState("110000116932100")
+  const [qcId] = useState(() => getLoggedInUserQcid())
   const [checkingEligibility, setCheckingEligibility] = useState(true)
   const [isBlocked, setIsBlocked] = useState(false)
   const [pFirstName, setPFirstName] = useState("")
@@ -239,19 +240,20 @@ const [step, setStep] = useState<Step>(
   const [dBarangay, setDBarangay] = useState("")
 
   useEffect(() => {
-    setPFirstName("CLARISA MAE")
-    setPMiddleName("GALIAS")
-    setPLastName("DIMAL")
+    const prof = getCurrentUserProfile()
+    setPFirstName(prof.firstName)
+    setPMiddleName(prof.middleName || "")
+    setPLastName(prof.lastName)
     setPNationality("FILIPINO")
-    setPBirthDate("2004-10-29")
-    setPAge("21")
-    setPGender("Babae")
-    setPCivilStatus("Single")
-    setPHouseNumber("11")
-    setPStreetName("OLD CABUYAO SAMPALOK ST")
-    setPBarangay("Sauyo")
-    setPPhoneNumber("0900 000 0000")
-    setPEmail("dimalmae@gmail.com")
+    setPBirthDate(prof.birthDate || "2004-10-29")
+    setPAge(String(prof.age || "21"))
+    setPGender(prof.sex === "MALE" ? "Lalaki" : "Babae")
+    setPCivilStatus(prof.civilStatus || "Single")
+    setPHouseNumber(prof.houseNo || "")
+    setPStreetName(prof.street || "")
+    setPBarangay(prof.barangay || "Sauyo")
+    setPPhoneNumber(prof.mobileNumber || "09000000000")
+    setPEmail(prof.email || "resident@gmail.com")
   }, [qcId])
 
   useEffect(() => {

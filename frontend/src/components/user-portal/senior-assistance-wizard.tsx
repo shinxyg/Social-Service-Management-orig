@@ -38,29 +38,11 @@ export interface UserProfile {
   addressBarangay: string
   addressCityMunicipality: string
   contactNo?: string
-  email?: string
 }
 
-const MOCK_USER_PROFILE: UserProfile = {
-  qcidNo: "110000116932100",
-  firstName: "CLARISA MAE",
-  middleName: "GALIAS",
-  lastName: "DIMAL",
-  suffix: "",
-  nationality: "FILIPINO",
-  dobMonth: "10",
-  dobDay: "29",
-  dobYear: "1960",
-  age: "65",
-  sex: "Female",
-  civilStatus: "Single",
-  addressHouseNo: "11",
-  addressStreet: "OLD CABUYAO SAMPALOK ST",
-  addressBarangay: "Sauyo",
-  addressCityMunicipality: "Quezon City",
-  contactNo: "09000000000",
-  email: "dimalmae@gmail.com",
-}
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+
+const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 
 export interface SeniorAssistanceWizardProps {
   onBack?: () => void

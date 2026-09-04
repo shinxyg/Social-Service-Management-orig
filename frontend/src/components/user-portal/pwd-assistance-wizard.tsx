@@ -32,27 +32,11 @@ export interface UserProfile {
   addressStreet: string
   addressBarangay: string
   addressCityMunicipality: string
-  qcidNo?: string
 }
 
-const MOCK_USER_PROFILE: UserProfile = {
-  userId: "1",
-  firstName: "CLARISA",
-  middleName: "",
-  lastName: "BERNARDINO",
-  suffix: "",
-  dobMonth: "OCTOBER",
-  dobDay: "29",
-  dobYear: "2004",
-  age: "20",
-  contactNo: "09123456789",
-  email: "clarisa.bernardino@example.com",
-  addressHouseNo: "123",
-  addressStreet: "MALIKAS ST",
-  addressBarangay: "CENTRAL",
-  addressCityMunicipality: "QUEZON CITY",
-  qcidNo: "QC-2024-00129",
-}
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+
+const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 
 
 const DISABILITY_TYPES = [

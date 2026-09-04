@@ -18,10 +18,11 @@ import {
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
 function generateReference(_status?: string | null, qcid?: string) {
-  if (qcid && qcid.trim()) return qcid.trim()
-  return "110000116932100"
+  if (qcid && qcid.trim() && qcid !== "110000116932100") return qcid.trim()
+  return getLoggedInUserQcid()
 }
 
 type IdStatus = "new" | "renewal" | "loss" | null
@@ -334,31 +335,7 @@ interface SoloParentApplicationWizardProps {
   onBlockedStatusChange?: (blocked: boolean) => void
 }
 
-const MOCK_USER_PROFILE: UserProfile = {
-  qcidNo: "110000116932100",
-  firstName: "CLARISA MAE",
-  middleName: "GALIAS",
-  lastName: "DIMAL",
-  suffix: "",
-  nationality: "FILIPINO",
-  dobMonth: "10",
-  dobDay: "29",
-  dobYear: "1960",
-  age: "65",
-  sex: "Female",
-  civilStatus: "Single",
-  addressHouseNo: "11",
-  addressStreet: "OLD CABUYAO SAMPALOK ST",
-  addressBarangay: "Sauyo",
-  addressCityMunicipality: "Quezon City",
-  contactNo: "09000000000",
-  email: "dimalmae@gmail.com",
-  bloodType: "O+",
-  emergencyFirstName: "CLARENCE",
-  emergencyLastName: "MILLARES",
-  emergencyContactNo: "09123123123",
-  emergencyRelationship: "Friend / Neighbor",
-}
+const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 
 interface FamilyMember {
   id: string

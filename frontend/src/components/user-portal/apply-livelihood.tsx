@@ -6,6 +6,7 @@ import LivelihoodStatusCard, { type LivelihoodApplicationRecord } from "./liveli
 import LivelihoodAssistanceView from "./livelihood-assistance-view"
 import LivelihoodMonitoringView from "./livelihood-monitoring-view"
 import { API_BASE } from "../../config/api"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 import {
   FileText,
   Package,
@@ -160,17 +161,15 @@ export default function ApplyLivelihood() {
 
     const fetchApp = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/livelihood/applications?qcid=110000116932100`)
+        const userQcid = getLoggedInUserQcid()
+        const res = await fetch(`${API_BASE}/api/livelihood/applications?qcid=${userQcid}`)
         if (res.ok) {
           const data = await res.json()
           if (data.success && data.applications && data.applications.length > 0) {
             const match = data.applications.find(
               (a: any) =>
-                a.reference_number === "LP-2026-2518" ||
-                a.reference_number === "LP-2026-1042" ||
-                a.qcid === "110000116932100" ||
-                a.user_id === "110000116932100" ||
-                (a.first_name && a.first_name.includes("CLARISA"))
+                a.qcid === userQcid ||
+                a.user_id === userQcid
             ) || data.applications[0]
             setActiveApplication(match)
             return

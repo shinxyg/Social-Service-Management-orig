@@ -15,6 +15,7 @@ import {
   MapPin,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
+import { getLoggedInUserQcid } from "../../utils/userProfile"
 import {
   FIXED_ASSISTANCE_AMOUNTS,
   getSavedDisbursements,
@@ -113,7 +114,7 @@ export default function MyApplications() {
       checkAndAutoReleaseScheduledDisbursements()
 
       try {
-        const qcId = "110000116932100"
+        const qcId = getLoggedInUserQcid()
         const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcId}`)
         if (res.ok) {
           const data = await res.json()

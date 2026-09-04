@@ -20,6 +20,7 @@ import {
   parseAppointmentDateTime,
 } from "../../utils/financialAidSync"
 import { API_BASE } from "../../config/api"
+import { getLoggedInUserQcid } from "../../utils/userProfile"
 import { useLanguage } from "../ui/language-context"
 
 export default function ApplyFinancialAid() {
@@ -61,7 +62,7 @@ export default function ApplyFinancialAid() {
           }
         }
 
-        const qcId = "110000116932100"
+        const qcId = getLoggedInUserQcid()
         const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcId}`)
         if (res.ok) {
           const data = await res.json()

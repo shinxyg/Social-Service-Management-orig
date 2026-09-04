@@ -226,26 +226,9 @@ interface PWDApplicationWizardProps {
   initialIdStatus?: "new" | "renewal" | "loss"
 }
 
-const MOCK_USER_PROFILE: UserProfile = {
-  qcidNo: "110000116932100",
-  firstName: "CLARISA MAE",
-  middleName: "GALIAS",
-  lastName: "DIMAL",
-  suffix: "",
-  nationality: "FILIPINO",
-  dobMonth: "10",
-  dobDay: "29",
-  dobYear: "2004",
-  age: "21",
-  sex: "Female",
-  civilStatus: "Single",
-  addressHouseNo: "11",
-  addressStreet: "OLD CABUYAO SAMPALOK ST",
-  addressBarangay: "Sauyo",
-  addressCity: "QUEZON CITY",
-  contactNo: "0900 000 0000",
-  email: "dimalmae@gmail.com",
-}
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+
+const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 
 // real uploaded file + generated preview URL, instead of a plain boolean
 interface UploadedDoc {
@@ -515,8 +498,8 @@ function formatFileSize(bytes: number) {
 
 // Uses the user's official QCID Number
 function generateReferenceNumber(qcid?: string) {
-  if (qcid && qcid.trim()) return qcid.trim()
-  return "110000116932100"
+  if (qcid && qcid.trim() && qcid !== "110000116932100") return qcid.trim()
+  return getLoggedInUserQcid()
 }
 
 export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_PROFILE, initialIdStatus }: PWDApplicationWizardProps) {
