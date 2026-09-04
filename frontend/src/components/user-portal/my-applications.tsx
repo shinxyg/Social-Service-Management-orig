@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Clock,
   CheckCircle2,
-  User,
   Sparkles,
   ChevronRight,
   ShieldCheck,
