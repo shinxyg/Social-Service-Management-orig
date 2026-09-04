@@ -59,7 +59,6 @@ export const Register = () => {
   const googleProfile = (location.state as { googleProfile?: { email: string; firstName: string; lastName: string } } | null)?.googleProfile;
 
   const [email, setEmail] = useState(googleProfile?.email || '');
-  const [confirmEmail, setConfirmEmail] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const otpInputRefs = useRef<Array<HTMLInputElement | null>>([]);
@@ -227,10 +226,9 @@ export const Register = () => {
     setError('');
 
     const trimmedEmail = email.trim();
-    const trimmedConfirm = confirmEmail.trim();
 
-    if (!trimmedEmail || !trimmedConfirm) {
-      setError('Please fill in both email fields.');
+    if (!trimmedEmail) {
+      setError('Please enter your email address.');
       return;
     }
 
@@ -251,11 +249,6 @@ export const Register = () => {
         setError('Invalid Gmail address format.');
         return;
       }
-    }
-
-    if (trimmedEmail.toLowerCase() !== trimmedConfirm.toLowerCase()) {
-      setError('Email addresses do not match.');
-      return;
     }
 
     setIsSendingOtp(true);
@@ -616,17 +609,6 @@ export const Register = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter Email Address"
-                      className={inputClass}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Confirm Email Address:</label>
-                    <input
-                      type="email"
-                      value={confirmEmail}
-                      onChange={(e) => setConfirmEmail(e.target.value)}
                       placeholder="Enter Email Address"
                       className={inputClass}
                       required
