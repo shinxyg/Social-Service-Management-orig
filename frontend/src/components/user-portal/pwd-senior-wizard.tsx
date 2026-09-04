@@ -270,6 +270,14 @@ function Field({
   )
 }
 
+function formatPwdId(val: string): string {
+  const digits = val.replace(/^PWD-?/i, "").replace(/\D/g, "").slice(0, 16)
+  if (!digits) return ""
+  if (digits.length <= 6) return digits
+  if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
+  return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10, 16)}`
+}
+
 function TextInput({
   value,
   onChange,
@@ -280,6 +288,7 @@ function TextInput({
   numbersOnly = false,
   maxLength,
   prefix,
+  isPwdIdMask = false,
 }: {
   value: string
   onChange: (v: string) => void
@@ -290,9 +299,15 @@ function TextInput({
   numbersOnly?: boolean
   maxLength?: number
   prefix?: string
+  isPwdIdMask?: boolean
 }) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let raw = e.target.value
+    if (isPwdIdMask) {
+      const formatted = formatPwdId(raw)
+      onChange(formatted)
+      return
+    }
     if (prefix && raw.toUpperCase().startsWith(prefix.toUpperCase())) {
       raw = raw.slice(prefix.length)
     }
@@ -322,13 +337,13 @@ function TextInput({
           {prefix}
         </span>
         <input
-          type={numbersOnly ? "tel" : type}
-          inputMode={numbersOnly ? "numeric" : undefined}
+          type={isPwdIdMask || numbersOnly ? "tel" : type}
+          inputMode={isPwdIdMask || numbersOnly ? "numeric" : undefined}
           value={displayVal}
           placeholder={placeholder}
           onChange={handleChange}
           disabled={disabled}
-          maxLength={maxLength}
+          maxLength={isPwdIdMask ? 18 : maxLength}
           className="w-full px-3 py-2 text-sm bg-transparent focus:outline-none font-mono placeholder:font-sans"
         />
       </div>
@@ -337,13 +352,13 @@ function TextInput({
 
   return (
     <input
-      type={numbersOnly ? "tel" : type}
-      inputMode={numbersOnly ? "numeric" : undefined}
+      type={isPwdIdMask || numbersOnly ? "tel" : type}
+      inputMode={isPwdIdMask || numbersOnly ? "numeric" : undefined}
       value={value}
       placeholder={placeholder}
       onChange={handleChange}
       disabled={disabled}
-      maxLength={maxLength}
+      maxLength={isPwdIdMask ? 18 : maxLength}
       className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
         disabled
           ? "border-border bg-gray-100 text-muted-foreground cursor-not-allowed"
@@ -1247,6 +1262,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                         <div className="flex flex-col sm:flex-row gap-2">
                           <TextInput
                             prefix="PWD-"
+                            isPwdIdMask
                             value={formData.existingPwdIdNumber}
                             onChange={(v) => {
                               updateField("existingPwdIdNumber", v)
@@ -1376,6 +1392,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                         <div className="flex flex-col sm:flex-row gap-2">
                           <TextInput
                             prefix={dontKnowId ? undefined : "PWD-"}
+                            isPwdIdMask={!dontKnowId}
                             value={formData.existingPwdIdNumber}
                             onChange={(v) => {
                               updateField("existingPwdIdNumber", v)
@@ -1585,6 +1602,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           <div className="flex flex-col sm:flex-row gap-2">
                             <TextInput
                               prefix="PWD-"
+                              isPwdIdMask
                               value={formData.existingPwdIdNumber}
                               onChange={(v) => {
                                 updateField("existingPwdIdNumber", v)
@@ -1704,6 +1722,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           <div className="flex flex-col sm:flex-row gap-2">
                             <TextInput
                               prefix={dontKnowId ? undefined : "PWD-"}
+                              isPwdIdMask={!dontKnowId}
                               value={formData.existingPwdIdNumber}
                               onChange={(v) => {
                                 updateField("existingPwdIdNumber", v)
