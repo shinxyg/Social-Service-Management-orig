@@ -120,9 +120,19 @@ async function initDb() {
 
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
+
+      -- Seed default admin and staff accounts
+      INSERT INTO users (email, password, first_name, last_name, role, is_email_verified, qcid_number)
+      VALUES 
+        ('admin@quezoncity.gov.ph', 'admin123', 'System', 'Administrator', 'staff', true, '110000116932100'),
+        ('admin', 'admin123', 'System', 'Administrator', 'staff', true, '110000116932100'),
+        ('staff@quezoncity.gov.ph', 'staff123', 'Social', 'Worker', 'staff', true, '110000116932101'),
+        ('staff', 'staff123', 'Social', 'Worker', 'staff', true, '110000116932101'),
+        ('superadmin', 'changeme', 'Super', 'Admin', 'super_admin', true, '110000116932102')
+      ON CONFLICT (email) DO NOTHING;
     `);
 
-    console.log('✅ PostgreSQL database tables and indexes verified/initialized successfully.');
+    console.log('✅ PostgreSQL database tables, indexes, and default admin accounts verified/initialized successfully.');
   } catch (err) {
     console.warn('⚠️ Note during database auto-init:', err.message);
   }
