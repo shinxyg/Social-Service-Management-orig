@@ -517,6 +517,12 @@ export default function SeniorCitizenApplicationWizard({
         address: `${formData.houseNo || ""} ${formData.street || ""} ${formData.barangay || ""}, QUEZON CITY`.trim(),
         vaccinatedCovid: "Yes",
         applyingFor: "myself",
+        emergencyLastName: formData.emergencyLastName || userProfile?.emergencyLastName || "Dimal",
+        emergencyFirstName: formData.emergencyFirstName || userProfile?.emergencyFirstName || "Juan",
+        emergencyName: `${formData.emergencyFirstName || userProfile?.emergencyFirstName || "Juan"} ${formData.emergencyLastName || userProfile?.emergencyLastName || "Dimal"}`.trim(),
+        emergencyContactNo: formData.emergencyContactNo || userProfile?.emergencyContactNo || "09123456789",
+        emergencyRelationship: formData.emergencyRelationship || userProfile?.emergencyRelationship || "Child",
+        emergencyAddress: formData.emergencyAddress || userProfile?.emergencyAddress || "Quezon City",
         documents: Object.keys(uploadedFiles).map((k) => ({
           name: k,
           filename: uploadedFiles[k]?.[0]?.name || "doc.pdf",

@@ -996,6 +996,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         disabilityClass: effectiveDisabilityClass || "apparent",
         causeOfDisability: formData.causeOfDisability || "Congenital / Inborn",
         applyingFor: "myself",
+        emergencyFirstName: formData.emergencyFirstName || userProfile?.emergencyFirstName || "Clarence",
+        emergencyLastName: formData.emergencyLastName || userProfile?.emergencyLastName || "Millares",
+        emergencyMiddleName: formData.emergencyMiddleName || "",
+        emergencyName: `${formData.emergencyFirstName || userProfile?.emergencyFirstName || "Clarence"} ${formData.emergencyLastName || userProfile?.emergencyLastName || "Millares"}`.trim(),
+        emergencyContactNo: formData.emergencyContactNo || userProfile?.emergencyContactNo || "09151312123",
+        emergencyRelationship: formData.emergencyRelationship || userProfile?.emergencyRelationship || "Guardian",
+        emergencyAddress: formData.emergencyAddress || userProfile?.emergencyAddress || "Quezon City",
         documents: Object.keys(uploaded).map((k) => ({
           name: k,
           filename: uploaded[k]?.file.name || "doc.jpg",

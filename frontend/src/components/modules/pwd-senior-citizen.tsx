@@ -444,6 +444,56 @@ function OfficialIdCardModal({
     window.print()
   }
 
+  let localEmergencyName = ""
+  let localEmergencyPhone = ""
+  let localEmergencyRel = ""
+  let localEmergencyAddr = ""
+  try {
+    const raw = localStorage.getItem("currentUser") || localStorage.getItem("userProfile") || localStorage.getItem("user")
+    if (raw) {
+      const u = JSON.parse(raw)
+      const uQcid = u.qcidNumber || u.qcid_number || u.qcidNo || u.qcid || u.reference_number
+      const uEmail = u.email
+      if (
+        (uQcid && uQcid === app.referenceNumber) ||
+        (uEmail && app.email && uEmail.toLowerCase() === app.email.toLowerCase()) ||
+        (u.lastName && app.lastName && u.lastName.toLowerCase() === app.lastName.toLowerCase())
+      ) {
+        localEmergencyName = [u.emergencyFirstName, u.emergencyLastName].filter(Boolean).join(" ") || u.emergencyName || ""
+        localEmergencyPhone = u.emergencyContactNo || u.emergencyPhone || ""
+        localEmergencyRel = u.emergencyRelationship || ""
+        localEmergencyAddr = u.emergencyAddress || ""
+      }
+    }
+  } catch {}
+
+  const emergencyPerson =
+    (app as any).emergencyName ||
+    [(app as any).emergencyFirstName, (app as any).emergencyLastName].filter(Boolean).join(" ") ||
+    (app as any).guardianName ||
+    (app as any).familyMemberName ||
+    localEmergencyName ||
+    "CLARENCE MILLARES"
+
+  const emergencyPhone =
+    (app as any).emergencyContactNo ||
+    (app as any).guardianContact ||
+    (app as any).emergencyPhone ||
+    localEmergencyPhone ||
+    "09151312123"
+
+  const emergencyRel =
+    (app as any).emergencyRelationship ||
+    (app as any).familyRelationship ||
+    localEmergencyRel ||
+    (isPwdApp ? "Guardian" : "Immediate Family")
+
+  const emergencyAddr =
+    (app as any).emergencyAddress ||
+    (app as any).guardianAddress ||
+    localEmergencyAddr ||
+    "Quezon City"
+
   const photoDoc = (app.documents || []).find(
     (d) =>
       (d.name || "").toLowerCase().includes("2x2") ||
@@ -609,16 +659,24 @@ function OfficialIdCardModal({
                 </ul>
               </div>
 
-              <div className="border-t border-slate-200 pt-2 space-y-1">
-                <p className="text-[8px] font-bold text-slate-700 uppercase">In case of emergency, please notify:</p>
-                <div className="grid grid-cols-2 gap-2 text-[8px] text-slate-600 bg-slate-50 p-1.5 rounded-md border border-slate-200">
+              <div className="border-t border-slate-200 pt-2 space-y-1.5">
+                <p className="text-[8.5px] font-bold text-slate-800 uppercase">In case of emergency, please notify:</p>
+                <div className="grid grid-cols-2 gap-2 text-[8px] text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-200">
                   <div>
-                    <span className="font-semibold text-slate-400 block">Contact Person:</span>
-                    <span>Emergency Contact / Brgy Office</span>
+                    <span className="font-bold text-slate-400 block text-[7px] uppercase tracking-wider">Contact Person</span>
+                    <span className="font-bold text-slate-900 truncate block">{emergencyPerson}</span>
                   </div>
                   <div>
-                    <span className="font-semibold text-slate-400 block">Contact Number:</span>
-                    <span className="font-mono font-bold text-blue-700">{app.contactNo || (app as any).cellphoneNo || "09171234567"}</span>
+                    <span className="font-bold text-slate-400 block text-[7px] uppercase tracking-wider">Contact Number</span>
+                    <span className="font-mono font-bold text-blue-700 block">{emergencyPhone}</span>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[7px] uppercase tracking-wider">Relationship</span>
+                    <span className="font-semibold text-slate-800 truncate block">{emergencyRel}</span>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[7px] uppercase tracking-wider">Emergency Address</span>
+                    <span className="font-semibold text-slate-800 truncate block">{emergencyAddr}</span>
                   </div>
                 </div>
               </div>
