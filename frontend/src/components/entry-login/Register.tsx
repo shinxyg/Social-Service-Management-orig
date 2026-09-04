@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Mail, User, Check, ShieldCheck } from 'lucide-react';
+import { Mail, User, Check, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { API_BASE } from '../../config/api';
 
 type Step = 0 | 1 | 2;
@@ -90,6 +90,8 @@ export const Register = () => {
   // Step 2 - Login Credentials
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmTouched, setConfirmTouched] = useState(false);
 
@@ -871,35 +873,57 @@ export const Register = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>{requiredMark} Password:</label>
-                      <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        onFocus={() => setPasswordFocused(true)}
-                        onBlur={() => setPasswordFocused(false)}
-                        placeholder="Enter password"
-                        className={inputClass}
-                        required
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          onFocus={() => setPasswordFocused(true)}
+                          onBlur={() => setPasswordFocused(false)}
+                          placeholder="Enter password"
+                          className={`${inputClass} pr-10`}
+                          required
+                        />
+                        <button
+                          type="button"
+                          tabIndex={-1}
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className={labelClass}>{requiredMark} Confirm Password:</label>
-                      <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        onFocus={() => setConfirmTouched(true)}
-                        placeholder="Enter password confirmation"
-                        className={`${inputClass} ${confirmMismatch ? 'border-red-400 focus:ring-red-500' : ''}`}
-                        required
-                      />
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          onFocus={() => setConfirmTouched(true)}
+                          placeholder="Enter password confirmation"
+                          className={`${inputClass} pr-10 ${confirmMismatch ? 'border-red-400 focus:ring-red-500' : ''}`}
+                          required
+                        />
+                        <button
+                          type="button"
+                          tabIndex={-1}
+                          onClick={() => setShowConfirmPassword((v) => !v)}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                          aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                       {confirmMismatch && (
                         <p className="text-[11px] text-red-500 mt-1">Invalid.</p>
                       )}
                     </div>
                   </div>
 
-                  {passwordFocused && (
+                  {(passwordFocused || password.length > 0) && (
                     <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1.5">
                       <p className="text-xs font-semibold text-slate-700">Password must contain the following:</p>
                       <PasswordRule met={hasLower} label="A lowercase letter" />
