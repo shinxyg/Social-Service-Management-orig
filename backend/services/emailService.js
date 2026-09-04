@@ -1,4 +1,22 @@
 const nodemailer = require('nodemailer');
+const path = require('path');
+const fs = require('fs');
+
+// Path to official project seal logo
+const logoPath = path.join(__dirname, '..', 'assets', 'logo.png');
+
+function getLogoAttachments() {
+  if (fs.existsSync(logoPath)) {
+    return [
+      {
+        filename: 'logo.png',
+        path: logoPath,
+        cid: 'project_logo',
+      },
+    ];
+  }
+  return [];
+}
 
 /**
  * Creates and returns a configured Nodemailer transporter.
@@ -80,8 +98,8 @@ async function sendPwdApprovalEmail({
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://quezoncity.gov.ph/wp-content/uploads/2021/01/QC-Logo-2021.png" alt="QC Seal" width="60" style="margin-bottom: 10px; display: inline-block;" onerror="this.style.display='none'" />
-          <h1>LUNGSOD QUEZON</h1>
+          <img src="cid:project_logo" alt="Quezon City Seal" width="60" height="60" style="margin-bottom: 10px; display: inline-block;" />
+          <h1>QUEZON CITY GOVERNMENT</h1>
           <p>Social Services &amp; Development Department (SSDD) — Persons with Disability Affairs Division</p>
         </div>
 
@@ -90,9 +108,9 @@ async function sendPwdApprovalEmail({
             <span class="badge">✓ APPLICATION APPROVED</span>
           </div>
 
-          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Mabuhay, ${recipientName || 'Aplikante'}!</h2>
+          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Greetings, ${recipientName || 'Applicant'}!</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
-            Ang iyong aplikasyon para sa <strong>Persons with Disability (PWD) ID</strong> ay opisyal nang <strong>NAAPRUBAHAN</strong> ng Quezon City SSDD.
+            Your application for the <strong>Persons with Disability (PWD) ID</strong> has been officially <strong>APPROVED</strong> by the Quezon City Social Services &amp; Development Department (SSDD).
           </p>
 
           <div class="card">
@@ -103,7 +121,7 @@ async function sendPwdApprovalEmail({
 
             <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 14px;">
               <tr>
-                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Pangalan ng Benepisyaryo:</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Beneficiary Name:</td>
                 <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right;">${recipientName || '—'}</td>
               </tr>
               <tr>
@@ -116,7 +134,7 @@ async function sendPwdApprovalEmail({
                 <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right;">${bloodType}</td>
               </tr>` : ''}
               <tr>
-                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Petsa ng Pag-apruba:</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Date of Approval:</td>
                 <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right;">${dateStr}</td>
               </tr>
               <tr>
@@ -127,16 +145,16 @@ async function sendPwdApprovalEmail({
           </div>
 
           <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #166534; line-height: 1.5;">
-            <strong>Paalala:</strong> Maaari mo nang gamitin ang iyong <strong>Digital PWD ID</strong> sa User Portal para sa pag-avail ng 20% statutory discount at mga benepisyo sa Quezon City.
+            <strong>Notice:</strong> You can now access and view your <strong>Digital PWD ID</strong> via the GovServe User Portal to avail of the 20% statutory discount and city benefits in Quezon City.
           </div>
 
           <a href="https://frontend-production-1c51.up.railway.app/portal" class="button" target="_blank">
-            BUKSAN ANG AKING DIGITAL PWD ID PORTAL
+            OPEN MY DIGITAL PWD ID PORTAL
           </a>
         </div>
 
         <div class="footer">
-          <p style="margin: 0 0 4px;">Ito ay opisyal na automated email mula sa Quezon City SSDD Social Service Management System.</p>
+          <p style="margin: 0 0 4px;">This is an official automated notification from the Quezon City SSDD Social Services Management System.</p>
           <p style="margin: 0;">Quezon City Hall Compound, Elliptical Road, Diliman, Quezon City | Helpline: 122</p>
         </div>
       </div>
@@ -144,17 +162,19 @@ async function sendPwdApprovalEmail({
     </html>
   `;
 
-  // 1. PRIMARY: Direct Gmail SMTP (Official Google Mail - lands in Inbox, passes SPF/DKIM/DMARC)
+  // 1. PRIMARY: Direct Gmail SMTP
   const transporter = createTransporter();
   const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
+  const attachments = getLogoAttachments();
 
   const mailOptions = {
     from: `"Quezon City SSDD (PWD Affairs)" <${senderEmail}>`,
     to: recipientEmail.trim(),
     subject: `[QC SSDD] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
-    text: `Mabuhay ${recipientName}! Ang iyong PWD ID Application ay Aprubado na. Official ID: ${pwdIdNumber || referenceNumber}.`,
+    text: `Greetings ${recipientName}! Your PWD ID Application has been approved. Official ID: ${pwdIdNumber || referenceNumber}.`,
     html: htmlContent,
+    attachments,
   };
 
   if (transporter) {
@@ -190,7 +210,7 @@ async function sendPwdApprovalEmail({
     }
   }
 
-  // 2. SECONDARY FALLBACK: Brevo HTTPS REST API (Port 443 — works if cloud environment blocks outbound SMTP ports)
+  // 2. SECONDARY FALLBACK: Brevo HTTPS REST API
   const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
   if (brevoApiKey) {
     try {
@@ -221,7 +241,7 @@ async function sendPwdApprovalEmail({
     }
   }
 
-  // 3. TERTIARY FALLBACK: Resend HTTPS API (Port 443)
+  // 3. TERTIARY FALLBACK: Resend HTTPS API
   const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
   if (resendApiKey) {
     try {
@@ -236,7 +256,7 @@ async function sendPwdApprovalEmail({
           from: 'Quezon City SSDD <onboarding@resend.dev>',
           to: [recipientEmail.trim()],
           subject: `[QC SSDD] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
-          text: `Mabuhay ${recipientName}! Ang iyong PWD ID Application ay Aprubado na. Official ID: ${pwdIdNumber || referenceNumber}.`,
+          text: `Greetings ${recipientName}! Your PWD ID Application has been approved. Official ID: ${pwdIdNumber || referenceNumber}.`,
           html: htmlContent,
         }),
       });
@@ -262,7 +282,7 @@ async function sendPwdApprovalEmail({
 /**
  * Sends a 6-digit OTP verification email to the recipient.
  */
-async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Applicant' }) {
+async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident' }) {
   if (!recipientEmail || !recipientEmail.includes('@')) {
     console.warn(`[Mailer] Invalid recipient email for OTP: "${recipientEmail}". Skipped.`);
     return { success: false, message: 'Invalid recipient email' };
@@ -274,7 +294,7 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Applican
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Quezon City Government - Registration OTP Verification</title>
+      <title>Quezon City Government - Account Verification OTP</title>
       <style>
         body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         .container { max-width: 580px; margin: 30px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
@@ -293,8 +313,8 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Applican
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://quezoncity.gov.ph/wp-content/uploads/2021/01/QC-Logo-2021.png" alt="QC Seal" width="60" style="margin-bottom: 10px; display: inline-block;" onerror="this.style.display='none'" />
-          <h1>LUNGSOD QUEZON</h1>
+          <img src="cid:project_logo" alt="Quezon City Seal" width="60" height="60" style="margin-bottom: 10px; display: inline-block;" />
+          <h1>QUEZON CITY GOVERNMENT</h1>
           <p>Social Services Management System (GovServe Portal)</p>
         </div>
 
@@ -303,24 +323,24 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Applican
             <span class="badge">EMAIL VERIFICATION CODE</span>
           </div>
 
-          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Kumusta!</h2>
+          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Hello!</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
-            Gamitin ang 6-digit One-Time Password (OTP) code sa ibaba upang makumpleto ang pagpaparehistro ng iyong GovServe Resident Account:
+            Please use the 6-digit One-Time Password (OTP) verification code below to complete your registration for your GovServe Resident Account:
           </p>
 
           <div class="otp-box">
-            <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 1px;">Iyong Verification Code</div>
+            <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 1px;">YOUR VERIFICATION CODE</div>
             <div class="otp-code">${otpCode}</div>
-            <div class="otp-note">Valid sa loob ng <strong>10 minuto</strong>.</div>
+            <div class="otp-note">Valid for <strong>10 minutes</strong>.</div>
           </div>
 
           <div class="warning-box">
-            <strong>Paalala sa Seguridad:</strong> Huwag ibahagi ang OTP code na ito sa kahit kanino. Ang mga kawani ng Quezon City SSDD ay hindi hihingi ng iyong OTP.
+            <strong>Security Notice:</strong> Do not share this OTP verification code with anyone. Quezon City SSDD personnel and administrators will never ask for your code.
           </div>
         </div>
 
         <div class="footer">
-          <p style="margin: 0 0 4px;">Ito ay opisyal na automated security email mula sa Quezon City GovServe Portal.</p>
+          <p style="margin: 0 0 4px;">This is an official automated security notification from the Quezon City GovServe Portal.</p>
           <p style="margin: 0;">Quezon City Hall Compound, Elliptical Road, Diliman, Quezon City</p>
         </div>
       </div>
@@ -328,17 +348,19 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Applican
     </html>
   `;
 
-  // 1. PRIMARY: Direct Gmail SMTP (Official Google Mail)
+  // 1. PRIMARY: Direct Gmail SMTP
   const transporter = createTransporter();
   const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
+  const attachments = getLogoAttachments();
 
   const mailOptions = {
     from: `"Quezon City GovServe" <${senderEmail}>`,
     to: recipientEmail.trim(),
     subject: `[QC GovServe] Your OTP Verification Code: ${otpCode}`,
-    text: `Ang iyong QC GovServe OTP Verification Code ay: ${otpCode}. Valid sa loob ng 10 minuto.`,
+    text: `Your Quezon City GovServe OTP Verification Code is: ${otpCode}. This code is valid for 10 minutes. Do not share this code with anyone.`,
     html: htmlContent,
+    attachments,
   };
 
   if (transporter) {
