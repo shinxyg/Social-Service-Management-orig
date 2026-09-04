@@ -97,6 +97,11 @@ interface SeniorCitizenApplicationSubmission {
   email: string
   address: string
 
+  // Optional Disability Info (if dual or mapped from unified records)
+  disabilityType?: string
+  disabilityClass?: string
+  causeOfDisability?: string
+
   // Vaccination Info
   vaccinatedCovid: string
 
@@ -1147,9 +1152,6 @@ const DEFAULT_SEED_APPLICATIONS: ApplicationSubmission[] = [
     cellphoneNo: "09193337788",
     email: "teresa.lopez@gmail.com",
     address: "15 Dahlia St., Brgy. Fairview, Quezon City",
-    disabilityType: "",
-    disabilityClass: "",
-    causeOfDisability: "",
     vaccinatedCovid: "Yes",
     applyingFor: "myself",
     documents: [
