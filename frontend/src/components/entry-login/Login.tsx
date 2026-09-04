@@ -226,7 +226,7 @@ export const Login = () => {
             </button>
           </form>
 
-          <div className="mt-6 pt-2 flex items-center justify-between gap-4 text-xs">
+          <div className="mt-5 flex items-center justify-between text-[11px] sm:text-xs">
             <button
               type="button"
               onClick={() => {
@@ -237,14 +237,12 @@ export const Login = () => {
                 setResetError('');
                 setIsConfirmModalOpen(false);
               }}
-              className="text-blue-600 hover:underline font-medium bg-transparent border-none cursor-pointer p-0 shrink-0"
+              className="text-blue-600 hover:underline font-medium bg-transparent border-none cursor-pointer p-0 whitespace-nowrap"
             >
               Forgot password?
             </button>
 
-            <span className="text-slate-300 select-none">|</span>
-
-            <p className="text-slate-400 m-0 text-right">
+            <span className="text-slate-400 whitespace-nowrap">
               Don't have an account?{' '}
               <a
                 href="/register"
@@ -253,7 +251,7 @@ export const Login = () => {
               >
                 Register here
               </a>
-            </p>
+            </span>
           </div>
         </div>
       </div>
