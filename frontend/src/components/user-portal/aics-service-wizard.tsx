@@ -784,7 +784,7 @@ export default function AICSServiceWizard({
           onCloseInfoBanner={() => setShowInfoBanner(false)}
           showSlotBanner={showSlotBanner}
           onCloseSlotBanner={() => setShowSlotBanner(false)}
-          onClose={onBack}
+          onClose={() => setShowRequirementsModal(false)}
         />
       )}
 
@@ -1913,10 +1913,13 @@ export default function AICSServiceWizard({
 
         {/* 🔔 CONFIRMATION DIALOG / MODAL BEFORE SUBMIT */}
         {showConfirmModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div
+            onClick={() => setShowConfirmModal(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200 cursor-pointer"
+          >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col border border-gray-200 text-left"
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col border border-gray-200 text-left cursor-default"
             >
               {/* Modal Header */}
               <div className="p-6 pb-5 flex items-start justify-between gap-4">
@@ -1963,8 +1966,14 @@ export default function AICSServiceWizard({
 
         {/* Sample Document Modal */}
         {sampleDocOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-            <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
+          <div
+            onClick={() => setSampleDocOpen(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 cursor-pointer"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden cursor-default"
+            >
               <div className="p-6 pb-4 border-b border-gray-200 shrink-0 flex items-center justify-between">
                 <h2 className="text-lg font-heading font-semibold text-gray-900">
                   Sample Document: {sampleDocOpen}
@@ -2071,8 +2080,14 @@ function UploadedDocPreviewModal({
   }, [file, isImage])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col cursor-default"
+      >
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <h4 className="text-sm font-bold text-foreground uppercase tracking-wide truncate pr-2">{title}</h4>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0">

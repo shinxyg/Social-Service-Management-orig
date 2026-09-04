@@ -315,28 +315,35 @@ export default function RequirementsModal({
 }: RequirementsModalProps) {
   const { t } = useLanguage()
 
+  const handleDismiss = () => {
+    if (onClose) {
+      onClose()
+    } else if (onContinue) {
+      onContinue()
+    }
+  }
+
   return (
     <div
-      className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+      onClick={handleDismiss}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200 cursor-pointer"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-card w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden relative"
+        className="bg-card w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden relative cursor-default"
       >
         <div className="p-6 pb-4 border-b border-border shrink-0 flex items-center justify-between gap-4">
           <h2 className="text-lg font-heading font-semibold text-foreground">
             {t("requirementsReviewHeader")}
           </h2>
-          {onClose && (
-            <button
-              onClick={onClose}
-              type="button"
-              className="text-muted-foreground hover:text-foreground cursor-pointer rounded-lg p-1"
-              aria-label={t("close")}
-            >
-              <X className="h-5 w-5" />
-            </button>
-          )}
+          <button
+            onClick={handleDismiss}
+            type="button"
+            className="text-muted-foreground hover:text-foreground cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-muted"
+            aria-label={t("close")}
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         {(showInfoBanner || (showSlotBanner && requirements.slotBannerText)) && (

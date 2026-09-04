@@ -788,7 +788,7 @@ if (step === "requirements" && requirements) {
         onCloseInfoBanner={() => setShowInfoBanner(false)}
         showSlotBanner={showSlotBanner}
         onCloseSlotBanner={() => setShowSlotBanner(false)}
-        onClose={() => onBack?.()}
+        onClose={() => setStep(hasRequirements ? "checklist" : "form")}
       />
     </>
   )
@@ -1859,8 +1859,14 @@ if (step === "requirements" && requirements) {
             </div>
           </div>
       {sampleDocOpen && SAMPLE_DOCUMENT_INFO[sampleDocOpen] && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-card w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
+        <div
+          onClick={() => setSampleDocOpen(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-card w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden cursor-default"
+          >
             <div className="p-6 pb-4 border-b border-border shrink-0">
               <h2 className="text-lg font-heading font-semibold text-foreground">
                 {t("sampleLabel", { name: sampleDocOpen })}
@@ -2190,10 +2196,13 @@ if (step === "requirements" && requirements) {
 
         {/* 🔔 CONFIRMATION DIALOG / MODAL BEFORE SUBMIT */}
         {showConfirmModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div
+            onClick={() => setShowConfirmModal(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200 cursor-pointer"
+          >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col border border-border text-left"
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col border border-border text-left cursor-default"
             >
               {/* Modal Header */}
               <div className="p-6 pb-5 flex items-start justify-between gap-4">
@@ -2544,8 +2553,14 @@ function UploadedDocPreviewModal({
   }, [file, isImage])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col cursor-default"
+      >
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <h4 className="text-sm font-bold text-foreground uppercase tracking-wide truncate pr-2">{title}</h4>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0">
