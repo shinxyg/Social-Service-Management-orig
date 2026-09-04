@@ -279,6 +279,7 @@ function TextInput({
   invalid = false,
   numbersOnly = false,
   maxLength,
+  prefix,
 }: {
   value: string
   onChange: (v: string) => void
@@ -288,9 +289,13 @@ function TextInput({
   invalid?: boolean
   numbersOnly?: boolean
   maxLength?: number
+  prefix?: string
 }) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let raw = e.target.value
+    if (prefix && raw.toUpperCase().startsWith(prefix.toUpperCase())) {
+      raw = raw.slice(prefix.length)
+    }
     if (numbersOnly) {
       raw = raw.replace(/\D/g, "")
     }
@@ -299,6 +304,37 @@ function TextInput({
     }
     onChange(raw)
   }
+
+  const displayVal = prefix && value.toUpperCase().startsWith(prefix.toUpperCase())
+    ? value.slice(prefix.length)
+    : value
+
+  if (prefix) {
+    return (
+      <div className={`flex w-full rounded-lg border overflow-hidden transition-all focus-within:ring-2 ${
+        disabled
+          ? "border-border bg-gray-100 cursor-not-allowed opacity-60"
+          : invalid
+          ? "border-red-400 focus-within:ring-red-300 bg-red-50"
+          : "border-border focus-within:ring-blue-400 bg-white"
+      }`}>
+        <span className="inline-flex items-center px-3.5 bg-slate-100 border-r border-border text-xs font-bold text-slate-700 select-none tracking-wider shrink-0 font-mono">
+          {prefix}
+        </span>
+        <input
+          type={numbersOnly ? "tel" : type}
+          inputMode={numbersOnly ? "numeric" : undefined}
+          value={displayVal}
+          placeholder={placeholder}
+          onChange={handleChange}
+          disabled={disabled}
+          maxLength={maxLength}
+          className="w-full px-3 py-2 text-sm bg-transparent focus:outline-none font-mono placeholder:font-sans"
+        />
+      </div>
+    )
+  }
+
   return (
     <input
       type={numbersOnly ? "tel" : type}
@@ -1210,13 +1246,14 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2">
                           <TextInput
+                            prefix="PWD-"
                             value={formData.existingPwdIdNumber}
                             onChange={(v) => {
                               updateField("existingPwdIdNumber", v)
                               updateField("hasExistingPwdId", t("yes"))
                               setIsIdVerified(false)
                             }}
-                            placeholder="e.g. PWD-137404-2026-847708"
+                            placeholder="137404-2026-847708"
                             invalid={attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
                           />
                           <button
@@ -1338,13 +1375,14 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2">
                           <TextInput
+                            prefix={dontKnowId ? undefined : "PWD-"}
                             value={formData.existingPwdIdNumber}
                             onChange={(v) => {
                               updateField("existingPwdIdNumber", v)
                               updateField("hasExistingPwdId", t("yes"))
                               setIsIdVerified(false)
                             }}
-                            placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "e.g. PWD-137404-2026-847708"}
+                            placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "137404-2026-847708"}
                             disabled={dontKnowId}
                             invalid={attemptedNext && !dontKnowId && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
                           />
@@ -1546,13 +1584,14 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           </div>
                           <div className="flex flex-col sm:flex-row gap-2">
                             <TextInput
+                              prefix="PWD-"
                               value={formData.existingPwdIdNumber}
                               onChange={(v) => {
                                 updateField("existingPwdIdNumber", v)
                                 updateField("hasExistingPwdId", t("yes"))
                                 setIsIdVerified(false)
                               }}
-                              placeholder="e.g. PWD-137404-2026-847708"
+                              placeholder="137404-2026-847708"
                               invalid={attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
                             />
                             <button
@@ -1664,13 +1703,14 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           </div>
                           <div className="flex flex-col sm:flex-row gap-2">
                             <TextInput
+                              prefix={dontKnowId ? undefined : "PWD-"}
                               value={formData.existingPwdIdNumber}
                               onChange={(v) => {
                                 updateField("existingPwdIdNumber", v)
                                 updateField("hasExistingPwdId", t("yes"))
                                 setIsIdVerified(false)
                               }}
-                              placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "e.g. PWD-137404-2026-847708"}
+                              placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "137404-2026-847708"}
                               disabled={dontKnowId}
                               invalid={attemptedNext && !dontKnowId && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
                             />
