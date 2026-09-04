@@ -768,7 +768,14 @@ function ResidentHeader({
             className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl hover:bg-muted transition-colors cursor-pointer"
           >
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-medium text-foreground leading-tight">{t("hiUserShort", { name: "Clarisa" })}</p>            
+              <p className="text-xs font-medium text-foreground leading-tight">{t("hiUserShort", { name: (() => {
+                try {
+                  const u = JSON.parse(localStorage.getItem("currentUser") || "{}");
+                  return u.firstName || u.first_name || "Resident";
+                } catch {
+                  return "Resident";
+                }
+              })() })}</p>            
             </div>
             <Avatar />
           </button>
@@ -800,9 +807,7 @@ function ResidentHeader({
     <ProfileModal
       open={profileOpen}
       onClose={() => setProfileOpen(false)}
-      name="Resident"
-      email="resident@example.com"
-      role="Applicant"
+      role="Resident"
     />
     {selectedNotif && (
   <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-sm">

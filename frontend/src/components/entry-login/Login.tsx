@@ -48,27 +48,34 @@ export const Login = () => {
           body: JSON.stringify({ email, password }),
         });
         const data = await res.json();
-        const detectedRole = data.role || (email.toLowerCase().includes('admin') ? 'staff' : 'user');
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userRole', detectedRole);
-        if (data.user) {
-          localStorage.setItem('currentUser', JSON.stringify(data.user));
-        }
 
-        setTimeout(() => {
-          window.location.href = detectedRole === 'staff' ? '/aics' : '/portal/aics';
-        }, 1200);
+        if (res.ok && data.success) {
+          const detectedRole = data.role || (email.toLowerCase().includes('admin') ? 'staff' : 'user');
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('userRole', detectedRole);
+          if (data.user) {
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+          }
+
+          setTimeout(() => {
+            if (detectedRole === 'super_admin') {
+              window.location.href = '/super-admin';
+            } else if (detectedRole === 'staff') {
+              window.location.href = '/aics';
+            } else {
+              window.location.href = '/portal/aics';
+            }
+          }, 1200);
+        } else {
+          setIsLoginLoading(false);
+          setError(data.message || 'Invalid credentials or account is not registered. Please register first.');
+        }
       } catch (err) {
-        // Fallback
-        const detectedRole = email.toLowerCase().includes('admin') ? 'staff' : 'user';
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userRole', detectedRole);
-        setTimeout(() => {
-          window.location.href = detectedRole === 'staff' ? '/aics' : '/portal/aics';
-        }, 1200);
+        setIsLoginLoading(false);
+        setError('Network error connecting to backend. Please check your connection and try again.');
       }
     } else {
-      setError('Please enter your username and password.');
+      setError('Please enter your email and password.');
     }
   };
 

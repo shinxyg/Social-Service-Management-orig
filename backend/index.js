@@ -85,6 +85,7 @@ app.use('/api/livelihood', livelihoodRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/pwd-senior', pwdSeniorRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/users', authRoutes);
 
 // Optional: Serve frontend static build if running fullstack single-service mode
 const frontendDistPath = path.join(__dirname, '../frontend/dist');

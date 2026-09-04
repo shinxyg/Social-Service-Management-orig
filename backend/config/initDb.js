@@ -112,6 +112,12 @@ async function initDb() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS qcid_number VARCHAR(100);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_month VARCHAR(50);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_day VARCHAR(10);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_year VARCHAR(10);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo_url TEXT;
+
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
     `);

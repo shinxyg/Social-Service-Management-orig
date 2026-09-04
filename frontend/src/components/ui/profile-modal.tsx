@@ -1,15 +1,18 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, User, AlertTriangle, IdCard, Eye, EyeOff, Languages, Check, Camera } from "lucide-react"
 import { useLanguage, type Language } from "./language-context"
+import { getSavedProfilePhoto, saveProfilePhoto } from "../../utils/profilePhoto"
+import { API_BASE } from "../../config/api"
 
 interface ProfileModalProps {
   open: boolean
   onClose: () => void
-  name: string
-  email: string
-  role: string
+  name?: string
+  email?: string
+  role?: string
   qcidNo?: string
   registeredVia?: string
+  user?: any
 }
 
 interface FormData {
@@ -30,142 +33,207 @@ interface FormData {
   mobileNumber: string
 }
 
-const initialFormData: FormData = {
-  firstName: "CLARISA MAE",
-  middleName: "GALIAS",
-  lastName: "DIMAL",
-  suffix: "",
-  birthMonth: "OCTOBER",
-  birthDay: "29",
-  birthYear: "2004",
-  city: "QUEZON CITY",
-  houseNo: "11",
-  street: "SAMPALOC STREET",
-  barangay: "SAUYO",
-  workingInCity: false,
-  occupation: "",
-  sex: "FEMALE",
-  mobileNumber: "0900 000 0000",
-}
-
-import { getSavedProfilePhoto, saveProfilePhoto } from "../../utils/profilePhoto"
-
 export function ProfileModal({
   open,
   onClose,
-  name,
+  name = "Resident",
   email,
-  qcidNo = "110000116932100",
+  qcidNo,
   registeredVia = "Email / Password",
+  user,
 }: ProfileModalProps) {
-  const [photoUrl, setPhotoUrl] = useState<string | null>(() => getSavedProfilePhoto(qcidNo))
-  const [tab, setTab] = useState<"account" | "personal" | "preferences">("account")
-  const [showQcid, setShowQcid] = useState(false)
-  const [formData, setFormData] = useState<FormData>(initialFormData)
-  const { language, setLanguage, t } = useLanguage()
+  // Load current registered user from props or localStorage
+  const getStoredUser = () => {
+    if (user) return user;
+    try {
+      const stored = localStorage.getItem("currentUser");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const currentUser = getStoredUser();
+  const resolvedEmail = email || currentUser?.email || "resident@gmail.com";
+  const resolvedQcid = qcidNo || currentUser?.qcidNumber || currentUser?.qcid_number || "110000116932100";
+
+  const buildInitialData = (): FormData => {
+    const u = currentUser;
+    return {
+      firstName: (u?.firstName || u?.first_name || name || "CLARISA MAE").toUpperCase(),
+      middleName: (u?.middleName || u?.middle_name || "").toUpperCase(),
+      lastName: (u?.lastName || u?.last_name || "").toUpperCase(),
+      suffix: (u?.suffix || "").toUpperCase(),
+      birthMonth: (u?.birthMonth || u?.birth_month || "OCTOBER").toUpperCase(),
+      birthDay: u?.birthDay || u?.birth_day || "29",
+      birthYear: u?.birthYear || u?.birth_year || "2004",
+      city: (u?.city || "QUEZON CITY").toUpperCase(),
+      houseNo: u?.houseNo || u?.house_no || "",
+      street: (u?.street || "").toUpperCase(),
+      barangay: (u?.barangay || "SAUYO").toUpperCase(),
+      workingInCity: u?.workingInQC === "Yes" || u?.working_in_qc === "Yes" || false,
+      occupation: (u?.occupation || "").toUpperCase(),
+      sex: (u?.sex || "FEMALE").toUpperCase(),
+      mobileNumber: u?.mobileNumber || u?.mobile_number || "09000000000",
+    };
+  };
+
+  const [photoUrl, setPhotoUrl] = useState<string | null>(() => getSavedProfilePhoto(resolvedQcid));
+  const [tab, setTab] = useState<"account" | "personal" | "preferences">("account");
+  const [showQcid, setShowQcid] = useState(false);
+  const [formData, setFormData] = useState<FormData>(buildInitialData);
+  const [savedFormData, setSavedFormData] = useState<FormData>(buildInitialData);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
+
+  useEffect(() => {
+    if (open) {
+      const data = buildInitialData();
+      setFormData(data);
+      setSavedFormData(data);
+      setPhotoUrl(getSavedProfilePhoto(resolvedQcid));
+      setIsEditing(false);
+    }
+  }, [open, user]);
 
   const languageOptions: { value: Language; label: string }[] = [
     { value: "en", label: t("english") },
     { value: "tl", label: t("tagalog") },
     { value: "bis", label: t("bisaya") },
-  ]
-  const [isEditing, setIsEditing] = useState(false)
-  const [savedFormData, setSavedFormData] = useState<FormData>(initialFormData)
+  ];
 
-  if (!open) return null
+  if (!open) return null;
 
-    const handleInputChange = (
+  const handleInputChange = (
     field: keyof FormData,
     value: string | boolean
   ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }))
-  }
+    }));
+  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Pumili lang ng image file (JPG, PNG, atbp).")
-      return
+      alert("Pumili lang ng image file (JPG, PNG, atbp).");
+      return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      alert("Masyadong malaki ang file. 2MB pababa lang ang pwede.")
-      return
+      alert("Masyadong malaki ang file. 2MB pababa lang ang pwede.");
+      return;
     }
 
-    const reader = new FileReader()
-        reader.onload = () => {
-      const dataUrl = reader.result as string
-      setPhotoUrl(dataUrl)
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setPhotoUrl(dataUrl);
       try {
-        saveProfilePhoto(dataUrl, qcidNo)
+        saveProfilePhoto(dataUrl, resolvedQcid);
       } catch (err) {
-        console.error("Hindi na-save ang photo sa localStorage:", err)
+        console.error("Hindi na-save ang photo:", err);
       }
-    }
-    reader.readAsDataURL(file)
-    e.target.value = ""
-  }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
   const handleStartEdit = () => {
-    setIsEditing(true)
-  }
+    setIsEditing(true);
+  };
 
   const handleCancelEdit = () => {
-    setFormData(savedFormData)
-    setIsEditing(false)
-  }
+    setFormData(savedFormData);
+    setIsEditing(false);
+  };
 
-  // Shared classes for personal-info fields: locked/greyed out until
-  // "Edit Profile" is clicked, editable (white bg, blue focus ring) after.
   const fieldClass = (extra = "") =>
     `w-full border rounded-lg px-3 py-2.5 text-sm transition-colors ${
       isEditing
         ? `border-gray-300 bg-white text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${extra}`
         : "border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed"
-    }`
+    }`;
 
   const handleDeactivate = () => {
     const confirmed = window.confirm(
       "Deactivating your account is a permanent action. All your data will be removed and you will lose access to the portal. Continue?"
-    )
+    );
     if (confirmed) {
-      console.log("Account deactivated")
+      console.log("Account deactivated");
     }
-  }
+  };
 
   const handleDelete = () => {
     const confirmed = window.confirm(
       "Deleting your account cannot be undone. All your data will be permanently removed. Continue?"
-    )
+    );
     if (confirmed) {
-      console.log("Account deleted")
+      console.log("Account deleted");
     }
-  }
+  };
 
-  const handleUpdateProfile = () => {
-    console.log("Profile updated:", formData)
-    // TODO: hook up to real update-profile API call
-    setSavedFormData(formData)
-    setIsEditing(false)
-    alert(t("profileUpdatedSuccess"))
-  }
+  const handleUpdateProfile = async () => {
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/users/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: resolvedEmail,
+          firstName: formData.firstName,
+          middleName: formData.middleName,
+          lastName: formData.lastName,
+          suffix: formData.suffix,
+          birthMonth: formData.birthMonth,
+          birthDay: formData.birthDay,
+          birthYear: formData.birthYear,
+          city: formData.city,
+          houseNo: formData.houseNo,
+          street: formData.street,
+          barangay: formData.barangay,
+          workingInQC: formData.workingInCity ? "Yes" : "No",
+          occupation: formData.occupation,
+          sex: formData.sex,
+          mobileNumber: formData.mobileNumber,
+          profilePhotoUrl: photoUrl,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSavedFormData(formData);
+        setIsEditing(false);
+        if (data.user) {
+          localStorage.setItem("currentUser", JSON.stringify(data.user));
+        }
+        alert(t("profileUpdatedSuccess") || "Profile updated successfully in database!");
+      } else {
+        alert(data.message || "Failed to update profile.");
+      }
+    } catch (err) {
+      console.error("Profile update error:", err);
+      setSavedFormData(formData);
+      setIsEditing(false);
+      alert("Profile updated locally.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const maskQcid = (value: string) => {
-    // keep the last 4 digits visible, mask the rest, preserving spacing groups of 5
-    const visibleCount = 4
+    const visibleCount = 4;
     const masked = value
       .split("")
       .map((char, idx) =>
         idx < value.length - visibleCount && /\d/.test(char) ? "•" : char
       )
-      .join("")
-    return masked.replace(/(.{5})/g, "$1 ").trim()
-  }
+      .join("");
+    return masked.replace(/(.{5})/g, "$1 ").trim();
+  };
 
   const months = [
     "JANUARY",
@@ -180,15 +248,11 @@ export function ProfileModal({
     "OCTOBER",
     "NOVEMBER",
     "DECEMBER",
-  ]
+  ];
 
-  const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: 100 }, (_, i) => currentYear - i)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
 
-  // Full display name built from the last SAVED form fields only.
-  // Falls back to the `name` prop if the fields are somehow empty.
-  // Uses savedFormData (not formData) so it does NOT update live while typing —
-  // it only reflects changes after "Update Profile" is clicked.
   const displayName =
     [
       savedFormData.firstName,
@@ -197,7 +261,7 @@ export function ProfileModal({
       savedFormData.suffix,
     ]
       .filter((part) => part && part.trim().length > 0)
-      .join(" ") || name
+      .join(" ") || name;
 
   return (
     <div
@@ -211,11 +275,13 @@ export function ProfileModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors z-10"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors z-10 cursor-pointer"
           aria-label="Close"
         >
           <X className="h-6 w-6" />
-        </button>        {/* Greeting + QCID Section */}
+        </button>
+
+        {/* Greeting + QCID Section */}
         <div className="px-8 pt-6 pb-4">
           <h2 className="text-xl font-bold text-gray-900">{t("hiUser", { name: displayName })}</h2>
           <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -223,7 +289,7 @@ export function ProfileModal({
             <span className="text-sm text-gray-600">
               QCID No:{" "}
               <span className="font-semibold text-gray-800 tracking-wide">
-                {showQcid ? qcidNo : maskQcid(qcidNo)}
+                {showQcid ? resolvedQcid : maskQcid(resolvedQcid)}
               </span>
             </span>
             <button
@@ -319,7 +385,7 @@ export function ProfileModal({
                   {t("emailAddress")}
                 </label>
                 <div className="w-full rounded-lg bg-gray-100 px-4 py-3 text-sm text-gray-800">
-                  {email}
+                  {resolvedEmail}
                 </div>
               </div>
 
@@ -328,14 +394,6 @@ export function ProfileModal({
                   {t("registrationBy")}
                 </label>
                 <div className="text-sm text-gray-500">{registeredVia}</div>
-              </div>
-
-              <div className="flex justify-center pt-2">
-                <button
-                  className="rounded-xl bg-blue-600 text-white text-sm font-semibold px-8 py-3 hover:bg-blue-700 transition-colors cursor-pointer"
-                >
-                  {t("changePassword")}
-                </button>
               </div>
             </div>
           )}
@@ -673,15 +731,17 @@ export function ProfileModal({
                   <>
                     <button
                       onClick={handleCancelEdit}
-                      className="flex-1 h-11 rounded-lg border-2 border-blue-600 text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors cursor-pointer"
+                      disabled={isUpdating}
+                      className="flex-1 h-11 rounded-lg border-2 border-blue-600 text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-50"
                     >
                       {t("cancelBtn")}
                     </button>
                     <button
                       onClick={handleUpdateProfile}
-                      className="flex-1 h-11 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
+                      disabled={isUpdating}
+                      className="flex-1 h-11 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      {t("updateProfile")}
+                      {isUpdating ? "Saving..." : t("updateProfile")}
                     </button>
                   </>
                 ) : (
@@ -730,7 +790,7 @@ export function ProfileModal({
             </div>
           )}
 
-          {/* Danger Zone - shown on all tabs */}
+          {/* Danger Zone */}
           <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6 space-y-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -757,5 +817,5 @@ export function ProfileModal({
         </div>
       </div>
     </div>
-  )
+  );
 }

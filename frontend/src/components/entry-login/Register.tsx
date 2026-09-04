@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate , useLocation } from 'react-router-dom';
-import { Mail, User, Check, ShieldCheck, Camera, Upload, X, RefreshCw } from 'lucide-react';
-import { saveProfilePhoto } from '../../utils/profilePhoto';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Mail, User, Check, ShieldCheck } from 'lucide-react';
 import { API_BASE } from '../../config/api';
 
 type Step = 0 | 1 | 2;
@@ -75,19 +74,6 @@ export const Register = () => {
   const [birthDay, setBirthDay] = useState('');
   const [birthYear, setBirthYear] = useState('');
 
-  // Step 1 - Profile Photo
-  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>('');
-  const photoInputRef = useRef<HTMLInputElement | null>(null);
-  const [photoError, setPhotoError] = useState('');
-
-  // Live camera capture
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraError, setCameraError] = useState('');
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
   // Step 2 - Address
   const [city, setCity] = useState('');
   const [specifyCity, setSpecifyCity] = useState('');
@@ -132,94 +118,6 @@ export const Register = () => {
       setOccupation('');
     }
   }, [workingInQC]);
-
-  // Palitan ang object URL kapag nagbago ang photo, at i-clean up ang luma
-  // para hindi tumagas ng memory (memory leak) sa browser.
-  useEffect(() => {
-    if (!profilePhoto) {
-      setProfilePhotoPreview('');
-      return;
-    }
-    const objectUrl = URL.createObjectURL(profilePhoto);
-    setProfilePhotoPreview(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [profilePhoto]);
-
-  // Ihinto ang camera stream kapag na-close ang modal o umalis sa page.
-  useEffect(() => {
-    return () => {
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-    };
-  }, []);
-
-  const applyPhotoFile = (file: File) => {
-    setPhotoError('');
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('Mag-upload lang ng image file (JPG, PNG, atbp.).');
-      return;
-    }
-    if (file.size > MAX_PHOTO_SIZE_MB * 1024 * 1024) {
-      setPhotoError(`Dapat hindi lalagpas sa ${MAX_PHOTO_SIZE_MB}MB ang photo.`);
-      return;
-    }
-    setProfilePhoto(file);
-  };
-
-  const handlePhotoInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) applyPhotoFile(file);
-    e.target.value = '';
-  };
-
-  const handleRemovePhoto = () => {
-    setProfilePhoto(null);
-    setPhotoError('');
-  };
-
-  const openCamera = async () => {
-    setCameraError('');
-    setShowCamera(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-    } catch (err) {
-      console.error(err);
-      setCameraError('Hindi ma-access ang camera. Siguraduhing pinahintulutan ang camera permission, o mag-upload na lang ng photo.');
-    }
-  };
-
-  const closeCamera = () => {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
-    setShowCamera(false);
-    setCameraError('');
-  };
-
-  const capturePhoto = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], `profile-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
-      applyPhotoFile(file);
-      closeCamera();
-    }, 'image/jpeg', 0.92);
-  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -396,10 +294,6 @@ export const Register = () => {
     setError('');
     setConfirmTouched(true);
 
-    if (!profilePhoto && !profilePhotoPreview) {
-      setError('Please upload or take a profile photo.');
-      return;
-    }
     if (!firstName || !lastName) {
       setError('Please enter your first and last name.');
       return;
@@ -473,28 +367,22 @@ export const Register = () => {
           occupation,
           sex,
           mobileNumber,
-          profilePhotoUrl: profilePhotoPreview || null,
         }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        if (profilePhotoPreview) {
-          saveProfilePhoto(profilePhotoPreview);
-        }
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userRole', 'user');
+        if (data.user) {
+          localStorage.setItem('currentUser', JSON.stringify(data.user));
+        }
         setStep(2);
       } else {
         setError(data.message || 'Registration failed. Please try again.');
       }
     } catch (err) {
       console.error('Registration error:', err);
-      if (profilePhotoPreview) {
-        saveProfilePhoto(profilePhotoPreview);
-      }
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userRole', 'user');
-      setStep(2);
+      setError('Network error during registration. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -707,74 +595,6 @@ export const Register = () => {
               </div>
 
               <form onSubmit={handleAccountInfoSubmit} className="w-full space-y-6 text-left">
-
-                {/* Profile Photo */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-bold text-[#0F172A] border-b border-slate-200 pb-2">
-                    {requiredMark} Profile Photo
-                  </h3>
-
-                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-                    <div className="relative shrink-0">
-                      <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden">
-                        {profilePhotoPreview ? (
-                          <img
-                            src={profilePhotoPreview}
-                            alt="Profile preview"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-8 h-8 text-slate-300" />
-                        )}
-                      </div>
-                      {profilePhotoPreview && (
-                        <button
-                          type="button"
-                          onClick={handleRemovePhoto}
-                          title="Remove photo"
-                          className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white border border-slate-300 shadow-sm flex items-center justify-center text-slate-500 hover:text-red-600 hover:border-red-300 cursor-pointer"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex-1 w-full">
-                      <p className="text-xs text-slate-500 mb-2.5">
-                        Mag-upload ng malinaw na buong-mukha na larawan, o kumuha gamit ang camera.
-                      </p>
-                      <div className="flex flex-wrap gap-2.5">
-                        <button
-                          type="button"
-                          onClick={() => photoInputRef.current?.click()}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
-                        >
-                          <Upload className="w-3.5 h-3.5" />
-                          Upload Photo
-                        </button>
-                        <button
-                          type="button"
-                          onClick={openCamera}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors cursor-pointer"
-                        >
-                          <Camera className="w-3.5 h-3.5" />
-                          Take Photo
-                        </button>
-                      </div>
-                      <input
-                        ref={photoInputRef}
-                        type="file"
-                        accept="image/*"
-                        capture="user"
-                        onChange={handlePhotoInputChange}
-                        className="hidden"
-                      />
-                      {photoError && (
-                        <p className="text-[11px] text-red-500 mt-2">{photoError}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
 
                 {/* Personal Details */}
                 <div className="space-y-4">
@@ -1139,71 +959,6 @@ export const Register = () => {
 
         </div>
       </div>
-
-      {/* Camera capture modal */}
-      {showCamera && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-[1px] px-4">
-          <div className="bg-white rounded-xl shadow-lg p-5 w-full max-w-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-[#0F172A]">Take a photo</h3>
-              <button
-                type="button"
-                onClick={closeCamera}
-                className="w-7 h-7 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {cameraError ? (
-              <div className="p-3 text-xs text-red-600 bg-red-50 rounded-lg border border-red-200 text-center">
-                {cameraError}
-              </div>
-            ) : (
-              <div className="relative rounded-lg overflow-hidden bg-slate-900 aspect-square">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover -scale-x-100"
-                />
-              </div>
-            )}
-            <canvas ref={canvasRef} className="hidden" />
-
-            <div className="flex gap-2.5 mt-4">
-              <button
-                type="button"
-                onClick={closeCamera}
-                className="flex-1 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              {!cameraError && (
-                <button
-                  type="button"
-                  onClick={capturePhoto}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  Capture
-                </button>
-              )}
-              {cameraError && (
-                <button
-                  type="button"
-                  onClick={openCamera}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-4 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Try Again
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {isSubmitting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] px-4">
