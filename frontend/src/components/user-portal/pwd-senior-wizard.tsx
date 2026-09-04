@@ -735,39 +735,161 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
   const [isVerifying, setIsVerifying] = useState(false)
   const [isIdVerified, setIsIdVerified] = useState(false)
+  const [verifyError, setVerifyError] = useState<string | null>(null)
+  const [approvedPwdRecord, setApprovedPwdRecord] = useState<any | null>(null)
   const [reasonForReplacement, setReasonForReplacement] = useState("")
   const [reasonForRenewal, setReasonForRenewal] = useState("")
   const [dontKnowId, setDontKnowId] = useState(false)
 
-  const handleVerifyId = () => {
-    if (!dontKnowId && !(formData.existingPwdIdNumber || "").trim()) return
+  // Function to fetch all PWD applications from Backend + LocalStorage
+  const fetchAllPwdApps = async (): Promise<any[]> => {
+    let allApps: any[] = []
+    try {
+      const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+      if (res.ok) {
+        const apps = await res.json()
+        if (Array.isArray(apps)) allApps = apps
+      }
+    } catch {}
+
+    try {
+      const saved = localStorage.getItem("pwd_senior_applications")
+      if (saved) {
+        const localApps = JSON.parse(saved)
+        if (Array.isArray(localApps)) {
+          const ids = new Set(allApps.map((a) => a.id))
+          for (const la of localApps) {
+            if (!ids.has(la.id)) allApps.push(la)
+          }
+        }
+      }
+    } catch {}
+
+    return allApps
+  }
+
+  // Auto-paste and auto-populate approved PWD ID on mount for Renewal and Loss ID
+  useEffect(() => {
+    const autoLoadApprovedId = async () => {
+      const isRenewalOrLoss = initialIdStatus === "renewal" || initialIdStatus === "loss" || idStatus === "renewal" || idStatus === "loss"
+      if (!isRenewalOrLoss) return
+
+      const apps = await fetchAllPwdApps()
+      const userQcid = (userProfile?.qcidNo || "110000116932100").trim().toLowerCase()
+      const userEmail = (userProfile?.email || "dimalmae@gmail.com").trim().toLowerCase()
+
+      // Look for approved PWD application for this resident
+      const approvedApp = apps.find(
+        (a) =>
+          a.category === "PWD" &&
+          a.status === "approved" &&
+          (
+            (a.referenceNumber && a.referenceNumber.toLowerCase() === userQcid) ||
+            (a.email && a.email.toLowerCase() === userEmail) ||
+            (a.assignedIdNumber && a.assignedIdNumber.toLowerCase() === userQcid)
+          )
+      )
+
+      if (approvedApp) {
+        const officialId = approvedApp.assignedIdNumber || approvedApp.referenceNumber || ""
+        setApprovedPwdRecord(approvedApp)
+        setFormData((prev) => ({
+          ...prev,
+          existingPwdIdNumber: officialId,
+          causeOfDisability: approvedApp.causeOfDisability || prev.causeOfDisability,
+          specificDisability: approvedApp.specificDisability || prev.specificDisability,
+        }))
+        if (approvedApp.disabilityType) setDisabilityType(approvedApp.disabilityType)
+        if (approvedApp.disabilityClass) setDisabilityClass(approvedApp.disabilityClass)
+        setIsIdVerified(true)
+        setVerifyError(null)
+      } else {
+        setApprovedPwdRecord(null)
+        setIsIdVerified(false)
+      }
+    }
+
+    autoLoadApprovedId()
+  }, [initialIdStatus, idStatus, userProfile?.qcidNo, userProfile?.email])
+
+  const handleVerifyId = async () => {
+    setVerifyError(null)
+    const typed = (formData.existingPwdIdNumber || "").trim().toLowerCase()
+    const userQcid = (userProfile?.qcidNo || "110000116932100").trim().toLowerCase()
+    const userEmail = (userProfile?.email || "dimalmae@gmail.com").trim().toLowerCase()
+
+    if (!dontKnowId && !typed) {
+      setVerifyError("Ilagay ang inyong PWD ID number bago i-verify.")
+      return
+    }
+
     setIsVerifying(true)
-    setTimeout(() => {
+    try {
+      const apps = await fetchAllPwdApps()
+
+      // Hanapin ang aprubadong PWD application
+      const matchedApp = apps.find((a) => {
+        if (a.category !== "PWD") return false
+        // Dapat approved o may assigned ID number
+        if (a.status !== "approved" && !a.assignedIdNumber) return false
+
+        if (dontKnowId) {
+          // Verify gamit ang QCID / email
+          return (
+            (a.referenceNumber && a.referenceNumber.toLowerCase() === userQcid) ||
+            (a.email && a.email.toLowerCase() === userEmail) ||
+            (a.assignedIdNumber && a.assignedIdNumber.toLowerCase() === userQcid)
+          )
+        }
+
+        // Verify gamit ang typed PWD ID number o reference number
+        const matchAssigned = a.assignedIdNumber && a.assignedIdNumber.trim().toLowerCase() === typed
+        const matchRef = a.referenceNumber && a.referenceNumber.trim().toLowerCase() === typed
+        return matchAssigned || matchRef
+      })
+
+      if (matchedApp) {
+        const officialId = matchedApp.assignedIdNumber || matchedApp.referenceNumber || formData.existingPwdIdNumber
+        setIsIdVerified(true)
+        setVerifyError(null)
+        setApprovedPwdRecord(matchedApp)
+        if (matchedApp.disabilityType) setDisabilityType(matchedApp.disabilityType)
+        if (matchedApp.disabilityClass) setDisabilityClass(matchedApp.disabilityClass)
+        setFormData((prev) => ({
+          ...prev,
+          existingPwdIdNumber: officialId,
+          causeOfDisability: matchedApp.causeOfDisability || prev.causeOfDisability || "Acquired",
+          specificDisability: matchedApp.specificDisability || prev.specificDisability || "Visual Impairment / Low Vision",
+          pobCity: prev.pobCity || "QUEZON CITY",
+          pobProvince: prev.pobProvince || "METRO MANILA",
+          bloodType: prev.bloodType || "O+",
+          permanentAddress: prev.permanentAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
+          presentAddress: prev.presentAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
+          emergencyLastName: prev.emergencyLastName || "DIMAL",
+          emergencyFirstName: prev.emergencyFirstName || "ROBERTO",
+          emergencyContactNo: prev.emergencyContactNo || "09171234567",
+          emergencyRelationship: prev.emergencyRelationship || "Father",
+          emergencyAddress: prev.emergencyAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
+          heightCm: prev.heightCm || "160",
+          weightKg: prev.weightKg || "52",
+          colorOfHair: prev.colorOfHair || "Black",
+          colorOfEyes: prev.colorOfEyes || "Brown",
+          otherMarks: prev.otherMarks || "None",
+        }))
+      } else {
+        // WALANG NAHANAP NA APRUBADONG PWD ID RECORD
+        setIsIdVerified(false)
+        setApprovedPwdRecord(null)
+        setVerifyError(
+          "NO PWD ID RECORD FOUND: Walang nahanap na aprubadong PWD ID record sa system. Bawal mag-apply para sa Renewal o Replacement / Lost ID kapag wala pang rehistrado at aprubadong New App PWD ID."
+        )
+      }
+    } catch {
+      setIsIdVerified(false)
+      setVerifyError("Nagkaroon ng problema sa pag-verify. Pakisubukang muli.")
+    } finally {
       setIsVerifying(false)
-      setIsIdVerified(true)
-      setDisabilityType((prev) => prev || "Visual Disability")
-      setDisabilityClass((prev) => prev || "apparent")
-      setFormData((prev) => ({
-        ...prev,
-        causeOfDisability: prev.causeOfDisability || "Acquired",
-        specificDisability: prev.specificDisability || "Visual Impairment / Low Vision",
-        pobCity: prev.pobCity || "QUEZON CITY",
-        pobProvince: prev.pobProvince || "METRO MANILA",
-        bloodType: prev.bloodType || "O+",
-        permanentAddress: prev.permanentAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
-        presentAddress: prev.presentAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
-        emergencyLastName: prev.emergencyLastName || "DIMAL",
-        emergencyFirstName: prev.emergencyFirstName || "ROBERTO",
-        emergencyContactNo: prev.emergencyContactNo || "09171234567",
-        emergencyRelationship: prev.emergencyRelationship || "Father",
-        emergencyAddress: prev.emergencyAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
-        heightCm: prev.heightCm || "160",
-        weightKg: prev.weightKg || "52",
-        colorOfHair: prev.colorOfHair || "Black",
-        colorOfEyes: prev.colorOfEyes || "Brown",
-        otherMarks: prev.otherMarks || "None",
-      }))
-    }, 600)
+    }
   }
 
   const effectiveDisabilityClass =
@@ -1150,7 +1272,18 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             )}
                           </button>
                         </div>
-                        {attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) && (
+                        {verifyError && (
+                          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
+                            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-bold text-red-900">WALANG NAHANAP NA APRUBADONG PWD ID (NO RECORD FOUND)</p>
+                              <p className="mt-0.5 leading-relaxed">{verifyError}</p>
+                              <p className="mt-1 text-red-700 font-semibold">Paalala: Kailangan munang magparehistro at maaprubahan sa "New App PWD ID" bago makapag-renew.</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) && !verifyError && (
                           <p className="text-xs text-red-500">
                             {!(formData.existingPwdIdNumber || "").trim()
                               ? t("pwdFieldRequiredNote") || "Required"
@@ -1316,7 +1449,18 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           )}
                         </div>
 
-                        {attemptedNext && !isIdVerified && (
+                        {verifyError && (
+                          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
+                            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-bold text-red-900">WALANG NAHANAP NA APRUBADONG PWD ID (NO RECORD FOUND)</p>
+                              <p className="mt-0.5 leading-relaxed">{verifyError}</p>
+                              <p className="mt-1 text-red-700 font-semibold">Paalala: Kailangan munang magparehistro at maaprubahan sa "New App PWD ID" bago makapag-apply para sa Replacement / Lost ID.</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {attemptedNext && !isIdVerified && !verifyError && (
                           <p className="text-xs text-red-500">
                             {!dontKnowId && !(formData.existingPwdIdNumber || "").trim()
                               ? t("pwdFieldRequiredNote") || "Required"
@@ -1466,7 +1610,18 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               )}
                             </button>
                           </div>
-                          {attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) && (
+                          {verifyError && (
+                            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
+                              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-bold text-red-900">WALANG NAHANAP NA APRUBADONG PWD ID (NO RECORD FOUND)</p>
+                                <p className="mt-0.5 leading-relaxed">{verifyError}</p>
+                                <p className="mt-1 text-red-700 font-semibold">Paalala: Kailangan munang magparehistro at maaprubahan sa "New App PWD ID" bago makapag-renew.</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) && !verifyError && (
                             <p className="text-xs text-red-500">
                               {!(formData.existingPwdIdNumber || "").trim()
                                 ? t("pwdFieldRequiredNote") || "Required"
@@ -1622,7 +1777,18 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             )}
                           </div>
 
-                          {attemptedNext && !isIdVerified && (
+                          {verifyError && (
+                            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
+                              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-bold text-red-900">WALANG NAHANAP NA APRUBADONG PWD ID (NO RECORD FOUND)</p>
+                                <p className="mt-0.5 leading-relaxed">{verifyError}</p>
+                                <p className="mt-1 text-red-700 font-semibold">Paalala: Kailangan munang magparehistro at maaprubahan sa "New App PWD ID" bago makapag-apply para sa Replacement / Lost ID.</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {attemptedNext && !isIdVerified && !verifyError && (
                             <p className="text-xs text-red-500">
                               {!dontKnowId && !(formData.existingPwdIdNumber || "").trim()
                                 ? t("pwdFieldRequiredNote") || "Required"
