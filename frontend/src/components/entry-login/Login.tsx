@@ -217,34 +217,32 @@ export const Login = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsForgotPasswordOpen(true);
-                  setResetSuccess(false);
-                  setResetEmail('');
-                  setIsNotRobot(false);
-                  setResetError('');
-                  setIsConfirmModalOpen(false);
-                }}
-                className="text-xs text-blue-600 hover:underline font-medium bg-transparent border-none cursor-pointer p-0"
-              >
-                Forgot password?
-              </button>
-            </div>
-
             <button
                 type="submit"
                 disabled={isLoginLoading}
-                className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] disabled:opacity-60 disabled:cursor-wait text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 cursor-pointer"
+                className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] disabled:opacity-60 disabled:cursor-wait text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 cursor-pointer mt-2"
               >
                 {isLoginLoading ? 'Signing in...' : 'Login'}
             </button>
           </form>
 
-          <div className="mt-5 text-center">
-            <p className="text-xs text-slate-400">
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setIsForgotPasswordOpen(true);
+                setResetSuccess(false);
+                setResetEmail('');
+                setIsNotRobot(false);
+                setResetError('');
+                setIsConfirmModalOpen(false);
+              }}
+              className="text-blue-600 hover:underline font-medium bg-transparent border-none cursor-pointer p-0"
+            >
+              Forgot password?
+            </button>
+
+            <p className="text-slate-400 m-0">
               Don't have an account?{' '}
               <a
                 href="/register"
