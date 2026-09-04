@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, X, Eye, EyeOff, Apple } from 'lucide-react';
-import { useGoogleLogin } from '@react-oauth/google';
+import { Lock, Mail, X, Eye, EyeOff } from 'lucide-react';
 import { API_BASE } from '../../config/api';
 
 export const Login = () => {
@@ -23,7 +22,6 @@ export const Login = () => {
   const [resetSuccess, setResetSuccess] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isResetLoading, setIsResetLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
@@ -35,35 +33,6 @@ export const Login = () => {
       navigate('/register');
     }, 1500);
   };
-  const googleLogin = useGoogleLogin({
-  onSuccess: async (tokenResponse) => {
-    setIsGoogleLoading(true);
-    try {
-      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-      });
-      const profile = await res.json();
-
-      // Diretso sa Register form, naka-prefill na galing sa Google
-      navigate('/register', {
-        state: {
-          googleProfile: {
-            email: profile.email,
-            firstName: profile.given_name || '',
-            lastName: profile.family_name || '',
-          },
-        },
-      });
-    } catch (err) {
-      setError('Failed to fetch Google account info. Please try again.');
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  },
-  onError: () => {
-    setError('Google sign-in was cancelled or failed.');
-  },
-});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,36 +255,6 @@ export const Login = () => {
               </a>
             </p>
           </div>
-
-          <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-[11px] text-slate-400 font-medium">Or continue with</span>
-            <div className="flex-1 h-px bg-slate-200" />
-          </div>
-
-            <div className="flex items-center justify-center gap-3">
-              <button
-                type="button"
-                className="w-12 h-10 flex items-center justify-center rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-                aria-label="Continue with Apple"
-              >
-                <Apple className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => googleLogin()}
-                disabled={isGoogleLoading}
-                className="w-12 h-10 flex items-center justify-center rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer font-bold text-sm disabled:opacity-60 disabled:cursor-wait"
-                aria-label="Continue with Google"
-              >
-                {isGoogleLoading ? (
-                  <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
-                ) : (
-                  'G'
-                )}
-              </button>
-            </div>
-
         </div>
       </div>
 
