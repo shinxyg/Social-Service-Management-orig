@@ -529,10 +529,14 @@ export default function AICSServiceWizard({
       formData.append("firstName", firstName)
       formData.append("middleName", middleName)
       formData.append("lastName", lastName)
-      formData.append("nationality", "FILIPINO")
+      formData.append("suffix", suffix)
+      formData.append("nationality", nationality || "FILIPINO")
       formData.append("birthDate", birthDate)
+      formData.append("age", age)
       formData.append("gender", sex)
+      formData.append("civilStatus", civilStatus)
       formData.append("phone", contactNumber)
+      formData.append("email", email)
       formData.append("address", completeAddress)
 
       let detailsObj: Record<string, any> = {
@@ -611,7 +615,7 @@ export default function AICSServiceWizard({
       try {
         const titleFormatted = serviceTitle.includes("Assistance") ? serviceTitle : `${serviceTitle} Assistance`
         const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[titleFormatted] || FIXED_ASSISTANCE_AMOUNTS[serviceTitle] || 1000
-        const applicantFullName = `${firstName || "CLARISA MAE"} ${middleName || "GALIAS"} ${lastName || "DIMAL"}`.trim().toUpperCase()
+        const applicantFullName = `${firstName || "CLARISA MAE"} ${middleName || "GALIAS"} ${lastName || "DIMAL"}${suffix ? " " + suffix : ""}`.trim().toUpperCase()
 
         const newDisbursement = {
           id: `disb-${Date.now()}`,

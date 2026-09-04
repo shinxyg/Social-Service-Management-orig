@@ -63,7 +63,12 @@ interface AicsApplication {
 }
 
 function fullName(app: AicsApplication) {
-  return [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(' ')
+  const suffix = app.suffix || (app.details as any)?.suffix || (app.details as any)?.applicantSuffix || ''
+  const parts = [app.first_name, app.middle_name, app.last_name]
+  if (suffix && !app.last_name?.toLowerCase().endsWith(suffix.toLowerCase())) {
+    parts.push(suffix)
+  }
+  return parts.filter(Boolean).join(' ')
 }
 
 function formatDate(dateStr: string) {
@@ -329,6 +334,10 @@ export default function AICS() {
                     <div>
                       <label style={labelStyle}>Nationality</label>
                       <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.nationality || '—'}</p>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Suffix</label>
+                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.suffix || (reviewingApp.details as any)?.suffix || '—'}</p>
                     </div>
                     <div>
                       <label style={labelStyle}>Birth Date</label>
