@@ -388,10 +388,9 @@ export default function ApplyLivelihood() {
           <button
             type="button"
             onClick={() => setShowRequirements(true)}
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
           >
-            <span>📋</span>
-            <span>Tingnan ang Requirements</span>
+            Tingnan ang Requirements
           </button>
         </div>
       </div>
