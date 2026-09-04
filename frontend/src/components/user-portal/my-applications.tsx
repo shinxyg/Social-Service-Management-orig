@@ -16,8 +16,6 @@ import {
   Trash2,
   RotateCcw,
   AlertTriangle,
-  FolderOpen,
-  Info,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile } from "../../utils/userProfile"
@@ -946,84 +944,91 @@ export default function MyApplications() {
   // ═══════════════════════════════════════════════════════════════════════
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header na may Title at Search Box */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-            User Application Portal
-          </span>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            {t("myApplicationsTitle") || "History Application"}
-          </h1>
-          <p className="text-sm text-gray-500">
-            {t("myApplicationsSubtitle") || "Tingnan ang katayuan at mga detalye ng inyong mga naisumiteng aplikasyon para sa tulong at serbisyo."}
-          </p>
-        </div>
+      {/* ── TOP HEADER (Main View vs Deleted View) ── */}
+      {activeTab === "deleted" ? (
+        <div className="space-y-4 border-b border-gray-200 pb-4">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setActiveTab("active")}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>{t("backToMyApplications") || "Bumalik sa History Application"}</span>
+            </button>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-72 shrink-0">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder={t("searchApplicationsPlaceholder") || "Hanapin ang Ref No. / Serbisyo..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 h-10 text-xs border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-xs"
-          />
-        </div>
-      </div>
-
-      {/* ── TOP TABS NAVIGATION (Active vs Deleted Applications) ── */}
-      <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-        <button
-          type="button"
-          onClick={() => setActiveTab("active")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === "active"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-          }`}
-        >
-          <FolderOpen className="w-4 h-4" />
-          <span>Aktibong Aplikasyon</span>
-          <span
-            className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
-              activeTab === "active" ? "bg-white text-blue-700" : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            {applications.length}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("deleted")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === "deleted"
-              ? "bg-red-600 text-white shadow-xs"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-          }`}
-        >
-          <Trash2 className="w-4 h-4" />
-          <span>Deleted Applications</span>
-          <span
-            className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
-              activeTab === "deleted" ? "bg-white text-red-700" : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            {deletedApplications.length}
-          </span>
-        </button>
-      </div>
-
-      {/* Notice Banner for Deleted Tab */}
-      {activeTab === "deleted" && (
-        <div className="bg-red-50/80 border border-red-200 rounded-xl p-3.5 text-xs text-red-800 flex items-center justify-between gap-3 animate-in fade-in duration-200">
-          <div className="flex items-center gap-2.5">
-            <Info className="w-4 h-4 text-red-600 shrink-0" />
-            <span>
-              Ang mga sumusunod ay ang mga <strong>naburang aplikasyon</strong>. Maaari mo itong ibalik (<strong>Restore</strong>) o permanenteng burahin sa database (<strong>Permanent Delete</strong>).
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 flex items-center gap-1.5">
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Deleted Applications ({deletedApplications.length})</span>
             </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-red-600">
+                Trash / Deleted Items
+              </span>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Deleted Applications
+              </h1>
+              <p className="text-sm text-gray-500">
+                Maaari mong i-restore ang mga naburang aplikasyon o permanenteng burahin sa database.
+              </p>
+            </div>
+
+            {/* Search Input for Deleted View */}
+            <div className="relative w-full sm:w-72 shrink-0">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder={t("searchApplicationsPlaceholder") || "Hanapin sa deleted items..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 h-10 text-xs border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 bg-white shadow-xs"
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+              User Application Portal
+            </span>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+              {t("myApplicationsTitle") || "History Application"}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {t("myApplicationsSubtitle") || "Tingnan ang katayuan at mga detalye ng inyong mga naisumiteng aplikasyon para sa tulong at serbisyo."}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64 shrink-0">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder={t("searchApplicationsPlaceholder") || "Hanapin ang Ref No. / Serbisyo..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 h-10 text-xs border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-xs"
+              />
+            </div>
+
+            {/* Deleted Applications Entry Button */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("deleted")}
+              className="shrink-0 flex items-center gap-2 px-3.5 h-10 rounded-xl text-xs font-bold bg-gray-100 hover:bg-red-50 hover:text-red-700 text-gray-700 border border-gray-200 hover:border-red-200 transition-all cursor-pointer shadow-2xs"
+              title="Tingnan ang mga naburang aplikasyon"
+            >
+              <Trash2 className="w-4 h-4 text-red-500" />
+              <span className="hidden md:inline">Deleted Applications</span>
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-red-100 text-red-700 border border-red-200">
+                {deletedApplications.length}
+              </span>
+            </button>
           </div>
         </div>
       )}
@@ -1032,7 +1037,7 @@ export default function MyApplications() {
       <div className="space-y-4">
         <div className="flex items-center justify-between text-xs text-gray-500 px-1">
           <span>
-            {activeTab === "active" ? "Kabuuang Aktibong Aplikasyon" : "Kabuuang Nabura"}:{" "}
+            {activeTab === "active" ? "Kabuuang Aplikasyon" : "Kabuuang Nabura"}:{" "}
             <strong>{filteredApplications.length}</strong>
           </span>
           {searchQuery && (
