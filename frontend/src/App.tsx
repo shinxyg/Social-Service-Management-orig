@@ -43,6 +43,7 @@ export default function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to={homePath} replace />} />
+          <Route path="/services" element={<LandingPage />} />
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to={homePath} replace />} />
           <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to={homePath} replace />} />
 
@@ -80,6 +81,7 @@ export default function App() {
             <Route element={<UserLayout />}>
               <Route index element={<Navigate to="/portal/aics" replace />} />
               <Route path="/portal" element={<Navigate to="/portal/aics" replace />} />
+              <Route path="/portal/services" element={<LandingPage />} />
               <Route path="/portal/aics" element={<AICSUser />} />
               <Route path="/portal/apply-pwd-senior" element={<ApplyPWDSenior />} />
               <Route path="/portal/apply-solo-parent" element={<ApplySoloParent />} />

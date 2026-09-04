@@ -18,6 +18,7 @@ import {
   X,
   FileText,
   Wallet,
+  Sparkles,
 } from "lucide-react"
 import { Tooltip } from "../ui/tooltip"
 import { AIChatWidget } from "../ui/ai-chat-widget"
@@ -43,6 +44,7 @@ function WheelchairIcon({ className, ...props }: React.ComponentProps<"svg">) {
       <path d="M11 7v8h4l4 5" />
       <path d="M11 11h5" />
       <path d="M7 11.5a5 5 0 1 0 6 7.5" />
+      <path d="m14 19 3 3" />
     </svg>
   )
 }
@@ -62,6 +64,12 @@ interface ResidentNavItem {
 
 function getResidentNav(t: (key: string, vars?: Record<string, string>) => string): ResidentNavItem[] {
   return [
+    {
+      id: "overview",
+      path: "/portal/services",
+      label: "Lahat ng Serbisyo (Directory)",
+      icon: Sparkles,
+    },
     {
       id: "aics",
       label: t("navAICSAssistance"),
