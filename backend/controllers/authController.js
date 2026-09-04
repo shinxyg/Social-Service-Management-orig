@@ -27,6 +27,22 @@ exports.sendOtp = async (req, res) => {
       });
     }
 
+    if (cleanEmail.endsWith('@gmail.com')) {
+      const username = cleanEmail.split('@')[0];
+      if (username.length < 6 || username.length > 30) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid Gmail address. Gmail usernames must be between 6 and 30 characters.',
+        });
+      }
+      if (!/^[a-z0-9.]+$/.test(username) || username.startsWith('.') || username.endsWith('.') || username.includes('..')) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid Gmail address format.',
+        });
+      }
+    }
+
     // Generate random 6-digit numeric OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry

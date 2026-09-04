@@ -240,6 +240,19 @@ export const Register = () => {
       return;
     }
 
+    // Gmail specific rules
+    if (trimmedEmail.toLowerCase().endsWith('@gmail.com')) {
+      const username = trimmedEmail.toLowerCase().split('@')[0];
+      if (username.length < 6 || username.length > 30) {
+        setError('Invalid Gmail address. Gmail usernames must be between 6 and 30 characters.');
+        return;
+      }
+      if (!/^[a-z0-9.]+$/.test(username) || username.startsWith('.') || username.endsWith('.') || username.includes('..')) {
+        setError('Invalid Gmail address format.');
+        return;
+      }
+    }
+
     if (trimmedEmail.toLowerCase() !== trimmedConfirm.toLowerCase()) {
       setError('Email addresses do not match.');
       return;
