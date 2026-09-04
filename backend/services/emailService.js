@@ -18,17 +18,24 @@ function getLogoAttachments() {
   return [];
 }
 
+let cachedTransporter = null;
+
 /**
  * Creates and returns a configured Nodemailer transporter.
- * Supports Gmail, custom SMTP, or fallback to console simulation.
+ * Uses connection pooling to keep SMTP connections warm and ultra-fast.
  */
 function createTransporter() {
+  if (cachedTransporter) return cachedTransporter;
+
   const user = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const pass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
 
   if (user && pass) {
-    return nodemailer.createTransport({
+    cachedTransporter = nodemailer.createTransport({
       service: 'gmail',
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 100,
       auth: {
         user,
         pass,
@@ -36,10 +43,11 @@ function createTransporter() {
       tls: {
         rejectUnauthorized: false,
       },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 10000,
     });
+    return cachedTransporter;
   }
 
   return null;
