@@ -344,6 +344,38 @@ const referralStatusTheme: Record<ReferralStatus, string> = {
   declined: "bg-rose-100 text-rose-700",
 }
 
+const DEFAULT_STATUS_THEME = {
+  chip: "bg-sky-100 text-sky-700",
+  card: "bg-sky-50/60 border-sky-200",
+  icon: <AlertCircle className="h-3.5 w-3.5" />,
+  label: "Open",
+}
+
+function getCaseStatusTheme(status?: string) {
+  if (!status) return DEFAULT_STATUS_THEME
+  const s = String(status).toLowerCase() as CaseStatus
+  if (statusTheme[s]) return statusTheme[s]
+  if (s.includes("monitor")) return statusTheme.monitoring
+  if (s.includes("refer")) return statusTheme.referred
+  if (s.includes("close")) return statusTheme.closed
+  return {
+    chip: "bg-slate-100 text-slate-700",
+    card: "bg-slate-50/60 border-slate-200",
+    icon: <AlertCircle className="h-3.5 w-3.5" />,
+    label: status.charAt(0).toUpperCase() + status.slice(1),
+  }
+}
+
+function getProgramColor(prog?: string) {
+  if (prog && programColors[prog as ModuleKey]) return programColors[prog as ModuleKey]
+  return "bg-slate-50 text-slate-700 border-slate-200"
+}
+
+function getPriorityColor(priority?: string) {
+  if (priority && priorityTheme[priority as CasePriority]) return priorityTheme[priority as CasePriority]
+  return "bg-slate-100 text-slate-700"
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
 }
@@ -380,7 +412,7 @@ function SectionHeading({ icon, children }: { icon: React.ReactNode; children: R
 // =====================================================================================
 
 function CaseCard({ c, onOpen }: { c: CaseRecord; onOpen: (id: string) => void }) {
-  const st = statusTheme[c.status]
+  const st = getCaseStatusTheme(c.status)
   return (
     <div className={`border rounded-xl p-4 transition-shadow hover:shadow-sm ${st.card}`}>
       <div className="flex items-start gap-4">
@@ -390,10 +422,10 @@ function CaseCard({ c, onOpen }: { c: CaseRecord; onOpen: (id: string) => void }
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <p className="text-sm font-semibold text-foreground">{c.clientName}</p>
-            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${programColors[c.linkedProgram]}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getProgramColor(c.linkedProgram)}`}>
               {c.linkedProgram}
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${priorityTheme[c.priority]}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getPriorityColor(c.priority)}`}>
               {c.priority} priority
             </span>
           </div>
@@ -407,9 +439,9 @@ function CaseCard({ c, onOpen }: { c: CaseRecord; onOpen: (id: string) => void }
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${st.chip}`}>
-            {st.icon}
-            {st.label}
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${st?.chip || 'bg-sky-100 text-sky-700'}`}>
+            {st?.icon}
+            {st?.label}
           </span>
           <button
             onClick={() => onOpen(c.id)}
@@ -459,8 +491,7 @@ function CaseProfileModal({
 
   const [newStatus, setNewStatus] = useState<CaseStatus>(c.status)
   const [statusNote, setStatusNote] = useState("")
-
-  const st = statusTheme[c.status]
+  const st = getCaseStatusTheme(c.status)
 
   const tabs: { key: ProfileTab; label: string; icon: ReactElement }[] = [
     { key: "overview", label: "Overview", icon: <User className="h-3.5 w-3.5" /> },
@@ -485,14 +516,14 @@ function CaseProfileModal({
                   Case No. {c.caseNumber} · Ref: {c.linkedReferenceNo}
                 </p>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${programColors[c.linkedProgram]}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getProgramColor(c.linkedProgram)}`}>
                     {c.linkedProgram}
                   </span>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${st.chip}`}>
-                    {st.icon}
-                    {st.label}
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${st?.chip || 'bg-sky-100 text-sky-700'}`}>
+                    {st?.icon}
+                    {st?.label}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${priorityTheme[c.priority]}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getPriorityColor(c.priority)}`}>
                     {c.priority} priority
                   </span>
                 </div>
@@ -830,19 +861,19 @@ function CaseProfileModal({
                   .slice()
                   .reverse()
                   .map((ev, idx) => {
-                    const evTheme = statusTheme[ev.status]
+                    const evTheme = getCaseStatusTheme(ev.status)
                     return (
                       <div key={ev.id} className="flex gap-3 pb-4 last:pb-0">
                         <div className="flex flex-col items-center shrink-0">
-                          <div className={`h-7 w-7 rounded-full flex items-center justify-center ${evTheme.chip}`}>
-                            {evTheme.icon}
+                          <div className={`h-7 w-7 rounded-full flex items-center justify-center ${evTheme?.chip || 'bg-slate-100 text-slate-700'}`}>
+                            {evTheme?.icon}
                           </div>
                           {idx !== c.statusHistory.length - 1 && <div className="flex-1 w-px bg-border mt-1" />}
                         </div>
                         <div className="flex-1 min-w-0 pb-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${evTheme.chip}`}>
-                              {evTheme.label}
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${evTheme?.chip || 'bg-slate-100 text-slate-700'}`}>
+                              {evTheme?.label}
                             </span>
                             <span className="text-xs text-muted-foreground">{formatDate(ev.date)} · {ev.by}</span>
                           </div>
@@ -1142,7 +1173,7 @@ export default function CaseManagement() {
           </div>
           <div>
             {allTimeline.map((ev) => {
-              const evTheme = statusTheme[ev.status]
+              const evTheme = getCaseStatusTheme(ev.status)
               return (
                 <div
                   key={ev.id}
@@ -1150,16 +1181,16 @@ export default function CaseManagement() {
                   className="flex gap-4 px-4 py-4 border-b border-border last:border-0 hover:bg-gray-50 cursor-pointer"
                 >
                   <div className="flex flex-col items-center shrink-0">
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center ${evTheme.chip}`}>
-                      {evTheme.icon}
+                    <div className={`h-9 w-9 rounded-full flex items-center justify-center ${evTheme?.chip || 'bg-slate-100 text-slate-700'}`}>
+                      {evTheme?.icon}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0 pb-1">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="text-sm font-semibold text-foreground">{ev.clientName}</span>
                       <span className="text-[11px] text-muted-foreground font-mono">{ev.caseNumber}</span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${evTheme.chip}`}>
-                        {evTheme.label}
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${evTheme?.chip || 'bg-slate-100 text-slate-700'}`}>
+                        {evTheme?.label}
                       </span>
                     </div>
                     <p className="text-sm text-foreground">{ev.note}</p>

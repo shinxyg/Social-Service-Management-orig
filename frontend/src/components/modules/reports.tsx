@@ -75,6 +75,34 @@ const moduleColors: Record<ModuleKey, { bar: string; text: string; chip: string;
   "Livelihood & Training": { bar: "bg-emerald-500", text: "text-emerald-700", chip: "bg-emerald-50 border-emerald-200", hex: "#10b981" },
 }
 
+const DEFAULT_MODULE_COLOR = {
+  bar: "bg-slate-500",
+  text: "text-slate-700",
+  chip: "bg-slate-50 border-slate-200",
+  hex: "#64748b",
+}
+
+function getModuleColors(key?: string) {
+  if (!key) return DEFAULT_MODULE_COLOR
+  if (moduleColors[key as ModuleKey]) return moduleColors[key as ModuleKey]
+
+  const lower = key.toLowerCase()
+  if (lower.includes("aics") || lower.includes("financial")) {
+    return moduleColors["AICS"]
+  }
+  if (lower.includes("pwd") || lower.includes("senior")) {
+    return moduleColors["PWD & Senior Citizen"]
+  }
+  if (lower.includes("solo") || lower.includes("child")) {
+    return moduleColors["Solo Parent & Child Welfare"]
+  }
+  if (lower.includes("livelihood") || lower.includes("training") || lower.includes("skills")) {
+    return moduleColors["Livelihood & Training"]
+  }
+
+  return DEFAULT_MODULE_COLOR
+}
+
 const DISBURSEMENT_COLOR = "#2563eb"
 
 function peso(n: number) {
@@ -126,7 +154,7 @@ export default function Reports() {
         name: m.module,
         value: m.total,
         pct: totals.total > 0 ? Math.round((m.total / totals.total) * 100) : 0,
-        fill: moduleColors[m.module].hex,
+        fill: getModuleColors(m.module).hex,
       })),
     [totals.total]
   )
@@ -245,15 +273,15 @@ export default function Reports() {
           {/* Per-program breakdown, still showing pending/approved/rejected detail */}
           <div className="lg:col-span-3 space-y-4">
             {MODULE_STATS.map((m, idx) => {
-              const colors = moduleColors[m.module]
+              const colors = getModuleColors(m.module)
               const share = moduleShareData.find((d) => d.name === m.module)?.pct ?? 0
               const decided = m.approved + m.rejected
               const approvalPct = decided > 0 ? Math.round((m.approved / decided) * 100) : 0
               return (
                 <div key={m.module}>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${colors.chip} ${colors.text}`}>
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: colors.hex }} />
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${colors?.chip || 'bg-slate-50 border-slate-200'} ${colors?.text || 'text-slate-700'}`}>
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: colors?.hex || '#64748b' }} />
                       {m.module}
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -262,7 +290,7 @@ export default function Reports() {
                   </div>
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${colors.bar} transition-[width] duration-1000 ease-out`}
+                      className={`h-full rounded-full ${colors?.bar || 'bg-slate-500'} transition-[width] duration-1000 ease-out`}
                       style={{
                         width: `${barsAnimated ? share : 0}%`,
                         transitionDelay: `${idx * 120}ms`,

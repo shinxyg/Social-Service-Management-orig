@@ -106,6 +106,24 @@ const roleTheme: Record<UserRole, { chip: string; icon: ReactElement }> = {
   Viewer: { chip: "bg-slate-100 text-slate-700", icon: <Eye className="h-3.5 w-3.5" /> },
 }
 
+const DEFAULT_ROLE_THEME = {
+  chip: "bg-slate-100 text-slate-700",
+  icon: <UserCog className="h-3.5 w-3.5" />,
+}
+
+function getRoleTheme(role?: string) {
+  if (!role) return DEFAULT_ROLE_THEME
+  if (roleTheme[role as UserRole]) return roleTheme[role as UserRole]
+
+  const lower = role.toLowerCase()
+  if (lower.includes("admin")) return roleTheme["Administrator"]
+  if (lower.includes("worker") || lower.includes("social")) return roleTheme["Social Worker"]
+  if (lower.includes("encoder") || lower.includes("staff")) return roleTheme["Encoder"]
+  if (lower.includes("viewer") || lower.includes("user")) return roleTheme["Viewer"]
+
+  return DEFAULT_ROLE_THEME
+}
+
 const ROLE_OPTIONS: UserRole[] = ["Administrator", "Social Worker", "Encoder", "Viewer"]
 
 function formatDateTime(iso: string) {
@@ -123,7 +141,7 @@ function initials(name: string) {
 // =====================================================================================
 
 function UserCard({ u, onOpen }: { u: SystemUser; onOpen: (id: string) => void }) {
-  const rt = roleTheme[u.role]
+  const rt = getRoleTheme(u.role)
   return (
     <div
       className={`border rounded-xl p-4 transition-shadow hover:shadow-sm ${
@@ -137,8 +155,8 @@ function UserCard({ u, onOpen }: { u: SystemUser; onOpen: (id: string) => void }
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <p className="text-sm font-semibold text-foreground">{u.name}</p>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${rt.chip}`}>
-              {rt.icon}
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${rt?.chip || 'bg-slate-100 text-slate-700'}`}>
+              {rt?.icon}
               {u.role}
             </span>
           </div>
@@ -192,7 +210,7 @@ function UserProfileModal({
   onToggleStatus: (id: string) => void
 }) {
   const [role, setRole] = useState<UserRole>(u.role)
-  const rt = roleTheme[u.role]
+  const rt = getRoleTheme(u.role)
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4 overflow-y-auto">
@@ -207,8 +225,8 @@ function UserProfileModal({
               <h2 className="text-lg font-bold text-foreground truncate">{u.name}</h2>
               <p className="text-sm text-muted-foreground mt-0.5">{u.email}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${rt.chip}`}>
-                  {rt.icon}
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${rt?.chip || 'bg-slate-100 text-slate-700'}`}>
+                  {rt?.icon}
                   {u.role}
                 </span>
                 <span

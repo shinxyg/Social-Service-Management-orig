@@ -206,6 +206,31 @@ const verificationTheme: Record<VerificationStatus, { chip: string; icon: ReactE
   unverified: { chip: "bg-red-100 text-red-700", icon: <XCircle className="h-3.5 w-3.5" />, label: "Unverified" },
 }
 
+const DEFAULT_VERIFICATION_THEME = {
+  chip: "bg-slate-100 text-slate-700",
+  icon: <Clock className="h-3.5 w-3.5" />,
+  label: "Pending",
+}
+
+function getVerificationTheme(status?: string) {
+  if (!status) return DEFAULT_VERIFICATION_THEME
+  const s = String(status).toLowerCase() as VerificationStatus
+  if (verificationTheme[s]) return verificationTheme[s]
+  if (s.includes("verif") || s.includes("approve")) return verificationTheme.verified
+  if (s.includes("pend")) return verificationTheme.pending
+  if (s.includes("unverif") || s.includes("reject")) return verificationTheme.unverified
+  return {
+    chip: "bg-slate-100 text-slate-700",
+    icon: <Clock className="h-3.5 w-3.5" />,
+    label: status.charAt(0).toUpperCase() + status.slice(1),
+  }
+}
+
+function getProgramColor(prog?: string) {
+  if (prog && programColors[prog as ProgramKey]) return programColors[prog as ProgramKey]
+  return "bg-slate-50 text-slate-700 border-slate-200"
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
 }
@@ -238,7 +263,7 @@ function SectionHeading({ icon, children }: { icon: React.ReactNode; children: R
 // =====================================================================================
 
 function BeneficiaryCard({ b, onOpen }: { b: Beneficiary; onOpen: (id: string) => void }) {
-  const vt = verificationTheme[b.verificationStatus]
+  const vt = getVerificationTheme(b.verificationStatus)
   return (
     <div className="border border-border rounded-xl p-4 bg-white transition-shadow hover:shadow-sm">
       <div className="flex items-start gap-4">
@@ -248,15 +273,15 @@ function BeneficiaryCard({ b, onOpen }: { b: Beneficiary; onOpen: (id: string) =
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <p className="text-sm font-semibold text-foreground">{b.fullName}</p>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${vt.chip}`}>
-              {vt.icon}
-              {vt.label}
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${vt?.chip || 'bg-slate-100 text-slate-700'}`}>
+              {vt?.icon}
+              {vt?.label}
             </span>
           </div>
           <p className="text-xs text-muted-foreground mb-2 font-mono">{b.beneficiaryNo}</p>
           <div className="flex items-center gap-2 flex-wrap mb-2">
             {b.enrolledPrograms.map((p, i) => (
-              <span key={i} className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${programColors[p.program]}`}>
+              <span key={i} className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getProgramColor(p.program)}`}>
                 {p.program}
               </span>
             ))}
@@ -302,7 +327,7 @@ function BeneficiaryProfileModal({
   const [idType, setIdType] = useState(b.idType || "")
   const [idNumber, setIdNumber] = useState(b.idNumber || "")
 
-  const vt = verificationTheme[b.verificationStatus]
+  const vt = getVerificationTheme(b.verificationStatus)
 
   const tabs: { key: ProfileTab; label: string; icon: ReactElement }[] = [
     { key: "overview", label: "Overview", icon: <User className="h-3.5 w-3.5" /> },
@@ -325,9 +350,9 @@ function BeneficiaryProfileModal({
                 <h2 className="text-lg font-bold text-foreground truncate">{b.fullName}</h2>
                 <p className="text-sm text-muted-foreground mt-0.5 font-mono">{b.beneficiaryNo}</p>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${vt.chip}`}>
-                    {vt.icon}
-                    {vt.label}
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${vt?.chip || 'bg-slate-100 text-slate-700'}`}>
+                    {vt?.icon}
+                    {vt?.label}
                   </span>
                 </div>
               </div>

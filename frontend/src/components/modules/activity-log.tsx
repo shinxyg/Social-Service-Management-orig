@@ -119,6 +119,36 @@ const actionTheme: Record<ActionType, { icon: React.ReactNode; chip: string; lab
   },
 };
 
+const DEFAULT_ACTION_THEME = {
+  icon: <Clock className="h-3.5 w-3.5" />,
+  chip: "bg-slate-100 text-slate-700 border-slate-200",
+  label: "Activity",
+};
+
+function getActionTheme(action?: string) {
+  if (!action) return DEFAULT_ACTION_THEME;
+  const act = String(action).toLowerCase() as ActionType;
+  if (actionTheme[act]) return actionTheme[act];
+
+  if (act.includes("approve")) return actionTheme.approved;
+  if (act.includes("reject")) return actionTheme.rejected;
+  if (act.includes("schedule")) return actionTheme.scheduled;
+  if (act.includes("complete")) return actionTheme.completed;
+  if (act.includes("submit") || act.includes("create") || act.includes("register")) return actionTheme.created;
+  if (act.includes("edit") || act.includes("update") || act.includes("modify")) return actionTheme.edited;
+
+  return {
+    icon: <Clock className="h-3.5 w-3.5" />,
+    chip: "bg-blue-50 text-blue-700 border-blue-200",
+    label: action.charAt(0).toUpperCase() + action.slice(1).replace(/_/g, " "),
+  };
+}
+
+function getModuleColor(mod?: string) {
+  if (mod && moduleColors[mod as ModuleKey]) return moduleColors[mod as ModuleKey];
+  return "bg-slate-50 text-slate-700 border-slate-200";
+}
+
 function ActivityRow({
   entry,
   onDelete,
@@ -126,7 +156,7 @@ function ActivityRow({
   entry: ActivityEntry
   onDelete: (entry: ActivityEntry) => void
 }) {
-  const at = actionTheme[entry.action]
+  const at = getActionTheme(entry.action)
   return (
     <div className="group flex gap-4 px-4 py-4 border-b border-border last:border-0">
       <div className="flex flex-col items-center shrink-0">
@@ -144,7 +174,7 @@ function ActivityRow({
             {at.icon}
             {at.label}
           </span>
-          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${moduleColors[entry.module]}`}>
+          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getModuleColor(entry.module)}`}>
             {entry.module}
           </span>
         </div>
@@ -179,7 +209,7 @@ function DeletedRow({
   onRestore: (entry: ActivityEntry) => void
   onPermanentDelete: (entry: ActivityEntry) => void
 }) {
-  const at = actionTheme[entry.action]
+  const at = getActionTheme(entry.action)
   return (
     <div className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-[11px] font-semibold text-muted-foreground shrink-0">

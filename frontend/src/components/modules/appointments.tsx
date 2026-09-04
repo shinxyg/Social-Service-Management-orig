@@ -80,6 +80,32 @@ const statusTheme: Record<AppointmentStatus, { card: string; chip: string; icon:
   },
 }
 
+const DEFAULT_APPT_STATUS_THEME = {
+  card: "bg-amber-50/60 border-amber-200",
+  chip: "bg-amber-100 text-amber-700",
+  icon: <Clock className="h-3.5 w-3.5" />,
+  label: "Pending",
+}
+
+function getAppointmentStatusTheme(status?: string) {
+  if (!status) return DEFAULT_APPT_STATUS_THEME
+  const s = String(status).toLowerCase() as AppointmentStatus
+  if (statusTheme[s]) return statusTheme[s]
+  if (s.includes("sched")) return statusTheme.scheduled
+  if (s.includes("comp") || s.includes("done")) return statusTheme.completed
+  return {
+    card: "bg-slate-50/60 border-slate-200",
+    chip: "bg-slate-100 text-slate-700",
+    icon: <Clock className="h-3.5 w-3.5" />,
+    label: status.charAt(0).toUpperCase() + status.slice(1),
+  }
+}
+
+function getAppointmentModuleColor(mod?: string) {
+  if (mod && moduleColors[mod as ModuleKey]) return moduleColors[mod as ModuleKey]
+  return "bg-slate-50 text-slate-700 border-slate-200"
+}
+
 function formatDateTime(iso: string) {
   const d = new Date(iso)
   return `${d.toLocaleDateString()} at ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
@@ -121,8 +147,7 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-                className="w-full mt-1.5 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full mt-1 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -131,51 +156,51 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full mt-1.5 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full mt-1 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-muted-foreground">Office / Location *</label>
+            <label className="text-xs font-semibold text-muted-foreground">Office Location *</label>
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. SSDD Office, QC Hall"
-              className="w-full mt-1.5 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="e.g. SSDD Main Office, Room 102"
+              className="w-full mt-1 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-muted-foreground">Notes for applicant (optional)</label>
+            <label className="text-xs font-semibold text-muted-foreground">Notes / Instructions</label>
             <textarea
+              rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              placeholder="e.g. Bring original copies of submitted documents."
-              className="w-full mt-1.5 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Bring original IDs, 2x2 picture..."
+              className="w-full mt-1 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-border flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-border flex items-center justify-end gap-3">
           <button
+            type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
-            onClick={() => {
-              if (!canSave) return
-              onSave(appointment.id, date, time, location, notes)
-              onClose()
-            }}
+            type="button"
             disabled={!canSave}
-            className="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            onClick={() => {
+              if (canSave) onSave(appointment.id, date, time, location, notes)
+            }}
+            className="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Save Schedule
+            Confirm & Save Schedule
           </button>
         </div>
       </div>
@@ -193,14 +218,14 @@ function AppointmentCard({
   onSchedule: (a: AppointmentRequest) => void
   onMarkCompleted: (id: string) => void
 }) {
-  const st = statusTheme[appt.status]
+  const st = getAppointmentStatusTheme(appt.status)
   return (
-    <div className={`border rounded-xl p-4 ${st.card}`}>
+    <div className={`border rounded-xl p-4 ${st?.card || 'bg-slate-50/60 border-slate-200'}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <p className="text-sm font-semibold text-foreground">{appt.applicantName}</p>
-            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${moduleColors[appt.module]}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getAppointmentModuleColor(appt.module)}`}>
               {appt.module}
             </span>
           </div>
@@ -229,9 +254,9 @@ function AppointmentCard({
         </div>
 
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${st.chip}`}>
-            {st.icon}
-            {st.label}
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${st?.chip || 'bg-slate-100 text-slate-700'}`}>
+            {st?.icon}
+            {st?.label}
           </span>
 
           {appt.status === "pending" && (
