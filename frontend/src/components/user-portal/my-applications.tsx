@@ -14,10 +14,9 @@ import {
   Banknote,
   MapPin,
   Trash2,
-  AlertCircle,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
-import { getLoggedInUserQcid, getCurrentUserProfile } from "../../utils/userProfile"
+import { getCurrentUserProfile } from "../../utils/userProfile"
 import {
   FIXED_ASSISTANCE_AMOUNTS,
   getSavedDisbursements,
@@ -46,8 +45,6 @@ export interface ApplicationRecord {
   email?: string
   remarks?: string
 }
-
-const DEFAULT_APPLICATIONS: ApplicationRecord[] = []
 
 export default function MyApplications() {
   const { t } = useLanguage()
