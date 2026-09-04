@@ -393,8 +393,8 @@ export default function AICSServiceWizard({
     return () => clearInterval(interval)
   }, [currentStep])
 
-  // Reload / Navigation warning protection — active in steps 1, 2, 3, 4
-  const isFormDirty = currentStep >= 1 && currentStep <= 4 && !showRequirementsModal
+  // Reload / Navigation warning protection — active from Step 2 onwards
+  const isFormDirty = currentStep >= 2 && currentStep <= 4 && !showRequirementsModal
 
   useEffect(() => {
     if (isFormDirty) {

@@ -361,15 +361,8 @@ export default function SeniorCitizenApplicationWizard({
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<DocumentItem | null>(null)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
-  // Reload / Navigation warning protection
-  const isFormDirty =
-    !isSubmitted &&
-    (step > 1 ||
-      isResidencyChecked ||
-      isAgeChecked ||
-      isDeclarationChecked ||
-      existingIdNumber !== "" ||
-      Object.keys(uploadedFiles).length > 0)
+  // Reload / Navigation warning protection — active from Step 2 onwards
+  const isFormDirty = !isSubmitted && step > 1
 
   useEffect(() => {
     if (isFormDirty) {

@@ -856,11 +856,11 @@ export default function SoloParentApplicationWizard({
   const requiredDocs = getRequiredDocuments(idStatus, selectedCategoryId)
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
 
-  // Reload / Navigation warning protection — active during steps 1, 2, 3, 4 when modal is closed
+  // Reload / Navigation warning protection — active from Step 2 onwards when modal is closed
   const isFormDirty =
     !isModalOpen &&
     submissionStage === "form" &&
-    (step >= 1 && step <= 4)
+    (step >= 2 && step <= 4)
 
   useEffect(() => {
     if (isFormDirty) {

@@ -460,13 +460,11 @@ const canProceedPersonal = Boolean(
   const [cameraDoc, setCameraDoc] = useState<string | null>(null)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
-  // Reload / Navigation warning protection — strictly active only in steps 1, 2, 3, 4
+  // Reload / Navigation warning protection — strictly active only starting from Step 2 onwards (personal, documents, review)
   const isFormDirty =
-    step === "checklist" ||
     step === "personal" ||
     step === "documents" ||
-    step === "review" ||
-    step === "form"
+    step === "review"
 
   useEffect(() => {
     if (isFormDirty) {
