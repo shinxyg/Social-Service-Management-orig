@@ -233,6 +233,13 @@ export const Register = () => {
       setError('Please fill in both email fields.');
       return;
     }
+
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError('Please enter a valid email address (e.g. yourname@gmail.com).');
+      return;
+    }
+
     if (trimmedEmail.toLowerCase() !== trimmedConfirm.toLowerCase()) {
       setError('Email addresses do not match.');
       return;

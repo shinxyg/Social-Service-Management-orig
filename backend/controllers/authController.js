@@ -18,6 +18,14 @@ exports.sendOtp = async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+    if (!emailRegex.test(cleanEmail) || cleanEmail.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format. Please provide a valid active email address.',
+      });
+    }
 
     // Generate random 6-digit numeric OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
