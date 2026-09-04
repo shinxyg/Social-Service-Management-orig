@@ -125,24 +125,45 @@ interface SeniorCitizenApplicationSubmission {
 type ApplicationSubmission = PWDApplicationSubmission | SeniorCitizenApplicationSubmission
 
 function isPWD(app: ApplicationSubmission): app is PWDApplicationSubmission {
-  return (
-    String(app.category || "").toUpperCase() === "PWD" ||
-    String(app.category || "").toLowerCase().includes("disability")
-  )
+  const cat = String(app.category || "").toLowerCase()
+  const id = String(app.id || "").toLowerCase()
+  const ref = String(app.referenceNumber || "").toLowerCase()
+  const assigned = String(app.assignedIdNumber || "").toLowerCase()
+  const disType = String((app as any).disabilityType || "").trim()
+
+  if (
+    cat.includes("pwd") ||
+    cat.includes("disabilit") ||
+    disType !== "" ||
+    id.includes("pwd") ||
+    ref.startsWith("pwd") ||
+    assigned.startsWith("pwd")
+  ) {
+    return true
+  }
+
+  if (cat.includes("senior") || cat.includes("osca") || id.includes("snr") || ref.startsWith("osca") || assigned.startsWith("osca")) {
+    return false
+  }
+
+  return true
 }
 
 function generateOfficialIdNumber(app: ApplicationSubmission): string {
-  if (app.assignedIdNumber && app.assignedIdNumber !== app.referenceNumber && !app.assignedIdNumber.startsWith("11000011")) {
-    return app.assignedIdNumber
-  }
-
+  const isPwdApp = isPWD(app)
   const cleanDigits = (app.referenceNumber || app.id || "").replace(/\D/g, "")
   const seq = cleanDigits.length >= 6 ? cleanDigits.slice(-6) : String(Math.floor(100000 + Math.random() * 900000))
   const year = new Date().getFullYear()
 
-  if (isPWD(app)) {
+  if (isPwdApp) {
+    if (app.assignedIdNumber && app.assignedIdNumber.startsWith("PWD-")) {
+      return app.assignedIdNumber
+    }
     return `PWD-137404-${year}-${seq}`
   } else {
+    if (app.assignedIdNumber && app.assignedIdNumber.startsWith("OSCA-")) {
+      return app.assignedIdNumber
+    }
     return `OSCA-137404-${year}-${seq}`
   }
 }
