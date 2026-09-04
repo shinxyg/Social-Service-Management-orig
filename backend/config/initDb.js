@@ -75,10 +75,45 @@ async function initDb() {
         monthly_sales_range VARCHAR(100),
         challenges_needs TEXT,
         officer_name VARCHAR(150),
-        photos JSONB DEFAULT '[]'::jsonb,
         inspection_date VARCHAR(100),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
+
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(150) UNIQUE NOT NULL,
+        password VARCHAR(255),
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        middle_name VARCHAR(100),
+        suffix VARCHAR(50),
+        birth_date VARCHAR(50),
+        city VARCHAR(100),
+        barangay VARCHAR(150),
+        street VARCHAR(255),
+        house_no VARCHAR(100),
+        working_in_qc VARCHAR(10),
+        occupation VARCHAR(150),
+        sex VARCHAR(20),
+        mobile_number VARCHAR(50),
+        profile_photo_url TEXT,
+        role VARCHAR(50) DEFAULT 'user',
+        is_email_verified BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS email_otps (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(150) NOT NULL,
+        otp_code VARCHAR(10) NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        is_used BOOLEAN DEFAULT false,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+      CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
     `);
 
     console.log('✅ PostgreSQL database tables and indexes verified/initialized successfully.');

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate , useLocation } from 'react-router-dom';
 import { Mail, User, Check, ShieldCheck, Camera, Upload, X, RefreshCw } from 'lucide-react';
 import { saveProfilePhoto } from '../../utils/profilePhoto';
+import { API_BASE } from '../../config/api';
 
 type Step = 0 | 1 | 2;
 
@@ -221,26 +222,47 @@ export const Register = () => {
     }, 'image/jpeg', 0.92);
   };
 
-  const handleSendOtp = (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
-  if (!email || !confirmEmail) {
-    setError('Please fill in both email fields.');
-    return;
-  }
-  if (email !== confirmEmail) {
-    setError('Email addresses do not match.');
-    return;
-  }
+    const trimmedEmail = email.trim();
+    const trimmedConfirm = confirmEmail.trim();
 
-  // In production this triggers a backend call that emails a real OTP.
-  setIsSendingOtp(true);
-  setTimeout(() => {
-    setIsSendingOtp(false);
-    setOtpSent(true);
-  }, 1500);
-};
+    if (!trimmedEmail || !trimmedConfirm) {
+      setError('Please fill in both email fields.');
+      return;
+    }
+    if (trimmedEmail.toLowerCase() !== trimmedConfirm.toLowerCase()) {
+      setError('Email addresses do not match.');
+      return;
+    }
+
+    setIsSendingOtp(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: trimmedEmail,
+          recipientName: googleProfile ? `${googleProfile.firstName} ${googleProfile.lastName}`.trim() : 'Resident',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOtpSent(true);
+        setResendCooldown(59);
+        setOtpDigits(['', '', '', '', '', '']);
+      } else {
+        setError(data.message || 'Failed to send OTP. Please check your email address.');
+      }
+    } catch (err: any) {
+      console.error('Error sending OTP:', err);
+      setError('Failed to connect to backend server. Please try again.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
 
   const formatCooldown = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60);
@@ -285,31 +307,68 @@ export const Register = () => {
     otpInputRefs.current[focusIndex]?.focus();
   };
 
-  const handleResendCode = () => {
+  const handleResendCode = async () => {
     if (resendCooldown > 0) return;
+    setError('');
     setOtpDigits(['', '', '', '', '', '']);
-    setResendMessage('A new code has been sent to your email.');
+    setResendMessage('Sending a new code to your email...');
     setResendCooldown(59);
-    otpInputRefs.current[0]?.focus();
-    setTimeout(() => setResendMessage(''), 4000);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          recipientName: googleProfile ? `${googleProfile.firstName} ${googleProfile.lastName}`.trim() : 'Resident',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setResendMessage(`A new 6-digit code has been sent to ${email.trim()}.`);
+        otpInputRefs.current[0]?.focus();
+      } else {
+        setError(data.message || 'Failed to resend OTP.');
+      }
+    } catch (err) {
+      setError('Network error while resending OTP.');
+    }
+    setTimeout(() => setResendMessage(''), 5000);
   };
 
-    const handleVerifyOtp = (e: React.FormEvent) => {
-      e.preventDefault();
-      setError('');
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
-      const otp = otpDigits.join('');
-      if (otp.length < 6) {
-        setError('Please enter the full 6-digit code.');
-        return;
-      }
+    const otp = otpDigits.join('');
+    if (otp.length < 6) {
+      setError('Please enter the full 6-digit code.');
+      return;
+    }
 
-      setIsVerifyingOtp(true);
-      setTimeout(() => {
-        setIsVerifyingOtp(false);
+    setIsVerifyingOtp(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          otpCode: otp,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
         setStep(1);
-      }, 1500);
-    };
+      } else {
+        setError(data.message || 'Invalid or expired OTP code.');
+      }
+    } catch (err) {
+      console.error('Error verifying OTP:', err);
+      setError('Failed to verify OTP with server. Please try again.');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
 
   // Password strength checks
   const hasLower = /[a-z]/.test(password);
@@ -319,12 +378,12 @@ export const Register = () => {
   const passwordValid = hasLower && hasUpper && hasNumber && hasMinLen;
   const confirmMismatch = confirmTouched && confirmPassword.length > 0 && confirmPassword !== password;
 
-  const handleAccountInfoSubmit = (e: React.FormEvent) => {
+  const handleAccountInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setConfirmTouched(true);
 
-    if (!profilePhoto) {
+    if (!profilePhoto && !profilePhotoPreview) {
       setError('Please upload or take a profile photo.');
       return;
     }
@@ -376,16 +435,56 @@ export const Register = () => {
       setError('Passwords do not match.');
       return;
     }
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          firstName,
+          lastName,
+          middleName,
+          suffix,
+          birthMonth,
+          birthDay,
+          birthYear,
+          city,
+          specifyCity,
+          houseNo,
+          street,
+          barangay,
+          workingInQC,
+          occupation,
+          sex,
+          mobileNumber,
+          profilePhotoUrl: profilePhotoPreview || null,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (profilePhotoPreview) {
+          saveProfilePhoto(profilePhotoPreview);
+        }
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userRole', 'user');
+        setStep(2);
+      } else {
+        setError(data.message || 'Registration failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
       if (profilePhotoPreview) {
         saveProfilePhoto(profilePhotoPreview);
       }
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('userRole', 'user');
-      setIsSubmitting(false);
       setStep(2);
-    }, 1500);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBackToLogin = () => {

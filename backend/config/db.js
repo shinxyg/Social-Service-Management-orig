@@ -23,7 +23,7 @@ if (connectionString) {
     host: process.env.PGHOST || process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.PGPORT || process.env.DB_PORT || '5432', 10),
     user: process.env.PGUSER || process.env.DB_USER || 'postgres',
-    password: process.env.PGPASSWORD || process.env.DB_PASSWORD || '',
+    password: String(process.env.PGPASSWORD || process.env.DB_PASSWORD || '').trim(),
     database: process.env.PGDATABASE || process.env.DB_NAME || 'railway',
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   };

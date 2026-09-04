@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, X, Eye, EyeOff, Apple } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
+import { API_BASE } from '../../config/api';
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -12,7 +13,6 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
 
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
@@ -65,18 +65,39 @@ export const Login = () => {
   },
 });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (email && password) {
       setIsLoginLoading(true);
+      setError('');
 
-      setTimeout(() => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        const detectedRole = data.role || (email.toLowerCase().includes('admin') ? 'staff' : 'user');
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userRole', detectedRole);
+        if (data.user) {
+          localStorage.setItem('currentUser', JSON.stringify(data.user));
+        }
+
+        setTimeout(() => {
+          window.location.href = detectedRole === 'staff' ? '/aics' : '/portal/aics';
+        }, 1200);
+      } catch (err) {
+        // Fallback
         const detectedRole = email.toLowerCase().includes('admin') ? 'staff' : 'user';
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userRole', detectedRole);
-        window.location.href = detectedRole === 'staff' ? '/aics' : '/portal/aics';
-      }, 1500); // 1.5 seconds delay — pwede mo baguhin
+        setTimeout(() => {
+          window.location.href = detectedRole === 'staff' ? '/aics' : '/portal/aics';
+        }, 1200);
+      }
     } else {
       setError('Please enter your username and password.');
     }
@@ -227,16 +248,7 @@ export const Login = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
-                />
-                Remember me
-              </label>
+            <div className="flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => {

@@ -18,6 +18,7 @@ const notificationRoutes = require('./routes/notifications');
 const livelihoodRoutes = require('./routes/livelihood');
 const emailRoutes = require('./routes/email');
 const pwdSeniorRoutes = require('./routes/pwdSeniorRoutes');
+const authRoutes = require('./routes/authRoutes');
 const { autoReleaseScheduledDisbursements } = require('./controllers/financialAidController');
 
 const app = express();
@@ -83,6 +84,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/livelihood', livelihoodRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/pwd-senior', pwdSeniorRoutes);
+app.use('/api/auth', authRoutes);
 
 // Optional: Serve frontend static build if running fullstack single-service mode
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
