@@ -14,6 +14,8 @@ import {
   Landmark,
   Image as ImageIcon,
   HeartHandshake,
+  IdCard,
+  Printer,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 
@@ -374,15 +376,246 @@ function DocumentViewerModal({
   )
 }
 
+function OfficialIdCardModal({
+  app,
+  onClose,
+}: {
+  app: ApplicationSubmission | null
+  onClose: () => void
+}) {
+  if (!app) return null
+  const isPwdApp = isPWD(app)
+  const idNumber = generateOfficialIdNumber(app)
+  const appDate = new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+
+  const [activeSide, setActiveSide] = useState<"front" | "back">("front")
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  const photoDoc = (app.documents || []).find(
+    (d) =>
+      (d.name || "").toLowerCase().includes("2x2") ||
+      (d.name || "").toLowerCase().includes("picture") ||
+      (d.filename || "").toLowerCase().includes("2x2") ||
+      (d.filename || "").toLowerCase().includes("picture")
+  )
+  const photoUrl = photoDoc ? getDocImageUrl(photoDoc) : "/samples/ID PICTURE (2X2).webp"
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
+      <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        {/* Modal Header */}
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50">
+          <div className="flex items-center gap-2">
+            <IdCard className="w-5 h-5 text-blue-600" />
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 leading-none">
+                Official Quezon City {isPwdApp ? "Persons with Disability (PWD) ID Card" : "Senior Citizen OSCA ID Card"}
+              </h3>
+              <p className="text-[11px] text-gray-500 mt-1">
+                Card ID: <span className="font-mono font-bold text-blue-700">{idNumber}</span>
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl font-light leading-none p-1 cursor-pointer">×</button>
+        </div>
+
+        {/* Side Selector */}
+        <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-3">
+          <button
+            onClick={() => setActiveSide("front")}
+            className={`pb-2 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+              activeSide === "front" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            FRONT OF ID CARD
+          </button>
+          <button
+            onClick={() => setActiveSide("back")}
+            className={`pb-2 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+              activeSide === "back" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            BACK OF ID CARD (PRIVILEGES &amp; EMERGENCY)
+          </button>
+        </div>
+
+        {/* Card Body */}
+        <div className="p-6 bg-slate-100/80 flex flex-col items-center justify-center overflow-y-auto">
+          {activeSide === "front" ? (
+            /* FRONT CARD */
+            <div
+              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none"
+              style={{
+                aspectRatio: "1.586 / 1",
+                background: isPwdApp
+                  ? "linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #eff6ff 100%)"
+                  : "linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0fdf4 100%)",
+              }}
+            >
+              {/* Header */}
+              <div className={`px-4 py-2.5 flex items-center justify-between text-white ${isPwdApp ? "bg-[#1d4ed8]" : "bg-[#0369a1]"}`}>
+                <div>
+                  <p className="text-[8px] font-bold tracking-widest uppercase opacity-90 leading-tight">Republic of the Philippines</p>
+                  <p className="text-xs font-black tracking-wide leading-tight uppercase">Quezon City Government</p>
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+                  {isPwdApp ? "PDAO CARD" : "OSCA CARD"}
+                </span>
+              </div>
+
+              {/* Sub-header */}
+              <div className={`py-1 text-center text-[10px] font-black uppercase tracking-widest ${isPwdApp ? "bg-amber-400 text-slate-900" : "bg-emerald-600 text-white"}`}>
+                {isPwdApp ? "Persons with Disability Affairs Office" : "Office for Senior Citizens Affairs"}
+              </div>
+
+              {/* Details */}
+              <div className="p-3 flex gap-3 items-start">
+                <div className="w-22 h-26 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative">
+                  {photoUrl ? (
+                    <img src={photoUrl} alt="Cardholder" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                      <User className="w-8 h-8 text-slate-300 mb-1" />
+                      <span className="text-[7px] font-bold uppercase tracking-wider">2x2 Photo</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 inset-x-0 bg-slate-900/80 text-white text-[6.5px] text-center py-0.5 font-bold uppercase">
+                    QC {isPwdApp ? "PDAO" : "OSCA"}
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div>
+                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC ID Number</span>
+                    <p className="text-sm font-black text-blue-900 font-mono tracking-wide leading-none">{idNumber}</p>
+                  </div>
+
+                  <div className="pt-0.5">
+                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Cardholder Full Name</span>
+                    <p className="text-xs font-black text-slate-900 leading-tight uppercase truncate">{displayName(app)}</p>
+                  </div>
+
+                  {isPwdApp ? (
+                    <div className="pt-0.5">
+                      <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Type of Disability</span>
+                      <p className="text-[9.5px] font-bold text-red-700 leading-tight">{app.disabilityType || "Visual Disability"}</p>
+                    </div>
+                  ) : (
+                    <div className="pt-0.5">
+                      <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Classification</span>
+                      <p className="text-[9.5px] font-bold text-emerald-800 leading-tight">Senior Citizen Welfare Beneficiary</p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-1 pt-0.5 text-[8.5px] text-slate-700">
+                    <div>
+                      <span className="text-[7px] font-semibold text-slate-400 uppercase">Birthdate:</span> {app.dateOfBirth || "—"}
+                    </div>
+                    <div>
+                      <span className="text-[7px] font-semibold text-slate-400 uppercase">Sex / Blood:</span> {app.sex || "—"} / O+
+                    </div>
+                  </div>
+
+                  <div className="text-[8.5px] text-slate-700 truncate pt-0.5">
+                    <span className="text-[7px] font-semibold text-slate-400 uppercase">Address:</span> {app.address || "Quezon City"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Signatures & Barcode */}
+              <div className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]">
+                <div>
+                  <p className="font-mono font-bold text-slate-700 tracking-widest text-[8.5px]">|||| | || |||| | | ||| ||||</p>
+                  <p className="text-[6.5px] text-slate-400 uppercase tracking-wider">Issued: {appDate}</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-18 border-b border-slate-400 mx-auto mb-0.5" />
+                  <p className="font-bold text-slate-800 text-[7.5px] leading-tight uppercase">MA. JOSEFINA G. BELMONTE</p>
+                  <p className="text-[6.5px] text-slate-500 uppercase leading-none">City Mayor</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* BACK CARD */
+            <div
+              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none p-4 flex flex-col justify-between"
+              style={{
+                aspectRatio: "1.586 / 1",
+                background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+              }}
+            >
+              <div>
+                <p className="text-[9px] font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1 text-center">
+                  {isPwdApp ? "Republic Act 7277 / RA 9442 Magna Carta for PWDs" : "Republic Act 9994 Expanded Senior Citizens Act"}
+                </p>
+                <ul className="text-[8px] text-slate-600 mt-2 space-y-1 list-disc pl-4">
+                  <li>20% discount and VAT exemption on medicines, medical supplies, and dental services.</li>
+                  <li>20% discount on public domestic transportation (air, sea, land, MRT/LRT).</li>
+                  <li>20% discount on hotels, restaurants, and recreational centers.</li>
+                  <li>This card is non-transferable and valid across the Republic of the Philippines.</li>
+                </ul>
+              </div>
+
+              <div className="border-t border-slate-200 pt-2 space-y-1">
+                <p className="text-[8px] font-bold text-slate-700 uppercase">In case of emergency, please notify:</p>
+                <div className="grid grid-cols-2 gap-2 text-[8px] text-slate-600 bg-slate-50 p-1.5 rounded-md border border-slate-200">
+                  <div>
+                    <span className="font-semibold text-slate-400 block">Contact Person:</span>
+                    <span>Emergency Contact / Brgy Office</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-slate-400 block">Contact Number:</span>
+                    <span className="font-mono font-bold text-blue-700">{app.contactNo || (app as any).cellphoneNo || "09171234567"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between gap-3">
+          <span className="text-xs text-slate-500">
+            Compliant with official Quezon City PDAO &amp; OSCA card issuance guidelines.
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              Print Card
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // =====================================================================================
 // Application Card (List Row)
 // =====================================================================================
 interface ApplicationCardProps {
   app: ApplicationSubmission
   onView: (app: ApplicationSubmission) => void
+  onShowCard?: (app: ApplicationSubmission) => void
 }
 
-function ApplicationCard({ app, onView }: ApplicationCardProps) {
+function ApplicationCard({ app, onView, onShowCard }: ApplicationCardProps) {
   const subLabel = subLabelForApp(app)
 
   return (
@@ -421,19 +654,34 @@ function ApplicationCard({ app, onView }: ApplicationCardProps) {
             )}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-3 shrink-0">
+        <div className="flex flex-col items-end gap-2.5 shrink-0">
           <StatusBadge status={app.status} />
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onView(app)
-            }}
-            className="gw-btn-ghost px-3 py-1.5 text-xs inline-flex items-center gap-1.5"
-          >
-            <Eye className="h-3.5 w-3.5" />
-            Review
-          </button>
+          <div className="flex items-center gap-2">
+            {app.status === "approved" && app.assignedIdNumber && onShowCard && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onShowCard(app)
+                }}
+                className="gw-btn-ghost px-2.5 py-1.5 text-xs text-blue-700 hover:text-blue-800 border-blue-200 bg-blue-50/60 inline-flex items-center gap-1 cursor-pointer"
+              >
+                <IdCard className="h-3.5 w-3.5 text-blue-600" />
+                View ID
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onView(app)
+              }}
+              className="gw-btn-ghost px-3 py-1.5 text-xs inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Review
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -448,9 +696,10 @@ interface DetailedViewProps {
   onClose: () => void
   onApprove: (app: ApplicationSubmission, idNumber: string) => void
   onReject: (id: string, reason: string) => void
+  onShowCard?: (app: ApplicationSubmission) => void
 }
 
-function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) {
+function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: DetailedViewProps) {
   const idNumber = generateOfficialIdNumber(app)
   const [customIdNumber, setCustomIdNumber] = useState(idNumber)
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
@@ -743,6 +992,18 @@ function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) 
                 </p>
               )}
               {app.notes && <p className="text-xs"><strong>Notes:</strong> {app.notes}</p>}
+              {onShowCard && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => onShowCard(app)}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
+                  >
+                    <IdCard className="h-4 w-4" />
+                    Preview &amp; Print Official QC ID Card
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -916,7 +1177,9 @@ export default function PWDSeniorCitizenAdmin() {
   })
 
   const [selectedApp, setSelectedApp] = useState<ApplicationSubmission | null>(null)
+  const [cardApp, setCardApp] = useState<ApplicationSubmission | null>(null)
   const [filterCategory, setFilterCategory] = useState<"all" | "PWD" | "Senior Citizen">("all")
+  const [filterType, setFilterType] = useState<"all" | "new" | "renewal" | "loss" | "assistance">("all")
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected" | "needs_revision">("all")
   const [searchTerm, setSearchTerm] = useState("")
 
@@ -1055,6 +1318,18 @@ export default function PWDSeniorCitizenAdmin() {
       filterStatus === "all" ||
       String(app.status || "").toLowerCase() === filterStatus.toLowerCase()
 
+    const appType = String(app.type || "").toLowerCase()
+    const matchType =
+      filterType === "all" ||
+      (filterType === "new" && appType === "new") ||
+      (filterType === "renewal" && appType === "renewal") ||
+      (filterType === "loss" && (appType === "loss" || appType === "replacement")) ||
+      (filterType === "assistance" &&
+        (appType.includes("assist") ||
+          appType === "social-assistance" ||
+          appType === "medicine-booklet" ||
+          appType === "movie-booklet"))
+
     const q = searchTerm.trim().toLowerCase()
     const matchSearch =
       q === "" ||
@@ -1064,7 +1339,7 @@ export default function PWDSeniorCitizenAdmin() {
       (app.referenceNumber || "").toLowerCase().includes(q) ||
       (app.assignedIdNumber || "").toLowerCase().includes(q) ||
       (app.address || "").toLowerCase().includes(q)
-    return matchCategory && matchStatus && matchSearch
+    return matchCategory && matchType && matchStatus && matchSearch
   })
 
   // Stats
@@ -1079,6 +1354,14 @@ export default function PWDSeniorCitizenAdmin() {
     { label: "All Categories", value: "all" },
     { label: "PWD", value: "PWD" },
     { label: "Senior Citizen", value: "Senior Citizen" },
+  ]
+
+  const typeOptions: { label: string; value: "all" | "new" | "renewal" | "loss" | "assistance" }[] = [
+    { label: "All Types", value: "all" },
+    { label: "New ID", value: "new" },
+    { label: "Renewal", value: "renewal" },
+    { label: "Lost / Replacement", value: "loss" },
+    { label: "Social Assistance", value: "assistance" },
   ]
 
   const statusOptions: { label: string; value: "all" | "pending" | "approved" | "rejected" }[] = [
@@ -1154,6 +1437,22 @@ export default function PWDSeniorCitizenAdmin() {
             </div>
 
             <div>
+              <p className="gw-eyebrow mb-2" style={{ color: "var(--ink-faint)" }}>Service Type</p>
+              <div className="flex flex-wrap gap-2">
+                {typeOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setFilterType(opt.value)}
+                    className="gw-tag gw-tag--ghost gw-tag--btn"
+                    style={filterType === opt.value ? { opacity: 1, borderColor: "var(--ink-soft)", fontWeight: 700 } : undefined}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
               <p className="gw-eyebrow mb-2" style={{ color: "var(--ink-faint)" }}>Status</p>
               <div className="flex flex-wrap gap-2">
                 {statusOptions.map((opt) => (
@@ -1191,6 +1490,7 @@ export default function PWDSeniorCitizenAdmin() {
                   key={app.id}
                   app={app}
                   onView={() => setSelectedApp(app)}
+                  onShowCard={() => setCardApp(app)}
                 />
               ))}
             </div>
@@ -1204,6 +1504,15 @@ export default function PWDSeniorCitizenAdmin() {
             onClose={() => setSelectedApp(null)}
             onApprove={handleApprove}
             onReject={handleReject}
+            onShowCard={(app) => setCardApp(app)}
+          />
+        )}
+
+        {/* Official QC ID Card Modal */}
+        {cardApp && (
+          <OfficialIdCardModal
+            app={cardApp}
+            onClose={() => setCardApp(null)}
           />
         )}
       </div>

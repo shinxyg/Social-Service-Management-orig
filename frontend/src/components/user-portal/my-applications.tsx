@@ -150,8 +150,87 @@ export default function MyApplications() {
               }
             })
 
+            // Also fetch PWD & Senior Citizen applications from backend & localStorage
+            let pwdApps: any[] = []
+            try {
+              const pwdRes = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+              if (pwdRes.ok) {
+                pwdApps = await pwdRes.json()
+              }
+            } catch {}
+            if (!pwdApps || pwdApps.length === 0) {
+              try {
+                pwdApps = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+              } catch {}
+            }
+
+            const mappedPwd: ApplicationRecord[] = (pwdApps || [])
+              .filter((p: any) => {
+                const userQcId = getLoggedInUserQcid()
+                return (
+                  !userQcId ||
+                  p.referenceNumber === userQcId ||
+                  p.email === "dimalmae@gmail.com" ||
+                  (p.lastName && p.lastName.toLowerCase().includes("dimal"))
+                )
+              })
+              .map((p: any) => {
+                const isPwd =
+                  String(p.category || "").toUpperCase() === "PWD" ||
+                  String(p.category || "").toLowerCase().includes("disability")
+                const typeStr = String(p.type || "new").toLowerCase()
+                const serviceTitle = isPwd
+                  ? typeStr === "assistance"
+                    ? "PWD Social Assistance"
+                    : typeStr === "renewal"
+                    ? "Persons with Disability (PWD) ID Renewal"
+                    : typeStr === "loss" || typeStr === "replacement"
+                    ? "Persons with Disability (PWD) ID Replacement"
+                    : "Persons with Disability (PWD) ID"
+                  : typeStr === "medicine-booklet"
+                  ? "Senior Citizen Medicine Booklet"
+                  : typeStr === "movie-booklet"
+                  ? "Senior Citizen Movie Booklet"
+                  : typeStr === "social-assistance"
+                  ? "Senior Citizen Social Assistance"
+                  : typeStr === "renewal"
+                  ? "Senior Citizen ID Renewal"
+                  : typeStr === "loss" || typeStr === "replacement"
+                  ? "Senior Citizen ID Replacement"
+                  : "Senior Citizen ID"
+
+                let appStatus: ApplicationStatus = "Pending"
+                if (p.status === "approved") appStatus = "Approved"
+                else if (p.status === "released") appStatus = "Released"
+                else if (p.status === "for_release") appStatus = "For Release"
+                else if (p.status === "under_review" || p.status === "review") appStatus = "Under Review"
+
+                return {
+                  applicationNo: p.assignedIdNumber || p.referenceNumber || p.id,
+                  assistance: serviceTitle,
+                  assistanceCategory: isPwd ? "PWD" : "Senior Citizen",
+                  dateApplied: new Date(p.submittedAt || p.created_at || Date.now()).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }),
+                  status: appStatus,
+                  applicantName: [p.firstName, p.middleName, p.lastName, p.suffix].filter(Boolean).join(" "),
+                  dateOfBirth: p.dateOfBirth || "October 29, 1960",
+                  address: p.address || "Quezon City",
+                  contactNumber: p.contactNo || p.cellphoneNo || "09171234567",
+                  email: p.email || "applicant@example.com",
+                  remarks:
+                    p.status === "approved"
+                      ? `Inaprubahan na. Assigned ID Number: ${p.assignedIdNumber || "Available sa Tanggapan"}`
+                      : p.status === "rejected"
+                      ? `Kailangang suriin muli: ${p.rejectionReason || "Hindi sapat ang dokumento."}`
+                      : "Kasalukuyang sinusuri ng PDAO / OSCA social worker.",
+                }
+              })
+
             // Isama ang default sample kung wala pa
-            const merged = [...mapped]
+            const merged = [...mappedPwd, ...mapped]
             if (!merged.some((a) => a.applicationNo === "AICS-2026-0001")) {
               merged.unshift(DEFAULT_APPLICATIONS[0])
             }

@@ -518,6 +518,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle")
   const [referenceNumber, setReferenceNumber] = useState("")
   const [isBlocked, setIsBlocked] = useState(false)
+  const [bypassedBlock, setBypassedBlock] = useState(false)
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
 
   const [isResident, setIsResident] = useState(false)
@@ -625,10 +626,10 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       }
 
       // Block ONLY if status is strictly 'pending'
-      if (activeAppStatus === "pending") {
+      if (!bypassedBlock && activeAppStatus === "pending") {
         setIsBlocked(true)
       } else {
-        // If rejected, approved, or no active application, allow user to apply freely
+        // If rejected, approved, bypassed, or no active application, allow user to apply freely
         setIsBlocked(false)
       }
     }
@@ -636,7 +637,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock])
 
   // Auto-redirect to pending status screen after 3 seconds on submitted
   useEffect(() => {
@@ -844,20 +845,21 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         middleName: formData.middleName || userProfile.middleName || "",
         lastName: formData.lastName || userProfile.lastName,
         suffix: formData.suffix || "",
-        dateOfBirth: `${formData.dobYear || "2004"}-${(formData.dobMonth || "10").padStart(2, "0")}-${(formData.dobDay || "29").padStart(2, "0")}`,
-        age: formData.age || "21",
-        sex: formData.sex || "Female",
-        civilStatus: formData.civilStatus || "Single",
-        contactNo: formData.contactNo || userProfile.contactNo || "09000000000",
-        email: formData.email || userProfile.email || "dimalmae@gmail.com",
-        address: `${formData.addressHouseNo || ""} ${formData.addressStreet || ""} ${formData.addressBarangay || ""}, QUEZON CITY`.trim(),
+        dateOfBirth: `${formData.dobYear || userProfile.dobYear || "2000"}-${(formData.dobMonth || userProfile.dobMonth || "01").padStart(2, "0")}-${(formData.dobDay || userProfile.dobDay || "01").padStart(2, "0")}`,
+        age: formData.age || userProfile.age || "21",
+        sex: formData.sex || userProfile.sex || "Female",
+        civilStatus: formData.civilStatus || userProfile.civilStatus || "Single",
+        contactNo: (formData.contactNo || userProfile.contactNo || "09171234567").replace(/\s+/g, ""),
+        cellphoneNo: (formData.contactNo || userProfile.contactNo || "09171234567").replace(/\s+/g, ""),
+        email: formData.email || userProfile.email || "applicant@example.com",
+        address: `${formData.addressHouseNo || userProfile.addressHouseNo || ""} ${formData.addressStreet || userProfile.addressStreet || ""} ${formData.addressBarangay || userProfile.addressBarangay || ""}, QUEZON CITY`.trim(),
         disabilityType: disabilityType || "Visual Disability",
-        disabilityClass: disabilityClass || "apparent",
+        disabilityClass: effectiveDisabilityClass || "apparent",
         causeOfDisability: formData.causeOfDisability || "Congenital / Inborn",
         applyingFor: "myself",
         documents: Object.keys(uploaded).map((k) => ({
-          name: uploaded[k]?.file.name || k,
-          filename: uploaded[k]?.file.name || "doc.pdf",
+          name: k,
+          filename: uploaded[k]?.file.name || "doc.jpg",
           fileUrl: uploaded[k]?.previewUrl,
           uploadedAt: new Date().toISOString(),
           status: "verified",
@@ -907,7 +909,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
           <div className="pt-2 flex flex-col sm:flex-row gap-3 w-full max-w-sm justify-center">
             <button
               type="button"
-              onClick={() => setIsBlocked(false)}
+              onClick={() => {
+                setBypassedBlock(true)
+                setIsBlocked(false)
+                setStep(1)
+                setSubmitStatus("idle")
+              }}
               className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-sm"
             >
               Magsumite ng Bagong Aplikasyon
