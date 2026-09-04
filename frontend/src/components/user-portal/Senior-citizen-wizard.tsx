@@ -260,7 +260,7 @@ export default function SeniorCitizenApplicationWizard({
   const [reasonForRenewal, setReasonForRenewal] = useState("")
 
   const handleVerifyId = () => {
-    if (!existingIdNumber.trim()) return
+    if (!(existingIdNumber || "").trim()) return
     setIsVerifying(true)
     setTimeout(() => {
       setIsVerifying(false)
@@ -274,7 +274,7 @@ export default function SeniorCitizenApplicationWizard({
     isDeclarationChecked &&
     (appFlow === "new" ||
       (isIdVerified &&
-        existingIdNumber.trim() !== "" &&
+        (existingIdNumber || "").trim() !== "" &&
         ((appFlow === "renewal" && reasonForRenewal !== "") ||
           (appFlow === "loss" && reasonForReplacement !== ""))))
 
@@ -828,7 +828,7 @@ export default function SeniorCitizenApplicationWizard({
                       <button
                         type="button"
                         onClick={handleVerifyId}
-                        disabled={!existingIdNumber.trim() || isVerifying}
+                        disabled={!(existingIdNumber || "").trim() || isVerifying}
                         className="px-5 py-2 rounded-lg bg-[#3b82f6] hover:bg-blue-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                       >
                         <Search className="w-3.5 h-3.5" />
@@ -924,7 +924,7 @@ export default function SeniorCitizenApplicationWizard({
 
               {attemptedNext && !step1Valid && (
                 <p className="text-xs text-red-600 font-medium">
-                  {appFlow !== "new" && (!isIdVerified || !existingIdNumber.trim())
+                  {appFlow !== "new" && (!isIdVerified || !(existingIdNumber || "").trim())
                     ? (t("seniorRenewalAlert") || "Pakilagay at i-verify ang inyong Senior Citizen ID bago magpatuloy.")
                     : (t("pwdCheckboxRequiredNote") || "Kailangang markahan ang lahat ng mga kwalipikasyon upang makapagpatuloy.")}
                 </p>
@@ -1215,7 +1215,7 @@ export default function SeniorCitizenApplicationWizard({
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !formData.emergencyFirstName.trim() ? "text-red-600" : "text-gray-700"}`}>
+                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyFirstName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
                             {t("firstNameLabel") || "First Name"} <span className="text-red-500">*</span>
                           </label>
                           <input
@@ -1228,14 +1228,14 @@ export default function SeniorCitizenApplicationWizard({
                             className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
                               !isEmergencyEditable
                                 ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
-                                : attemptedNext && !formData.emergencyFirstName.trim()
+                                : attemptedNext && !(formData.emergencyFirstName || "").trim()
                                 ? "border-red-400 focus:ring-red-300 bg-red-50"
                                 : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                             }`}
                           />
                         </div>
                         <div>
-                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !formData.emergencyLastName.trim() ? "text-red-600" : "text-gray-700"}`}>
+                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyLastName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
                             {t("lastNameLabel") || "Last Name"} <span className="text-red-500">*</span>
                           </label>
                           <input
@@ -1248,14 +1248,14 @@ export default function SeniorCitizenApplicationWizard({
                             className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
                               !isEmergencyEditable
                                 ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
-                                : attemptedNext && !formData.emergencyLastName.trim()
+                                : attemptedNext && !(formData.emergencyLastName || "").trim()
                                 ? "border-red-400 focus:ring-red-300 bg-red-50"
                                 : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                             }`}
                           />
                         </div>
                         <div>
-                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && formData.emergencyContactNo.trim().length < 11 ? "text-red-600" : "text-gray-700"}`}>
+                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && (formData.emergencyContactNo || "").trim().length < 11 ? "text-red-600" : "text-gray-700"}`}>
                             {t("phoneNumberLabel") || "Contact Number"} <span className="text-red-500">*</span>
                           </label>
                           <input
@@ -1269,14 +1269,14 @@ export default function SeniorCitizenApplicationWizard({
                             className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 font-mono focus:outline-none focus:ring-2 ${
                               !isEmergencyEditable
                                 ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
-                                : attemptedNext && formData.emergencyContactNo.trim().length < 11
+                                : attemptedNext && (formData.emergencyContactNo || "").trim().length < 11
                                 ? "border-red-400 focus:ring-red-300 bg-red-50"
                                 : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                             }`}
                           />
                         </div>
                         <div>
-                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !formData.emergencyRelationship.trim() ? "text-red-600" : "text-gray-700"}`}>
+                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyRelationship || "").trim() ? "text-red-600" : "text-gray-700"}`}>
                             {t("pwdRelationshipLabel") || "Relationship"} <span className="text-red-500">*</span>
                           </label>
                           <select
@@ -1286,7 +1286,7 @@ export default function SeniorCitizenApplicationWizard({
                             className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
                               !isEmergencyEditable
                                 ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
-                                : attemptedNext && !formData.emergencyRelationship.trim()
+                                : attemptedNext && !(formData.emergencyRelationship || "").trim()
                                 ? "border-red-400 focus:ring-red-300 bg-red-50"
                                 : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                             }`}

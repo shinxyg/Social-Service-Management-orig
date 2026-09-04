@@ -498,7 +498,7 @@ function formatFileSize(bytes: number) {
 
 // Uses the user's official QCID Number
 function generateReferenceNumber(qcid?: string) {
-  if (qcid && qcid.trim() && qcid !== "110000116932100") return qcid.trim()
+  if (qcid && (qcid || "").trim() && qcid !== "110000116932100") return (qcid || "").trim()
   return getLoggedInUserQcid()
 }
 
@@ -1111,7 +1111,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
                       <div className="p-4 rounded-xl bg-slate-50 border border-blue-200 space-y-3">
                         <div className="flex justify-between items-center">
-                          <label className={`block text-xs font-semibold ${attemptedNext && (!formData.existingPwdIdNumber.trim() || !isIdVerified) ? "text-red-600" : "text-foreground"}`}>
+                          <label className={`block text-xs font-semibold ${attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) ? "text-red-600" : "text-foreground"}`}>
                             {t("pwdExistingIdLabel")} <span className="text-red-500">*</span>
                           </label>
                           {isIdVerified && (
@@ -1129,13 +1129,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               setIsIdVerified(false)
                             }}
                             placeholder="e.g. 2131232"
-                            invalid={attemptedNext && (!formData.existingPwdIdNumber.trim() || !isIdVerified)}
+                            invalid={attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
                             numbersOnly
                           />
                           <button
                             type="button"
                             onClick={handleVerifyId}
-                            disabled={!formData.existingPwdIdNumber.trim() || isVerifying}
+                            disabled={!(formData.existingPwdIdNumber || "").trim() || isVerifying}
                             className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
                           >
                             {isVerifying ? (
@@ -1151,9 +1151,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             )}
                           </button>
                         </div>
-                        {attemptedNext && (!formData.existingPwdIdNumber.trim() || !isIdVerified) && (
+                        {attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) && (
                           <p className="text-xs text-red-500">
-                            {!formData.existingPwdIdNumber.trim()
+                            {!(formData.existingPwdIdNumber || "").trim()
                               ? t("pwdFieldRequiredNote") || "Required"
                               : "Pindutin ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy."}
                           </p>
@@ -1248,13 +1248,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             }}
                             placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "e.g. 2131232"}
                             disabled={dontKnowId}
-                            invalid={attemptedNext && !dontKnowId && (!formData.existingPwdIdNumber.trim() || !isIdVerified)}
+                            invalid={attemptedNext && !dontKnowId && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
                             numbersOnly
                           />
                           <button
                             type="button"
                             onClick={handleVerifyId}
-                            disabled={(!dontKnowId && !formData.existingPwdIdNumber.trim()) || isVerifying}
+                            disabled={(!dontKnowId && !(formData.existingPwdIdNumber || "").trim()) || isVerifying}
                             className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
                           >
                             {isVerifying ? (
@@ -1319,7 +1319,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
                         {attemptedNext && !isIdVerified && (
                           <p className="text-xs text-red-500">
-                            {!dontKnowId && !formData.existingPwdIdNumber.trim()
+                            {!dontKnowId && !(formData.existingPwdIdNumber || "").trim()
                               ? t("pwdFieldRequiredNote") || "Required"
                               : "Pindutin ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy."}
                           </p>
@@ -1427,7 +1427,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                       {idStatus === "renewal" && (
                         <div className="p-4 rounded-lg bg-slate-50 border border-blue-200 space-y-3">
                           <div className="flex justify-between items-center">
-                            <label className={`block text-xs font-semibold ${attemptedNext && (!formData.existingPwdIdNumber.trim() || !isIdVerified) ? "text-red-600" : "text-foreground"}`}>
+                            <label className={`block text-xs font-semibold ${attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) ? "text-red-600" : "text-foreground"}`}>
                               {t("pwdExistingIdLabel")} <span className="text-red-500">*</span>
                             </label>
                             {isIdVerified && (
@@ -1445,13 +1445,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                 setIsIdVerified(false)
                               }}
                               placeholder="e.g. 2131232"
-                              invalid={attemptedNext && (!formData.existingPwdIdNumber.trim() || !isIdVerified)}
+                              invalid={attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
                               numbersOnly
                             />
                             <button
                               type="button"
                               onClick={handleVerifyId}
-                              disabled={!formData.existingPwdIdNumber.trim() || isVerifying}
+                              disabled={!(formData.existingPwdIdNumber || "").trim() || isVerifying}
                               className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
                             >
                               {isVerifying ? (
@@ -1467,9 +1467,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               )}
                             </button>
                           </div>
-                          {attemptedNext && (!formData.existingPwdIdNumber.trim() || !isIdVerified) && (
+                          {attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) && (
                             <p className="text-xs text-red-500">
-                              {!formData.existingPwdIdNumber.trim()
+                              {!(formData.existingPwdIdNumber || "").trim()
                                 ? t("pwdFieldRequiredNote") || "Required"
                                 : "Pindutin ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy."}
                             </p>
@@ -1554,13 +1554,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               }}
                               placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "e.g. 2131232"}
                               disabled={dontKnowId}
-                              invalid={attemptedNext && !dontKnowId && (!formData.existingPwdIdNumber.trim() || !isIdVerified)}
+                              invalid={attemptedNext && !dontKnowId && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
                               numbersOnly
                             />
                             <button
                               type="button"
                               onClick={handleVerifyId}
-                              disabled={(!dontKnowId && !formData.existingPwdIdNumber.trim()) || isVerifying}
+                              disabled={(!dontKnowId && !(formData.existingPwdIdNumber || "").trim()) || isVerifying}
                               className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
                             >
                               {isVerifying ? (
@@ -1625,7 +1625,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
                           {attemptedNext && !isIdVerified && (
                             <p className="text-xs text-red-500">
-                              {!dontKnowId && !formData.existingPwdIdNumber.trim()
+                              {!dontKnowId && !(formData.existingPwdIdNumber || "").trim()
                                 ? t("pwdFieldRequiredNote") || "Required"
                                 : "Pindutin ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy."}
                             </p>

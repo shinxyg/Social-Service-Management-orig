@@ -21,7 +21,7 @@ import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
 function generateReference(_status?: string | null, qcid?: string) {
-  if (qcid && qcid.trim() && qcid !== "110000116932100") return qcid.trim()
+  if (qcid && (qcid || "").trim() && qcid !== "110000116932100") return (qcid || "").trim()
   return getLoggedInUserQcid()
 }
 
@@ -745,7 +745,7 @@ export default function SoloParentApplicationWizard({
   const selectedCategory = SOLO_PARENT_CATEGORIES.find((c) => c.id === selectedCategoryId) || null
 
   const handleVerifyId = () => {
-    if (!existingIdNumber.trim()) {
+    if (!(existingIdNumber || "").trim()) {
       setVerifyError("Kailangang ilagay ang inyong Solo Parent ID Number.")
       return
     }
@@ -757,7 +757,7 @@ export default function SoloParentApplicationWizard({
       const fullName = `${userProfile.firstName} ${userProfile.middleName || ""} ${userProfile.lastName}`.trim()
       setVerifiedRecord({
         name: fullName,
-        idNumber: existingIdNumber.trim(),
+        idNumber: (existingIdNumber || "").trim(),
         barangay: userProfile.addressBarangay || "SAUYO",
         status: idStatus === "renewal" ? "Active / Expired" : "Replacement / Lost ID",
       })
@@ -983,14 +983,14 @@ export default function SoloParentApplicationWizard({
     (idStatus === "new"
       ? selectedCategoryId !== null && hasSoleParentalCare
       : idStatus === "renewal"
-      ? isIdVerified && existingIdNumber.trim() !== "" && hasSoleParentalCare && renewalReason !== ""
-      : isIdVerified && existingIdNumber.trim() !== "" && hasSoleParentalCare && replacementReason !== "")
+      ? isIdVerified && (existingIdNumber || "").trim() !== "" && hasSoleParentalCare && renewalReason !== ""
+      : isIdVerified && (existingIdNumber || "").trim() !== "" && hasSoleParentalCare && replacementReason !== "")
 
   const step2Valid =
-    formData.emergencyFirstName.trim() !== "" &&
-    formData.emergencyLastName.trim() !== "" &&
-    formData.emergencyContactNo.trim().length === 11 &&
-    formData.emergencyRelationship.trim() !== ""
+    (formData.emergencyFirstName || "").trim() !== "" &&
+    (formData.emergencyLastName || "").trim() !== "" &&
+    (formData.emergencyContactNo || "").trim().length === 11 &&
+    (formData.emergencyRelationship || "").trim() !== ""
 
   const step3Valid = requiredDocs.every((doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0)
 
@@ -1365,13 +1365,13 @@ export default function SoloParentApplicationWizard({
                             setVerifyError("")
                           }}
                           placeholder="Enter Solo Parent ID Number"
-                          invalid={attemptedNext && (!existingIdNumber.trim() || !isIdVerified)}
+                          invalid={attemptedNext && (!(existingIdNumber || "").trim() || !isIdVerified)}
                         />
                       </div>
                       <button
                         type="button"
                         onClick={handleVerifyId}
-                        disabled={!existingIdNumber.trim() || isVerifying}
+                        disabled={!(existingIdNumber || "").trim() || isVerifying}
                         className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 h-10 uppercase tracking-wide"
                       >
                         {isVerifying ? (
@@ -1469,13 +1469,13 @@ export default function SoloParentApplicationWizard({
                             setVerifyError("")
                           }}
                           placeholder="Enter Solo Parent ID Number"
-                          invalid={attemptedNext && (!existingIdNumber.trim() || !isIdVerified)}
+                          invalid={attemptedNext && (!(existingIdNumber || "").trim() || !isIdVerified)}
                         />
                       </div>
                       <button
                         type="button"
                         onClick={handleVerifyId}
-                        disabled={!existingIdNumber.trim() || isVerifying}
+                        disabled={!(existingIdNumber || "").trim() || isVerifying}
                         className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 h-10 uppercase tracking-wide"
                       >
                         {isVerifying ? (
@@ -1862,7 +1862,7 @@ export default function SoloParentApplicationWizard({
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !formData.emergencyFirstName.trim() ? "text-red-600" : "text-gray-700"}`}>
+                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyFirstName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
                         {t("firstNameLabel") || "First name"} <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -1877,14 +1877,14 @@ export default function SoloParentApplicationWizard({
                             ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                             : isEditingInfo
                             ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                            : attemptedNext && !formData.emergencyFirstName.trim()
+                            : attemptedNext && !(formData.emergencyFirstName || "").trim()
                             ? "border-red-400 focus:ring-red-300 bg-red-50"
                             : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                         }`}
                       />
                     </div>
                     <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !formData.emergencyLastName.trim() ? "text-red-600" : "text-gray-700"}`}>
+                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyLastName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
                         {t("lastNameLabel") || "Last name"} <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -1899,14 +1899,14 @@ export default function SoloParentApplicationWizard({
                             ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                             : isEditingInfo
                             ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                            : attemptedNext && !formData.emergencyLastName.trim()
+                            : attemptedNext && !(formData.emergencyLastName || "").trim()
                             ? "border-red-400 focus:ring-red-300 bg-red-50"
                             : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                         }`}
                       />
                     </div>
                     <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && formData.emergencyContactNo.trim().length < 11 ? "text-red-600" : "text-gray-700"}`}>
+                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && (formData.emergencyContactNo || "").trim().length < 11 ? "text-red-600" : "text-gray-700"}`}>
                         {t("phoneNumberLabel") || "Phone number"} <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -1922,14 +1922,14 @@ export default function SoloParentApplicationWizard({
                             ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                             : isEditingInfo
                             ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                            : attemptedNext && formData.emergencyContactNo.trim().length < 11
+                            : attemptedNext && (formData.emergencyContactNo || "").trim().length < 11
                             ? "border-red-400 focus:ring-red-300 bg-red-50"
                             : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                         }`}
                       />
                     </div>
                     <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !formData.emergencyRelationship.trim() ? "text-red-600" : "text-gray-700"}`}>
+                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyRelationship || "").trim() ? "text-red-600" : "text-gray-700"}`}>
                         {t("pwdRelationshipLabel") || "Relationship"} <span className="text-red-500">*</span>
                       </label>
                       {idStatus !== "new" && !isEditingInfo ? (
@@ -1947,7 +1947,7 @@ export default function SoloParentApplicationWizard({
                           className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
                             isEditingInfo
                               ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                              : attemptedNext && !formData.emergencyRelationship.trim()
+                              : attemptedNext && !(formData.emergencyRelationship || "").trim()
                               ? "border-red-400 focus:ring-red-300 bg-red-50"
                               : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                           }`}
