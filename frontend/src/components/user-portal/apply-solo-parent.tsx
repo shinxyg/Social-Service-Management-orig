@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
 import { AlertCircle, FileText, X } from "lucide-react"
 import SoloParentApplicationWizard from "./solo-parent-wizard"
-import ChildWelfareApplicationWizard, { CHILD_WELFARE_PROGRAMS, getLocalizedChildWelfarePrograms } from "./child-welfare-wizard"
+import ChildWelfareApplicationWizard, { getLocalizedChildWelfarePrograms } from "./child-welfare-wizard"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
 
