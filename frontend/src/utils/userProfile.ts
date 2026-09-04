@@ -40,80 +40,89 @@ export function getCurrentUser(): any {
 }
 
 /**
+ * Clamps year, month, and day to a real, valid date in the Gregorian calendar.
+ * (e.g. Feb 32 in 1932 becomes Feb 29, 1932; Feb 32 in 2023 becomes Feb 28, 2023; Apr 31 becomes Apr 30)
+ */
+export function clampValidDate(year: number, month: number, day: number): string {
+  const currYear = new Date().getFullYear()
+  let y = Math.floor(year)
+  if (isNaN(y)) y = 2000
+  if (y < 100) {
+    y = y <= (currYear % 100) ? 2000 + y : 1900 + y
+  } else if (y < 1900 || y > currYear) {
+    y = 2000
+  }
+
+  let m = Math.floor(month)
+  if (isNaN(m) || m < 1) m = 1
+  if (m > 12) m = 12
+
+  // Exact maximum days in this month of this year
+  const maxDays = new Date(y, m, 0).getDate()
+  let d = Math.floor(day)
+  if (isNaN(d) || d < 1) d = 1
+  if (d > maxDays) d = maxDays
+
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`
+}
+
+/**
  * Normalizes any date string (ISO "YYYY-MM-DD", "Month DD, YYYY", "MM/DD/YYYY", etc.)
  * into a valid HTML5 "YYYY-MM-DD" format suitable for <input type="date">.
+ * Ensures the date is valid on the Gregorian calendar (e.g. prevents Feb 32).
  */
 export function toISODateString(val?: string | null): string {
   if (!val) return ""
   const str = String(val).trim()
   if (!str) return ""
 
-  const currYear = new Date().getFullYear()
-
-  // 1. Already valid YYYY-MM-DD
-  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  // 1. Matches YYYY-MM-DD or YYYY-M-D
+  const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)
   if (isoMatch) {
-    const y = parseInt(isoMatch[1], 10)
-    if (y >= 1900 && y <= currYear + 1) {
-      return str
-    }
+    return clampValidDate(
+      parseInt(isoMatch[1], 10),
+      parseInt(isoMatch[2], 10),
+      parseInt(isoMatch[3], 10)
+    )
   }
 
-  const MONTHS: Record<string, string> = {
-    JANUARY: "01", JAN: "01", ENERO: "01",
-    FEBRUARY: "02", FEB: "02", PEBRERO: "02",
-    MARCH: "03", MAR: "03", MARSO: "03",
-    APRIL: "04", APR: "04", ABRIL: "04",
-    MAY: "05", MAYO: "05",
-    JUNE: "06", JUN: "06", HUNYO: "06",
-    JULY: "07", JUL: "07", HULYO: "07",
-    AUGUST: "08", AUG: "08", AGOSTO: "08",
-    SEPTEMBER: "09", SEP: "09", SEPT: "09", SETYEMBRE: "09",
-    OCTOBER: "10", OCT: "10", OKTUBRE: "10",
-    NOVEMBER: "11", NOV: "11", NOBYEMBRE: "11",
-    DECEMBER: "12", DEC: "12", DISYEMBRE: "12",
+  const MONTHS: Record<string, number> = {
+    JANUARY: 1, JAN: 1, ENERO: 1,
+    FEBRUARY: 2, FEB: 2, PEBRERO: 2,
+    MARCH: 3, MAR: 3, MARSO: 3,
+    APRIL: 4, APR: 4, ABRIL: 4,
+    MAY: 5, MAYO: 5,
+    JUNE: 6, JUN: 6, HUNYO: 6,
+    JULY: 7, JUL: 7, HULYO: 7,
+    AUGUST: 8, AUG: 8, AGOSTO: 8,
+    SEPTEMBER: 9, SEP: 9, SEPT: 9, SETYEMBRE: 9,
+    OCTOBER: 10, OCT: 10, OKTUBRE: 10,
+    NOVEMBER: 11, NOV: 11, NOBYEMBRE: 11,
+    DECEMBER: 12, DEC: 12, DISYEMBRE: 12,
   }
 
   // 2. Match "Month DD, YYYY" or "Month DD YY" or "Month DD, 12"
   const m1 = str.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{1,4})$/)
   if (m1) {
-    const month = MONTHS[m1[1].toUpperCase()] || "01"
-    const day = m1[2].padStart(2, "0")
-    let year = parseInt(m1[3], 10)
-    if (year < 100) {
-      year = year <= (currYear % 100) ? 2000 + year : 1900 + year
-    } else if (year < 1900 || year > currYear) {
-      year = 2000
-    }
-    return `${year}-${month}-${day}`
+    const monthNum = MONTHS[m1[1].toUpperCase()] || 1
+    const day = parseInt(m1[2], 10)
+    const year = parseInt(m1[3], 10)
+    return clampValidDate(year, monthNum, day)
   }
 
   // 3. Match "MM/DD/YYYY" or "M/D/YY"
   const m2 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{1,4})$/)
   if (m2) {
-    const month = m2[1].padStart(2, "0")
-    const day = m2[2].padStart(2, "0")
-    let year = parseInt(m2[3], 10)
-    if (year < 100) {
-      year = year <= (currYear % 100) ? 2000 + year : 1900 + year
-    } else if (year < 1900 || year > currYear) {
-      year = 2000
-    }
-    return `${year}-${month}-${day}`
+    const monthNum = parseInt(m2[1], 10)
+    const day = parseInt(m2[2], 10)
+    const year = parseInt(m2[3], 10)
+    return clampValidDate(year, monthNum, day)
   }
 
   // 4. Try JS Date parser
   const parsed = new Date(str)
   if (!isNaN(parsed.getTime())) {
-    let year = parsed.getFullYear()
-    if (year < 100) {
-      year = year <= (currYear % 100) ? 2000 + year : 1900 + year
-    } else if (year < 1900 || year > currYear) {
-      year = 2000
-    }
-    const month = String(parsed.getMonth() + 1).padStart(2, "0")
-    const day = String(parsed.getDate()).padStart(2, "0")
-    return `${year}-${month}-${day}`
+    return clampValidDate(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate())
   }
 
   return ""
