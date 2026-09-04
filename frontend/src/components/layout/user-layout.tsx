@@ -118,9 +118,6 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
         { path: "/portal/apply-solo-parent?category=child-welfare&program=nutritional-assistance", label: t("navChildNutritional") || "Nutritional Assistance" },
         { path: "/portal/apply-solo-parent?category=child-welfare&program=child-protection", label: t("navChildProtection") || "Child Protection Assistance" },
         { path: "/portal/apply-solo-parent?category=child-welfare&program=emergency-assistance", label: t("navChildEmergency") || "Emergency Assistance" },
-        { path: "/portal/apply-solo-parent?category=child-welfare&program=psychosocial-support", label: t("navChildPsychosocial") || "Psychosocial Support" },
-        { path: "/portal/apply-solo-parent?category=child-welfare&program=temporary-shelter", label: t("navChildShelter") || "Temporary Shelter / Care" },
-        { path: "/portal/apply-solo-parent?category=child-welfare&program=family-parenting-support", label: t("navChildParenting") || "Family / Parenting Support" },
       ],
     },
     {
