@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
-import { ClipboardList, X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles, ChevronRight, AlertCircle } from "lucide-react"
-import { PageHeader } from "../ui/shared"
+import { X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles, ChevronRight, AlertCircle } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"

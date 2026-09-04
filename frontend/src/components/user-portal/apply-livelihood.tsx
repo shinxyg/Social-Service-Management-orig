@@ -7,7 +7,7 @@ import LivelihoodAssistanceView from "./livelihood-assistance-view"
 import LivelihoodMonitoringView from "./livelihood-monitoring-view"
 import TrainingProgramView from "./training-program-view"
 import { API_BASE } from "../../config/api"
-import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { getLoggedInUserQcid } from "../../utils/userProfile"
 import {
   FileText,
   Package,
