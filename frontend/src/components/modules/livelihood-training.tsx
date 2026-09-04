@@ -25,8 +25,10 @@ import {
   AlertTriangle,
   RotateCcw,
   ShieldAlert,
+  Award,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
+import TrainingProgramAdmin from "./training-program-admin"
 
 // ---- Unified Interfaces ----
 export type ApplicationStatus = "pending" | "under_review" | "approved" | "rejected" | "needs_revision"
@@ -1749,7 +1751,7 @@ export default function LivelihoodApplicationsAdmin() {
     return []
   })
 
-  const [adminTab, setAdminTab] = useState<"applications" | "assistance" | "monitoring">("applications")
+  const [adminTab, setAdminTab] = useState<"applications" | "assistance" | "monitoring" | "training">("applications")
 
   // Modals state
   const [selectedReviewApp, setSelectedReviewApp] = useState<LivelihoodApplication | null>(null)
@@ -2198,9 +2200,9 @@ export default function LivelihoodApplicationsAdmin() {
         </button>
       </div>
 
-      {/* Admin 3-Stage Navigation Tabs */}
+      {/* Admin 4-Stage Navigation Tabs */}
       <div className="bg-card border border-border rounded-2xl p-1.5 shadow-xs">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5">
           <button
             type="button"
             onClick={() => setAdminTab("applications")}
@@ -2241,6 +2243,20 @@ export default function LivelihoodApplicationsAdmin() {
           >
             <Activity className="h-4 w-4" />
             <span>3. LIVELIHOOD MONITORING ({releasedCount} Released)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setAdminTab("training")}
+            id="tab-admin-training"
+            className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              adminTab === "training"
+                ? "bg-purple-600 text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
+          >
+            <Award className="h-4 w-4" />
+            <span>4. TRAINING PROGRAM</span>
           </button>
         </div>
       </div>
@@ -2567,6 +2583,13 @@ export default function LivelihoodApplicationsAdmin() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 4: TRAINING PROGRAM SUB-MODULE                            */}
+      {/* ============================================================ */}
+      {adminTab === "training" && (
+        <TrainingProgramAdmin />
       )}
 
       {/* ============================================================ */}

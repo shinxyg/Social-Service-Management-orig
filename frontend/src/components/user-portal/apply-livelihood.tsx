@@ -5,6 +5,7 @@ import LivelihoodApplicationWizard from "./livelihood-wizard"
 import LivelihoodStatusCard, { type LivelihoodApplicationRecord } from "./livelihood-status-card"
 import LivelihoodAssistanceView from "./livelihood-assistance-view"
 import LivelihoodMonitoringView from "./livelihood-monitoring-view"
+import TrainingProgramView from "./training-program-view"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 import {
@@ -13,6 +14,8 @@ import {
   Activity,
   PlusCircle,
   Lock,
+  GraduationCap,
+  Store,
 } from "lucide-react"
 
 type LivelihoodProgramTab = "apply" | "assistance" | "monitoring"
@@ -297,8 +300,55 @@ export default function ApplyLivelihood() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] py-4 max-w-5xl mx-auto px-4 space-y-6">
-      {/* Tab Locked Alert Notice */}
-      {tabLockedMessage && (
+      {/* Top Level Sub-Module Switcher */}
+      <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-border">
+        <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-xl border border-border">
+          <button
+            type="button"
+            onClick={() => {
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev)
+                next.set("category", "livelihood")
+                return next
+              })
+            }}
+            className={`px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
+              !isTraining
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Store className="h-4 w-4 text-blue-600" />
+            <span>Livelihood Assistance</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev)
+                next.set("category", "training")
+                return next
+              })
+            }}
+            className={`px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
+              isTraining
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <GraduationCap className="h-4 w-4 text-indigo-600" />
+            <span>Training Program</span>
+          </button>
+        </div>
+      </div>
+
+      {isTraining ? (
+        <TrainingProgramView />
+      ) : (
+        <>
+          {/* Tab Locked Alert Notice */}
+          {tabLockedMessage && (
         <div className="p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200 animate-in fade-in duration-200">
           <div className="flex items-center gap-2">
             <Lock className="h-4 w-4 shrink-0 text-amber-600" />
@@ -479,6 +529,8 @@ export default function ApplyLivelihood() {
           onContinue={handleProceedToWizard}
           onClose={() => setShowRequirements(false)}
         />
+      )}
+        </>
       )}
     </div>
   )
