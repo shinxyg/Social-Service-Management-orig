@@ -49,8 +49,6 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const MAX_PHOTO_SIZE_MB = 5;
-
 export const Register = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>(0);
@@ -957,14 +955,6 @@ export const Register = () => {
               <p className="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed">
                 Your resident account has been created. You can now log in and access QC eServices.
               </p>
-
-              {profilePhotoPreview && (
-                <img
-                  src={profilePhotoPreview}
-                  alt="Profile"
-                  className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 mb-4"
-                />
-              )}
 
               <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-left mb-6">
                 <p className="text-[11px] text-slate-400 mb-1">Registered email</p>
