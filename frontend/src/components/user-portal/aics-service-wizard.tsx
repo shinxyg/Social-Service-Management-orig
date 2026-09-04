@@ -49,21 +49,20 @@ function CustomCheckbox({
   label: React.ReactNode
 }) {
   return (
-    <label className="flex items-start gap-2.5 text-sm text-[#3b82f6] cursor-pointer select-none">
+    <label className="flex items-start gap-2.5 text-sm text-[#3b82f6] cursor-pointer select-none group">
+      <input
+        type="checkbox"
+        className="sr-only peer"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
       <span
-        onClick={() => onChange(!checked)}
-        className={`flex items-center justify-center h-4.5 w-4.5 mt-0.5 rounded-[3px] shrink-0 border-2 transition-colors ${
-          checked ? "bg-[#3b82f6] border-[#3b82f6]" : "bg-white border-gray-300"
+        className={`flex items-center justify-center h-4.5 w-4.5 mt-0.5 rounded-[3px] shrink-0 border-2 transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 ${
+          checked ? "bg-[#3b82f6] border-[#3b82f6]" : "bg-white border-gray-300 group-hover:border-blue-400"
         }`}
       >
         {checked && <Check className="h-3 w-3 text-white" strokeWidth={3.5} />}
       </span>
-      <input
-        type="checkbox"
-        className="sr-only"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
       <span className="leading-snug text-blue-700 font-medium text-sm">{label}</span>
     </label>
   )
