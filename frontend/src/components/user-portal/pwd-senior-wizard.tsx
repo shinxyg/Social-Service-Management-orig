@@ -735,7 +735,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
   const [isVerifying, setIsVerifying] = useState(false)
   const [isIdVerified, setIsIdVerified] = useState(false)
-  const [isEditingInfo, setIsEditingInfo] = useState(false)
   const [reasonForReplacement, setReasonForReplacement] = useState("")
   const [reasonForRenewal, setReasonForRenewal] = useState("")
   const [dontKnowId, setDontKnowId] = useState(false)
@@ -1808,23 +1807,23 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                 <SectionHeader title={t("personalInfoSectionTitle").toUpperCase()} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label={t("pwdPobCityLabel")}>
-                    <TextInput value={formData.pobCity} onChange={(v) => updateField("pobCity", v)} placeholder="City / Municipality" disabled={isLocked} />
+                    <TextInput value={formData.pobCity} onChange={(v) => updateField("pobCity", v)} placeholder="City / Municipality" />
                   </Field>
                   <Field label={t("pwdPobProvinceLabel")}>
-                    <TextInput value={formData.pobProvince} onChange={(v) => updateField("pobProvince", v)} placeholder="Province" disabled={isLocked} />
+                    <TextInput value={formData.pobProvince} onChange={(v) => updateField("pobProvince", v)} placeholder="Province" />
                   </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label={t("pwdBloodTypeLabel")}>
-                    <TextInput value={formData.bloodType} onChange={(v) => updateField("bloodType", v)} placeholder="e.g. O+, A+, B+" disabled={isLocked} />
+                    <TextInput value={formData.bloodType} onChange={(v) => updateField("bloodType", v)} placeholder="e.g. O+, A+, B+" />
                   </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label={t("pwdPermanentAddressLabel")} required>
-                    <TextInput value={formData.permanentAddress} onChange={(v) => updateField("permanentAddress", v)} placeholder="Permanent Address" disabled={isLocked} />
+                    <TextInput value={formData.permanentAddress} onChange={(v) => updateField("permanentAddress", v)} placeholder="Permanent Address" />
                   </Field>
                   <Field label={t("pwdPresentAddressLabel")}>
-                    <TextInput value={formData.presentAddress} onChange={(v) => updateField("presentAddress", v)} placeholder="Present Address (kung iba sa permanent)" disabled={isLocked} />
+                    <TextInput value={formData.presentAddress} onChange={(v) => updateField("presentAddress", v)} placeholder="Present Address (kung iba sa permanent)" />
                   </Field>
                 </div>
               </div>
@@ -1834,10 +1833,10 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                 <SectionHeader title={t("pwdEmergencyContactLabel").toUpperCase()} />
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <Field label={t("lastNameLabel")}>
-                    <TextInput value={formData.emergencyLastName} onChange={(v) => updateField("emergencyLastName", v)} disabled={isLocked} />
+                    <TextInput value={formData.emergencyLastName} onChange={(v) => updateField("emergencyLastName", v)} />
                   </Field>
                   <Field label={t("firstNameLabel")}>
-                    <TextInput value={formData.emergencyFirstName} onChange={(v) => updateField("emergencyFirstName", v)} disabled={isLocked} />
+                    <TextInput value={formData.emergencyFirstName} onChange={(v) => updateField("emergencyFirstName", v)} />
                   </Field>
                   <Field label={t("pwdContactNoLabel")}>
                     <TextInput
@@ -1846,15 +1845,14 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                       placeholder="09XXXXXXXXX"
                       numbersOnly
                       maxLength={11}
-                      disabled={isLocked}
                     />
                   </Field>
                   <Field label={t("pwdRelationshipLabel")}>
-                    <TextInput value={formData.emergencyRelationship} onChange={(v) => updateField("emergencyRelationship", v)} disabled={isLocked} />
+                    <TextInput value={formData.emergencyRelationship} onChange={(v) => updateField("emergencyRelationship", v)} />
                   </Field>
                 </div>
                 <Field label={t("address")}>
-                  <TextInput value={formData.emergencyAddress} onChange={(v) => updateField("emergencyAddress", v)} disabled={isLocked} />
+                  <TextInput value={formData.emergencyAddress} onChange={(v) => updateField("emergencyAddress", v)} />
                 </Field>
               </div>
 
@@ -1866,28 +1864,24 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     <TextInput
                       value={formData.heightCm}
                       onChange={(v) => updateField("heightCm", v)}
-                      disabled={isLocked}
                     />
                   </Field>
                   <Field label={t("pwdWeightLabel")}>
                     <TextInput
                       value={formData.weightKg}
                       onChange={(v) => updateField("weightKg", v)}
-                      disabled={isLocked}
                     />
                   </Field>
                   <Field label={t("pwdHairColorLabel")}>
                     <TextInput
                       value={formData.colorOfHair}
                       onChange={(v) => updateField("colorOfHair", v)}
-                      disabled={isLocked}
                     />
                   </Field>
                   <Field label={t("pwdEyeColorLabel")}>
                     <TextInput
                       value={formData.colorOfEyes}
                       onChange={(v) => updateField("colorOfEyes", v)}
-                      disabled={isLocked}
                     />
                   </Field>
                 </div>
@@ -1895,7 +1889,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                   <TextInput
                     value={formData.otherMarks}
                     onChange={(v) => updateField("otherMarks", v)}
-                    disabled={isLocked}
                   />
                 </Field>
               </div>
@@ -1922,14 +1915,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                       value={formData.causeOfDisability}
                       onChange={(v) => updateField("causeOfDisability", v)}
                       options={CAUSE_OF_DISABILITY}
-                      disabled={isLocked}
                     />
                   </Field>
                   <Field label={t("pwdSpecificDisabilityLabel")}>
                     <TextInput
                       value={formData.specificDisability}
                       onChange={(v) => updateField("specificDisability", v)}
-                      disabled={isLocked}
                     />
                   </Field>
                 </div>
