@@ -25,37 +25,6 @@ function generateReference(qcid?: string) {
   return "110000116932100"
 }
 
-const QC_BARANGAYS = [
-  "Alicia", "Amihan", "Apolonio Samson", "Baesa", "Bagbag", "Bagong Pag-Asa",
-  "Bagong Silangan", "Bagumbayan", "Bagumbuhay", "Bahay Toro", "Balingasa",
-  "Balong Bato", "Batasan Hills", "Bayanihan", "Bagong Lipunan Ng Crame",
-  "Blue Ridge A", "Blue Ridge B", "Botocan", "Bungad", "Camp Aguinaldo",
-  "Capri", "Central", "Commonwealth", "Culiat", "Damar", "Damayan",
-  "Damayang Lagi", "Del Monte", "Dioquino Zobel", "Don Manuel", "Aurora",
-  "Doña Imelda", "Doña Josefa", "Duyan-Duyan", "E. Rodriguez", "East Kamias",
-  "Escopa I", "Escopa II", "Escopa III", "Escopa IV", "Fairview",
-  "Greater Lagro", "Gulod", "Holy Spirit", "Horseshoe",
-  "Immaculate Concepcion", "Kaligayahan", "Kalusugan", "Kamuning",
-  "Katipunan", "Kaunlaran", "Kristong Hari", "Krus Na Ligas", "Laging Handa",
-  "Libis", "Lourdes", "Loyola Heights", "Maharlika", "Malaya", "Mangga",
-  "Manresa", "Mariana", "Mariblo", "Marilag", "Masagana", "Masambong",
-  "Matandang Balara", "Milagrosa", "Nagkaisang Nayon", "Nayong Kanluran",
-  "New Era (Constitution Hills)", "North Fairview", "Novaliches Proper",
-  "N.S. Amoranto (Gintong Silahis)", "Obrero", "Old Capitol Site",
-  "Paang Bundok", "Pag-Ibig Sa Nayon", "Paligsahan", "Paltok", "Pansol",
-  "Paraiso", "Pasong Putik Proper", "Pasong Tamo", "Payatas", "Phil-Am",
-  "Pinagkaisahan", "Pinyahan", "Project 6", "Quirino 2-A", "Quirino 2-B",
-  "Quirino 2-C", "Quirino 3-A", "Ramon Magsaysay", "Roxas", "Sacred Heart",
-  "Saint Ignatius", "Saint Peter", "Salvacion", "San Agustin", "San Antonio",
-  "San Bartolome", "San Isidro", "San Isidro Labrador", "San Jose", "San Martin De Porres",
-  "San Roque", "San Vicente", "Santa Cruz", "Santa Lucia", "Santa Monica",
-  "Santa Teresita", "Santo Cristo", "Santo Domingo", "Santo Niño", "Santol",
-  "Sauyo", "Sienna", "Sikatuna Village", "Silangan", "Socorro", "South Triangle",
-  "Tagumpay", "Talayan", "Talipapa", "Tandang Sora", "Tatalon", "Teachers Village East",
-  "Teachers Village West", "Ugong Norte", "Unang Sigaw", "Valencia", "Vasra",
-  "Veterans Village", "Villa Maria Clara", "West Kamias", "West Triangle", "White Plains"
-]
-
 export interface ChildWelfareProgram {
   id: number
   key: string
@@ -445,6 +414,7 @@ function formatFileSize(bytes: number) {
 export interface UserProfile {
   userId?: string
   qcidNo?: string
+  qcidNumber?: string
   firstName: string
   middleName?: string
   lastName: string
@@ -453,14 +423,22 @@ export interface UserProfile {
   dobMonth?: string
   dobDay?: string
   dobYear?: string
+  birthMonth?: string
+  birthDay?: string
+  birthYear?: string
   age?: string | number
   sex?: string
   civilStatus?: string
   addressHouseNo?: string
-  addressStreet: string
-  addressBarangay: string
-  addressCityMunicipality: string
+  houseNo?: string
+  addressStreet?: string
+  street?: string
+  addressBarangay?: string
+  barangay?: string
+  addressCityMunicipality?: string
+  city?: string
   contactNo?: string
+  mobileNumber?: string
   email?: string
 }
 
@@ -779,8 +757,8 @@ export default function ChildWelfareApplicationWizard({
             <span className="font-semibold text-gray-900">{selectedAssistanceType}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">{t("childName") || "Pangalan ng Bata"}:</span>
-            <span className="font-semibold text-gray-900">{formData.childFirstName} {formData.childLastName}</span>
+            <span className="text-gray-500">{t("applicantName") || "Pangalan ng Aplikante"}:</span>
+            <span className="font-semibold text-gray-900">{formData.firstName} {formData.lastName}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-500">{t("parentGuardian") || "Magulang / Guardian"}:</span>
