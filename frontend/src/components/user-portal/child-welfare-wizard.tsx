@@ -15,8 +15,10 @@ import {
   Baby,
   Activity,
   AlertCircle,
+  User,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
+import { getCurrentUserProfile } from "../../utils/userProfile"
 
 function generateReference(qcid?: string) {
   if (qcid && qcid.trim()) return qcid.trim()
@@ -440,12 +442,20 @@ function formatFileSize(bytes: number) {
   return `${(kb / 1024).toFixed(1)} MB`
 }
 
-interface UserProfile {
+export interface UserProfile {
+  userId?: string
   qcidNo?: string
   firstName: string
   middleName?: string
   lastName: string
   suffix?: string
+  nationality?: string
+  dobMonth?: string
+  dobDay?: string
+  dobYear?: string
+  age?: string | number
+  sex?: string
+  civilStatus?: string
   addressHouseNo?: string
   addressStreet: string
   addressBarangay: string
@@ -461,19 +471,7 @@ interface ChildWelfareWizardProps {
   initialProgramKey?: string
 }
 
-const MOCK_USER_PROFILE: UserProfile = {
-  qcidNo: "110000116932100",
-  firstName: "CLARISA MAE",
-  middleName: "GALIAS",
-  lastName: "DIMAL",
-  suffix: "",
-  addressHouseNo: "11",
-  addressStreet: "OLD CABUYAO SAMPALOK ST",
-  addressBarangay: "Sauyo",
-  addressCityMunicipality: "Quezon City",
-  contactNo: "09000000000",
-  email: "dimalmae@gmail.com",
-}
+const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 
 export default function ChildWelfareApplicationWizard({
   onBack,
@@ -495,6 +493,7 @@ export default function ChildWelfareApplicationWizard({
   const [showSampleModal, setShowSampleModal] = useState(false)
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<{ id: string; label: string; sampleImage?: string; description?: string } | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [isEditingInfo, setIsEditingInfo] = useState(false)
 
   const currentPrograms = getLocalizedChildWelfarePrograms(language)
 
@@ -533,22 +532,30 @@ export default function ChildWelfareApplicationWizard({
 
   // Step 2: Personal Information
   const [formData, setFormData] = useState({
-    // Child Information
-    childFirstName: "",
-    childMiddleName: "",
-    childLastName: "",
-    childDobMonth: "05",
-    childDobDay: "10",
-    childDobYear: "2018",
-    childAge: "8",
-    childSex: "Male",
-    childAddress: "Quezon City",
-    childBarangay: "Sauyo",
+    // I. Applicant QCID Profile Information
+    qcidNumber: userProfile?.qcidNo || "110000116932100",
+    firstName: userProfile?.firstName || "CLARISA MAE",
+    middleName: userProfile?.middleName || "GALIAS",
+    lastName: userProfile?.lastName || "DIMAL",
+    suffix: userProfile?.suffix || "",
+    nationality: userProfile?.nationality || "FILIPINO",
+    dobMonth: userProfile?.dobMonth || "10",
+    dobDay: userProfile?.dobDay || "29",
+    dobYear: userProfile?.dobYear || "1960",
+    age: userProfile?.age ? String(userProfile.age) : "65",
+    sex: userProfile?.sex || "Female",
+    civilStatus: userProfile?.civilStatus || "Single",
+    addressHouseNo: userProfile?.addressHouseNo || "11",
+    addressStreet: userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST",
+    barangay: userProfile?.addressBarangay || "Sauyo",
+    city: userProfile?.addressCityMunicipality || "Quezon City",
+    contactNo: userProfile?.contactNo || "09000000000",
+    email: userProfile?.email || "dimalmae@gmail.com",
 
-    // Parent / Guardian / Reporting Person
-    parentFullName: `${userProfile.firstName} ${userProfile.middleName ? userProfile.middleName + " " : ""}${userProfile.lastName}`.trim(),
+    // II. Parent / Guardian / Reporting Person
+    parentFullName: `${userProfile?.firstName || "CLARISA MAE"} ${userProfile?.middleName ? userProfile.middleName + " " : ""}${userProfile?.lastName || "DIMAL"}`.trim(),
     parentRelationship: "Mother",
-    parentContactNo: userProfile.contactNo || "09000000000",
+    parentContactNo: userProfile?.contactNo || "09000000000",
 
     // Specific concern / details
     reasonForRequest: "",
@@ -616,14 +623,8 @@ export default function ChildWelfareApplicationWizard({
   const step1Valid = check1 && check2 && check3 && selectedAssistanceType !== ""
 
   const step2Valid =
-    formData.childFirstName.trim() !== "" &&
-    formData.childLastName.trim() !== "" &&
-    formData.childDobMonth !== "" &&
-    formData.childDobDay !== "" &&
-    formData.childDobYear !== "" &&
-    formData.childAge.trim() !== "" &&
-    formData.childAddress.trim() !== "" &&
-    formData.childBarangay.trim() !== "" &&
+    formData.firstName.trim() !== "" &&
+    formData.lastName.trim() !== "" &&
     formData.parentFullName.trim() !== "" &&
     formData.parentContactNo.trim().length >= 11
 
@@ -863,161 +864,286 @@ export default function ChildWelfareApplicationWizard({
           {/* ──────────────── STEP 2: PERSONAL INFORMATION ──────────────── */}
           {step === 2 && (
             <div className="space-y-6">
-              <div className="border-b border-gray-200 pb-3">
-                <h3 className="text-base font-bold text-gray-900 uppercase">
-                  {selectedProgram.title} — {t("cwStepPersonal") || (language === "tl" ? "PERSONAL NA IMPORMASYON" : language === "bis" ? "PERSONAL NGA IMPORMASYON" : "PERSONAL INFORMATION")}
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {language === "tl"
-                    ? "Pakilagay ang impormasyon ng bata at ng magulang / guardian / reporting person."
-                    : language === "bis"
-                    ? "Palihug ibutang ang impormasyon sa bata ug sa ginikanan / guardian / reporting person."
-                    : "Please enter the information of the child and the parent / guardian / reporting person."}
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 uppercase">
+                    {selectedProgram.title} — {t("cwStepPersonal") || (language === "tl" ? "PERSONAL NA IMPORMASYON" : language === "bis" ? "PERSONAL NGA IMPORMASYON" : "PERSONAL INFORMATION")}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {t("qcidProfileDesc") || "Please review your personal information from your QCID profile. Fill in the additional details below."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{t("autoFilledQcidBadge") || "Auto-filled from QCID Record"}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingInfo((v) => !v)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span>{isEditingInfo ? (t("lockInformation") || "Lock Information") : (t("editInformation") || "Edit Information")}</span>
+                  </button>
+                </div>
               </div>
 
-              {/* CHILD INFORMATION */}
+              {/* IMPORTANT REMINDER BOX */}
+              <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold text-blue-600">{t("importantReminder") || "IMPORTANT REMINDER"}</p>
+                  <p className="text-blue-600/90 mt-0.5 text-xs">
+                    {t("qcidReminderNote") || "Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service."}
+                  </p>
+                </div>
+              </div>
+
+              {attemptedNext && !step2Valid && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-red-700">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>Mangyaring punan ang lahat ng kinakailangang fields na may pulang asterisko (*).</span>
+                </div>
+              )}
+
+              {/* I. IMPORMASYON NG APLIKANTE (QCID PROFILE) */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
-                  <Baby className="w-4 h-4 text-blue-600" />
-                  {t("childInfoTitle") || (language === "tl" ? "I. IMPORMASYON NG BATA" : language === "bis" ? "I. IMPORMASYON SA BATA" : "I. CHILD INFORMATION")}
+                  <User className="w-4 h-4 text-blue-600" />
+                  {language === "tl" ? "I. IMPORMASYON NG APLIKANTE (QCID PROFILE)" : language === "bis" ? "I. IMPORMASYON SA APLIKANTE (QCID PROFILE)" : "I. APPLICANT INFORMATION (QCID PROFILE)"}
                 </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.childFirstName.trim() ? "text-red-600" : "text-gray-700"}`}>
-                      {language === "tl" ? "Pangalan *" : language === "bis" ? "Ngalan *" : "First Name *"}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.childFirstName}
-                      onChange={(e) => updateField("childFirstName", e.target.value.toUpperCase())}
-                      placeholder="Hal. JUAN"
-                      className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      {language === "tl" ? "Gitnang Pangalan" : language === "bis" ? "Tungang Ngalan" : "Middle Name"}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.childMiddleName}
-                      onChange={(e) => updateField("childMiddleName", e.target.value.toUpperCase())}
-                      placeholder="Hal. GALIAS"
-                      className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.childLastName.trim() ? "text-red-600" : "text-gray-700"}`}>
-                      {language === "tl" ? "Apelyido *" : language === "bis" ? "Apelyido *" : "Last Name *"}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.childLastName}
-                      onChange={(e) => updateField("childLastName", e.target.value.toUpperCase())}
-                      placeholder="Hal. DELA CRUZ"
-                      className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      {language === "tl" ? "Petsa ng Kapanganakan *" : language === "bis" ? "Petsa sa Pagkatawo *" : "Date of Birth *"}
-                    </label>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      <input
-                        type="text"
-                        placeholder="MM"
-                        maxLength={2}
-                        value={formData.childDobMonth}
-                        onChange={(e) => updateField("childDobMonth", e.target.value.replace(/\D/g, ""))}
-                        className="h-10 rounded-lg border border-gray-300 px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                      <input
-                        type="text"
-                        placeholder="DD"
-                        maxLength={2}
-                        value={formData.childDobDay}
-                        onChange={(e) => updateField("childDobDay", e.target.value.replace(/\D/g, ""))}
-                        className="h-10 rounded-lg border border-gray-300 px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                      <input
-                        type="text"
-                        placeholder="YYYY"
-                        maxLength={4}
-                        value={formData.childDobYear}
-                        onChange={(e) => updateField("childDobYear", e.target.value.replace(/\D/g, ""))}
-                        className="h-10 rounded-lg border border-gray-300 px-2 text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      {language === "tl" ? "Edad *" : language === "bis" ? "Edad *" : "Age *"}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.childAge}
-                      onChange={(e) => updateField("childAge", e.target.value.replace(/\D/g, ""))}
-                      placeholder="Hal. 8"
-                      className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      {language === "tl" ? "Kasarian *" : language === "bis" ? "Kasarian *" : "Sex *"}
-                    </label>
-                    <div className="flex items-center gap-4 h-10">
-                      {[
-                        { val: "Male", label: language === "tl" ? "Lalaki" : language === "bis" ? "Lalaki" : "Male" },
-                        { val: "Female", label: language === "tl" ? "Babae" : language === "bis" ? "Babaye" : "Female" }
-                      ].map((s) => (
-                        <label key={s.val} className="flex items-center gap-1.5 text-xs text-gray-800 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="childSex"
-                            value={s.val}
-                            checked={formData.childSex === s.val}
-                            onChange={() => updateField("childSex", s.val)}
-                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                          />
-                          <span>{s.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      {language === "tl" ? "Tirahan (House No., Street) *" : language === "bis" ? "Pinuy-anan (House No., Street) *" : "Current Address *"}
-                    </label>
+                    <label className="text-xs font-semibold text-gray-700">{t("qcIdLabel") || "QC ID"} *</label>
                     <input
                       type="text"
-                      value={formData.childAddress}
-                      onChange={(e) => updateField("childAddress", e.target.value)}
-                      placeholder="Hal. 11 Sampaloc Street"
-                      className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      value={formData.qcidNumber}
+                      onChange={(e) => updateField("qcidNumber", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Barangay *
-                    </label>
-                    <select
-                      value={formData.childBarangay}
-                      onChange={(e) => updateField("childBarangay", e.target.value)}
-                      className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    >
-                      <option value="">{language === "tl" ? "Pumili ng Barangay..." : language === "bis" ? "Pili og Barangay..." : "Select Barangay..."}</option>
-                      {QC_BARANGAYS.map((b) => (
-                        <option key={b} value={b}>{b}</option>
-                      ))}
-                    </select>
+                    <label className="text-xs font-semibold text-gray-700">{t("firstNameLabel") || "First name"} *</label>
+                    <input
+                      type="text"
+                      value={formData.firstName}
+                      onChange={(e) => updateField("firstName", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("middleNameLabel") || "Middle name"}</label>
+                    <input
+                      type="text"
+                      value={formData.middleName}
+                      onChange={(e) => updateField("middleName", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("lastNameLabel") || "Last name"} *</label>
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => updateField("lastName", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("suffixLabel") || "Suffix (Jr., Sr., III, etc.)"}</label>
+                    <input
+                      type="text"
+                      value={formData.suffix}
+                      onChange={(e) => updateField("suffix", e.target.value)}
+                      placeholder={t("suffixLabel") || "Suffix (Jr., Sr., etc.)"}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("nationalityLabel") || "Nationality"} *</label>
+                    <input
+                      type="text"
+                      value={formData.nationality}
+                      onChange={(e) => updateField("nationality", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("birthDateLabel") || "Date of birth"} *</label>
+                    <input
+                      type="text"
+                      value={`${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`}
+                      onChange={(e) => {
+                        const parts = e.target.value.split("/")
+                        if (parts.length === 3) {
+                          updateField("dobMonth", parts[0])
+                          updateField("dobDay", parts[1])
+                          updateField("dobYear", parts[2])
+                        }
+                      }}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("ageLabel") || "Age"} *</label>
+                    <input
+                      type="text"
+                      value={formData.age}
+                      onChange={(e) => updateField("age", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("genderLabel") || "Gender"} *</label>
+                    <input
+                      type="text"
+                      value={formData.sex}
+                      onChange={(e) => updateField("sex", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("civilStatusLabel") || "Civil status"} *</label>
+                    <input
+                      type="text"
+                      value={formData.civilStatus}
+                      onChange={(e) => updateField("civilStatus", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("contactNumberLabel") || "Contact number"} *</label>
+                    <input
+                      type="text"
+                      value={formData.contactNo}
+                      onChange={(e) => updateField("contactNo", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("houseNumberLabel") || "House/Building number"} *</label>
+                    <input
+                      type="text"
+                      value={formData.addressHouseNo}
+                      onChange={(e) => updateField("addressHouseNo", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("streetLabel") || "Street"} *</label>
+                    <input
+                      type="text"
+                      value={formData.addressStreet}
+                      onChange={(e) => updateField("addressStreet", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("barangayLabel") || "Barangay"} *</label>
+                    <input
+                      type="text"
+                      value={formData.barangay}
+                      onChange={(e) => updateField("barangay", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
                   </div>
                 </div>
               </div>
@@ -1517,20 +1643,21 @@ export default function ChildWelfareApplicationWizard({
 
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Child Information */}
+                {/* Applicant Information */}
                 <div className="p-4 rounded-xl border border-gray-200 bg-white space-y-2 text-xs">
                   <div className="flex justify-between items-center pb-2 border-b border-gray-100">
                     <span className="font-bold text-gray-900 uppercase">
-                      {language === "tl" ? "IMPORMASYON NG BATA" : language === "bis" ? "IMPORMASYON SA BATA" : "CHILD INFORMATION"}
+                      {language === "tl" ? "IMPORMASYON NG APLIKANTE" : language === "bis" ? "IMPORMASYON SA APLIKANTE" : "APPLICANT INFORMATION"}
                     </span>
                     <button type="button" onClick={() => setStep(2)} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
                       <Pencil className="w-3 h-3" /> {language === "tl" ? "I-edit" : language === "bis" ? "I-edit" : "Edit"}
                     </button>
                   </div>
-                  <p><span className="text-gray-500">{language === "tl" ? "Buong Pangalan:" : language === "bis" ? "Tibuok Ngalan:" : "Full Name:"}</span> <span className="font-semibold text-gray-900">{formData.childFirstName} {formData.childMiddleName ? formData.childMiddleName + " " : ""}{formData.childLastName}</span></p>
-                  <p><span className="text-gray-500">{language === "tl" ? "Petsa ng Kapanganakan / Edad:" : language === "bis" ? "Petsa sa Pagkatawo / Edad:" : "Date of Birth / Age:"}</span> <span className="font-semibold text-gray-900">{formData.childDobMonth}/{formData.childDobDay}/{formData.childDobYear} ({formData.childAge} {language === "tl" ? "taong gulang" : language === "bis" ? "ka tuig" : "y/o"})</span></p>
-                  <p><span className="text-gray-500">{language === "tl" ? "Kasarian:" : language === "bis" ? "Kasarian:" : "Sex:"}</span> <span className="font-semibold text-gray-900">{formData.childSex}</span></p>
-                  <p><span className="text-gray-500">{language === "tl" ? "Tirahan:" : language === "bis" ? "Pinuy-anan:" : "Address:"}</span> <span className="font-semibold text-gray-900">{formData.childAddress}, Brgy. {formData.childBarangay}</span></p>
+                  <p><span className="text-gray-500">QC ID:</span> <span className="font-semibold text-gray-900 font-mono">{formData.qcidNumber}</span></p>
+                  <p><span className="text-gray-500">{language === "tl" ? "Buong Pangalan:" : language === "bis" ? "Tibuok Ngalan:" : "Full Name:"}</span> <span className="font-semibold text-gray-900">{formData.firstName} {formData.middleName ? formData.middleName + " " : ""}{formData.lastName} {formData.suffix}</span></p>
+                  <p><span className="text-gray-500">{language === "tl" ? "Petsa ng Kapanganakan / Edad:" : language === "bis" ? "Petsa sa Pagkatawo / Edad:" : "Date of Birth / Age:"}</span> <span className="font-semibold text-gray-900">{formData.dobMonth}/{formData.dobDay}/{formData.dobYear} ({formData.age} {language === "tl" ? "taong gulang" : language === "bis" ? "ka tuig" : "y/o"})</span></p>
+                  <p><span className="text-gray-500">{language === "tl" ? "Kasarian / Katayuang Sibil:" : language === "bis" ? "Kasarian / Sibil nga Kahimtang:" : "Sex / Civil Status:"}</span> <span className="font-semibold text-gray-900">{formData.sex} / {formData.civilStatus}</span></p>
+                  <p><span className="text-gray-500">{language === "tl" ? "Tirahan:" : language === "bis" ? "Pinuy-anan:" : "Address:"}</span> <span className="font-semibold text-gray-900">{formData.addressHouseNo} {formData.addressStreet}, Brgy. {formData.barangay}, {formData.city}</span></p>
                 </div>
 
                 {/* Parent / Guardian Information */}
