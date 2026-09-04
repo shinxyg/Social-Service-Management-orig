@@ -431,6 +431,7 @@ function OfficialIdCardModal({
 }) {
   if (!app) return null
   const isPwdApp = isPWD(app)
+  const idNumber = generateOfficialIdNumber(app)
   const issueDateObj = new Date(app.approvedDate || app.submittedAt || Date.now())
   const validIssueDate = isNaN(issueDateObj.getTime()) ? new Date() : issueDateObj
   const appDate = validIssueDate.toLocaleDateString("en-PH", {
