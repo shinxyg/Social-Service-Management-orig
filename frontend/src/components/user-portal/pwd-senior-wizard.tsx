@@ -800,10 +800,19 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
           )
         }
 
-        // Verify gamit ang typed PWD ID number o reference number
-        const matchAssigned = a.assignedIdNumber && a.assignedIdNumber.trim().toLowerCase() === typed
-        const matchRef = a.referenceNumber && a.referenceNumber.trim().toLowerCase() === typed
-        return matchAssigned || matchRef
+        // Verify gamit ang typed PWD ID number o reference number (flexible matching: may PWD- man o wala)
+        const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const refClean = (a.referenceNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+
+        const matchAssigned =
+          (a.assignedIdNumber && a.assignedIdNumber.trim().toLowerCase() === typed) ||
+          (assignedClean !== "" && (assignedClean === cleanTyped || assignedClean.endsWith(cleanTyped) || cleanTyped.endsWith(assignedClean)))
+        const matchRef =
+          (a.referenceNumber && a.referenceNumber.trim().toLowerCase() === typed) ||
+          (refClean !== "" && (refClean === cleanTyped || refClean.endsWith(cleanTyped) || cleanTyped.endsWith(refClean)))
+
+        return Boolean(matchAssigned || matchRef)
       })
 
       if (matchedApp) {
@@ -1207,9 +1216,8 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               updateField("hasExistingPwdId", t("yes"))
                               setIsIdVerified(false)
                             }}
-                            placeholder="e.g. 2131232"
+                            placeholder="e.g. PWD-137404-2026-847708"
                             invalid={attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
-                            numbersOnly
                           />
                           <button
                             type="button"
@@ -1336,10 +1344,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               updateField("hasExistingPwdId", t("yes"))
                               setIsIdVerified(false)
                             }}
-                            placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "e.g. 2131232"}
+                            placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "e.g. PWD-137404-2026-847708"}
                             disabled={dontKnowId}
                             invalid={attemptedNext && !dontKnowId && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
-                            numbersOnly
                           />
                           <button
                             type="button"
@@ -1545,9 +1552,8 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                 updateField("hasExistingPwdId", t("yes"))
                                 setIsIdVerified(false)
                               }}
-                              placeholder="e.g. 2131232"
+                              placeholder="e.g. PWD-137404-2026-847708"
                               invalid={attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
-                              numbersOnly
                             />
                             <button
                               type="button"
@@ -1664,10 +1670,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                 updateField("hasExistingPwdId", t("yes"))
                                 setIsIdVerified(false)
                               }}
-                              placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "e.g. 2131232"}
+                              placeholder={dontKnowId ? "Gamitin ang QC ID Profile para i-verify" : "e.g. PWD-137404-2026-847708"}
                               disabled={dontKnowId}
                               invalid={attemptedNext && !dontKnowId && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
-                              numbersOnly
                             />
                             <button
                               type="button"
