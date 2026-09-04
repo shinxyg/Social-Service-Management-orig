@@ -368,7 +368,19 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const handleToggleSelfPatient = (checked: boolean) => {
     setIsSelfPatient(checked)
     setSameAddressAsApplicant(checked)
-    if (!checked) {
+    if (checked) {
+      setIRelation("Sarili")
+      setIFirstName(pFirstName)
+      setIMiddleName(pMiddleName)
+      setILastName(pLastName)
+      setISuffix(pSuffix)
+      setIGender(pGender)
+      setIBirthDate(toISODateString(pBirthDate))
+      setIAge(pAge)
+      setIHouseNumber(pHouseNumber)
+      setIStreetName(pStreetName)
+      setIBarangay(pBarangay)
+    } else {
       setIRelation("")
       setIHouseNumber("")
       setIStreetName("")
@@ -386,7 +398,18 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const handleToggleSelfBeneficiary = (checked: boolean) => {
     setBenIsSelf(checked)
     setBenSameAddress(checked)
-    if (!checked) {
+    if (checked) {
+      setBenFirstName(pFirstName)
+      setBenMiddleName(pMiddleName)
+      setBenLastName(pLastName)
+      setBenSuffix(pSuffix)
+      setBenGender(pGender)
+      setBenBirthDate(toISODateString(pBirthDate))
+      setBenAge(pAge)
+      setBenHouseNumber(pHouseNumber)
+      setBenStreetName(pStreetName)
+      setBenBarangay(pBarangay)
+    } else {
       setBenHouseNumber("")
       setBenStreetName("")
       setBenBarangay("")
@@ -1191,7 +1214,7 @@ if (isBlocked) {
                 <input value={pNationality} disabled className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`} placeholder={t("nationalityLabel")} />
               </Field>
               <Field label={`${t("birthDateLabel")} *`}>
-                <input type="date" value={pBirthDate} disabled className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`} />
+                <input type="date" value={toISODateString(pBirthDate)} disabled className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`} />
               </Field>
 
               <Field label={`${t("ageLabel")} *`}>
@@ -1491,7 +1514,7 @@ if (isBlocked) {
                   <Field label={`${t("beneficiaryBirthDateLabel")} *`}>
                     <input
                       type="date"
-                      value={benBirthDate}
+                      value={toISODateString(benBirthDate)}
                       onChange={(e) => {
                         const val = e.target.value
                         setBenBirthDate(val)
@@ -1696,7 +1719,7 @@ if (isBlocked) {
                 <Field label={`${t("birthDateLabel")} *`}>
                   <input
                     type="date"
-                    value={iBirthDate}
+                    value={toISODateString(iBirthDate)}
                     onChange={(e) => {
                       const val = e.target.value
                       setIBirthDate(val)

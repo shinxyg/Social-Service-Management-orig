@@ -116,7 +116,7 @@ export function toISODateString(val?: string | null): string {
     return `${year}-${month}-${day}`
   }
 
-  return "2000-01-01"
+  return ""
 }
 
 /**
