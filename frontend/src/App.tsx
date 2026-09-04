@@ -10,7 +10,6 @@ import { Register } from "./components/entry-login/Register"
 import LandingPage from "./pages/landing"
 
 import AICSUser from "./components/user-portal/aics-user"
-import UserDashboard from "./components/user-portal/user-dashboard"
 import ApplyPWDSenior from "./components/user-portal/apply-pwd-senior"
 import ApplySoloParent from "./components/user-portal/apply-solo-parent"
 import ApplyLivelihood from "./components/user-portal/apply-livelihood"
@@ -36,7 +35,7 @@ export default function App() {
   const isSuperAdmin = isAuthenticated && userRole === 'super_admin'
   const isStaff = isAuthenticated && userRole === 'staff';
   const isResident = isAuthenticated && userRole === 'user';
-  const homePath = isSuperAdmin ? "/super-admin" : isStaff ? defaultModulePath : "/portal/dashboard"
+  const homePath = isSuperAdmin ? "/super-admin" : isStaff ? defaultModulePath : "/portal/aics"
 
   return (
     <LanguageProvider>
@@ -79,9 +78,8 @@ export default function App() {
           {/* Resident Routes */}
           {isResident && (
             <Route element={<UserLayout />}>
-              <Route index element={<Navigate to="/portal/dashboard" replace />} />
-              <Route path="/portal" element={<Navigate to="/portal/dashboard" replace />} />
-              <Route path="/portal/dashboard" element={<UserDashboard />} />
+              <Route index element={<Navigate to="/portal/aics" replace />} />
+              <Route path="/portal" element={<Navigate to="/portal/aics" replace />} />
               <Route path="/portal/aics" element={<AICSUser />} />
               <Route path="/portal/apply-pwd-senior" element={<ApplyPWDSenior />} />
               <Route path="/portal/apply-solo-parent" element={<ApplySoloParent />} />

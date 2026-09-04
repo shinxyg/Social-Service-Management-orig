@@ -681,10 +681,10 @@ export default function AICSServiceWizard({
               Tingnan ang Aking Aplikasyon
             </a>
             <a
-              href="/portal/dashboard"
+              href="/portal/aics"
               className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-xs transition-colors"
             >
-              Bumalik sa Dashboard
+              Bumalik sa AICS
             </a>
           </div>
         </div>
