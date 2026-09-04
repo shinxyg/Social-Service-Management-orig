@@ -758,13 +758,28 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           {/* APPLICATION FORM (shown if no application yet, or if revising/re-applying) */}
           {(!activeApplication || isRevising) && (
             <form onSubmit={handleSubmitApplication} className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-6">
-              <div className="border-b border-border pb-4">
-                <h3 className="text-xl font-bold text-foreground">
-                  Apply for Training Program
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Mabilisang aplikasyon para sa mga programang pangkabuhayan at skills training ng Quezon City.
-                </p>
+              <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">
+                    Apply for Training Program
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Mabilisang aplikasyon para sa mga programang pangkabuhayan at skills training ng Quezon City.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 self-start sm:self-center">
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${formStep === "select" ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}>
+                    1. Kurso
+                  </span>
+                  <span className="text-muted-foreground text-xs">→</span>
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${formStep === "profile" ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}>
+                    2. Impormasyon
+                  </span>
+                  <span className="text-muted-foreground text-xs">→</span>
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${formStep === "review" ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}>
+                    3. Kumpirmasyon
+                  </span>
+                </div>
               </div>
 
               {/* Step 1: Select Training */}
