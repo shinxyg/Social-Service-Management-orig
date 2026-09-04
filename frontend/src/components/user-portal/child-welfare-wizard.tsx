@@ -824,7 +824,7 @@ export default function ChildWelfareApplicationWizard({
   const STEPS = [
     { id: 1, label: t("cwStepChecklist") || (language === "tl" ? "KUMPLETUHIN ANG CHECKLIST" : language === "bis" ? "KUMPLETOHA ANG CHECKLIST" : "COMPLETE CHECKLIST") },
     { id: 2, label: t("cwStepPersonal") || (language === "tl" ? "PERSONAL NA IMPORMASYON" : language === "bis" ? "PERSONAL NGA IMPORMASYON" : "PERSONAL INFORMATION") },
-    { id: 3, label: t("cwStepDocuments") || (language === "tl" ? "MAGSUMITE NG DOKUMENTO" : language === "bis" ? "ISUMITE ANG MGA DOKUMENTO" : "SUBMIT DOCUMENTS") },
+    { id: 3, label: t("pwdStepDocuments") ? t("pwdStepDocuments").toUpperCase() : "SAMPLE DOCUMENTS" },
     { id: 4, label: t("cwStepReview") || (language === "tl" ? "SURIIN AT ISUMITE" : language === "bis" ? "SUSIHA UG ISUMITE" : "REVIEW & SUBMIT") },
   ]
 
@@ -1073,30 +1073,33 @@ export default function ChildWelfareApplicationWizard({
           {STEPS.map((s, i) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
               <div
-                className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${
+                className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                   i === step - 1
-                    ? "bg-[#3b82f6] text-white"
+                    ? "bg-blue-600 text-white"
                     : step > i + 1
-                    ? "bg-[#3b82f6]/80 text-white"
-                    : "bg-gray-200 text-gray-400"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-500"
                 }`}
               >
                 {step > i + 1 ? <Check className="h-4 w-4" /> : i + 1}
               </div>
               {i < STEPS.length - 1 && (
-                <div className="flex-1 h-px bg-gray-200 mx-2" />
+                <div className={`flex-1 h-px mx-2 transition-colors ${step > i + 1 ? "bg-blue-300" : "bg-gray-200"}`} />
               )}
             </div>
           ))}
         </div>
 
-        <div className="flex gap-2 px-6 pb-4">
-          {STEPS.map((s, i) => (
+        {/* Tab labels */}
+        <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
+          {STEPS.map((s) => (
             <div
               key={s.id}
-              className={`flex-1 text-center text-xs font-bold py-3 rounded-lg tracking-wide uppercase ${
-                i === step - 1
-                  ? "bg-[#3b82f6] text-white"
+              className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
+                s.id === step
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : s.id < step
+                  ? "bg-blue-100 text-blue-700"
                   : "bg-gray-100 text-gray-500"
               }`}
             >
@@ -1123,9 +1126,9 @@ export default function ChildWelfareApplicationWizard({
                     type="checkbox"
                     checked={check1}
                     onChange={(e) => setCheck1(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#3b82f6] accent-[#3b82f6] focus:ring-[#3b82f6]"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
                   />
-                  <span className={`text-sm ${attemptedNext && !check1 ? "text-red-600 font-semibold" : "text-[#3b82f6]"}`}>
+                  <span className={`text-sm ${attemptedNext && !check1 ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     {selectedProgram.checklists[0]} *
                   </span>
                 </label>
@@ -1135,9 +1138,9 @@ export default function ChildWelfareApplicationWizard({
                     type="checkbox"
                     checked={check2}
                     onChange={(e) => setCheck2(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#3b82f6] accent-[#3b82f6] focus:ring-[#3b82f6]"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
                   />
-                  <span className={`text-sm ${attemptedNext && !check2 ? "text-red-600 font-semibold" : "text-[#3b82f6]"}`}>
+                  <span className={`text-sm ${attemptedNext && !check2 ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     {selectedProgram.checklists[1]} *
                   </span>
                 </label>
@@ -1147,9 +1150,9 @@ export default function ChildWelfareApplicationWizard({
                     type="checkbox"
                     checked={check3}
                     onChange={(e) => setCheck3(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#3b82f6] accent-[#3b82f6] focus:ring-[#3b82f6]"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
                   />
-                  <span className={`text-sm ${attemptedNext && !check3 ? "text-red-600 font-semibold" : "text-[#3b82f6]"}`}>
+                  <span className={`text-sm ${attemptedNext && !check3 ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     {selectedProgram.checklists[2]} *
                   </span>
                 </label>
@@ -1159,16 +1162,30 @@ export default function ChildWelfareApplicationWizard({
                 )}
               </div>
 
+              {/* Blue Info Alert Banner */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">
+                    BAGONG APLIKASYON PARA SA CHILD WELFARE SERVICES
+                  </p>
+                  <p className="text-xs text-blue-700 mt-0.5">
+                    NEW APPLICATION: First-time Child Welfare assistance. Complete all requirements.
+                  </p>
+                </div>
+              </div>
+
               {/* Click the type of assistance */}
               <div className="space-y-2 pt-2">
                 <h3 className="text-sm font-bold text-gray-900 tracking-wide uppercase">
                   {language === "tl" ? "PILIIN ANG URI NG TULONG" : language === "bis" ? "PILIA ANG MATANG SA TABANG" : "CLICK THE TYPE OF ASSISTANCE"}
                 </h3>
+                <p className="text-xs text-blue-700 font-medium">Choose the type of assistance **</p>
                 <div className="relative">
                   <select
                     value={selectedAssistanceType}
                     onChange={(e) => setSelectedAssistanceType(e.target.value)}
-                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500"
                   >
                     {selectedProgram.assistanceTypes.map((type) => (
                       <option key={type} value={type}>

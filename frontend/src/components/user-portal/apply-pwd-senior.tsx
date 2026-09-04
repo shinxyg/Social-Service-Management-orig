@@ -542,10 +542,13 @@ export default function ApplyPWDSenior() {
               </div>
               <button
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setUnderstood(true)
+                  setShowModal(false)
+                }}
                 className="px-5 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white transition-all shrink-0 cursor-pointer shadow-sm"
               >
-                {understood ? t("iUnderstand") : "Ipagpatuloy ang Aplikasyon"}
+                Ipagpatuloy ang Aplikasyon
               </button>
             </div>
           </div>

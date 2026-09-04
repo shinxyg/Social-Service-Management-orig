@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import {
   Check,
+  ChevronRight,
   Upload,
   Camera,
   FileText,
@@ -97,7 +98,7 @@ export default function SeniorBookletWizard({
   const STEPS = [
     { id: 1, label: t("wizardChecklist") || "COMPLETE CHECKLIST" },
     { id: 2, label: t("wizardPersonal") || "PERSONAL INFORMATION" },
-    { id: 3, label: t("wizardDocuments") || "REQUIREMENTS / DOCUMENT UPLOAD" },
+    { id: 3, label: t("pwdStepDocuments")?.toUpperCase() || "SAMPLE DOCUMENTS" },
     { id: 4, label: t("wizardReview") || "REVIEW & SUBMIT" },
   ]
 
@@ -547,31 +548,31 @@ export default function SeniorBookletWizard({
               <div
                 className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                   s.id === step
-                    ? "bg-[#3b82f6] text-white"
+                    ? "bg-blue-600 text-white"
                     : s.id < step
-                    ? "bg-[#3b82f6] text-white"
-                    : "bg-gray-200 text-gray-400"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-500"
                 }`}
               >
                 {s.id < step ? <Check className="h-4 w-4 stroke-[3]" /> : s.id}
               </div>
               {idx < STEPS.length - 1 && (
-                <div className={`h-px flex-1 mx-2 ${s.id < step ? "bg-[#3b82f6]" : "bg-gray-200"}`} />
+                <div className={`h-px flex-1 mx-2 ${s.id < step ? "bg-blue-300" : "bg-gray-200"}`} />
               )}
             </div>
           ))}
         </div>
 
-        {/* Tab labels bar matching Pic 2 */}
-        <div className="flex gap-2 px-6 pb-4">
+        {/* Tab labels bar */}
+        <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
               key={s.id}
-              className={`flex-1 text-center text-xs font-bold py-3 rounded-lg tracking-wide uppercase transition-colors select-none ${
+              className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
                 s.id === step
-                  ? "bg-[#3b82f6] text-white shadow-xs"
+                  ? "bg-blue-600 text-white"
                   : s.id < step
-                  ? "bg-blue-50 text-[#3b82f6]"
+                  ? "bg-blue-100 text-blue-700"
                   : "bg-gray-100 text-gray-500"
               }`}
             >
@@ -609,10 +610,26 @@ export default function SeniorBookletWizard({
                 />
               </div>
 
+              {/* Blue Info Alert Banner */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">
+                    {title.toUpperCase()} — PRIMARY REQUIREMENTS
+                  </p>
+                  <p className="text-xs text-blue-700 mt-0.5">
+                    Kumpletuhin ang mga pangunahing kwalipikasyon at ihanda ang inyong Senior Citizen / OSCA ID upang makapag-apply.
+                  </p>
+                </div>
+              </div>
+
               <div>
-                <p className="text-sm text-gray-800 mb-3 font-bold uppercase tracking-wide">
+                <p className="text-sm text-foreground mb-1 font-bold uppercase tracking-wide">
                   {`HAVE YOU ALREADY RECEIVED ${title.toUpperCase()}? *`}
                 </p>
+                <label className="text-xs mb-2 block font-medium text-blue-700">
+                  Choose Status **
+                </label>
                 <div className="flex items-center gap-8">
                   <label className="flex items-center gap-2 text-sm text-[#3b82f6] cursor-pointer select-none">
                     <input
@@ -1283,13 +1300,14 @@ export default function SeniorBookletWizard({
               type="button"
               onClick={goNext}
               disabled={!canGoNext}
-              className={`px-8 h-10 rounded-lg text-xs font-bold transition-colors select-none ${
+              className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors select-none ${
                 canGoNext
-                  ? "bg-[#3b82f6] text-white hover:bg-blue-700 cursor-pointer shadow-xs"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
             >
-              NEXT
+              <span>NEXT</span>
+              <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
             <button
@@ -1419,7 +1437,7 @@ function CustomCheckbox({
         onChange={(e) => onChange(e.target.checked)}
         className="sr-only"
       />
-      <span className="leading-snug text-gray-900">{label}</span>
+      <span className="leading-snug text-blue-700 font-medium text-sm">{label}</span>
     </label>
   )
 }

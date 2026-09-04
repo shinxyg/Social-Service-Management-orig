@@ -954,7 +954,7 @@ export default function PWDSocialAssistanceWizard({
                     onChange={(e) => updateField("isResident", e.target.checked)}
                     className="mt-1 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-foreground">
+                  <span className={`text-sm ${attemptedNext && !formData.isResident ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     Are you a legitimate resident of Quezon City? <span className="text-red-500">*</span>
                   </span>
                 </label>
@@ -969,7 +969,7 @@ export default function PWDSocialAssistanceWizard({
                     onChange={(e) => updateField("hasDisability", e.target.checked)}
                     className="mt-1 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-foreground">
+                  <span className={`text-sm ${attemptedNext && !formData.hasDisability ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     Do you have a registered PWD ID or valid proof of disability? <span className="text-red-500">*</span>
                   </span>
                 </label>
@@ -979,11 +979,11 @@ export default function PWDSocialAssistanceWizard({
               </div>
 
               {/* Service Info Banner */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-bold text-amber-950">PWD SOCIAL ASSISTANCE — SIMPLIFIED APPLICATION</p>
-                  <p className="text-xs text-amber-900 mt-1">
+                  <p className="text-sm font-bold text-blue-900">PWD SOCIAL ASSISTANCE — SIMPLIFIED APPLICATION</p>
+                  <p className="text-xs text-blue-700 mt-1">
                     Tulong pinansyal, gamot, medical support, at assistive devices para sa mga Persons with Disabilities sa QC.
                   </p>
                 </div>
@@ -1049,7 +1049,7 @@ export default function PWDSocialAssistanceWizard({
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-blue-600 uppercase tracking-wide block mb-1">
+                  <label className="text-xs font-semibold text-blue-700 uppercase tracking-wide block mb-1">
                     CLICK THE TYPE OF DISABILITY <span className="text-red-500">**</span>
                   </label>
                   <SelectInput
@@ -1061,12 +1061,12 @@ export default function PWDSocialAssistanceWizard({
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-blue-600 uppercase tracking-wide block mb-1">
+                  <label className="text-xs font-semibold text-blue-700 uppercase tracking-wide block mb-1">
                     TYPE OF ASSISTANCE REQUESTED <span className="text-red-500">**</span>
                   </label>
                   <SelectInput
                     value={formData.assistanceType}
-                    onChange={(v) => updateField("assistanceType", v)}
+                    onChange={(e) => updateField("assistanceType", e)}
                     options={ASSISTANCE_TYPES}
                     invalid={attemptedNext && formData.assistanceType === ""}
                   />

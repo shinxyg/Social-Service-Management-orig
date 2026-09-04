@@ -711,7 +711,7 @@ export default function SoloParentApplicationWizard({
   const STEPS = [
     { id: 1, label: "COMPLETE CHECKLIST" },
     { id: 2, label: "PERSONAL INFORMATION" },
-    { id: 3, label: "SUBMIT DOCUMENTS" },
+    { id: 3, label: "SAMPLE DOCUMENTS" },
     { id: 4, label: "REVIEW & SUBMIT" },
   ]
 
@@ -1200,7 +1200,7 @@ export default function SoloParentApplicationWizard({
         </div>
 
         {/* Tab labels */}
-        <div className="flex gap-2 border-b border-border bg-gray-50 p-2">
+        <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
               key={s.id}
@@ -1235,9 +1235,9 @@ export default function SoloParentApplicationWizard({
                     type="checkbox"
                     checked={isResident}
                     onChange={(e) => setIsResident(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                   />
-                  <span className="text-sm text-foreground">
+                  <span className={`text-sm ${attemptedNext && !isResident ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     Are you a legitimate resident of Quezon City? <span className="text-red-500">*</span>
                   </span>
                 </label>
@@ -1252,9 +1252,9 @@ export default function SoloParentApplicationWizard({
                         type="checkbox"
                         checked={hasSoleParentalCare}
                         onChange={(e) => setHasSoleParentalCare(e.target.checked)}
-                        className="mt-1 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
+                        className="mt-0.5 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                       />
-                      <span className="text-sm text-foreground">
+                      <span className={`text-sm ${attemptedNext && !hasSoleParentalCare ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                         Are you a solo parent with sole parental care and custody over your child/children? <span className="text-red-500">*</span>
                       </span>
                     </label>
@@ -1268,9 +1268,9 @@ export default function SoloParentApplicationWizard({
                       type="checkbox"
                       checked={hasSoleParentalCare}
                       onChange={(e) => setHasSoleParentalCare(e.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
+                      className="mt-0.5 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                     />
-                    <span className="text-sm text-foreground">
+                    <span className={`text-sm ${attemptedNext && !hasSoleParentalCare ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                       {idStatus === "renewal"
                         ? "Do you have an existing or expired Solo Parent ID for renewal? *"
                         : "Was your Solo Parent ID lost or damaged, and in need of replacement? *"}
@@ -1279,10 +1279,31 @@ export default function SoloParentApplicationWizard({
                 )}
               </div>
 
+              {/* Blue Info Alert Banner */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">
+                    {idStatus === "renewal"
+                      ? "PAG-RENEW NG SOLO PARENT ID"
+                      : idStatus === "loss"
+                      ? "PAGPAPALIT NG NAWALA O NASIRANG SOLO PARENT ID"
+                      : "BAGONG APLIKASYON PARA SA SOLO PARENT ID"}
+                  </p>
+                  <p className="text-xs text-blue-700 mt-0.5">
+                    {idStatus === "renewal"
+                      ? "RENEWAL: I-update ang inyong kasalukuyang Solo Parent ID. Ihanda ang ID number at mga kaukulang dokumento."
+                      : idStatus === "loss"
+                      ? "REPLACEMENT: Aplikasyon para sa nawala o nasirang Solo Parent ID. Ihanda ang Affidavit of Loss o sirang ID."
+                      : "NEW APPLICATION: First-time Solo Parent ID application. Complete all requirements."}
+                  </p>
+                </div>
+              </div>
+
               {/* Radio question - only for NEW application */}
               {idStatus === "new" && (
                 <div className="space-y-1.5 pt-1">
-                  <p className="text-sm text-foreground">
+                  <p className="text-sm text-blue-700 font-medium">
                     Have you already received medical assistance or Solo Parent services from another Quezon City office? <span className="text-red-500">*</span>
                   </p>
                   <div className="flex items-center gap-6 pt-1">
@@ -1316,7 +1337,7 @@ export default function SoloParentApplicationWizard({
                   <label className="text-xs font-bold text-foreground uppercase tracking-wide block">
                     CLICK THE TYPE OF ASSISTANCE / CATEGORY
                   </label>
-                  <p className="text-xs text-muted-foreground mb-1">Choose the category / circumstance **</p>
+                  <p className="text-xs text-blue-700 mb-1 font-medium">Choose the category / circumstance **</p>
                   <select
                     value={selectedCategoryId ?? ""}
                     onChange={(e) => {
@@ -2158,6 +2179,7 @@ export default function SoloParentApplicationWizard({
           {step < 4 ? (
             <button
               onClick={goNext}
+              disabled={!canGoNext}
               className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 canGoNext ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs" : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}

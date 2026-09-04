@@ -186,7 +186,7 @@ function CustomCheckbox({
         onChange={(e) => onChange(e.target.checked)}
         className="sr-only"
       />
-      <span className="leading-snug text-gray-800 text-sm font-medium">{label}</span>
+      <span className="leading-snug text-blue-700 text-sm font-medium">{label}</span>
     </label>
   )
 }
@@ -236,7 +236,7 @@ export default function SeniorCitizenApplicationWizard({
   const WIZARD_TABS = [
     t("wizardChecklist") || "COMPLETE CHECKLIST",
     t("wizardPersonal") || "PERSONAL INFORMATION",
-    t("wizardDocuments") || "SUBMIT DOCUMENTS",
+    t("pwdStepDocuments")?.toUpperCase() || "SAMPLE DOCUMENTS",
     t("wizardReview") || "REVIEW & SUBMIT",
   ]
 
@@ -713,11 +713,11 @@ export default function SeniorCitizenApplicationWizard({
               <div key={i} className="flex items-center flex-1 last:flex-none">
                 <div
                   className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                    isCompleted
-                      ? "bg-emerald-600 text-white"
-                      : isCurrent
-                      ? "bg-[#3b82f6] text-white"
-                      : "bg-gray-200 text-gray-400"
+                    isCurrent
+                      ? "bg-blue-600 text-white"
+                      : isCompleted
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-500"
                   }`}
                 >
                   {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : stepNum}
@@ -725,7 +725,7 @@ export default function SeniorCitizenApplicationWizard({
                 {i < WIZARD_TABS.length - 1 && (
                   <div
                     className={`flex-1 h-px mx-2 transition-colors ${
-                      step > stepNum ? "bg-emerald-500" : "bg-gray-200"
+                      step > stepNum ? "bg-blue-300" : "bg-gray-200"
                     }`}
                   />
                 )}
@@ -735,7 +735,7 @@ export default function SeniorCitizenApplicationWizard({
         </div>
 
         {/* ── STEPPER TABS BAR ── */}
-        <div className="flex gap-2 px-6 pb-4">
+        <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {WIZARD_TABS.map((label, i) => {
             const stepNum = i + 1
             const isCurrent = step === stepNum
@@ -744,11 +744,11 @@ export default function SeniorCitizenApplicationWizard({
             return (
               <div
                 key={label}
-                className={`flex-1 text-center text-xs font-bold py-3 rounded-lg tracking-wide uppercase transition-colors select-none ${
+                className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
                   isCurrent
-                    ? "bg-[#3b82f6] text-white shadow-xs"
+                    ? "bg-blue-600 text-white"
                     : isCompleted
-                    ? "bg-blue-50 text-[#3b82f6]"
+                    ? "bg-blue-100 text-blue-700"
                     : "bg-gray-100 text-gray-500"
                 }`}
               >
@@ -943,9 +943,9 @@ export default function SeniorCitizenApplicationWizard({
                     setStep(2)
                   }}
                   disabled={!step1Valid}
-                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2 ${
+                  className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
                     step1Valid
-                      ? "bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
+                      ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }`}
                 >

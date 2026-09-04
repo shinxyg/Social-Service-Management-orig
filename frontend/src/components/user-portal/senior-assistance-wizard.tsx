@@ -553,7 +553,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
         </div>
 
         {/* Tab labels bar */}
-        <div className="flex gap-2 border-b border-border bg-gray-50/70 p-2">
+        <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
               key={s.id}
@@ -596,14 +596,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                 </div>
               )}
 
-              {/* Banner */}
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3.5">
-                <HeartHandshake className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+              {/* Blue Info Alert Banner */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
                 <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">
                     Tulong Panlipunan ng Quezon City SSDD at OSCA
                   </h4>
-                  <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
+                  <p className="text-xs text-blue-700 mt-1 leading-relaxed">
                     Ang programang ito ay naglalayong magkaloob ng ayuda, gamot, assistive devices, at suportang medikal sa mga kapus-palad o nangangailangang senior citizens ng lungsod.
                   </p>
                 </div>
@@ -618,7 +618,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                     onChange={(e) => setIsResident(e.target.checked)}
                     className="mt-0.5 h-4 w-4 text-blue-600 rounded"
                   />
-                  <span className={`text-sm ${attemptedNext && !isResident ? "text-red-600 font-semibold" : "text-foreground"}`}>
+                  <span className={`text-sm ${attemptedNext && !isResident ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     Ikaw ba ay isang lehitimong residente ng Quezon City? <span className="text-red-500">*</span>
                   </span>
                 </label>
@@ -630,7 +630,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                     onChange={(e) => setIsSenior(e.target.checked)}
                     className="mt-0.5 h-4 w-4 text-blue-600 rounded"
                   />
-                  <span className={`text-sm ${attemptedNext && !isSenior ? "text-red-600 font-semibold" : "text-foreground"}`}>
+                  <span className={`text-sm ${attemptedNext && !isSenior ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     Ikaw ba ay 60 taong gulang na pataas? <span className="text-red-500">*</span>
                   </span>
                 </label>
@@ -642,7 +642,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                     onChange={(e) => setHasSeniorId(e.target.checked)}
                     className="mt-0.5 h-4 w-4 text-blue-600 rounded"
                   />
-                  <span className={`text-sm ${attemptedNext && !hasSeniorId ? "text-red-600 font-semibold" : "text-foreground"}`}>
+                  <span className={`text-sm ${attemptedNext && !hasSeniorId ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     Mayroon ka na bang opisyal na QC Senior Citizen / OSCA ID? <span className="text-red-500">*</span>
                   </span>
                 </label>
@@ -654,7 +654,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                     onChange={(e) => setIsIndigentOrInNeed(e.target.checked)}
                     className="mt-0.5 h-4 w-4 text-blue-600 rounded"
                   />
-                  <span className={`text-sm ${attemptedNext && !isIndigentOrInNeed ? "text-red-600 font-semibold" : "text-foreground"}`}>
+                  <span className={`text-sm ${attemptedNext && !isIndigentOrInNeed ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     Kabilang ka ba sa kapus-palad o indigent na sektor na nangangailangan ng agarang tulong? <span className="text-red-500">*</span>
                   </span>
                 </label>
@@ -1400,7 +1400,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
               type="button"
               onClick={goNext}
               disabled={!canGoNext}
-              className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-xs font-bold transition-colors ${
+              className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 canGoNext
                   ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"

@@ -1,4 +1,4 @@
-import { X, Info, AlertTriangle } from "lucide-react"
+import { X, Info, AlertTriangle, AlertCircle } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 
 
@@ -293,13 +293,16 @@ interface RequirementsModalProps {
   onAcceptedChange: (checked: boolean) => void
   onContinue: () => void
 
-  showInfoBanner: boolean
-  onCloseInfoBanner: () => void
+  showInfoBanner?: boolean
+  onCloseInfoBanner?: () => void
 
-  showSlotBanner: boolean
-  onCloseSlotBanner: () => void
+  showSlotBanner?: boolean
+  onCloseSlotBanner?: () => void
 
   onClose?: () => void
+  serviceTitle?: string
+  badgeLabel?: string
+  badgeColor?: string
 }
 
 export default function RequirementsModal({
@@ -307,11 +310,14 @@ export default function RequirementsModal({
   accepted,
   onAcceptedChange,
   onContinue,
-  showInfoBanner,
+  showInfoBanner = true,
   onCloseInfoBanner,
-  showSlotBanner,
+  showSlotBanner = true,
   onCloseSlotBanner,
   onClose,
+  serviceTitle,
+  badgeLabel,
+  badgeColor,
 }: RequirementsModalProps) {
   const { t } = useLanguage()
 
@@ -323,105 +329,101 @@ export default function RequirementsModal({
     }
   }
 
+  const modalTitle = serviceTitle
+    ? serviceTitle.toLowerCase().startsWith("requirements")
+      ? serviceTitle
+      : `Requirements for Application of ${serviceTitle}`
+    : "Requirements for Application of AICS Assistance"
+
+  const modalBadge = badgeLabel || serviceTitle || "AICS Assistance"
+  const modalBadgeColor = badgeColor || "bg-blue-50 text-blue-700 border-blue-200"
+
   return (
     <div
       onClick={handleDismiss}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200 cursor-pointer"
+      className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150 cursor-pointer"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-card w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden relative cursor-default"
+        className="bg-white w-full max-w-2xl max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden relative cursor-default animate-in zoom-in-95 duration-150"
       >
-        <div className="p-6 pb-4 border-b border-border shrink-0 flex items-center justify-between gap-4">
-          <h2 className="text-lg font-heading font-semibold text-foreground">
-            {t("requirementsReviewHeader")}
-          </h2>
+        {/* Modal Header (Matches Pic 2) */}
+        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10 shrink-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+            <h2 className="text-base md:text-lg font-bold text-foreground truncate">
+              {modalTitle}
+            </h2>
+            <span className={`shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${modalBadgeColor}`}>
+              {modalBadge}
+            </span>
+          </div>
           <button
             onClick={handleDismiss}
             type="button"
-            className="text-muted-foreground hover:text-foreground cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-muted"
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
             aria-label={t("close")}
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {(showInfoBanner || (showSlotBanner && requirements.slotBannerText)) && (
-          <div className="px-6 pt-4 space-y-3 shrink-0">
-            {showInfoBanner && (
-              <div className="relative flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                <div className="text-sm pr-6">
-                  <p className="font-semibold text-blue-600">{t("importantReminder")}</p>
-                  <p className="text-blue-600/90 mt-0.5">
-                    {t("pwdGeneralReminderDesc")}
-                  </p>
-                </div>
-                <button
-                  onClick={onCloseInfoBanner}
-                  className="absolute top-3 right-3 text-blue-500/60 hover:text-blue-500 cursor-pointer"
-                  aria-label={t("close")}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-
-            {showSlotBanner && requirements.slotBannerText && (
-              <div className="relative flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                <div className="text-sm pr-6">
-                  <p className="font-semibold text-amber-600">{t("reminderTitle")}</p>
-                  <p className="text-amber-600/90 mt-0.5">
-                    {requirements.slotBannerText}
-                  </p>
-                </div>
-                <button
-                  onClick={onCloseSlotBanner}
-                  className="absolute top-3 right-3 text-amber-500/60 hover:text-amber-500 cursor-pointer"
-                  aria-label={t("close")}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
+        {/* Modal Content (Matches Pic 2) */}
+        <div className="p-6 space-y-5 overflow-y-auto flex-1">
+          {/* Important reminder (Blue Box) */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-blue-900">{t("importantReminder") || "Important reminder"}</p>
+              <p className="text-sm text-blue-800 mt-0.5">Please scroll and read all requirements below.</p>
+            </div>
           </div>
-        )}
 
-        <div className="p-6 space-y-4 overflow-y-auto flex-1">
-            <div className="border-t border-border pt-4 space-y-4 text-sm text-foreground">
-            <h3 className="font-heading font-semibold">
-              {requirements.programTitle}
-            </h3>
+          {/* Slot / Alert Banner (Amber Box) */}
+          {showSlotBanner && requirements.slotBannerText && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm font-semibold text-amber-900">
+                {requirements.slotBannerText}
+              </p>
+            </div>
+          )}
 
+          {/* Sections */}
+          <div className="space-y-5">
             {requirements.sections.map((section, i) => (
-              <div key={i}>
-                <p className="font-semibold mb-1">{section.heading}</p>
+              <div key={i} className="space-y-2">
+                <h3 className="text-base font-bold text-foreground uppercase tracking-wide">
+                  {section.heading}
+                </h3>
 
                 {section.body && (
-                  <p className="text-muted-foreground">{section.body}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                    {section.body}
+                  </p>
                 )}
 
                 {section.list && (
-                  <ul
-                    className={`list-inside space-y-0.5 mt-1 ${
-                      section.listClassName ?? "text-blue-600 list-disc"
-                    }`}
-                  >
+                  <ul className="space-y-2.5 mb-3">
                     {section.list.map((item, j) => (
-                      <li key={j}>{item}</li>
+                      <li key={j} className="flex items-start gap-2.5 text-sm text-foreground">
+                        <span className="text-blue-600 font-bold leading-none mt-1 shrink-0">•</span>
+                        <span className="leading-relaxed">{item}</span>
+                      </li>
                     ))}
                   </ul>
                 )}
 
                 {section.note && (
-                  <p className="text-muted-foreground mt-3">{section.note}</p>
+                  <p className="text-xs font-semibold text-foreground mt-3 mb-1.5">{section.note}</p>
                 )}
 
                 {section.noteList && (
-                  <ul className="list-disc list-inside text-blue-600 space-y-0.5 mt-1">
+                  <ul className="space-y-2 mb-3 pl-2">
                     {section.noteList.map((item, j) => (
-                      <li key={j}>{item}</li>
+                      <li key={j} className="flex items-start gap-2 text-sm text-foreground">
+                        <span className="text-blue-600 font-bold leading-none mt-1 shrink-0">•</span>
+                        <span className="leading-relaxed">{item}</span>
+                      </li>
                     ))}
                   </ul>
                 )}
@@ -429,15 +431,15 @@ export default function RequirementsModal({
             ))}
 
             {requirements.faqs && requirements.faqs.length > 0 && (
-              <div>
-                <p className="font-semibold mb-2">
-                  V. FREQUENTLY ASKED QUESTIONS:
-                </p>
+              <div className="pt-2">
+                <h4 className="font-bold text-sm text-foreground mb-3 uppercase tracking-wide">
+                  Frequently Asked Questions (FAQ):
+                </h4>
                 <div className="space-y-3">
                   {requirements.faqs.map((faq, i) => (
-                    <div key={i}>
-                      <p className="font-semibold text-blue-600">{faq.question}</p>
-                      <p className="text-muted-foreground mt-0.5">{faq.answer}</p>
+                    <div key={i} className="bg-gray-50 border border-border/80 rounded-xl p-3.5">
+                      <p className="font-semibold text-xs text-blue-900">{faq.question}</p>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{faq.answer}</p>
                     </div>
                   ))}
                 </div>
@@ -446,26 +448,34 @@ export default function RequirementsModal({
           </div>
         </div>
 
-        <div className="p-6 pt-4 border-t border-border flex items-center justify-between gap-4 shrink-0">
-          <label className="flex items-start gap-2 text-sm select-none text-foreground cursor-pointer">
+        {/* Modal Footer (Matches Pic 2) */}
+        <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex items-center justify-between gap-4 shrink-0">
+          <div className="flex items-start gap-2.5 flex-1">
             <input
               type="checkbox"
+              id="aics-modal-understand"
               checked={accepted}
               onChange={(e) => onAcceptedChange(e.target.checked)}
-              className="h-4 w-4 mt-0.5 rounded border-border accent-primary disabled:cursor-not-allowed cursor-pointer"
+              className="mt-0.5 cursor-pointer accent-blue-600 h-4 w-4"
             />
-            {t("requirementsAcceptCheckbox")}
-          </label>
+            <label htmlFor="aics-modal-understand" className="text-xs md:text-sm text-foreground cursor-pointer select-none">
+              {t("requirementsAcceptCheckbox") || "I accept and understand the documentary requirements for this service"}
+            </label>
+          </div>
 
           <button
-            onClick={onContinue}
-            disabled={!accepted}
-            className="shrink-0 px-5 h-10 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-opacity cursor-pointer"
+            type="button"
+            onClick={() => {
+              onAcceptedChange(true)
+              onContinue()
+            }}
+            className="px-5 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white transition-all shrink-0 cursor-pointer shadow-sm"
           >
-            {t("iUnderstand")}
+            Ipagpatuloy ang Aplikasyon
           </button>
         </div>
       </div>
     </div>
   )
 }
+

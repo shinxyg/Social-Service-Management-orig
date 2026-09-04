@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { ClipboardList, X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles } from "lucide-react"
+import { ClipboardList, X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles, ChevronRight, AlertCircle } from "lucide-react"
 import { PageHeader } from "../ui/shared"
 import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
@@ -32,10 +32,10 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   const WIZARD_TABS = [
-    t("wizardChecklist"),
-    t("wizardPersonal"),
-    t("wizardDocuments"),
-    t("wizardReview"),
+    t("wizardChecklist")?.toUpperCase() || "COMPLETE CHECKLIST",
+    t("wizardPersonal")?.toUpperCase() || "PERSONAL INFORMATION",
+    t("pwdStepDocuments")?.toUpperCase() || "SAMPLE DOCUMENTS",
+    t("wizardReview")?.toUpperCase() || "REVIEW & SUBMIT",
   ]
 
   const SAMPLE_DOCUMENTS = [
@@ -135,14 +135,38 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [appStatus, setAppStatus] = useState<"pending" | "approved" | "rejected" | "completed">("pending")
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
 
-const isFuneralAssistance = initialTypeKey === "aicsFuneral"
-const isEducationalAssistance = initialTypeKey === "aicsEducational"
-const requirements = initialTypeKey ? AICS_REQUIREMENTS[initialTypeKey] : undefined
-const hasRequirements = Boolean(requirements)
+  const isFuneralAssistance =
+    initialTypeKey === "aicsFuneral" ||
+    type?.toLowerCase().includes("funeral") ||
+    type?.toLowerCase().includes("libing") ||
+    type?.toLowerCase().includes("burial")
 
-const [step, setStep] = useState<Step>(
-  hasRequirements ? "requirements" : "form"
-)
+  const isEducationalAssistance =
+    initialTypeKey === "aicsEducational" ||
+    type?.toLowerCase().includes("educational") ||
+    type?.toLowerCase().includes("aral")
+
+  const resolvedTypeKey =
+    initialTypeKey ||
+    (isFuneralAssistance
+      ? "aicsFuneral"
+      : isEducationalAssistance
+      ? "aicsEducational"
+      : type?.toLowerCase().includes("material")
+      ? "aicsMaterial"
+      : type?.toLowerCase().includes("food") || type?.toLowerCase().includes("pagkain")
+      ? "aicsFood"
+      : type?.toLowerCase().includes("transport") || type?.toLowerCase().includes("biyahe")
+      ? "aicsTransportation"
+      : "aicsMedical")
+
+  const requirements = AICS_REQUIREMENTS[resolvedTypeKey] || AICS_REQUIREMENTS["aicsMedical"]
+  const hasRequirements = Boolean(requirements)
+
+  const [step, setStep] = useState<Step>(
+    hasRequirements ? "checklist" : "form"
+  )
+  const [showRequirementsModal, setShowRequirementsModal] = useState(false)
 
   const [reqAccepted, setReqAccepted] = useState(false)
   const [showInfoBanner, setShowInfoBanner] = useState(true)
@@ -758,53 +782,72 @@ if (isBlocked) {
   )
 }
 
-if (step === "requirements" && requirements) {
-  return (
+  const renderTopRequirementsBanner = () => (
     <>
-      <div className="p-4 md:p-6 space-y-6 max-w-2xl mx-auto">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {t("back")}
-          </button>
-        )}
-        <PageHeader title={t("applyAicsTitle")} desc={t("applyAicsDesc")} />
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-soft opacity-40 pointer-events-none">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <ClipboardList className="h-4 w-4 text-primary" />
-            {t("applicantInformation")}
+      <div className="mb-4">
+        <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 text-blue-700">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-sm md:text-base font-bold text-foreground">
+                  Requirements for Application of QC {type}
+                </h1>
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-200">
+                  New Application
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Opisyal na serbisyo para sa AICS Crisis Assistance ng Lungsod Quezon.
+              </p>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowRequirementsModal(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
+          >
+            <span>📋</span>
+            <span>Tingnan ang Requirements</span>
+          </button>
         </div>
       </div>
 
-      <RequirementsModal
-        requirements={requirements}
-        accepted={reqAccepted}
-        onAcceptedChange={setReqAccepted}
-        onContinue={() => setStep(hasRequirements ? "checklist" : "form")}
-        showInfoBanner={showInfoBanner}
-        onCloseInfoBanner={() => setShowInfoBanner(false)}
-        showSlotBanner={showSlotBanner}
-        onCloseSlotBanner={() => setShowSlotBanner(false)}
-        onClose={() => setStep(hasRequirements ? "checklist" : "form")}
-      />
+      {showRequirementsModal && requirements && (
+        <RequirementsModal
+          requirements={requirements}
+          serviceTitle={type}
+          badgeLabel="New Application"
+          badgeColor="bg-green-50 text-green-700 border-green-200"
+          accepted={reqAccepted}
+          onAcceptedChange={setReqAccepted}
+          onContinue={() => setShowRequirementsModal(false)}
+          showInfoBanner={showInfoBanner}
+          onCloseInfoBanner={() => setShowInfoBanner(false)}
+          showSlotBanner={showSlotBanner}
+          onCloseSlotBanner={() => setShowSlotBanner(false)}
+          onClose={() => setShowRequirementsModal(false)}
+        />
+      )}
     </>
   )
-}
+
   if (step === "checklist") {
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
+        {renderTopRequirementsBanner()}
+
         <div className="border border-gray-200 rounded-xl overflow-hidden bg-white relative">
           <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
               <div key={i} className="flex items-center flex-1 last:flex-none">
                 <div
-                  className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${
+                  className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                     i === 0
-                      ? "bg-[#3b82f6] text-white"
-                      : "bg-gray-200 text-gray-400"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-500"
                   }`}
                 >
                   {i + 1}
@@ -813,12 +856,12 @@ if (step === "requirements" && requirements) {
               </div>
             ))}
           </div>
-          <div className="flex gap-2 px-6 pb-4">
+          <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
             {WIZARD_TABS.map((label, i) => (
               <div
                 key={label}
-                className={`flex-1 text-center text-xs font-bold py-3 rounded-lg tracking-wide uppercase ${
-                  i === 0 ? "bg-[#3b82f6] text-white" : "bg-gray-100 text-gray-500"
+                className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
+                  i === 0 ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500"
                 }`}
               >
                 {label}
@@ -827,6 +870,19 @@ if (step === "requirements" && requirements) {
           </div>
 
           <div className="p-6 sm:p-8 space-y-7">
+            {/* Blue Info Alert Banner */}
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+              <div>
+                <p className="text-sm font-semibold text-blue-900">
+                  {type.toUpperCase()} — PRIMARY REQUIREMENTS
+                </p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  Kumpletuhin ang mga pangunahing kwalipikasyon at ihanda ang mga kaukulang dokumento upang makapagpatuloy sa aplikasyon.
+                </p>
+              </div>
+            </div>
+
             {isEducationalAssistance ? (
               <>
                 <div>
@@ -1045,14 +1101,18 @@ if (step === "requirements" && requirements) {
           </div>
 
           <div className="px-6 sm:px-8 pb-6 sm:pb-8 flex justify-end">
-            {canProceedChecklist && (
-              <button
-                onClick={() => setStep("personal")}
-                className="px-6 h-10 rounded-lg bg-[#3b82f6] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
-              >
-                {t("nextButton").toUpperCase()}
-              </button>
-            )}
+            <button
+              onClick={() => setStep("personal")}
+              disabled={!canProceedChecklist}
+              className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                canProceedChecklist
+                  ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              <span>{t("nextButton").toUpperCase()}</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -1062,34 +1122,39 @@ if (step === "requirements" && requirements) {
   if (step === "personal") {
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
+        {renderTopRequirementsBanner()}
         <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
-          <div className="flex items-center px-6 pt-6">
+          <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
               <div key={i} className="flex items-center flex-1 last:flex-none">
                 <div
-                  className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${
+                  className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                     i === 1
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-blue-600 text-white"
                       : i < 1
-                      ? "bg-primary/70 text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-500"
                   }`}
                 >
-                  {i + 1}
+                  {i < 1 ? <Check className="h-4 w-4" /> : i + 1}
                 </div>
-                {i < WIZARD_TABS.length - 1 && <div className="flex-1 h-px bg-border mx-2" />}
+                {i < WIZARD_TABS.length - 1 && (
+                  <div className={`flex-1 h-px mx-2 transition-colors ${i < 1 ? "bg-blue-300" : "bg-gray-200"}`} />
+                )}
               </div>
             ))}
           </div>
 
-          <div className="flex gap-1 px-6 pt-4">
+          <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
             {WIZARD_TABS.map((label, i) => (
               <div
                 key={label}
-                className={`flex-1 text-center text-xs font-semibold py-3 rounded-md ${
+                className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
                   i === 1
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-blue-600 text-white"
+                    : i < 1
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-gray-100 text-gray-500"
                 }`}
               >
                 {label}
@@ -1711,33 +1776,39 @@ if (step === "requirements" && requirements) {
   if (step === "documents") {
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
+        {renderTopRequirementsBanner()}
         <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
-          <div className="flex items-center px-6 pt-6">
+          <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
               <div key={i} className="flex items-center flex-1 last:flex-none">
                 <div
-                  className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${
+                  className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                     i === 2
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-blue-600 text-white"
                       : i < 2
-                      ? "bg-primary/70 text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-500"
                   }`}
                 >
-                  {i + 1}
+                  {i < 2 ? <Check className="h-4 w-4" /> : i + 1}
                 </div>
-                {i < WIZARD_TABS.length - 1 && <div className="flex-1 h-px bg-border mx-2" />}
+                {i < WIZARD_TABS.length - 1 && (
+                  <div className={`flex-1 h-px mx-2 transition-colors ${i < 2 ? "bg-blue-300" : "bg-gray-200"}`} />
+                )}
               </div>
             ))}
           </div>
-          <div className="flex gap-1 px-6 pt-4">
+
+          <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
             {WIZARD_TABS.map((label, i) => (
               <div
                 key={label}
-                className={`flex-1 text-center text-xs font-semibold py-3 rounded-md ${
+                className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
                   i === 2
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-blue-600 text-white"
+                    : i < 2
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-gray-100 text-gray-500"
                 }`}
               >
                 {label}
@@ -1935,39 +2006,40 @@ if (step === "requirements" && requirements) {
 
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-4">
+        {renderTopRequirementsBanner()}
         {isFuneralAssistance && (
           <div className="border-l-4 border-emerald-600 pl-4">
             <h1 className="text-xl font-heading font-semibold text-emerald-700">{t("burialAssistanceHeading")}</h1>
           </div>
         )}
         <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
-          <div className="flex items-center px-6 pt-6">
+          <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
               <div key={i} className="flex items-center flex-1 last:flex-none">
                 <div
-                  className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${
+                  className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                     i === 3
-                      ? "bg-primary text-primary-foreground"
-                      : i < 3
-                      ? "bg-primary/70 text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-blue-600 text-white"
+                      : "bg-blue-600 text-white"
                   }`}
                 >
-                  {i + 1}
+                  {i < 3 ? <Check className="h-4 w-4" /> : i + 1}
                 </div>
-                {i < WIZARD_TABS.length - 1 && <div className="flex-1 h-px bg-border mx-2" />}
+                {i < WIZARD_TABS.length - 1 && (
+                  <div className="flex-1 h-px mx-2 transition-colors bg-blue-300" />
+                )}
               </div>
             ))}
           </div>
 
-          <div className="flex gap-1 px-6 pt-4">
+          <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
             {WIZARD_TABS.map((label, i) => (
               <div
                 key={label}
-                className={`flex-1 text-center text-xs font-semibold py-3 rounded-md ${
+                className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
                   i === 3
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-blue-600 text-white"
+                    : "bg-blue-100 text-blue-700"
                 }`}
               >
                 {label}
@@ -2506,7 +2578,7 @@ function CustomCheckbox({
         onChange={(e) => onChange(e.target.checked)}
         className="sr-only"
       />
-      <span className="leading-snug">{label}</span>
+      <span className="leading-snug text-blue-700 font-medium text-sm">{label}</span>
     </label>
   )
 }

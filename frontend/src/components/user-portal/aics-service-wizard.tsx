@@ -10,6 +10,8 @@ import {
   Pencil,
   ChevronUp,
   Sparkles,
+  ChevronRight,
+  AlertCircle,
 } from "lucide-react"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -62,7 +64,7 @@ function CustomCheckbox({
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
       />
-      <span>{label}</span>
+      <span className="leading-snug text-blue-700 font-medium text-sm">{label}</span>
     </label>
   )
 }
@@ -192,7 +194,7 @@ export default function AICSServiceWizard({
       : "aicsTransportation"
 
   const programRequirements = AICS_REQUIREMENTS[reqKey]
-  const [showRequirementsModal, setShowRequirementsModal] = useState(true)
+  const [showRequirementsModal, setShowRequirementsModal] = useState(false)
   const [reqAccepted, setReqAccepted] = useState(false)
   const [showInfoBanner, setShowInfoBanner] = useState(true)
   const [showSlotBanner, setShowSlotBanner] = useState(true)
@@ -647,7 +649,7 @@ export default function AICSServiceWizard({
   const WIZARD_TABS = [
     "COMPLETE CHECKLIST",
     "PERSONAL INFORMATION",
-    "SUBMIT DOCUMENTS",
+    "SAMPLE DOCUMENTS",
     "REVIEW & SUBMIT",
   ]
 
@@ -773,10 +775,47 @@ export default function AICSServiceWizard({
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
+      {/* Top Requirements Banner with Button to Open Modal */}
+      {programRequirements && (
+        <div className="mb-4">
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 text-blue-700">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-sm md:text-base font-bold text-gray-900">
+                    Requirements for {serviceTitle}
+                  </h1>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+                    {serviceTitle}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Opisyal na serbisyo para sa AICS Crisis Assistance ng Lungsod Quezon.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowRequirementsModal(true)}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
+            >
+              <span>📋</span>
+              <span>Tingnan ang Requirements</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Requirements Modal Popup */}
       {showRequirementsModal && programRequirements && (
         <RequirementsModal
           requirements={programRequirements}
+          serviceTitle={serviceTitle}
+          badgeLabel={serviceTitle}
+          badgeColor="bg-blue-50 text-blue-700 border-blue-200"
           accepted={reqAccepted}
           onAcceptedChange={setReqAccepted}
           onContinue={() => setShowRequirementsModal(false)}
@@ -809,30 +848,32 @@ export default function AICSServiceWizard({
           {WIZARD_TABS.map((_, i) => (
             <div key={i} className="flex items-center flex-1 last:flex-none">
               <div
-                className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold ${
+                className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                   i === currentStep - 1
-                    ? "bg-[#3b82f6] text-white"
+                    ? "bg-blue-600 text-white"
                     : currentStep > i + 1
-                    ? "bg-[#3b82f6]/80 text-white"
-                    : "bg-gray-200 text-gray-400"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-500"
                 }`}
               >
                 {currentStep > i + 1 ? <Check className="h-4 w-4" /> : i + 1}
               </div>
               {i < WIZARD_TABS.length - 1 && (
-                <div className="flex-1 h-px bg-gray-200 mx-2" />
+                <div className={`flex-1 h-px mx-2 transition-colors ${currentStep > i + 1 ? "bg-blue-300" : "bg-gray-200"}`} />
               )}
             </div>
           ))}
         </div>
 
-        <div className="flex gap-2 px-6 pb-4">
+        <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {WIZARD_TABS.map((label, i) => (
             <div
               key={label}
-              className={`flex-1 text-center text-xs font-bold py-3 rounded-lg tracking-wide uppercase ${
+              className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
                 i === currentStep - 1
-                  ? "bg-[#3b82f6] text-white"
+                  ? "bg-blue-600 text-white"
+                  : currentStep > i + 1
+                  ? "bg-blue-100 text-blue-700"
                   : "bg-gray-100 text-gray-500"
               }`}
             >
@@ -850,6 +891,19 @@ export default function AICSServiceWizard({
                   <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
                     SERVICE AND PRIMARY REQUIREMENTS
                   </h2>
+                </div>
+
+                {/* Blue Info Alert Banner */}
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-blue-900">
+                      {serviceTitle.toUpperCase()} — PRIMARY REQUIREMENTS
+                    </p>
+                    <p className="text-xs text-blue-700 mt-0.5">
+                      Kumpletuhin ang mga pangunahing kwalipikasyon at ihanda ang mga kaukulang dokumento upang makapagpatuloy sa aplikasyon.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -1101,13 +1155,14 @@ export default function AICSServiceWizard({
                     type="button"
                     disabled={!canProceedStep1()}
                     onClick={() => setCurrentStep(2)}
-                    className={`px-6 h-10 rounded-lg text-sm font-semibold transition-all ${
+                    className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
                       canProceedStep1()
-                        ? "bg-[#3b82f6] text-white hover:opacity-90 cursor-pointer shadow-sm"
+                        ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
                         : "bg-gray-200 text-gray-400 cursor-not-allowed"
                     }`}
                   >
-                    NEXT
+                    <span>NEXT</span>
+                    <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
               </>
