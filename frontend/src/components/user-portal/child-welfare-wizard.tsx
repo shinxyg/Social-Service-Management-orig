@@ -14,6 +14,7 @@ import {
   Users,
   Baby,
   Activity,
+  AlertCircle,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 

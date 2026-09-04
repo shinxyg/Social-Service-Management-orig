@@ -40,7 +40,7 @@ export interface UserProfile {
   emergencyRelationship?: string
 }
 
-import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { getCurrentUserProfile } from "../../utils/userProfile"
 
 const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 

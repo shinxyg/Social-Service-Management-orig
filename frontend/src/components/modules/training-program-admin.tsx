@@ -1,26 +1,13 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import {
   Award,
   Search,
   CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Clock3,
-  Calendar,
-  MapPin,
-  User,
-  Phone,
-  Mail,
-  FileText,
   Printer,
   Trash2,
   RefreshCw,
   Check,
-  X,
   Eye,
-  Building2,
-  GraduationCap,
-  Sparkles,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import type { TrainingApplicationRecord } from "../user-portal/training-program-view"
@@ -248,10 +235,11 @@ export default function TrainingProgramAdmin() {
           <button
             type="button"
             onClick={fetchTrainingApplications}
-            className="p-2 rounded-xl border border-border bg-muted/20 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+            disabled={isLoading}
+            className="p-2 rounded-xl border border-border bg-muted/20 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer disabled:opacity-50"
             title="Refresh list"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
           <button
             type="button"

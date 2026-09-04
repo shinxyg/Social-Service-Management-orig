@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import {
   BookOpen,
   Calendar,
   Clock,
   MapPin,
-  Users,
   CheckCircle2,
   Clock3,
   AlertCircle,
@@ -13,7 +12,6 @@ import {
   Award,
   Download,
   Printer,
-  ChevronRight,
   Sparkles,
   Scissors,
   UtensilsCrossed,
@@ -22,10 +20,6 @@ import {
   ArrowRight,
   Info,
   ShieldCheck,
-  User,
-  Phone,
-  Mail,
-  Home,
   RefreshCw,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
@@ -190,7 +184,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   // Current active user application state
   const [activeApplication, setActiveApplication] = useState<TrainingApplicationRecord | null>(null)
   const [allUserApplications, setAllUserApplications] = useState<TrainingApplicationRecord[]>([])
-  const [isLoading, setIsLoading] = useState(false)
 
   // Apply Form State
   const [applyCourseId, setApplyCourseId] = useState<string>("tr-sewing")
@@ -419,7 +412,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     }
   }
 
-  const isApproved = activeApplication?.status === "approved"
   const completedTrainings = allUserApplications.filter((a) => a.attendance?.completed || a.schedule?.trainingStatus === "Completed" || a.certificate)
 
   return (

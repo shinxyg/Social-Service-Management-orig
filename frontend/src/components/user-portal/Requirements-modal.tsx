@@ -1,4 +1,4 @@
-import { X, Info, AlertTriangle, AlertCircle } from "lucide-react"
+import { X, AlertTriangle, AlertCircle } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 
 
@@ -370,21 +370,43 @@ export default function RequirementsModal({
         {/* Modal Content (Matches Pic 2) */}
         <div className="p-6 space-y-5 overflow-y-auto flex-1">
           {/* Important reminder (Blue Box) */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-blue-900">{t("importantReminder") || "Important reminder"}</p>
-              <p className="text-sm text-blue-800 mt-0.5">Please scroll and read all requirements below.</p>
+          {showInfoBanner && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-blue-900">{t("importantReminder") || "Important reminder"}</p>
+                <p className="text-sm text-blue-800 mt-0.5">Please scroll and read all requirements below.</p>
+              </div>
+              {onCloseInfoBanner && (
+                <button
+                  type="button"
+                  onClick={onCloseInfoBanner}
+                  className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                  aria-label="Close alert"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Slot / Alert Banner (Amber Box) */}
           {showSlotBanner && requirements.slotBannerText && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-sm font-semibold text-amber-900">
+              <p className="text-sm font-semibold text-amber-900 flex-1">
                 {requirements.slotBannerText}
               </p>
+              {onCloseSlotBanner && (
+                <button
+                  type="button"
+                  onClick={onCloseSlotBanner}
+                  className="text-amber-500 hover:text-amber-700 cursor-pointer"
+                  aria-label="Close slot banner"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           )}
 

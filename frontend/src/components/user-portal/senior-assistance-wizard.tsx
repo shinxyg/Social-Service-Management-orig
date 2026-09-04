@@ -7,7 +7,6 @@ import {
   AlertCircle,
   X,
   Loader2,
-  HeartHandshake,
   Sparkles,
   ChevronRight,
   ChevronUp,
@@ -38,9 +37,10 @@ export interface UserProfile {
   addressBarangay: string
   addressCityMunicipality: string
   contactNo?: string
+  email?: string
 }
 
-import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { getCurrentUserProfile } from "../../utils/userProfile"
 
 const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 
