@@ -62,8 +62,33 @@ interface AicsApplication {
   updated_at: string
 }
 
+function getAppSuffix(app: AicsApplication | null | undefined): string {
+  if (!app) return ''
+  if (app.suffix && app.suffix.trim() && app.suffix !== '—') return app.suffix.trim()
+  if ((app.details as any)?.suffix) return String((app.details as any).suffix).trim()
+  if ((app.details as any)?.applicantSuffix) return String((app.details as any).applicantSuffix).trim()
+
+  try {
+    const raw = localStorage.getItem('currentUser') || localStorage.getItem('userProfile') || localStorage.getItem('user')
+    if (raw) {
+      const u = JSON.parse(raw)
+      const uQcid = u.qcidNumber || u.qcid_number || u.qcidNo || u.qcid || u.reference_number
+      const uEmail = u.email
+      if (
+        (uQcid && (uQcid === app.qc_id || uQcid === app.reference_no)) ||
+        (uEmail && app.email && uEmail.toLowerCase() === app.email.toLowerCase()) ||
+        (u.lastName && app.last_name && u.lastName.toLowerCase() === app.last_name.toLowerCase())
+      ) {
+        if (u.suffix && u.suffix.trim()) return u.suffix.trim()
+      }
+    }
+  } catch {}
+
+  return ''
+}
+
 function fullName(app: AicsApplication) {
-  const suffix = app.suffix || (app.details as any)?.suffix || (app.details as any)?.applicantSuffix || ''
+  const suffix = getAppSuffix(app)
   const parts = [app.first_name, app.middle_name, app.last_name]
   if (suffix && !app.last_name?.toLowerCase().endsWith(suffix.toLowerCase())) {
     parts.push(suffix)
@@ -337,7 +362,7 @@ export default function AICS() {
                     </div>
                     <div>
                       <label style={labelStyle}>Suffix</label>
-                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.suffix || (reviewingApp.details as any)?.suffix || '—'}</p>
+                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{getAppSuffix(reviewingApp) || '—'}</p>
                     </div>
                     <div>
                       <label style={labelStyle}>Birth Date</label>

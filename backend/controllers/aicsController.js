@@ -105,6 +105,46 @@ exports.createApplication = async (req, res) => {
   }
 };
 
+async function enrichApplicationWithSuffix(app) {
+  if (!app) return app;
+  if (app.suffix && String(app.suffix).trim()) return app;
+
+  try {
+    // 1. Check users table by qcid or email
+    if (app.qc_id || app.email) {
+      const uRes = await db.query(
+        `SELECT suffix FROM users 
+         WHERE (qcid_number = $1 OR ($2 <> '' AND LOWER(email) = LOWER($2))) 
+           AND suffix IS NOT NULL AND suffix <> '' LIMIT 1`,
+        [app.qc_id || '', app.email || '']
+      );
+      if (uRes.rows.length > 0 && uRes.rows[0].suffix) {
+        app.suffix = uRes.rows[0].suffix;
+        // background update so it's persisted in aics_applications
+        db.query('UPDATE aics_applications SET suffix = $1 WHERE id = $2', [app.suffix, app.id]).catch(() => {});
+        return app;
+      }
+    }
+
+    // 2. Check pwd_senior_applications table
+    const pRes = await db.query(
+      `SELECT suffix FROM pwd_senior_applications 
+       WHERE (reference_number = $1 OR ($2 <> '' AND LOWER(email) = LOWER($2)) 
+              OR (LOWER(first_name) = LOWER($3) AND LOWER(last_name) = LOWER($4))) 
+         AND suffix IS NOT NULL AND suffix <> '' LIMIT 1`,
+      [app.qc_id || '', app.email || '', app.first_name || '', app.last_name || '']
+    );
+    if (pRes.rows.length > 0 && pRes.rows[0].suffix) {
+      app.suffix = pRes.rows[0].suffix;
+      db.query('UPDATE aics_applications SET suffix = $1 WHERE id = $2', [app.suffix, app.id]).catch(() => {});
+      return app;
+    }
+  } catch (e) {
+    // ignore query errors
+  }
+  return app;
+}
+
 // GET /api/aics/applications  (para sa admin, may optional ?status= filter)
 // GET /api/aics/applications  (may optional ?status= at ?qcId= filter)
 exports.getApplications = async (req, res) => {
@@ -129,10 +169,15 @@ exports.getApplications = async (req, res) => {
     query += ' ORDER BY created_at DESC';
 
     const result = await db.query(query, params);
-    const rows = result.rows.map((row) => ({
-      ...row,
-      reference_no: row.qc_id || row.reference_no || '110000116932100',
-    }));
+    const rows = await Promise.all(
+      result.rows.map(async (row) => {
+        const enriched = await enrichApplicationWithSuffix(row);
+        return {
+          ...enriched,
+          reference_no: enriched.qc_id || enriched.reference_no || '110000116932100',
+        };
+      })
+    );
     res.json({ applications: rows });
   } catch (err) {
     console.error(err);
@@ -154,13 +199,15 @@ exports.getApplicationByReference = async (req, res) => {
       return res.status(404).json({ error: 'Walang nahanap na application.' });
     }
 
+    const application = await enrichApplicationWithSuffix(appResult.rows[0]);
+
     const docsResult = await db.query(
-    'SELECT id, document_label, original_filename, file_type, file_path, uploaded_at FROM aics_documents WHERE application_id = $1',
-    [appResult.rows[0].id]
+      'SELECT id, document_label, original_filename, file_type, file_path, uploaded_at FROM aics_documents WHERE application_id = $1',
+      [application.id]
     );
 
     res.json({
-      application: appResult.rows[0],
+      application,
       documents: docsResult.rows,
     });
   } catch (err) {
