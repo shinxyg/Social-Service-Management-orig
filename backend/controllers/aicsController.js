@@ -1,10 +1,9 @@
 const db = require('../config/db');
 const { logActivity } = require('./activityLogController');
 
-function generateReferenceNo() {
-  const year = new Date().getFullYear();
-  const random = Math.floor(1000 + Math.random() * 9000);
-  return `AICS-${year}-${random}`;
+function generateReferenceNo(qcId) {
+  if (qcId && String(qcId).trim()) return String(qcId).trim();
+  return '110000116932100';
 }
 
 // POST /api/aics/applications
@@ -35,7 +34,7 @@ exports.createApplication = async (req, res) => {
     const finalLastName = lastName || 'DIMAL';
     const finalAssistanceType = assistanceType || 'Medical Assistance';
 
-    const referenceNo = generateReferenceNo();
+    const referenceNo = req.body.referenceNo || req.body.reference_no || (qcId && String(qcId).trim()) || generateReferenceNo(qcId);
     let parsedDetails = {};
     try {
       parsedDetails = typeof details === 'string' ? JSON.parse(details) : (details || {});
@@ -130,7 +129,11 @@ exports.getApplications = async (req, res) => {
     query += ' ORDER BY created_at DESC';
 
     const result = await db.query(query, params);
-    res.json({ applications: result.rows });
+    const rows = result.rows.map((row) => ({
+      ...row,
+      reference_no: row.qc_id || row.reference_no || '110000116932100',
+    }));
+    res.json({ applications: rows });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Hindi makuha ang listahan ng applications.' });
@@ -143,7 +146,7 @@ exports.getApplicationByReference = async (req, res) => {
     const { referenceNo } = req.params;
 
     const appResult = await db.query(
-      'SELECT * FROM aics_applications WHERE reference_no = $1',
+      'SELECT * FROM aics_applications WHERE reference_no = $1 OR qc_id = $1',
       [referenceNo]
     );
 

@@ -3,9 +3,9 @@ const db = require('../config/db');
 const fs = require('fs').promises;
 const path = require('path');
 
-function generateReference() {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `CW-2026-${num}`;
+function generateReference(qcid) {
+  if (qcid && String(qcid).trim()) return String(qcid).trim();
+  return '110000116932100';
 }
 
 // Create new application
@@ -32,7 +32,7 @@ exports.createApplication = async (req, res) => {
       });
     }
 
-    const referenceNumber = generateReference();
+    const referenceNumber = req.body.referenceNumber || req.body.reference_number || (formData && (formData.qcidNumber || formData.qcidNo || formData.qcId)) || generateReference();
 
     const result = await db.query(
       `INSERT INTO child_welfare_applications (

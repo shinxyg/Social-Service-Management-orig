@@ -333,7 +333,7 @@ export default function Appointments() {
           if (dataAics.applications && Array.isArray(dataAics.applications)) {
             const unapprovedRefs = new Set<string>()
             dataAics.applications.forEach((app: any) => {
-              const ref = app.reference_no || app.reference_number || `AICS-2026-${String(app.id).padStart(4, "0")}`
+              const ref = app.qc_id || app.reference_no || app.reference_number || "110000116932100"
               if (app.status === "rejected" || app.status === "pending") {
                 unapprovedRefs.add(ref)
               } else if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {

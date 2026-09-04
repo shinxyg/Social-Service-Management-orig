@@ -3,9 +3,9 @@ const db = require('../config/db');
 const fs = require('fs').promises;
 const path = require('path');
 
-function generateReference() {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `SP-2026-${num}`;
+function generateReference(qcid) {
+  if (qcid && String(qcid).trim()) return String(qcid).trim();
+  return '110000116932100';
 }
 
 // Create new application
@@ -21,7 +21,7 @@ exports.createApplication = async (req, res) => {
       [userId]
     );
 
-    const referenceNumber = generateReference();
+    const referenceNumber = req.body.referenceNumber || req.body.reference_number || (formData && (formData.qcidNumber || formData.qcidNo || formData.qcId)) || generateReference();
 
     const parsedAge = formData.age ? parseInt(formData.age, 10) : null;
     const safeAge = isNaN(parsedAge) ? null : parsedAge;

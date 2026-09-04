@@ -112,7 +112,7 @@ export default function AICS() {
   const openReview = async (app: AicsApplication) => {
     setActionLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/applications/${app.reference_no}`)
+      const res = await fetch(`${API_BASE}/applications/${encodeURIComponent(app.reference_no || app.qc_id || '')}`)
       if (!res.ok) throw new Error('Failed to fetch application details')
       const data = await res.json()
       setReviewingApp(data.application)
@@ -242,7 +242,7 @@ export default function AICS() {
                       style={{ borderBottomColor: DESIGN.colors.border, cursor: 'pointer' }}
                       className="border-b hover:bg-gray-50"
                     >
-                      <td style={{ color: DESIGN.colors.foreground, opacity: 0.7, fontSize: '13px', fontFamily: 'monospace' }} className="py-3 px-4">{app.reference_no}</td>
+                      <td style={{ color: DESIGN.colors.foreground, opacity: 0.7, fontSize: '13px', fontFamily: 'monospace' }} className="py-3 px-4">{app.qc_id || app.reference_no}</td>
                       <td style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 500 }} className="py-3 px-4">{fullName(app)}</td>
                       <td style={{ color: DESIGN.colors.foreground, opacity: 0.7, fontSize: '14px' }} className="py-3 px-4">{app.assistance_type}</td>
                       <td style={{ color: DESIGN.colors.foreground, opacity: 0.7, fontSize: '14px' }} className="py-3 px-4">{formatDate(app.created_at)}</td>
@@ -313,7 +313,7 @@ export default function AICS() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label style={labelStyle}>Reference No.</label>
-                      <p style={{ color: DESIGN.colors.foreground, fontSize: '16px', fontWeight: 700, fontFamily: 'monospace', marginTop: '8px' }}>{reviewingApp.reference_no}</p>
+                      <p style={{ color: DESIGN.colors.foreground, fontSize: '16px', fontWeight: 700, fontFamily: 'monospace', marginTop: '8px' }}>{reviewingApp.qc_id || reviewingApp.reference_no}</p>
                     </div>
                     <div>
                       <label style={labelStyle}>Date Applied</label>

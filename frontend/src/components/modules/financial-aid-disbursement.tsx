@@ -75,7 +75,7 @@ export default function FinancialAidDisbursement() {
           if (data.applications && Array.isArray(data.applications)) {
             const rejectedRefs = new Set<string>()
             const approvedApps = data.applications.filter((app: any) => {
-              const ref = app.reference_no || app.reference_number || `AICS-2026-${String(app.id).padStart(4, "0")}`
+              const ref = app.qc_id || app.reference_no || app.reference_number || "110000116932100"
               if (app.status === "rejected" || app.status === "pending") {
                 rejectedRefs.add(ref)
                 return false
@@ -90,9 +90,9 @@ export default function FinancialAidDisbursement() {
               const isReleased = app.status === "released" || app.status === "completed"
 
               return {
-                id: `remote-${app.id || app.reference_no}`,
+                id: `remote-${app.id || app.qc_id || app.reference_no}`,
                 disbursementId: `DISB-2026-${String(app.id || 101).padStart(4, "0")}`,
-                applicationRef: app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`,
+                applicationRef: app.qc_id || app.reference_no || app.reference_number || "110000116932100",
                 applicantName: `${app.first_name || ""} ${app.middle_name || ""} ${app.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY APPLICANT",
                 assistanceType: type,
                 fixedAmount: amount,

@@ -73,9 +73,9 @@ const DEFAULT_TRAINING_COURSES = [
   },
 ];
 
-function generateReference() {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `TP-2026-${num}`;
+function generateReference(qcid) {
+  if (qcid && String(qcid).trim()) return String(qcid).trim();
+  return '110000116932100';
 }
 
 function loadPersistentApps() {
@@ -212,7 +212,7 @@ exports.applyForTraining = (req, res) => {
     };
 
     const userQcid = qcid || applicantInfo?.qcidNo || applicantInfo?.qcidNumber || '110000116932100';
-    const refNum = generateReference();
+    const refNum = generateReference(userQcid);
 
     const newApp = {
       id: Date.now(),

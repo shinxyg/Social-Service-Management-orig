@@ -47,7 +47,7 @@ export interface ApplicationRecord {
 
 const DEFAULT_APPLICATIONS: ApplicationRecord[] = [
   {
-    applicationNo: "AICS-2026-0001",
+    applicationNo: "110000116932100",
     assistance: "Transportation Assistance",
     assistanceCategory: "AICS",
     dateApplied: "August 31, 2026",
@@ -60,7 +60,7 @@ const DEFAULT_APPLICATIONS: ApplicationRecord[] = [
     remarks: "Dokumento ay kasalukuyang sinusuri ng social worker para sa assessment.",
   },
   {
-    applicationNo: "AICS-2026-0002",
+    applicationNo: "110000116932100",
     assistance: "Material Assistance",
     assistanceCategory: "AICS",
     dateApplied: "August 30, 2026",
@@ -73,7 +73,7 @@ const DEFAULT_APPLICATIONS: ApplicationRecord[] = [
     remarks: "Nakatakda para sa panayam at pagsusuri ng pangangailangan.",
   },
   {
-    applicationNo: "AICS-2026-0003",
+    applicationNo: "110000116932100",
     assistance: "Medical Assistance",
     assistanceCategory: "AICS",
     dateApplied: "August 28, 2026",
@@ -86,7 +86,7 @@ const DEFAULT_APPLICATIONS: ApplicationRecord[] = [
     remarks: "Inaprubahan. Handa na para sa disbursement sa City Hall payout counter.",
   },
   {
-    applicationNo: "PWD-2026-0012",
+    applicationNo: "110000116932100",
     assistance: "Persons with Disability (PWD) ID",
     assistanceCategory: "PWD",
     dateApplied: "August 25, 2026",
@@ -128,7 +128,7 @@ export default function MyApplications() {
               const cleanAssistance = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
 
               return {
-                applicationNo: app.reference_number || `AICS-2026-${String(app.id).padStart(4, "0")}`,
+                applicationNo: app.qc_id || app.reference_no || app.reference_number || qcId || "110000116932100",
                 assistance: cleanAssistance,
                 assistanceCategory: "AICS",
                 dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
@@ -216,7 +216,7 @@ export default function MyApplications() {
             else if (p.status === "under_review" || p.status === "review") appStatus = "Under Review"
 
             return {
-              applicationNo: p.assignedIdNumber || p.referenceNumber || p.id,
+              applicationNo: p.assignedIdNumber || p.referenceNumber || p.qcidNo || qcId || "110000116932100",
               assistance: serviceTitle,
               assistanceCategory: isPwd ? "PWD" : "Senior Citizen",
               dateApplied: new Date(p.submittedAt || p.created_at || Date.now()).toLocaleDateString("en-PH", {
@@ -250,7 +250,7 @@ export default function MyApplications() {
           const spData = await spRes.json()
           if (spData.applications && Array.isArray(spData.applications)) {
             const mappedSp: ApplicationRecord[] = spData.applications.map((app: any) => ({
-              applicationNo: app.reference_number || `SP-${app.id}`,
+              applicationNo: app.qcid_number || app.qc_id || app.reference_number || qcId || "110000116932100",
               assistance: `Solo Parent ID (${app.application_type || "New"})`,
               assistanceCategory: "Solo Parent",
               dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
@@ -287,7 +287,7 @@ export default function MyApplications() {
           const cwData = await cwRes.json()
           if (cwData.applications && Array.isArray(cwData.applications)) {
             const mappedCw: ApplicationRecord[] = cwData.applications.map((app: any) => ({
-              applicationNo: app.reference_number || `CW-${app.id}`,
+              applicationNo: app.reference_number || qcId || "110000116932100",
               assistance: app.category_title || "Child Welfare Assistance",
               assistanceCategory: "Child Welfare",
               dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
@@ -332,7 +332,7 @@ export default function MyApplications() {
         }
         if (Array.isArray(livApps) && livApps.length > 0) {
           const mappedLiv: ApplicationRecord[] = livApps.map((l: any) => ({
-            applicationNo: l.reference_number || `LIV-${l.id}`,
+            applicationNo: l.qcid || l.reference_number || qcId || "110000116932100",
             assistance: l.proposed_business_name ? `Livelihood Assistance: ${l.proposed_business_name}` : "Livelihood Assistance",
             assistanceCategory: "Livelihood",
             dateApplied: new Date(l.created_at || Date.now()).toLocaleDateString("en-PH", {
@@ -376,7 +376,7 @@ export default function MyApplications() {
         }
         if (Array.isArray(trnApps) && trnApps.length > 0) {
           const mappedTrn: ApplicationRecord[] = trnApps.map((t: any) => ({
-            applicationNo: t.reference_number || `TRN-${t.id}`,
+            applicationNo: t.qcid || t.reference_number || qcId || "110000116932100",
             assistance: `Training: ${t.program_title || t.course_title || t.training_course || "Skills Training"}`,
             assistanceCategory: "Livelihood",
             dateApplied: new Date(t.created_at || Date.now()).toLocaleDateString("en-PH", {
@@ -408,7 +408,7 @@ export default function MyApplications() {
         setApplications(DEFAULT_APPLICATIONS)
       } else {
         // Guarantee default sample is present for visual completeness if not already
-        if (!allFoundApps.some((a) => a.applicationNo === "AICS-2026-0001")) {
+        if (!allFoundApps.some((a) => a.applicationNo === "110000116932100")) {
           allFoundApps.unshift(DEFAULT_APPLICATIONS[0])
         }
         setApplications(allFoundApps)

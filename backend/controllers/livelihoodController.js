@@ -6,9 +6,9 @@ const fs = require('fs');
 const DATA_DIR = path.join(__dirname, '../data');
 const DATA_FILE = path.join(DATA_DIR, 'livelihood_applications.json');
 
-function generateReference() {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `LP-2026-${num}`;
+function generateReference(qcid) {
+  if (qcid && String(qcid).trim()) return String(qcid).trim();
+  return '110000116932100';
 }
 
 function loadPersistentApps() {
@@ -180,7 +180,7 @@ exports.createApplication = async (req, res) => {
       });
     }
 
-    const referenceNumber = generateReference();
+    const referenceNumber = req.body.referenceNumber || req.body.reference_number || req.body.qcidNumber || req.body.qcidNo || req.body.qcId || generateReference(req.body.qcidNumber || req.body.qcidNo || req.body.qcId);
     const parsedAge = age ? parseInt(age, 10) : null;
     const parsedAmount = estimatedAmount ? parseFloat(String(estimatedAmount).replace(/[^0-9.]/g, '')) || 15000 : 15000;
 

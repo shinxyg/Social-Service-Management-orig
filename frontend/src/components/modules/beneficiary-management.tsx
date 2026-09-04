@@ -76,9 +76,9 @@ const MOCK_BENEFICIARIES: Beneficiary[] = [
     idType: "PhilID",
     idNumber: "1234-5678-9012",
     enrolledPrograms: [
-      { program: "AICS", referenceNo: "AICS-2026-4127", status: "Approved", dateEnrolled: "2026-08-15" },
-      { program: "Child Welfare", referenceNo: "CW-2026-3312", status: "Pending", dateEnrolled: "2026-08-18" },
-      { program: "Livelihood", referenceNo: "PBQC-2026-4127", status: "Pending", dateEnrolled: "2026-08-15" },
+      { program: "AICS", referenceNo: "110000116932100", status: "Approved", dateEnrolled: "2026-08-15" },
+      { program: "Child Welfare", referenceNo: "110000116932100", status: "Pending", dateEnrolled: "2026-08-18" },
+      { program: "Livelihood", referenceNo: "110000116932100", status: "Pending", dateEnrolled: "2026-08-15" },
     ],
     history: [
       { id: "H-001", date: "2026-08-15", program: "AICS", action: "Application submitted", detail: "Medical Assistance application." },

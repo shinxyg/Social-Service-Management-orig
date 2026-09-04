@@ -90,7 +90,7 @@ const MOCK_CASES: CaseRecord[] = [
     address: "11 Sampaloc Street, Brgy. Sauyo, Quezon City",
     contactNo: "0917 555 1234",
     linkedProgram: "AICS",
-    linkedReferenceNo: "AICS-2026-4127",
+    linkedReferenceNo: "110000116932100",
     caseType: "Medical Assistance Follow-up",
     dateOpened: "2026-08-21",
     assignedSocialWorker: "Admin User",
