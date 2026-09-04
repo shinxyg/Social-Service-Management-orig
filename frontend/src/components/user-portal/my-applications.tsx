@@ -15,7 +15,7 @@ import {
   MapPin,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
-import { getLoggedInUserQcid } from "../../utils/userProfile"
+import { getLoggedInUserQcid, getCurrentUserProfile } from "../../utils/userProfile"
 import {
   FIXED_ASSISTANCE_AMOUNTS,
   getSavedDisbursements,
@@ -54,52 +54,66 @@ export default function MyApplications() {
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null)
   const [copied, setCopied] = useState(false)
 
-  // Subaybayan ang lahat ng naisumiteng aplikasyon sa buong sistema
+  // Subaybayan ang lahat ng naisumiteng aplikasyon ng kasalukuyang naka-log in na user
   useEffect(() => {
     const fetchUserApps = async () => {
       // Auto-release engine check
       checkAndAutoReleaseScheduledDisbursements()
 
-      const qcId = getLoggedInUserQcid()
-      const userId = localStorage.getItem("userId") || "1"
+      const userProfile = getCurrentUserProfile()
+      const qcId = (userProfile.qcidNo || "").trim()
+      const userId = userProfile.id || localStorage.getItem("userId") || "1"
+      const userEmail = (userProfile.email || "").trim().toLowerCase()
+      const userFirst = (userProfile.firstName || "").trim().toLowerCase()
+      const userLast = (userProfile.lastName || "").trim().toLowerCase()
       let allFoundApps: ApplicationRecord[] = []
 
       // 1. AICS Applications
       try {
-        const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcId}`)
+        const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${encodeURIComponent(qcId)}`)
         if (res.ok) {
           const data = await res.json()
           if (data.applications && Array.isArray(data.applications)) {
-            const mappedAics: ApplicationRecord[] = data.applications.map((app: any) => {
-              const rawType = (app.assistance_type || "Transportation").replace(/\s*assistance/gi, "").trim()
-              const cleanAssistance = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
+            const mappedAics: ApplicationRecord[] = data.applications
+              .filter((app: any) => {
+                const appQc = String(app.qc_id || app.reference_no || app.reference_number || "").trim().toLowerCase()
+                const appEmail = String(app.email || "").trim().toLowerCase()
+                const appName = String(app.full_name || "").trim().toLowerCase()
+                const matchQc = qcId !== "" && appQc === qcId.toLowerCase()
+                const matchEmail = userEmail !== "" && appEmail === userEmail
+                const matchName = userFirst !== "" && userLast !== "" && appName.includes(userFirst) && appName.includes(userLast)
+                return Boolean(matchQc || matchEmail || matchName)
+              })
+              .map((app: any) => {
+                const rawType = (app.assistance_type || "Transportation").replace(/\s*assistance/gi, "").trim()
+                const cleanAssistance = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
 
-              return {
-                applicationNo: app.qc_id || app.reference_no || app.reference_number || qcId || "110000116932100",
-                assistance: cleanAssistance,
-                assistanceCategory: "AICS",
-                dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }),
-                status:
-                  app.status === "approved"
-                    ? "Approved"
-                    : app.status === "released"
-                    ? "Released"
-                    : app.status === "for_release"
-                    ? "For Release"
-                    : app.status === "assessment"
-                    ? "For Assessment"
-                    : "Under Review",
-                applicantName: app.full_name || "CLARISA MAE GALIAS DIMAL",
-                dateOfBirth: app.birth_date || "October 29, 1960",
-                address: app.address || "11 OLD CABUYAO SAMPALOK ST, Sauyo, QUEZON CITY",
-                contactNumber: app.contact_number || "09000000000",
-                email: "dimalmae@gmail.com",
-              }
-            })
+                return {
+                  applicationNo: app.qc_id || app.reference_no || app.reference_number || qcId,
+                  assistance: cleanAssistance,
+                  assistanceCategory: "AICS",
+                  dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }),
+                  status:
+                    app.status === "approved"
+                      ? "Approved"
+                      : app.status === "released"
+                      ? "Released"
+                      : app.status === "for_release"
+                      ? "For Release"
+                      : app.status === "assessment"
+                      ? "For Assessment"
+                      : "Under Review",
+                  applicantName: app.full_name || `${userProfile.firstName} ${userProfile.lastName}`,
+                  dateOfBirth: app.birth_date || userProfile.birthDateDisplay,
+                  address: app.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+                  contactNumber: app.contact_number || userProfile.mobileNumber,
+                  email: app.email || userProfile.email,
+                }
+              })
             allFoundApps.push(...mappedAics)
           }
         }
@@ -124,12 +138,17 @@ export default function MyApplications() {
 
         const mappedPwd: ApplicationRecord[] = (pwdApps || [])
           .filter((p: any) => {
-            return (
-              !qcId ||
-              p.referenceNumber === qcId ||
-              p.email === "dimalmae@gmail.com" ||
-              (p.lastName && p.lastName.toLowerCase().includes("dimal"))
-            )
+            const pRef = String(p.referenceNumber || "").trim().toLowerCase()
+            const pEmail = String(p.email || "").trim().toLowerCase()
+            const pQc = String(p.qcidNo || "").trim().toLowerCase()
+            const pFirst = String(p.firstName || "").trim().toLowerCase()
+            const pLast = String(p.lastName || "").trim().toLowerCase()
+
+            const matchQc = qcId !== "" && (pRef === qcId.toLowerCase() || pQc === qcId.toLowerCase())
+            const matchEmail = userEmail !== "" && pEmail === userEmail
+            const matchName = userFirst !== "" && userLast !== "" && pFirst.includes(userFirst) && pLast.includes(userLast)
+
+            return Boolean(matchQc || matchEmail || matchName)
           })
           .map((p: any) => {
             const isPwd =
@@ -163,7 +182,7 @@ export default function MyApplications() {
             else if (p.status === "under_review" || p.status === "review") appStatus = "Under Review"
 
             return {
-              applicationNo: p.assignedIdNumber || p.referenceNumber || p.qcidNo || qcId || "110000116932100",
+              applicationNo: p.assignedIdNumber || p.referenceNumber || p.qcidNo || qcId,
               assistance: serviceTitle,
               assistanceCategory: isPwd ? "PWD" : "Senior Citizen",
               dateApplied: new Date(p.submittedAt || p.created_at || Date.now()).toLocaleDateString("en-PH", {
@@ -173,10 +192,10 @@ export default function MyApplications() {
               }),
               status: appStatus,
               applicantName: [p.firstName, p.middleName, p.lastName, p.suffix].filter(Boolean).join(" "),
-              dateOfBirth: p.dateOfBirth || "October 29, 1960",
-              address: p.address || "Quezon City",
-              contactNumber: p.contactNo || p.cellphoneNo || "09171234567",
-              email: p.email || "applicant@example.com",
+              dateOfBirth: p.dateOfBirth || userProfile.birthDateDisplay,
+              address: p.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+              contactNumber: p.contactNo || p.cellphoneNo || userProfile.mobileNumber,
+              email: p.email || userProfile.email,
               remarks:
                 p.status === "approved"
                   ? `Inaprubahan na. Assigned ID Number: ${p.assignedIdNumber || "Available sa Tanggapan"}`
@@ -196,30 +215,37 @@ export default function MyApplications() {
         if (spRes.ok) {
           const spData = await spRes.json()
           if (spData.applications && Array.isArray(spData.applications)) {
-            const mappedSp: ApplicationRecord[] = spData.applications.map((app: any) => ({
-              applicationNo: app.qcid_number || app.qc_id || app.reference_number || qcId || "110000116932100",
-              assistance: `Solo Parent ID (${app.application_type || "New"})`,
-              assistanceCategory: "Solo Parent",
-              dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              }),
-              status:
-                app.application_status === "approved"
-                  ? "Approved"
-                  : app.application_status === "released"
-                  ? "Released"
-                  : app.application_status === "for_release"
-                  ? "For Release"
-                  : "Under Review",
-              applicantName: [app.first_name, app.last_name].filter(Boolean).join(" ") || "Applicant",
-              dateOfBirth: "N/A",
-              address: "Quezon City",
-              contactNumber: "09000000000",
-              email: "applicant@example.com",
-              remarks: app.admin_notes || (app.application_status === "approved" ? "Application approved" : "Under review"),
-            }))
+            const mappedSp: ApplicationRecord[] = spData.applications
+              .filter((app: any) => {
+                const appQc = String(app.qcid_number || app.qc_id || app.reference_number || "").trim().toLowerCase()
+                const appEmail = String(app.email || "").trim().toLowerCase()
+                const uQc = qcId.toLowerCase()
+                return (uQc !== "" && appQc === uQc) || (userEmail !== "" && appEmail === userEmail) || (app.user_id && String(app.user_id) === String(userId))
+              })
+              .map((app: any) => ({
+                applicationNo: app.qcid_number || app.qc_id || app.reference_number || qcId,
+                assistance: `Solo Parent ID (${app.application_type || "New"})`,
+                assistanceCategory: "Solo Parent",
+                dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }),
+                status:
+                  app.application_status === "approved"
+                    ? "Approved"
+                    : app.application_status === "released"
+                    ? "Released"
+                    : app.application_status === "for_release"
+                    ? "For Release"
+                    : "Under Review",
+                applicantName: [app.first_name, app.last_name].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`,
+                dateOfBirth: userProfile.birthDateDisplay,
+                address: app.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+                contactNumber: app.contact_number || userProfile.mobileNumber,
+                email: app.email || userProfile.email,
+                remarks: app.admin_notes || (app.application_status === "approved" ? "Application approved" : "Under review"),
+              }))
             allFoundApps.push(...mappedSp)
           }
         }
@@ -233,28 +259,35 @@ export default function MyApplications() {
         if (cwRes.ok) {
           const cwData = await cwRes.json()
           if (cwData.applications && Array.isArray(cwData.applications)) {
-            const mappedCw: ApplicationRecord[] = cwData.applications.map((app: any) => ({
-              applicationNo: app.reference_number || qcId || "110000116932100",
-              assistance: app.category_title || "Child Welfare Assistance",
-              assistanceCategory: "Child Welfare",
-              dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              }),
-              status:
-                app.application_status === "approved"
-                  ? "Approved"
-                  : app.application_status === "released"
-                  ? "Released"
-                  : "Under Review",
-              applicantName: app.child_name || "Beneficiary Child",
-              dateOfBirth: "N/A",
-              address: "Quezon City",
-              contactNumber: "09000000000",
-              email: "applicant@example.com",
-              remarks: app.application_status === "approved" ? "Approved by Child Welfare" : "Under review",
-            }))
+            const mappedCw: ApplicationRecord[] = cwData.applications
+              .filter((app: any) => {
+                const appQc = String(app.reference_number || app.qc_id || "").trim().toLowerCase()
+                const appEmail = String(app.email || "").trim().toLowerCase()
+                const uQc = qcId.toLowerCase()
+                return (uQc !== "" && appQc === uQc) || (userEmail !== "" && appEmail === userEmail) || (app.user_id && String(app.user_id) === String(userId))
+              })
+              .map((app: any) => ({
+                applicationNo: app.reference_number || qcId,
+                assistance: app.category_title || "Child Welfare Assistance",
+                assistanceCategory: "Child Welfare",
+                dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }),
+                status:
+                  app.application_status === "approved"
+                    ? "Approved"
+                    : app.application_status === "released"
+                    ? "Released"
+                    : "Under Review",
+                applicantName: app.child_name || "Beneficiary Child",
+                dateOfBirth: userProfile.birthDateDisplay,
+                address: app.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+                contactNumber: app.contact_number || userProfile.mobileNumber,
+                email: app.email || userProfile.email,
+                remarks: app.application_status === "approved" ? "Approved by Child Welfare" : "Under review",
+              }))
             allFoundApps.push(...mappedCw)
           }
         }
@@ -278,28 +311,35 @@ export default function MyApplications() {
           } catch {}
         }
         if (Array.isArray(livApps) && livApps.length > 0) {
-          const mappedLiv: ApplicationRecord[] = livApps.map((l: any) => ({
-            applicationNo: l.qcid || l.reference_number || qcId || "110000116932100",
-            assistance: l.proposed_business_name ? `Livelihood Assistance: ${l.proposed_business_name}` : "Livelihood Assistance",
-            assistanceCategory: "Livelihood",
-            dateApplied: new Date(l.created_at || Date.now()).toLocaleDateString("en-PH", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            }),
-            status:
-              l.status === "Approved" || l.status === "approved"
-                ? "Approved"
-                : l.status === "Released" || l.status === "released"
-                ? "Released"
-                : "Under Review",
-            applicantName: l.applicant_name || [l.first_name, l.last_name].filter(Boolean).join(" ") || "Applicant",
-            dateOfBirth: "N/A",
-            address: l.address || "Quezon City",
-            contactNumber: l.contact_number || "09000000000",
-            email: l.email || "applicant@example.com",
-            remarks: l.remarks || "Livelihood capital assistance application",
-          }))
+          const mappedLiv: ApplicationRecord[] = livApps
+            .filter((l: any) => {
+              const lQc = String(l.qcid || l.reference_number || "").trim().toLowerCase()
+              const lEmail = String(l.email || "").trim().toLowerCase()
+              const uQc = qcId.toLowerCase()
+              return (uQc !== "" && lQc === uQc) || (userEmail !== "" && lEmail === userEmail)
+            })
+            .map((l: any) => ({
+              applicationNo: l.qcid || l.reference_number || qcId,
+              assistance: l.proposed_business_name ? `Livelihood Assistance: ${l.proposed_business_name}` : "Livelihood Assistance",
+              assistanceCategory: "Livelihood",
+              dateApplied: new Date(l.created_at || Date.now()).toLocaleDateString("en-PH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+              status:
+                l.status === "Approved" || l.status === "approved"
+                  ? "Approved"
+                  : l.status === "Released" || l.status === "released"
+                  ? "Released"
+                  : "Under Review",
+              applicantName: l.applicant_name || [l.first_name, l.last_name].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`,
+              dateOfBirth: userProfile.birthDateDisplay,
+              address: l.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+              contactNumber: l.contact_number || userProfile.mobileNumber,
+              email: l.email || userProfile.email,
+              remarks: l.remarks || "Livelihood capital assistance application",
+            }))
           allFoundApps.push(...mappedLiv)
         }
       } catch (err) {
@@ -322,35 +362,42 @@ export default function MyApplications() {
           } catch {}
         }
         if (Array.isArray(trnApps) && trnApps.length > 0) {
-          const mappedTrn: ApplicationRecord[] = trnApps.map((t: any) => ({
-            applicationNo: t.qcid || t.reference_number || qcId || "110000116932100",
-            assistance: `Training: ${t.program_title || t.course_title || t.training_course || "Skills Training"}`,
-            assistanceCategory: "Livelihood",
-            dateApplied: new Date(t.created_at || Date.now()).toLocaleDateString("en-PH", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            }),
-            status:
-              t.status === "Enrolled" || t.status === "approved"
-                ? "Approved"
-                : t.status === "Completed"
-                ? "Released"
-                : "Under Review",
-            applicantName: t.applicant_name || [t.first_name, t.last_name].filter(Boolean).join(" ") || "Applicant",
-            dateOfBirth: "N/A",
-            address: "Quezon City",
-            contactNumber: t.contact_number || "09000000000",
-            email: t.email || "applicant@example.com",
-            remarks: `Training course application for ${t.program_title || "Skills Program"}`,
-          }))
+          const mappedTrn: ApplicationRecord[] = trnApps
+            .filter((t: any) => {
+              const tQc = String(t.qcid || t.reference_number || "").trim().toLowerCase()
+              const tEmail = String(t.email || "").trim().toLowerCase()
+              const uQc = qcId.toLowerCase()
+              return (uQc !== "" && tQc === uQc) || (userEmail !== "" && tEmail === userEmail)
+            })
+            .map((t: any) => ({
+              applicationNo: t.qcid || t.reference_number || qcId,
+              assistance: `Training: ${t.program_title || t.course_title || t.training_course || "Skills Training"}`,
+              assistanceCategory: "Livelihood",
+              dateApplied: new Date(t.created_at || Date.now()).toLocaleDateString("en-PH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+              status:
+                t.status === "Enrolled" || t.status === "approved"
+                  ? "Approved"
+                  : t.status === "Completed"
+                  ? "Released"
+                  : "Under Review",
+              applicantName: t.applicant_name || [t.first_name, t.last_name].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`,
+              dateOfBirth: userProfile.birthDateDisplay,
+              address: `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+              contactNumber: t.contact_number || userProfile.mobileNumber,
+              email: t.email || userProfile.email,
+              remarks: `Training course application for ${t.program_title || "Skills Program"}`,
+            }))
           allFoundApps.push(...mappedTrn)
         }
       } catch (err) {
         console.warn("Could not fetch Training applications:", err)
       }
 
-      // Set real submitted applications only (empty if none)
+      // Set real submitted applications belonging ONLY to logged in user
       setApplications(allFoundApps)
     }
 
