@@ -531,46 +531,118 @@ export default function ChildWelfareApplicationWizard({
   }, [selectedProgramId, language])
 
   // Step 2: Personal Information
-  const [formData, setFormData] = useState({
-    // I. Applicant QCID Profile Information
-    qcidNumber: userProfile?.qcidNo || "110000116932100",
-    firstName: userProfile?.firstName || "CLARISA MAE",
-    middleName: userProfile?.middleName || "GALIAS",
-    lastName: userProfile?.lastName || "DIMAL",
-    suffix: userProfile?.suffix || "",
-    nationality: userProfile?.nationality || "FILIPINO",
-    dobMonth: userProfile?.dobMonth || "10",
-    dobDay: userProfile?.dobDay || "29",
-    dobYear: userProfile?.dobYear || "1960",
-    age: userProfile?.age ? String(userProfile.age) : "65",
-    sex: userProfile?.sex || "Female",
-    civilStatus: userProfile?.civilStatus || "Single",
-    addressHouseNo: userProfile?.addressHouseNo || "11",
-    addressStreet: userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST",
-    barangay: userProfile?.addressBarangay || "Sauyo",
-    city: userProfile?.addressCityMunicipality || "Quezon City",
-    contactNo: userProfile?.contactNo || "09000000000",
-    email: userProfile?.email || "dimalmae@gmail.com",
+  const currentUser = getCurrentUserProfile()
+  const [formData, setFormData] = useState(() => {
+    const prof = userProfile || (currentUser as any)
+    const qcid = prof?.qcidNo || prof?.qcidNumber || (prof as any)?.qcid || "110000116932100"
+    const fName = prof?.firstName || "CLARISA MAE"
+    const mName = prof?.middleName || "GALIAS"
+    const lName = prof?.lastName || "DIMAL"
+    const sfx = prof?.suffix || ""
+    const nat = prof?.nationality || "FILIPINO"
+    const dMonth = prof?.dobMonth || (prof as any)?.birthMonth || "10"
+    const dDay = prof?.dobDay || (prof as any)?.birthDay || "29"
+    const dYear = prof?.dobYear || (prof as any)?.birthYear || "1960"
+    const userAge = prof?.age ? String(prof.age) : "65"
+    const userSex = prof?.sex || "Female"
+    const civStat = prof?.civilStatus || "Single"
+    const hNo = prof?.addressHouseNo || (prof as any)?.houseNo || "11"
+    const st = prof?.addressStreet || (prof as any)?.street || "OLD CABUYAO SAMPALOK ST"
+    const brgy = prof?.addressBarangay || (prof as any)?.barangay || "Sauyo"
+    const userCity = prof?.addressCityMunicipality || (prof as any)?.city || "Quezon City"
+    const cNo = prof?.contactNo || (prof as any)?.mobileNumber || "09000000000"
+    const userEmail = prof?.email || "dimalmae@gmail.com"
+    const pFullName = `${fName} ${mName ? mName + " " : ""}${lName}`.trim()
 
-    // II. Parent / Guardian / Reporting Person
-    parentFullName: `${userProfile?.firstName || "CLARISA MAE"} ${userProfile?.middleName ? userProfile.middleName + " " : ""}${userProfile?.lastName || "DIMAL"}`.trim(),
-    parentRelationship: "Mother",
-    parentContactNo: userProfile?.contactNo || "09000000000",
+    return {
+      // I. Applicant QCID Profile Information
+      qcidNumber: qcid,
+      firstName: fName,
+      middleName: mName,
+      lastName: lName,
+      suffix: sfx,
+      nationality: nat,
+      dobMonth: dMonth,
+      dobDay: dDay,
+      dobYear: dYear,
+      age: userAge,
+      sex: userSex,
+      civilStatus: civStat,
+      addressHouseNo: hNo,
+      addressStreet: st,
+      barangay: brgy,
+      city: userCity,
+      contactNo: cNo,
+      email: userEmail,
 
-    // Specific concern / details
-    reasonForRequest: "",
-    briefDescription: "",
-    isImmediateDanger: "No",
-    isChildSafe: "Yes",
-    isParentAvailable: "Yes",
-    emergencyType: "Emergency Medical Assistance",
-    emergencyDateTime: "",
-    reportEmergencyPriority: false,
-    currentLivingSituation: "",
+      // II. Parent / Guardian / Reporting Person
+      parentFullName: pFullName,
+      parentRelationship: "Mother",
+      parentContactNo: cNo,
 
-    // Certification
-    certifiedCorrect: false,
+      // Specific concern / details
+      reasonForRequest: "",
+      briefDescription: "",
+      isImmediateDanger: "No",
+      isChildSafe: "Yes",
+      isParentAvailable: "Yes",
+      emergencyType: "Emergency Medical Assistance",
+      emergencyDateTime: "",
+      reportEmergencyPriority: false,
+      currentLivingSituation: "",
+
+      // Certification
+      certifiedCorrect: false,
+    }
   })
+
+  // Sync profile data if userProfile changes
+  useEffect(() => {
+    if (!userProfile) return
+    const qcid = userProfile?.qcidNo || userProfile?.qcidNumber || (userProfile as any)?.qcid || "110000116932100"
+    const fName = userProfile?.firstName || "CLARISA MAE"
+    const mName = userProfile?.middleName || "GALIAS"
+    const lName = userProfile?.lastName || "DIMAL"
+    const sfx = userProfile?.suffix || ""
+    const nat = userProfile?.nationality || "FILIPINO"
+    const dMonth = userProfile?.dobMonth || (userProfile as any)?.birthMonth || "10"
+    const dDay = userProfile?.dobDay || (userProfile as any)?.birthDay || "29"
+    const dYear = userProfile?.dobYear || (userProfile as any)?.birthYear || "1960"
+    const userAge = userProfile?.age ? String(userProfile.age) : "65"
+    const userSex = userProfile?.sex || "Female"
+    const civStat = userProfile?.civilStatus || "Single"
+    const hNo = userProfile?.addressHouseNo || (userProfile as any)?.houseNo || "11"
+    const st = userProfile?.addressStreet || (userProfile as any)?.street || "OLD CABUYAO SAMPALOK ST"
+    const brgy = userProfile?.addressBarangay || (userProfile as any)?.barangay || "Sauyo"
+    const userCity = userProfile?.addressCityMunicipality || (userProfile as any)?.city || "Quezon City"
+    const cNo = userProfile?.contactNo || (userProfile as any)?.mobileNumber || "09000000000"
+    const userEmail = userProfile?.email || "dimalmae@gmail.com"
+    const pFullName = `${fName} ${mName ? mName + " " : ""}${lName}`.trim()
+
+    setFormData((prev) => ({
+      ...prev,
+      qcidNumber: qcid,
+      firstName: fName,
+      middleName: mName,
+      lastName: lName,
+      suffix: sfx,
+      nationality: nat,
+      dobMonth: dMonth,
+      dobDay: dDay,
+      dobYear: dYear,
+      age: userAge,
+      sex: userSex,
+      civilStatus: civStat,
+      addressHouseNo: hNo,
+      addressStreet: st,
+      barangay: brgy,
+      city: userCity,
+      contactNo: cNo,
+      email: userEmail,
+      parentFullName: pFullName,
+      parentContactNo: cNo,
+    }))
+  }, [userProfile])
 
   const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
