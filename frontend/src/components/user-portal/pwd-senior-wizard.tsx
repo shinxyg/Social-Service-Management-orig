@@ -1706,45 +1706,19 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
           )}
 
           {/* STEP 2 — PWD Personal Information Form */}
-          {step === 2 && (() => {
-            const isLocked = (idStatus === "renewal" || idStatus === "loss") && !isEditingInfo
-            return (
+          {step === 2 && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                {(idStatus === "renewal" || idStatus === "loss") ? (
-                  <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 flex-1">
-                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                    <div className="text-sm">
-                      <p className="font-semibold text-amber-800">
-                        {idStatus === "loss" ? "REPLACEMENT / LOST PWD ID — ID Reference" : "RENEWAL — ID Reference"}
-                      </p>
-                      <p className="text-amber-700 mt-0.5">
-                        PWD ID Number: <span className="font-bold">{formData.existingPwdIdNumber || "Verified"}</span>
-                      </p>
-                    </div>
+              {(idStatus === "renewal" || idStatus === "loss") && (
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                  <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-amber-800">
+                      {idStatus === "loss" ? "REPLACEMENT / LOST PWD ID — ID Reference" : "RENEWAL — ID Reference"}
+                    </p>
+                    <p className="text-amber-700 mt-0.5">
+                      PWD ID Number: <span className="font-bold">{formData.existingPwdIdNumber || "Verified"}</span>
+                    </p>
                   </div>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={() => setIsEditingInfo((v) => !v)}
-                  className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shrink-0 shadow-xs ${
-                    isEditingInfo
-                      ? "bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700"
-                      : "bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
-                  }`}
-                >
-                  {isEditingInfo ? <Check className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
-                  <span>{isEditingInfo ? "I-SAVE ANG PAGBABAGO" : "EDIT / UPDATE INFORMATION"}</span>
-                </button>
-              </div>
-
-              {isEditingInfo && (
-                <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-emerald-900">
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>
-                    Maaari mo nang baguhin ang iyong <strong>Email Address</strong>, <strong>Phone Number</strong>, at iba pang detalye sa ibaba.
-                  </span>
                 </div>
               )}
 
@@ -1766,35 +1740,19 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     <LockedField value={userProfile?.qcidNo || "110000116932100"} />
                   </Field>
                   <Field label={`${t("firstNameLabel")} *`}>
-                    {isEditingInfo ? (
-                      <TextInput value={formData.firstName} onChange={(v) => updateField("firstName", v)} />
-                    ) : (
-                      <LockedField value={formData.firstName || "CLARISA MAE"} />
-                    )}
+                    <LockedField value={formData.firstName || "CLARISA MAE"} />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label={t("middleNameLabel")}>
-                    {isEditingInfo ? (
-                      <TextInput value={formData.middleName} onChange={(v) => updateField("middleName", v)} placeholder="—" />
-                    ) : (
-                      <LockedField value={formData.middleName || "GALIAS"} placeholder="—" />
-                    )}
+                    <LockedField value={formData.middleName || "GALIAS"} placeholder="—" />
                   </Field>
                   <Field label={`${t("lastNameLabel")} *`}>
-                    {isEditingInfo ? (
-                      <TextInput value={formData.lastName} onChange={(v) => updateField("lastName", v)} />
-                    ) : (
-                      <LockedField value={formData.lastName || "DIMAL"} />
-                    )}
+                    <LockedField value={formData.lastName || "DIMAL"} />
                   </Field>
                   <Field label={t("suffixLabel")}>
-                    {isEditingInfo ? (
-                      <TextInput value={formData.suffix} onChange={(v) => updateField("suffix", v)} placeholder={t("suffixLabel")} />
-                    ) : (
-                      <LockedField value={formData.suffix || ""} placeholder={t("suffixLabel")} />
-                    )}
+                    <LockedField value={formData.suffix || ""} placeholder={t("suffixLabel")} />
                   </Field>
                 </div>
 
@@ -1824,54 +1782,24 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     <LockedField value={formData.civilStatus || "Single"} />
                   </Field>
                   <Field label={`${t("houseNumberLabel")} *`}>
-                    {isEditingInfo ? (
-                      <TextInput value={formData.addressHouseNo} onChange={(v) => updateField("addressHouseNo", v)} />
-                    ) : (
-                      <LockedField value={formData.addressHouseNo || "11"} />
-                    )}
+                    <LockedField value={formData.addressHouseNo || "11"} />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label={`${t("streetNameLabel")} *`}>
-                    {isEditingInfo ? (
-                      <TextInput value={formData.addressStreet} onChange={(v) => updateField("addressStreet", v)} />
-                    ) : (
-                      <LockedField value={formData.addressStreet || "OLD CABUYAO SAMPALOK ST"} />
-                    )}
+                    <LockedField value={formData.addressStreet || "OLD CABUYAO SAMPALOK ST"} />
                   </Field>
                   <Field label={`${t("barangayLabel")} *`}>
-                    {isEditingInfo ? (
-                      <TextInput value={formData.addressBarangay} onChange={(v) => updateField("addressBarangay", v)} />
-                    ) : (
-                      <LockedField value={formData.addressBarangay || "Sauyo"} />
-                    )}
+                    <LockedField value={formData.addressBarangay || "Sauyo"} />
                   </Field>
                   <Field label={`${t("pwdContactNoLabel")} *`}>
-                    {isEditingInfo ? (
-                      <TextInput
-                        value={formData.contactNo}
-                        onChange={(v) => updateField("contactNo", v)}
-                        placeholder="09XXXXXXXXX"
-                        numbersOnly
-                        maxLength={11}
-                      />
-                    ) : (
-                      <LockedField value={formData.contactNo || userProfile?.contactNo || "09XXXXXXXXX"} />
-                    )}
+                    <LockedField value={formData.contactNo || userProfile?.contactNo || "09XXXXXXXXX"} />
                   </Field>
                 </div>
 
                 <Field label={`${t("emailLabel")} *`}>
-                  {isEditingInfo ? (
-                    <TextInput
-                      value={formData.email}
-                      onChange={(v) => updateField("email", v)}
-                      placeholder="hal. kahit_anong_email@gmail.com"
-                    />
-                  ) : (
-                    <LockedField value={formData.email || userProfile?.email || "espelitadanny@gmail.com"} />
-                  )}
+                  <LockedField value={formData.email || userProfile?.email || "espelitadanny@gmail.com"} />
                 </Field>
               </div>
 
@@ -2007,8 +1935,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                 </div>
               </div>
             </div>
-            )
-          })()}
+          )}
 
           {/* STEP 3 — matches the AICS "Pag-upload ng File" card layout */}
           {step === 3 && (
