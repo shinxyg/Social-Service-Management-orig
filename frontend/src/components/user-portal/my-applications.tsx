@@ -13,6 +13,8 @@ import {
   Check,
   Banknote,
   MapPin,
+  Trash2,
+  AlertCircle,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getLoggedInUserQcid, getCurrentUserProfile } from "../../utils/userProfile"
@@ -53,6 +55,70 @@ export default function MyApplications() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null)
   const [copied, setCopied] = useState(false)
+  const [appToArchive, setAppToArchive] = useState<ApplicationRecord | null>(null)
+  const [isArchiving, setIsArchiving] = useState(false)
+  const [archiveSuccess, setArchiveSuccess] = useState<string | null>(null)
+
+  const handleConfirmArchive = async () => {
+    if (!appToArchive) return
+    setIsArchiving(true)
+    const appNo = appToArchive.applicationNo
+    const appAssistance = appToArchive.assistance
+
+    try {
+      await fetch(`${API_BASE}/api/user-applications/archive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          applicationNo: appNo,
+          referenceNo: appNo,
+          category: appToArchive.assistanceCategory,
+          assistance: appAssistance,
+          applicantName: appToArchive.applicantName,
+          email: appToArchive.email,
+          reason: "Deleted & archived by applicant from History Application",
+        }),
+      })
+
+      // Clean local storage caches
+      try {
+        const localPwd = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+        localStorage.setItem(
+          "pwd_senior_applications",
+          JSON.stringify(localPwd.filter((p: any) => p.assignedIdNumber !== appNo && p.referenceNumber !== appNo && p.id !== appNo))
+        )
+      } catch {}
+
+      try {
+        const localLiv = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
+        localStorage.setItem(
+          "livelihood_applications",
+          JSON.stringify(localLiv.filter((l: any) => l.reference_number !== appNo && l.qcid !== appNo))
+        )
+      } catch {}
+
+      try {
+        const localTrn = JSON.parse(localStorage.getItem("training_applications") || "[]")
+        localStorage.setItem(
+          "training_applications",
+          JSON.stringify(localTrn.filter((t: any) => t.reference_number !== appNo && t.qcid !== appNo))
+        )
+      } catch {}
+
+      // Update UI state immediately
+      setApplications((prev) => prev.filter((a) => !(a.applicationNo === appNo && a.assistance === appAssistance)))
+      if (selectedApp?.applicationNo === appNo && selectedApp?.assistance === appAssistance) {
+        setSelectedApp(null)
+      }
+      setArchiveSuccess(`Matagumpay na nai-archive at nabura ang ${appAssistance}.`)
+      setTimeout(() => setArchiveSuccess(null), 4000)
+    } catch (err) {
+      console.error("Failed archiving application:", err)
+    } finally {
+      setIsArchiving(false)
+      setAppToArchive(null)
+    }
+  }
 
   // Subaybayan ang lahat ng naisumiteng aplikasyon ng kasalukuyang naka-log in na user
   useEffect(() => {
@@ -512,6 +578,16 @@ export default function MyApplications() {
               {badge.icon}
               {badge.label}
             </span>
+
+            <button
+              type="button"
+              onClick={() => setAppToArchive(selectedApp)}
+              className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
+              title="I-archive / Burahin ang Aplikasyon"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete / Archive</span>
+            </button>
           </div>
         </div>
 
@@ -1067,23 +1143,94 @@ export default function MyApplications() {
                     <span>Opisyal na talaan ng Quezon City Social Services</span>
                   </div>
 
-                  {/* ┌─────────────────────────┐
-                      │    VIEW APPLICATION     │
-                      └─────────────────────────┘ */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedApp(app)}
-                    className="w-full sm:w-auto px-5 h-10 rounded-xl bg-[#3b82f6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-sm"
-                  >
-                    <span>VIEW APPLICATION</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    {/* ┌─────────────────────────┐
+                        │     DELETE / ARCHIVE      │
+                        └─────────────────────────┘ */}
+                    <button
+                      type="button"
+                      onClick={() => setAppToArchive(app)}
+                      className="px-3.5 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs"
+                      title="I-archive / Burahin ang Aplikasyon"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete / Archive</span>
+                    </button>
+
+                    {/* ┌─────────────────────────┐
+                        │    VIEW APPLICATION     │
+                        └─────────────────────────┘ */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedApp(app)}
+                      className="flex-1 sm:flex-initial px-5 h-10 rounded-xl bg-[#3b82f6] hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-sm"
+                    >
+                      <span>VIEW APPLICATION</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             )
           })
         )}
       </div>
+
+      {/* ── ARCHIVE & DELETE CONFIRMATION MODAL ── */}
+      {appToArchive && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-200 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1.5">
+              <h3 className="text-base font-bold text-gray-900">I-archive / Burahin ang Aplikasyon?</h3>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Sigurado ka bang nais mong burahin ang aplikasyon para sa <strong className="text-gray-900">{appToArchive.assistance}</strong> ({appToArchive.applicationNo})?
+              </p>
+              <p className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-left">
+                Paalala: Ang talaang ito ay ilalagay sa <strong>Archive ng database</strong> at aalisin sa iyong aktibong History Application.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                disabled={isArchiving}
+                onClick={() => setAppToArchive(null)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Kanselahin
+              </button>
+              <button
+                type="button"
+                disabled={isArchiving}
+                onClick={handleConfirmArchive}
+                className="px-5 py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                {isArchiving ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Ina-archive...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Oo, I-archive at Burahin</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SUCCESS NOTIFICATION BANNER ── */}
+      {archiveSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <Check className="w-4 h-4" />
+          <span>{archiveSuccess}</span>
+        </div>
+      )}
     </div>
   )
 }

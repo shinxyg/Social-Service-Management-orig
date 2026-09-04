@@ -160,6 +160,41 @@ async function initDb() {
         ('staff', 'staff123', 'Social', 'Worker', 'staff', true, '110000116932101'),
         ('superadmin', 'changeme', 'Super', 'Admin', 'super_admin', true, '110000116932102')
       ON CONFLICT (email) DO NOTHING;
+
+      -- Archive column support for all application categories
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
+
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
+
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
+
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
+
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
+
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
+
+      CREATE TABLE IF NOT EXISTS archived_applications (
+        id SERIAL PRIMARY KEY,
+        application_id VARCHAR(100),
+        reference_no VARCHAR(100),
+        category VARCHAR(100),
+        assistance_title VARCHAR(255),
+        applicant_name VARCHAR(255),
+        email VARCHAR(150),
+        qcid VARCHAR(100),
+        status VARCHAR(50),
+        payload JSONB DEFAULT '{}'::jsonb,
+        archived_by VARCHAR(150),
+        reason TEXT,
+        archived_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     console.log('✅ PostgreSQL database tables, indexes, and default admin accounts verified/initialized successfully.');

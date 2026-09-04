@@ -20,6 +20,7 @@ const emailRoutes = require('./routes/email');
 const pwdSeniorRoutes = require('./routes/pwdSeniorRoutes');
 const authRoutes = require('./routes/authRoutes');
 const trainingRoutes = require('./routes/trainingRoutes');
+const userApplicationRoutes = require('./routes/userApplicationRoutes');
 const { autoReleaseScheduledDisbursements } = require('./controllers/financialAidController');
 
 const app = express();
@@ -88,6 +89,7 @@ app.use('/api/pwd-senior', pwdSeniorRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', authRoutes);
 app.use('/api/training', trainingRoutes);
+app.use('/api/user-applications', userApplicationRoutes);
 
 // Optional: Serve frontend static build if running fullstack single-service mode
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
