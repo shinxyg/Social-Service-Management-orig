@@ -45,64 +45,11 @@ export interface ApplicationRecord {
   remarks?: string
 }
 
-const DEFAULT_APPLICATIONS: ApplicationRecord[] = [
-  {
-    applicationNo: "110000116932100",
-    assistance: "Transportation Assistance",
-    assistanceCategory: "AICS",
-    dateApplied: "August 31, 2026",
-    status: "Under Review",
-    applicantName: "CLARISA MAE GALIAS DIMAL",
-    dateOfBirth: "October 29, 1960",
-    address: "11 OLD CABUYAO SAMPALOK ST, Sauyo, QUEZON CITY",
-    contactNumber: "09000000000",
-    email: "dimalmae@gmail.com",
-    remarks: "Dokumento ay kasalukuyang sinusuri ng social worker para sa assessment.",
-  },
-  {
-    applicationNo: "110000116932100",
-    assistance: "Material Assistance",
-    assistanceCategory: "AICS",
-    dateApplied: "August 30, 2026",
-    status: "For Assessment",
-    applicantName: "CLARISA MAE GALIAS DIMAL",
-    dateOfBirth: "October 29, 1960",
-    address: "11 OLD CABUYAO SAMPALOK ST, Sauyo, QUEZON CITY",
-    contactNumber: "09000000000",
-    email: "dimalmae@gmail.com",
-    remarks: "Nakatakda para sa panayam at pagsusuri ng pangangailangan.",
-  },
-  {
-    applicationNo: "110000116932100",
-    assistance: "Medical Assistance",
-    assistanceCategory: "AICS",
-    dateApplied: "August 28, 2026",
-    status: "For Release",
-    applicantName: "CLARISA MAE GALIAS DIMAL",
-    dateOfBirth: "October 29, 1960",
-    address: "11 OLD CABUYAO SAMPALOK ST, Sauyo, QUEZON CITY",
-    contactNumber: "09000000000",
-    email: "dimalmae@gmail.com",
-    remarks: "Inaprubahan. Handa na para sa disbursement sa City Hall payout counter.",
-  },
-  {
-    applicationNo: "110000116932100",
-    assistance: "Persons with Disability (PWD) ID",
-    assistanceCategory: "PWD",
-    dateApplied: "August 25, 2026",
-    status: "Released",
-    applicantName: "CLARISA MAE GALIAS DIMAL",
-    dateOfBirth: "October 29, 1960",
-    address: "11 OLD CABUYAO SAMPALOK ST, Sauyo, QUEZON CITY",
-    contactNumber: "09000000000",
-    email: "dimalmae@gmail.com",
-    remarks: "Na-release na ang PWD ID card sa barangay / district office.",
-  },
-]
+const DEFAULT_APPLICATIONS: ApplicationRecord[] = []
 
 export default function MyApplications() {
   const { t } = useLanguage()
-  const [applications, setApplications] = useState<ApplicationRecord[]>(DEFAULT_APPLICATIONS)
+  const [applications, setApplications] = useState<ApplicationRecord[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null)
   const [copied, setCopied] = useState(false)
@@ -403,16 +350,8 @@ export default function MyApplications() {
         console.warn("Could not fetch Training applications:", err)
       }
 
-      // Default sample if no records exist yet
-      if (allFoundApps.length === 0) {
-        setApplications(DEFAULT_APPLICATIONS)
-      } else {
-        // Guarantee default sample is present for visual completeness if not already
-        if (!allFoundApps.some((a) => a.applicationNo === "110000116932100")) {
-          allFoundApps.unshift(DEFAULT_APPLICATIONS[0])
-        }
-        setApplications(allFoundApps)
-      }
+      // Set real submitted applications only (empty if none)
+      setApplications(allFoundApps)
     }
 
     fetchUserApps()
@@ -975,7 +914,7 @@ export default function MyApplications() {
             </div>
             <h3 className="text-sm font-bold text-gray-700">Walang Nahanap na Aplikasyon</h3>
             <p className="text-xs text-gray-500 max-w-sm mx-auto">
-              Walang rekord na tumutugma sa inyong napiling serbisyo o paghahanap.
+              Wala ka pang naisumiteng aplikasyon o walang rekord na tumutugma sa inyong paghahanap.
             </p>
           </div>
         ) : (
