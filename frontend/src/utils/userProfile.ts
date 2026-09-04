@@ -172,9 +172,9 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
 
   return {
     id: u?.id || '1',
-    firstName: (u?.firstName || u?.first_name || 'Resident').toUpperCase(),
-    middleName: (u?.middleName || u?.middle_name || '').toUpperCase(),
-    lastName: (u?.lastName || u?.last_name || '').toUpperCase(),
+    firstName: String(u?.firstName || u?.first_name || 'Resident').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 50).toUpperCase(),
+    middleName: String(u?.middleName || u?.middle_name || '').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 30).toUpperCase(),
+    lastName: String(u?.lastName || u?.last_name || '').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 50).toUpperCase(),
     suffix: (u?.suffix || '').toUpperCase(),
     birthMonth: (u?.birthMonth || u?.birth_month || 'JANUARY').toUpperCase(),
     birthDay: u?.birthDay || u?.birth_day || '1',

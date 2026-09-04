@@ -1278,13 +1278,31 @@ if (isBlocked) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label={`${t("firstNameLabel")} *`}>
-                    <input value={dFirstName} onChange={(e) => setDFirstName(e.target.value)} className={`${inputCls} h-10`} placeholder={t("firstNameLabel")} />
+                    <input
+                      value={dFirstName}
+                      maxLength={50}
+                      onChange={(e) => setDFirstName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50))}
+                      className={`${inputCls} h-10`}
+                      placeholder={t("firstNameLabel")}
+                    />
                   </Field>
                   <Field label={t("middleNameLabel")}>
-                    <input value={dMiddleName} onChange={(e) => setDMiddleName(e.target.value)} className={`${inputCls} h-10`} placeholder={t("middleNameLabel")} />
+                    <input
+                      value={dMiddleName}
+                      maxLength={30}
+                      onChange={(e) => setDMiddleName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 30))}
+                      className={`${inputCls} h-10`}
+                      placeholder={t("middleNameLabel")}
+                    />
                   </Field>
                   <Field label={`${t("lastNameLabel")} *`}>
-                    <input value={dLastName} onChange={(e) => setDLastName(e.target.value)} className={`${inputCls} h-10`} placeholder={t("lastNameLabel")} />
+                    <input
+                      value={dLastName}
+                      maxLength={50}
+                      onChange={(e) => setDLastName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50))}
+                      className={`${inputCls} h-10`}
+                      placeholder={t("lastNameLabel")}
+                    />
                   </Field>
 
                   <Field label={t("suffixLabel")}>
@@ -1477,7 +1495,8 @@ if (isBlocked) {
                   <Field label={`${t("beneficiaryFirstNameLabel")} *`}>
                     <input
                       value={benFirstName}
-                      onChange={(e) => setBenFirstName(e.target.value)}
+                      maxLength={50}
+                      onChange={(e) => setBenFirstName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50))}
                       disabled={benIsSelf}
                       className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`}
                       placeholder={t("beneficiaryFirstNameLabel")}
@@ -1486,7 +1505,8 @@ if (isBlocked) {
                   <Field label={t("beneficiaryMiddleNameLabel")}>
                     <input
                       value={benMiddleName}
-                      onChange={(e) => setBenMiddleName(e.target.value)}
+                      maxLength={30}
+                      onChange={(e) => setBenMiddleName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 30))}
                       disabled={benIsSelf}
                       className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`}
                       placeholder={t("middleNameLabel")}
@@ -1495,7 +1515,8 @@ if (isBlocked) {
                   <Field label={`${t("beneficiaryLastNameLabel")} *`}>
                     <input
                       value={benLastName}
-                      onChange={(e) => setBenLastName(e.target.value)}
+                      maxLength={50}
+                      onChange={(e) => setBenLastName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50))}
                       disabled={benIsSelf}
                       className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`}
                       placeholder={t("beneficiaryLastNameLabel")}
@@ -1670,7 +1691,8 @@ if (isBlocked) {
                 <Field label={`${t("firstNameLabel")} *`}>
                   <input
                     value={iFirstName}
-                    onChange={(e) => setIFirstName(e.target.value)}
+                    maxLength={50}
+                    onChange={(e) => setIFirstName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50))}
                     disabled={isSelfPatient}
                     className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`}
                     placeholder={t("firstNameLabel")}
@@ -1679,7 +1701,8 @@ if (isBlocked) {
                 <Field label={t("middleNameLabel")}>
                   <input
                     value={iMiddleName}
-                    onChange={(e) => setIMiddleName(e.target.value)}
+                    maxLength={30}
+                    onChange={(e) => setIMiddleName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 30))}
                     disabled={isSelfPatient}
                     className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`}
                     placeholder={t("middleNameLabel")}
@@ -1688,7 +1711,8 @@ if (isBlocked) {
                 <Field label={`${t("lastNameLabel")} *`}>
                   <input
                     value={iLastName}
-                    onChange={(e) => setILastName(e.target.value)}
+                    maxLength={50}
+                    onChange={(e) => setILastName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50))}
                     disabled={isSelfPatient}
                     className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`}
                     placeholder={t("lastNameLabel")}

@@ -412,10 +412,11 @@ export function ProfileModal({
                       <input
                         type="text"
                         autoComplete="off"
+                        maxLength={50}
                         value={formData.firstName}
                         disabled={!isEditing}
                         onChange={(e) =>
-                          handleInputChange("firstName", e.target.value)
+                          handleInputChange("firstName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50))
                         }
                         className={fieldClass()}
                       />
@@ -430,10 +431,11 @@ export function ProfileModal({
                       <input
                         type="text"
                         autoComplete="off"
+                        maxLength={30}
                         value={formData.middleName}
                         disabled={!isEditing}
                         onChange={(e) =>
-                          handleInputChange("middleName", e.target.value)
+                          handleInputChange("middleName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 30))
                         }
                         className={fieldClass()}
                       />
@@ -448,10 +450,11 @@ export function ProfileModal({
                       <input
                         type="text"
                         autoComplete="off"
+                        maxLength={50}
                         value={formData.lastName}
                         disabled={!isEditing}
                         onChange={(e) =>
-                          handleInputChange("lastName", e.target.value)
+                          handleInputChange("lastName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50))
                         }
                         className={fieldClass()}
                       />

@@ -608,7 +608,8 @@ export const Register = () => {
                       <input
                         type="text"
                         value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
+                        maxLength={50}
+                        onChange={(e) => setFirstName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 50))}
                         placeholder="Enter first name"
                         className={inputClass}
                         required
@@ -619,7 +620,8 @@ export const Register = () => {
                       <input
                         type="text"
                         value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
+                        maxLength={50}
+                        onChange={(e) => setLastName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 50))}
                         placeholder="Enter last name"
                         className={inputClass}
                         required
@@ -630,7 +632,8 @@ export const Register = () => {
                       <input
                         type="text"
                         value={middleName}
-                        onChange={(e) => setMiddleName(e.target.value)}
+                        maxLength={30}
+                        onChange={(e) => setMiddleName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 30))}
                         placeholder="Enter middle name"
                         className={inputClass}
                       />

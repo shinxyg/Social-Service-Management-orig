@@ -1888,8 +1888,9 @@ export default function SoloParentApplicationWizard({
                       </label>
                       <input
                         type="text"
+                        maxLength={50}
                         value={formData.emergencyFirstName}
-                        onChange={(e) => updateField("emergencyFirstName", e.target.value.toUpperCase())}
+                        onChange={(e) => updateField("emergencyFirstName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
                         readOnly={idStatus !== "new" && !isEditingInfo}
                         disabled={idStatus !== "new" && !isEditingInfo}
                         placeholder={t("firstNameLabel") || "First name"}
@@ -1910,8 +1911,9 @@ export default function SoloParentApplicationWizard({
                       </label>
                       <input
                         type="text"
+                        maxLength={50}
                         value={formData.emergencyLastName}
-                        onChange={(e) => updateField("emergencyLastName", e.target.value.toUpperCase())}
+                        onChange={(e) => updateField("emergencyLastName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
                         readOnly={idStatus !== "new" && !isEditingInfo}
                         disabled={idStatus !== "new" && !isEditingInfo}
                         placeholder={t("lastNameLabel") || "Last name"}

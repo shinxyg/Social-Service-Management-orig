@@ -1213,10 +1213,11 @@ export default function SeniorCitizenApplicationWizard({
                           </label>
                           <input
                             type="text"
+                            maxLength={50}
                             readOnly={!isEmergencyEditable}
                             disabled={!isEmergencyEditable}
                             value={formData.emergencyFirstName}
-                            onChange={(e) => handleFieldChange("emergencyFirstName", e.target.value.toUpperCase())}
+                            onChange={(e) => handleFieldChange("emergencyFirstName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
                             placeholder={t("firstNameLabel") || "First Name"}
                             className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
                               !isEmergencyEditable
@@ -1233,10 +1234,11 @@ export default function SeniorCitizenApplicationWizard({
                           </label>
                           <input
                             type="text"
+                            maxLength={50}
                             readOnly={!isEmergencyEditable}
                             disabled={!isEmergencyEditable}
                             value={formData.emergencyLastName}
-                            onChange={(e) => handleFieldChange("emergencyLastName", e.target.value.toUpperCase())}
+                            onChange={(e) => handleFieldChange("emergencyLastName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
                             placeholder={t("lastNameLabel") || "Last Name"}
                             className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
                               !isEmergencyEditable
