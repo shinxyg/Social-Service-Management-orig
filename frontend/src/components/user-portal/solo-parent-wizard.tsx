@@ -916,7 +916,7 @@ export default function SoloParentApplicationWizard({
 
   const handleFinalSubmit = async () => {
     setSubmissionStage("matching")
-    const fallbackRef = reference || userProfile?.qcidNo || formData?.qcidNumber || "110000116932100"
+    const fallbackRef = reference || generateReference(idStatus, userProfile?.qcidNo || formData?.qcidNumber)
     setReference(fallbackRef)
 
     try {
