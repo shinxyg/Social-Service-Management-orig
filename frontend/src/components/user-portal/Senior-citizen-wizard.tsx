@@ -343,10 +343,10 @@ export default function SeniorCitizenApplicationWizard({
   const step2Valid =
     appFlow !== "new"
       ? true
-      : formData.emergencyFirstName.trim() !== "" &&
-        formData.emergencyLastName.trim() !== "" &&
-        formData.emergencyContactNo.trim().length >= 11 &&
-        formData.emergencyRelationship.trim() !== ""
+      : (formData.emergencyFirstName || "").trim() !== "" &&
+        (formData.emergencyLastName || "").trim() !== "" &&
+        (formData.emergencyContactNo || "").trim().length >= 11 &&
+        (formData.emergencyRelationship || "").trim() !== ""
 
   // Step 3: Documents state
   const currentRequirements =

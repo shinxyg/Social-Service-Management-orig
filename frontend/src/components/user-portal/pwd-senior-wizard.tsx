@@ -527,30 +527,29 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [disabilityType, setDisabilityType] = useState("")
   const [disabilityClass, setDisabilityClass] = useState<DisabilityClass>(null)
 
-  const [formData, setFormData] = useState<FormData>(() =>
-    userProfile
-      ? {
-          ...EMPTY_FORM_DATA,
-          firstName: userProfile.firstName,
-          middleName: userProfile.middleName || "",
-          lastName: userProfile.lastName,
-          suffix: userProfile.suffix || "",
-          citizenship: userProfile.nationality || "FILIPINO",
-          dobMonth: userProfile.dobMonth,
-          dobDay: userProfile.dobDay,
-          dobYear: userProfile.dobYear,
-          age: userProfile.age || "21",
-          sex: userProfile.sex || "Female",
-          civilStatus: userProfile.civilStatus || "Single",
-          addressCity: userProfile.addressCity,
-          addressHouseNo: userProfile.addressHouseNo || "11",
-          addressStreet: userProfile.addressStreet,
-          addressBarangay: userProfile.addressBarangay,
-          contactNo: (userProfile.contactNo || "09000000000").replace(/\s+/g, ""),
-          email: userProfile.email || "dimalmae@gmail.com",
-        }
-      : EMPTY_FORM_DATA
-  )
+  const [formData, setFormData] = useState<FormData>(() => {
+    const prof: any = userProfile || {}
+    return {
+      ...EMPTY_FORM_DATA,
+      firstName: prof.firstName || prof.first_name || "CLARISA MAE",
+      middleName: prof.middleName || prof.middle_name || "GALIAS",
+      lastName: prof.lastName || prof.last_name || "DIMAL",
+      suffix: prof.suffix || "",
+      citizenship: prof.nationality || "FILIPINO",
+      dobMonth: prof.dobMonth || prof.birthMonth || prof.birth_month || "10",
+      dobDay: prof.dobDay || prof.birthDay || prof.birth_day || "29",
+      dobYear: prof.dobYear || prof.birthYear || prof.birth_year || "2000",
+      age: String(prof.age || "24"),
+      sex: prof.sex || "Female",
+      civilStatus: prof.civilStatus || "Single",
+      addressCity: prof.addressCity || prof.city || "QUEZON CITY",
+      addressHouseNo: prof.addressHouseNo || prof.houseNo || prof.house_no || "11",
+      addressStreet: prof.addressStreet || prof.street || "OLD CABUYAO SAMPALOK ST",
+      addressBarangay: prof.addressBarangay || prof.barangay || "Sauyo",
+      contactNo: String(prof.contactNo || prof.mobileNumber || prof.mobile_number || "09000000000").replace(/\s+/g, ""),
+      email: prof.email || "dimalmae@gmail.com",
+    }
+  })
 
   const [uploaded, setUploaded] = useState<Record<string, UploadedDoc | undefined>>({})
   const [sampleDoc, setSampleDoc] = useState<string | null>(null)
@@ -742,7 +741,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [dontKnowId, setDontKnowId] = useState(false)
 
   const handleVerifyId = () => {
-    if (!dontKnowId && !formData.existingPwdIdNumber.trim()) return
+    if (!dontKnowId && !(formData.existingPwdIdNumber || "").trim()) return
     setIsVerifying(true)
     setTimeout(() => {
       setIsVerifying(false)
@@ -756,13 +755,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         pobCity: prev.pobCity || "QUEZON CITY",
         pobProvince: prev.pobProvince || "METRO MANILA",
         bloodType: prev.bloodType || "O+",
-        permanentAddress: prev.permanentAddress || `${prev.addressHouseNo} ${prev.addressStreet}, ${prev.addressBarangay}, ${prev.addressCity}`.trim(),
-        presentAddress: prev.presentAddress || `${prev.addressHouseNo} ${prev.addressStreet}, ${prev.addressBarangay}, ${prev.addressCity}`.trim(),
+        permanentAddress: prev.permanentAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
+        presentAddress: prev.presentAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
         emergencyLastName: prev.emergencyLastName || "DIMAL",
         emergencyFirstName: prev.emergencyFirstName || "ROBERTO",
         emergencyContactNo: prev.emergencyContactNo || "09171234567",
         emergencyRelationship: prev.emergencyRelationship || "Father",
-        emergencyAddress: prev.emergencyAddress || `${prev.addressHouseNo} ${prev.addressStreet}, ${prev.addressBarangay}, ${prev.addressCity}`.trim(),
+        emergencyAddress: prev.emergencyAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
         heightCm: prev.heightCm || "160",
         weightKg: prev.weightKg || "52",
         colorOfHair: prev.colorOfHair || "Black",
@@ -783,22 +782,22 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     hasDisability &&
     idStatus !== null &&
     (idStatus === "loss"
-      ? (dontKnowId || formData.existingPwdIdNumber.trim() !== "") && isIdVerified && reasonForReplacement !== ""
+      ? (dontKnowId || (formData.existingPwdIdNumber || "").trim() !== "") && isIdVerified && reasonForReplacement !== ""
       : idStatus === "renewal"
-      ? formData.existingPwdIdNumber.trim() !== "" && isIdVerified && reasonForRenewal !== ""
-      : disabilityType !== "")
+      ? (formData.existingPwdIdNumber || "").trim() !== "" && isIdVerified && reasonForRenewal !== ""
+      : (disabilityType || "").trim() !== "")
 
   const step2Valid =
-    formData.firstName.trim() !== "" &&
-    formData.lastName.trim() !== "" &&
-    formData.dobMonth !== "" &&
-    formData.dobDay !== "" &&
-    formData.dobYear !== "" &&
-    formData.addressHouseNo.trim() !== "" &&
-    formData.addressBarangay.trim() !== "" &&
-    formData.contactNo.trim().length === 11 &&
+    (formData.firstName || "").trim() !== "" &&
+    (formData.lastName || "").trim() !== "" &&
+    Boolean(formData.dobMonth) &&
+    Boolean(formData.dobDay) &&
+    Boolean(formData.dobYear) &&
+    (formData.addressHouseNo || "").trim() !== "" &&
+    (formData.addressBarangay || "").trim() !== "" &&
+    (formData.contactNo || "").trim().length === 11 &&
     effectiveDisabilityClass !== null &&
-    disabilityType.trim() !== ""
+    (disabilityType || "").trim() !== ""
 
   const requiredDocs =
     idStatus === "loss"
