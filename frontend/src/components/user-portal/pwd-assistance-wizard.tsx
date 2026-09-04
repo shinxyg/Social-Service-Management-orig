@@ -35,6 +35,7 @@ export interface UserProfile {
 }
 
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { API_BASE } from "../../config/api"
 
 const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 
@@ -718,8 +719,56 @@ export default function PWDSocialAssistanceWizard({
 
   const handleFinalSubmit = () => {
     setSubmissionStage("matching")
-    const ref = userProfile?.qcidNo || formData?.pwdIdNumber || "110000116932100"
+    const ref = getLoggedInUserQcid() || formData?.pwdIdNumber || `PWD-AST-${Date.now()}`
     setReference(ref)
+
+    const newApp = {
+      id: `APP-AST-${Date.now()}`,
+      submittedAt: new Date().toISOString(),
+      referenceNumber: ref,
+      category: "PWD",
+      type: "assistance",
+      firstName: formData.firstName || userProfile?.firstName || "Ricardo",
+      middleName: formData.middleName || userProfile?.middleName || "",
+      lastName: formData.lastName || userProfile?.lastName || "Dimal",
+      suffix: formData.suffix || "",
+      dateOfBirth: `${formData.dobYear || "2000"}-${(formData.dobMonth || "01").padStart(2, "0")}-${(formData.dobDay || "01").padStart(2, "0")}`,
+      age: formData.age || "24",
+      sex: formData.sex || "Male",
+      civilStatus: "Single",
+      contactNo: formData.contactNumber || userProfile?.contactNo || "09123456789",
+      cellphoneNo: formData.contactNumber || userProfile?.contactNo || "09123456789",
+      email: formData.email || userProfile?.email || "applicant@example.com",
+      address: `${formData.houseNo || ""} ${formData.street || ""} ${formData.barangay || ""}, ${formData.cityMunicipality || "QUEZON CITY"}`.trim(),
+      disabilityType: formData.disabilityType || "Visual Disability",
+      disabilityClass: "non-apparent",
+      causeOfDisability: formData.causeOfDisability || "Acquired",
+      assistanceType: formData.assistanceType || "Educational Assistance",
+      reasonForRequest: formData.reasonForRequest || "Support",
+      monthlyHouseholdIncome: formData.monthlyHouseholdIncome || "",
+      monthlyHouseholdExpenses: formData.monthlyHouseholdExpenses || "",
+      applyingFor: "myself",
+      documents: Object.keys(uploadedDocs).flatMap((docId) =>
+        (uploadedDocs[docId] || []).map((file) => ({
+          name: docId,
+          filename: file.name,
+          uploadedAt: new Date().toISOString(),
+          status: "verified",
+        }))
+      ),
+      status: "pending",
+    }
+
+    try {
+      const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+      localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing]))
+      fetch(`${API_BASE}/api/pwd-senior/applications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newApp),
+      }).catch(() => {})
+    } catch {}
+
     setTimeout(() => {
       setSubmissionStage("pending")
     }, 1200)
@@ -751,6 +800,16 @@ export default function PWDSocialAssistanceWizard({
             Mayroon ka pang nakabinbing aplikasyon para sa PWD Social Assistance. Maghintay
             ng pagsusuri bago magsumite ng panibagong aplikasyon.
           </p>
+          <button
+            onClick={() => {
+              setIsBlocked(false)
+              setStep(1)
+              setSubmissionStage("form")
+            }}
+            className="mt-2 px-4 py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"
+          >
+            + Magsumite ng Panibagong Aplikasyon
+          </button>
         </div>
       </div>
     )

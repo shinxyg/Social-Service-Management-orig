@@ -366,3 +366,38 @@ CREATE TABLE IF NOT EXISTS email_otps (
 
 CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
 
+-- 14. PWD & Senior Citizen Applications Table
+CREATE TABLE IF NOT EXISTS pwd_senior_applications (
+  id VARCHAR(100) PRIMARY KEY,
+  reference_number VARCHAR(100),
+  category VARCHAR(50) NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  first_name VARCHAR(100) NOT NULL,
+  middle_name VARCHAR(100),
+  last_name VARCHAR(100) NOT NULL,
+  suffix VARCHAR(20),
+  date_of_birth VARCHAR(50),
+  age VARCHAR(10),
+  sex VARCHAR(20),
+  civil_status VARCHAR(50),
+  contact_no VARCHAR(50),
+  email VARCHAR(150),
+  address TEXT,
+  disability_type VARCHAR(100),
+  disability_class VARCHAR(50),
+  cause_of_disability VARCHAR(100),
+  applying_for VARCHAR(50) DEFAULT 'myself',
+  documents JSONB DEFAULT '[]'::jsonb,
+  status VARCHAR(50) DEFAULT 'pending',
+  assigned_id_number VARCHAR(100),
+  approved_by VARCHAR(100),
+  approved_date VARCHAR(50),
+  rejection_reason TEXT,
+  submitted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_pwd_senior_ref ON pwd_senior_applications(reference_number);
+CREATE INDEX IF NOT EXISTS idx_pwd_senior_cat ON pwd_senior_applications(category);
+CREATE INDEX IF NOT EXISTS idx_pwd_senior_status ON pwd_senior_applications(status);
+

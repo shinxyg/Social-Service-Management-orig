@@ -121,6 +121,36 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
 
+      CREATE TABLE IF NOT EXISTS pwd_senior_applications (
+        id VARCHAR(100) PRIMARY KEY,
+        reference_number VARCHAR(100),
+        category VARCHAR(50) NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        first_name VARCHAR(100) NOT NULL,
+        middle_name VARCHAR(100),
+        last_name VARCHAR(100) NOT NULL,
+        suffix VARCHAR(20),
+        date_of_birth VARCHAR(50),
+        age VARCHAR(10),
+        sex VARCHAR(20),
+        civil_status VARCHAR(50),
+        contact_no VARCHAR(50),
+        email VARCHAR(150),
+        address TEXT,
+        disability_type VARCHAR(100),
+        disability_class VARCHAR(50),
+        cause_of_disability VARCHAR(100),
+        applying_for VARCHAR(50) DEFAULT 'myself',
+        documents JSONB DEFAULT '[]'::jsonb,
+        status VARCHAR(50) DEFAULT 'pending',
+        assigned_id_number VARCHAR(100),
+        approved_by VARCHAR(100),
+        approved_date VARCHAR(50),
+        rejection_reason TEXT,
+        submitted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
       -- Seed default admin and staff accounts
       INSERT INTO users (email, password, first_name, last_name, role, is_email_verified, qcid_number)
       VALUES 

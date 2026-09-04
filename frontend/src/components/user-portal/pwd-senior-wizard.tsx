@@ -904,6 +904,15 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
             Mayroon ka pang nakabinbing aplikasyon para sa Persons with Disability (PWD) ID. Maghintay
             ng pagsusuri bago magsumite ng panibagong aplikasyon.
           </p>
+          <div className="pt-2 flex flex-col sm:flex-row gap-3 w-full max-w-sm justify-center">
+            <button
+              type="button"
+              onClick={() => setIsBlocked(false)}
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-sm"
+            >
+              Magsumite ng Bagong Aplikasyon
+            </button>
+          </div>
         </div>
       </div>
     )

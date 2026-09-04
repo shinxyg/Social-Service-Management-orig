@@ -116,7 +116,10 @@ interface SeniorCitizenApplicationSubmission {
 type ApplicationSubmission = PWDApplicationSubmission | SeniorCitizenApplicationSubmission
 
 function isPWD(app: ApplicationSubmission): app is PWDApplicationSubmission {
-  return app.category === "PWD"
+  return (
+    String(app.category || "").toUpperCase() === "PWD" ||
+    String(app.category || "").toLowerCase().includes("disability")
+  )
 }
 
 function generateOfficialIdNumber(app: ApplicationSubmission): string {
@@ -229,22 +232,26 @@ function initials(app: ApplicationSubmission) {
 }
 
 function subLabelForApp(app: ApplicationSubmission) {
+  const type = String(app.type || "").toLowerCase()
   if (isPWD(app)) {
-    switch (app.type) {
+    switch (type) {
       case "new": return "New ID Application"
       case "renewal": return "ID Renewal"
-      case "loss": return "Lost ID Replacement"
+      case "loss":
+      case "replacement": return "Lost ID Replacement"
       case "assistance": return "PWD Social Assistance"
       default: return "PWD Application"
     }
   } else {
-    switch (app.type) {
+    switch (type) {
       case "new": return "New Senior ID"
       case "renewal": return "Senior ID Renewal"
-      case "loss": return "Lost ID Replacement"
+      case "loss":
+      case "replacement": return "Lost ID Replacement"
       case "medicine-booklet": return "Medicine Discount Booklet"
       case "movie-booklet": return "Free Movie Booklet"
-      case "social-assistance": return "Senior Social Assistance"
+      case "social-assistance":
+      case "assistance": return "Senior Social Assistance"
       default: return "Senior Citizen Application"
     }
   }
@@ -405,7 +412,7 @@ function ApplicationCard({ app, onView }: ApplicationCardProps) {
           <div className="flex items-center gap-4 flex-wrap">
             <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: "var(--ink-soft)" }}>
               <Paperclip className="h-3.5 w-3.5" />
-              {app.documents.length} documents
+              {(app.documents || []).length} documents
             </span>
             {app.status === "approved" && app.assignedIdNumber && (
               <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>
@@ -445,6 +452,7 @@ interface DetailedViewProps {
 
 function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) {
   const idNumber = generateOfficialIdNumber(app)
+  const [customIdNumber, setCustomIdNumber] = useState(idNumber)
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
@@ -576,38 +584,42 @@ function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) 
           {/* Section 03: Documents */}
           <div>
             <SectionHeading number={nextNum()} icon={<Paperclip className="h-4 w-4" />}>
-              Supporting Documents ({app.documents.length})
+              Supporting Documents ({(app.documents || []).length})
             </SectionHeading>
             <div className="space-y-2">
-              {app.documents.map((doc, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setPreviewDoc(doc)}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-muted/30 cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-950/40">
-                      {/\.(jpe?g|png)$/i.test(doc.filename || doc.name) ? (
-                        <ImageIcon className="h-4 w-4" />
-                      ) : (
-                        <FileText className="h-4 w-4" />
-                      )}
+              {(app.documents || []).length === 0 ? (
+                <p className="text-xs text-muted-foreground p-3 bg-slate-50 rounded-lg">No documents uploaded.</p>
+              ) : (
+                (app.documents || []).map((doc, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setPreviewDoc(doc)}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-muted/30 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-950/40">
+                        {/\.(jpe?g|png)$/i.test(doc.filename || doc.name) ? (
+                          <ImageIcon className="h-4 w-4" />
+                        ) : (
+                          <FileText className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{doc.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleString() : "Uploaded on file"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{doc.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(doc.uploadedAt).toLocaleString()}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Verified
+                      </span>
+                      <span className="text-xs font-semibold text-blue-600 hover:underline">View</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Verified
-                    </span>
-                    <span className="text-xs font-semibold text-blue-600 hover:underline">View</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -643,16 +655,15 @@ function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) 
                         Assign {app.category} ID Number *
                       </label>
                       <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md">
-                        Auto-Generated QC ID
+                        Official QC ID
                       </span>
                     </div>
                     <input
                       type="text"
-                      value={idNumber}
-                      readOnly
-                      disabled
-                      placeholder="110000116932100"
-                      className="gw-input w-full mt-1.5 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 cursor-not-allowed font-mono select-none"
+                      value={customIdNumber}
+                      onChange={(e) => setCustomIdNumber(e.target.value)}
+                      placeholder="e.g. PWD-137404-2026-XXXXXX"
+                      className="gw-input w-full mt-1.5 px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 font-mono"
                     />
                   </div>
                   <div className="flex gap-3">
@@ -666,8 +677,9 @@ function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) 
                     <button
                       type="button"
                       onClick={() => {
-                        if (idNumber.trim()) {
-                          onApprove(app, idNumber)
+                        const finalId = customIdNumber.trim() || idNumber
+                        if (finalId) {
+                          onApprove(app, finalId)
                           onClose()
                         }
                       }}
@@ -762,6 +774,130 @@ function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) 
   )
 }
 
+const DEFAULT_SEED_APPLICATIONS: ApplicationSubmission[] = [
+  {
+    id: "APP-PWD-2026-001",
+    submittedAt: "2026-08-20T09:30:00.000Z",
+    referenceNumber: "PWD-QC-2026-4891",
+    category: "PWD",
+    type: "new",
+    firstName: "Juan",
+    middleName: "Ramos",
+    lastName: "Dela Cruz",
+    suffix: "",
+    dateOfBirth: "1998-05-14",
+    age: "28",
+    sex: "Male",
+    civilStatus: "Single",
+    contactNo: "09171234567",
+    cellphoneNo: "09171234567",
+    email: "juan.delacruz@gmail.com",
+    address: "Block 12 Lot 4, Brgy. Batasan Hills, Quezon City",
+    disabilityType: "Visual Disability",
+    disabilityClass: "apparent",
+    causeOfDisability: "Congenital / Inborn",
+    applyingFor: "myself",
+    documents: [
+      { name: "Whole Body Picture", filename: "whole_body.jpg", fileUrl: "/samples/WHOLE BODY.jpg", uploadedAt: "2026-08-20T09:25:00.000Z", status: "verified" },
+      { name: "Certificate of Disability", filename: "cert_disability.jpg", fileUrl: "/samples/CERTIFICATE OF DISABILITY.jpg", uploadedAt: "2026-08-20T09:26:00.000Z", status: "verified" },
+      { name: "Proof of Residence", filename: "residency.webp", fileUrl: "/samples/PROOF OF RESIDENCE.webp", uploadedAt: "2026-08-20T09:27:00.000Z", status: "verified" },
+      { name: "2x2 ID Picture", filename: "id_picture.webp", fileUrl: "/samples/ID PICTURE (2X2).webp", uploadedAt: "2026-08-20T09:28:00.000Z", status: "verified" },
+    ],
+    status: "pending",
+  },
+  {
+    id: "APP-PWD-2026-002",
+    submittedAt: "2026-08-18T14:15:00.000Z",
+    referenceNumber: "PWD-QC-2026-3109",
+    category: "PWD",
+    type: "renewal",
+    firstName: "Maria",
+    middleName: "Clara",
+    lastName: "Santos",
+    suffix: "",
+    dateOfBirth: "1992-11-20",
+    age: "33",
+    sex: "Female",
+    civilStatus: "Married",
+    contactNo: "09189876543",
+    cellphoneNo: "09189876543",
+    email: "maria.santos@gmail.com",
+    address: "24 Malakas St., Brgy. Pinyahan, Quezon City",
+    disabilityType: "Orthopedic Disability",
+    disabilityClass: "apparent",
+    causeOfDisability: "Accident / Trauma",
+    applyingFor: "myself",
+    documents: [
+      { name: "Previous PWD ID Card", filename: "qc_id_pwd.jpg", fileUrl: "/samples/QC ID NG PERSON WITH DISABILITY.jpg", uploadedAt: "2026-08-18T14:10:00.000Z", status: "verified" },
+      { name: "Certificate of Disability", filename: "cert_disability.jpg", fileUrl: "/samples/CERTIFICATE OF DISABILITY.jpg", uploadedAt: "2026-08-18T14:12:00.000Z", status: "verified" },
+      { name: "2x2 ID Picture", filename: "id_picture.webp", fileUrl: "/samples/ID PICTURE (2X2).webp", uploadedAt: "2026-08-18T14:13:00.000Z", status: "verified" },
+    ],
+    status: "approved",
+    assignedIdNumber: "PWD-137404-2026-310901",
+    approvedBy: "Social Worker Admin",
+    approvedDate: "2026-08-19T10:00:00.000Z",
+  },
+  {
+    id: "APP-PWD-2026-003",
+    submittedAt: "2026-08-22T11:00:00.000Z",
+    referenceNumber: "PWD-QC-2026-5520",
+    category: "PWD",
+    type: "assistance",
+    firstName: "Ricardo",
+    middleName: "Bautista",
+    lastName: "Dimal",
+    suffix: "Jr.",
+    dateOfBirth: "2001-03-08",
+    age: "25",
+    sex: "Male",
+    civilStatus: "Single",
+    contactNo: "09205554321",
+    cellphoneNo: "09205554321",
+    email: "ricardo.dimal@gmail.com",
+    address: "Zone 3, Brgy. Holy Spirit, Quezon City",
+    disabilityType: "Psychosocial Disability",
+    disabilityClass: "non-apparent",
+    causeOfDisability: "Illness / Disease",
+    applyingFor: "myself",
+    documents: [
+      { name: "Certificate of Disability from Specialist", filename: "cert_disability.jpg", fileUrl: "/samples/CERTIFICATE OF DISABILITY.jpg", uploadedAt: "2026-08-22T10:50:00.000Z", status: "verified" },
+      { name: "Barangay Indigency Certificate", filename: "barangay_cert.webp", fileUrl: "/samples/BARANGAY CERTIFICATE.webp", uploadedAt: "2026-08-22T10:52:00.000Z", status: "verified" },
+      { name: "Proof of Residence", filename: "residency.webp", fileUrl: "/samples/PROOF OF RESIDENCE.webp", uploadedAt: "2026-08-22T10:55:00.000Z", status: "verified" },
+    ],
+    status: "pending",
+  },
+  {
+    id: "APP-SNR-2026-004",
+    submittedAt: "2026-08-21T08:45:00.000Z",
+    referenceNumber: "OSCA-QC-2026-8802",
+    category: "Senior Citizen",
+    type: "new",
+    firstName: "Teresa",
+    middleName: "Manalo",
+    lastName: "Lopez",
+    suffix: "",
+    dateOfBirth: "1960-04-12",
+    age: "66",
+    sex: "Female",
+    civilStatus: "Widowed",
+    contactNo: "09193337788",
+    cellphoneNo: "09193337788",
+    email: "teresa.lopez@gmail.com",
+    address: "15 Dahlia St., Brgy. Fairview, Quezon City",
+    disabilityType: "",
+    disabilityClass: "",
+    causeOfDisability: "",
+    vaccinatedCovid: "Yes",
+    applyingFor: "myself",
+    documents: [
+      { name: "Birth Certificate / Valid ID", filename: "birth_cert.jpg", fileUrl: "/samples/BIRTH CERTIFICATE OF MINOR.jpg", uploadedAt: "2026-08-21T08:40:00.000Z", status: "verified" },
+      { name: "Barangay Residency Certificate", filename: "barangay_cert.webp", fileUrl: "/samples/BARANGAY CERTIFICATE.webp", uploadedAt: "2026-08-21T08:42:00.000Z", status: "verified" },
+      { name: "2x2 ID Picture", filename: "id_picture.webp", fileUrl: "/samples/ID PICTURE (2X2).webp", uploadedAt: "2026-08-21T08:43:00.000Z", status: "verified" },
+    ],
+    status: "pending",
+  },
+]
+
 // =====================================================================================
 // Main Admin Component: PWDSeniorCitizenAdmin
 // =====================================================================================
@@ -771,14 +907,12 @@ export default function PWDSeniorCitizenAdmin() {
       const saved = localStorage.getItem("pwd_senior_applications")
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) {
-          // Filter out dummy mock applications APP-001, APP-002, APP-003 so table is clean for testing
-          const realApps = parsed.filter((a) => a.id !== "APP-001" && a.id !== "APP-002" && a.id !== "APP-003")
-          return realApps
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed
         }
       }
     } catch {}
-    return []
+    return DEFAULT_SEED_APPLICATIONS
   })
 
   const [selectedApp, setSelectedApp] = useState<ApplicationSubmission | null>(null)
@@ -793,7 +927,7 @@ export default function PWDSeniorCitizenAdmin() {
         const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
         if (res.ok) {
           const data = await res.json()
-          if (Array.isArray(data)) {
+          if (Array.isArray(data) && data.length > 0) {
             setApplications(data)
             try {
               localStorage.setItem("pwd_senior_applications", JSON.stringify(data))
@@ -912,13 +1046,24 @@ export default function PWDSeniorCitizenAdmin() {
 
   // Filter applications
   const filteredApps = applications.filter((app) => {
-    const matchCategory = filterCategory === "all" || app.category === filterCategory
-    const matchStatus = filterStatus === "all" || app.status === filterStatus
+    const appCat = String(app.category || "").toUpperCase()
+    const matchCategory =
+      filterCategory === "all" ||
+      (filterCategory === "PWD" && (appCat === "PWD" || appCat.includes("DISABILITY"))) ||
+      (filterCategory === "Senior Citizen" && (appCat === "SENIOR CITIZEN" || appCat.includes("SENIOR")))
+    const matchStatus =
+      filterStatus === "all" ||
+      String(app.status || "").toLowerCase() === filterStatus.toLowerCase()
+
+    const q = searchTerm.trim().toLowerCase()
     const matchSearch =
-      searchTerm === "" ||
-      app.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.referenceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      q === "" ||
+      (app.firstName || "").toLowerCase().includes(q) ||
+      (app.lastName || "").toLowerCase().includes(q) ||
+      displayName(app).toLowerCase().includes(q) ||
+      (app.referenceNumber || "").toLowerCase().includes(q) ||
+      (app.assignedIdNumber || "").toLowerCase().includes(q) ||
+      (app.address || "").toLowerCase().includes(q)
     return matchCategory && matchStatus && matchSearch
   })
 
