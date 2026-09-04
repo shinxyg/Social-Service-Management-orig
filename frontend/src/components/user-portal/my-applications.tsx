@@ -57,7 +57,7 @@ export default function MyApplications() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null)
   const [copied, setCopied] = useState(false)
-  
+
   // Dialog modal states
   const [appToDelete, setAppToDelete] = useState<ApplicationRecord | null>(null)
   const [appToPermanentDelete, setAppToPermanentDelete] = useState<ApplicationRecord | null>(null)
@@ -112,7 +112,10 @@ export default function MyApplications() {
         const storedDeleted: ApplicationRecord[] = JSON.parse(
           localStorage.getItem("deleted_user_applications") || "[]"
         )
-        const updatedDeleted = [deletedRecord, ...storedDeleted.filter((d) => d.applicationNo !== appNo || d.assistance !== appAssistance)]
+        const updatedDeleted = [
+          deletedRecord,
+          ...storedDeleted.filter((d) => d.applicationNo !== appNo || d.assistance !== appAssistance),
+        ]
         localStorage.setItem("deleted_user_applications", JSON.stringify(updatedDeleted))
       } catch {}
 
@@ -126,10 +129,10 @@ export default function MyApplications() {
       if (selectedApp?.applicationNo === appNo && selectedApp?.assistance === appAssistance) {
         setSelectedApp(null)
       }
-      showToast(`Nailipat sa Deleted Items ang ${appAssistance}.`)
+      showToast(`Moved ${appAssistance} to Deleted Applications.`)
     } catch (err) {
       console.error("Failed deleting application:", err)
-      showToast("Nagka-aberya sa pagbura ng aplikasyon.", "danger")
+      showToast("An error occurred while deleting application.", "danger")
     } finally {
       setIsProcessing(false)
       setAppToDelete(null)
@@ -160,21 +163,28 @@ export default function MyApplications() {
         const storedDeleted: ApplicationRecord[] = JSON.parse(
           localStorage.getItem("deleted_user_applications") || "[]"
         )
-        const updatedDeleted = storedDeleted.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance))
+        const updatedDeleted = storedDeleted.filter(
+          (d) => !(d.applicationNo === appNo && d.assistance === appAssistance)
+        )
         localStorage.setItem("deleted_user_applications", JSON.stringify(updatedDeleted))
       } catch {}
 
       // Update UI state
-      setDeletedApplications((prev) => prev.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance)))
-      setApplications((prev) => [app, ...prev.filter((a) => !(a.applicationNo === appNo && a.assistance === appAssistance))])
+      setDeletedApplications((prev) =>
+        prev.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance))
+      )
+      setApplications((prev) => [
+        app,
+        ...prev.filter((a) => !(a.applicationNo === appNo && a.assistance === appAssistance)),
+      ])
 
       if (selectedApp?.applicationNo === appNo && selectedApp?.assistance === appAssistance) {
         setSelectedApp(null)
       }
-      showToast(`Matagumpay na naibalik ang ${appAssistance} sa Aktibong Aplikasyon.`)
+      showToast(`Successfully restored ${appAssistance} to active applications.`)
     } catch (err) {
       console.error("Failed restoring application:", err)
-      showToast("Hindi maibalik ang aplikasyon sa ngayon.", "danger")
+      showToast("Could not restore application at this time.", "danger")
     } finally {
       setIsProcessing(false)
     }
@@ -205,7 +215,9 @@ export default function MyApplications() {
         const localPwd = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
         localStorage.setItem(
           "pwd_senior_applications",
-          JSON.stringify(localPwd.filter((p: any) => p.assignedIdNumber !== appNo && p.referenceNumber !== appNo && p.id !== appNo))
+          JSON.stringify(
+            localPwd.filter((p: any) => p.assignedIdNumber !== appNo && p.referenceNumber !== appNo && p.id !== appNo)
+          )
         )
       } catch {}
 
@@ -229,21 +241,25 @@ export default function MyApplications() {
         const storedDeleted: ApplicationRecord[] = JSON.parse(
           localStorage.getItem("deleted_user_applications") || "[]"
         )
-        const updatedDeleted = storedDeleted.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance))
+        const updatedDeleted = storedDeleted.filter(
+          (d) => !(d.applicationNo === appNo && d.assistance === appAssistance)
+        )
         localStorage.setItem("deleted_user_applications", JSON.stringify(updatedDeleted))
       } catch {}
 
       // Update UI state
-      setDeletedApplications((prev) => prev.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance)))
+      setDeletedApplications((prev) =>
+        prev.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance))
+      )
       setApplications((prev) => prev.filter((a) => !(a.applicationNo === appNo && a.assistance === appAssistance)))
 
       if (selectedApp?.applicationNo === appNo && selectedApp?.assistance === appAssistance) {
         setSelectedApp(null)
       }
-      showToast(`Permanenteng nabura ang ${appAssistance} sa database.`, "danger")
+      showToast(`Permanently deleted ${appAssistance} from database.`, "danger")
     } catch (err) {
       console.error("Failed permanent deletion:", err)
-      showToast("Nagka-aberya sa permanenteng pagbura.", "danger")
+      showToast("An error occurred during permanent deletion.", "danger")
     } finally {
       setIsProcessing(false)
       setAppToPermanentDelete(null)
@@ -271,7 +287,9 @@ export default function MyApplications() {
 
       try {
         const delRes = await fetch(
-          `${API_BASE}/api/user-applications/deleted?email=${encodeURIComponent(userEmail)}&qcid=${encodeURIComponent(qcId)}&name=${encodeURIComponent(userFirst + " " + userLast)}`
+          `${API_BASE}/api/user-applications/deleted?email=${encodeURIComponent(userEmail)}&qcid=${encodeURIComponent(
+            qcId
+          )}&name=${encodeURIComponent(userFirst + " " + userLast)}`
         )
         if (delRes.ok) {
           const delData = await delRes.json()
@@ -282,9 +300,12 @@ export default function MyApplications() {
               assistanceCategory: d.category || d.payload?.assistanceCategory || "General",
               dateApplied: d.payload?.dateApplied || new Date(d.archivedAt || Date.now()).toLocaleDateString("en-PH"),
               status: d.status || d.payload?.status || "Approved",
-              applicantName: d.applicantName || d.payload?.applicantName || `${userProfile.firstName} ${userProfile.lastName}`,
+              applicantName:
+                d.applicantName || d.payload?.applicantName || `${userProfile.firstName} ${userProfile.lastName}`,
               dateOfBirth: d.payload?.dateOfBirth || userProfile.birthDateDisplay,
-              address: d.payload?.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+              address:
+                d.payload?.address ||
+                `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
               contactNumber: d.payload?.contactNumber || userProfile.mobileNumber,
               email: d.email || userProfile.email,
               deletedAt: new Date(d.archivedAt || Date.now()).toLocaleDateString("en-PH", {
@@ -354,7 +375,9 @@ export default function MyApplications() {
                       : "Under Review",
                   applicantName: app.full_name || `${userProfile.firstName} ${userProfile.lastName}`,
                   dateOfBirth: app.birth_date || userProfile.birthDateDisplay,
-                  address: app.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+                  address:
+                    app.address ||
+                    `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
                   contactNumber: app.contact_number || userProfile.mobileNumber,
                   email: app.email || userProfile.email,
                 }
@@ -439,15 +462,17 @@ export default function MyApplications() {
               status: appStatus,
               applicantName: [p.firstName, p.middleName, p.lastName, p.suffix].filter(Boolean).join(" "),
               dateOfBirth: p.dateOfBirth || userProfile.birthDateDisplay,
-              address: p.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+              address:
+                p.address ||
+                `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
               contactNumber: p.contactNo || p.cellphoneNo || userProfile.mobileNumber,
               email: p.email || userProfile.email,
               remarks:
                 p.status === "approved"
-                  ? `Inaprubahan na. Assigned ID Number: ${p.assignedIdNumber || "Available sa Tanggapan"}`
+                  ? `Approved. Assigned ID Number: ${p.assignedIdNumber || "Available at office"}`
                   : p.status === "rejected"
-                  ? `Kailangang suriin muli: ${p.rejectionReason || "Hindi sapat ang dokumento."}`
-                  : "Kasalukuyang sinusuri ng PDAO / OSCA social worker.",
+                  ? `Review required: ${p.rejectionReason || "Incomplete documentation."}`
+                  : "Currently being reviewed by social worker.",
             }
           })
         allFoundApps.push(...mappedPwd)
@@ -467,7 +492,11 @@ export default function MyApplications() {
                 const appQc = String(app.qcid_number || app.qc_id || app.reference_number || "").trim().toLowerCase()
                 const appEmail = String(app.email || "").trim().toLowerCase()
                 const uQc = qcId.toLowerCase()
-                return (uQc !== "" && appQc === uQc) || (userEmail !== "" && appEmail === userEmail) || (app.user_id && String(app.user_id) === String(userId))
+                return (
+                  (uQc !== "" && appQc === uQc) ||
+                  (userEmail !== "" && appEmail === userEmail) ||
+                  (app.user_id && String(app.user_id) === String(userId))
+                )
               })
               .map((app: any) => ({
                 applicationNo: app.qcid_number || app.qc_id || app.reference_number || qcId,
@@ -486,12 +515,17 @@ export default function MyApplications() {
                     : app.application_status === "for_release"
                     ? "For Release"
                     : "Under Review",
-                applicantName: [app.first_name, app.last_name].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`,
+                applicantName:
+                  [app.first_name, app.last_name].filter(Boolean).join(" ") ||
+                  `${userProfile.firstName} ${userProfile.lastName}`,
                 dateOfBirth: userProfile.birthDateDisplay,
-                address: app.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+                address:
+                  app.address ||
+                  `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
                 contactNumber: app.contact_number || userProfile.mobileNumber,
                 email: app.email || userProfile.email,
-                remarks: app.admin_notes || (app.application_status === "approved" ? "Application approved" : "Under review"),
+                remarks:
+                  app.admin_notes || (app.application_status === "approved" ? "Application approved" : "Under review"),
               }))
             allFoundApps.push(...mappedSp)
           }
@@ -512,7 +546,11 @@ export default function MyApplications() {
                 const appQc = String(app.reference_number || app.qc_id || "").trim().toLowerCase()
                 const appEmail = String(app.email || "").trim().toLowerCase()
                 const uQc = qcId.toLowerCase()
-                return (uQc !== "" && appQc === uQc) || (userEmail !== "" && appEmail === userEmail) || (app.user_id && String(app.user_id) === String(userId))
+                return (
+                  (uQc !== "" && appQc === uQc) ||
+                  (userEmail !== "" && appEmail === userEmail) ||
+                  (app.user_id && String(app.user_id) === String(userId))
+                )
               })
               .map((app: any) => ({
                 applicationNo: app.reference_number || qcId,
@@ -531,7 +569,9 @@ export default function MyApplications() {
                     : "Under Review",
                 applicantName: app.child_name || "Beneficiary Child",
                 dateOfBirth: userProfile.birthDateDisplay,
-                address: app.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+                address:
+                  app.address ||
+                  `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
                 contactNumber: app.contact_number || userProfile.mobileNumber,
                 email: app.email || userProfile.email,
                 remarks: app.application_status === "approved" ? "Approved by Child Welfare" : "Under review",
@@ -569,7 +609,9 @@ export default function MyApplications() {
             })
             .map((l: any) => ({
               applicationNo: l.qcid || l.reference_number || qcId,
-              assistance: l.proposed_business_name ? `Livelihood Assistance: ${l.proposed_business_name}` : "Livelihood Assistance",
+              assistance: l.proposed_business_name
+                ? `Livelihood Assistance: ${l.proposed_business_name}`
+                : "Livelihood Assistance",
               assistanceCategory: "Livelihood",
               dateApplied: new Date(l.created_at || Date.now()).toLocaleDateString("en-PH", {
                 year: "numeric",
@@ -582,9 +624,14 @@ export default function MyApplications() {
                   : l.status === "Released" || l.status === "released"
                   ? "Released"
                   : "Under Review",
-              applicantName: l.applicant_name || [l.first_name, l.last_name].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`,
+              applicantName:
+                l.applicant_name ||
+                [l.first_name, l.last_name].filter(Boolean).join(" ") ||
+                `${userProfile.firstName} ${userProfile.lastName}`,
               dateOfBirth: userProfile.birthDateDisplay,
-              address: l.address || `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+              address:
+                l.address ||
+                `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
               contactNumber: l.contact_number || userProfile.mobileNumber,
               email: l.email || userProfile.email,
               remarks: l.remarks || "Livelihood capital assistance application",
@@ -634,7 +681,10 @@ export default function MyApplications() {
                   : t.status === "Completed"
                   ? "Released"
                   : "Under Review",
-              applicantName: t.applicant_name || [t.first_name, t.last_name].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`,
+              applicantName:
+                t.applicant_name ||
+                [t.first_name, t.last_name].filter(Boolean).join(" ") ||
+                `${userProfile.firstName} ${userProfile.lastName}`,
               dateOfBirth: userProfile.birthDateDisplay,
               address: `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
               contactNumber: t.contact_number || userProfile.mobileNumber,
@@ -740,7 +790,7 @@ export default function MyApplications() {
             className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>{t("backToMyApplications") || "Bumalik sa History Application"}</span>
+            <span>{t("backToMyApplications") || "Back to My Applications"}</span>
           </button>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -778,7 +828,7 @@ export default function MyApplications() {
                 type="button"
                 onClick={() => setAppToDelete(selectedApp)}
                 className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
-                title="Burahin ang Aplikasyon"
+                title="Delete Application"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete</span>
@@ -796,7 +846,7 @@ export default function MyApplications() {
             {selectedApp.assistance}
           </h1>
           <p className="text-sm text-gray-500">
-            Detalyadong impormasyon at opisyal na katayuan ng inyong naisumiteng aplikasyon.
+            Detailed information and official status of your submitted social service request.
           </p>
         </div>
 
@@ -815,7 +865,7 @@ export default function MyApplications() {
                   type="button"
                   onClick={() => handleCopyNo(selectedApp.applicationNo)}
                   className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
-                  title="Kopyahin ang Reference Number"
+                  title="Copy Reference Number"
                 >
                   {copied ? (
                     <Check className="w-4 h-4 text-emerald-600" />
@@ -831,7 +881,7 @@ export default function MyApplications() {
                 {selectedApp.assistanceCategory}
               </span>
               <span className="text-xs text-gray-400">
-                Petsa: <strong>{selectedApp.dateApplied}</strong>
+                Date Applied: <strong>{selectedApp.dateApplied}</strong>
               </span>
             </div>
           </div>
@@ -839,11 +889,11 @@ export default function MyApplications() {
           {/* Applicant Summary */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs pt-2">
             <div>
-              <span className="text-gray-400 block font-medium">Buong Pangalan:</span>
+              <span className="text-gray-400 block font-medium">Full Name:</span>
               <span className="font-bold text-gray-900 text-sm uppercase">{selectedApp.applicantName}</span>
             </div>
             <div>
-              <span className="text-gray-400 block font-medium">Petsa ng Kapanganakan:</span>
+              <span className="text-gray-400 block font-medium">Date of Birth:</span>
               <span className="font-medium text-gray-900">{selectedApp.dateOfBirth}</span>
             </div>
             <div>
@@ -857,7 +907,7 @@ export default function MyApplications() {
           </div>
 
           <div className="text-xs pt-2 border-t border-gray-100">
-            <span className="text-gray-400 block font-medium">Tirahan / Address:</span>
+            <span className="text-gray-400 block font-medium">Address:</span>
             <span className="font-medium text-gray-900">{selectedApp.address}</span>
           </div>
         </div>
@@ -887,7 +937,7 @@ export default function MyApplications() {
                   FINANCIAL AID & PAYOUT APPOINTMENT
                 </h3>
                 <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                  Awtomatikong Nakakabit
+                  Automatically Linked
                 </span>
               </div>
 
@@ -895,7 +945,7 @@ export default function MyApplications() {
                 <div className="bg-white/80 rounded-xl p-3.5 border border-emerald-100 space-y-1">
                   <span className="text-gray-500 block uppercase font-bold text-[10px]">Approved Fixed Amount</span>
                   <span className="text-2xl font-black text-emerald-700">₱{fixedAmt.toLocaleString()}</span>
-                  <p className="text-[10px] text-gray-500">Itinakda ayon sa uri ng serbisyo</p>
+                  <p className="text-[10px] text-gray-500">Standard rate based on assistance category</p>
                 </div>
 
                 <div className="bg-white/80 rounded-xl p-3.5 border border-emerald-100 space-y-1">
@@ -925,14 +975,14 @@ export default function MyApplications() {
             onClick={() => setSelectedApp(null)}
             className="w-full sm:w-auto px-6 h-11 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold transition-colors cursor-pointer"
           >
-            ← {t("backToMyApplications") || "Bumalik sa Listahan"}
+            ← {t("backToMyApplications") || "Back to Applications"}
           </button>
           <button
             type="button"
             onClick={() => window.print()}
             className="w-full sm:w-auto px-6 h-11 rounded-xl bg-[#3b82f6] hover:bg-blue-600 text-white text-sm font-semibold transition-colors cursor-pointer shadow-xs"
           >
-            I-print ang Resibo / Detalye
+            Print Receipt / Details
           </button>
         </div>
       </div>
@@ -940,7 +990,7 @@ export default function MyApplications() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  // ── MY APPLICATIONS LIST (Main View na may Active at Deleted Tabs)
+  // ── MY APPLICATIONS LIST (Main View & Deleted View)
   // ═══════════════════════════════════════════════════════════════════════
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
@@ -954,7 +1004,7 @@ export default function MyApplications() {
               className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>{t("backToMyApplications") || "Bumalik sa History Application"}</span>
+              <span>{t("backToMyApplications") || "Back to History Application"}</span>
             </button>
 
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 flex items-center gap-1.5">
@@ -972,7 +1022,7 @@ export default function MyApplications() {
                 Deleted Applications
               </h1>
               <p className="text-sm text-gray-500">
-                Maaari mong i-restore ang mga naburang aplikasyon o permanenteng burahin sa database.
+                You can restore deleted applications or permanently remove them from the database.
               </p>
             </div>
 
@@ -981,7 +1031,7 @@ export default function MyApplications() {
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder={t("searchApplicationsPlaceholder") || "Hanapin sa deleted items..."}
+                placeholder={t("searchApplicationsPlaceholder") || "Search deleted applications..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 h-10 text-xs border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 bg-white shadow-xs"
@@ -999,7 +1049,7 @@ export default function MyApplications() {
               {t("myApplicationsTitle") || "History Application"}
             </h1>
             <p className="text-sm text-gray-500">
-              {t("myApplicationsSubtitle") || "Tingnan ang katayuan at mga detalye ng inyong mga naisumiteng aplikasyon para sa tulong at serbisyo."}
+              {t("myApplicationsSubtitle") || "Track the status, schedule, and details of all your submitted social service requests."}
             </p>
           </div>
 
@@ -1009,7 +1059,7 @@ export default function MyApplications() {
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder={t("searchApplicationsPlaceholder") || "Hanapin ang Ref No. / Serbisyo..."}
+                placeholder={t("searchApplicationsPlaceholder") || "Search application no., assistance, or name..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 h-10 text-xs border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-xs"
@@ -1021,7 +1071,7 @@ export default function MyApplications() {
               type="button"
               onClick={() => setActiveTab("deleted")}
               className="shrink-0 flex items-center gap-2 px-3.5 h-10 rounded-xl text-xs font-bold bg-gray-100 hover:bg-red-50 hover:text-red-700 text-gray-700 border border-gray-200 hover:border-red-200 transition-all cursor-pointer shadow-2xs"
-              title="Tingnan ang mga naburang aplikasyon"
+              title="View deleted applications"
             >
               <Trash2 className="w-4 h-4 text-red-500" />
               <span className="hidden md:inline">Deleted Applications</span>
@@ -1037,7 +1087,7 @@ export default function MyApplications() {
       <div className="space-y-4">
         <div className="flex items-center justify-between text-xs text-gray-500 px-1">
           <span>
-            {activeTab === "active" ? "Kabuuang Aplikasyon" : "Kabuuang Nabura"}:{" "}
+            {activeTab === "active" ? "Total Applications" : "Total Deleted"}:{" "}
             <strong>{filteredApplications.length}</strong>
           </span>
           {searchQuery && (
@@ -1045,7 +1095,7 @@ export default function MyApplications() {
               onClick={() => setSearchQuery("")}
               className="text-blue-600 hover:underline cursor-pointer"
             >
-              I-clear ang search
+              Clear search
             </button>
           )}
         </div>
@@ -1056,12 +1106,12 @@ export default function MyApplications() {
               {activeTab === "active" ? <FileText className="w-6 h-6" /> : <Trash2 className="w-6 h-6" />}
             </div>
             <h3 className="text-sm font-bold text-gray-700">
-              {activeTab === "active" ? "Walang Aktibong Aplikasyon" : "Walang Naburang Aplikasyon"}
+              {activeTab === "active" ? "No Applications Found" : "No Deleted Applications"}
             </h3>
             <p className="text-xs text-gray-500 max-w-sm mx-auto">
               {activeTab === "active"
-                ? "Wala ka pang naisumiteng aplikasyon o walang rekord na tumutugma sa inyong paghahanap."
-                : "Walang mga aplikasyon na nasa Deleted items sa kasalukuyan."}
+                ? "You have no submitted applications or no records match your search."
+                : "No applications found in the trash."}
             </p>
           </div>
         ) : (
@@ -1087,7 +1137,7 @@ export default function MyApplications() {
                       </span>
                       {isDeleted && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-bold border border-red-200">
-                          Nabura noong: {app.deletedAt || "Recently"}
+                          Deleted on: {app.deletedAt || "Recently"}
                         </span>
                       )}
                     </div>
@@ -1106,11 +1156,11 @@ export default function MyApplications() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-600">
                   <div>
-                    <span className="text-gray-400 block">Aplikante:</span>
+                    <span className="text-gray-400 block">Applicant:</span>
                     <span className="font-semibold text-gray-900 uppercase">{app.applicantName}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 block">Petsa ng Pagsumite:</span>
+                    <span className="text-gray-400 block">Date Applied:</span>
                     <span className="font-medium text-gray-900">{app.dateApplied}</span>
                   </div>
                   <div>
@@ -1172,7 +1222,7 @@ export default function MyApplications() {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-100">
                   <div className="text-[11px] text-gray-500 flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Opisyal na talaan ng Quezon City Social Services</span>
+                    <span>Official record of Quezon City Social Services</span>
                   </div>
 
                   <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -1184,7 +1234,7 @@ export default function MyApplications() {
                           disabled={isProcessing}
                           onClick={() => handleRestore(app)}
                           className="px-4 h-10 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs"
-                          title="Ibalik ang aplikasyon sa aktibong listahan"
+                          title="Restore application to active list"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           <span>Restore</span>
@@ -1195,7 +1245,7 @@ export default function MyApplications() {
                           disabled={isProcessing}
                           onClick={() => setAppToPermanentDelete(app)}
                           className="px-4 h-10 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs hover:shadow-sm"
-                          title="Permanenteng burahin sa database"
+                          title="Permanently delete from database"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           <span>Permanent Delete</span>
@@ -1208,7 +1258,7 @@ export default function MyApplications() {
                           type="button"
                           onClick={() => setAppToDelete(app)}
                           className="px-3.5 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs"
-                          title="Burahin ang Aplikasyon"
+                          title="Delete Application"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           <span>Delete</span>
@@ -1240,12 +1290,12 @@ export default function MyApplications() {
               <Trash2 className="w-6 h-6" />
             </div>
             <div className="text-center space-y-1.5">
-              <h3 className="text-base font-bold text-gray-900">Burahin ang Aplikasyon?</h3>
+              <h3 className="text-base font-bold text-gray-900">Delete Application?</h3>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Sigurado ka bang nais mong burahin ang aplikasyon para sa <strong className="text-gray-900">{appToDelete.assistance}</strong> ({appToDelete.applicationNo})?
+                Are you sure you want to delete the application for <strong className="text-gray-900">{appToDelete.assistance}</strong> ({appToDelete.applicationNo})?
               </p>
               <p className="text-[11px] text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-200 text-left">
-                Paalala: Malilipat ito sa <strong>"Deleted Applications"</strong> tab sa itaas kung saan maaari mo pa itong i-restore o tuluyang burahin.
+                Note: This application will be moved to <strong>"Deleted Applications"</strong> where you can restore it or permanently delete it.
               </p>
             </div>
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
@@ -1255,7 +1305,7 @@ export default function MyApplications() {
                 onClick={() => setAppToDelete(null)}
                 className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
               >
-                Kanselahin
+                Cancel
               </button>
               <button
                 type="button"
@@ -1266,12 +1316,12 @@ export default function MyApplications() {
                 {isProcessing ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Binubura...</span>
+                    <span>Deleting...</span>
                   </>
                 ) : (
                   <>
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>Oo, Burahin</span>
+                    <span>Yes, Delete</span>
                   </>
                 )}
               </button>
@@ -1288,17 +1338,17 @@ export default function MyApplications() {
               <AlertTriangle className="w-6 h-6 text-red-600" />
             </div>
             <div className="text-center space-y-2">
-              <h3 className="text-base font-bold text-red-950">Permanenteng Burahin ang Aplikasyon?</h3>
+              <h3 className="text-base font-bold text-red-950">Permanently Delete Application?</h3>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Sigurado ka bang nais mong permanenteng burahin ang <strong className="text-gray-900">{appToPermanentDelete.assistance}</strong> ({appToPermanentDelete.applicationNo})?
+                Are you sure you want to permanently delete <strong className="text-gray-900">{appToPermanentDelete.assistance}</strong> ({appToPermanentDelete.applicationNo})?
               </p>
               <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-[11px] text-red-800 text-left font-medium space-y-1">
                 <span className="font-bold flex items-center gap-1 text-red-900">
                   <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-                  Babala: Hindi na ito mababawi!
+                  Warning: This action cannot be undone!
                 </span>
                 <p>
-                  Tuluyang mawawala ang rekord na ito mula sa PostgreSQL database, storage, at opisyal na portal.
+                  This record will be permanently purged from the PostgreSQL database, storage, and official portal.
                 </p>
               </div>
             </div>
@@ -1309,7 +1359,7 @@ export default function MyApplications() {
                 onClick={() => setAppToPermanentDelete(null)}
                 className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
               >
-                Kanselahin
+                Cancel
               </button>
               <button
                 type="button"
@@ -1320,7 +1370,7 @@ export default function MyApplications() {
                 {isProcessing ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Permanenteng binubura...</span>
+                    <span>Permanently deleting...</span>
                   </>
                 ) : (
                   <>
