@@ -48,6 +48,7 @@ interface PWDApplicationSubmission {
 
   // Contact & Address
   contactNo: string
+  cellphoneNo?: string
   email: string
   address: string
 
@@ -92,6 +93,7 @@ interface SeniorCitizenApplicationSubmission {
 
   // Contact & Address
   cellphoneNo: string
+  contactNo?: string
   email: string
   address: string
 
