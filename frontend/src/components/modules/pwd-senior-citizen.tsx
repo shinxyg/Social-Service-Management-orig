@@ -778,32 +778,19 @@ function ApplicationCard({ app, onView, onShowCard }: ApplicationCardProps) {
         </div>
         <div className="flex flex-col items-end gap-2.5 shrink-0">
           <StatusBadge status={app.status} />
-          <div className="flex items-center gap-2">
-            {app.status === "approved" && app.assignedIdNumber && onShowCard && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onShowCard(app)
-                }}
-                className="gw-btn-ghost px-2.5 py-1.5 text-xs text-blue-700 hover:text-blue-800 border-blue-200 bg-blue-50/60 inline-flex items-center gap-1 cursor-pointer"
-              >
-                <IdCard className="h-3.5 w-3.5 text-blue-600" />
-                View ID
-              </button>
-            )}
+          {app.status === "approved" && app.assignedIdNumber && onShowCard && (
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                onView(app)
+                onShowCard(app)
               }}
-              className="gw-btn-ghost px-3 py-1.5 text-xs inline-flex items-center gap-1.5 cursor-pointer"
+              className="gw-btn-ghost px-2.5 py-1.5 text-xs text-blue-700 hover:text-blue-800 border-blue-200 bg-blue-50/60 inline-flex items-center gap-1 cursor-pointer"
             >
-              <Eye className="h-3.5 w-3.5" />
-              Review
+              <IdCard className="h-3.5 w-3.5 text-blue-600" />
+              View ID
             </button>
-          </div>
+          )}
         </div>
       </div>
     </div>
