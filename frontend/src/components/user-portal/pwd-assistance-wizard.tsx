@@ -1256,9 +1256,9 @@ export default function PWDSocialAssistanceWizard({
                 </div>
               </div>
 
-              {/* I. APPLICANT INFORMATION */}
+              {/* APPLICANT INFORMATION */}
               <div className="space-y-4">
-                <SectionHeader title="I. APPLICANT INFORMATION" />
+                <SectionHeader title="APPLICANT INFORMATION" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="QC ID Number *">
@@ -1311,9 +1311,9 @@ export default function PWDSocialAssistanceWizard({
                 </div>
               </div>
 
-              {/* II. ADDRESS */}
+              {/* ADDRESS */}
               <div className="space-y-4">
-                <SectionHeader title="II. ADDRESS" />
+                <SectionHeader title="ADDRESS" />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label="House No. / Street *">
                     <LockedField
@@ -1332,9 +1332,9 @@ export default function PWDSocialAssistanceWizard({
                 </div>
               </div>
 
-              {/* III. DISABILITY INFORMATION */}
+              {/* DISABILITY INFORMATION */}
               <div className="space-y-4">
-                <SectionHeader title="III. DISABILITY INFORMATION" />
+                <SectionHeader title="DISABILITY INFORMATION" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Disability Type" required>
                     <SelectInput
@@ -1362,9 +1362,9 @@ export default function PWDSocialAssistanceWizard({
                 </Field>
               </div>
 
-              {/* IV. HOUSEHOLD & SOCIO-ECONOMIC INFORMATION */}
+              {/* HOUSEHOLD & SOCIO-ECONOMIC INFORMATION */}
               <div className="space-y-4">
-                <SectionHeader title="IV. HOUSEHOLD & SOCIO-ECONOMIC INFORMATION" />
+                <SectionHeader title="HOUSEHOLD & SOCIO-ECONOMIC INFORMATION" />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label="Number of Household Members" required invalid={attemptedNext && formData.householdMembersCount.trim() === ""}>
                     <TextInput
@@ -1396,9 +1396,9 @@ export default function PWDSocialAssistanceWizard({
                 </div>
               </div>
 
-              {/* V. ASSISTANCE DETAILS */}
+              {/* ASSISTANCE DETAILS */}
               <div className="space-y-4">
-                <SectionHeader title="V. ASSISTANCE DETAILS" />
+                <SectionHeader title="ASSISTANCE DETAILS" />
                 <Field label="Type of Assistance Requested" required>
                   <SelectInput
                     value={formData.assistanceType}
