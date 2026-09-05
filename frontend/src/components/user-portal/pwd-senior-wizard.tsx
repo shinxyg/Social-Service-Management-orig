@@ -848,7 +848,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     const userEmail = (userProfile?.email || "dimalmae@gmail.com").trim().toLowerCase()
 
     if (!dontKnowId && !cleanTyped) {
-      setVerifyError("Please enter your PWD ID number before verifying.")
+      setVerifyError(t("pwdEnterIdPrompt") || "Please enter your PWD ID number before verifying.")
       return
     }
 
@@ -929,12 +929,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         setIsIdVerified(false)
         setApprovedPwdRecord(null)
         setVerifyError(
-          "Hindi nahanap ang PWD ID number sa sistema. Bawal ang random o hindi rehistradong ID number. Kailangan mayroon kang naunang New PWD ID application sa system bago mag-apply para sa Renewal o Replacement / Lost ID."
+          t("pwdNoRecordFoundDesc") ||
+          "No existing PWD ID record found in the system for this number. Random or unregistered ID numbers are not allowed. You must have a registered New PWD ID application in the system before applying for Renewal or Replacement / Lost ID."
         )
       }
     } catch {
       setIsIdVerified(false)
-      setVerifyError("Nagkaroon ng error sa pag-verify ng PWD ID. Pakisubukan muli.")
+      setVerifyError(t("pwdVerifyErrorGeneric") || "An error occurred while verifying the PWD ID. Please try again.")
     } finally {
       setIsVerifying(false)
     }
@@ -1349,9 +1350,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
                             <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                             <div>
-                              <p className="font-bold text-red-900">NO APPROVED PWD ID RECORD FOUND</p>
+                              <p className="font-bold text-red-900">{t("pwdNoRecordFoundTitle") || "NO APPROVED PWD ID RECORD FOUND"}</p>
                               <p className="mt-0.5 leading-relaxed">{verifyError}</p>
-                              <p className="mt-1 text-red-700 font-semibold">Reminder: You must first register and get approved for a "New App PWD ID" before applying for Renewal.</p>
+                              <p className="mt-1 text-red-700 font-semibold">{t("pwdRenewalReminder") || "Reminder: You must first register and get approved for a \"New App PWD ID\" before applying for Renewal."}</p>
                             </div>
                           </div>
                         )}
@@ -1527,9 +1528,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
                             <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                             <div>
-                              <p className="font-bold text-red-900">NO APPROVED PWD ID RECORD FOUND</p>
+                              <p className="font-bold text-red-900">{t("pwdNoRecordFoundTitle") || "NO APPROVED PWD ID RECORD FOUND"}</p>
                               <p className="mt-0.5 leading-relaxed">{verifyError}</p>
-                              <p className="mt-1 text-red-700 font-semibold">Reminder: You must first register and get approved for a "New App PWD ID" before applying for Replacement / Lost ID.</p>
+                              <p className="mt-1 text-red-700 font-semibold">{t("pwdLossReminder") || "Reminder: You must first register and get approved for a \"New App PWD ID\" before applying for Replacement / Lost ID."}</p>
                             </div>
                           </div>
                         )}
@@ -1689,9 +1690,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
                               <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                               <div>
-                                <p className="font-bold text-red-900">NO APPROVED PWD ID RECORD FOUND</p>
+                                <p className="font-bold text-red-900">{t("pwdNoRecordFoundTitle") || "NO APPROVED PWD ID RECORD FOUND"}</p>
                                 <p className="mt-0.5 leading-relaxed">{verifyError}</p>
-                                <p className="mt-1 text-red-700 font-semibold">Reminder: You must first register and get approved for a "New App PWD ID" before applying for Renewal.</p>
+                                <p className="mt-1 text-red-700 font-semibold">{t("pwdRenewalReminder") || "Reminder: You must first register and get approved for a \"New App PWD ID\" before applying for Renewal."}</p>
                               </div>
                             </div>
                           )}
@@ -1857,9 +1858,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in duration-200">
                               <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                               <div>
-                                <p className="font-bold text-red-900">NO APPROVED PWD ID RECORD FOUND</p>
+                                <p className="font-bold text-red-900">{t("pwdNoRecordFoundTitle") || "NO APPROVED PWD ID RECORD FOUND"}</p>
                                 <p className="mt-0.5 leading-relaxed">{verifyError}</p>
-                                <p className="mt-1 text-red-700 font-semibold">Reminder: You must first register and get approved for a "New App PWD ID" before applying for Replacement / Lost ID.</p>
+                                <p className="mt-1 text-red-700 font-semibold">{t("pwdLossReminder") || "Reminder: You must first register and get approved for a \"New App PWD ID\" before applying for Replacement / Lost ID."}</p>
                               </div>
                             </div>
                           )}

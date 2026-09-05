@@ -559,6 +559,36 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   pwdExistingIdQuestion: { en: "Do you have an existing PWD ID Number?", tl: "Mayroon ka bang kasalukuyang PWD ID Number?", bis: "Naa ka bay naa nang PWD ID Number?" },
   pwdExistingIdLabel: { en: "PWD ID number", tl: "PWD ID Number", bis: "PWD ID Number" },
   pwdExistingIdPlaceholder: { en: "Enter your existing PWD ID Number", tl: "Ilagay ang iyong kasalukuyang PWD ID Number", bis: "Isulat ang imong naa nang PWD ID Number" },
+  pwdNoRecordFoundTitle: {
+    en: "NO APPROVED PWD ID RECORD FOUND",
+    tl: "WALANG NAHANAP NA REHISTRADONG PWD ID RECORD",
+    bis: "WALAY NAKIT-AN NGA REHISTRADONG PWD ID RECORD",
+  },
+  pwdNoRecordFoundDesc: {
+    en: "No existing PWD ID record found in the system for this number. Random or unregistered ID numbers are not allowed. You must have a registered New PWD ID application in the system before applying for Renewal or Replacement / Lost ID.",
+    tl: "Hindi nahanap ang PWD ID number sa sistema. Bawal ang random o hindi rehistradong ID number. Kailangan mayroon kang naunang New PWD ID application sa system bago mag-apply para sa Renewal o Replacement / Lost ID.",
+    bis: "Wala makit-i ang PWD ID number sa sistema. Bawal ang random o wala marehistro nga ID number. Kinahanglan adunay una nga New PWD ID application sa sistema una mag-apply para sa Renewal o Replacement / Lost ID.",
+  },
+  pwdRenewalReminder: {
+    en: "Reminder: You must first register and get approved for a \"New App PWD ID\" before applying for Renewal.",
+    tl: "Paalala: Kailangan munang magparehistro at maaprubahan sa \"New App PWD ID\" bago mag-apply para sa Renewal.",
+    bis: "Pahibalo: Kinahanglan una magparehistro ug maaprubahan sa \"New App PWD ID\" una mag-apply para sa Renewal.",
+  },
+  pwdLossReminder: {
+    en: "Reminder: You must first register and get approved for a \"New App PWD ID\" before applying for Replacement / Lost ID.",
+    tl: "Paalala: Kailangan munang magparehistro at maaprubahan sa \"New App PWD ID\" bago mag-apply para sa Replacement / Lost ID.",
+    bis: "Pahibalo: Kinahanglan una magparehistro ug maaprubahan sa \"New App PWD ID\" una mag-apply para sa Replacement / Lost ID.",
+  },
+  pwdEnterIdPrompt: {
+    en: "Please enter your PWD ID number before verifying.",
+    tl: "Mangyaring ilagay ang iyong PWD ID number bago mag-verify.",
+    bis: "Palihug ibutang ang imong PWD ID number una mag-verify.",
+  },
+  pwdVerifyErrorGeneric: {
+    en: "An error occurred while verifying the PWD ID. Please try again.",
+    tl: "Nagkaroon ng error sa pag-verify ng PWD ID. Pakisubukan muli.",
+    bis: "Adunay sayop nga nahitabo sa pag-verify sa PWD ID. Palihug sulayi pag-usab.",
+  },
   pwdClassificationLabel: { en: "Classification of disability", tl: "Klasipikasyon ng Kapansanan", bis: "Klasipikasyon sa Kapansanon" },
   pwdApparentOption: { en: "Apparent Disability", tl: "Apparent Disability", bis: "Apparent Disability" },
   pwdNonApparentOption: { en: "Non-Apparent Disability", tl: "Non-Apparent Disability", bis: "Non-Apparent Disability" },
