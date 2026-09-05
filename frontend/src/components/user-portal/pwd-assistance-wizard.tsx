@@ -839,9 +839,7 @@ export default function PWDSocialAssistanceWizard({
   )
 
   // Step 4 Validation (Review & Submit)
-  const step4Valid =
-    formData.isCertified &&
-    formData.signatureName.trim() !== ""
+  const step4Valid = formData.isCertified
 
   const canGoNext =
     step === 1
@@ -1648,41 +1646,30 @@ export default function PWDSocialAssistanceWizard({
                 </AccordionSection>
               </div>
 
-              {/* Certification */}
-              <div className="border border-blue-200 bg-blue-50/60 rounded-xl p-4 md:p-5 space-y-4">
-                <h4 className="text-xs font-bold text-blue-950 uppercase tracking-wide">
-                  Pahayag at Sertipikasyon (Certification & Declaration)
-                </h4>
-                <p className="text-xs text-blue-900 leading-relaxed">
-                  Ako ay nagpapatunay na ang lahat ng impormasyong aking inilagay sa aplikasyong ito at ang mga kalakip na litrato/dokumento ay totoo, tama, at kumpleto ayon sa aking pinakamahusay na kaalaman.
+              {/* Important Notice */}
+              <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-blue-700">
+                  Ang lahat ng impormasyon at dokumentong inyong isinumite ay susuriin ng Social Worker alinsunod sa mga patakaran ng Quezon City Government.
                 </p>
+              </div>
+
+              {/* Declaration */}
+              <div className="pt-2">
                 <label className="flex items-start gap-3 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={formData.isCertified}
                     onChange={(e) => updateField("isCertified", e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-0.5"
+                    className="mt-1 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-xs font-bold text-foreground">
-                    Sumasang-ayon ako sa mga kondisyon at pinatutunayan ang kawastuhan ng mga datos. <span className="text-red-500">*</span>
+                  <span className="text-sm font-semibold text-gray-900">
+                    I certify that the information provided is true and correct. <span className="text-red-500">*</span>
                   </span>
                 </label>
                 {attemptedNext && !formData.isCertified && (
-                  <p className="text-xs text-red-600 font-semibold">Kailangang lagyan ng check ang kahon bago magpatuloy.</p>
+                  <p className="text-xs text-red-600 font-semibold mt-1">Please check the box to certify before submitting.</p>
                 )}
-              </div>
-
-              {/* Signature */}
-              <div className="border border-border rounded-xl p-4 md:p-5 space-y-3">
-                <label className="text-xs font-bold text-foreground uppercase tracking-wide block">
-                  Lagda ng Aplikante (Applicant Signature / Full Name) <span className="text-red-500">*</span>
-                </label>
-                <TextInput
-                  value={formData.signatureName}
-                  onChange={(v) => updateField("signatureName", v)}
-                  placeholder="I-type ang buong pangalan bilang electronic signature"
-                  invalid={attemptedNext && formData.signatureName.trim() === ""}
-                />
               </div>
             </div>
           )}
