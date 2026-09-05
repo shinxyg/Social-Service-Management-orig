@@ -906,52 +906,36 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     try {
       const apps = await fetchAllPwdApps()
 
-      const prof = getCurrentUserProfile()
-      const loggedQcid = (getLoggedInUserQcid() || userProfile?.qcidNo || prof?.qcidNo || prof?.qcidNumber || "").trim().toLowerCase()
-      const email = (userProfile?.email || prof?.email || "").trim().toLowerCase()
-      const userLastName = (userProfile?.lastName || prof?.lastName || "").trim().toLowerCase()
-      const userFirstName = (userProfile?.firstName || prof?.firstName || "").trim().toLowerCase()
-
-      const checkUserMatches = (a: any) => {
-        if (!a) return false
-        const aEmail = (a.email || "").trim().toLowerCase()
-        const aRef = (a.referenceNumber || a.reference_no || a.qcid || a.qcidNo || a.qcid_number || "").trim().toLowerCase()
-        const aAssigned = (a.assignedIdNumber || "").trim().toLowerCase()
-        const aLastName = (a.lastName || "").trim().toLowerCase()
-        const aFirstName = (a.firstName || "").trim().toLowerCase()
-
-        const isQcidMatch = loggedQcid && (aRef === loggedQcid || aAssigned === loggedQcid || aRef.includes(loggedQcid) || loggedQcid.includes(aRef))
-        const isEmailMatch = email && aEmail && aEmail === email
-        const isNameMatch = userLastName && aLastName && userLastName === aLastName && (!userFirstName || !aFirstName || userFirstName === aFirstName)
-
-        return Boolean(isQcidMatch || isEmailMatch || isNameMatch)
-      }
-
-      // Hanapin ang tunay na PWD application / rehistradong PWD record sa system na pagmamay-ari ng user account
+      // Hanapin ang tunay na PWD application / rehistradong PWD record sa system
       const matchedApp = apps.find((a) => {
         if (!a) return false
-        const cat = (a.category || "").trim().toUpperCase()
-        if (cat !== "PWD") return false
-
-        if (!checkUserMatches(a)) return false
+        const cat = (a.category || a.service || "").trim().toUpperCase()
+        if (cat !== "PWD" && !cat.includes("PWD")) return false
 
         // Ang record ay dapat nagmula sa valid application (approved o may assigned/reference number mula sa New App)
         const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const refClean = (a.referenceNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const idClean = (a.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const cleanDigits = cleanTyped.replace(/\D/g, "")
+        const assignedDigits = (a.assignedIdNumber || "").replace(/\D/g, "")
+        const refDigits = (a.referenceNumber || "").replace(/\D/g, "")
 
         // STRICT MATCHING: dapat tumutugma nang eksakto sa assigned ID o reference number o app ID
         const matchAssigned =
           assignedClean !== "" &&
           (cleanTyped === assignedClean ||
            cleanTyped === `pwd${assignedClean}` ||
-           `pwd${cleanTyped}` === assignedClean)
+           `pwd${cleanTyped}` === assignedClean ||
+           (cleanDigits.length >= 6 && assignedDigits.includes(cleanDigits)) ||
+           (assignedDigits.length >= 6 && cleanDigits.includes(assignedDigits)))
 
         const matchRef =
           refClean !== "" &&
           (cleanTyped === refClean ||
            cleanTyped === `pwd${refClean}` ||
-           `pwd${cleanTyped}` === refClean)
+           `pwd${cleanTyped}` === refClean ||
+           (cleanDigits.length >= 6 && refDigits.includes(cleanDigits)) ||
+           (refDigits.length >= 6 && cleanDigits.includes(refDigits)))
 
         const matchId = idClean !== "" && cleanTyped === idClean
 

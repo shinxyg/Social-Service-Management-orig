@@ -303,9 +303,10 @@ export default function SeniorCitizenApplicationWizard({
     setVerifyError(null)
     const typed = (existingIdNumber || "").trim()
     const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
+    const cleanDigits = typed.replace(/\D/g, "")
 
-    if (!cleanTyped) {
-      setVerifyError("Please enter your Senior Citizen ID number before verifying.")
+    if (!cleanTyped || cleanDigits.length < 5) {
+      setVerifyError("Please enter your valid Senior Citizen ID number before verifying.")
       return
     }
 
@@ -313,40 +314,18 @@ export default function SeniorCitizenApplicationWizard({
     try {
       const apps = await fetchAllSeniorApps()
 
-      const prof = getCurrentUserProfile()
-      const loggedQcid = (getLoggedInUserQcid() || userProfile?.qcidNo || prof?.qcidNo || prof?.qcidNumber || "").trim().toLowerCase()
-      const email = (userProfile?.email || prof?.email || "").trim().toLowerCase()
-      const userLastName = (userProfile?.lastName || prof?.lastName || "").trim().toLowerCase()
-      const userFirstName = (userProfile?.firstName || prof?.firstName || "").trim().toLowerCase()
-
-      const checkUserMatches = (a: any) => {
-        if (!a) return false
-        const aEmail = (a.email || "").trim().toLowerCase()
-        const aRef = (a.referenceNumber || a.reference_no || a.qcid || a.qcidNo || a.qcid_number || "").trim().toLowerCase()
-        const aAssigned = (a.assignedIdNumber || "").trim().toLowerCase()
-        const aLastName = (a.lastName || "").trim().toLowerCase()
-        const aFirstName = (a.firstName || "").trim().toLowerCase()
-
-        const isQcidMatch = loggedQcid && (aRef === loggedQcid || aAssigned === loggedQcid || aRef.includes(loggedQcid) || loggedQcid.includes(aRef))
-        const isEmailMatch = email && aEmail && aEmail === email
-        const isNameMatch = userLastName && aLastName && userLastName === aLastName && (!userFirstName || !aFirstName || userFirstName === aFirstName)
-
-        return Boolean(isQcidMatch || isEmailMatch || isNameMatch)
-      }
-
-      // Check for approved application belonging to this user account
+      // Look for matching registered Senior Citizen record
       const matchedApp = apps.find((a) => {
         if (!a) return false
         const cat = String(a.category || a.service || "").trim().toUpperCase()
-        const isSeniorCategory = cat.includes("SENIOR") || cat === "SENIOR CITIZEN"
+        const isSeniorCategory = cat.includes("SENIOR") || cat === "SENIOR CITIZEN" || String(a.service || "").toLowerCase().includes("senior")
         if (!isSeniorCategory) return false
-
-        // Strict: Must belong to currently logged-in account
-        if (!checkUserMatches(a)) return false
 
         const assignedClean = String(a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const refClean = String(a.referenceNumber || a.reference_no || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const idClean = String(a.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const assignedDigits = String(a.assignedIdNumber || "").replace(/\D/g, "")
+        const refDigits = String(a.referenceNumber || a.reference_no || "").replace(/\D/g, "")
 
         const matchAssigned =
           assignedClean !== "" &&
@@ -354,13 +333,17 @@ export default function SeniorCitizenApplicationWizard({
            cleanTyped === `senior${assignedClean}` ||
            `senior${cleanTyped}` === assignedClean ||
            cleanTyped === `osca${assignedClean}` ||
-           `osca${cleanTyped}` === assignedClean)
+           `osca${cleanTyped}` === assignedClean ||
+           (cleanDigits.length >= 6 && assignedDigits.includes(cleanDigits)) ||
+           (assignedDigits.length >= 6 && cleanDigits.includes(assignedDigits)))
 
         const matchRef =
           refClean !== "" &&
           (cleanTyped === refClean ||
            cleanTyped === `senior${refClean}` ||
-           `senior${cleanTyped}` === refClean)
+           `senior${cleanTyped}` === refClean ||
+           (cleanDigits.length >= 6 && refDigits.includes(cleanDigits)) ||
+           (refDigits.length >= 6 && cleanDigits.includes(refDigits)))
 
         const matchId = idClean !== "" && cleanTyped === idClean
 
@@ -398,7 +381,7 @@ export default function SeniorCitizenApplicationWizard({
         setIsIdVerified(false)
         setApprovedSeniorRecord(null)
         setVerifyError(
-          "No approved Senior Citizen application found on your account for this ID. Renewal and Replacement / Lost ID are based on your approved New Application. Please check your ID number or submit a New Application first."
+          "No registered Senior Citizen record found in the system for this ID. Renewal and Replacement are only available for registered Senior Citizen ID holders. Please check your ID number or submit a New Application first."
         )
       }
     } catch {
