@@ -644,11 +644,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   }, [step, submitStatus])
 
   const [latestApprovedApp, setLatestApprovedApp] = useState<any>(null)
+  const [activeAppStatus, setActiveAppStatus] = useState<string | null>(null)
 
   // Check if there is an active application for this user
   useEffect(() => {
     const checkActiveApp = async () => {
-      let activeAppStatus: string | null = null
+      let currentAppStatus: string | null = null
       let matchedApproved: any = null
 
       const checkUserMatches = (a: any) => {
@@ -669,14 +670,14 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
             const userApps = apps.filter(checkUserMatches)
             const pendingApp = userApps.find((a) => a.status === "pending")
             const approvedApp = userApps.find((a) => a.status === "approved")
-            if (pendingApp) activeAppStatus = "pending"
+            if (pendingApp) currentAppStatus = "pending"
             if (approvedApp) matchedApproved = approvedApp
           }
         }
       } catch {}
 
       // Fallback check localStorage if backend unavailable
-      if (!matchedApproved || !activeAppStatus) {
+      if (!matchedApproved || !currentAppStatus) {
         try {
           const saved = localStorage.getItem("pwd_senior_applications")
           if (saved) {
@@ -685,12 +686,14 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
               const userApps = apps.filter(checkUserMatches)
               const pendingApp = userApps.find((a) => a.status === "pending")
               const approvedApp = userApps.find((a) => a.status === "approved")
-              if (!activeAppStatus && pendingApp) activeAppStatus = "pending"
+              if (!currentAppStatus && pendingApp) currentAppStatus = "pending"
               if (!matchedApproved && approvedApp) matchedApproved = approvedApp
             }
           }
         } catch {}
       }
+
+      setActiveAppStatus(currentAppStatus)
 
       if (matchedApproved) {
         setLatestApprovedApp(matchedApproved)
@@ -706,7 +709,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
       // Block ONLY if status is strictly 'pending' AND user is applying for a new ID
       const isNewFlow = !initialIdStatus || initialIdStatus === "new"
-      if (!bypassedBlock && activeAppStatus === "pending" && isNewFlow) {
+      if (!bypassedBlock && currentAppStatus === "pending" && isNewFlow) {
         setIsBlocked(true)
       } else {
         // If renewal, loss/replacement, rejected, approved, bypassed, or no active application, allow user to apply freely
@@ -1499,8 +1502,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                 </div>
                                 <div>
                                   <span className="text-emerald-700 block">PWD ID Status:</span>
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 mt-0.5">
-                                    Active
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold mt-0.5 ${
+                                    activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending"
+                                      ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                      : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                  }`}>
+                                    {activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
                                   </span>
                                 </div>
                               </div>
@@ -1676,8 +1683,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               </div>
                               <div>
                                 <span className="text-emerald-700 block">PWD ID Status:</span>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 mt-0.5">
-                                  Active
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold mt-0.5 ${
+                                  activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending"
+                                    ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                    : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                }`}>
+                                  {activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
                                 </span>
                               </div>
                               <div>
@@ -1839,8 +1850,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                   </div>
                                   <div>
                                     <span className="text-emerald-700 block">PWD ID Status:</span>
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 mt-0.5">
-                                      Active
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold mt-0.5 ${
+                                      activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending"
+                                        ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                        : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                    }`}>
+                                      {activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
                                     </span>
                                   </div>
                                 </div>
@@ -2006,8 +2021,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                 </div>
                                 <div>
                                   <span className="text-emerald-700 block">PWD ID Status:</span>
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 mt-0.5">
-                                    Active
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold mt-0.5 ${
+                                    activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending"
+                                      ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                      : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                  }`}>
+                                    {activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
                                   </span>
                                 </div>
                                 <div>
