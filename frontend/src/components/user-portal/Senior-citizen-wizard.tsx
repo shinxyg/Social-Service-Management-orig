@@ -244,7 +244,6 @@ export default function SeniorCitizenApplicationWizard({
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
-  const [bypassedBlock, setBypassedBlock] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -469,7 +468,7 @@ export default function SeniorCitizenApplicationWizard({
       }
 
       // Block when there is a pending application matching this flow
-      if (!bypassedBlock && matchedPendingForFlow) {
+      if (matchedPendingForFlow) {
         if (appFlow === "renewal" || appFlow === "loss") {
           setIsBlocked(true)
         } else if (!matchedApproved) {
@@ -485,7 +484,7 @@ export default function SeniorCitizenApplicationWizard({
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow])
+  }, [userProfile?.qcidNo, userProfile?.email, appFlow])
 
   // Set blocked on submit
   useEffect(() => {
@@ -608,7 +607,7 @@ export default function SeniorCitizenApplicationWizard({
       : "Replacement / Lost ID"
 
   // ---- APPROVED state (Bungad bago mag Step 1) ----
-  if (latestApprovedApp && appFlow === "new" && !bypassedBlock) {
+  if (latestApprovedApp && appFlow === "new") {
     return (
       <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4 animate-in fade-in duration-300">
         {onBack && (
