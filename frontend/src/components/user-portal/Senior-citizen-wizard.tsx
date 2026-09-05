@@ -381,8 +381,10 @@ export default function SeniorCitizenApplicationWizard({
   const [latestApprovedApp, setLatestApprovedApp] = useState<any>(null)
   const [blockedApp, setBlockedApp] = useState<any>(null)
 
-  // Check if there is an active application for this user
+  // Check if there is an active application for this user (Real-time syncing)
   useEffect(() => {
+    let isMounted = true
+
     const checkActiveApp = async () => {
       let matchedApproved: any = null
       let matchedPendingForFlow: any = null
@@ -395,24 +397,35 @@ export default function SeniorCitizenApplicationWizard({
           ? "replacement"
           : "new"
 
+      const prof = getCurrentUserProfile()
+      const loggedQcid = (getLoggedInUserQcid() || userProfile?.qcidNo || prof?.qcidNo || prof?.qcidNumber || "").trim().toLowerCase()
+      const email = (userProfile?.email || prof?.email || "").trim().toLowerCase()
+      const userLastName = (userProfile?.lastName || prof?.lastName || "").trim().toLowerCase()
+      const userFirstName = (userProfile?.firstName || prof?.firstName || "").trim().toLowerCase()
+
       const checkUserMatches = (a: any) => {
-        const prof = getCurrentUserProfile()
-        const qcid = (userProfile?.qcidNo || prof?.qcidNo || prof?.qcidNumber || "110000116932100").trim().toLowerCase()
-        const email = (userProfile?.email || prof?.email || "").trim().toLowerCase()
+        if (!a) return false
         const aEmail = (a.email || "").trim().toLowerCase()
-        const aRef = (a.referenceNumber || a.reference_no || a.qcid || "").trim().toLowerCase()
+        const aRef = (a.referenceNumber || a.reference_no || a.qcid || a.qcidNo || a.qcid_number || "").trim().toLowerCase()
         const aAssigned = (a.assignedIdNumber || "").trim().toLowerCase()
         const aCat = String(a.category || "").toUpperCase()
-        return (
-          (aRef === qcid || (email && aEmail === email) || (aAssigned && aAssigned === qcid)) &&
-          (aCat.includes("SENIOR") || aCat === "SENIOR CITIZEN")
-        )
+        const aLastName = (a.lastName || "").trim().toLowerCase()
+        const aFirstName = (a.firstName || "").trim().toLowerCase()
+
+        const isSeniorCategory = aCat.includes("SENIOR") || aCat === "SENIOR CITIZEN" || String(a.service || "").toLowerCase().includes("senior")
+        if (!isSeniorCategory) return false
+
+        const isQcidMatch = loggedQcid && (aRef === loggedQcid || aAssigned === loggedQcid || aRef.includes(loggedQcid) || loggedQcid.includes(aRef))
+        const isEmailMatch = email && aEmail && aEmail === email
+        const isNameMatch = userLastName && aLastName && userLastName === aLastName && (!userFirstName || !aFirstName || userFirstName === aFirstName)
+
+        return Boolean(isQcidMatch || isEmailMatch || isNameMatch)
       }
 
-      // Check backend API first
+      // 1. Fetch from backend API
       try {
         const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
-        if (res.ok) {
+        if (res.ok && isMounted) {
           const apps = await res.json()
           if (Array.isArray(apps)) {
             const userApps = apps.filter(checkUserMatches)
@@ -431,29 +444,34 @@ export default function SeniorCitizenApplicationWizard({
         }
       } catch {}
 
-      // Fallback check localStorage if backend unavailable
-      if (!matchedApproved || !matchedPendingForFlow) {
-        try {
-          const saved = localStorage.getItem("pwd_senior_applications")
-          if (saved) {
-            const apps = JSON.parse(saved)
-            if (Array.isArray(apps)) {
-              const userApps = apps.filter(checkUserMatches)
-              const pendingFlow = userApps.find((a) => {
-                if (a.status !== "pending") return false
-                if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
-                if (expectedType === "renewal") return a.type === "renewal"
-                return a.type === "new" || !a.type
-              })
-              const pendingAny = userApps.find((a) => a.status === "pending")
-              const approvedNew = userApps.find((a) => a.status === "approved")
-              if (!matchedPendingForFlow && pendingFlow) matchedPendingForFlow = pendingFlow
-              if (!matchedPendingAny && pendingAny) matchedPendingAny = pendingAny
-              if (!matchedApproved && approvedNew) matchedApproved = approvedNew
+      // 2. Check localStorage in real-time
+      if (isMounted) {
+        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
+        for (const k of localKeys) {
+          try {
+            const saved = localStorage.getItem(k)
+            if (saved) {
+              const apps = JSON.parse(saved)
+              if (Array.isArray(apps)) {
+                const userApps = apps.filter(checkUserMatches)
+                const pendingFlow = userApps.find((a) => {
+                  if (a.status !== "pending") return false
+                  if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
+                  if (expectedType === "renewal") return a.type === "renewal"
+                  return a.type === "new" || !a.type
+                })
+                const pendingAny = userApps.find((a) => a.status === "pending")
+                const approvedNew = userApps.find((a) => a.status === "approved")
+                if (!matchedPendingForFlow && pendingFlow) matchedPendingForFlow = pendingFlow
+                if (!matchedPendingAny && pendingAny) matchedPendingAny = pendingAny
+                if (!matchedApproved && approvedNew) matchedApproved = approvedNew
+              }
             }
-          }
-        } catch {}
+          } catch {}
+        }
       }
+
+      if (!isMounted) return
 
       if (matchedPendingForFlow) {
         setBlockedApp(matchedPendingForFlow)
@@ -482,8 +500,16 @@ export default function SeniorCitizenApplicationWizard({
     }
 
     checkActiveApp()
-    const interval = setInterval(checkActiveApp, 2000)
-    return () => clearInterval(interval)
+    const interval = setInterval(checkActiveApp, 1500)
+    window.addEventListener("pwd_senior_applications_updated", checkActiveApp)
+    window.addEventListener("storage", checkActiveApp)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      window.removeEventListener("pwd_senior_applications_updated", checkActiveApp)
+      window.removeEventListener("storage", checkActiveApp)
+    }
   }, [userProfile?.qcidNo, userProfile?.email, appFlow])
 
   // Set blocked on submit

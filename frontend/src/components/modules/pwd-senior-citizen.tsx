@@ -1428,20 +1428,57 @@ export default function PWDSeniorCitizen() {
   const [selectedApp, setSelectedApp] = useState<ApplicationSubmission | null>(null)
   const [cardApp, setCardApp] = useState<ApplicationSubmission | null>(null)
 
-  // Fetch applications from backend
+  // Fetch applications from backend and localStorage in real-time
   useEffect(() => {
+    let isMounted = true
+
     const fetchApps = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
-        if (res.ok) {
-          const data = await res.json()
-          setApplications(data)
+        let combined: ApplicationSubmission[] = []
+        try {
+          const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+          if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data)) combined = data
+          }
+        } catch (err) {
+          console.warn("Could not fetch PWD/Senior applications from backend:", err)
+        }
+
+        // Merge localStorage
+        try {
+          const raw = localStorage.getItem("pwd_senior_applications")
+          if (raw) {
+            const localApps = JSON.parse(raw)
+            if (Array.isArray(localApps)) {
+              for (const la of localApps) {
+                if (la && !combined.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
+                  combined.push(la)
+                }
+              }
+            }
+          }
+        } catch {}
+
+        if (isMounted && combined.length > 0) {
+          setApplications(combined)
         }
       } catch (err) {
-        console.warn("Could not fetch PWD/Senior applications from backend:", err)
+        console.warn("Error syncing applications:", err)
       }
     }
+
     fetchApps()
+    const interval = setInterval(fetchApps, 2500)
+    window.addEventListener("pwd_senior_applications_updated", fetchApps)
+    window.addEventListener("storage", fetchApps)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      window.removeEventListener("pwd_senior_applications_updated", fetchApps)
+      window.removeEventListener("storage", fetchApps)
+    }
   }, [])
 
   // Persist applications to state & localStorage
