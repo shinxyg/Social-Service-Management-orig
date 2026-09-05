@@ -595,6 +595,106 @@ export default function SeniorCitizenApplicationWizard({
       ? "Renewal Application"
       : "Replacement / Lost ID"
 
+  // ---- APPROVED state (Bungad bago mag Step 1) ----
+  if (latestApprovedApp && appFlow === "new" && !bypassedBlock) {
+    return (
+      <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4 animate-in fade-in duration-300">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            ← Bumalik
+          </button>
+        )}
+        <div className="bg-white border-2 border-emerald-500/80 rounded-2xl p-6 sm:p-8 shadow-md flex flex-col items-center text-center gap-4">
+          <div className="h-16 w-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md ring-8 ring-emerald-50">
+            <Check className="h-8 w-8 stroke-[3]" />
+          </div>
+
+          <div className="space-y-1.5 max-w-lg">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+              ✓ APPROVED APPLICATION
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+              {t("seniorAppApprovedTitle") || "Aprubado na ang Iyong Aplikasyon sa Senior Citizen ID"}
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+              {t("seniorAppApprovedDesc") || "Binabati kita! Ang iyong aplikasyon para sa Senior Citizen ID ay opisyal nang nasuri at naaprubahan ng Social Services Development Department."}
+            </p>
+          </div>
+
+          {/* Details Card */}
+          <div className="w-full bg-linear-to-br from-emerald-50/70 to-slate-50 border border-emerald-200 rounded-xl p-4 sm:p-5 text-left space-y-3">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-100 pb-3">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                {t("officialIdNumberLabel") || "Opisyal na Senior Citizen ID Number"}
+              </span>
+              <span className="font-mono font-black text-base text-emerald-950 tracking-wider bg-white px-3 py-1 rounded-lg border border-emerald-300 select-all shadow-2xs">
+                {latestApprovedApp.assignedIdNumber || latestApprovedApp.referenceNumber}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-gray-500 block">Pangalan ng Aplikante:</span>
+                <span className="font-bold text-gray-900 text-sm">
+                  {[latestApprovedApp.firstName, latestApprovedApp.middleName, latestApprovedApp.lastName].filter(Boolean).join(" ")}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500 block">Kategorya:</span>
+                <span className="font-bold text-gray-900 text-sm">
+                  Senior Citizen ID
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500 block">{t("dateApprovedLabel") || "Petsa ng Pag-apruba"}:</span>
+                <span className="font-semibold text-emerald-900">
+                  {latestApprovedApp.approvedDate || (latestApprovedApp.updatedAt ? new Date(latestApprovedApp.updatedAt).toLocaleDateString() : "Active")}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500 block">Status:</span>
+                <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Aktibo / Rehistrado
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="pt-2 flex flex-col sm:flex-row gap-3 w-full justify-center">
+            <a
+              href="/portal/my-applications"
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span>{t("viewInMyApplications") || "Tingnan sa My Applications"}</span>
+            </a>
+            <a
+              href="/portal/apply-pwd-senior?category=senior&type=renewal"
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <span>Mag-apply para sa Renewal</span>
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                setBypassedBlock(true)
+                setStep(1)
+              }}
+              className="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-semibold transition-all cursor-pointer"
+            >
+              Buksan ang Form
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (isBlocked && appFlow === "new" && !bypassedBlock) {
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
@@ -788,101 +888,6 @@ export default function SeniorCitizenApplicationWizard({
           {/* ──────────────── STEP 1: COMPLETE CHECKLIST ──────────────── */}
           {step === 1 && (
             <div className="space-y-6">
-              {/* APPROVED BANNER / CARD on Step 1 */}
-              {latestApprovedApp && (
-                <div className="rounded-2xl border-2 border-emerald-500 bg-linear-to-br from-emerald-50 via-white to-emerald-50/40 p-5 md:p-6 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-100 pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0 ring-4 ring-emerald-100">
-                        <Check className="h-6 w-6 stroke-[3]" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-base font-extrabold text-emerald-950 uppercase tracking-wide">
-                            {t("seniorAppApprovedTitle") || "Senior Citizen Application Approved"}
-                          </h4>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-600 text-white shadow-xs">
-                            ✓ APPROVED
-                          </span>
-                        </div>
-                        <p className="text-xs text-emerald-800 mt-0.5">
-                          {t("seniorAppApprovedDesc") || "Your Senior Citizen ID application has been verified and approved."}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Quick link to My Applications */}
-                    <a
-                      href="/portal/my-applications"
-                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      <span>{t("viewInMyApplications") || "View in My Applications"}</span>
-                    </a>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-white/80 backdrop-blur-xs p-4 rounded-xl border border-emerald-200">
-                    <div>
-                      <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
-                        {t("officialIdNumberLabel") || "Official Assigned ID"}
-                      </span>
-                      <span className="font-mono font-extrabold text-sm text-emerald-950 tracking-wide select-all bg-emerald-100/70 px-2 py-0.5 rounded-md mt-1 inline-block border border-emerald-200">
-                        {latestApprovedApp.assignedIdNumber || latestApprovedApp.referenceNumber}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
-                        Applicant Name
-                      </span>
-                      <span className="font-semibold text-xs text-gray-900 mt-1 block truncate">
-                        {[latestApprovedApp.firstName, latestApprovedApp.middleName, latestApprovedApp.lastName].filter(Boolean).join(" ")}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
-                        Application Category
-                      </span>
-                      <span className="font-semibold text-xs text-gray-900 mt-1 block truncate">
-                        Senior Citizen ID
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
-                        {t("dateApprovedLabel") || "Date Approved"}
-                      </span>
-                      <span className="font-semibold text-xs text-emerald-900 mt-1 block">
-                        {latestApprovedApp.approvedDate || (latestApprovedApp.updatedAt ? new Date(latestApprovedApp.updatedAt).toLocaleDateString() : "Active")}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* If this is Renewal or Replacement flow and user hasn't filled/verified their ID yet, offer 1-click apply */}
-                  {appFlow !== "new" && !isIdVerified && (
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-emerald-100/60 p-3 rounded-xl border border-emerald-200">
-                      <p className="text-xs text-emerald-900 font-medium">
-                        💡 Gusto mo bang gamitin ang opisyal na Senior Citizen ID number na ito para sa renewal/replacement?
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const officialId = latestApprovedApp.assignedIdNumber || latestApprovedApp.referenceNumber
-                          if (officialId) {
-                            setExistingIdNumber(officialId)
-                            setIsIdVerified(true)
-                          }
-                        }}
-                        className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
-                      >
-                        {t("useThisIdForRenewal") || "Gamitin ang ID na Ito"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
               <div>
                 <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
                   {appFlow === "new"
