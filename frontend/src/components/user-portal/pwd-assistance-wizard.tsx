@@ -671,7 +671,7 @@ export default function PWDSocialAssistanceWizard({
       dobDay: userProfile.dobDay || "",
       age: userProfile.age || "20",
       pwdIdNumber: "",
-      disabilityType: initialDisabilityType || "Psychosocial Disability",
+      disabilityType: "",
       causeOfDisability: initialCauseOfDisability || "Congenital / Inborn",
       disabilityDescription: initialDesc || "",
       contactNumber: userProfile.contactNo || "09123456789",
@@ -1212,6 +1212,7 @@ export default function PWDSocialAssistanceWizard({
                           updateField("pwdIdNumber", v)
                           setIsIdVerified(false)
                           setVerifyError(null)
+                          updateField("disabilityType", "")
                         }}
                         placeholder="137404-2026-847708"
                         invalid={attemptedNext && (!formData.pwdIdNumber.trim() || !isIdVerified)}
@@ -1256,18 +1257,15 @@ export default function PWDSocialAssistanceWizard({
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-blue-700 uppercase tracking-wide block mb-1">
+                  <label className={`text-xs font-semibold uppercase tracking-wide block mb-1 ${attemptedNext && !formData.disabilityType ? "text-red-600" : "text-blue-700"}`}>
                     TYPE OF DISABILITY <span className="text-red-500">**</span>
                   </label>
-                  {isIdVerified && formData.disabilityType ? (
-                    <LockedField value={formData.disabilityType} />
-                  ) : (
-                    <SelectInput
-                      value={formData.disabilityType}
-                      onChange={(v) => updateField("disabilityType", v)}
-                      options={DISABILITY_TYPES}
-                      invalid={attemptedNext && formData.disabilityType === ""}
-                    />
+                  <LockedField
+                    value={formData.disabilityType}
+                    placeholder="Auto-filled upon PWD ID verification"
+                  />
+                  {attemptedNext && !formData.disabilityType && (
+                    <p className="text-xs text-red-500 mt-1">Please enter and verify your PWD ID to auto-load disability type.</p>
                   )}
                 </div>
 
