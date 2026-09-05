@@ -947,6 +947,18 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     (formData.addressHouseNo || "").trim() !== "" &&
     (formData.addressBarangay || "").trim() !== "" &&
     (formData.contactNo || "").trim().length === 11 &&
+    (formData.bloodType || "").trim() !== "" &&
+    (formData.permanentAddress || "").trim() !== "" &&
+    (formData.emergencyLastName || "").trim() !== "" &&
+    (formData.emergencyFirstName || "").trim() !== "" &&
+    (formData.emergencyContactNo || "").trim().length === 11 &&
+    (formData.emergencyRelationship || "").trim() !== "" &&
+    (formData.emergencyAddress || "").trim() !== "" &&
+    (formData.heightCm || "").trim() !== "" &&
+    (formData.weightKg || "").trim() !== "" &&
+    (formData.colorOfHair || "").trim() !== "" &&
+    (formData.colorOfEyes || "").trim() !== "" &&
+    (formData.causeOfDisability || "").trim() !== "" &&
     effectiveDisabilityClass !== null &&
     (disabilityType || "").trim() !== ""
 
@@ -2021,13 +2033,33 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                   </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label={t("pwdBloodTypeLabel")}>
-                    <TextInput value={formData.bloodType} onChange={(v) => updateField("bloodType", v)} placeholder="e.g. O+, A+, B+" />
+                  <Field
+                    label={t("pwdBloodTypeLabel")}
+                    required
+                    invalid={attemptedNext && (formData.bloodType || "").trim() === ""}
+                    invalidNote="Required"
+                  >
+                    <TextInput
+                      value={formData.bloodType}
+                      onChange={(v) => updateField("bloodType", v)}
+                      placeholder="e.g. O+, A+, B+"
+                      invalid={attemptedNext && (formData.bloodType || "").trim() === ""}
+                    />
                   </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label={t("pwdPermanentAddressLabel")} required>
-                    <TextInput value={formData.permanentAddress} onChange={(v) => updateField("permanentAddress", v)} placeholder="Permanent Address" />
+                  <Field
+                    label={t("pwdPermanentAddressLabel")}
+                    required
+                    invalid={attemptedNext && (formData.permanentAddress || "").trim() === ""}
+                    invalidNote="Required"
+                  >
+                    <TextInput
+                      value={formData.permanentAddress}
+                      onChange={(v) => updateField("permanentAddress", v)}
+                      placeholder="Permanent Address"
+                      invalid={attemptedNext && (formData.permanentAddress || "").trim() === ""}
+                    />
                   </Field>
                   <Field label={t("pwdPresentAddressLabel")}>
                     <TextInput value={formData.presentAddress} onChange={(v) => updateField("presentAddress", v)} placeholder="Present Address (kung iba sa permanent)" />
@@ -2039,27 +2071,69 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
               <div className="space-y-4">
                 <SectionHeader title={t("pwdEmergencyContactLabel").toUpperCase()} />
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <Field label={t("lastNameLabel")}>
-                    <TextInput value={formData.emergencyLastName} onChange={(v) => updateField("emergencyLastName", v)} />
+                  <Field
+                    label={t("lastNameLabel")}
+                    required
+                    invalid={attemptedNext && (formData.emergencyLastName || "").trim() === ""}
+                    invalidNote="Required"
+                  >
+                    <TextInput
+                      value={formData.emergencyLastName}
+                      onChange={(v) => updateField("emergencyLastName", v)}
+                      invalid={attemptedNext && (formData.emergencyLastName || "").trim() === ""}
+                    />
                   </Field>
-                  <Field label={t("firstNameLabel")}>
-                    <TextInput value={formData.emergencyFirstName} onChange={(v) => updateField("emergencyFirstName", v)} />
+                  <Field
+                    label={t("firstNameLabel")}
+                    required
+                    invalid={attemptedNext && (formData.emergencyFirstName || "").trim() === ""}
+                    invalidNote="Required"
+                  >
+                    <TextInput
+                      value={formData.emergencyFirstName}
+                      onChange={(v) => updateField("emergencyFirstName", v)}
+                      invalid={attemptedNext && (formData.emergencyFirstName || "").trim() === ""}
+                    />
                   </Field>
-                  <Field label={t("pwdContactNoLabel")}>
+                  <Field
+                    label={t("pwdContactNoLabel")}
+                    required
+                    invalid={attemptedNext && (formData.emergencyContactNo || "").trim().length !== 11}
+                    invalidNote="11 digits required (09XXXXXXXXX)"
+                  >
                     <TextInput
                       value={formData.emergencyContactNo}
                       onChange={(v) => updateField("emergencyContactNo", v)}
                       placeholder="09XXXXXXXXX"
                       numbersOnly
                       maxLength={11}
+                      invalid={attemptedNext && (formData.emergencyContactNo || "").trim().length !== 11}
                     />
                   </Field>
-                  <Field label={t("pwdRelationshipLabel")}>
-                    <TextInput value={formData.emergencyRelationship} onChange={(v) => updateField("emergencyRelationship", v)} />
+                  <Field
+                    label={t("pwdRelationshipLabel")}
+                    required
+                    invalid={attemptedNext && (formData.emergencyRelationship || "").trim() === ""}
+                    invalidNote="Required"
+                  >
+                    <TextInput
+                      value={formData.emergencyRelationship}
+                      onChange={(v) => updateField("emergencyRelationship", v)}
+                      invalid={attemptedNext && (formData.emergencyRelationship || "").trim() === ""}
+                    />
                   </Field>
                 </div>
-                <Field label={t("address")}>
-                  <TextInput value={formData.emergencyAddress} onChange={(v) => updateField("emergencyAddress", v)} />
+                <Field
+                  label={t("address")}
+                  required
+                  invalid={attemptedNext && (formData.emergencyAddress || "").trim() === ""}
+                  invalidNote="Required"
+                >
+                  <TextInput
+                    value={formData.emergencyAddress}
+                    onChange={(v) => updateField("emergencyAddress", v)}
+                    invalid={attemptedNext && (formData.emergencyAddress || "").trim() === ""}
+                  />
                 </Field>
               </div>
 
@@ -2067,28 +2141,56 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
               <div className="space-y-4">
                 <SectionHeader title={t("pwdPhysicalAppearanceHeader").toUpperCase()} />
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <Field label={t("pwdHeightLabel")}>
+                  <Field
+                    label={t("pwdHeightLabel")}
+                    required
+                    invalid={attemptedNext && (formData.heightCm || "").trim() === ""}
+                    invalidNote="Required"
+                  >
                     <TextInput
                       value={formData.heightCm}
                       onChange={(v) => updateField("heightCm", v)}
+                      placeholder="e.g. 165"
+                      invalid={attemptedNext && (formData.heightCm || "").trim() === ""}
                     />
                   </Field>
-                  <Field label={t("pwdWeightLabel")}>
+                  <Field
+                    label={t("pwdWeightLabel")}
+                    required
+                    invalid={attemptedNext && (formData.weightKg || "").trim() === ""}
+                    invalidNote="Required"
+                  >
                     <TextInput
                       value={formData.weightKg}
                       onChange={(v) => updateField("weightKg", v)}
+                      placeholder="e.g. 60"
+                      invalid={attemptedNext && (formData.weightKg || "").trim() === ""}
                     />
                   </Field>
-                  <Field label={t("pwdHairColorLabel")}>
+                  <Field
+                    label={t("pwdHairColorLabel")}
+                    required
+                    invalid={attemptedNext && (formData.colorOfHair || "").trim() === ""}
+                    invalidNote="Required"
+                  >
                     <TextInput
                       value={formData.colorOfHair}
                       onChange={(v) => updateField("colorOfHair", v)}
+                      placeholder="e.g. Black"
+                      invalid={attemptedNext && (formData.colorOfHair || "").trim() === ""}
                     />
                   </Field>
-                  <Field label={t("pwdEyeColorLabel")}>
+                  <Field
+                    label={t("pwdEyeColorLabel")}
+                    required
+                    invalid={attemptedNext && (formData.colorOfEyes || "").trim() === ""}
+                    invalidNote="Required"
+                  >
                     <TextInput
                       value={formData.colorOfEyes}
                       onChange={(v) => updateField("colorOfEyes", v)}
+                      placeholder="e.g. Brown"
+                      invalid={attemptedNext && (formData.colorOfEyes || "").trim() === ""}
                     />
                   </Field>
                 </div>
@@ -2096,6 +2198,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                   <TextInput
                     value={formData.otherMarks}
                     onChange={(v) => updateField("otherMarks", v)}
+                    placeholder="e.g. Mole on left cheek (optional)"
                   />
                 </Field>
               </div>
@@ -2117,21 +2220,36 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                       placeholder={t("pwdChooseDisabilityType")}
                     />
                   </Field>
-                  <Field label={t("pwdCauseOfDisabilityLabel")}>
+                  <Field
+                    label={t("pwdCauseOfDisabilityLabel")}
+                    required
+                    invalid={attemptedNext && (formData.causeOfDisability || "").trim() === ""}
+                    invalidNote="Required"
+                  >
                     <SelectInput
                       value={formData.causeOfDisability}
                       onChange={(v) => updateField("causeOfDisability", v)}
                       options={CAUSE_OF_DISABILITY}
+                      invalid={attemptedNext && (formData.causeOfDisability || "").trim() === ""}
                     />
                   </Field>
                   <Field label={t("pwdSpecificDisabilityLabel")}>
                     <TextInput
                       value={formData.specificDisability}
                       onChange={(v) => updateField("specificDisability", v)}
+                      placeholder="Optional"
                     />
                   </Field>
                 </div>
               </div>
+
+              {/* Error Banner when Next is attempted with incomplete fields */}
+              {attemptedNext && !step2Valid && (
+                <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>Pakikumpleto ang lahat ng kinakailangang impormasyon sa Step 2 bago magpatuloy sa susunod na hakbang.</span>
+                </div>
+              )}
             </div>
           )}
 

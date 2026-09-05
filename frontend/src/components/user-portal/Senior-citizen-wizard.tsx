@@ -353,7 +353,8 @@ export default function SeniorCitizenApplicationWizard({
       : (formData.emergencyFirstName || "").trim() !== "" &&
         (formData.emergencyLastName || "").trim() !== "" &&
         (formData.emergencyContactNo || "").trim().length >= 11 &&
-        (formData.emergencyRelationship || "").trim() !== ""
+        (formData.emergencyRelationship || "").trim() !== "" &&
+        (formData.emergencyAddress || "").trim() !== ""
 
   // Step 3: Documents state
   const currentRequirements =
@@ -1309,6 +1310,26 @@ export default function SeniorCitizenApplicationWizard({
                             <option value="Others">{t("relationOthers") || "Others"}</option>
                           </select>
                         </div>
+                      </div>
+                      <div className="mt-3">
+                        <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyAddress || "").trim() ? "text-red-600" : "text-gray-700"}`}>
+                          {t("address") || "Emergency Address"} <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          readOnly={!isEmergencyEditable}
+                          disabled={!isEmergencyEditable}
+                          value={formData.emergencyAddress}
+                          onChange={(e) => handleFieldChange("emergencyAddress", e.target.value)}
+                          placeholder="Emergency Residential Address"
+                          className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
+                            !isEmergencyEditable
+                              ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
+                              : attemptedNext && !(formData.emergencyAddress || "").trim()
+                              ? "border-red-400 focus:ring-red-300 bg-red-50"
+                              : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                          }`}
+                        />
                       </div>
                     </div>
                   )
