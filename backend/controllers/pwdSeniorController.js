@@ -492,6 +492,11 @@ exports.updateApplicationStatus = async (req, res) => {
               ]
             );
           }
+        } catch (e) {
+          console.warn('Could not insert financial disbursement for PWD/Senior:', e.message);
+        }
+      }
+
       // 3. Directly dispatch generated Official ID Email to Gmail
       const targetEmail = targetApp?.email || targetApp?.contact_email;
       if (targetEmail && targetEmail.includes('@')) {

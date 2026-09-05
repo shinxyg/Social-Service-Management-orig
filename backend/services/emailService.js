@@ -428,6 +428,12 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
     }
   }
 
+  return {
+    success: false,
+    message: `Failed to deliver OTP to ${recipientEmail}.`,
+  };
+}
+
 /**
  * Sends an official Senior Citizen (OSCA) ID Approval email to the recipient.
  */
