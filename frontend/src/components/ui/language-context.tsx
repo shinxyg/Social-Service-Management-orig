@@ -282,6 +282,48 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   chooseAssistanceType: { en: "Choose the type of assistance", tl: "Pumili ng Type ng Assistance", bis: "Pilia ang Type sa Assistance" },
   medicinesMedicalSupplies: { en: "Medicines / Medical Supplies", tl: "Medicines / Medical Supplies", bis: "Medicines / Medical Supplies" },
 
+  // Pending Screen / Block Screen & Submission Status
+  hasPendingAppTitle: { en: "You Have an Active Application", tl: "May Kasalukuyang Application Ka Pa", bis: "Naa kay Kasamtangang Aplikasyon" },
+  hasPendingAppDesc: {
+    en: "Your application for {type} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.",
+    tl: "Matagumpay na naisumite at nakabinbin (Pending) na ang inyong aplikasyon para sa {type}. Maghintay muna ng pagsusuri ng Social Worker bago magsumite ng panibagong aplikasyon.",
+    bis: "Malampusong nasumite ug naghulat (Pending) na ang imong aplikasyon alang sa {type}. Palihug paghulat og pagsusi gikan sa Social Worker una magsumite og bag-ong aplikasyon.",
+  },
+  appRefNoLabel: { en: "Application Reference No.:", tl: "Application Reference No.:", bis: "Application Reference No.:" },
+  appStatusLabel: { en: "Status:", tl: "Katayuan (Status):", bis: "Kahimtang (Status):" },
+  statusPendingBadge: { en: "● Under Review (Pending)", tl: "● Kasalukuyang Sinusuri (Pending)", bis: "● Kasamtangang Gisusi (Pending)" },
+  dateFiledLabel: { en: "Date Filed:", tl: "Petsa ng Pagsumite:", bis: "Petsa sa Pagsumite:" },
+  viewMyApplications: { en: "VIEW IN MY APPLICATIONS", tl: "TINGNAN SA MY APPLICATIONS", bis: "TAN-AWA SA AKONG MGA APLIKASYON" },
+  recentlySubmitted: { en: "Recently", tl: "Kamakailan", bis: "Bag-o lang" },
+  checkingEligibility: { en: "Checking your eligibility...", tl: "Sinusuri ang iyong eligibility...", bis: "Gisusi ang imong kwalipikasyon..." },
+  requirementsForAppOf: { en: "Requirements for Application of QC {type}", tl: "Mga Kinakailangan sa Pag-apply ng QC {type}", bis: "Mga Kinahanglanon sa Pag-apply sa QC {type}" },
+  officialServiceNote: { en: "Official service for QC AICS Crisis Assistance.", tl: "Opisyal na serbisyo para sa AICS Crisis Assistance ng Lungsod Quezon.", bis: "Opisyal nga serbisyo para sa AICS Crisis Assistance sa Dakbayan sa Quezon." },
+  viewRequirements: { en: "View Requirements", tl: "Tingnan ang Requirements", bis: "Tan-awa ang mga Kinahanglanon" },
+  primaryReqAlertTitle: { en: "{type} — PRIMARY REQUIREMENTS", tl: "{type} — MGA PANGUNAHING KINAKAILANGAN", bis: "{type} — NAG-UNANG MGA KINAHANGLANON" },
+  primaryReqAlertDesc: { en: "Complete the primary qualification questions below and prepare the required documents to proceed with your application.", tl: "Kumpletuhin ang mga pangunahing kwalipikasyon at ihanda ang mga kaukulang dokumento upang makapagpatuloy sa aplikasyon.", bis: "Kompletoha ang mga nag-unang kwalipikasyon ug iandam ang mga gikinahanglang dokumento aron makapadayon sa aplikasyon." },
+  submittingApplication: { en: "Submitting Application...", tl: "Isinusumite ang Aplikasyon...", bis: "Ginasumite ang Aplikasyon..." },
+  pleaseWaitProcessing: { en: "Please wait while your application is being processed.", tl: "Mangyaring maghintay habang pinoproseso ang inyong aplikasyon.", bis: "Palihug paghulat samtang giproseso ang imong aplikasyon." },
+  applicationSubmittedBadge: { en: "Application Submitted Successfully!", tl: "Matagumpay na Naisumite ang Aplikasyon!", bis: "Malampusong Nasumite ang Aplikasyon!" },
+  submittedWelcomeTitle: { en: "Welcome! Your Application Has Been Received", tl: "Mabuhay! Ang inyong aplikasyon ay Natanggap Na", bis: "Maayong Pag-abot! Nadawat Na ang Imong Aplikasyon" },
+  submittedSubtitle: {
+    en: "Your {type} application has been submitted successfully and is currently under review.",
+    tl: "Ang inyong {type} application ay matagumpay na naisumite at kasalukuyang sinusuri.",
+    bis: "Ang imong {type} nga aplikasyon malampusong nasumite ug kasamtangang gisusi.",
+  },
+  serviceLabel: { en: "Service:", tl: "Serbisyo:", bis: "Serbisyo:" },
+  applicantLabel: { en: "Applicant:", tl: "Aplikante:", bis: "Aplikante:" },
+  dateLabel: { en: "Date:", tl: "Petsa:", bis: "Petsa:" },
+  notifCheckNote: {
+    en: "You may check Notifications for updates regarding your application status.",
+    tl: "Maaari ninyong tingnan ang Notifications para sa mga update sa inyong aplikasyon.",
+    bis: "Mahimo nimong tan-awon ang mga Pahibalo para sa mga update sa imong aplikasyon.",
+  },
+  autoRedirectStatusCountdown: {
+    en: "Automatically redirecting to application status in {count} seconds...",
+    tl: "Awtomatikong lilipat sa application status sa loob ng {count} segundo...",
+    bis: "Awtomatikong mobalhin sa status sa aplikasyon sulod sa {count} segundos...",
+  },
+
   // Personal information step
   importantReminder: { en: "Important reminder", tl: "Mahalagang Paalala", bis: "Importanteng Pahinumdom" },
   qcidReminderNote: {

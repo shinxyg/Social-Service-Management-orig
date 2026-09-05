@@ -678,26 +678,26 @@ export default function AICSServiceWizard({
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              May Kasalukuyang Application Ka Pa
+              {t("hasPendingAppTitle")}
             </h2>
             <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
-              Matagumpay na naisumite at nakabinbin (Pending) na ang inyong aplikasyon para sa <span className="font-semibold text-gray-800">{serviceTitle}</span>. Maghintay muna ng pagsusuri ng Social Worker bago magsumite ng panibagong aplikasyon.
+              {t("hasPendingAppDesc").replace("{type}", serviceTitle)}
             </p>
           </div>
 
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">Application Reference No.:</span>
+              <span className="text-gray-500 font-medium">{t("appRefNoLabel")}</span>
               <span className="font-mono font-bold text-blue-600">{displayRef}</span>
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">Katayuan (Status):</span>
+              <span className="text-gray-500 font-medium">{t("appStatusLabel")}</span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                ● Kasalukuyang Sinusuri (Pending)
+                {t("statusPendingBadge")}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Petsa ng Pagsumite:</span>
+              <span className="text-gray-500 font-medium">{t("dateFiledLabel")}</span>
               <span className="font-semibold text-gray-700">
                 {displayDate}
               </span>
@@ -712,7 +712,7 @@ export default function AICSServiceWizard({
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              TINGNAN SA MY APPLICATIONS
+              {t("viewMyApplications")}
             </button>
           </div>
         </div>
@@ -727,9 +727,9 @@ export default function AICSServiceWizard({
           <div className="h-14 w-14 rounded-2xl bg-[#3b82f6]/10 flex items-center justify-center">
             <Loader2 className="h-7 w-7 text-[#3b82f6] animate-spin" />
           </div>
-          <h2 className="text-lg font-heading font-semibold text-gray-900">Isinusumite ang Aplikasyon...</h2>
+          <h2 className="text-lg font-heading font-semibold text-gray-900">{t("submittingApplication")}</h2>
           <p className="text-sm text-gray-500 max-w-sm">
-            Mangyaring maghintay habang pinoproseso ang inyong aplikasyon.
+            {t("pleaseWaitProcessing")}
           </p>
         </div>
       </div>
@@ -746,34 +746,34 @@ export default function AICSServiceWizard({
 
           <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <Sparkles className="w-3.5 h-3.5" /> Application Submitted Successfully!
+              <Sparkles className="w-3.5 h-3.5" /> {t("applicationSubmittedBadge")}
             </span>
             <h2 className="text-2xl font-bold text-gray-900">
-              Mabuhay! Ang inyong aplikasyon ay Natanggap Na
+              {t("submittedWelcomeTitle")}
             </h2>
             <p className="text-sm text-gray-500 max-w-md mx-auto">
-              Ang inyong {serviceTitle} application ay matagumpay na naisumite at kasalukuyang sinusuri.
+              {t("submittedSubtitle").replace("{type}", serviceTitle)}
             </p>
           </div>
 
           {/* Reference Card */}
           <div className="border border-gray-200 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
             <div className="flex justify-between items-center text-xs text-gray-900 border-b border-gray-200 pb-2">
-              <span className="font-semibold text-gray-500">Application Reference No.:</span>
+              <span className="font-semibold text-gray-500">{t("appRefNoLabel")}</span>
               <span className="font-mono font-bold text-blue-700 text-sm">{referenceNo}</span>
             </div>
             <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">Service:</span>
+              <span className="text-gray-500">{t("serviceLabel")}</span>
               <span className="font-semibold text-gray-900">{serviceTitle}</span>
             </div>
             <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">Aplikante:</span>
+              <span className="text-gray-500">{t("applicantLabel")}</span>
               <span className="font-semibold text-gray-900">
                 {[firstName, middleName, lastName, suffix].filter(Boolean).join(" ")}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">Petsa:</span>
+              <span className="text-gray-500">{t("dateLabel")}</span>
               <span className="text-gray-900">
                 {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
               </span>
@@ -783,14 +783,14 @@ export default function AICSServiceWizard({
           <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
             <Info className="w-4 h-4 text-blue-600 shrink-0" />
             <p>
-              Maaari ninyong tingnan ang Notifications para sa mga update sa inyong aplikasyon.
+              {t("notifCheckNote")}
             </p>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
             <span>
-              Awtomatikong lilipat sa application status sa loob ng {redirectCountdown} segundo...
+              {t("autoRedirectStatusCountdown").replace("{count}", String(redirectCountdown))}
             </span>
           </div>
 
@@ -811,15 +811,15 @@ export default function AICSServiceWizard({
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-sm md:text-base font-bold text-gray-900">
-                    Requirements for {serviceTitle}
+                  <h1 className="text-sm md:text-base font-bold text-foreground">
+                    {t("requirementsForAppOf").replace("{type}", serviceTitle)}
                   </h1>
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
-                    {serviceTitle}
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-200">
+                    {t("newApplication") || "New Application"}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Opisyal na serbisyo para sa AICS Crisis Assistance ng Lungsod Quezon.
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t("officialServiceNote")}
                 </p>
               </div>
             </div>
@@ -828,7 +828,7 @@ export default function AICSServiceWizard({
               onClick={() => setShowRequirementsModal(true)}
               className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
             >
-              Tingnan ang Requirements
+              {t("viewRequirements")}
             </button>
           </div>
         </div>

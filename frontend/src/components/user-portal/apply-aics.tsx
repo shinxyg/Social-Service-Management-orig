@@ -799,7 +799,7 @@ if (checkingEligibility) {
     <div className="p-4 md:p-6 max-w-xl mx-auto">
       <div className="bg-card border border-border rounded-2xl p-8 shadow-soft flex flex-col items-center text-center gap-3">
         <Loader2 className="h-7 w-7 text-primary animate-spin" />
-        <p className="text-sm text-muted-foreground">Sinusuri ang iyong eligibility...</p>
+        <p className="text-sm text-muted-foreground">{t("checkingEligibility")}</p>
       </div>
     </div>
   )
@@ -814,29 +814,29 @@ if (isBlocked) {
         </div>
         <div>
           <h2 className="text-lg font-bold text-gray-900">
-            May Kasalukuyang Application Ka Pa
+            {t("hasPendingAppTitle")}
           </h2>
           <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
-            Matagumpay na naisumite at nakabinbin (Pending) na ang inyong aplikasyon para sa <span className="font-semibold text-gray-800">{type}</span>. Maghintay muna ng pagsusuri ng Social Worker bago magsumite ng panibagong aplikasyon.
+            {t("hasPendingAppDesc").replace("{type}", type)}
           </p>
         </div>
 
         {blockedApp && (
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">Application Reference No.:</span>
+              <span className="text-gray-500 font-medium">{t("appRefNoLabel")}</span>
               <span className="font-mono font-bold text-blue-600">{blockedApp.reference_no || blockedApp.qc_id}</span>
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">Katayuan (Status):</span>
+              <span className="text-gray-500 font-medium">{t("appStatusLabel")}</span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                ● Kasalukuyang Sinusuri (Pending)
+                {t("statusPendingBadge")}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Petsa ng Pagsumite:</span>
+              <span className="text-gray-500 font-medium">{t("dateFiledLabel")}</span>
               <span className="font-semibold text-gray-700">
-                {blockedApp.created_at ? new Date(blockedApp.created_at).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }) : "Kamakailan"}
+                {blockedApp.created_at ? new Date(blockedApp.created_at).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }) : t("recentlySubmitted")}
               </span>
             </div>
           </div>
@@ -850,7 +850,7 @@ if (isBlocked) {
             }}
             className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
           >
-            TINGNAN SA MY APPLICATIONS
+            {t("viewMyApplications")}
           </button>
         </div>
       </div>
@@ -869,14 +869,14 @@ if (isBlocked) {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-sm md:text-base font-bold text-foreground">
-                  Requirements for Application of QC {type}
+                  {t("requirementsForAppOf").replace("{type}", type)}
                 </h1>
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-200">
-                  New Application
+                  {t("newApplication") || "New Application"}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Opisyal na serbisyo para sa AICS Crisis Assistance ng Lungsod Quezon.
+                {t("officialServiceNote")}
               </p>
             </div>
           </div>
@@ -885,7 +885,7 @@ if (isBlocked) {
             onClick={() => setShowRequirementsModal(true)}
             className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
           >
-            Tingnan ang Requirements
+            {t("viewRequirements")}
           </button>
         </div>
       </div>
@@ -894,7 +894,7 @@ if (isBlocked) {
         <RequirementsModal
           requirements={requirements}
           serviceTitle={type}
-          badgeLabel="New Application"
+          badgeLabel={t("newApplication") || "New Application"}
           badgeColor="bg-green-50 text-green-700 border-green-200"
           accepted={reqAccepted}
           onAcceptedChange={setReqAccepted}
@@ -950,10 +950,10 @@ if (isBlocked) {
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
               <div>
                 <p className="text-sm font-semibold text-blue-900">
-                  {type.toUpperCase()} — PRIMARY REQUIREMENTS
+                  {t("primaryReqAlertTitle").replace("{type}", type.toUpperCase())}
                 </p>
                 <p className="text-xs text-blue-700 mt-0.5">
-                  Kumpletuhin ang mga pangunahing kwalipikasyon at ihanda ang mga kaukulang dokumento upang makapagpatuloy sa aplikasyon.
+                  {t("primaryReqAlertDesc")}
                 </p>
               </div>
             </div>
@@ -2549,32 +2549,32 @@ if (isBlocked) {
 
           <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <Sparkles className="w-3.5 h-3.5" /> Application Submitted Successfully!
+              <Sparkles className="w-3.5 h-3.5" /> {t("applicationSubmittedBadge")}
             </span>
             <h2 className="text-2xl font-bold text-foreground">
-              Mabuhay! Ang inyong aplikasyon ay Natanggap Na
+              {t("submittedWelcomeTitle")}
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Ang inyong {type} application ay matagumpay na naisumite at kasalukuyang sinusuri.
+              {t("submittedSubtitle").replace("{type}", type)}
             </p>
           </div>
 
           {/* Reference Card */}
           <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
             <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-              <span className="font-semibold text-muted-foreground">Application Reference No.:</span>
+              <span className="font-semibold text-muted-foreground">{t("appRefNoLabel")}</span>
               <span className="font-mono font-bold text-blue-700 text-sm">{reference}</span>
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Service:</span>
+              <span className="text-muted-foreground">{t("serviceLabel")}</span>
               <span className="font-semibold text-foreground">{type}</span>
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Aplikante:</span>
+              <span className="text-muted-foreground">{t("applicantLabel")}</span>
               <span className="font-semibold text-foreground">{name || "Applicant"}</span>
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Petsa:</span>
+              <span className="text-muted-foreground">{t("dateLabel")}</span>
               <span className="text-foreground">
                 {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
               </span>
@@ -2584,14 +2584,14 @@ if (isBlocked) {
           <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
             <Info className="w-4 h-4 text-blue-600 shrink-0" />
             <p>
-              Maaari ninyong tingnan ang Notifications para sa mga update sa inyong aplikasyon.
+              {t("notifCheckNote")}
             </p>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
             <span>
-              Awtomatikong lilipat sa application status sa loob ng {redirectCountdown} segundo...
+              {t("autoRedirectStatusCountdown").replace("{count}", String(redirectCountdown))}
             </span>
           </div>
         </div>
