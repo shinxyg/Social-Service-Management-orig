@@ -82,12 +82,12 @@ async function sendPwdApprovalEmail({
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Quezon City Government - Official PWD ID Approval</title>
+      <title>GovServe - Official PWD ID Approval</title>
       <style>
         body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
         .header { background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); padding: 30px 24px; text-align: center; color: #ffffff; }
-        .header h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+        .header h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
         .header p { margin: 6px 0 0; font-size: 13px; opacity: 0.9; }
         .content { padding: 32px 24px; color: #1e293b; }
         .badge { display: inline-block; background-color: #ecfdf5; color: #047857; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 9999px; border: 1px solid #a7f3d0; margin-bottom: 20px; }
@@ -106,9 +106,9 @@ async function sendPwdApprovalEmail({
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="Government Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
-          <h1>QUEZON CITY GOVERNMENT</h1>
-          <p>Social Services &amp; Development Department (SSDD) — Persons with Disability Affairs Division</p>
+          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="GovServe Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
+          <h1>GovServe</h1>
+          <p>Social Services &amp; Development Department — Persons with Disability Affairs Division</p>
         </div>
 
         <div class="content">
@@ -118,7 +118,7 @@ async function sendPwdApprovalEmail({
 
           <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Greetings, ${recipientName || 'Applicant'}!</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
-            Your application for the <strong>Persons with Disability (PWD) ID</strong> has been officially <strong>APPROVED</strong> by the Quezon City Social Services &amp; Development Department (SSDD).
+            Your application for the <strong>Persons with Disability (PWD) ID</strong> has been officially <strong>APPROVED</strong> by GovServe Social Services &amp; Development Department.
           </p>
 
           <div class="card">
@@ -153,7 +153,7 @@ async function sendPwdApprovalEmail({
           </div>
 
           <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #166534; line-height: 1.5;">
-            <strong>Notice:</strong> You can now access and view your <strong>Digital PWD ID</strong> via the GovServe User Portal to avail of the 20% statutory discount and city benefits in Quezon City.
+            <strong>Notice:</strong> You can now access and view your <strong>Digital PWD ID</strong> via the GovServe User Portal to avail of statutory benefits and social assistance.
           </div>
 
           <a href="https://frontend-production-1c51.up.railway.app/portal" class="button" target="_blank">
@@ -162,8 +162,8 @@ async function sendPwdApprovalEmail({
         </div>
 
         <div class="footer">
-          <p style="margin: 0 0 4px;">This is an official automated notification from the Quezon City SSDD Social Services Management System.</p>
-          <p style="margin: 0;">Quezon City Hall Compound, Elliptical Road, Diliman, Quezon City | Helpline: 122</p>
+          <p style="margin: 0 0 4px;">This is an official automated notification from the GovServe Social Services Management System.</p>
+          <p style="margin: 0;">GovServe Social Services Management Portal | Online Support</p>
         </div>
       </div>
     </body>
@@ -177,9 +177,9 @@ async function sendPwdApprovalEmail({
   const attachments = getLogoAttachments();
 
   const mailOptions = {
-    from: `"Quezon City SSDD (PWD Affairs)" <${senderEmail}>`,
+    from: `"GovServe (PWD Affairs)" <${senderEmail}>`,
     to: recipientEmail.trim(),
-    subject: `[QC SSDD] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
+    subject: `[GovServe] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
     text: `Greetings ${recipientName}! Your PWD ID Application has been approved. Official ID: ${pwdIdNumber || referenceNumber}.`,
     html: htmlContent,
     attachments,
@@ -231,9 +231,9 @@ async function sendPwdApprovalEmail({
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          sender: { name: 'Quezon City SSDD (PWD Affairs)', email: senderEmail },
+          sender: { name: 'GovServe (PWD Affairs)', email: senderEmail },
           to: [{ email: recipientEmail.trim(), name: recipientName || 'Applicant' }],
-          subject: `[QC SSDD] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
+          subject: `[GovServe] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
           htmlContent: htmlContent,
         }),
       });
@@ -261,9 +261,9 @@ async function sendPwdApprovalEmail({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Quezon City SSDD <onboarding@resend.dev>',
+          from: 'GovServe <onboarding@resend.dev>',
           to: [recipientEmail.trim()],
-          subject: `[QC SSDD] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
+          subject: `[GovServe] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
           text: `Greetings ${recipientName}! Your PWD ID Application has been approved. Official ID: ${pwdIdNumber || referenceNumber}.`,
           html: htmlContent,
         }),
@@ -302,7 +302,7 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Quezon City Government - Account Verification OTP</title>
+      <title>GovServe - Account Verification OTP</title>
       <style>
         body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         .container { max-width: 580px; margin: 30px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
@@ -322,8 +322,8 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
       <div class="container">
         <div class="header">
           <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="Government Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
-          <h1>QUEZON CITY GOVERNMENT</h1>
-          <p>Social Services Management System (GovServe Portal)</p>
+          <h1>GovServe</h1>
+          <p>Social Services Management System</p>
         </div>
 
         <div class="content">
@@ -343,13 +343,13 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
           </div>
 
           <div class="warning-box">
-            <strong>Security Notice:</strong> Do not share this OTP verification code with anyone. Quezon City SSDD personnel and administrators will never ask for your code.
+            <strong>Security Notice:</strong> Do not share this OTP verification code with anyone. GovServe personnel and administrators will never ask for your code.
           </div>
         </div>
 
         <div class="footer">
-          <p style="margin: 0 0 4px;">This is an official automated security notification from the Quezon City GovServe Portal.</p>
-          <p style="margin: 0;">Quezon City Hall Compound, Elliptical Road, Diliman, Quezon City</p>
+          <p style="margin: 0 0 4px;">This is an official automated security notification from the GovServe Portal.</p>
+          <p style="margin: 0;">GovServe Social Services Management Portal | Online Support</p>
         </div>
       </div>
     </body>
@@ -363,10 +363,10 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
   const attachments = getLogoAttachments();
 
   const mailOptions = {
-    from: `"Quezon City GovServe" <${senderEmail}>`,
+    from: `"GovServe" <${senderEmail}>`,
     to: recipientEmail.trim(),
-    subject: `[QC GovServe] Your OTP Verification Code: ${otpCode}`,
-    text: `Your Quezon City GovServe OTP Verification Code is: ${otpCode}. This code is valid for 10 minutes. Do not share this code with anyone.`,
+    subject: `[GovServe] Your OTP Verification Code: ${otpCode}`,
+    text: `Your GovServe OTP Verification Code is: ${otpCode}. This code is valid for 10 minutes. Do not share this code with anyone.`,
     html: htmlContent,
     attachments,
   };
@@ -412,9 +412,9 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          sender: { name: 'Quezon City GovServe', email: senderEmail },
+          sender: { name: 'GovServe', email: senderEmail },
           to: [{ email: recipientEmail.trim(), name: recipientName }],
-          subject: `[QC GovServe] Your OTP Verification Code: ${otpCode}`,
+          subject: `[GovServe] Your OTP Verification Code: ${otpCode}`,
           htmlContent: htmlContent,
         }),
       });
