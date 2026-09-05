@@ -185,10 +185,10 @@ function generateOfficialIdNumber(app: ApplicationSubmission): string {
     }
     return `PWD-137404-${year}-${seq}`
   } else {
-    if (app.assignedIdNumber && app.assignedIdNumber.startsWith("OSCA-")) {
-      return app.assignedIdNumber
+    if (app.assignedIdNumber && (app.assignedIdNumber.startsWith("SENIOR-") || app.assignedIdNumber.startsWith("OSCA-"))) {
+      return app.assignedIdNumber.replace("OSCA-", "SENIOR-")
     }
-    return `OSCA-137404-${year}-${seq}`
+    return `SENIOR-137404-${year}-${seq}`
   }
 }
 

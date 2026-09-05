@@ -636,6 +636,17 @@ export default function SeniorCitizenApplicationWizard({
 
   // ---- APPROVED state (Bungad bago mag Step 1) ----
   if (latestApprovedApp && appFlow === "new") {
+    const rawAppDate = latestApprovedApp.approvedDate || latestApprovedApp.approved_date || latestApprovedApp.updatedAt || latestApprovedApp.submittedAt
+    let formattedApprovedDate = "Active"
+    if (rawAppDate) {
+      const d = new Date(rawAppDate)
+      formattedApprovedDate = !isNaN(d.getTime())
+        ? d.toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+        : String(rawAppDate)
+    }
+
+    const assignedId = (latestApprovedApp.assignedIdNumber || latestApprovedApp.referenceNumber || "").replace("OSCA-", "SENIOR-")
+
     return (
       <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4 animate-in fade-in duration-300">
         {onBack && (
@@ -643,7 +654,7 @@ export default function SeniorCitizenApplicationWizard({
             onClick={onBack}
             className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            ← Bumalik
+            ← Back
           </button>
         )}
         <div className="bg-white border-2 border-emerald-500/80 rounded-2xl p-6 sm:p-8 shadow-md flex flex-col items-center text-center gap-4">
@@ -656,10 +667,10 @@ export default function SeniorCitizenApplicationWizard({
               ✓ APPROVED APPLICATION
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-              {t("seniorAppApprovedTitle") || "Aprubado na ang Iyong Aplikasyon sa Senior Citizen ID"}
+              Senior Citizen Application Approved
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-              {t("seniorAppApprovedDesc") || "Binabati kita! Ang iyong aplikasyon para sa Senior Citizen ID ay opisyal nang nasuri at naaprubahan ng Social Services Development Department."}
+              Congratulations! Your Senior Citizen ID application has been verified and approved by Gov Services.
             </p>
           </div>
 
@@ -667,37 +678,37 @@ export default function SeniorCitizenApplicationWizard({
           <div className="w-full bg-linear-to-br from-emerald-50/70 to-slate-50 border border-emerald-200 rounded-xl p-4 sm:p-5 text-left space-y-3">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-100 pb-3">
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                {t("officialIdNumberLabel") || "Opisyal na Senior Citizen ID Number"}
+                OFFICIAL ASSIGNED SENIOR ID NUMBER
               </span>
               <span className="font-mono font-black text-base text-emerald-950 tracking-wider bg-white px-3 py-1 rounded-lg border border-emerald-300 select-all shadow-2xs">
-                {latestApprovedApp.assignedIdNumber || latestApprovedApp.referenceNumber}
+                {assignedId}
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="text-gray-500 block">Pangalan ng Aplikante:</span>
+                <span className="text-gray-500 block">Applicant Name:</span>
                 <span className="font-bold text-gray-900 text-sm">
                   {[latestApprovedApp.firstName, latestApprovedApp.middleName, latestApprovedApp.lastName].filter(Boolean).join(" ")}
                 </span>
               </div>
               <div>
-                <span className="text-gray-500 block">Kategorya:</span>
+                <span className="text-gray-500 block">Category:</span>
                 <span className="font-bold text-gray-900 text-sm">
                   Senior Citizen ID
                 </span>
               </div>
               <div>
-                <span className="text-gray-500 block">{t("dateApprovedLabel") || "Petsa ng Pag-apruba"}:</span>
+                <span className="text-gray-500 block">Date Approved:</span>
                 <span className="font-semibold text-emerald-900">
-                  {latestApprovedApp.approvedDate || (latestApprovedApp.updatedAt ? new Date(latestApprovedApp.updatedAt).toLocaleDateString() : "Active")}
+                  {formattedApprovedDate}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500 block">Status:</span>
                 <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Aktibo / Rehistrado
+                  Active / Registered
                 </span>
               </div>
             </div>
@@ -710,13 +721,13 @@ export default function SeniorCitizenApplicationWizard({
               className="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
             >
               <ExternalLink className="h-4 w-4" />
-              <span>{t("viewInMyApplications") || "Tingnan sa My Applications"}</span>
+              <span>View in My Applications</span>
             </a>
             <a
               href="/portal/apply-pwd-senior?category=senior&type=renewal"
               className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
             >
-              <span>{t("applyForRenewal") || "Mag-apply para sa Renewal"} →</span>
+              <span>Apply for Renewal →</span>
             </a>
           </div>
         </div>

@@ -294,8 +294,8 @@ export default function ApplyPWDSenior() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {isSenior
-                    ? "Opisyal na serbisyo para sa mga Senior Citizens ng Lungsod Quezon."
-                    : "Opisyal na serbisyo para sa Persons with Disability (PWD) ng Lungsod Quezon."}
+                    ? "Official government social service for Senior Citizens."
+                    : "Official government social service for Persons with Disability (PWD)."}
                 </p>
               </div>
             </div>
@@ -304,7 +304,7 @@ export default function ApplyPWDSenior() {
               onClick={() => setShowModal(true)}
               className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
             >
-              Tingnan ang Requirements
+              View Requirements
             </button>
           </div>
         </div>
