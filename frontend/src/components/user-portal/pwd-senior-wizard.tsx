@@ -896,8 +896,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     setVerifyError(null)
     const typed = (formData.existingPwdIdNumber || "").trim()
     const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
-    const userQcid = (userProfile?.qcidNo || "110000116932100").trim().toLowerCase()
-    const userEmail = (userProfile?.email || "dimalmae@gmail.com").trim().toLowerCase()
 
     if (!cleanTyped) {
       setVerifyError(t("pwdEnterIdPrompt") || "Please enter your PWD ID number before verifying.")
@@ -918,7 +916,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const refClean = (a.referenceNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const idClean = (a.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const emailClean = (a.email || "").trim().toLowerCase()
 
         // STRICT MATCHING: dapat tumutugma nang eksakto sa assigned ID o reference number o app ID
         const matchAssigned =
