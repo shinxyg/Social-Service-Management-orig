@@ -685,27 +685,17 @@ export default function SeniorCitizenApplicationWizard({
           <div className="pt-2 flex flex-col sm:flex-row gap-3 w-full justify-center">
             <a
               href="/portal/my-applications"
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
             >
               <ExternalLink className="h-4 w-4" />
               <span>{t("viewInMyApplications") || "Tingnan sa My Applications"}</span>
             </a>
             <a
               href="/portal/apply-pwd-senior?category=senior&type=renewal"
-              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
             >
-              <span>Mag-apply para sa Renewal</span>
+              <span>{t("applyForRenewal") || "Mag-apply para sa Renewal"} →</span>
             </a>
-            <button
-              type="button"
-              onClick={() => {
-                setBypassedBlock(true)
-                setStep(1)
-              }}
-              className="px-4 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-semibold transition-all cursor-pointer"
-            >
-              Buksan ang Form
-            </button>
           </div>
         </div>
       </div>
