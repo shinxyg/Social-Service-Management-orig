@@ -632,6 +632,32 @@ export default function PWDSocialAssistanceWizard({
   }, [step, submissionStage])
 
   const [formData, setFormData] = useState<FormData>(() => {
+    let initialDisabilityType = ""
+    let initialCauseOfDisability = ""
+    let initialDesc = ""
+
+    try {
+      const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "qcid_cards"]
+      for (const k of localKeys) {
+        const local = JSON.parse(localStorage.getItem(k) || "[]")
+        if (Array.isArray(local)) {
+          const matched = local.find(
+            (a) =>
+              a &&
+              ((a.category && a.category.toUpperCase().includes("PWD")) ||
+                (a.type && typeof a.type === "string" && a.type.toLowerCase().includes("pwd")) ||
+                a.disabilityType ||
+                a.causeOfDisability)
+          )
+          if (matched) {
+            if (matched.disabilityType && !initialDisabilityType) initialDisabilityType = matched.disabilityType
+            if (matched.causeOfDisability && !initialCauseOfDisability) initialCauseOfDisability = matched.causeOfDisability
+            if (matched.specificDisability && !initialDesc) initialDesc = matched.specificDisability
+          }
+        }
+      }
+    } catch {}
+
     return {
       ...EMPTY_FORM,
       firstName: userProfile.firstName || "",
@@ -643,6 +669,9 @@ export default function PWDSocialAssistanceWizard({
       dobDay: userProfile.dobDay || "",
       age: userProfile.age || "20",
       pwdIdNumber: "",
+      disabilityType: initialDisabilityType || "Psychosocial Disability",
+      causeOfDisability: initialCauseOfDisability || "Congenital / Inborn",
+      disabilityDescription: initialDesc || "",
       contactNumber: userProfile.contactNo || "09123456789",
       email: userProfile.email || "",
       houseNo: userProfile.addressHouseNo || "",
@@ -752,7 +781,20 @@ export default function PWDSocialAssistanceWizard({
           matchedApp.typeOfDisability ||
           "Visual Disability"
         updateField("disabilityType", matchedDisability)
-        if (matchedApp.causeOfDisability) updateField("causeOfDisability", matchedApp.causeOfDisability)
+        const matchedCause =
+          matchedApp.causeOfDisability ||
+          matchedApp.disabilityCause ||
+          matchedApp.familyCauseOfDisability ||
+          formData.causeOfDisability ||
+          "Congenital / Inborn"
+        updateField("causeOfDisability", matchedCause)
+        const matchedDesc =
+          matchedApp.specificDisability ||
+          matchedApp.disabilityDescription ||
+          matchedApp.description ||
+          formData.disabilityDescription ||
+          ""
+        if (matchedDesc) updateField("disabilityDescription", matchedDesc)
         if (matchedApp.firstName && !formData.firstName) updateField("firstName", matchedApp.firstName)
         if (matchedApp.lastName && !formData.lastName) updateField("lastName", matchedApp.lastName)
         if (matchedApp.middleName && !formData.middleName) updateField("middleName", matchedApp.middleName)
@@ -1336,29 +1378,24 @@ export default function PWDSocialAssistanceWizard({
               <div className="space-y-4">
                 <SectionHeader title="DISABILITY INFORMATION" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Disability Type" required>
-                    <SelectInput
-                      value={formData.disabilityType}
-                      onChange={(v) => updateField("disabilityType", v)}
-                      options={DISABILITY_TYPES}
-                    />
+                  <Field label="Disability Type *">
+                    <LockedField value={formData.disabilityType || "Psychosocial Disability"} />
                   </Field>
-                  <Field label="Cause of Disability" required invalid={attemptedNext && formData.causeOfDisability === ""}>
-                    <SelectInput
-                      value={formData.causeOfDisability}
-                      onChange={(v) => updateField("causeOfDisability", v)}
-                      options={DISABILITY_CAUSES}
-                      invalid={attemptedNext && formData.causeOfDisability === ""}
-                    />
+                  <Field label="Cause of Disability *">
+                    <LockedField value={formData.causeOfDisability || "Congenital / Inborn"} />
                   </Field>
                 </div>
                 <Field label="Brief Description of Disability">
-                  <TextArea
-                    value={formData.disabilityDescription}
-                    onChange={(v) => updateField("disabilityDescription", v)}
-                    placeholder="Maikling paglalarawan sa kondisyon o kapansanan..."
-                    rows={2}
-                  />
+                  {formData.disabilityDescription ? (
+                    <LockedField value={formData.disabilityDescription} />
+                  ) : (
+                    <TextArea
+                      value={formData.disabilityDescription}
+                      onChange={(v) => updateField("disabilityDescription", v)}
+                      placeholder="Maikling paglalarawan sa kondisyon o kapansanan (opsyonal)..."
+                      rows={2}
+                    />
+                  )}
                 </Field>
               </div>
 
