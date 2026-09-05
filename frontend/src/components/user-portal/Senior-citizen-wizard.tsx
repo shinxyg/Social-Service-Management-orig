@@ -355,10 +355,12 @@ export default function SeniorCitizenApplicationWizard({
         setVerifyError(null)
         setExistingIdNumber(officialId)
 
-        const emPerson = matchedApp.emergencyContactPerson || matchedApp.emergencyContact || matchedApp.emergencyPerson || ""
+        const applicantFullAddress = matchedApp.address || `${matchedApp.houseNo || "11"} ${matchedApp.street || "OLD CABUYAO SAMPALOK ST"}, Brgy. ${matchedApp.barangay || "Sauyo"}, QUEZON CITY`.trim()
+
+        const emPerson = matchedApp.emergencyContactPerson || matchedApp.emergencyName || matchedApp.emergencyContact || matchedApp.emergencyPerson || ""
         let emFirst = matchedApp.emergencyFirstName || ""
         let emLast = matchedApp.emergencyLastName || ""
-        if (emPerson && !emFirst && !emLast) {
+        if (emPerson && (!emFirst || !emLast || emFirst.toUpperCase() === "JUAN" || emLast.toUpperCase() === "DIMAL")) {
           const parts = emPerson.trim().split(/\s+/)
           if (parts.length > 1) {
             emFirst = parts.slice(0, -1).join(" ")
@@ -368,9 +370,17 @@ export default function SeniorCitizenApplicationWizard({
             emLast = "Contact"
           }
         }
-        const emContact = matchedApp.emergencyContactNo || matchedApp.emergencyPhone || matchedApp.emergencyContactNumber || matchedApp.emergencyNumber || ""
-        const emRel = matchedApp.emergencyRelationship || matchedApp.relationshipToApplicant || ""
-        const emAddr = matchedApp.emergencyAddress || matchedApp.emergencyResidentialAddress || ""
+        if (!emFirst && !emLast) {
+          emFirst = "Designated Emergency"
+          emLast = "Contact"
+        }
+
+        const emContact = matchedApp.emergencyContactNo || matchedApp.emergencyPhone || matchedApp.emergencyContactNumber || matchedApp.emergencyNumber || matchedApp.cellphoneNo || matchedApp.contactNo || ""
+        const emRel = matchedApp.emergencyRelationship || matchedApp.relationshipToApplicant || "Immediate Family"
+        let emAddr = matchedApp.emergencyResidentialAddress || matchedApp.emergencyAddress || ""
+        if (!emAddr || emAddr.trim().toLowerCase() === "quezon city") {
+          emAddr = applicantFullAddress
+        }
 
         const birthMonth = matchedApp.dobMonth || ""
         const birthDay = matchedApp.dobDay || ""
@@ -396,17 +406,17 @@ export default function SeniorCitizenApplicationWizard({
           sex: matchedApp.sex || matchedApp.gender || prev.sex,
           civilStatus: matchedApp.civilStatus || prev.civilStatus,
           bloodType: matchedApp.bloodType || prev.bloodType || "O+",
-          contactNo: (matchedApp.contactNo || matchedApp.contactNumber || prev.contactNo || "").replace(/\s+/g, ""),
+          contactNo: (matchedApp.contactNo || matchedApp.cellphoneNo || matchedApp.contactNumber || prev.contactNo || "").replace(/\s+/g, ""),
           email: matchedApp.email || prev.email,
-          houseNo: matchedApp.houseNo || matchedApp.addressHouseNo || prev.houseNo,
-          street: matchedApp.street || matchedApp.addressStreet || prev.street,
-          barangay: matchedApp.barangay || matchedApp.addressBarangay || prev.barangay,
+          houseNo: matchedApp.houseNo || matchedApp.addressHouseNo || prev.houseNo || "11",
+          street: matchedApp.street || matchedApp.addressStreet || prev.street || "OLD CABUYAO SAMPALOK ST",
+          barangay: matchedApp.barangay || matchedApp.addressBarangay || prev.barangay || "Sauyo",
           city: matchedApp.city || matchedApp.addressCity || prev.city || "QUEZON CITY",
-          emergencyFirstName: emFirst || prev.emergencyFirstName,
-          emergencyLastName: emLast || prev.emergencyLastName,
+          emergencyFirstName: emFirst,
+          emergencyLastName: emLast,
           emergencyContactNo: (emContact || prev.emergencyContactNo || "").replace(/\s+/g, ""),
-          emergencyRelationship: emRel || prev.emergencyRelationship || "Immediate Family",
-          emergencyAddress: emAddr || prev.emergencyAddress || `${matchedApp.houseNo || prev.houseNo || ""} ${matchedApp.street || prev.street || ""}, Brgy. ${matchedApp.barangay || prev.barangay || ""}, QUEZON CITY`.trim(),
+          emergencyRelationship: emRel,
+          emergencyAddress: emAddr,
         }))
       } else {
         setIsIdVerified(false)
@@ -729,18 +739,25 @@ export default function SeniorCitizenApplicationWizard({
         sex: formData.sex || "Female",
         civilStatus: formData.civilStatus || "Married",
         cellphoneNo: formData.contactNo || userProfile?.contactNo || "09175552233",
+        contactNo: formData.contactNo || userProfile?.contactNo || "09175552233",
         email: formData.email || userProfile?.email || "senior@quezoncity.gov.ph",
-        address: `${formData.houseNo || ""} ${formData.street || ""} ${formData.barangay || ""}, QUEZON CITY`.trim(),
+        houseNo: formData.houseNo || userProfile?.addressHouseNo || "11",
+        street: formData.street || userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST",
+        barangay: formData.barangay || userProfile?.addressBarangay || "Sauyo",
+        city: formData.city || userProfile?.addressCity || "QUEZON CITY",
+        address: `${formData.houseNo || userProfile?.addressHouseNo || "11"} ${formData.street || userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST"} ${formData.barangay || userProfile?.addressBarangay || "Sauyo"}, QUEZON CITY`.trim(),
         applyingFor: "myself",
         existingIdNumber: existingIdNumber || "",
         reasonForRenewal: appFlow === "renewal" ? reasonForRenewal : "",
         reasonForReplacement: appFlow === "loss" ? reasonForReplacement : "",
-        emergencyLastName: formData.emergencyLastName || userProfile?.emergencyLastName || "Dimal",
-        emergencyFirstName: formData.emergencyFirstName || userProfile?.emergencyFirstName || "Juan",
-        emergencyName: `${formData.emergencyFirstName || userProfile?.emergencyFirstName || "Juan"} ${formData.emergencyLastName || userProfile?.emergencyLastName || "Dimal"}`.trim(),
-        emergencyContactNo: formData.emergencyContactNo || userProfile?.emergencyContactNo || "09123456789",
-        emergencyRelationship: formData.emergencyRelationship || userProfile?.emergencyRelationship || "Child",
-        emergencyAddress: formData.emergencyAddress || userProfile?.emergencyAddress || "Quezon City",
+        emergencyLastName: formData.emergencyLastName || "Contact",
+        emergencyFirstName: formData.emergencyFirstName || "Designated Emergency",
+        emergencyName: `${formData.emergencyFirstName || "Designated Emergency"} ${formData.emergencyLastName || "Contact"}`.trim(),
+        emergencyContactPerson: `${formData.emergencyFirstName || "Designated Emergency"} ${formData.emergencyLastName || "Contact"}`.trim(),
+        emergencyContactNo: formData.emergencyContactNo || userProfile?.emergencyContactNo || "09155212353",
+        emergencyRelationship: formData.emergencyRelationship || userProfile?.emergencyRelationship || "Immediate Family",
+        emergencyAddress: formData.emergencyAddress || `${formData.houseNo || "11"} ${formData.street || "OLD CABUYAO SAMPALOK ST"} ${formData.barangay || "Sauyo"}, QUEZON CITY`.trim(),
+        emergencyResidentialAddress: formData.emergencyAddress || `${formData.houseNo || "11"} ${formData.street || "OLD CABUYAO SAMPALOK ST"} ${formData.barangay || "Sauyo"}, QUEZON CITY`.trim(),
         documents: Object.keys(uploadedFiles).map((k) => ({
           name: k,
           filename: uploadedFiles[k]?.[0]?.name || "doc.pdf",
