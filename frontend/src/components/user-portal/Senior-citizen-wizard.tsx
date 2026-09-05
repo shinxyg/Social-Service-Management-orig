@@ -244,6 +244,7 @@ export default function SeniorCitizenApplicationWizard({
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
+  const [bypassedBlock, setBypassedBlock] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -486,25 +487,11 @@ export default function SeniorCitizenApplicationWizard({
     return () => clearInterval(interval)
   }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow])
 
-  // Auto-redirect to pending status screen after 3 seconds on submitted
+  // Set blocked on submit
   useEffect(() => {
     if (!isSubmitted) return
-
-    setRedirectCountdown(3)
-    const interval = setInterval(() => {
-      setRedirectCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          setIsBlocked(true)
-          setIsSubmitted(false)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [isSubmitted, appFlow])
+    setIsBlocked(true)
+  }, [isSubmitted])
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
