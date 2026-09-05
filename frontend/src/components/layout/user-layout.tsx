@@ -433,7 +433,7 @@ function ResidentHeader({
   dark: boolean
   onToggleDark: () => void
 }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const residentNav = getResidentNav(t)
   const location = useLocation()
   const currentFullUrl = location.pathname + location.search
