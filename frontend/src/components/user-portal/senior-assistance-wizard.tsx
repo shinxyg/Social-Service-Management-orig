@@ -179,6 +179,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   ]
 
   const [step, setStep] = useState(1)
+  const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -415,6 +416,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
     if (step === 2 && !isStep2Valid) return
     if (step === 3 && !isStep3Valid) return
     setAttemptedNext(false)
+    if (returnToReview) {
+      setStep(4)
+      setReturnToReview(false)
+      return
+    }
     setStep((prev) => Math.min(prev + 1, 4))
   }
 
@@ -1281,7 +1287,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
               </div>
 
               {/* Section 1: Checklist & Assistance */}
-              <ReviewSection title="Mga Kinakailangan at Tulong na Hinihiling" onEdit={() => setStep(1)}>
+              <ReviewSection title="Mga Kinakailangan at Tulong na Hinihiling" onEdit={() => { setReturnToReview(true); setStep(1) }}>
                 <div className="divide-y divide-border">
                   <ReviewCheckItem ok={isResident} label="Lehitimong residente ng Quezon City" />
                   <ReviewCheckItem ok={isSenior} label="60 taong gulang na pataas (Senior Citizen)" />
@@ -1291,7 +1297,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
               </ReviewSection>
 
               {/* Section 2: Personal & Household */}
-              <ReviewSection title="Personal na Impormasyon at Kalagayan ng Tahanan" onEdit={() => setStep(2)}>
+              <ReviewSection title="Personal na Impormasyon at Kalagayan ng Tahanan" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <ReviewField
                     label="Buong Pangalan"
@@ -1322,7 +1328,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
               </ReviewSection>
 
               {/* Section 3: Documents */}
-              <ReviewSection title="Mga Dokumentong Na-upload" onEdit={() => setStep(3)}>
+              <ReviewSection title="Mga Dokumentong Na-upload" onEdit={() => { setReturnToReview(true); setStep(3) }}>
                 <div className="space-y-4">
                   {requiredDocuments.map((doc) => {
                     const file = uploadedFiles[doc.id]

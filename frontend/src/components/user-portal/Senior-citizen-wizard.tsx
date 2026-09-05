@@ -243,6 +243,7 @@ export default function SeniorCitizenApplicationWizard({
   ]
 
   const [step, setStep] = useState(1)
+  const [returnToReview, setReturnToReview] = useState(false)
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
@@ -947,7 +948,12 @@ export default function SeniorCitizenApplicationWizard({
                       return
                     }
                     setAttemptedNext(false)
-                    setStep(2)
+                    if (returnToReview) {
+                      setStep(4)
+                      setReturnToReview(false)
+                    } else {
+                      setStep(2)
+                    }
                   }}
                   disabled={!step1Valid}
                   className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
@@ -1361,7 +1367,12 @@ export default function SeniorCitizenApplicationWizard({
                       return
                     }
                     setAttemptedNext(false)
-                    setStep(3)
+                    if (returnToReview) {
+                      setStep(4)
+                      setReturnToReview(false)
+                    } else {
+                      setStep(3)
+                    }
                   }}
                   disabled={!step2Valid}
                   className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2 ${
@@ -1521,6 +1532,7 @@ export default function SeniorCitizenApplicationWizard({
                     }
                     setAttemptedNext(false)
                     setStep(4)
+                    setReturnToReview(false)
                   }}
                   disabled={!step3Valid}
                   className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2 ${
@@ -1588,7 +1600,7 @@ export default function SeniorCitizenApplicationWizard({
                   </h3>
                   <button
                     type="button"
-                    onClick={() => setStep(2)}
+                    onClick={() => { setReturnToReview(true); setStep(2) }}
                     className="text-xs font-semibold text-[#3b82f6] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <Pencil className="w-3 h-3" /> {t("editLabel") || "Edit"}
@@ -1685,7 +1697,7 @@ export default function SeniorCitizenApplicationWizard({
                   </h3>
                   <button
                     type="button"
-                    onClick={() => setStep(3)}
+                    onClick={() => { setReturnToReview(true); setStep(3) }}
                     className="text-xs font-semibold text-[#3b82f6] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <Pencil className="w-3 h-3" /> {t("editLabel") || "Edit"}

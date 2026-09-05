@@ -469,6 +469,7 @@ export default function ChildWelfareApplicationWizard({
   ]
 
   const [step, setStep] = useState(1)
+  const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -702,6 +703,11 @@ export default function ChildWelfareApplicationWizard({
       return
     }
     setAttemptedNext(false)
+    if (returnToReview) {
+      setStep(4)
+      setReturnToReview(false)
+      return
+    }
     setStep((s) => Math.min(s + 1, 4))
   }
 
@@ -1711,7 +1717,7 @@ export default function ChildWelfareApplicationWizard({
                     <span className="font-bold text-gray-900 uppercase">
                       {language === "tl" ? "IMPORMASYON NG APLIKANTE" : language === "bis" ? "IMPORMASYON SA APLIKANTE" : "APPLICANT INFORMATION"}
                     </span>
-                    <button type="button" onClick={() => setStep(2)} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                    <button type="button" onClick={() => { setReturnToReview(true); setStep(2) }} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
                       <Pencil className="w-3 h-3" /> {language === "tl" ? "I-edit" : language === "bis" ? "I-edit" : "Edit"}
                     </button>
                   </div>
@@ -1728,7 +1734,7 @@ export default function ChildWelfareApplicationWizard({
                     <span className="font-bold text-gray-900 uppercase">
                       {language === "tl" ? "MAGULANG / GUARDIAN" : language === "bis" ? "GINIKANAN / GUARDIAN" : "PARENT / GUARDIAN"}
                     </span>
-                    <button type="button" onClick={() => setStep(2)} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                    <button type="button" onClick={() => { setReturnToReview(true); setStep(2) }} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
                       <Pencil className="w-3 h-3" /> {language === "tl" ? "I-edit" : language === "bis" ? "I-edit" : "Edit"}
                     </button>
                   </div>
@@ -1745,7 +1751,7 @@ export default function ChildWelfareApplicationWizard({
                   <span className="font-bold text-gray-900 uppercase">
                     {language === "tl" ? "HINIHILING NA SERBISYO / TULONG" : language === "bis" ? "GIHANGYO NGA TABANG" : "ASSISTANCE REQUESTED"}
                   </span>
-                  <button type="button" onClick={() => setStep(1)} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                  <button type="button" onClick={() => { setReturnToReview(true); setStep(1) }} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
                     <Pencil className="w-3 h-3" /> {language === "tl" ? "I-edit" : language === "bis" ? "I-edit" : "Edit"}
                   </button>
                 </div>
@@ -1765,7 +1771,7 @@ export default function ChildWelfareApplicationWizard({
                   <span className="font-bold text-gray-900 uppercase">
                     {language === "tl" ? "MGA NA-UPLOAD NA DOKUMENTO" : language === "bis" ? "MGA NA-UPLOAD NGA DOKUMENTO" : "UPLOADED DOCUMENTS"}
                   </span>
-                  <button type="button" onClick={() => setStep(3)} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                  <button type="button" onClick={() => { setReturnToReview(true); setStep(3) }} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
                     <Pencil className="w-3 h-3" /> {language === "tl" ? "I-edit" : language === "bis" ? "I-edit" : "Edit"}
                   </button>
                 </div>

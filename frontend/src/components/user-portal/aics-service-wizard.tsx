@@ -200,6 +200,7 @@ export default function AICSServiceWizard({
 
   // Current Step: 1 = checklist, 2 = personal, 3 = documents, 4 = review, 5 = submitted, 6 = pending review
   const [currentStep, setCurrentStep] = useState<number>(1)
+  const [returnToReview, setReturnToReview] = useState(false)
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
 
   // Eligibility check state
@@ -1179,7 +1180,14 @@ export default function AICSServiceWizard({
                   <button
                     type="button"
                     disabled={!canProceedStep1()}
-                    onClick={() => setCurrentStep(2)}
+                    onClick={() => {
+                      if (returnToReview) {
+                        setCurrentStep(4)
+                        setReturnToReview(false)
+                      } else {
+                        setCurrentStep(2)
+                      }
+                    }}
                     className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
                       canProceedStep1()
                         ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
@@ -1394,7 +1402,14 @@ export default function AICSServiceWizard({
                   <button
                     type="button"
                     disabled={!canProceedStep2()}
-                    onClick={() => setCurrentStep(3)}
+                    onClick={() => {
+                      if (returnToReview) {
+                        setCurrentStep(4)
+                        setReturnToReview(false)
+                      } else {
+                        setCurrentStep(3)
+                      }
+                    }}
                     className={`px-6 h-10 rounded-lg text-sm font-semibold transition-all ${
                       canProceedStep2()
                         ? "bg-[#3b82f6] text-white hover:opacity-90 cursor-pointer shadow-sm"
@@ -1691,7 +1706,10 @@ export default function AICSServiceWizard({
                   <button
                     type="button"
                     disabled={!canProceedStep3()}
-                    onClick={() => setCurrentStep(4)}
+                    onClick={() => {
+                      setCurrentStep(4)
+                      setReturnToReview(false)
+                    }}
                     className={`px-6 h-10 rounded-lg text-sm font-semibold transition-all ${
                       canProceedStep3()
                         ? "bg-[#3b82f6] text-white hover:opacity-90 cursor-pointer shadow-sm"
@@ -1717,7 +1735,7 @@ export default function AICSServiceWizard({
                 </div>
 
                 {/* Section 1: Requirements */}
-                <ReviewSection title="Requirements" onEdit={() => setCurrentStep(1)}>
+                <ReviewSection title="Requirements" onEdit={() => { setReturnToReview(true); setCurrentStep(1) }}>
                   <div className="divide-y divide-gray-100">
                     <ReviewCheckItem
                       ok={qcResident}
@@ -1830,7 +1848,7 @@ export default function AICSServiceWizard({
                 </ReviewSection>
 
                 {/* Section 2: Personal Information */}
-                <ReviewSection title="Personal Information" onEdit={() => setCurrentStep(2)}>
+                <ReviewSection title="Personal Information" onEdit={() => { setReturnToReview(true); setCurrentStep(2) }}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 p-5 text-xs sm:text-sm">
                     <ReviewField label="QC ID NUMBER" value={qcIdNumber} />
                     <ReviewField
@@ -1876,7 +1894,7 @@ export default function AICSServiceWizard({
                 </ReviewSection>
 
                 {/* Section 3: Required Documents */}
-                <ReviewSection title="Required Documents" onEdit={() => setCurrentStep(3)}>
+                <ReviewSection title="Required Documents" onEdit={() => { setReturnToReview(true); setCurrentStep(3) }}>
                   <div className="p-5 space-y-6">
                     {[
                       {

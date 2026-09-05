@@ -721,6 +721,7 @@ export default function SoloParentApplicationWizard({
   ]
 
   const [step, setStep] = useState(1)
+  const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -1025,6 +1026,11 @@ export default function SoloParentApplicationWizard({
     }
 
     setAttemptedNext(false)
+    if (returnToReview) {
+      setStep(4)
+      setReturnToReview(false)
+      return
+    }
     setStep((s) => Math.min(s + 1, 4))
   }
 
@@ -2084,7 +2090,7 @@ export default function SoloParentApplicationWizard({
               </div>
 
               {/* Application Details */}
-              <ReviewSection title="Application Details" onEdit={() => setStep(1)}>
+              <ReviewSection title="Application Details" onEdit={() => { setReturnToReview(true); setStep(1) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField
                     label="Application Type"
@@ -2118,7 +2124,7 @@ export default function SoloParentApplicationWizard({
               </ReviewSection>
 
               {/* Personal Information */}
-              <ReviewSection title="Personal Information" onEdit={() => setStep(2)}>
+              <ReviewSection title="Personal Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField label="Full Name" value={fullApplicantName} />
                   <ReviewField
@@ -2143,7 +2149,7 @@ export default function SoloParentApplicationWizard({
               </ReviewSection>
 
               {/* Uploaded Documents */}
-              <ReviewSection title="Uploaded Documents" onEdit={() => setStep(3)}>
+              <ReviewSection title="Uploaded Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>
                 <div className="p-4 space-y-4">
                   {requiredDocs.map((doc) => {
                     const files = uploadedDocs[doc.id] || []

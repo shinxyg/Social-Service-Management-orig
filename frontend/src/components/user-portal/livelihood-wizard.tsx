@@ -141,6 +141,7 @@ export default function LivelihoodApplicationWizard({
   onStepChange,
 }: LivelihoodWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+  const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -345,6 +346,12 @@ export default function LivelihoodApplicationWizard({
 
   const handleNext = () => {
     if (validateStep(step)) {
+      if (returnToReview) {
+        setStep(4)
+        setReturnToReview(false)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+        return
+      }
       setStep((prev) => Math.min(prev + 1, 4) as any)
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
@@ -1692,7 +1699,7 @@ export default function LivelihoodApplicationWizard({
                   </h3>
                   <button
                     type="button"
-                    onClick={() => setStep(1)}
+                    onClick={() => { setReturnToReview(true); setStep(1) }}
                     className="text-xs font-semibold text-blue-600 hover:underline"
                   >
                     Edit
@@ -1734,7 +1741,7 @@ export default function LivelihoodApplicationWizard({
                   </h3>
                   <button
                     type="button"
-                    onClick={() => setStep(2)}
+                    onClick={() => { setReturnToReview(true); setStep(2) }}
                     className="text-xs font-semibold text-blue-600 hover:underline"
                   >
                     Edit
@@ -1768,7 +1775,7 @@ export default function LivelihoodApplicationWizard({
                   </h3>
                   <button
                     type="button"
-                    onClick={() => setStep(3)}
+                    onClick={() => { setReturnToReview(true); setStep(3) }}
                     className="text-xs font-semibold text-blue-600 hover:underline"
                   >
                     Edit

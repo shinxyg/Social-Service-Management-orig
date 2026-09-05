@@ -540,6 +540,7 @@ export default function PWDSocialAssistanceWizard({
     { id: 4, label: t("wizardReview").toUpperCase() },
   ]
   const [step, setStep] = useState(1)
+  const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -719,6 +720,12 @@ export default function PWDSocialAssistanceWizard({
     }
 
     setAttemptedNext(false)
+    if (returnToReview) {
+      setStep(4)
+      setReturnToReview(false)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      return
+    }
     setStep((s) => Math.min(s + 1, 4))
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -1465,7 +1472,7 @@ export default function PWDSocialAssistanceWizard({
               </div>
 
               <div className="space-y-3">
-                <AccordionSection title="Checklist & Primary Requirements" onEdit={() => setStep(1)}>
+                <AccordionSection title="Checklist & Primary Requirements" onEdit={() => { setReturnToReview(true); setStep(1) }}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <ReviewField label="Residente ng QC" value={formData.isResident ? "Oo" : "Hindi"} />
                     <ReviewField label="May Kapansanan" value={formData.hasDisability ? "Oo" : "Hindi"} />
@@ -1475,7 +1482,7 @@ export default function PWDSocialAssistanceWizard({
                   </div>
                 </AccordionSection>
 
-                <AccordionSection title="Personal & Address Information" onEdit={() => setStep(2)}>
+                <AccordionSection title="Personal & Address Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <ReviewField label="Buong Pangalan" value={fullApplicantName} />
                     <ReviewField label="Date of Birth" value={`${formData.dobMonth} ${formData.dobDay}, ${formData.dobYear}`} />
@@ -1488,7 +1495,7 @@ export default function PWDSocialAssistanceWizard({
                   </div>
                 </AccordionSection>
 
-                <AccordionSection title="Household & Assistance Details" onEdit={() => setStep(2)}>
+                <AccordionSection title="Household & Assistance Details" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <ReviewField label="Bilang ng Miyembro sa Bahay" value={`${formData.householdMembersCount} miyembro`} />
                     <ReviewField label="Buwanang Kita" value={formData.monthlyHouseholdIncome} />
@@ -1499,7 +1506,7 @@ export default function PWDSocialAssistanceWizard({
                   </div>
                 </AccordionSection>
 
-                <AccordionSection title="Uploaded Documents" onEdit={() => setStep(3)}>
+                <AccordionSection title="Uploaded Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>
                   <div className="space-y-4">
                     {REQUIRED_DOCUMENTS.map((doc) => {
                       const files = uploadedDocs[doc.id] || []

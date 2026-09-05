@@ -572,6 +572,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   ]
 
   const [step, setStep] = useState(1)
+  const [returnToReview, setReturnToReview] = useState(false)
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle")
@@ -980,6 +981,11 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       return
     }
     setAttemptedNext(false)
+    if (returnToReview) {
+      setStep(4)
+      setReturnToReview(false)
+      return
+    }
     setStep((s) => Math.min(s + 1, 4))
   }
 
@@ -2418,7 +2424,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                   </p>
                   <button
                     type="button"
-                    onClick={() => setStep(2)}
+                    onClick={() => { setReturnToReview(true); setStep(2) }}
                     className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline"
                   >
                     <Pencil className="h-3 w-3" />
@@ -2486,7 +2492,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                   </p>
                   <button
                     type="button"
-                    onClick={() => setStep(3)}
+                    onClick={() => { setReturnToReview(true); setStep(3) }}
                     className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline"
                   >
                     <Pencil className="h-3 w-3" />
