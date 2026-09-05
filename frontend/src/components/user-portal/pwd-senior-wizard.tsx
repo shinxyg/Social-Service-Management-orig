@@ -279,7 +279,7 @@ function Field({
 }
 
 function formatPwdId(val: string): string {
-  const digits = val.replace(/^PWD-?/i, "").replace(/\D/g, "").slice(0, 16)
+  const digits = val.replace(/^PWD-?/i, "").replace(/^PWD\s*-\s*/i, "").replace(/\D/g, "").slice(0, 16)
   if (!digits) return ""
   if (digits.length <= 6) return digits
   if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
@@ -328,20 +328,22 @@ function TextInput({
     onChange(raw)
   }
 
-  const displayVal = prefix && value.toUpperCase().startsWith(prefix.toUpperCase())
+  const displayVal = isPwdIdMask
+    ? value.replace(/^PWD-?/i, "").replace(/^PWD\s*-\s*/i, "")
+    : prefix && value.toUpperCase().startsWith(prefix.toUpperCase())
     ? value.slice(prefix.length)
     : value
 
   if (prefix) {
     return (
-      <div className={`flex w-full rounded-lg border overflow-hidden transition-all focus-within:ring-2 ${
+      <div className={`flex items-center w-full rounded-lg border overflow-hidden transition-all focus-within:ring-2 ${
         disabled
           ? "border-border bg-gray-100 cursor-not-allowed opacity-60"
           : invalid
           ? "border-red-400 focus-within:ring-red-300 bg-red-50"
           : "border-border focus-within:ring-blue-400 bg-white"
       }`}>
-        <span className="inline-flex items-center px-3.5 bg-slate-100 border-r border-border text-xs font-bold text-slate-700 select-none tracking-wider shrink-0 font-mono">
+        <span className="inline-flex items-center justify-center px-3.5 py-2.5 bg-slate-100 border-r border-border text-xs font-bold text-slate-700 select-none tracking-wider shrink-0 font-mono">
           {prefix}
         </span>
         <input
@@ -352,7 +354,7 @@ function TextInput({
           onChange={handleChange}
           disabled={disabled}
           maxLength={isPwdIdMask ? 18 : maxLength}
-          className="w-full px-3 py-2 text-sm bg-transparent focus:outline-none font-mono placeholder:font-sans"
+          className="w-full px-3 py-2 text-sm bg-transparent focus:outline-none font-mono placeholder:font-sans text-foreground"
         />
       </div>
     )
