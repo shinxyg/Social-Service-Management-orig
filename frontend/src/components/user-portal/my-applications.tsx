@@ -396,29 +396,47 @@ export default function MyApplications() {
 
       // 2. PWD & Senior Citizen Applications
       try {
-        let pwdApps: any[] = []
+        let apiPwdApps: any[] = []
         try {
           const pwdRes = await fetch(`${API_BASE}/api/pwd-senior/applications`)
           if (pwdRes.ok) {
-            pwdApps = await pwdRes.json()
+            apiPwdApps = await pwdRes.json()
           }
         } catch {}
-        if (!pwdApps || pwdApps.length === 0) {
-          try {
-            pwdApps = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
-          } catch {}
+
+        let localPwdApps: any[] = []
+        try {
+          localPwdApps = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+        } catch {}
+
+        // Merge API and LocalStorage applications
+        const combinedMap = new Map<string, any>()
+        if (Array.isArray(localPwdApps)) {
+          localPwdApps.forEach((p) => {
+            const key = p.id || p.referenceNumber || p.assignedIdNumber || `${p.category}-${p.type}-${p.email}`
+            combinedMap.set(key, p)
+          })
         }
+        if (Array.isArray(apiPwdApps)) {
+          apiPwdApps.forEach((p) => {
+            const key = p.id || p.referenceNumber || p.assignedIdNumber || `${p.category}-${p.type}-${p.email}`
+            combinedMap.set(key, p)
+          })
+        }
+
+        const pwdApps = Array.from(combinedMap.values())
 
         const mappedPwd: ApplicationRecord[] = (pwdApps || [])
           .filter((p: any) => {
             if (p.is_archived === true) return false
             const pRef = String(p.referenceNumber || "").trim().toLowerCase()
+            const pAssigned = String(p.assignedIdNumber || "").trim().toLowerCase()
             const pEmail = String(p.email || "").trim().toLowerCase()
-            const pQc = String(p.qcidNo || "").trim().toLowerCase()
+            const pQc = String(p.qcidNo || p.qcid || "").trim().toLowerCase()
             const pFirst = String(p.firstName || "").trim().toLowerCase()
             const pLast = String(p.lastName || "").trim().toLowerCase()
 
-            const matchQc = qcId !== "" && (pRef === qcId.toLowerCase() || pQc === qcId.toLowerCase())
+            const matchQc = qcId !== "" && (pRef === qcId.toLowerCase() || pQc === qcId.toLowerCase() || pAssigned === qcId.toLowerCase())
             const matchEmail = userEmail !== "" && pEmail === userEmail
             const matchName = userFirst !== "" && userLast !== "" && pFirst.includes(userFirst) && pLast.includes(userLast)
 
@@ -711,6 +729,18 @@ export default function MyApplications() {
     }
 
     fetchUserApps()
+    const interval = setInterval(fetchUserApps, 3000)
+    const handleUpdate = () => fetchUserApps()
+    window.addEventListener("storage", handleUpdate)
+    window.addEventListener("pwd_senior_applications_updated", handleUpdate)
+    window.addEventListener("user_notifications_updated", handleUpdate)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("storage", handleUpdate)
+      window.removeEventListener("pwd_senior_applications_updated", handleUpdate)
+      window.removeEventListener("user_notifications_updated", handleUpdate)
+    }
   }, [])
 
   const currentList = activeTab === "active" ? applications : deletedApplications

@@ -1409,6 +1409,8 @@ export default function PWDSeniorCitizenAdmin() {
       const next = updater(prev)
       try {
         localStorage.setItem("pwd_senior_applications", JSON.stringify(next))
+        window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+        window.dispatchEvent(new Event("storage"))
       } catch {}
       return next
     })
