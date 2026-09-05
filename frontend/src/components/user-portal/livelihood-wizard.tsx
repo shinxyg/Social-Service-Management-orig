@@ -5,6 +5,7 @@ import {
   Upload,
   FileText,
   AlertTriangle,
+  AlertCircle,
   X,
   Info,
   Check,

@@ -22,7 +22,6 @@ import { Tooltip } from "../ui/tooltip"
 import { AIChatWidget } from "../ui/ai-chat-widget"
 import { ProfileModal } from "../ui/profile-modal"
 import { useLanguage } from "../ui/language-context"
-import RequirementsModal, { AICS_REQUIREMENTS } from "../user-portal/Requirements-modal"
 import { getSavedProfilePhoto } from "../../utils/profilePhoto"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 import { API_BASE } from "../../config/api"
@@ -135,7 +134,6 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
   ]
 }
 
-const QC_ID = "110000116932100"
 
 interface AicsNotification {
   id: string

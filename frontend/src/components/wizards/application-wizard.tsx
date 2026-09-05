@@ -263,8 +263,8 @@ export function AICSApplicationWizard({
               </Field>
               <Field label="Eligibility">
                 <div className="flex gap-3">
-                  <RadioPill label="Eligible" value="eligible" current={eligible} onChange={setEligible} />
-                  <RadioPill label="Not eligible" value="not-eligible" current={eligible} onChange={setEligible} />
+                  <RadioPill<"eligible" | "not-eligible"> label="Eligible" value="eligible" current={eligible} onChange={setEligible} />
+                  <RadioPill<"eligible" | "not-eligible"> label="Not eligible" value="not-eligible" current={eligible} onChange={setEligible} />
                 </div>
               </Field>
               <Field label="Assessment notes" full>
@@ -289,8 +289,8 @@ export function AICSApplicationWizard({
               </Field>
               <Field label="Decision">
                 <div className="flex gap-3">
-                  <RadioPill label="Approved" value="Approved" current={approvalStatus} onChange={setApprovalStatus} />
-                  <RadioPill label="Disapproved" value="Disapproved" current={approvalStatus} onChange={setApprovalStatus} />
+                  <RadioPill<"Approved" | "Disapproved"> label="Approved" value="Approved" current={approvalStatus} onChange={setApprovalStatus} />
+                  <RadioPill<"Approved" | "Disapproved"> label="Disapproved" value="Disapproved" current={approvalStatus} onChange={setApprovalStatus} />
                 </div>
               </Field>
             </div>

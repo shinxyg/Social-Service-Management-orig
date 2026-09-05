@@ -470,8 +470,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   },
   confirmAndSubmit: { en: "Confirm & submit", tl: "Confirm & Submit", bis: "Confirm & Submit" },
 
-  // Matching / pending steps
-  submittingApplication: { en: "Submitting your application", tl: "Isinusumite ang iyong aplikasyon", bis: "Gisumite ang imong aplikasyon" },
   submittingApplicationDesc: { en: "This will only take a moment...", tl: "Sandali lang po...", bis: "Sandali ra po..." },
   waitingApprovalHeader: { en: "Waiting for admin approval", tl: "Naghihintay ng Pag-apruba", bis: "Naghulat og Pag-apruba" },
   waitingApprovalMsg: {
@@ -982,7 +980,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   applicationDetails: { en: "Application Details", tl: "Mga Detalye ng Aplikasyon", bis: "Mga Detalye sa Aplikasyon" },
   uploadedDocuments: { en: "Uploaded Documents", tl: "Mga Na-upload na Dokumento", bis: "Mga Na-upload nga Dokumento" },
   yearsOld: { en: "years old", tl: "taong gulang", bis: "ka tuig" },
-  serviceLabel: { en: "Service", tl: "Serbisyo", bis: "Serbisyo" },
   applicationTypeLabel: { en: "Application Type", tl: "Uri ng Aplikasyon", bis: "Matang sa Aplikasyon" },
   dateSubmittedLabel: { en: "Date Submitted", tl: "Petsa ng Pagsumite", bis: "Petsa sa Pagsumite" },
   appointmentRequestNotice: {

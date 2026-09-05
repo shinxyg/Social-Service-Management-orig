@@ -324,6 +324,7 @@ interface UserProfile {
   emergencyLastName?: string
   emergencyContactNo?: string
   emergencyRelationship?: string
+  emergencyAddress?: string
 }
 
 interface SoloParentApplicationWizardProps {
@@ -373,6 +374,7 @@ interface FormData {
   emergencyLastName: string
   emergencyContactNo: string
   emergencyRelationship: string
+  emergencyAddress: string
 }
 
 const EMPTY_FORM_DATA: FormData = {
@@ -398,6 +400,7 @@ const EMPTY_FORM_DATA: FormData = {
   emergencyLastName: "DIMAL",
   emergencyContactNo: "09123456789",
   emergencyRelationship: "Child",
+  emergencyAddress: "Quezon City",
 }
 
 function TextInput({
@@ -855,6 +858,7 @@ export default function SoloParentApplicationWizard({
     emergencyLastName: idStatus === "new" ? "" : userProfile.emergencyLastName || "MILLARES",
     emergencyContactNo: idStatus === "new" ? "" : userProfile.emergencyContactNo || "09123123123",
     emergencyRelationship: idStatus === "new" ? "" : userProfile.emergencyRelationship || "Friend",
+    emergencyAddress: idStatus === "new" ? "" : userProfile.emergencyAddress || (userProfile.addressHouseNo ? `${userProfile.addressHouseNo} ${userProfile.addressStreet}, ${userProfile.addressBarangay}, ${userProfile.addressCityMunicipality}` : "Quezon City"),
   }))
   const updateField = (key: keyof FormData, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }))
