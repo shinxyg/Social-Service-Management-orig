@@ -266,16 +266,121 @@ export default function SeniorCitizenApplicationWizard({
   const [existingIdNumber, setExistingIdNumber] = useState("")
   const [isIdVerified, setIsIdVerified] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
+  const [verifyError, setVerifyError] = useState<string | null>(null)
+  const [approvedSeniorRecord, setApprovedSeniorRecord] = useState<any | null>(null)
   const [reasonForReplacement, setReasonForReplacement] = useState("")
   const [reasonForRenewal, setReasonForRenewal] = useState("")
 
-  const handleVerifyId = () => {
-    if (!(existingIdNumber || "").trim()) return
+  const fetchAllSeniorApps = async (): Promise<any[]> => {
+    let allApps: any[] = []
+    try {
+      const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+      if (res.ok) {
+        const apps = await res.json()
+        if (Array.isArray(apps)) allApps = apps
+      }
+    } catch {}
+
+    const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
+    for (const k of localKeys) {
+      try {
+        const saved = localStorage.getItem(k)
+        if (saved) {
+          const localApps = JSON.parse(saved)
+          if (Array.isArray(localApps)) {
+            const ids = new Set(allApps.map((a) => a.id || a.referenceNumber))
+            for (const la of localApps) {
+              if (!ids.has(la.id || la.referenceNumber)) allApps.push(la)
+            }
+          }
+        }
+      } catch {}
+    }
+    return allApps
+  }
+
+  const handleVerifyId = async () => {
+    setVerifyError(null)
+    const typed = (existingIdNumber || "").trim()
+    const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
+
+    if (!cleanTyped) {
+      setVerifyError("Please enter your Senior Citizen ID number before verifying.")
+      return
+    }
+
     setIsVerifying(true)
-    setTimeout(() => {
+    try {
+      const apps = await fetchAllSeniorApps()
+      const matchedApp = apps.find((a) => {
+        if (!a) return false
+        const cat = String(a.category || a.service || "").trim().toUpperCase()
+        const isSeniorCategory = cat.includes("SENIOR") || cat === "SENIOR CITIZEN"
+        if (!isSeniorCategory) return false
+
+        const assignedClean = String(a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const refClean = String(a.referenceNumber || a.reference_no || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const idClean = String(a.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+
+        const matchAssigned =
+          assignedClean !== "" &&
+          (cleanTyped === assignedClean ||
+           cleanTyped === `senior${assignedClean}` ||
+           `senior${cleanTyped}` === assignedClean ||
+           cleanTyped === `osca${assignedClean}` ||
+           `osca${cleanTyped}` === assignedClean)
+
+        const matchRef =
+          refClean !== "" &&
+          (cleanTyped === refClean ||
+           cleanTyped === `senior${refClean}` ||
+           `senior${cleanTyped}` === refClean)
+
+        const matchId = idClean !== "" && cleanTyped === idClean
+
+        return Boolean(matchAssigned || matchRef || matchId)
+      })
+
+      if (matchedApp) {
+        const officialId = (matchedApp.assignedIdNumber || matchedApp.referenceNumber || existingIdNumber).replace("OSCA-", "SENIOR-")
+        setIsIdVerified(true)
+        setVerifyError(null)
+        setApprovedSeniorRecord(matchedApp)
+        setExistingIdNumber(officialId)
+        if (matchedApp.firstName) {
+          setFormData((prev) => ({
+            ...prev,
+            firstName: matchedApp.firstName || prev.firstName,
+            middleName: matchedApp.middleName || prev.middleName,
+            lastName: matchedApp.lastName || prev.lastName,
+            suffix: matchedApp.suffix || prev.suffix,
+            contactNo: (matchedApp.contactNo || matchedApp.contactNumber || prev.contactNo || "").replace(/\s+/g, ""),
+            email: matchedApp.email || prev.email,
+            houseNo: matchedApp.houseNo || matchedApp.addressHouseNo || prev.houseNo,
+            street: matchedApp.street || matchedApp.addressStreet || prev.street,
+            barangay: matchedApp.barangay || matchedApp.addressBarangay || prev.barangay,
+            city: matchedApp.city || matchedApp.addressCity || prev.city,
+            dobMonth: matchedApp.dobMonth || prev.dobMonth,
+            dobDay: matchedApp.dobDay || prev.dobDay,
+            dobYear: matchedApp.dobYear || prev.dobYear,
+            age: matchedApp.age || prev.age,
+            sex: matchedApp.sex || prev.sex,
+            civilStatus: matchedApp.civilStatus || prev.civilStatus,
+          }))
+        }
+      } else {
+        setIsIdVerified(false)
+        setApprovedSeniorRecord(null)
+        setVerifyError(
+          "No registered Senior Citizen ID found in the system for this number. Renewal and Replacement / Lost ID are only available for applicants who have an existing approved New Senior Citizen ID application. Please verify your ID number or submit a New Application first."
+        )
+      }
+    } catch {
+      setIsIdVerified(false)
+      setVerifyError("An error occurred while verifying the Senior Citizen ID. Please try again.")
+    } finally {
       setIsVerifying(false)
-      setIsIdVerified(true)
-    }, 600)
+    }
   }
 
   const step1Valid =
@@ -997,6 +1102,7 @@ export default function SeniorCitizenApplicationWizard({
                             const formatted = formatSeniorId(e.target.value)
                             setExistingIdNumber(formatted ? `SENIOR-${formatted}` : "")
                             setIsIdVerified(false)
+                            setVerifyError(null)
                           }}
                           placeholder="137404-2026-516915"
                           maxLength={18}
@@ -1013,6 +1119,31 @@ export default function SeniorCitizenApplicationWizard({
                         <span>{isVerifying ? "Verifying..." : "VERIFY ID"}</span>
                       </button>
                     </div>
+
+                    {verifyError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-start gap-2 animate-in fade-in duration-150">
+                        <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold">Invalid Senior Citizen ID: </span>
+                          {verifyError}
+                        </div>
+                      </div>
+                    )}
+
+                    {isIdVerified && (
+                      <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 space-y-1.5 animate-in fade-in duration-200">
+                        <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+                          <Check className="w-4 h-4 text-emerald-600" />
+                          <span>Registered Senior Citizen Record Verified</span>
+                        </div>
+                        <div className="text-emerald-700 grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px]">
+                          <div><span className="text-emerald-900/70">ID Number:</span> <strong className="font-mono">{existingIdNumber}</strong></div>
+                          {approvedSeniorRecord?.firstName && (
+                            <div><span className="text-emerald-900/70">Applicant Name:</span> <strong>{[approvedSeniorRecord.firstName, approvedSeniorRecord.middleName, approvedSeniorRecord.lastName].filter(Boolean).join(" ")}</strong></div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Reason for Renewal or Replacement when verified */}
