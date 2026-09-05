@@ -1092,14 +1092,13 @@ export default function SeniorCitizenApplicationWizard({
                     }
                   }}
                   disabled={!step1Valid}
-                  className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  className={`flex items-center justify-center px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
                     step1Valid
                       ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }`}
                 >
                   <span>{t("nextButton") ? t("nextButton").toUpperCase() : "NEXT"}</span>
-                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -1474,9 +1473,8 @@ export default function SeniorCitizenApplicationWizard({
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="px-6 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-xs font-bold text-gray-700 uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="px-6 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-xs font-bold text-gray-700 uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center"
                 >
-                  <ChevronLeft className="w-4 h-4" />
                   <span>{t("backButton") ? t("backButton").toUpperCase() : "BACK"}</span>
                 </button>
 
@@ -1496,14 +1494,13 @@ export default function SeniorCitizenApplicationWizard({
                     }
                   }}
                   disabled={!step2Valid}
-                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2 ${
+                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center ${
                     step2Valid
                       ? "bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }`}
                 >
                   <span>{t("nextButton") ? t("nextButton").toUpperCase() : "NEXT"}</span>
-                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -1638,9 +1635,8 @@ export default function SeniorCitizenApplicationWizard({
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-6 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-xs font-bold text-gray-700 uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="px-6 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-xs font-bold text-gray-700 uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center"
                 >
-                  <ChevronLeft className="w-4 h-4" />
                   <span>{t("backButton") ? t("backButton").toUpperCase() : "BACK"}</span>
                 </button>
 
@@ -1656,14 +1652,13 @@ export default function SeniorCitizenApplicationWizard({
                     setReturnToReview(false)
                   }}
                   disabled={!step3Valid}
-                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2 ${
+                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center ${
                     step3Valid
                       ? "bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }`}
                 >
                   <span>{t("nextButton") ? t("nextButton").toUpperCase() : "NEXT"}</span>
-                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -1889,9 +1884,8 @@ export default function SeniorCitizenApplicationWizard({
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="px-6 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-xs font-bold text-gray-700 uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="px-6 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-xs font-bold text-gray-700 uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center"
                 >
-                  <ChevronLeft className="w-4 h-4" />
                   <span>{t("backButton") ? t("backButton").toUpperCase() : "BACK"}</span>
                 </button>
 
@@ -1899,14 +1893,13 @@ export default function SeniorCitizenApplicationWizard({
                   type="button"
                   onClick={() => setShowConfirmModal(true)}
                   disabled={!certified}
-                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2 ${
+                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center ${
                     certified
                       ? "bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }`}
                 >
                   <span>{t("submitApplicationUpper") || "SUBMIT APPLICATION"}</span>
-                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
