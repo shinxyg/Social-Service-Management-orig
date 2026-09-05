@@ -152,6 +152,7 @@ export default function ApplyLivelihood() {
   // Requirements Modal visibility & acceptance
   const [showRequirements, setShowRequirements] = useState(false)
   const [requirementsAccepted, setRequirementsAccepted] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
 
   // Current Application Record
   const [activeApplication, setActiveApplication] = useState<LivelihoodApplicationRecord | null>(null)
@@ -364,36 +365,38 @@ export default function ApplyLivelihood() {
         </div>
       )}
 
-      {/* Top Requirements Banner with Button to Open Modal */}
-      <div className="mb-4">
-        <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 text-blue-700">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-sm md:text-base font-bold text-foreground">
-                  Requirements for QC Livelihood Program
-                </h1>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
-                  Livelihood Assistance
-                </span>
+      {/* Top Requirements Banner with Button to Open Modal (shown only on Step 1) */}
+      {currentStep === 1 && (
+        <div className="mb-4 animate-in fade-in duration-150">
+          <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 text-blue-700">
+                <FileText className="w-5 h-5" />
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Opisyal na serbisyo para sa Pangkabuhayan at Negosyo Assistance ng Lungsod Quezon.
-              </p>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-sm md:text-base font-bold text-foreground">
+                    Requirements for QC Livelihood Program
+                  </h1>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+                    Livelihood Assistance
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Opisyal na serbisyo para sa Pangkabuhayan at Negosyo Assistance ng Lungsod Quezon.
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowRequirements(true)}
+              className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
+            >
+              Tingnan ang Requirements
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowRequirements(true)}
-            className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
-          >
-            Tingnan ang Requirements
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Top 3-Part Program Navigation Bar */}
       <div className="bg-card border border-border rounded-2xl p-2 shadow-xs">
@@ -486,6 +489,7 @@ export default function ApplyLivelihood() {
               isUpdatingRevision={isUpdatingRevision}
               onSuccessSubmit={handleSuccessSubmit}
               onCancel={() => setIsWizardOpen(false)}
+              onStepChange={setCurrentStep}
             />
           ) : activeApplication ? (
             <div className="space-y-4">

@@ -433,10 +433,6 @@ export default function SeniorCitizenApplicationWizard({
         setIsBlocked(true)
       } else {
         // If rejected, approved, bypassed, or no active application, allow user to apply freely
-        if (activeAppStatus === "approved" || isBlocked) {
-          setStep(1)
-          setIsSubmitted(false)
-        }
         setIsBlocked(false)
       }
     }
@@ -444,7 +440,7 @@ export default function SeniorCitizenApplicationWizard({
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow, isBlocked])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow])
 
   // Auto-redirect to pending status screen after 3 seconds on submitted
   useEffect(() => {

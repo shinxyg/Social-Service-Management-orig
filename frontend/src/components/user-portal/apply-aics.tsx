@@ -1143,7 +1143,6 @@ if (isBlocked) {
   if (step === "personal") {
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
-        {renderTopRequirementsBanner()}
         <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
           <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
@@ -1847,7 +1846,6 @@ if (isBlocked) {
   if (step === "documents") {
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
-        {renderTopRequirementsBanner()}
         <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
           <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
@@ -2077,7 +2075,6 @@ if (isBlocked) {
 
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-4">
-        {renderTopRequirementsBanner()}
         {isFuneralAssistance && (
           <div className="border-l-4 border-emerald-600 pl-4">
             <h1 className="text-xl font-heading font-semibold text-emerald-700">{t("burialAssistanceHeading")}</h1>

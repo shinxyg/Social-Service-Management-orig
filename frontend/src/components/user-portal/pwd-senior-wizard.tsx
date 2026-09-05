@@ -693,10 +693,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         setIsBlocked(true)
       } else {
         // If renewal, loss/replacement, rejected, approved, bypassed, or no active application, allow user to apply freely
-        if (activeAppStatus === "approved" || isBlocked) {
-          setStep(1)
-          setSubmitStatus("idle")
-        }
         setIsBlocked(false)
       }
     }
@@ -704,7 +700,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, initialIdStatus, isBlocked])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, initialIdStatus])
 
   // Auto-redirect to pending status screen after 3 seconds on submitted
   useEffect(() => {

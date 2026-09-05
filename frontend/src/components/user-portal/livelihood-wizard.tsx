@@ -129,6 +129,7 @@ interface LivelihoodWizardProps {
   isUpdatingRevision?: boolean
   onSuccessSubmit?: (application: any) => void
   onCancel?: () => void
+  onStepChange?: (step: number) => void
 }
 
 export default function LivelihoodApplicationWizard({
@@ -136,8 +137,13 @@ export default function LivelihoodApplicationWizard({
   isUpdatingRevision = false,
   onSuccessSubmit,
   onCancel,
+  onStepChange,
 }: LivelihoodWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [confirmedTrue, setConfirmedTrue] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
