@@ -136,6 +136,14 @@ function generateReference(qcid?: string) {
   return getLoggedInUserQcid()
 }
 
+function formatSeniorId(val: string): string {
+  const digits = val.replace(/^(SENIOR|OSCA)-?/i, "").replace(/^(SENIOR|OSCA)\s*-\s*/i, "").replace(/\D/g, "").slice(0, 16)
+  if (!digits) return ""
+  if (digits.length <= 6) return digits
+  if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
+  return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10, 16)}`
+}
+
 function calculateAge(month: string, day: string, year: string): string {
   const y = parseInt(year, 10)
   const m = parseInt(month, 10)
@@ -954,10 +962,10 @@ export default function SeniorCitizenApplicationWizard({
                   onChange={setIsDeclarationChecked}
                   label={
                     appFlow === "new"
-                      ? (t("seniorNoExistingIdCheck") || "Do you have no existing Senior Citizen / OSCA ID? *")
+                      ? "Do you have no existing Senior Citizen ID? *"
                       : appFlow === "renewal"
-                      ? (t("seniorHasExistingRenewalCheck") || "Do you have an existing or expired Senior Citizen / OSCA ID for renewal? *")
-                      : (t("seniorLostDamagedCheck") || "Was your Senior Citizen / OSCA ID lost or damaged, and in need of replacement? *")
+                      ? "Do you have an existing or expired Senior Citizen ID for renewal? *"
+                      : "Was your Senior Citizen ID lost or damaged, and in need of replacement? *"
                   }
                 />
               </div>
@@ -969,33 +977,40 @@ export default function SeniorCitizenApplicationWizard({
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold uppercase text-gray-800 tracking-wide flex items-center gap-1.5">
                         <IdCard className="w-4 h-4 text-[#3b82f6]" />
-                        {t("seniorOscaIdNumberLabel") || "Senior Citizen / OSCA ID Number *"}
+                        SENIOR CITIZEN ID NUMBER *
                       </label>
                       {isIdVerified && (
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                          <Check className="w-3.5 h-3.5" /> {t("seniorRecordFound") || "Senior Citizen Record Found"}
+                          <Check className="w-3.5 h-3.5" /> Senior Citizen Record Verified
                         </span>
                       )}
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 max-w-md">
-                      <input
-                        type="text"
-                        value={existingIdNumber}
-                        onChange={(e) => {
-                          setExistingIdNumber(e.target.value.toUpperCase())
-                          setIsIdVerified(false)
-                        }}
-                        placeholder={t("enterExistingIdPlaceholder") || "Enter Existing ID Number"}
-                        className="flex-1 h-11 px-3.5 rounded-lg border border-gray-300 bg-white text-sm font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                      />
+                      <div className="flex items-center flex-1 rounded-lg border border-gray-300 bg-white overflow-hidden transition-all focus-within:ring-2 focus-within:ring-[#3b82f6]/40 focus-within:border-[#3b82f6]">
+                        <span className="px-3 py-2.5 bg-gray-100 text-gray-600 font-mono font-bold text-xs border-r border-gray-300 select-none">
+                          SENIOR-
+                        </span>
+                        <input
+                          type="text"
+                          value={existingIdNumber.replace(/^(SENIOR|OSCA)-?/i, "")}
+                          onChange={(e) => {
+                            const formatted = formatSeniorId(e.target.value)
+                            setExistingIdNumber(formatted ? `SENIOR-${formatted}` : "")
+                            setIsIdVerified(false)
+                          }}
+                          placeholder="137404-2026-516915"
+                          maxLength={18}
+                          className="flex-1 h-11 px-3.5 bg-white text-sm font-mono text-gray-900 focus:outline-none"
+                        />
+                      </div>
                       <button
                         type="button"
                         onClick={handleVerifyId}
                         disabled={!(existingIdNumber || "").trim() || isVerifying}
-                        className="px-5 py-2 rounded-lg bg-[#3b82f6] hover:bg-blue-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                        className="px-5 py-2.5 rounded-lg bg-[#3b82f6] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
                       >
                         <Search className="w-3.5 h-3.5" />
-                        <span>{isVerifying ? (t("verifyingBtn") || "Verifying...") : (t("verifyIdBtn") || "VERIFY ID")}</span>
+                        <span>{isVerifying ? "Verifying..." : "VERIFY ID"}</span>
                       </button>
                     </div>
                   </div>
@@ -1004,7 +1019,7 @@ export default function SeniorCitizenApplicationWizard({
                   {isIdVerified && (
                     <div className="pt-3 border-t border-gray-200 space-y-2.5 animate-in fade-in duration-200">
                       <label className="block text-xs font-bold uppercase text-gray-800 tracking-wide">
-                        {appFlow === "renewal" ? (t("reasonForRenewalLabel") || "Reason for Renewal *") : (t("reasonForReplacementLabel") || "Reason for Replacement *")}
+                        {appFlow === "renewal" ? "Reason for Renewal *" : "Reason for Replacement *"}
                       </label>
                       <div className="flex flex-col sm:flex-row gap-5">
                         {appFlow === "renewal" ? (
@@ -1018,7 +1033,7 @@ export default function SeniorCitizenApplicationWizard({
                                 onChange={() => setReasonForRenewal("Expired / Due for Renewal")}
                                 className="h-4 w-4 accent-[#3b82f6] cursor-pointer"
                               />
-                              <span className="font-medium">{t("expiredDueRenewal") || "Expired / Due for Renewal"}</span>
+                              <span className="font-medium">Expired / Due for Renewal</span>
                             </label>
                             <label className="flex items-center gap-2.5 text-sm text-gray-800 cursor-pointer select-none">
                               <input
@@ -1029,7 +1044,7 @@ export default function SeniorCitizenApplicationWizard({
                                 onChange={() => setReasonForRenewal("Updated Information")}
                                 className="h-4 w-4 accent-[#3b82f6] cursor-pointer"
                               />
-                              <span className="font-medium">{t("updatedInformation") || "Updated Information"}</span>
+                              <span className="font-medium">Updated Information</span>
                             </label>
                           </>
                         ) : (
@@ -1043,7 +1058,7 @@ export default function SeniorCitizenApplicationWizard({
                                 onChange={() => setReasonForReplacement("Lost / Nawala")}
                                 className="h-4 w-4 accent-[#3b82f6] cursor-pointer"
                               />
-                              <span className="font-medium">{t("lostOption") || "Lost / Nawala"}</span>
+                              <span className="font-medium">Lost / Missing</span>
                             </label>
                             <label className="flex items-center gap-2.5 text-sm text-gray-800 cursor-pointer select-none">
                               <input
@@ -1054,7 +1069,7 @@ export default function SeniorCitizenApplicationWizard({
                                 onChange={() => setReasonForReplacement("Damaged / Nasira")}
                                 className="h-4 w-4 accent-[#3b82f6] cursor-pointer"
                               />
-                              <span className="font-medium">{t("damagedOption") || "Damaged / Nasira"}</span>
+                              <span className="font-medium">Damaged / Defaced</span>
                             </label>
                           </>
                         )}
@@ -1070,17 +1085,17 @@ export default function SeniorCitizenApplicationWizard({
                 <div className="space-y-1">
                   <h3 className="text-xs sm:text-sm font-bold text-blue-900 uppercase tracking-wide">
                     {appFlow === "new"
-                      ? (t("navNewSeniorId") || "BAGONG APLIKASYON PARA SA SENIOR CITIZEN (SENIOR) ID")
+                      ? "NEW APPLICATION FOR SENIOR CITIZEN ID"
                       : appFlow === "renewal"
-                      ? (t("navRenewalSeniorId") || "PAG-RENEW NG SENIOR CITIZEN (SENIOR / OSCA) ID")
-                      : (t("navLossSeniorId") || "REPLACEMENT / NAWALANG SENIOR CITIZEN (OSCA) ID")}
+                      ? "RENEWAL OF SENIOR CITIZEN ID"
+                      : "REPLACEMENT / LOST SENIOR CITIZEN ID"}
                   </h3>
                   <p className="text-xs sm:text-sm text-blue-800 leading-relaxed">
                     {appFlow === "new"
-                      ? (t("seniorNewAlert") || "First-time application para sa Senior Citizen ID. Kumpletuhin ang lahat ng kinakailangang impormasyon at dokumento.")
+                      ? "First-time application for Senior Citizen ID. Complete all required personal information and supporting documents."
                       : appFlow === "renewal"
-                      ? (t("seniorRenewalAlert") || "Para sa mga umiiral na senior citizen na nag-expire o mag-eexpire na ang ID. Ilagay ang inyong lumang ID number at ihanda ang mga kaukulang dokumento para sa renewal.")
-                      : (t("seniorLossIdAlert") || "Para sa mga nawalan o nasiraan ng Senior Citizen ID. Kumpletuhin ang Notarized Affidavit of Loss at mga kailangang dokumento para sa pagpapalit ng ID.")}
+                      ? "RENEWAL — Please enter your current Senior ID Number (e.g. SENIOR-137404-2026-516915) and prepare the required documents before proceeding."
+                      : "For lost or damaged Senior Citizen IDs. Please upload a Notarized Affidavit of Loss and required identification documents."}
                   </p>
                 </div>
               </div>
@@ -1088,8 +1103,8 @@ export default function SeniorCitizenApplicationWizard({
               {attemptedNext && !step1Valid && (
                 <p className="text-xs text-red-600 font-medium">
                   {appFlow !== "new" && (!isIdVerified || !(existingIdNumber || "").trim())
-                    ? (t("seniorRenewalAlert") || "Pakilagay at i-verify ang inyong Senior Citizen ID bago magpatuloy.")
-                    : (t("pwdCheckboxRequiredNote") || "Kailangang markahan ang lahat ng mga kwalipikasyon upang makapagpatuloy.")}
+                    ? "Please enter and verify your Senior Citizen ID number before proceeding."
+                    : "Please check and complete all primary requirement checkboxes to proceed."}
                 </p>
               )}
 
