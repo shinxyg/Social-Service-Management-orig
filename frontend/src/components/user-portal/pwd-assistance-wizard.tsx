@@ -82,7 +82,7 @@ const ASSISTANCE_TYPES = [
 ]
 
 const MONTHLY_INCOME_RANGES = [
-  "Walang Regular na Kita",
+  "No Regular Income",
   "Below ₱5,000",
   "₱5,000 - ₱10,000",
   "₱10,001 - ₱15,000",
@@ -395,7 +395,7 @@ function SelectInput({
           : "border-border focus:ring-blue-400"
       }`}
     >
-      <option value="">Piliin...</option>
+      <option value="">Select...</option>
       {options.map((opt) => (
         <option key={opt} value={opt}>
           {opt}
@@ -1175,7 +1175,7 @@ export default function PWDSocialAssistanceWizard({
                   </span>
                 </label>
                 {attemptedNext && !formData.hasDisability && (
-                  <p className="text-xs text-red-500 ml-6">Kinakailangang may kapansanan o rehistradong PWD ID.</p>
+                  <p className="text-xs text-red-500 ml-6">Must have a disability or registered PWD ID.</p>
                 )}
               </div>
 
@@ -1185,7 +1185,7 @@ export default function PWDSocialAssistanceWizard({
                 <div>
                   <p className="text-sm font-bold text-blue-900">PWD SOCIAL ASSISTANCE — SIMPLIFIED APPLICATION</p>
                   <p className="text-xs text-blue-700 mt-1">
-                    Tulong pinansyal, gamot, medical support, at assistive devices para sa mga Persons with Disabilities sa QC.
+                    Financial, medical, assistive device, and emergency assistance support for Persons with Disabilities in Quezon City.
                   </p>
                 </div>
               </div>
@@ -1396,7 +1396,7 @@ export default function PWDSocialAssistanceWizard({
                     <TextArea
                       value={formData.disabilityDescription}
                       onChange={(v) => updateField("disabilityDescription", v)}
-                      placeholder="Maikling paglalarawan sa kondisyon o kapansanan (opsyonal)..."
+                      placeholder="Brief description of condition or disability (optional)..."
                       rows={2}
                     />
                   )}
@@ -1447,7 +1447,7 @@ export default function PWDSocialAssistanceWizard({
                   <TextArea
                     value={formData.reasonForRequest}
                     onChange={(v) => updateField("reasonForRequest", v)}
-                    placeholder="Ipaliwanag kung bakit kinakailangan ang tulong na ito..."
+                    placeholder="Explain why this assistance is needed..."
                     rows={3}
                     invalid={attemptedNext && formData.reasonForRequest.trim() === ""}
                   />
@@ -1457,7 +1457,7 @@ export default function PWDSocialAssistanceWizard({
               {attemptedNext && !step2Valid && (
                 <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700">
                   <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>Pakikumpleto ang lahat ng kinakailangang impormasyon sa Step 2 bago magpatuloy sa susunod na hakbang.</span>
+                  <span>Please complete all required information in Step 2 before proceeding to the next step.</span>
                 </div>
               )}
             </div>
