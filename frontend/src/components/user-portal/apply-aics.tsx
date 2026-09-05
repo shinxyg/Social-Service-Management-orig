@@ -808,14 +808,6 @@ if (checkingEligibility) {
 if (isBlocked) {
   return (
     <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
-      {onBack && (
-        <button
-          onClick={onBack}
-          className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
-        >
-          ← Bumalik
-        </button>
-      )}
       <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
         <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
           <Info className="h-8 w-8 text-amber-500" />
@@ -850,25 +842,16 @@ if (isBlocked) {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full pt-2">
+        <div className="w-full pt-2">
           <button
             type="button"
             onClick={() => {
               window.location.href = "/portal/my-applications"
             }}
-            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
           >
             TINGNAN SA MY APPLICATIONS
           </button>
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-            >
-              BUMALIK SA DASHBOARD
-            </button>
-          )}
         </div>
       </div>
     </div>

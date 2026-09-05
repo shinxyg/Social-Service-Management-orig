@@ -672,14 +672,6 @@ export default function AICSServiceWizard({
 
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            ← Bumalik
-          </button>
-        )}
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
           <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
             <Info className="h-8 w-8 text-amber-500" />
@@ -712,7 +704,7 @@ export default function AICSServiceWizard({
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full pt-2">
+          <div className="w-full pt-2">
             <button
               type="button"
               onClick={() => {
@@ -722,15 +714,6 @@ export default function AICSServiceWizard({
             >
               TINGNAN SA MY APPLICATIONS
             </button>
-            {onBack && (
-              <button
-                type="button"
-                onClick={onBack}
-                className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-semibold transition-colors cursor-pointer"
-              >
-                Bumalik sa AICS
-              </button>
-            )}
           </div>
         </div>
       </div>
