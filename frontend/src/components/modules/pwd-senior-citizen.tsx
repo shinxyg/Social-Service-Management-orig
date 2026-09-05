@@ -1014,7 +1014,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
               ) : (
                 <>
                   <Field label="Service & Application Type" value={subLabel} />
-                  <Field label="Application category" value="Senior Citizen Services (OSCA)" />
+                  <Field label="Application category" value="Senior Citizen Services" />
                   {((app as any).existingIdNumber || (app as any).oldSeniorId) && (
                     <Field
                       label={app.type === "renewal" ? "Existing / Expired Senior ID" : "Previous / Lost Senior ID"}
