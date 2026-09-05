@@ -1913,13 +1913,6 @@ export default function SeniorCitizenApplicationWizard({
               </button>
               <button
                 type="button"
-                onClick={() => setShowConfirmModal(false)}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                {t("cancelBtnUpper") || "CANCEL"}
-              </button>
-              <button
-                type="button"
                 onClick={() => {
                   setShowConfirmModal(false)
                   handleFinalSubmit()
