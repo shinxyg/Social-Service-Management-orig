@@ -540,10 +540,11 @@ function ResidentHeader({
                 const isApproved = app.status === "approved"
                 items.push({
                   id: notifId,
-                  title: isApproved ? "Na-approve ang AICS Aplikasyon" : "Hindi Na-approve ang AICS Aplikasyon",
+                  title: isApproved ? (t("notifAicsApprovedTitle") || "AICS Assistance Application: Approved") : (t("notifAicsRejectedTitle") || "AICS Assistance Application: Not Approved"),
                   desc: `${app.assistance_type} — Ref: ${app.reference_no || app.qc_id}`,
-                  time: new Date(app.updated_at || app.created_at).toLocaleString("en-PH"),
+                  time: new Date(app.updated_at || app.created_at).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
                   unread: !readIds.includes(notifId),
+                  reason: app.rejection_reason || null,
                 })
               })
             }
@@ -565,12 +566,44 @@ function ResidentHeader({
               userPwdApps.forEach((app: any) => {
                 const notifId = `pwd-${app.id}-${app.status}`
                 const isApproved = app.status === "approved"
+                const isSenior = (app.category || "").toLowerCase().includes("senior")
+                const isRenewal = app.type === "renewal"
+                const isLoss = app.type === "replacement" || app.type === "loss"
+
+                let title = ""
+                if (isSenior) {
+                  if (isApproved) {
+                    title = isRenewal
+                      ? (t("notifSeniorRenewalApprovedTitle") || "Senior Citizen ID Application (Renewal): Approved")
+                      : isLoss
+                      ? (t("notifSeniorReplacementApprovedTitle") || "Senior Citizen ID Application (Replacement): Approved")
+                      : (t("notifSeniorApprovedTitle") || "Senior Citizen ID Application: Approved")
+                  } else {
+                    title = t("notifSeniorRejectedTitle") || "Senior Citizen ID Application: Not Approved"
+                  }
+                } else {
+                  if (isApproved) {
+                    title = isRenewal
+                      ? (t("notifPwdRenewalApprovedTitle") || "PWD ID Application (Renewal): Approved")
+                      : isLoss
+                      ? (t("notifPwdReplacementApprovedTitle") || "PWD ID Application (Replacement): Approved")
+                      : (t("notifPwdApprovedTitle") || "PWD ID Application: Approved")
+                  } else {
+                    title = t("notifPwdRejectedTitle") || "PWD ID Application: Not Approved"
+                  }
+                }
+
+                const serviceLabel = isSenior
+                  ? `${t("seniorCitizenServices") || "Senior Citizen Services"} (${isRenewal ? (t("renewal") || "Renewal") : isLoss ? (t("replacement") || "Replacement") : (t("newApplication") || "New Application")})`
+                  : `${t("pwdServices") || "PWD Services"} (${isRenewal ? (t("renewal") || "Renewal") : isLoss ? (t("replacement") || "Replacement") : (t("newApplication") || "New Application")})`
+
                 items.push({
                   id: notifId,
-                  title: isApproved ? "Na-approve ang PWD / Senior Application" : "Hindi Na-approve ang PWD / Senior Application",
-                  desc: `${app.serviceType || "PWD/Senior Service"} — Ref: ${app.id}`,
-                  time: new Date(app.approvedDate || app.submissionDate || Date.now()).toLocaleString("en-PH"),
+                  title,
+                  desc: `${serviceLabel} — Ref: ${app.assignedIdNumber || app.referenceNumber || app.id}`,
+                  time: new Date(app.approvedDate || app.submittedAt || app.submissionDate || Date.now()).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
                   unread: !readIds.includes(notifId),
+                  reason: app.rejectionReason || null,
                 })
               })
             }
@@ -592,9 +625,9 @@ function ResidentHeader({
               const isApproved = app.application_status === "approved"
               items.push({
                 id: notifId,
-                title: isApproved ? "Na-approve ang Solo Parent Aplikasyon" : "Hindi Na-approve ang Solo Parent Aplikasyon",
+                title: isApproved ? (t("notifSoloParentApprovedTitle") || "Solo Parent Application: Approved") : (t("notifSoloParentRejectedTitle") || "Solo Parent Application: Not Approved"),
                 desc: `Solo Parent — Ref: ${app.reference_number}`,
-                time: new Date(app.updated_at || app.created_at).toLocaleString("en-PH"),
+                time: new Date(app.updated_at || app.created_at).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
                 unread: !readIds.includes(notifId),
                 reason: app.rejection_reason || null,
               })
@@ -617,9 +650,9 @@ function ResidentHeader({
               const isApproved = app.application_status === "approved"
               items.push({
                 id: notifId,
-                title: isApproved ? "Na-approve ang Child Welfare Aplikasyon" : "Hindi Na-approve ang Child Welfare Aplikasyon",
+                title: isApproved ? (t("notifChildWelfareApprovedTitle") || "Child Welfare Application: Approved") : (t("notifChildWelfareRejectedTitle") || "Child Welfare Application: Not Approved"),
                 desc: `Child Welfare — Ref: ${app.reference_number}`,
-                time: new Date(app.updated_at || app.created_at).toLocaleString("en-PH"),
+                time: new Date(app.updated_at || app.created_at).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
                 unread: !readIds.includes(notifId),
               })
             })
@@ -643,10 +676,11 @@ function ResidentHeader({
                 const isApproved = app.status === "approved"
                 items.push({
                   id: notifId,
-                  title: isApproved ? "Na-approve ang Livelihood Application" : "Hindi Na-approve ang Livelihood Application",
+                  title: isApproved ? (t("notifLivelihoodApprovedTitle") || "Livelihood & Training Application: Approved") : (t("notifLivelihoodRejectedTitle") || "Livelihood & Training Application: Not Approved"),
                   desc: `${app.programName || "Livelihood"} — Ref: ${app.id}`,
-                  time: new Date(app.approvedDate || app.createdAt || Date.now()).toLocaleString("en-PH"),
+                  time: new Date(app.approvedDate || app.createdAt || Date.now()).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
                   unread: !readIds.includes(notifId),
+                  reason: app.rejectionReason || null,
                 })
               })
             }
@@ -669,7 +703,7 @@ function ResidentHeader({
       window.removeEventListener("user_notifications_updated", handleNotifUpdate)
       window.removeEventListener("storage", handleNotifUpdate)
     }
-  }, [])
+  }, [language])
 
   const unreadNotifCount = notifications.filter((n) => n.unread).length
 
@@ -850,18 +884,18 @@ function ResidentHeader({
 
       {selectedNotif.reason ? (
         <div className="mt-4 rounded-xl bg-destructive/10 border border-destructive/20 px-3 py-2.5">
-          <p className="text-xs font-semibold text-destructive">Rason ng Pagtanggi</p>
+          <p className="text-xs font-semibold text-destructive">{t("notifRejectionReasonLabel") || "Reason for Rejection"}</p>
           <p className="text-sm text-destructive/90 mt-1">{selectedNotif.reason}</p>
         </div>
       ) : (
-        <p className="mt-4 text-xs text-muted-foreground italic">Walang karagdagang detalye.</p>
+        <p className="mt-4 text-xs text-muted-foreground italic">{t("notifNoDetails") || "No additional details."}</p>
       )}
 
       <button
         onClick={() => setSelectedNotif(null)}
-        className="mt-4 w-full rounded-xl bg-muted hover:bg-muted/70 text-foreground text-sm font-medium py-2 transition-colors"
+        className="mt-4 w-full rounded-xl bg-muted hover:bg-muted/70 text-foreground text-sm font-medium py-2 transition-colors cursor-pointer"
       >
-        Isara
+        {t("close") || "Close"}
       </button>
     </div>
   </div>

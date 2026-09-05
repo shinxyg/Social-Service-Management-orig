@@ -1209,6 +1209,103 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   category: { en: "Category", tl: "Kategorya", bis: "Kategorya" },
   editInformation: { en: "Edit Information", tl: "I-edit ang Impormasyon", bis: "I-edit ang Impormasyon" },
   lockInformation: { en: "Lock Information", tl: "I-lock ang Impormasyon", bis: "I-lock ang Impormasyon" },
+
+  // Notification Multi-language translations
+  notifPwdApprovedTitle: {
+    en: "PWD ID Application: Approved",
+    tl: "Aplikasyon sa PWD ID: Naaprubahan",
+    bis: "Aplikasyon sa PWD ID: Na-aprobahan",
+  },
+  notifPwdRenewalApprovedTitle: {
+    en: "PWD ID Application (Renewal): Approved",
+    tl: "Aplikasyon sa PWD ID (Renewal): Naaprubahan",
+    bis: "Aplikasyon sa PWD ID (Renewal): Na-aprobahan",
+  },
+  notifPwdReplacementApprovedTitle: {
+    en: "PWD ID Application (Replacement): Approved",
+    tl: "Aplikasyon sa PWD ID (Replacement): Naaprubahan",
+    bis: "Aplikasyon sa PWD ID (Replacement): Na-aprobahan",
+  },
+  notifPwdRejectedTitle: {
+    en: "PWD ID Application: Not Approved",
+    tl: "Aplikasyon sa PWD ID: Hindi Naaprubahan",
+    bis: "Aplikasyon sa PWD ID: Wala Ma-aprobahan",
+  },
+  notifSeniorApprovedTitle: {
+    en: "Senior Citizen ID Application: Approved",
+    tl: "Aplikasyon sa Senior Citizen ID: Naaprubahan",
+    bis: "Aplikasyon sa Senior Citizen ID: Na-aprobahan",
+  },
+  notifSeniorRenewalApprovedTitle: {
+    en: "Senior Citizen ID Application (Renewal): Approved",
+    tl: "Aplikasyon sa Senior Citizen ID (Renewal): Naaprubahan",
+    bis: "Aplikasyon sa Senior Citizen ID (Renewal): Na-aprobahan",
+  },
+  notifSeniorReplacementApprovedTitle: {
+    en: "Senior Citizen ID Application (Replacement): Approved",
+    tl: "Aplikasyon sa Senior Citizen ID (Replacement): Naaprubahan",
+    bis: "Aplikasyon sa Senior Citizen ID (Replacement): Na-aprobahan",
+  },
+  notifSeniorRejectedTitle: {
+    en: "Senior Citizen ID Application: Not Approved",
+    tl: "Aplikasyon sa Senior Citizen ID: Hindi Naaprubahan",
+    bis: "Aplikasyon sa Senior Citizen ID: Wala Ma-aprobahan",
+  },
+  notifAicsApprovedTitle: {
+    en: "AICS Assistance Application: Approved",
+    tl: "Aplikasyon sa Tulong AICS: Naaprubahan",
+    bis: "Aplikasyon sa Tabang AICS: Na-aprobahan",
+  },
+  notifAicsRejectedTitle: {
+    en: "AICS Assistance Application: Not Approved",
+    tl: "Aplikasyon sa Tulong AICS: Hindi Naaprubahan",
+    bis: "Aplikasyon sa Tabang AICS: Wala Ma-aprobahan",
+  },
+  notifSoloParentApprovedTitle: {
+    en: "Solo Parent Application: Approved",
+    tl: "Aplikasyon sa Solo Parent: Naaprubahan",
+    bis: "Aplikasyon sa Solo Parent: Na-aprobahan",
+  },
+  notifSoloParentRejectedTitle: {
+    en: "Solo Parent Application: Not Approved",
+    tl: "Aplikasyon sa Solo Parent: Hindi Naaprubahan",
+    bis: "Aplikasyon sa Solo Parent: Wala Ma-aprobahan",
+  },
+  notifChildWelfareApprovedTitle: {
+    en: "Child Welfare Application: Approved",
+    tl: "Aplikasyon sa Child Welfare: Naaprubahan",
+    bis: "Aplikasyon sa Child Welfare: Na-aprobahan",
+  },
+  notifChildWelfareRejectedTitle: {
+    en: "Child Welfare Application: Not Approved",
+    tl: "Aplikasyon sa Child Welfare: Hindi Naaprubahan",
+    bis: "Aplikasyon sa Child Welfare: Wala Ma-aprobahan",
+  },
+  notifLivelihoodApprovedTitle: {
+    en: "Livelihood & Training Application: Approved",
+    tl: "Aplikasyon sa Livelihood & Training: Naaprubahan",
+    bis: "Aplikasyon sa Livelihood & Training: Na-aprobahan",
+  },
+  notifLivelihoodRejectedTitle: {
+    en: "Livelihood & Training Application: Not Approved",
+    tl: "Aplikasyon sa Livelihood & Training: Hindi Naaprubahan",
+    bis: "Aplikasyon sa Livelihood & Training: Wala Ma-aprobahan",
+  },
+  notifRejectionReasonLabel: {
+    en: "Reason for Rejection",
+    tl: "Rason ng Pagtanggi",
+    bis: "Rason sa Pagsalikway",
+  },
+  notifNoDetails: {
+    en: "No additional details available.",
+    tl: "Walang karagdagang detalyeng nakasaad.",
+    bis: "Walay dugang detalyeng gipahayag.",
+  },
+  notifDismiss: {
+    en: "Dismiss notification",
+    tl: "Alisin ang notification",
+    bis: "Kuhaa ang pahibalo",
+  },
 }
 
 interface LanguageContextValue {
