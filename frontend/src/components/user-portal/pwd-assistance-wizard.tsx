@@ -285,6 +285,14 @@ function Field({
   )
 }
 
+function formatPwdId(val: string): string {
+  const digits = val.replace(/^PWD-?/i, "").replace(/^PWD\s*-\s*/i, "").replace(/\D/g, "").slice(0, 16)
+  if (!digits) return ""
+  if (digits.length <= 6) return digits
+  if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
+  return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10, 16)}`
+}
+
 function TextInput({
   value,
   onChange,
@@ -294,6 +302,8 @@ function TextInput({
   invalid = false,
   numbersOnly = false,
   maxLength,
+  prefix,
+  isPwdIdMask = false,
 }: {
   value: string
   onChange: (v: string) => void
@@ -303,9 +313,19 @@ function TextInput({
   invalid?: boolean
   numbersOnly?: boolean
   maxLength?: number
+  prefix?: string
+  isPwdIdMask?: boolean
 }) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let raw = e.target.value
+    if (isPwdIdMask) {
+      const formatted = formatPwdId(raw)
+      onChange(formatted)
+      return
+    }
+    if (prefix && raw.toUpperCase().startsWith(prefix.toUpperCase())) {
+      raw = raw.slice(prefix.length)
+    }
     if (numbersOnly) {
       raw = raw.replace(/\D/g, "")
     }
@@ -313,6 +333,38 @@ function TextInput({
       raw = raw.slice(0, maxLength)
     }
     onChange(raw)
+  }
+
+  const displayVal = isPwdIdMask
+    ? value.replace(/^PWD-?/i, "").replace(/^PWD\s*-\s*/i, "")
+    : prefix && value.toUpperCase().startsWith(prefix.toUpperCase())
+    ? value.slice(prefix.length)
+    : value
+
+  if (prefix) {
+    return (
+      <div className={`flex items-center w-full rounded-lg border overflow-hidden transition-all focus-within:ring-2 ${
+        disabled
+          ? "border-border bg-gray-100 cursor-not-allowed opacity-60"
+          : invalid
+          ? "border-red-400 focus-within:ring-red-300 bg-red-50"
+          : "border-border focus-within:ring-blue-400 bg-white"
+      }`}>
+        <span className="inline-flex items-center justify-center px-3.5 py-2.5 bg-slate-100 border-r border-border text-xs font-bold text-slate-700 select-none tracking-wider shrink-0 font-mono">
+          {prefix}
+        </span>
+        <input
+          type={isPwdIdMask || numbersOnly ? "tel" : type}
+          inputMode={isPwdIdMask || numbersOnly ? "numeric" : undefined}
+          value={displayVal}
+          placeholder={placeholder}
+          onChange={handleChange}
+          disabled={disabled}
+          maxLength={isPwdIdMask ? 18 : maxLength}
+          className="w-full px-3 py-2 text-sm bg-transparent focus:outline-none font-mono placeholder:font-sans text-foreground"
+        />
+      </div>
+    )
   }
 
   return (
@@ -599,36 +651,111 @@ export default function PWDSocialAssistanceWizard({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [step, submissionStage])
 
-  const [formData, setFormData] = useState<FormData>(() => ({
-    ...EMPTY_FORM,
-    firstName: userProfile.firstName || "",
-    middleName: userProfile.middleName || "",
-    lastName: userProfile.lastName || "",
-    suffix: userProfile.suffix || "",
-    dobYear: userProfile.dobYear || "",
-    dobMonth: userProfile.dobMonth || "",
-    dobDay: userProfile.dobDay || "",
-    age: userProfile.age || "20",
-    pwdIdNumber: userProfile.qcidNo || "QC-PWD-2024-00129",
-    contactNumber: userProfile.contactNo || "09123456789",
-    email: userProfile.email || "",
-    houseNo: userProfile.addressHouseNo || "",
-    street: userProfile.addressStreet || "",
-    barangay: userProfile.addressBarangay || "",
-    cityMunicipality: userProfile.addressCityMunicipality || "QUEZON CITY",
-  }))
+  const [formData, setFormData] = useState<FormData>(() => {
+    let initialPwdId = ""
+    try {
+      const savedApps = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+      if (Array.isArray(savedApps)) {
+        const approved = savedApps.find((a) => a.category === "PWD" && (a.assignedIdNumber || a.status === "approved"))
+        if (approved) {
+          initialPwdId = formatPwdId(approved.assignedIdNumber || approved.referenceNumber || "")
+        }
+      }
+    } catch {}
+
+    return {
+      ...EMPTY_FORM,
+      firstName: userProfile.firstName || "",
+      middleName: userProfile.middleName || "",
+      lastName: userProfile.lastName || "",
+      suffix: userProfile.suffix || "",
+      dobYear: userProfile.dobYear || "",
+      dobMonth: userProfile.dobMonth || "",
+      dobDay: userProfile.dobDay || "",
+      age: userProfile.age || "20",
+      pwdIdNumber: initialPwdId,
+      contactNumber: userProfile.contactNo || "09123456789",
+      email: userProfile.email || "",
+      houseNo: userProfile.addressHouseNo || "",
+      street: userProfile.addressStreet || "",
+      barangay: userProfile.addressBarangay || "",
+      cityMunicipality: userProfile.addressCityMunicipality || "QUEZON CITY",
+    }
+  })
 
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
   const [isVerifying, setIsVerifying] = useState(false)
   const [isIdVerified, setIsIdVerified] = useState(false)
+  const [verifyError, setVerifyError] = useState<string | null>(null)
 
-  const handleVerifyId = () => {
-    if (!formData.pwdIdNumber.trim()) return
+  const handleVerifyId = async () => {
+    setVerifyError(null)
+    const typed = (formData.pwdIdNumber || "").trim()
+    const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
+
+    if (!cleanTyped) {
+      setVerifyError("Kailangang ilagay ang PWD ID number bago mag-verify.")
+      return
+    }
+
     setIsVerifying(true)
-    setTimeout(() => {
+    try {
+      let allApps: any[] = []
+      try {
+        const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+        if (res.ok) {
+          const apps = await res.json()
+          if (Array.isArray(apps)) allApps = apps
+        }
+      } catch {}
+
+      try {
+        const local = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+        if (Array.isArray(local)) {
+          const ids = new Set(allApps.map((a) => a.id))
+          for (const la of local) {
+            if (!ids.has(la.id)) allApps.push(la)
+          }
+        }
+      } catch {}
+
+      const matchedApp = allApps.find((a) => {
+        if (!a) return false
+        const cat = (a.category || "").trim().toUpperCase()
+        if (cat !== "PWD") return false
+
+        const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const refClean = (a.referenceNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const idClean = (a.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+
+        const matchAssigned =
+          assignedClean !== "" &&
+          (cleanTyped === assignedClean || cleanTyped === `pwd${assignedClean}` || `pwd${cleanTyped}` === assignedClean)
+        const matchRef =
+          refClean !== "" &&
+          (cleanTyped === refClean || cleanTyped === `pwd${refClean}` || `pwd${cleanTyped}` === refClean)
+        const matchId = idClean !== "" && cleanTyped === idClean
+
+        return Boolean(matchAssigned || matchRef || matchId)
+      })
+
+      if (matchedApp) {
+        setIsIdVerified(true)
+        setVerifyError(null)
+        const officialId = formatPwdId(matchedApp.assignedIdNumber || matchedApp.referenceNumber || typed)
+        updateField("pwdIdNumber", officialId)
+        if (matchedApp.disabilityType) updateField("disabilityType", matchedApp.disabilityType)
+        if (matchedApp.causeOfDisability) updateField("causeOfDisability", matchedApp.causeOfDisability)
+      } else {
+        setIsIdVerified(false)
+        setVerifyError("Hindi nahanap ang rehistradong PWD ID record sa sistema. Pakitiyak na tama ang ID number.")
+      }
+    } catch {
+      setIsIdVerified(false)
+      setVerifyError("Nagkaroon ng error sa pag-verify. Pakisubukang muli.")
+    } finally {
       setIsVerifying(false)
-      setIsIdVerified(true)
-    }, 600)
+    }
   }
 
   const updateField = (key: keyof FormData, value: any) => {
@@ -1023,12 +1150,15 @@ export default function PWDSocialAssistanceWizard({
                   <div className="flex flex-col sm:flex-row gap-2">
                     <div className="flex-1">
                       <TextInput
+                        prefix="PWD-"
+                        isPwdIdMask={true}
                         value={formData.pwdIdNumber}
                         onChange={(v) => {
                           updateField("pwdIdNumber", v)
                           setIsIdVerified(false)
+                          setVerifyError(null)
                         }}
-                        placeholder="Enter your existing PWD ID Number (e.g. QC-PWD-2024-XXXXX)"
+                        placeholder="137404-2026-847708"
                         invalid={attemptedNext && (!formData.pwdIdNumber.trim() || !isIdVerified)}
                       />
                     </div>
@@ -1045,23 +1175,29 @@ export default function PWDSocialAssistanceWizard({
                         </>
                       ) : (
                         <>
-                          <Search className="w-3.5 h-3.5" />
-                          <span>VERIFY ID</span>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>VERIFY PWD ID</span>
                         </>
                       )}
                     </button>
                   </div>
-                  {attemptedNext && !formData.pwdIdNumber.trim() && (
+                  {verifyError && (
+                    <div className="mt-2 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2 animate-in fade-in duration-200">
+                      <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                      <span>{verifyError}</span>
+                    </div>
+                  )}
+                  {attemptedNext && !formData.pwdIdNumber.trim() && !verifyError && (
                     <p className="text-xs text-red-500 mt-1">Kailangang ilagay ang inyong PWD ID Number.</p>
                   )}
-                  {attemptedNext && formData.pwdIdNumber.trim() !== "" && !isIdVerified && (
-                    <p className="text-xs text-red-500 mt-1">Pakipindot ang VERIFY ID at tiyaking verified ang record bago magpatuloy.</p>
+                  {attemptedNext && formData.pwdIdNumber.trim() !== "" && !isIdVerified && !verifyError && (
+                    <p className="text-xs text-red-500 mt-1">Pakipindot ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy.</p>
                   )}
                   {isIdVerified && (
                     <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2 text-xs text-emerald-800 animate-in fade-in duration-200">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                       <span>
-                        Matagumpay na na-verify ang inyong PWD ID record <strong>({formData.pwdIdNumber})</strong>.
+                        Matagumpay na na-verify ang inyong PWD ID record <strong>(PWD-{formData.pwdIdNumber})</strong>.
                       </span>
                     </div>
                   )}
