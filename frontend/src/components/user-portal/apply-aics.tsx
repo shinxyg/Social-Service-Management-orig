@@ -1162,15 +1162,6 @@ if (isBlocked) {
                     </div>
                   )}
                 </div>
-
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-2 tracking-wide uppercase">{t("clickAssistanceType")}</h3>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t("chooseAssistanceType")} **</label>
-                  <div className="w-full h-11 rounded-lg border border-gray-300 bg-gray-50 px-3 flex items-center justify-between text-sm text-gray-900 cursor-not-allowed">
-                    {t("medicinesMedicalSupplies")}
-                    <span className="text-gray-400">▾</span>
-                  </div>
-                </div>
               </>
             )}
           </div>
