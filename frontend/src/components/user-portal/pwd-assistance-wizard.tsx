@@ -1707,7 +1707,7 @@ export default function PWDSocialAssistanceWizard({
               onClick={goNext}
               className="px-6 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs transition-colors"
             >
-              NEXT &gt;
+              NEXT
             </button>
           ) : (
             <button
