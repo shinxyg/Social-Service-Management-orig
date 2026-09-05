@@ -1152,22 +1152,36 @@ export default function SoloParentChildWelfareAdmin() {
 const [isLoading, setIsLoading] = useState(true)
 const [loadError, setLoadError] = useState("")
 
-const loadApplications = async () => {
-  setIsLoading(true)
+const loadApplications = async (silent = false) => {
+  if (!silent) setIsLoading(true)
   setLoadError("")
   try {
     const apps = await fetchAllSubmissions()
     setApplications(apps)
   } catch (err) {
     console.error("Failed to load applications:", err)
-    setLoadError("Hindi makuha ang mga application. Subukan ulit.")
+    if (!silent) setLoadError("Hindi makuha ang mga application. Subukan ulit.")
   } finally {
-    setIsLoading(false)
+    if (!silent) setIsLoading(false)
   }
 }
 
 useEffect(() => {
-  loadApplications()
+  loadApplications(false)
+
+  const interval = setInterval(() => {
+    loadApplications(true)
+  }, 2500)
+
+  const handleSync = () => loadApplications(true)
+  window.addEventListener("storage", handleSync)
+  window.addEventListener("focus", handleSync)
+
+  return () => {
+    clearInterval(interval)
+    window.removeEventListener("storage", handleSync)
+    window.removeEventListener("focus", handleSync)
+  }
 }, [])
 const [selectedApp, setSelectedApp] = useState<WelfareSubmission | null>(null)
 const [filterCategory, setFilterCategory] = useState<"all" | "Solo Parent" | "Child Welfare">("all")

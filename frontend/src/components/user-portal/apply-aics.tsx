@@ -763,6 +763,10 @@ const handleFinalSubmit = async () => {
       if (response.ok) {
         const data = await response.json()
         setReference(data.application?.reference_no || qcId || "110000116932100")
+        try {
+          localStorage.setItem('aics_application_submitted', String(Date.now()))
+          window.dispatchEvent(new CustomEvent('aics_application_submitted'))
+        } catch {}
       } else {
         setReference(qcId || "110000116932100")
       }

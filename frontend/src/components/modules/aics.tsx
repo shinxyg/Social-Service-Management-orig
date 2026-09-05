@@ -119,8 +119,8 @@ export default function AICS() {
   const [showBeneficiaryInfo, setShowBeneficiaryInfo] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
 
-  const fetchApplications = useCallback(async () => {
-    setLoading(true)
+  const fetchApplications = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     setErrorMsg(null)
     try {
       const res = await fetch(`${API_BASE}/applications`)
@@ -129,14 +129,36 @@ export default function AICS() {
       setApplications(data.applications || [])
     } catch (err) {
       console.error(err)
-      setErrorMsg('Hindi makuha ang listahan ng applications. Siguraduhing tumatakbo ang backend server.')
+      if (!silent) {
+        setErrorMsg('Hindi makuha ang listahan ng applications. Siguraduhing tumatakbo ang backend server.')
+      }
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    fetchApplications()
+    fetchApplications(false)
+
+    // Realtime live polling every 2 seconds
+    const interval = setInterval(() => {
+      fetchApplications(true)
+    }, 2000)
+
+    const handleSync = () => {
+      fetchApplications(true)
+    }
+
+    window.addEventListener('storage', handleSync)
+    window.addEventListener('aics_application_submitted', handleSync)
+    window.addEventListener('focus', handleSync)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('storage', handleSync)
+      window.removeEventListener('aics_application_submitted', handleSync)
+      window.removeEventListener('focus', handleSync)
+    }
   }, [fetchApplications])
 
   const openReview = async (app: AicsApplication) => {
