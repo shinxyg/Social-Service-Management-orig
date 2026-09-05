@@ -1259,8 +1259,8 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                   )}
                   {app.notes && <p className="text-xs"><strong>Notes:</strong> {app.notes}</p>}
                   <p className="text-emerald-800 font-semibold flex items-center gap-1.5 text-xs">
-                    <Check className="h-3.5 w-3.5 text-emerald-600" />
-                    Connected to Appointments (for ID claiming schedule)
+                    <Mail className="h-3.5 w-3.5 text-emerald-600" />
+                    Directly Sent to Registered Gmail ({app.email || "Applicant Email"})
                   </p>
                   {onShowCard && (
                     <div className="pt-2">
@@ -1613,27 +1613,7 @@ export default function PWDSeniorCitizen() {
         amount: 2000,
       })
     } else {
-      // 1. Sync ID card pickup/claiming to Appointments
-      try {
-        fetch(`${API_BASE}/api/appointments`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            referenceNo: targetApp.referenceNumber,
-            reference_no: targetApp.referenceNumber,
-            module: isPWD(targetApp) ? "PWD" : "Senior Citizen",
-            applicantName: displayName(targetApp),
-            applicant_name: displayName(targetApp),
-            concern: isPWD(targetApp) ? "PWD ID Card Issuance" : "Senior ID Card Issuance",
-            status: "pending",
-          }),
-        }).catch(() => {})
-      } catch {}
-
-      window.dispatchEvent(new Event("appointments_updated"))
-      window.dispatchEvent(new Event("storage"))
-
-      // 2. Dispatch in-portal bell notification to applicant for ID cards
+      // 1. Dispatch in-portal bell notification to applicant for ID cards
       if (targetApp) {
         const rawType = String(targetApp.type || "").toLowerCase()
         const typeLabel =
@@ -1643,16 +1623,16 @@ export default function PWDSeniorCitizen() {
             ? "Replacement / Lost ID"
             : "New Application"
         const serviceName = isPWD(targetApp) ? "PWD ID" : "Senior Citizen ID"
+        const targetEmail = targetApp.email
 
         pushUserNotification({
           title: `${serviceName} Application (${typeLabel}): Approved`,
-          desc: `Congratulations! Your application for ${serviceName} (${typeLabel}) has been officially approved. Official Assigned ID Number: ${idNumber}.`,
+          desc: `Congratulations! Your application for ${serviceName} (${typeLabel}) has been approved. Your official Digital ID (${idNumber}) was sent directly to your Gmail (${targetEmail || "registered email"}).`,
           applicationRef: targetApp.referenceNumber,
           assistanceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
         })
 
-        // 3. Dispatch official ID approval email directly to applicant's Gmail
-        const targetEmail = targetApp.email
+        // 2. Dispatch official ID approval email directly to applicant's Gmail
         if (targetEmail && targetEmail.includes("@")) {
           const endpoint = isPWD(targetApp) ? `${API_BASE}/api/email/send-pwd-id` : `${API_BASE}/api/email/send-senior-id`
           const payload = isPWD(targetApp)
