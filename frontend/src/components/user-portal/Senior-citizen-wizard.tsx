@@ -403,11 +403,16 @@ export default function SeniorCitizenApplicationWizard({
           : "new"
 
       const checkUserMatches = (a: any) => {
-        const qcid = userProfile?.qcidNo || "110000116932100"
-        const email = userProfile?.email || "dimalmae@gmail.com"
+        const prof = getCurrentUserProfile()
+        const qcid = (userProfile?.qcidNo || prof?.qcidNo || prof?.qcidNumber || "110000116932100").trim().toLowerCase()
+        const email = (userProfile?.email || prof?.email || "").trim().toLowerCase()
+        const aEmail = (a.email || "").trim().toLowerCase()
+        const aRef = (a.referenceNumber || a.reference_no || a.qcid || "").trim().toLowerCase()
+        const aAssigned = (a.assignedIdNumber || "").trim().toLowerCase()
+        const aCat = String(a.category || "").toUpperCase()
         return (
-          (a.referenceNumber === qcid || a.email === email) &&
-          a.category === "Senior Citizen"
+          (aRef === qcid || (email && aEmail === email) || (aAssigned && aAssigned === qcid)) &&
+          (aCat.includes("SENIOR") || aCat === "SENIOR CITIZEN")
         )
       }
 
@@ -418,9 +423,12 @@ export default function SeniorCitizenApplicationWizard({
           const apps = await res.json()
           if (Array.isArray(apps)) {
             const userApps = apps.filter(checkUserMatches)
-            const pendingFlow = userApps.find(
-              (a) => a.status === "pending" && (a.type === expectedType || (!a.type && expectedType === "new"))
-            )
+            const pendingFlow = userApps.find((a) => {
+              if (a.status !== "pending") return false
+              if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
+              if (expectedType === "renewal") return a.type === "renewal"
+              return a.type === "new" || !a.type
+            })
             const pendingAny = userApps.find((a) => a.status === "pending")
             const approvedNew = userApps.find((a) => a.status === "approved")
             if (pendingFlow) matchedPendingForFlow = pendingFlow
@@ -438,9 +446,12 @@ export default function SeniorCitizenApplicationWizard({
             const apps = JSON.parse(saved)
             if (Array.isArray(apps)) {
               const userApps = apps.filter(checkUserMatches)
-              const pendingFlow = userApps.find(
-                (a) => a.status === "pending" && (a.type === expectedType || (!a.type && expectedType === "new"))
-              )
+              const pendingFlow = userApps.find((a) => {
+                if (a.status !== "pending") return false
+                if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
+                if (expectedType === "renewal") return a.type === "renewal"
+                return a.type === "new" || !a.type
+              })
               const pendingAny = userApps.find((a) => a.status === "pending")
               const approvedNew = userApps.find((a) => a.status === "approved")
               if (!matchedPendingForFlow && pendingFlow) matchedPendingForFlow = pendingFlow
@@ -463,9 +474,15 @@ export default function SeniorCitizenApplicationWizard({
         setLatestApprovedApp(null)
       }
 
-      // Block ONLY for Renewal flow when there is a pending renewal application
-      if (appFlow === "renewal" && !bypassedBlock && matchedPendingForFlow) {
-        setIsBlocked(true)
+      // Block when there is a pending application matching this flow
+      if (!bypassedBlock && matchedPendingForFlow) {
+        if (appFlow === "renewal" || appFlow === "loss") {
+          setIsBlocked(true)
+        } else if (!matchedApproved) {
+          setIsBlocked(true)
+        } else {
+          setIsBlocked(false)
+        }
       } else {
         setIsBlocked(false)
       }
@@ -476,7 +493,7 @@ export default function SeniorCitizenApplicationWizard({
     return () => clearInterval(interval)
   }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow])
 
-  // Auto-redirect to pending status screen after 3 seconds on submitted (only for renewal)
+  // Auto-redirect to pending status screen after 3 seconds on submitted
   useEffect(() => {
     if (!isSubmitted) return
 
@@ -485,9 +502,7 @@ export default function SeniorCitizenApplicationWizard({
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
-          if (appFlow === "renewal") {
-            setIsBlocked(true)
-          }
+          setIsBlocked(true)
           setIsSubmitted(false)
           return 0
         }
