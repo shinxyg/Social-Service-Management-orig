@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react"
 import {
   Check,
-  ChevronLeft,
-  ChevronRight,
   FileText,
   Upload,
   Camera,
   X,
   Pencil,
   Info,
-  Sparkles,
-  Loader2,
   ShieldCheck,
   User,
   IdCard,
@@ -248,8 +244,6 @@ export default function SeniorCitizenApplicationWizard({
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
-  const [bypassedBlock, setBypassedBlock] = useState(false)
-  const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -1251,12 +1245,7 @@ export default function SeniorCitizenApplicationWizard({
                     <select
                       value={formData.bloodType}
                       onChange={(e) => handleFieldChange("bloodType", e.target.value)}
-                      disabled={appFlow !== "new" && !isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        appFlow !== "new" && !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 transition-colors bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                     >
                       {["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"].map((bt) => (
                         <option key={bt} value={bt}>{bt}</option>
