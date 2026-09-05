@@ -815,7 +815,6 @@ interface DetailedViewProps {
 
 function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: DetailedViewProps) {
   const idNumber = generateOfficialIdNumber(app)
-  const [customIdNumber, setCustomIdNumber] = useState(idNumber)
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
