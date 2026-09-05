@@ -287,7 +287,6 @@ export default function SeniorCitizenApplicationWizard({
           (appFlow === "loss" && reasonForReplacement !== ""))))
 
   // Step 2: Personal Information state
-  const [isEditingInfo, setIsEditingInfo] = useState(false)
   const [formData, setFormData] = useState({
     firstName: userProfile?.firstName || "CLARISA MAE",
     middleName: userProfile?.middleName || "GALIAS",
@@ -1109,30 +1108,15 @@ export default function SeniorCitizenApplicationWizard({
           {/* ──────────────── STEP 2: PERSONAL INFORMATION ──────────────── */}
           {step === 2 && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-3">
-                <div>
-                  <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
-                    {appFlow === "new" ? (t("wizardPersonal") || "Personal Information") : (t("verifiedPersonalInfo") || "Verified Personal Information")}
-                  </h2>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {appFlow === "new"
-                      ? (t("reviewSeniorDesc") || "Please review your personal information from your QCID profile. Fill in the additional details below.")
-                      : t("autoFetchedFromVerifiedSeniorId", { id: existingIdNumber || "—" }) || `Information automatically retrieved from verified Senior Citizen ID (${existingIdNumber || "—"}).`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                    <Check className="w-3.5 h-3.5" /> {t("autoFilledFromQcidRecord") || "Auto-filled from QCID Record"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingInfo((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition-colors cursor-pointer"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span>{isEditingInfo ? "Lock Information" : "Edit Information"}</span>
-                  </button>
-                </div>
+              <div className="border-b border-gray-200 pb-3">
+                <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
+                  {appFlow === "new" ? (t("wizardPersonal") || "Personal Information") : (t("verifiedPersonalInfo") || "Verified Personal Information")}
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {appFlow === "new"
+                    ? (t("reviewSeniorDesc") || "Please review your personal information from your QCID profile. Fill in the additional details below.")
+                    : t("autoFetchedFromVerifiedSeniorId", { id: existingIdNumber || "—" }) || `Information automatically retrieved from verified Senior Citizen ID (${existingIdNumber || "—"}).`}
+                </p>
               </div>
 
               {/* IMPORTANT REMINDER BOX */}
@@ -1354,9 +1338,9 @@ export default function SeniorCitizenApplicationWizard({
                   </div>
                 )}
 
-                {/* EMERGENCY CONTACT (Editable directly on New App, toggleable on Renewal/Loss) */}
+                {/* EMERGENCY CONTACT */}
                 {(() => {
-                  const isEmergencyEditable = appFlow === "new" || isEditingInfo
+                  const isEmergencyEditable = true
                   return (
                     <div className="pt-4 border-t border-gray-200 space-y-3">
                       <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5">
