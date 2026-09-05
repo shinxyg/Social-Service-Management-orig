@@ -118,6 +118,80 @@ export default function FinancialAidDisbursement() {
             remoteRecords = remoteRecords.filter((rr) => !rejectedRefs.has(rr.applicationRef))
           }
         }
+
+        // 3. Fetch from /api/pwd-senior/applications (Approved Social Assistance Only)
+        let pwdSeniorApps: any[] = []
+        try {
+          const resPwd = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+          if (resPwd.ok) {
+            pwdSeniorApps = await resPwd.json()
+          }
+        } catch {}
+
+        if (!Array.isArray(pwdSeniorApps) || pwdSeniorApps.length === 0) {
+          try {
+            const local = localStorage.getItem("pwd_senior_applications")
+            if (local) pwdSeniorApps = JSON.parse(local)
+          } catch {}
+        }
+
+        if (Array.isArray(pwdSeniorApps) && pwdSeniorApps.length > 0) {
+          const rejectedPwdRefs = new Set<string>()
+          const approvedPwdApps = pwdSeniorApps.filter((app: any) => {
+            const ref = app.referenceNumber || app.reference_number || app.id
+            const isAssistance =
+              app.type === "assistance" ||
+              app.type === "social-assistance" ||
+              String(app.category || "").toLowerCase().includes("assistance") ||
+              String(app.service || "").toLowerCase().includes("assistance") ||
+              String(app.assistanceType || "").toLowerCase().includes("assistance")
+
+            if (isAssistance) {
+              if (app.status === "rejected" || app.status === "pending") {
+                rejectedPwdRefs.add(ref)
+                return false
+              }
+              return app.status === "approved" || app.status === "completed" || app.status === "for_release"
+            }
+            return false
+          })
+
+          const pwdRecords: SyncedDisbursementRecord[] = approvedPwdApps.map((app: any) => {
+            const fullName =
+              [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ") ||
+              [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") ||
+              "APPLICANT"
+            const isPwdApp = String(app.category || "").toUpperCase().includes("PWD")
+            const assistanceType = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
+            const isReleased = app.status === "released" || app.status === "completed"
+            const ref = app.referenceNumber || app.reference_number || "PWD-QC-2026"
+
+            return {
+              id: `remote-pwd-${app.id || ref}`,
+              disbursementId: `DISB-2026-${String(app.id || ref).slice(-4).padStart(4, "0")}`,
+              applicationRef: ref,
+              applicantName: fullName.toUpperCase(),
+              assistanceType: assistanceType,
+              fixedAmount: 2000,
+              dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }),
+              status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
+              venue: "Quezon City Hall",
+              remarks: "Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.",
+            }
+          })
+
+          pwdRecords.forEach((pr) => {
+            if (!remoteRecords.some((rr) => rr.applicationRef === pr.applicationRef || rr.disbursementId === pr.disbursementId)) {
+              remoteRecords.push(pr)
+            }
+          })
+
+          remoteRecords = remoteRecords.filter((rr) => !rejectedPwdRefs.has(rr.applicationRef))
+        }
       } catch (err) {
         console.warn("Could not fetch remote disbursements/applications:", err)
       }

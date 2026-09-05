@@ -21,10 +21,20 @@ exports.getAppointments = async (req, res) => {
     // Purge any appointments belonging to pending or rejected AICS applications
     await db.query(`
       DELETE FROM appointments
-      WHERE reference_no IN (
+      WHERE module = 'AICS' AND reference_no IN (
         SELECT reference_no FROM aics_applications WHERE status NOT IN ('approved', 'completed', 'for_release')
       )
     `);
+
+    // Purge any appointments belonging to pending or rejected PWD / Senior applications
+    try {
+      await db.query(`
+        DELETE FROM appointments
+        WHERE module IN ('PWD', 'Senior Citizen') AND reference_no IN (
+          SELECT reference_number FROM pwd_senior_applications WHERE status NOT IN ('approved', 'completed', 'for_release')
+        )
+      `);
+    } catch (_) {}
 
     // Deduplicate appointments table
     try {
@@ -55,12 +65,42 @@ exports.getAppointments = async (req, res) => {
       }
     } catch (_) {}
 
+    // Auto-populate appointments from approved PWD & Senior Citizen applications if not yet present
+    try {
+      const approvedPwdSenior = await db.query(
+        `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix 
+         FROM pwd_senior_applications 
+         WHERE status = 'approved'`
+      );
+      for (const row of approvedPwdSenior.rows) {
+        const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [row.reference_number]);
+        if (checkAppt.rows.length === 0) {
+          const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+          const isPwd = String(row.category || '').toUpperCase().includes('PWD');
+          const mod = isPwd ? 'PWD' : 'Senior Citizen';
+          const appType = String(row.type || '').toLowerCase();
+          const isAssistance = appType === 'assistance' || appType === 'social-assistance' || String(row.category || '').toLowerCase().includes('assistance');
+          const concern = isAssistance ? (isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance') : (isPwd ? 'PWD ID Card Issuance' : 'Senior ID Card Issuance');
+          await db.query(
+            `INSERT INTO appointments
+              (reference_no, module, applicant_name, concern, status, office_location, notes)
+             VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang aplikasyon para sa scheduling.')
+             ON CONFLICT DO NOTHING`,
+            [row.reference_number, mod, fullName, concern]
+          );
+        }
+      }
+    } catch (_) {}
+
     const result = await db.query(
       `SELECT a.* FROM appointments a
        WHERE a.reference_no LIKE 'LP-%'
-          OR a.module = 'Livelihood'
+          OR a.module IN ('Livelihood', 'PWD', 'Senior Citizen', 'Solo Parent', 'Child Welfare')
           OR a.reference_no IN (
             SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
+          )
+          OR a.reference_no IN (
+            SELECT reference_number FROM pwd_senior_applications WHERE status IN ('approved', 'completed', 'for_release')
           )
        ORDER BY a.created_at DESC`
     );

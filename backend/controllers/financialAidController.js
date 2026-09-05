@@ -184,7 +184,11 @@ exports.getDisbursements = async (req, res) => {
       await db.query(`
         DELETE FROM financial_aid_disbursements
         WHERE (
-          application_ref NOT LIKE 'LP-%' AND application_ref IN (
+          application_ref NOT LIKE 'LP-%' 
+          AND application_ref NOT IN (
+            SELECT reference_number FROM pwd_senior_applications WHERE status IN ('approved', 'completed', 'for_release')
+          )
+          AND application_ref IN (
             SELECT f.application_ref FROM financial_aid_disbursements f
             LEFT JOIN aics_applications a ON f.application_ref = a.reference_no
             WHERE a.id IS NULL OR a.status NOT IN ('approved', 'completed', 'for_release')
@@ -238,6 +242,44 @@ exports.getDisbursements = async (req, res) => {
          SET fixed_amount = 15000
          WHERE (fixed_amount::numeric = 0 OR fixed_amount IS NULL) AND assistance_type LIKE '%Livelihood%'`
       );
+    } catch (_) {}
+
+    // Auto-populate disbursements from approved PWD & Senior Citizen Social Assistance
+    try {
+      const approvedPwdAssistance = await db.query(
+        `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, approved_date
+         FROM pwd_senior_applications 
+         WHERE status = 'approved' AND (type = 'assistance' OR type = 'social-assistance' OR category ILIKE '%assistance%')`
+      );
+      for (const row of approvedPwdAssistance.rows) {
+        const disbCheck = await db.query(
+          'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1',
+          [row.reference_number]
+        );
+        if (disbCheck.rows.length === 0) {
+          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+          const isPwd = String(row.category || '').toUpperCase().includes('PWD');
+          const assistanceType = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
+          await db.query(
+            `INSERT INTO financial_aid_disbursements (
+              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+              date_approved, status, venue, remarks
+            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
+            ON CONFLICT DO NOTHING`,
+            [
+              disbId,
+              row.reference_number,
+              fullName,
+              assistanceType,
+              2000,
+              row.approved_date || new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+              'Quezon City Hall',
+              'Approved PWD/Senior Social Assistance. Ready for Appointment scheduling and payout.',
+            ]
+          );
+        }
+      }
     } catch (_) {}
 
     const result = await db.query(

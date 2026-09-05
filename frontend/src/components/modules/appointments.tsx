@@ -359,6 +359,62 @@ export default function Appointments() {
           }
         }
 
+        // 3. Fetch from /api/pwd-senior/applications (Approved Social Assistance Only)
+        let pwdSeniorApps: any[] = []
+        try {
+          const resPwd = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+          if (resPwd.ok) {
+            pwdSeniorApps = await resPwd.json()
+          }
+        } catch {}
+
+        if (!Array.isArray(pwdSeniorApps) || pwdSeniorApps.length === 0) {
+          try {
+            const local = localStorage.getItem("pwd_senior_applications")
+            if (local) pwdSeniorApps = JSON.parse(local)
+          } catch {}
+        }
+
+        if (Array.isArray(pwdSeniorApps) && pwdSeniorApps.length > 0) {
+          const unapprovedPwdRefs = new Set<string>()
+          pwdSeniorApps.forEach((app: any) => {
+            const ref = app.referenceNumber || app.reference_number || app.id
+            const isAssistance =
+              app.type === "assistance" ||
+              app.type === "social-assistance" ||
+              String(app.category || "").toLowerCase().includes("assistance") ||
+              String(app.service || "").toLowerCase().includes("assistance") ||
+              String(app.assistanceType || "").toLowerCase().includes("assistance")
+
+            if (isAssistance) {
+              if (app.status === "rejected" || app.status === "pending") {
+                unapprovedPwdRefs.add(ref)
+              } else if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
+                if (!appts.some((ap) => ap.referenceNo === ref)) {
+                  const fullName =
+                    [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ") ||
+                    [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") ||
+                    "APPLICANT"
+                  const isPwdApp = String(app.category || "").toUpperCase().includes("PWD")
+                  const concernName = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
+
+                  appts.push({
+                    id: `pwd-senior-appt-${app.id || ref}`,
+                    referenceNo: ref,
+                    module: isPwdApp ? "PWD" : "Senior Citizen",
+                    applicantName: fullName,
+                    submittedAt: app.submittedAt || app.created_at || new Date().toISOString(),
+                    concern: concernName,
+                    status: "pending",
+                  })
+                }
+              }
+            }
+          })
+
+          appts = appts.filter((a) => !unapprovedPwdRefs.has(a.referenceNo))
+        }
+
         setAppointments(appts)
       } catch (err) {
         console.warn("Could not fetch appointments from backend:", err)

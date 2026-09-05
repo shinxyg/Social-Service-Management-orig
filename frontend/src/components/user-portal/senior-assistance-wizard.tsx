@@ -7,7 +7,6 @@ import {
   AlertCircle,
   X,
   Loader2,
-  Sparkles,
   ChevronRight,
   ChevronUp,
   Pencil,
@@ -17,6 +16,8 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
+import { API_BASE } from "../../config/api"
+import { getLoggedInUserQcid } from "../../utils/userProfile"
 
 export interface UserProfile {
   userId?: string
@@ -190,10 +191,85 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
-  const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
+  const [blockedApp, setBlockedApp] = useState<any | null>(null)
   const [referenceNumber, setReferenceNumber] = useState("")
   const [submissionDate, setSubmissionDate] = useState("")
   const [isEditingInfo, setIsEditingInfo] = useState(false)
+
+  // Check on mount if user already has an active pending Senior assistance application
+  useEffect(() => {
+    const checkActiveApp = async () => {
+      try {
+        let allApps: any[] = []
+        try {
+          const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+          if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data)) allApps = data
+          }
+        } catch {}
+
+        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications"]
+        for (const k of localKeys) {
+          try {
+            const local = JSON.parse(localStorage.getItem(k) || "[]")
+            if (Array.isArray(local)) {
+              for (const la of local) {
+                if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
+                  allApps.push(la)
+                }
+              }
+            }
+          } catch {}
+        }
+
+        const currentQcid = getLoggedInUserQcid() || (userProfile as any)?.qcidNumber || userProfile?.qcidNo || "110000116932100"
+        const currentEmail = (userProfile?.email || "").toLowerCase().trim()
+        const currentLastName = (userProfile?.lastName || "").toLowerCase().trim()
+        const currentFirstName = (userProfile?.firstName || "").toLowerCase().trim()
+
+        const activeApp = allApps.find((a) => {
+          if (!a) return false
+          const cat = String(a.category || "").toUpperCase()
+          const isSenior = cat.includes("SENIOR") || a.category === "Senior Citizen"
+          const isAssistance =
+            a.type === "assistance" ||
+            a.type === "social-assistance" ||
+            String(a.type || "").toLowerCase().includes("assistance") ||
+            String(a.service || "").toLowerCase().includes("assistance") ||
+            String(a.assistanceType || "").toLowerCase().includes("assistance")
+
+          if (!isSenior || !isAssistance) return false
+
+          const appStatus = String(a.status || "pending").toLowerCase()
+          if (appStatus !== "pending" && appStatus !== "under_review" && appStatus !== "for_release") return false
+
+          const appRef = String(a.referenceNumber || a.reference_number || a.id || "").trim()
+          const appEmail = String(a.email || "").toLowerCase().trim()
+          const appLastName = String(a.lastName || a.last_name || "").toLowerCase().trim()
+          const appFirstName = String(a.firstName || a.first_name || "").toLowerCase().trim()
+
+          const matchUser =
+            (currentQcid && (appRef === currentQcid || appRef.includes(currentQcid) || currentQcid.includes(appRef))) ||
+            (currentEmail && appEmail && currentEmail === appEmail) ||
+            (currentLastName && appLastName && (currentLastName === appLastName || appLastName.includes(currentLastName))) ||
+            (currentFirstName && appFirstName && currentFirstName === appFirstName)
+
+          return matchUser
+        })
+
+        if (activeApp) {
+          setBlockedApp(activeApp)
+          setReferenceNumber(activeApp.referenceNumber || activeApp.reference_number || activeApp.id || currentQcid)
+          setIsBlocked(true)
+        }
+      } catch (e) {
+        console.warn("Could not check active Senior assistance application:", e)
+      }
+    }
+
+    checkActiveApp()
+  }, [userProfile])
 
   // Reload / Navigation warning protection
   useEffect(() => {
@@ -206,26 +282,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
       ;(window as any).__isFormDirty = false
     }
   }, [step, submitted])
-
-  // Auto-redirect to pending status screen (Pic 2) after 3 seconds on submitted
-  useEffect(() => {
-    if (!submitted) return
-
-    setRedirectCountdown(3)
-    const interval = setInterval(() => {
-      setRedirectCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          setIsBlocked(true)
-          setSubmitted(false)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [submitted])
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -479,62 +535,112 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
   if (submitted) {
     return (
-      <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
-        <div className="bg-white border border-border rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-emerald-50">
-            <Check className="w-8 h-8" />
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <Info className="h-8 w-8 text-amber-500" />
           </div>
-
-          <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <Sparkles className="w-3.5 h-3.5" /> Application Submitted Successfully!
-            </span>
-            <h2 className="text-2xl font-bold text-foreground">
-              Mabuhay! Ang inyong aplikasyon ay Natanggap Na
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              {t("hasPendingAppTitle") || "You Have an Active Application"}
             </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Ang inyong Senior Citizen Social Assistance application ay matagumpay na naisumite at kasalukuyang sinusuri.
+            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+              {t("hasPendingAppDesc") ? t("hasPendingAppDesc").replace("{type}", "Senior Citizen Social Assistance") : "Your application for Senior Citizen Social Assistance has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."}
             </p>
           </div>
 
-          {/* Reference Card */}
-          <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
-            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-              <span className="font-semibold text-muted-foreground">Application Reference No.:</span>
-              <span className="font-mono font-bold text-blue-700 text-sm">{referenceNumber}</span>
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appRefNoLabel") || "Application Reference No.:"}</span>
+              <span className="font-mono font-bold text-blue-600">{referenceNumber || userProfile?.qcidNo || "110000116932100"}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Service:</span>
-              <span className="font-semibold text-foreground">Senior Citizen Social Assistance</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">OSCA ID No.:</span>
-              <span className="font-mono font-semibold text-foreground">{formData.seniorIdNumber}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Aplikante:</span>
-              <span className="font-semibold text-foreground">
-                {formData.firstName} {formData.middleName ? `${formData.middleName} ` : ""}{formData.lastName}
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                {t("statusPendingBadge") || "• Under Review (Pending)"}
               </span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Petsa:</span>
-              <span className="text-foreground">{submissionDate}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
+              <span className="font-semibold text-gray-700">
+                {submissionDate || new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
+              </span>
             </div>
           </div>
 
-          <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
-            <Info className="w-4 h-4 text-blue-600 shrink-0" />
-            <p>
-              Maaari ninyong tingnan ang Notifications para sa mga update sa inyong aplikasyon.
+          <div className="w-full pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isBlocked) {
+    return (
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            ← Bumalik
+          </button>
+        )}
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <Info className="h-8 w-8 text-amber-500" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              May Kasalukuyang Application Ka Pa
+            </h2>
+            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+              Ang inyong aplikasyon para sa <strong>Senior Citizen Social Assistance</strong> ay matagumpay na naisumite at kasalukuyang sinusuri (Pending). Maghintay ng pagsusuri ng Social Worker bago magsumite ng panibagong aplikasyon.
             </p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
-            <span>
-              Awtomatikong lilipat sa application status sa loob ng {redirectCountdown} segundo...
-            </span>
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appRefNoLabel") || "Application Reference No.:"}</span>
+              <span className="font-mono font-bold text-blue-600">
+                {blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || referenceNumber || userProfile?.qcidNo || "110000116932100"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                {t("statusPendingBadge") || "• Under Review (Pending)"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
+              <span className="font-semibold text-gray-700">
+                {blockedApp?.submittedAt || blockedApp?.created_at || blockedApp?.dateSubmitted
+                  ? new Date(blockedApp.submittedAt || blockedApp.created_at || blockedApp.dateSubmitted).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+                  : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
+              </span>
+            </div>
+          </div>
+
+          <div className="w-full pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
+            </button>
           </div>
         </div>
       </div>

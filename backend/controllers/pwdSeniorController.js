@@ -395,27 +395,104 @@ exports.updateApplicationStatus = async (req, res) => {
     const { id } = req.params;
     const { status, assignedIdNumber, approvedBy, approvedDate, rejectionReason } = req.body;
 
+    let targetApp = null;
     try {
-      await db.query(
+      const q = await db.query(
         `UPDATE pwd_senior_applications
          SET status = $1, assigned_id_number = $2, approved_by = $3, approved_date = $4, rejection_reason = $5
-         WHERE id = $6`,
+         WHERE id = $6 OR reference_number = $6
+         RETURNING *`,
         [status, assignedIdNumber || null, approvedBy || null, approvedDate || null, rejectionReason || null, id]
       );
+      if (q.rows.length > 0) {
+        targetApp = q.rows[0];
+      }
     } catch (dbErr) {
       console.warn('[DB Error] Updating DB failed, updating in memory fallback:', dbErr.message);
-      memoryApplications = memoryApplications.map((app) =>
-        app.id === id
-          ? {
-              ...app,
-              status,
-              assignedIdNumber: assignedIdNumber || app.assignedIdNumber,
-              approvedBy: approvedBy || app.approvedBy,
-              approvedDate: approvedDate || app.approvedDate,
-              rejectionReason: rejectionReason || app.rejectionReason,
-            }
-          : app
-      );
+      memoryApplications = memoryApplications.map((app) => {
+        if (app.id === id || app.referenceNumber === id || app.reference_number === id) {
+          const updated = {
+            ...app,
+            status,
+            assignedIdNumber: assignedIdNumber || app.assignedIdNumber,
+            approvedBy: approvedBy || app.approvedBy,
+            approvedDate: approvedDate || app.approvedDate,
+            rejectionReason: rejectionReason || app.rejectionReason,
+          };
+          targetApp = updated;
+          return updated;
+        }
+        return app;
+      });
+    }
+
+    if (!targetApp) {
+      targetApp = memoryApplications.find((a) => a.id === id || a.referenceNumber === id || a.reference_number === id);
+    }
+
+    const refNo = targetApp?.reference_number || targetApp?.referenceNumber || id;
+    const fullName = targetApp ? [
+      targetApp.first_name || targetApp.firstName,
+      targetApp.middle_name || targetApp.middleName,
+      targetApp.last_name || targetApp.lastName,
+      targetApp.suffix
+    ].filter(Boolean).join(' ').trim().toUpperCase() : 'BENEFICIARY';
+    const isPwd = String(targetApp?.category || '').toUpperCase().includes('PWD');
+    const appType = String(targetApp?.type || '').toLowerCase();
+    const isAssistance = appType === 'assistance' || appType === 'social-assistance' || String(targetApp?.category || '').toLowerCase().includes('assistance') || String(targetApp?.service || '').toLowerCase().includes('assistance');
+
+    if (status === 'approved') {
+      const concernName = isAssistance ? (isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance') : (isPwd ? 'PWD ID Card Issuance' : 'Senior ID Card Issuance');
+
+      // 1. Insert into appointments
+      try {
+        const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [refNo]);
+        if (checkAppt.rows.length === 0) {
+          await db.query(
+            `INSERT INTO appointments
+              (reference_no, module, applicant_name, concern, status, office_location, notes)
+             VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang aplikasyon para sa scheduling.')
+             ON CONFLICT DO NOTHING`,
+            [refNo, isPwd ? 'PWD' : 'Senior Citizen', fullName, concernName]
+          );
+        }
+      } catch (e) {
+        console.warn('Could not insert appointment for PWD/Senior:', e.message);
+      }
+
+      // 2. Insert into financial_aid_disbursements if social assistance
+      if (isAssistance) {
+        try {
+          const disbCheck = await db.query('SELECT id FROM financial_aid_disbursements WHERE application_ref = $1', [refNo]);
+          if (disbCheck.rows.length === 0) {
+            const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+            await db.query(
+              `INSERT INTO financial_aid_disbursements (
+                disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+                date_approved, status, venue, remarks
+              ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
+              ON CONFLICT DO NOTHING`,
+              [
+                disbId,
+                refNo,
+                fullName,
+                concernName,
+                2000,
+                approvedDate || new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+                'Quezon City Hall',
+                'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.',
+              ]
+            );
+          }
+        } catch (e) {
+          console.warn('Could not insert financial disbursement for PWD/Senior:', e.message);
+        }
+      }
+    } else if (status === 'rejected') {
+      try {
+        await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [refNo]);
+        await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref = $1`, [refNo]);
+      } catch (_) {}
     }
 
     if (logActivity) {
@@ -424,13 +501,13 @@ exports.updateApplicationStatus = async (req, res) => {
         actorRole: 'Social Worker',
         action: status === 'approved' ? 'approved' : status === 'rejected' ? 'rejected' : 'edited',
         module: 'PWD & Senior Citizen',
-        referenceNo: assignedIdNumber || id,
+        referenceNo: assignedIdNumber || refNo,
         subject: `${status === 'approved' ? 'Approved' : 'Rejected'} PWD/Senior Application`,
         detail: status === 'approved' ? `Official ID: ${assignedIdNumber || 'Assigned'}` : (rejectionReason || 'Requirements not met'),
       });
     }
 
-    return res.json({ success: true, id, status, assignedIdNumber });
+    return res.json({ success: true, id, status, assignedIdNumber, referenceNumber: refNo });
   } catch (err) {
     console.error('Error updating status:', err);
     return res.status(500).json({ error: 'Failed to update status', details: err.message });

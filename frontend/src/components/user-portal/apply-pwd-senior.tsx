@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
-import { AlertCircle, RefreshCw, HeartHandshake, X, FileText } from "lucide-react"
+import { AlertCircle, RefreshCw, HeartHandshake, X, FileText, Info } from "lucide-react"
 import PWDApplicationWizard from "./pwd-senior-wizard"
 import SeniorCitizenApplicationWizard from "./Senior-citizen-wizard"
 import PWDSocialAssistanceWizard from "./pwd-assistance-wizard"
 import SeniorBookletWizard from "./senior-booklet-wizard"
 import SeniorSocialAssistanceWizard from "./senior-assistance-wizard"
 import { useLanguage } from "../ui/language-context"
+import { API_BASE } from "../../config/api"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
 export default function ApplyPWDSenior() {
   const { t } = useLanguage()
@@ -19,13 +21,8 @@ export default function ApplyPWDSenior() {
   const [showModal, setShowModal] = useState(false)
   const [understood, setUnderstood] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
-
-  // Keep modal closed on navigation so user can see and access the form UI directly
-  useEffect(() => {
-    setShowModal(false)
-    setUnderstood(false)
-    setCurrentStep(1)
-  }, [urlCategory, urlType])
+  const [isBlocked, setIsBlocked] = useState(false)
+  const [blockedApp, setBlockedApp] = useState<any>(null)
 
   const isSenior = urlCategory === "senior"
   const isSeniorMedicine = isSenior && urlType === "medicine-booklet"
@@ -33,6 +30,130 @@ export default function ApplyPWDSenior() {
   const isSeniorSocial = isSenior && urlType === "social-assistance"
   const isSeniorId = isSenior && !isSeniorMedicine && !isSeniorMovie && !isSeniorSocial
   const isAssistance = !isSenior && urlType === "assistance"
+
+  // Check for existing pending/active applications for this category & service
+  useEffect(() => {
+    let isMounted = true
+
+    const checkActiveApp = async () => {
+      try {
+        let allApps: any[] = []
+        try {
+          const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+          if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data)) allApps = data
+          }
+        } catch (err) {
+          console.warn("Could not fetch applications from backend:", err)
+        }
+
+        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
+        for (const k of localKeys) {
+          try {
+            const local = JSON.parse(localStorage.getItem(k) || "[]")
+            if (Array.isArray(local)) {
+              for (const la of local) {
+                if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber) || (a.reference_number && a.reference_number === la.reference_number))) {
+                  allApps.push(la)
+                }
+              }
+            }
+          } catch {}
+        }
+
+        const currentQcid = getLoggedInUserQcid() || "110000572516915"
+        const userProf = getCurrentUserProfile()
+        const currentEmail = (userProf?.email || "").toLowerCase().trim()
+        const currentLastName = (userProf?.lastName || "").toLowerCase().trim()
+        const currentFirstName = (userProf?.firstName || "").toLowerCase().trim()
+
+        const isMatchForCurrentService = (a: any) => {
+          if (!a) return false
+
+          const appCategory = String(a.category || "").toLowerCase()
+          const appType = String(a.type || a.assistanceType || a.service || "").toLowerCase()
+          const appService = String(a.service || "").toLowerCase()
+
+          if (isAssistance) {
+            // PWD Social Assistance
+            const isAssistanceType =
+              appType === "assistance" ||
+              appType === "social-assistance" ||
+              appCategory.includes("assistance") ||
+              appService.includes("assistance") ||
+              (appCategory === "pwd" && (appType === "assistance" || appType === "social-assistance")) ||
+              (a.documents || []).some((d: any) => String(d.name || "").toLowerCase().includes("indigency") || String(d.name || "").toLowerCase().includes("pwdqcid"))
+            if (!isAssistanceType) return false
+          } else if (isSeniorSocial) {
+            // Senior Social Assistance
+            const isSeniorSocialType =
+              (appCategory === "senior" && (appType === "social-assistance" || appType === "assistance")) ||
+              appService.includes("senior social")
+            if (!isSeniorSocialType) return false
+          } else if (isSeniorMedicine) {
+            if (!(appCategory === "senior" && appType === "medicine-booklet")) return false
+          } else if (isSeniorMovie) {
+            if (!(appCategory === "senior" && appType === "movie-booklet")) return false
+          } else if (isSeniorId) {
+            if (appCategory !== "senior" || appType.includes("assistance") || appType.includes("booklet") || appService.includes("assistance")) return false
+          } else {
+            // PWD ID
+            if (appCategory === "senior" || appType.includes("assistance") || appCategory.includes("assistance") || appService.includes("assistance")) return false
+          }
+
+          const appStatus = String(a.status || "pending").toLowerCase()
+          if (appStatus !== "pending" && appStatus !== "under_review" && appStatus !== "for_release") return false
+
+          const appRef = String(a.referenceNumber || a.reference_number || a.id || a.qc_id || a.qcid || "").trim()
+          const appEmail = String(a.email || "").toLowerCase().trim()
+          const appLastName = String(a.lastName || a.last_name || "").toLowerCase().trim()
+          const appFirstName = String(a.firstName || a.first_name || "").toLowerCase().trim()
+
+          const matchUser =
+            (currentQcid && (appRef === currentQcid || appRef.includes(currentQcid) || currentQcid.includes(appRef) || a.qcid === currentQcid || a.qc_id === currentQcid)) ||
+            (currentEmail && appEmail && currentEmail === appEmail) ||
+            (currentLastName && appLastName && currentFirstName && appFirstName && currentLastName === appLastName && currentFirstName === appFirstName) ||
+            (currentLastName && appLastName && (currentLastName === appLastName || appLastName.includes(currentLastName)))
+
+          return Boolean(matchUser)
+        }
+
+        const matchedApp = allApps.find(isMatchForCurrentService)
+
+        if (isMounted) {
+          if (matchedApp) {
+            setIsBlocked(true)
+            setBlockedApp(matchedApp)
+          } else {
+            setIsBlocked(false)
+            setBlockedApp(null)
+          }
+        }
+      } catch (err) {
+        console.warn("Eligibility check skipped/offline:", err)
+      }
+    }
+
+    checkActiveApp()
+
+    const handleUpdated = () => checkActiveApp()
+    window.addEventListener("pwd_senior_applications_updated", handleUpdated)
+    window.addEventListener("storage", handleUpdated)
+
+    return () => {
+      isMounted = false
+      window.removeEventListener("pwd_senior_applications_updated", handleUpdated)
+      window.removeEventListener("storage", handleUpdated)
+    }
+  }, [urlCategory, urlType, isSenior, isAssistance, isSeniorSocial, isSeniorMedicine, isSeniorMovie, isSeniorId])
+
+  // Keep modal closed on navigation so user can see and access the form UI directly
+  useEffect(() => {
+    setShowModal(false)
+    setUnderstood(false)
+    setCurrentStep(1)
+  }, [urlCategory, urlType])
 
   const typeBadge = isSeniorMedicine
     ? { label: t("badgeMedicineBooklet"), color: "bg-blue-100 text-blue-700 border-blue-200" }
@@ -92,6 +213,63 @@ export default function ApplyPWDSenior() {
     t("seniorReq5"),
     t("seniorReq6"),
   ]
+
+  // Render blocked active application UI directly (matching Pic 2)
+  if (isBlocked) {
+    const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || blockedApp?.id || blockedApp?.qc_id || blockedApp?.qcid || getLoggedInUserQcid() || "110000572516915"
+    const displayDate = blockedApp?.created_at || blockedApp?.submittedAt || blockedApp?.dateSubmitted
+      ? new Date(blockedApp.created_at || blockedApp.submittedAt || blockedApp.dateSubmitted).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+      : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+
+    return (
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <Info className="h-8 w-8 text-amber-500" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              {t("hasPendingAppTitle") || "You Have an Active Application"}
+            </h2>
+            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+              {t("hasPendingAppDesc") ? t("hasPendingAppDesc").replace("{type}", modalTitle) : `Your application for ${modalTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.`}
+            </p>
+          </div>
+
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appRefNoLabel") || "Application Reference No.:"}</span>
+              <span className="font-mono font-bold text-blue-600">{displayRef}</span>
+            </div>
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                {t("statusPendingBadge") || "• Under Review (Pending)"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
+              <span className="font-semibold text-gray-700">
+                {displayDate}
+              </span>
+            </div>
+          </div>
+
+          <div className="w-full pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">

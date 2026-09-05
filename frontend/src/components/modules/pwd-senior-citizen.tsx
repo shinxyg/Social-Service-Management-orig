@@ -17,7 +17,12 @@ import {
   Printer,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
-import { pushUserNotification } from "../../utils/financialAidSync"
+import {
+  pushUserNotification,
+  getSavedDisbursements,
+  saveDisbursements,
+  type SyncedDisbursementRecord,
+} from "../../utils/financialAidSync"
 
 // ---- Types for collected form data from user submissions ----
 interface ApplicationDocument {
@@ -817,6 +822,13 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: Detaile
 
   const contactNumber = isPWD(app) ? app.contactNo : app.cellphoneNo
   const subLabel = subLabelForApp(app)
+  const isAssistance =
+    app.type === "assistance" ||
+    (app as any).type === "social-assistance" ||
+    String(app.category || "").toLowerCase().includes("assistance") ||
+    String(subLabel || "").toLowerCase().includes("assistance") ||
+    String((app as any).service || "").toLowerCase().includes("assistance") ||
+    String((app as any).assistanceType || "").toLowerCase().includes("assistance")
 
   let localEmergencyName = ""
   let localEmergencyPhone = ""
@@ -1071,72 +1083,81 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: Detaile
             </div>
           </div>
 
-          {/* Action Decision Section */}
-          {app.status === "pending" && (
+          {/* Action Decision Section inside body if active */}
+          {app.status === "pending" && actionMode !== "view" && (
             <div className="border-t border-border pt-5">
-              {actionMode === "view" && (
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setActionMode("approve")}
-                    className="gw-btn-approve flex-1 h-11 inline-flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Check className="h-4 w-4" />
-                    Approve Application
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActionMode("reject")}
-                    className="gw-btn-reject flex-1 h-11 inline-flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <X className="h-4 w-4" />
-                    Reject Application
-                  </button>
-                </div>
-              )}
-
               {actionMode === "approve" && (
-                <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                        Assign {app.category} ID Number *
-                      </label>
-                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md">
-                        Official QC ID
-                      </span>
+                isAssistance ? (
+                  <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                          Confirm Social Assistance Approval
+                        </label>
+                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md">
+                          Direct Aid &amp; Appointment Routing
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                        Approving this social assistance application will automatically forward the applicant to <strong>Appointments (for payout scheduling)</strong> and <strong>Financial Aid Disbursement (₱2,000 Aid)</strong>.
+                      </p>
                     </div>
-                    <input
-                      type="text"
-                      value={customIdNumber}
-                      onChange={(e) => setCustomIdNumber(e.target.value)}
-                      placeholder="e.g. PWD-137404-2026-XXXXXX"
-                      className="gw-input w-full mt-1.5 px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 font-mono"
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setActionMode("view")}
-                      className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const finalId = customIdNumber.trim() || idNumber
-                        if (finalId) {
-                          onApprove(app, finalId)
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setActionMode("view")}
+                        className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onApprove(app, app.referenceNumber)
                           onClose()
-                        }
-                      }}
-                      className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
-                    >
-                      Confirm Approval
-                    </button>
+                        }}
+                        className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
+                      >
+                        Confirm Approval &amp; Forward
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                          Confirm {app.category} Approval
+                        </label>
+                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md">
+                          Official QC ID: {idNumber}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                        Official ID Number <strong className="font-mono text-foreground">{idNumber}</strong> has been assigned. Approving will automatically connect this application to <strong>Appointments</strong> for claiming/pickup schedule.
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setActionMode("view")}
+                        className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onApprove(app, idNumber)
+                          onClose()
+                        }}
+                        className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
+                      >
+                        Confirm Approval &amp; Connect to Appointment
+                      </button>
+                    </div>
+                  </div>
+                )
               )}
 
               {actionMode === "reject" && (
@@ -1185,23 +1206,42 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: Detaile
                 <Check className="h-4 w-4 text-emerald-600" />
                 Approved on {new Date(app.approvedDate || app.submittedAt).toLocaleDateString()} by {app.approvedBy || "Admin Staff"}
               </p>
-              {app.assignedIdNumber && (
-                <p className="text-xs">
-                  <strong>Assigned ID Number:</strong> {app.assignedIdNumber}
-                </p>
-              )}
-              {app.notes && <p className="text-xs"><strong>Notes:</strong> {app.notes}</p>}
-              {onShowCard && (
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => onShowCard(app)}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
-                  >
-                    <IdCard className="h-4 w-4" />
-                    Preview &amp; Print Official QC ID Card
-                  </button>
+              {isAssistance ? (
+                <div className="pt-2 text-xs space-y-1">
+                  <p className="text-emerald-800 font-semibold flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    Connected to Appointments (for payout schedule)
+                  </p>
+                  <p className="text-emerald-800 font-semibold flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    Forwarded to Financial Aid Disbursement (₱2,000 Fixed Aid)
+                  </p>
                 </div>
+              ) : (
+                <>
+                  {app.assignedIdNumber && (
+                    <p className="text-xs">
+                      <strong>Assigned ID Number:</strong> {app.assignedIdNumber}
+                    </p>
+                  )}
+                  {app.notes && <p className="text-xs"><strong>Notes:</strong> {app.notes}</p>}
+                  <p className="text-emerald-800 font-semibold flex items-center gap-1.5 text-xs">
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    Connected to Appointments (for ID claiming schedule)
+                  </p>
+                  {onShowCard && (
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => onShowCard(app)}
+                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
+                      >
+                        <IdCard className="h-4 w-4" />
+                        Preview &amp; Print Official QC ID Card
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -1217,15 +1257,36 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: Detaile
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border flex justify-end gap-3" style={{ background: "var(--surface-sunk)" }}>
+        {/* Sticky Footer */}
+        <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-3" style={{ background: "var(--surface-sunk)" }}>
           <button
             type="button"
             onClick={onClose}
-            className="gw-btn-ghost px-6 h-10 text-sm cursor-pointer"
+            className="gw-btn-ghost px-5 h-10 text-sm cursor-pointer"
           >
             Close
           </button>
+
+          {app.status === "pending" && actionMode === "view" && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setActionMode("reject")}
+                className="gw-btn-reject px-4 h-10 text-sm inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+                Reject
+              </button>
+              <button
+                type="button"
+                onClick={() => setActionMode("approve")}
+                className="gw-btn-approve px-5 h-10 text-sm inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <Check className="h-4 w-4" />
+                Approve &amp; Forward
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1344,6 +1405,9 @@ const DEFAULT_SEED_APPLICATIONS: ApplicationSubmission[] = [
     cellphoneNo: "09193337788",
     email: "teresa.lopez@gmail.com",
     address: "15 Dahlia St., Brgy. Fairview, Quezon City",
+    disabilityType: "",
+    disabilityClass: "",
+    causeOfDisability: "",
     vaccinatedCovid: "Yes",
     applyingFor: "myself",
     documents: [
@@ -1355,55 +1419,32 @@ const DEFAULT_SEED_APPLICATIONS: ApplicationSubmission[] = [
   },
 ]
 
-// =====================================================================================
-// Main Admin Component: PWDSeniorCitizenAdmin
-// =====================================================================================
-export default function PWDSeniorCitizenAdmin() {
-  const [applications, setApplications] = useState<ApplicationSubmission[]>(() => {
-    try {
-      const saved = localStorage.getItem("pwd_senior_applications")
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed
-        }
-      }
-    } catch {}
-    return DEFAULT_SEED_APPLICATIONS
-  })
-
-  const [selectedApp, setSelectedApp] = useState<ApplicationSubmission | null>(null)
-  const [cardApp, setCardApp] = useState<ApplicationSubmission | null>(null)
+export default function PWDSeniorCitizen() {
+  const [applications, setApplications] = useState<ApplicationSubmission[]>(DEFAULT_SEED_APPLICATIONS)
   const [filterCategory, setFilterCategory] = useState<"all" | "PWD" | "Senior Citizen">("all")
   const [filterType, setFilterType] = useState<"all" | "new" | "renewal" | "loss" | "assistance">("all")
-  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected" | "needs_revision">("all")
+  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all")
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedApp, setSelectedApp] = useState<ApplicationSubmission | null>(null)
+  const [cardApp, setCardApp] = useState<ApplicationSubmission | null>(null)
 
-  // Real-time backend synchronization across windows, devices, and Incognito mode
+  // Fetch applications from backend
   useEffect(() => {
     const fetchApps = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
         if (res.ok) {
           const data = await res.json()
-          if (Array.isArray(data) && data.length > 0) {
-            setApplications(data)
-            try {
-              localStorage.setItem("pwd_senior_applications", JSON.stringify(data))
-            } catch {}
-          }
+          setApplications(data)
         }
       } catch (err) {
         console.warn("Could not fetch PWD/Senior applications from backend:", err)
       }
     }
-
     fetchApps()
-    const interval = setInterval(fetchApps, 3000)
-    return () => clearInterval(interval)
   }, [])
 
-  // Persist applications to localStorage
+  // Persist applications to state & localStorage
   const updateApplications = (updater: (prev: ApplicationSubmission[]) => ApplicationSubmission[]) => {
     setApplications((prev) => {
       const next = updater(prev)
@@ -1419,7 +1460,6 @@ export default function PWDSeniorCitizenAdmin() {
   const handleApprove = async (targetApp: ApplicationSubmission, idNumber: string) => {
     const id = targetApp.id
     const approvedDate = new Date().toISOString()
-    const emailToSend = targetApp.email ? targetApp.email.trim() : ""
 
     updateApplications((prev) =>
       prev.map((app) =>
@@ -1451,47 +1491,103 @@ export default function PWDSeniorCitizenAdmin() {
       console.warn("Failed updating backend status:", err)
     }
 
-    // Dispatch in-portal bell notification to applicant
-    if (targetApp) {
-      const rawType = String(targetApp.type || "").toLowerCase()
-      const typeLabel =
-        rawType === "renewal"
-          ? "Renewal"
-          : rawType === "replacement" || rawType === "loss"
-          ? "Replacement / Lost ID"
-          : "New Application"
-      const serviceName = isPWD(targetApp) ? "PWD ID" : "Senior Citizen ID"
+    // Handle Assistance Applications vs ID Applications
+    const isAssistanceApp =
+      targetApp.type === "assistance" ||
+      (targetApp as any).type === "social-assistance" ||
+      String(targetApp.category || "").toLowerCase().includes("assistance") ||
+      String((targetApp as any).service || "").toLowerCase().includes("assistance") ||
+      String((targetApp as any).assistanceType || "").toLowerCase().includes("assistance") ||
+      (targetApp.documents || []).some((d: any) => String(d.name || "").toLowerCase().includes("indigency") || String(d.name || "").toLowerCase().includes("pwdqcid"))
 
-      pushUserNotification({
-        title: `${serviceName} Application (${typeLabel}): Approved`,
-        desc: `Congratulations! Your application for ${serviceName} (${typeLabel}) has been officially approved. Official Assigned ID Number: ${idNumber}.`,
-        applicationRef: targetApp.referenceNumber,
-        assistanceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
-      })
-    }
+    if (isAssistanceApp) {
+      const assistanceName = isPWD(targetApp) ? "PWD Social Assistance" : "Senior Social Assistance"
 
-    // Dispatch real email notification to applicant's email address
-    if (targetApp && emailToSend) {
+      // 1. Sync to Financial Aid Disbursements
       try {
-        console.log(`[Email Dispatch] Sending PWD ID to applicant email: ${emailToSend}`)
-        const emailRes = await fetch(`${API_BASE}/api/email/send-pwd-id`, {
+        const currentDisbursements = getSavedDisbursements()
+        if (!currentDisbursements.some((d) => d.applicationRef === targetApp.referenceNumber)) {
+          const newRecord: SyncedDisbursementRecord = {
+            id: `disb-${Date.now()}`,
+            disbursementId: `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`,
+            applicationRef: targetApp.referenceNumber,
+            applicantName: displayName(targetApp).toUpperCase(),
+            assistanceType: assistanceName,
+            fixedAmount: 2000,
+            dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
+            status: "PENDING",
+            venue: "Quezon City Hall",
+            remarks: "Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.",
+          }
+          saveDisbursements([newRecord, ...currentDisbursements])
+        }
+      } catch (err) {
+        console.warn("Failed saving disbursement record:", err)
+      }
+
+      // 2. Sync to Appointments
+      try {
+        fetch(`${API_BASE}/api/appointments`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            recipientEmail: emailToSend,
-            recipientName: displayName(targetApp),
-            pwdIdNumber: idNumber,
-            referenceNumber: targetApp.referenceNumber,
-            disabilityType: isPWD(targetApp) ? targetApp.disabilityType : "PWD / Senior Program",
-            approvedDate,
-            contactNumber: isPWD(targetApp) ? targetApp.contactNo : targetApp.cellphoneNo,
-            address: targetApp.address,
+            reference_no: targetApp.referenceNumber,
+            module: isPWD(targetApp) ? "PWD" : "Senior Citizen",
+            applicant_name: displayName(targetApp),
+            concern: assistanceName,
+            status: "pending",
           }),
+        }).catch(() => {})
+      } catch {}
+
+      window.dispatchEvent(new Event("appointments_updated"))
+      window.dispatchEvent(new Event("financial_disbursements_updated"))
+      window.dispatchEvent(new Event("storage"))
+
+      // 3. In-portal Bell Notification
+      pushUserNotification({
+        title: `${assistanceName}: Approved`,
+        desc: `Congratulations! Your application for ${assistanceName} has been approved and forwarded to Appointments for payout scheduling and Financial Aid Disbursement (₱2,000).`,
+        applicationRef: targetApp.referenceNumber,
+        assistanceType: assistanceName,
+        amount: 2000,
+      })
+    } else {
+      // 1. Sync ID card pickup/claiming to Appointments
+      try {
+        fetch(`${API_BASE}/api/appointments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reference_no: targetApp.referenceNumber,
+            module: isPWD(targetApp) ? "PWD" : "Senior Citizen",
+            applicant_name: displayName(targetApp),
+            concern: isPWD(targetApp) ? "PWD ID Card Issuance" : "Senior ID Card Issuance",
+            status: "pending",
+          }),
+        }).catch(() => {})
+      } catch {}
+
+      window.dispatchEvent(new Event("appointments_updated"))
+      window.dispatchEvent(new Event("storage"))
+
+      // 2. Dispatch in-portal bell notification to applicant for ID cards
+      if (targetApp) {
+        const rawType = String(targetApp.type || "").toLowerCase()
+        const typeLabel =
+          rawType === "renewal"
+            ? "Renewal"
+            : rawType === "replacement" || rawType === "loss"
+            ? "Replacement / Lost ID"
+            : "New Application"
+        const serviceName = isPWD(targetApp) ? "PWD ID" : "Senior Citizen ID"
+
+        pushUserNotification({
+          title: `${serviceName} Application (${typeLabel}): Approved`,
+          desc: `Congratulations! Your application for ${serviceName} (${typeLabel}) has been officially approved. Official Assigned ID Number: ${idNumber}.`,
+          applicationRef: targetApp.referenceNumber,
+          assistanceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
         })
-        const emailData = await emailRes.json()
-        console.log(`[Email Response]`, emailData)
-      } catch (err) {
-        console.warn("Email dispatch error:", err)
       }
     }
   }
