@@ -1531,8 +1531,10 @@ export default function PWDSeniorCitizen() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            referenceNo: targetApp.referenceNumber,
             reference_no: targetApp.referenceNumber,
             module: isPWD(targetApp) ? "PWD" : "Senior Citizen",
+            applicantName: displayName(targetApp),
             applicant_name: displayName(targetApp),
             concern: assistanceName,
             status: "pending",
@@ -1559,8 +1561,10 @@ export default function PWDSeniorCitizen() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            referenceNo: targetApp.referenceNumber,
             reference_no: targetApp.referenceNumber,
             module: isPWD(targetApp) ? "PWD" : "Senior Citizen",
+            applicantName: displayName(targetApp),
             applicant_name: displayName(targetApp),
             concern: isPWD(targetApp) ? "PWD ID Card Issuance" : "Senior ID Card Issuance",
             status: "pending",

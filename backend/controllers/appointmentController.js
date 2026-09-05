@@ -113,19 +113,17 @@ exports.getAppointments = async (req, res) => {
 // POST /api/appointments
 exports.createAppointment = async (req, res) => {
   try {
-    const {
-      referenceNo,
-      module,
-      applicantName,
-      concern,
-      scheduledDate,
-      scheduledTime,
-      officeLocation,
-      notes,
-    } = req.body;
+    const referenceNo = req.body.referenceNo || req.body.reference_no;
+    const module = req.body.module || 'AICS';
+    const applicantName = req.body.applicantName || req.body.applicant_name;
+    const concern = req.body.concern;
+    const scheduledDate = req.body.scheduledDate || req.body.scheduled_date;
+    const scheduledTime = req.body.scheduledTime || req.body.scheduled_time;
+    const officeLocation = req.body.officeLocation || req.body.office_location || 'Quezon City Hall';
+    const notes = req.body.notes;
 
     if (!referenceNo || !applicantName || !concern) {
-      return res.status(400).json({ error: 'Missing required fields.' });
+      return res.status(400).json({ error: 'Missing required fields: referenceNo, applicantName, or concern.' });
     }
 
     const initialStatus = scheduledDate ? 'scheduled' : 'pending';
@@ -134,16 +132,17 @@ exports.createAppointment = async (req, res) => {
       `INSERT INTO appointments
         (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (id) DO NOTHING
        RETURNING *`,
       [
         referenceNo,
-        module || 'AICS',
+        module,
         applicantName,
         concern,
         initialStatus,
         scheduledDate || null,
         scheduledTime || null,
-        officeLocation || 'Quezon City Hall',
+        officeLocation,
         notes || null,
       ]
     );

@@ -479,6 +479,7 @@ export default function Appointments() {
           : a
       )
     )
+    setSchedulingAppt(null)
   }
 
   const handleMarkCompleted = (id: string) => {
