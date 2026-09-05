@@ -676,12 +676,6 @@ export default function PWDSocialAssistanceWizard({
   const [isVerifying, setIsVerifying] = useState(false)
   const [isIdVerified, setIsIdVerified] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
-  const [errorModal, setErrorModal] = useState<{
-    isOpen: boolean
-    title: string
-    message: string
-    hint?: string
-  } | null>(null)
 
   const handleVerifyId = async () => {
     setVerifyError(null)
@@ -690,14 +684,7 @@ export default function PWDSocialAssistanceWizard({
     const cleanTypedDigits = typed.replace(/\D/g, "")
 
     if (!cleanTyped) {
-      const msg = "Please enter your PWD ID number before clicking verify."
-      setVerifyError(msg)
-      setErrorModal({
-        isOpen: true,
-        title: "PWD ID Number Required",
-        message: msg,
-        hint: "Format example: 137404-2026-847708",
-      })
+      setVerifyError("Please enter your PWD ID number before clicking verify.")
       return
     }
 
@@ -791,24 +778,11 @@ export default function PWDSocialAssistanceWizard({
         if (matchedApp.houseNo && !formData.houseNo) updateField("houseNo", matchedApp.houseNo)
       } else {
         setIsIdVerified(false)
-        const errMsg = "No registered PWD ID record found in the system matching this ID number. Unregistered or random numbers cannot proceed."
-        setVerifyError(errMsg)
-        setErrorModal({
-          isOpen: true,
-          title: "Invalid PWD ID Number",
-          message: errMsg,
-          hint: "If you do not have an official Quezon City PWD ID yet, please apply for a New PWD ID first.",
-        })
+        setVerifyError("No registered PWD ID record found in the system matching this ID number. Unregistered or random numbers cannot proceed.")
       }
     } catch {
       setIsIdVerified(false)
-      const errCatch = "An error occurred while verifying the PWD ID. Please try again."
-      setVerifyError(errCatch)
-      setErrorModal({
-        isOpen: true,
-        title: "Verification Error",
-        message: errCatch,
-      })
+      setVerifyError("An error occurred while verifying the PWD ID. Please try again.")
     } finally {
       setIsVerifying(false)
     }
@@ -899,60 +873,6 @@ export default function PWDSocialAssistanceWizard({
   const goNext = () => {
     if (!canGoNext) {
       setAttemptedNext(true)
-      if (step === 1) {
-        if (!formData.isResident) {
-          setErrorModal({
-            isOpen: true,
-            title: "Residency Requirement",
-            message: "You must be a legitimate resident of Quezon City to apply for PWD Social Assistance.",
-            hint: "Please confirm that you are a resident of Quezon City.",
-          })
-          return
-        }
-        if (!formData.hasDisability) {
-          setErrorModal({
-            isOpen: true,
-            title: "Disability Requirement",
-            message: "You must have a registered PWD ID or valid proof of disability to qualify.",
-            hint: "Please confirm that you have a registered PWD ID.",
-          })
-          return
-        }
-        if (!formData.pwdIdNumber.trim()) {
-          setErrorModal({
-            isOpen: true,
-            title: "PWD ID Number Required",
-            message: "Please enter your Quezon City PWD ID number and click 'VERIFY PWD ID' before proceeding.",
-            hint: "Example format: 137404-2026-847708",
-          })
-          return
-        }
-        if (!isIdVerified) {
-          setErrorModal({
-            isOpen: true,
-            title: "Verification Required",
-            message: "Your PWD ID has not been verified yet. Please click the 'VERIFY PWD ID' button to validate your ID in the system.",
-            hint: "Only verified PWD cardholders with active records can proceed.",
-          })
-          return
-        }
-        if (!formData.disabilityType) {
-          setErrorModal({
-            isOpen: true,
-            title: "Disability Type Required",
-            message: "Please select your type of disability from the options provided.",
-          })
-          return
-        }
-        if (!formData.assistanceType) {
-          setErrorModal({
-            isOpen: true,
-            title: "Assistance Type Required",
-            message: "Please select the type of social assistance you are requesting.",
-          })
-          return
-        }
-      }
       return
     }
 
@@ -1298,16 +1218,16 @@ export default function PWDSocialAssistanceWizard({
                     </div>
                   )}
                   {attemptedNext && !formData.pwdIdNumber.trim() && !verifyError && (
-                    <p className="text-xs text-red-500 mt-1">Kailangang ilagay ang inyong PWD ID Number.</p>
+                    <p className="text-xs text-red-500 mt-1">Please enter your PWD ID Number.</p>
                   )}
                   {attemptedNext && formData.pwdIdNumber.trim() !== "" && !isIdVerified && !verifyError && (
-                    <p className="text-xs text-red-500 mt-1">Pakipindot ang VERIFY PWD ID at tiyaking verified ang record bago magpatuloy.</p>
+                    <p className="text-xs text-red-500 mt-1">Please click VERIFY PWD ID and ensure the record is verified before proceeding.</p>
                   )}
                   {isIdVerified && (
                     <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2 text-xs text-emerald-800 animate-in fade-in duration-200">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                       <span>
-                        Matagumpay na na-verify ang inyong PWD ID record <strong>(PWD-{formData.pwdIdNumber})</strong>.
+                        PWD ID record successfully verified <strong>(PWD-{formData.pwdIdNumber})</strong>.
                       </span>
                     </div>
                   )}
@@ -1967,42 +1887,6 @@ export default function PWDSocialAssistanceWizard({
         />
       )}
 
-      {/* ⚠️ ENGLISH ERROR POP-UP MODAL */}
-      {errorModal?.isOpen && (
-        <div className="fixed inset-0 z-60 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-border animate-in zoom-in-95 duration-150 flex flex-col"
-          >
-            <div className="p-6 text-center space-y-4">
-              <div className="w-14 h-14 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-red-50">
-                <AlertCircle className="w-7 h-7" />
-              </div>
-              <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-foreground">{errorModal.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {errorModal.message}
-                </p>
-              </div>
-              {errorModal.hint && (
-                <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 text-xs text-amber-900 text-left flex items-start gap-2.5">
-                  <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span className="leading-normal">{errorModal.hint}</span>
-                </div>
-              )}
-            </div>
-            <div className="p-4 bg-gray-50 border-t border-border flex items-center justify-end">
-              <button
-                type="button"
-                onClick={() => setErrorModal(null)}
-                className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
-              >
-                OK, UNDERSTOOD
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
