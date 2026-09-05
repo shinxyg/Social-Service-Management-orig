@@ -681,9 +681,10 @@ export default function PWDSocialAssistanceWizard({
     setVerifyError(null)
     const typed = (formData.pwdIdNumber || "").trim()
     const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
+    const cleanTypedDigits = typed.replace(/\D/g, "")
 
     if (!cleanTyped) {
-      setVerifyError("Kailangang ilagay ang PWD ID number bago mag-verify.")
+      setVerifyError("Kailangang ilagay ang inyong PWD ID number bago mag-verify.")
       return
     }
 
@@ -699,33 +700,64 @@ export default function PWDSocialAssistanceWizard({
       } catch {}
 
       try {
-        const local = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
-        if (Array.isArray(local)) {
-          const ids = new Set(allApps.map((a) => a.id))
-          for (const la of local) {
-            if (!ids.has(la.id)) allApps.push(la)
+        const res2 = await fetch(`${API_BASE}/api/user-applications`)
+        if (res2.ok) {
+          const apps2 = await res2.json()
+          if (Array.isArray(apps2)) {
+            const ids = new Set(allApps.map((a) => a.id || a._id))
+            for (const a of apps2) {
+              if (!ids.has(a.id || a._id)) allApps.push(a)
+            }
           }
         }
       } catch {}
 
+      const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "qcid_cards"]
+      for (const k of localKeys) {
+        try {
+          const local = JSON.parse(localStorage.getItem(k) || "[]")
+          if (Array.isArray(local)) {
+            const ids = new Set(allApps.map((a) => a.id || a._id))
+            for (const la of local) {
+              if (la && !ids.has(la.id || la._id)) allApps.push(la)
+            }
+          }
+        } catch {}
+      }
+
+      const checkFieldMatch = (val: any): boolean => {
+        if (!val || typeof val !== "string") return false
+        const cleanVal = val.replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const cleanValDigits = val.replace(/\D/g, "")
+        if (!cleanVal) return false
+
+        if (cleanTyped === cleanVal || cleanTyped === `pwd${cleanVal}` || `pwd${cleanTyped}` === cleanVal) return true
+        if (cleanTypedDigits && cleanValDigits && (cleanTypedDigits === cleanValDigits || cleanTypedDigits.endsWith(cleanValDigits) || cleanValDigits.endsWith(cleanTypedDigits))) {
+          if (cleanTypedDigits.length >= 6 && cleanValDigits.length >= 6) return true
+        }
+        return false
+      }
+
       const matchedApp = allApps.find((a) => {
         if (!a) return false
-        const cat = (a.category || "").trim().toUpperCase()
-        if (cat !== "PWD") return false
+        const cat = (a.category || a.type || "").trim().toUpperCase()
+        const isPwdRecord =
+          cat.includes("PWD") ||
+          a.category === "PWD" ||
+          a.disabilityType ||
+          (typeof a.type === "string" && a.type.toLowerCase().includes("pwd"))
 
-        const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const refClean = (a.referenceNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const idClean = (a.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        // Also check if any PWD identifier matches
+        const matchesAnyId =
+          checkFieldMatch(a.assignedIdNumber) ||
+          checkFieldMatch(a.referenceNumber) ||
+          checkFieldMatch(a.pwdIdNumber) ||
+          checkFieldMatch(a.existingPwdIdNumber) ||
+          checkFieldMatch(a.qcidNo) ||
+          checkFieldMatch(a.qcid) ||
+          checkFieldMatch(a.id)
 
-        const matchAssigned =
-          assignedClean !== "" &&
-          (cleanTyped === assignedClean || cleanTyped === `pwd${assignedClean}` || `pwd${cleanTyped}` === assignedClean)
-        const matchRef =
-          refClean !== "" &&
-          (cleanTyped === refClean || cleanTyped === `pwd${refClean}` || `pwd${cleanTyped}` === refClean)
-        const matchId = idClean !== "" && cleanTyped === idClean
-
-        return Boolean(matchAssigned || matchRef || matchId)
+        return Boolean(matchesAnyId && (isPwdRecord || !cat))
       })
 
       if (matchedApp) {
@@ -735,9 +767,18 @@ export default function PWDSocialAssistanceWizard({
         updateField("pwdIdNumber", officialId)
         if (matchedApp.disabilityType) updateField("disabilityType", matchedApp.disabilityType)
         if (matchedApp.causeOfDisability) updateField("causeOfDisability", matchedApp.causeOfDisability)
+        if (matchedApp.firstName && !formData.firstName) updateField("firstName", matchedApp.firstName)
+        if (matchedApp.lastName && !formData.lastName) updateField("lastName", matchedApp.lastName)
+        if (matchedApp.middleName && !formData.middleName) updateField("middleName", matchedApp.middleName)
+        if (matchedApp.suffix && !formData.suffix) updateField("suffix", matchedApp.suffix)
+        if (matchedApp.contactNo && !formData.contactNumber) updateField("contactNumber", matchedApp.contactNo)
+        if (matchedApp.cellphoneNo && !formData.contactNumber) updateField("contactNumber", matchedApp.cellphoneNo)
+        if (matchedApp.barangay && !formData.barangay) updateField("barangay", matchedApp.barangay)
+        if (matchedApp.street && !formData.street) updateField("street", matchedApp.street)
+        if (matchedApp.houseNo && !formData.houseNo) updateField("houseNo", matchedApp.houseNo)
       } else {
         setIsIdVerified(false)
-        setVerifyError("Hindi nahanap ang rehistradong PWD ID record sa sistema. Pakitiyak na tama ang ID number.")
+        setVerifyError("Hindi nahanap ang rehistradong PWD ID record sa sistema. Siguraduhing may rehistradong PWD ID o approved application bago magpatuloy.")
       }
     } catch {
       setIsIdVerified(false)
