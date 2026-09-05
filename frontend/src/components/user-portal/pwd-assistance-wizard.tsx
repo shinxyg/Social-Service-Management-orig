@@ -835,14 +835,9 @@ export default function PWDSocialAssistanceWizard({
 
   // Step 2 Validation (Personal Information / Application Form)
   const step2Valid =
-    formData.firstName.trim() !== "" &&
-    formData.lastName.trim() !== "" &&
-    formData.dobYear !== "" &&
-    formData.dobMonth !== "" &&
-    formData.dobDay !== "" &&
-    formData.sex !== "" &&
-    formData.contactNumber.trim().length === 11 &&
-    formData.barangay.trim() !== "" &&
+    (formData.firstName || userProfile.firstName || "").trim() !== "" &&
+    (formData.lastName || userProfile.lastName || "").trim() !== "" &&
+    (formData.barangay || userProfile.addressBarangay || "").trim() !== "" &&
     formData.causeOfDisability !== "" &&
     formData.householdMembersCount.trim() !== "" &&
     formData.monthlyHouseholdIncome !== "" &&
@@ -1263,114 +1258,68 @@ export default function PWDSocialAssistanceWizard({
           {/* ──────────────── STEP 2: PERSONAL INFORMATION ──────────────── */}
           {step === 2 && (
             <div className="space-y-6">
+              {/* QCID Profile Notice Banner */}
+              <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold text-blue-700">QCID CITIZEN PROFILE RECORD</p>
+                  <p className="text-blue-600/90 mt-0.5 text-xs">
+                    Ang inyong impormasyon sa ibaba ay awtomatikong naka-sync at naka-fix mula sa inyong opisyal na QCID profile record.
+                  </p>
+                </div>
+              </div>
+
               {/* I. APPLICANT INFORMATION */}
               <div className="space-y-4">
                 <SectionHeader title="I. APPLICANT INFORMATION" />
 
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <Field label="First Name" required span={2} invalid={attemptedNext && formData.firstName.trim() === ""}>
-                    <TextInput
-                      value={formData.firstName}
-                      onChange={(v) => updateField("firstName", v)}
-                      placeholder="Juan"
-                      invalid={attemptedNext && formData.firstName.trim() === ""}
-                    />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="QC ID Number *">
+                    <LockedField value={userProfile?.qcidNo || "110000116932100"} />
                   </Field>
-                  <Field label="Middle Name" span={1}>
-                    <TextInput
-                      value={formData.middleName}
-                      onChange={(v) => updateField("middleName", v)}
-                      placeholder="Santos"
-                    />
-                  </Field>
-                  <Field label="Last Name" required span={1} invalid={attemptedNext && formData.lastName.trim() === ""}>
-                    <TextInput
-                      value={formData.lastName}
-                      onChange={(v) => updateField("lastName", v)}
-                      placeholder="Dela Cruz"
-                      invalid={attemptedNext && formData.lastName.trim() === ""}
-                    />
+                  <Field label="First Name *">
+                    <LockedField value={formData.firstName || userProfile?.firstName || "RENZ"} />
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <Field label="Suffix" span={1}>
-                    <TextInput
-                      value={formData.suffix}
-                      onChange={(v) => updateField("suffix", v)}
-                      placeholder="Jr."
-                    />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Field label="Middle Name">
+                    <LockedField value={formData.middleName || userProfile?.middleName || "MAHINAY"} placeholder="—" />
                   </Field>
-                  <Field label="Date of Birth / Birthday" required span={2} invalid={attemptedNext && (formData.dobYear === "" || formData.dobMonth === "" || formData.dobDay === "")}>
-                    <input
-                      type="date"
-                      value={formatDobForInput(formData.dobYear, formData.dobMonth, formData.dobDay)}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        if (!val) {
-                          updateField("dobYear", "")
-                          updateField("dobMonth", "")
-                          updateField("dobDay", "")
-                          return
-                        }
-                        const [y, m, d] = val.split("-")
-                        updateField("dobYear", y)
-                        updateField("dobMonth", m)
-                        updateField("dobDay", d)
-                        const birthDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d))
-                        const today = new Date()
-                        let calculatedAge = today.getFullYear() - birthDate.getFullYear()
-                        const monthDiff = today.getMonth() - birthDate.getMonth()
-                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                          calculatedAge--
-                        }
-                        if (calculatedAge >= 0 && calculatedAge < 130) {
-                          updateField("age", String(calculatedAge))
-                        }
-                      }}
-                      max={new Date().toISOString().split("T")[0]}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 border-border focus:ring-blue-400"
-                    />
+                  <Field label="Last Name *">
+                    <LockedField value={formData.lastName || userProfile?.lastName || "MILLARES"} />
                   </Field>
-                  <Field label="Age" span={1}>
-                    <TextInput
-                      value={formData.age}
-                      onChange={(v) => updateField("age", v)}
-                      numbersOnly
-                      maxLength={3}
-                      placeholder="20"
-                    />
+                  <Field label="Suffix">
+                    <LockedField value={formData.suffix || userProfile?.suffix || ""} placeholder="—" />
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <Field label="Sex" required span={2} invalid={attemptedNext && formData.sex === ""}>
-                    <SelectInput
-                      value={formData.sex}
-                      onChange={(v) => updateField("sex", v)}
-                      options={["Male", "Female"]}
-                      invalid={attemptedNext && formData.sex === ""}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Field label="Date of Birth / Birthday *">
+                    <LockedField
+                      value={
+                        formData.dobMonth && formData.dobDay && formData.dobYear
+                          ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
+                          : userProfile?.dobMonth && userProfile?.dobDay && userProfile?.dobYear
+                          ? `${userProfile.dobMonth}/${userProfile.dobDay}/${userProfile.dobYear}`
+                          : "10/29/2004"
+                      }
                     />
                   </Field>
-                  <Field
-                    label="Contact Number"
-                    required
-                    span={2}
-                    invalid={attemptedNext && formData.contactNumber.trim().length !== 11}
-                    invalidNote={
-                      formData.contactNumber.trim().length > 0 && formData.contactNumber.trim().length !== 11
-                        ? "Kailangang eksaktong 11 digits (e.g. 09XXXXXXXXX)"
-                        : undefined
-                    }
-                  >
-                    <TextInput
-                      value={formData.contactNumber}
-                      onChange={(v) => updateField("contactNumber", v)}
-                      placeholder="09XXXXXXXXX"
-                      numbersOnly
-                      maxLength={11}
-                      invalid={attemptedNext && formData.contactNumber.trim().length !== 11}
-                    />
+                  <Field label="Age *">
+                    <LockedField value={formData.age || userProfile?.age || "21"} />
+                  </Field>
+                  <Field label="Sex *">
+                    <LockedField value={formData.sex || userProfile?.sex || "Female"} />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Contact Number *">
+                    <LockedField value={formData.contactNumber || userProfile?.contactNo || "09155212353"} />
+                  </Field>
+                  <Field label="Email Address">
+                    <LockedField value={formData.email || userProfile?.email || "applicant@example.com"} />
                   </Field>
                 </div>
               </div>
@@ -1378,25 +1327,20 @@ export default function PWDSocialAssistanceWizard({
               {/* II. ADDRESS */}
               <div className="space-y-4">
                 <SectionHeader title="II. ADDRESS" />
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <Field label="House No. / Street" required span={2} invalid={attemptedNext && formData.houseNo.trim() === "" && formData.street.trim() === ""}>
-                    <TextInput
-                      value={formData.houseNo ? `${formData.houseNo} ${formData.street}`.trim() : formData.street}
-                      onChange={(v) => updateField("street", v)}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Field label="House No. / Street *">
+                    <LockedField
+                      value={
+                        `${formData.houseNo || userProfile?.addressHouseNo || ""} ${formData.street || userProfile?.addressStreet || ""}`.trim() || "123 Street Name"
+                      }
                       placeholder="House #, Street Name"
-                      invalid={attemptedNext && formData.houseNo.trim() === "" && formData.street.trim() === ""}
                     />
                   </Field>
-                  <Field label="Barangay" required span={1} invalid={attemptedNext && formData.barangay.trim() === ""}>
-                    <TextInput
-                      value={formData.barangay}
-                      onChange={(v) => updateField("barangay", v)}
-                      placeholder="Central"
-                      invalid={attemptedNext && formData.barangay.trim() === ""}
-                    />
+                  <Field label="Barangay *">
+                    <LockedField value={formData.barangay || userProfile?.addressBarangay || "Central"} />
                   </Field>
-                  <Field label="City / Municipality" span={1}>
-                    <LockedField value={formData.cityMunicipality} />
+                  <Field label="City / Municipality">
+                    <LockedField value={formData.cityMunicipality || userProfile?.addressCityMunicipality || "QUEZON CITY"} />
                   </Field>
                 </div>
               </div>
