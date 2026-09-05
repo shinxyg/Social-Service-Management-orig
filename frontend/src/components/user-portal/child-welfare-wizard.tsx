@@ -447,6 +447,7 @@ interface ChildWelfareWizardProps {
   userProfile?: UserProfile
   initialProgramId?: number
   initialProgramKey?: string
+  onStepChange?: (step: number) => void
 }
 
 const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
@@ -456,6 +457,7 @@ export default function ChildWelfareApplicationWizard({
   userProfile = MOCK_USER_PROFILE,
   initialProgramId,
   initialProgramKey,
+  onStepChange,
 }: ChildWelfareWizardProps) {
   const { t, language } = useLanguage()
 
@@ -467,6 +469,11 @@ export default function ChildWelfareApplicationWizard({
   ]
 
   const [step, setStep] = useState(1)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
+
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [showSampleModal, setShowSampleModal] = useState(false)
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<{ id: string; label: string; sampleImage?: string; description?: string } | null>(null)

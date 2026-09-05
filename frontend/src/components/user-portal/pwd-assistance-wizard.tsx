@@ -18,6 +18,7 @@ import DocumentCameraModal from "../ui/document-camera-modal"
 
 export interface UserProfile {
   userId?: string
+  qcidNo?: string
   firstName: string
   middleName?: string
   lastName: string
@@ -32,6 +33,11 @@ export interface UserProfile {
   addressStreet: string
   addressBarangay: string
   addressCityMunicipality: string
+  emergencyFirstName?: string
+  emergencyLastName?: string
+  emergencyContactNo?: string
+  emergencyRelationship?: string
+  emergencyAddress?: string
 }
 
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"

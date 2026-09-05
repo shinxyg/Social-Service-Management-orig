@@ -100,10 +100,12 @@ export default function ApplySoloParent() {
   const [isBlocked, setIsBlocked] = useState(false)
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(1)
   const [understood, setUnderstood] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
 
   useEffect(() => {
     setSelectedCategoryId(1)
     setUnderstood(false)
+    setCurrentStep(1)
 
     if (isChildWelfare) {
       setIsBlocked(false)
@@ -160,9 +162,9 @@ export default function ApplySoloParent() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {/* Top Requirements Banner with Button to Open Modal (Matches Pic 1) */}
-      {!isBlocked && (
-        <div className="max-w-5xl mx-auto px-4 md:px-6 mb-4">
+      {/* Top Requirements Banner with Button to Open Modal (shown only on Step 1) */}
+      {!isBlocked && currentStep === 1 && (
+        <div className="max-w-5xl mx-auto px-4 md:px-6 mb-4 animate-in fade-in duration-150">
           <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 text-blue-700">
@@ -201,6 +203,7 @@ export default function ApplySoloParent() {
           key={`child-welfare-${matchedCwProgram.key}`}
           initialProgramId={matchedCwProgram.id}
           initialProgramKey={matchedCwProgram.key}
+          onStepChange={setCurrentStep}
         />
       ) : (
         <SoloParentApplicationWizard
@@ -208,6 +211,7 @@ export default function ApplySoloParent() {
           initialType={typeParam === "renewal" ? "renewal" : typeParam === "loss" ? "loss" : "new"}
           initialCategoryId={selectedCategoryId}
           isModalOpen={showRequirementsModal}
+          onStepChange={setCurrentStep}
           onBlockedStatusChange={(blocked) => {
             if (blocked) {
               setIsBlocked(true)

@@ -333,6 +333,7 @@ interface SoloParentApplicationWizardProps {
   initialType?: IdStatus
   isModalOpen?: boolean
   onBlockedStatusChange?: (blocked: boolean) => void
+  onStepChange?: (step: number) => void
 }
 
 const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
@@ -695,6 +696,7 @@ export default function SoloParentApplicationWizard({
   initialType = "new",
   isModalOpen = false,
   onBlockedStatusChange,
+  onStepChange,
 }: SoloParentApplicationWizardProps) {
   const { t } = useLanguage()
   const [idStatus, setIdStatus] = useState<IdStatus>(initialType)
@@ -716,6 +718,11 @@ export default function SoloParentApplicationWizard({
   ]
 
   const [step, setStep] = useState(1)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
+
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<SampleDocument | null>(null)
   const [showSampleModal, setShowSampleModal] = useState(false)
