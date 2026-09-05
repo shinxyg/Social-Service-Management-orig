@@ -1088,29 +1088,10 @@ export default function SeniorCitizenApplicationWizard({
               {appFlow !== "new" && (
                 <div className="p-5 rounded-xl border border-gray-200 bg-gray-50/70 space-y-4">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold uppercase text-gray-800 tracking-wide flex items-center gap-1.5">
-                        <IdCard className="w-4 h-4 text-[#3b82f6]" />
-                        SENIOR CITIZEN ID NUMBER *
-                      </label>
-                      {isIdVerified && (
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                          <Check className="w-3.5 h-3.5" /> Senior Citizen Record Verified
-                        </span>
-                      )}
-                    </div>
-
-                    {!latestApprovedApp && !isIdVerified && (
-                      <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-start gap-2.5">
-                        <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold">Account Requirement: </span>
-                          <span>
-                            Renewal and Replacement / Lost ID applications are based on your registered account. You must have an approved <strong>New Senior Citizen ID Application</strong> on this account to proceed.
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    <label className="text-xs font-bold uppercase text-gray-800 tracking-wide flex items-center gap-1.5">
+                      <IdCard className="w-4 h-4 text-[#3b82f6]" />
+                      SENIOR CITIZEN ID NUMBER *
+                    </label>
 
                     <div className="flex flex-col sm:flex-row gap-2 max-w-md">
                       <div className="flex items-center flex-1 rounded-lg border border-gray-300 bg-white overflow-hidden transition-all focus-within:ring-2 focus-within:ring-[#3b82f6]/40 focus-within:border-[#3b82f6]">
@@ -1148,21 +1129,6 @@ export default function SeniorCitizenApplicationWizard({
                         <div>
                           <span className="font-bold">Invalid Senior Citizen ID: </span>
                           {verifyError}
-                        </div>
-                      </div>
-                    )}
-
-                    {isIdVerified && (
-                      <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 space-y-1.5 animate-in fade-in duration-200">
-                        <div className="flex items-center gap-1.5 font-bold text-emerald-900">
-                          <Check className="w-4 h-4 text-emerald-600" />
-                          <span>Registered Senior Citizen Record Verified</span>
-                        </div>
-                        <div className="text-emerald-700 grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px]">
-                          <div><span className="text-emerald-900/70">ID Number:</span> <strong className="font-mono">{existingIdNumber}</strong></div>
-                          {approvedSeniorRecord?.firstName && (
-                            <div><span className="text-emerald-900/70">Applicant Name:</span> <strong>{[approvedSeniorRecord.firstName, approvedSeniorRecord.middleName, approvedSeniorRecord.lastName].filter(Boolean).join(" ")}</strong></div>
-                          )}
                         </div>
                       </div>
                     )}
