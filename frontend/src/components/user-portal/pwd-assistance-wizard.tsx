@@ -50,28 +50,6 @@ import { API_BASE } from "../../config/api"
 const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
 
 
-const DISABILITY_TYPES = [
-  "Deaf / Hard of Hearing",
-  "Intellectual Disability",
-  "Learning Disability",
-  "Mental Disability",
-  "Orthopedic Disability",
-  "Physical Disability",
-  "Psychosocial Disability",
-  "Speech and Language Impairment",
-  "Visual Disability",
-  "Chronic Illness with Disability",
-  "Multiple Disabilities",
-  "Developmental / Neurological Disability",
-]
-
-const DISABILITY_CAUSES = [
-  "Congenital / Inborn",
-  "Illness / Disease",
-  "Accident / Trauma",
-  "Acquired through Aging",
-  "Others",
-]
 
 const ASSISTANCE_TYPES = [
   "Financial Assistance / Cash Aid",
@@ -707,19 +685,6 @@ export default function PWDSocialAssistanceWizard({
         if (res.ok) {
           const apps = await res.json()
           if (Array.isArray(apps)) allApps = apps
-        }
-      } catch {}
-
-      try {
-        const res2 = await fetch(`${API_BASE}/api/user-applications`)
-        if (res2.ok) {
-          const apps2 = await res2.json()
-          if (Array.isArray(apps2)) {
-            const ids = new Set(allApps.map((a) => a.id || a._id))
-            for (const a of apps2) {
-              if (!ids.has(a.id || a._id)) allApps.push(a)
-            }
-          }
         }
       } catch {}
 
