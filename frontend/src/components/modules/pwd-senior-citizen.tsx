@@ -995,8 +995,24 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: Detaile
                 </>
               ) : (
                 <>
-                  <Field label="COVID-19 Vaccination status" value={app.vaccinatedCovid} />
-                  <Field label="Application category" value="Senior Citizen Services" />
+                  <Field label="Service & Application Type" value={subLabel} />
+                  <Field label="Application category" value="Senior Citizen Services (OSCA)" />
+                  {((app as any).existingIdNumber || (app as any).oldSeniorId) && (
+                    <Field
+                      label={app.type === "renewal" ? "Existing / Expired Senior ID" : "Previous / Lost Senior ID"}
+                      value={
+                        <span className="font-mono font-bold text-blue-700">
+                          {(app as any).existingIdNumber || (app as any).oldSeniorId}
+                        </span>
+                      }
+                    />
+                  )}
+                  {((app as any).reasonForRenewal || (app as any).reasonForReplacement) && (
+                    <Field
+                      label={app.type === "renewal" ? "Reason for Renewal" : "Reason for Replacement"}
+                      value={(app as any).reasonForRenewal || (app as any).reasonForReplacement}
+                    />
+                  )}
                 </>
               )}
             </div>
