@@ -386,12 +386,14 @@ export default function SeniorCitizenApplicationWizard({
   }, [isFormDirty])
 
   const [latestApprovedApp, setLatestApprovedApp] = useState<any>(null)
+  const [blockedApp, setBlockedApp] = useState<any>(null)
 
   // Check if there is an active application for this user
   useEffect(() => {
     const checkActiveApp = async () => {
       let activeAppStatus: string | null = null
       let matchedApproved: any = null
+      let matchedPending: any = null
 
       const checkUserMatches = (a: any) => {
         const qcid = userProfile?.qcidNo || "110000116932100"
@@ -411,7 +413,10 @@ export default function SeniorCitizenApplicationWizard({
             const userApps = apps.filter(checkUserMatches)
             const pendingApp = userApps.find((a) => a.status === "pending")
             const approvedApp = userApps.find((a) => a.status === "approved")
-            if (pendingApp) activeAppStatus = "pending"
+            if (pendingApp) {
+              activeAppStatus = "pending"
+              matchedPending = pendingApp
+            }
             if (approvedApp) matchedApproved = approvedApp
           }
         }
@@ -427,31 +432,36 @@ export default function SeniorCitizenApplicationWizard({
               const userApps = apps.filter(checkUserMatches)
               const pendingApp = userApps.find((a) => a.status === "pending")
               const approvedApp = userApps.find((a) => a.status === "approved")
-              if (!activeAppStatus && pendingApp) activeAppStatus = "pending"
+              if (!activeAppStatus && pendingApp) {
+                activeAppStatus = "pending"
+                matchedPending = pendingApp
+              }
               if (!matchedApproved && approvedApp) matchedApproved = approvedApp
             }
           }
         } catch {}
       }
 
-      if (matchedApproved) {
+      if (matchedPending) {
+        setBlockedApp(matchedPending)
+      }
+
+      if (matchedApproved && !matchedPending) {
         setLatestApprovedApp(matchedApproved)
-        // When approved, reset blocked or submitted states and return to step 1
+        // When approved and no pending application, reset blocked or submitted states
         if (isBlocked || isSubmitted) {
           setIsBlocked(false)
           setIsSubmitted(false)
           setStep(1)
         }
-      } else {
+      } else if (!matchedApproved) {
         setLatestApprovedApp(null)
       }
 
-      // Block ONLY if status is strictly 'pending' AND user is applying for a new ID
-      const isNewFlow = appFlow === "new"
-      if (!bypassedBlock && activeAppStatus === "pending" && isNewFlow) {
+      // Block if user has an active pending application
+      if (!bypassedBlock && activeAppStatus === "pending") {
         setIsBlocked(true)
       } else {
-        // If rejected, approved, bypassed, or no active application, allow user to apply freely
         setIsBlocked(false)
       }
     }
@@ -695,40 +705,73 @@ export default function SeniorCitizenApplicationWizard({
     )
   }
 
-  if (isBlocked && appFlow === "new" && !bypassedBlock) {
+  if (isBlocked && !bypassedBlock) {
+    const serviceTitle =
+      appFlow === "renewal"
+        ? "Renewal Senior Citizen ID"
+        : appFlow === "loss"
+        ? "Replacement / Lost Senior Citizen ID"
+        : "Senior Citizen ID Services"
+
     return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            ← Bumalik
-          </button>
-        )}
-        <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-7 w-7 text-amber-500" />
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <Info className="h-8 w-8 text-amber-500" />
           </div>
-          <h2 className="text-lg font-bold text-gray-900">
-            May Kasalukuyang Application Ka Pa
-          </h2>
-          <p className="text-sm text-gray-500 max-w-sm">
-            Mayroon ka pang nakabinbing aplikasyon para sa Senior Citizen ID. Maghintay
-            ng pagsusuri bago magsumite ng panibagong aplikasyon.
-          </p>
-          <div className="pt-2 flex flex-col sm:flex-row gap-3 w-full max-w-sm justify-center">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              {t("hasPendingAppTitle") || "You Have an Active Application"}
+            </h2>
+            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+              Your application for {serviceTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.
+            </p>
+          </div>
+
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appRefNoLabel") || "Application Reference No.:"}</span>
+              <span className="font-mono font-bold text-blue-600">
+                {blockedApp?.referenceNumber || blockedApp?.reference_no || userProfile?.qcidNo || "110000572516915"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                {t("statusPendingBadge") || "Under Review (Pending)"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
+              <span className="font-semibold text-gray-700">
+                {blockedApp?.submittedAt
+                  ? new Date(blockedApp.submittedAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+                  : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
+              </span>
+            </div>
+          </div>
+
+          <div className="w-full pt-2 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
+            </button>
             <button
               type="button"
               onClick={() => {
                 setBypassedBlock(true)
                 setIsBlocked(false)
                 setStep(1)
-                setIsSubmitted(false)
               }}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-sm"
+              className="w-full py-2 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-semibold transition-colors cursor-pointer"
             >
-              Magsumite ng Bagong Aplikasyon / Buksan ang Form
+              Magsumite ng Ibang Aplikasyon / Buksan ang Form
             </button>
           </div>
         </div>
