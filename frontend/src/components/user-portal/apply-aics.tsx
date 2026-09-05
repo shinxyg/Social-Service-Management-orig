@@ -282,31 +282,40 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   }, [qcId])
 
   useEffect(() => {
-  const checkEligibility = async () => {
-    setCheckingEligibility(true)
-    try {
-      const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcId}`)
-      if (res.ok) {
-        const data = await res.json()
-        // Block ONLY if may pending application na PAREHONG assistance type
-        const matchedApp = (data.applications || []).find(
-          (app: any) =>
-            app.status === "pending" &&
-            (app.assistance_type === type ||
-              app.assistance_type?.toLowerCase().includes((type || "").toLowerCase()) ||
-              (type || "").toLowerCase().includes((app.assistance_type || "").toLowerCase()))
-        )
-        setIsBlocked(Boolean(matchedApp))
-        setBlockedApp(matchedApp || null)
+    const checkEligibility = async () => {
+      setCheckingEligibility(true)
+      try {
+        const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcId}`)
+        if (res.ok) {
+          const data = await res.json()
+          // Robust matching across assistance categories
+          const isSameAssistanceType = (dbType: string) => {
+            const dbT = (dbType || "").toLowerCase().trim()
+            if (isEducationalAssistance) {
+              return dbT.includes("educ") || dbT.includes("aral")
+            }
+            if (isFuneralAssistance) {
+              return dbT.includes("funeral") || dbT.includes("burial") || dbT.includes("libing")
+            }
+            const currentT = (type || "").toLowerCase().trim()
+            return dbT === currentT || dbT.includes(currentT) || currentT.includes(dbT) || (dbT.includes("medic") && currentT.includes("medic"))
+          }
+
+          const matchedApp = (data.applications || []).find(
+            (app: any) =>
+              app.status === "pending" && isSameAssistanceType(app.assistance_type)
+          )
+          setIsBlocked(Boolean(matchedApp))
+          setBlockedApp(matchedApp || null)
+        }
+      } catch (err) {
+        console.warn("Eligibility check skipped/offline:", err)
+      } finally {
+        setCheckingEligibility(false)
       }
-    } catch (err) {
-      console.warn("Eligibility check skipped/offline:", err)
-    } finally {
-      setCheckingEligibility(false)
     }
-  }
-  checkEligibility()
-}, [qcId, type])
+    checkEligibility()
+  }, [qcId, type, isEducationalAssistance, isFuneralAssistance])
 
    useEffect(() => {
     if (dSameAddressAsApplicant) {

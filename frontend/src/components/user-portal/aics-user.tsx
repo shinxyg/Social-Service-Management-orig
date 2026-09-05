@@ -6,7 +6,7 @@ import { useLanguage } from "../ui/language-context"
 const TYPE_MAP: Record<string, { key: string; reqKey: string }> = {
   medical: { key: "aicsMedical", reqKey: "aicsMedical" },
   funeral: { key: "aicsFuneral", reqKey: "aicsFuneral" },
-  educational: { key: "Educational Asssistance", reqKey: "aicsEducational" },
+  educational: { key: "Educational Assistance", reqKey: "aicsEducational" },
   material: { key: "aicsMaterial", reqKey: "aicsMaterial" },
   food: { key: "aicsFood", reqKey: "aicsFood" },
   transportation: { key: "aicsTransportation", reqKey: "aicsTransportation" },
