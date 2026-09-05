@@ -911,8 +911,27 @@ export default function MyApplications() {
           </div>
         </div>
 
-        {/* Card 2: Financial Aid & Payout Appointment */}
+        {/* Card 2: Financial Aid & Payout Appointment (Only when Approved / For Release / Released) */}
         {(() => {
+          const isApprovedOrReleased =
+            selectedApp.status === "Approved" || selectedApp.status === "For Release" || selectedApp.status === "Released"
+
+          if (!isApprovedOrReleased) {
+            return (
+              <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-5 shadow-xs flex items-start gap-3">
+                <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5 text-xs text-amber-900">
+                  <p className="font-bold text-sm text-amber-950">
+                    Kasalukuyang Sinusuri ang Aplikasyon (Pending / Under Review)
+                  </p>
+                  <p className="text-amber-800 leading-relaxed">
+                    Ang inyong aplikasyon ay pinoproseso at sinusuri pa ng Social Worker. Awtomatikong magkakaroon ng Fixed Financial Aid record at appointment schedule para sa payout kapag na-aprubahan na ito.
+                  </p>
+                </div>
+              </div>
+            )
+          }
+
           const rawType = (selectedApp.assistance || "").replace(/\s*assistance/gi, "").trim()
           const formattedType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
           const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[formattedType] || FIXED_ASSISTANCE_AMOUNTS[selectedApp.assistance] || 1000
@@ -921,10 +940,10 @@ export default function MyApplications() {
           const matchDisb = savedDisbursements.find(
             (d) =>
               d.applicationRef === selectedApp.applicationNo ||
-              d.applicantName.toLowerCase().trim() === selectedApp.applicantName.toLowerCase().trim()
+              (d.applicantName && d.applicantName.toLowerCase().trim() === selectedApp.applicantName.toLowerCase().trim())
           )
 
-          const apptDate = matchDisb?.appointmentDate || "August 31, 2026"
+          const apptDate = matchDisb?.appointmentDate || new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
           const apptTime = matchDisb?.appointmentTime || "10:00 AM"
           const payoutVenue = matchDisb?.venue || "Quezon City Hall"
 
@@ -1168,8 +1187,15 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                {/* ── CONNECTED FINANCIAL AID & PAYOUT APPOINTMENT BANNER ── */}
+                {/* ── CONNECTED FINANCIAL AID & PAYOUT APPOINTMENT BANNER (Only when Approved / For Release / Released) ── */}
                 {(() => {
+                  const isApprovedOrReleased =
+                    app.status === "Approved" || app.status === "For Release" || app.status === "Released"
+
+                  if (!isApprovedOrReleased) {
+                    return null
+                  }
+
                   const rawType = (app.assistance || "").replace(/\s*assistance/gi, "").trim()
                   const formattedType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
                   const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[formattedType] || FIXED_ASSISTANCE_AMOUNTS[app.assistance] || 1000
@@ -1178,10 +1204,10 @@ export default function MyApplications() {
                   const matchDisb = savedDisbursements.find(
                     (d) =>
                       d.applicationRef === app.applicationNo ||
-                      d.applicantName.toLowerCase().trim() === app.applicantName.toLowerCase().trim()
+                      (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName.toLowerCase().trim())
                   )
 
-                  const apptDate = matchDisb?.appointmentDate || "August 31, 2026"
+                  const apptDate = matchDisb?.appointmentDate || new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
                   const apptTime = matchDisb?.appointmentTime || "10:00 AM"
                   const payoutVenue = matchDisb?.venue || "Quezon City Hall"
 
@@ -1197,7 +1223,7 @@ export default function MyApplications() {
                               Financial Aid Record
                             </span>
                             <span className="text-[11px] font-mono text-blue-700 font-bold">
-                              {matchDisb?.disbursementId || "DISB-2026-0001"}
+                              {matchDisb?.disbursementId || `DISB-${app.applicationNo.slice(-4)}`}
                             </span>
                           </div>
                           <p className="font-bold text-gray-900">
