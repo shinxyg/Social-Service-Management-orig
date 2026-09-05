@@ -11,7 +11,6 @@ import {
   Loader2,
   Sparkles,
   Info,
-  Search,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -27,6 +26,9 @@ export interface UserProfile {
   dobDay: string
   dobYear: string
   age?: string
+  sex?: string
+  gender?: string
+  citizenship?: string
   contactNo?: string
   email?: string
   addressHouseNo?: string
@@ -126,28 +128,6 @@ const REQUIRED_DOCUMENTS: RequiredDocument[] = [
     required: true,
   },
 ]
-
-const MONTH_MAP: Record<string, string> = {
-  JANUARY: "01",
-  FEBRUARY: "02",
-  MARCH: "03",
-  APRIL: "04",
-  MAY: "05",
-  JUNE: "06",
-  JULY: "07",
-  AUGUST: "08",
-  SEPTEMBER: "09",
-  OCTOBER: "10",
-  NOVEMBER: "11",
-  DECEMBER: "12",
-}
-
-function formatDobForInput(y?: string, m?: string, d?: string) {
-  if (!y || !m || !d) return ""
-  const mNorm = MONTH_MAP[m.toUpperCase()] || m.padStart(2, "0")
-  const dNorm = d.padStart(2, "0")
-  return `${y}-${mNorm}-${dNorm}`
-}
 
 function formatFileSize(bytes: number) {
   if (!bytes) return "0.0 KB"
