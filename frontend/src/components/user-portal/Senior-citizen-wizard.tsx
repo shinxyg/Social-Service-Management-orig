@@ -620,12 +620,6 @@ export default function SeniorCitizenApplicationWizard({
 
       if (matchedApproved) {
         setLatestApprovedApp(matchedApproved)
-        setApprovedSeniorRecord(matchedApproved)
-        const officialId = (matchedApproved.assignedIdNumber || matchedApproved.referenceNumber || "").replace("OSCA-", "SENIOR-")
-        if (officialId && (appFlow === "renewal" || appFlow === "loss")) {
-          setExistingIdNumber((prev) => prev || officialId)
-          setIsIdVerified(true)
-        }
       } else {
         setLatestApprovedApp(null)
       }

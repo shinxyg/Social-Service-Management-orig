@@ -733,15 +733,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
       if (matchedApproved) {
         setLatestApprovedApp(matchedApproved)
-        setApprovedPwdRecord(matchedApproved)
-        const officialId = matchedApproved.assignedIdNumber || matchedApproved.referenceNumber || ""
-        if (officialId && (initialIdStatus === "renewal" || initialIdStatus === "loss")) {
-          setFormData((prev) => ({
-            ...prev,
-            existingPwdIdNumber: prev.existingPwdIdNumber || officialId,
-          }))
-          setIsIdVerified(true)
-        }
       } else {
         setLatestApprovedApp(null)
       }
