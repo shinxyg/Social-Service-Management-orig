@@ -1436,12 +1436,8 @@ export default function PWDSocialAssistanceWizard({
               {/* ASSISTANCE DETAILS */}
               <div className="space-y-4">
                 <SectionHeader title="ASSISTANCE DETAILS" />
-                <Field label="Type of Assistance Requested" required>
-                  <SelectInput
-                    value={formData.assistanceType}
-                    onChange={(v) => updateField("assistanceType", v)}
-                    options={ASSISTANCE_TYPES}
-                  />
+                <Field label="Type of Assistance Requested *">
+                  <LockedField value={formData.assistanceType || "Emergency Assistance"} />
                 </Field>
                 <Field label="Reason for Request" required invalid={attemptedNext && formData.reasonForRequest.trim() === ""}>
                   <TextArea
