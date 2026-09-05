@@ -664,6 +664,7 @@ const handleFinalSubmit = async () => {
       ? "Transportation Assistance"
       : "Medical Assistance"
 
+    const formData = new FormData()
     formData.append("assistanceType", assistanceTypeName)
     formData.append("qcId", qcId)
     formData.append("firstName", pFirstName)
