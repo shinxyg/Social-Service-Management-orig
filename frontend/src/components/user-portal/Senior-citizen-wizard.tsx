@@ -717,13 +717,18 @@ export default function SeniorCitizenApplicationWizard({
     )
   }
 
-  if (isBlocked && !bypassedBlock) {
+  if (isBlocked) {
     const serviceTitle =
       appFlow === "renewal"
-        ? "Renewal Senior Citizen ID"
+        ? "Renewal SENIOR ID"
         : appFlow === "loss"
-        ? "Replacement / Lost Senior Citizen ID"
-        : "Senior Citizen ID Services"
+        ? "Replacement / Lost SENIOR ID"
+        : "New App SENIOR ID"
+
+    const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || userProfile?.qcidNo || "110000572516915"
+    const displayDate = blockedApp?.submittedAt
+      ? new Date(blockedApp.submittedAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+      : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
 
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
@@ -744,27 +749,24 @@ export default function SeniorCitizenApplicationWizard({
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">{t("appRefNoLabel") || "Application Reference No.:"}</span>
               <span className="font-mono font-bold text-blue-600">
-                {blockedApp?.referenceNumber || blockedApp?.reference_no || userProfile?.qcidNo || "110000572516915"}
+                {displayRef}
               </span>
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                {t("statusPendingBadge") || "Under Review (Pending)"}
+                {t("statusPendingBadge") || "• Under Review (Pending)"}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
               <span className="font-semibold text-gray-700">
-                {blockedApp?.submittedAt
-                  ? new Date(blockedApp.submittedAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
-                  : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
+                {displayDate}
               </span>
             </div>
           </div>
 
-          <div className="w-full pt-2 flex flex-col gap-2">
+          <div className="w-full pt-2">
             <button
               type="button"
               onClick={() => {
@@ -774,104 +776,67 @@ export default function SeniorCitizenApplicationWizard({
             >
               {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setBypassedBlock(true)
-                setIsBlocked(false)
-                setStep(1)
-              }}
-              className="w-full py-2 px-4 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-semibold transition-colors cursor-pointer"
-            >
-              Magsumite ng Ibang Aplikasyon / Buksan ang Form
-            </button>
           </div>
         </div>
       </div>
     )
   }
 
-  // ── SUBMISSION SUCCESS SCREEN ──
+  // ── SUBMISSION SUCCESS / PENDING SCREEN ──
   if (isSubmitted) {
-    return (
-      <div className="p-4 md:p-6 max-w-5xl mx-auto animate-in fade-in duration-300">
-        <div className="border border-gray-200 rounded-xl overflow-hidden bg-white p-8 text-center shadow-xs space-y-6">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-emerald-50">
-            <Check className="w-8 h-8" strokeWidth={3} />
-          </div>
+    const serviceTitle =
+      appFlow === "renewal"
+        ? "Renewal SENIOR ID"
+        : appFlow === "loss"
+        ? "Replacement / Lost SENIOR ID"
+        : "New App SENIOR ID"
 
-          <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <Sparkles className="w-3.5 h-3.5" /> Application Submitted Successfully!
-            </span>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Mabuhay! Ang inyong aplikasyon ay Natanggap Na.
+    return (
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <Info className="h-8 w-8 text-amber-500" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              {t("hasPendingAppTitle") || "You Have an Active Application"}
             </h2>
-            <p className="text-sm text-gray-600 max-w-md mx-auto">
-              Ang inyong Senior Citizen ID application ay matagumpay na naisumite at kasalukuyang sinusuri.
+            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+              Your application for {serviceTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.
             </p>
           </div>
 
-          {/* Reference Card */}
-          <div className="border border-gray-200 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/70">
-            <div className="flex justify-between items-center text-xs text-gray-900 border-b border-gray-200 pb-2">
-              <span className="font-semibold text-gray-500">Application Reference No.:</span>
-              <span className="font-mono font-bold text-[#3b82f6] text-sm">{referenceNo}</span>
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appRefNoLabel") || "Application Reference No.:"}</span>
+              <span className="font-mono font-bold text-blue-600">
+                {referenceNo || userProfile?.qcidNo || "110000572516915"}
+              </span>
             </div>
-            <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">Service:</span>
-              <span className="font-semibold text-gray-900">Senior Citizen ID</span>
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                {t("statusPendingBadge") || "• Under Review (Pending)"}
+              </span>
             </div>
-            <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">Application Type:</span>
-              <span className="font-semibold text-gray-900 uppercase">{flowBadgeTitle}</span>
-            </div>
-            {appFlow !== "new" && existingIdNumber && (
-              <>
-                <div className="flex justify-between items-center text-xs text-gray-900">
-                  <span className="text-gray-500">
-                    {appFlow === "renewal" ? "Expired / Old Senior ID:" : "Lost Senior ID / QCID:"}
-                  </span>
-                  <span className="font-mono font-semibold text-gray-900">{existingIdNumber}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs text-gray-900">
-                  <span className="text-gray-500">
-                    {appFlow === "renewal" ? "Reason for Renewal:" : "Reason for Replacement:"}
-                  </span>
-                  <span className="font-semibold text-gray-900">
-                    {appFlow === "renewal" ? reasonForRenewal : reasonForReplacement}
-                  </span>
-                </div>
-              </>
-            )}
-            <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">Aplikante:</span>
-              <span className="font-semibold text-gray-900 uppercase">{fullName}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">Petsa:</span>
-              <span className="text-gray-900">
-                {new Date().toLocaleDateString("en-PH", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
+              <span className="font-semibold text-gray-700">
+                {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
               </span>
             </div>
           </div>
 
-          <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
-            <Info className="w-4 h-4 text-[#3b82f6] shrink-0" />
-            <p>
-              Maaari ninyong tingnan ang Notifications para sa mga update sa inyong aplikasyon.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
-            <span>
-              Awtomatikong lilipat sa application status sa loob ng {redirectCountdown} segundo...
-            </span>
+          <div className="w-full pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
+            </button>
           </div>
         </div>
       </div>
