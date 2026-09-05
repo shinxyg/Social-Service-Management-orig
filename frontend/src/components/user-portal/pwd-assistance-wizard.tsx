@@ -1351,11 +1351,7 @@ export default function PWDSocialAssistanceWizard({
                     <LockedField value={formData.email || userProfile?.email || "applicant@example.com"} />
                   </Field>
                 </div>
-              </div>
 
-              {/* ADDRESS */}
-              <div className="space-y-4">
-                <SectionHeader title="ADDRESS" />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label="House No. / Street *">
                     <LockedField
