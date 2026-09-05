@@ -17,6 +17,7 @@ import {
   Printer,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
+import { pushUserNotification } from "../../utils/financialAidSync"
 
 // ---- Types for collected form data from user submissions ----
 interface ApplicationDocument {
@@ -1448,6 +1449,28 @@ export default function PWDSeniorCitizenAdmin() {
       console.warn("Failed updating backend status:", err)
     }
 
+    // Dispatch in-portal bell notification to applicant
+    if (targetApp) {
+      const typeLabel =
+        targetApp.type === "renewal"
+          ? "Renewal"
+          : targetApp.type === "replacement"
+          ? "Replacement / Lost ID"
+          : "New Application"
+      const serviceName = isPWD(targetApp) ? "PWD ID" : "Senior Citizen ID"
+
+      pushUserNotification({
+        applicantEmail: emailToSend,
+        recipientName: displayName(targetApp),
+        title: `Aplikasyon sa ${serviceName} (${typeLabel}): Naaprubahan`,
+        message: `Binabati kita! Ang iyong aplikasyon para sa ${typeLabel} ng ${serviceName} ay opisyal nang naaprubahan. Opisyal na ID Number: ${idNumber}.`,
+        type: "success",
+        serviceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
+        referenceNo: targetApp.referenceNumber,
+        actionUrl: "/portal/my-applications",
+      })
+    }
+
     // Dispatch real email notification to applicant's email address
     if (targetApp && emailToSend) {
       try {
@@ -1475,6 +1498,7 @@ export default function PWDSeniorCitizenAdmin() {
   }
 
   const handleReject = async (id: string, reason: string) => {
+    const targetApp = applications.find((a) => a.id === id)
     updateApplications((prev) =>
       prev.map((app) =>
         app.id === id
@@ -1486,6 +1510,19 @@ export default function PWDSeniorCitizenAdmin() {
           : app
       )
     )
+
+    if (targetApp) {
+      pushUserNotification({
+        applicantEmail: isPWD(targetApp) ? targetApp.email : targetApp.email,
+        recipientName: displayName(targetApp),
+        title: `Aplikasyon sa ${isPWD(targetApp) ? "PWD" : "Senior Citizen"} ID: Hindi Naaprubahan`,
+        message: `Paumanhin, ang iyong aplikasyon ay hindi naaprubahan. Dahilan: ${reason || "Nangangailangan ng karagdagang dokumento."}`,
+        type: "warning",
+        serviceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
+        referenceNo: targetApp.referenceNumber,
+        actionUrl: "/portal/my-applications",
+      })
+    }
 
     // Sync rejection to backend database
     try {
