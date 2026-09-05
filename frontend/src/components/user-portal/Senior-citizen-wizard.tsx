@@ -267,7 +267,6 @@ export default function SeniorCitizenApplicationWizard({
   const [isIdVerified, setIsIdVerified] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
-  const [approvedSeniorRecord, setApprovedSeniorRecord] = useState<any | null>(null)
   const [reasonForReplacement, setReasonForReplacement] = useState("")
   const [reasonForRenewal, setReasonForRenewal] = useState("")
 
@@ -354,7 +353,6 @@ export default function SeniorCitizenApplicationWizard({
         const officialId = (matchedApp.assignedIdNumber || matchedApp.referenceNumber || existingIdNumber).replace("OSCA-", "SENIOR-")
         setIsIdVerified(true)
         setVerifyError(null)
-        setApprovedSeniorRecord(matchedApp)
         setExistingIdNumber(officialId)
         if (matchedApp.firstName) {
           setFormData((prev) => ({
@@ -379,7 +377,6 @@ export default function SeniorCitizenApplicationWizard({
         }
       } else {
         setIsIdVerified(false)
-        setApprovedSeniorRecord(null)
         setVerifyError(
           "No registered Senior Citizen record found in the system for this ID. Renewal and Replacement are only available for registered Senior Citizen ID holders. Please check your ID number or submit a New Application first."
         )
