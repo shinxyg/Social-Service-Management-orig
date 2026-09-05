@@ -1353,16 +1353,12 @@ export default function PWDSocialAssistanceWizard({
                   </Field>
                 </div>
                 <Field label="Brief Description of Disability">
-                  {formData.disabilityDescription ? (
-                    <LockedField value={formData.disabilityDescription} />
-                  ) : (
-                    <TextArea
-                      value={formData.disabilityDescription}
-                      onChange={(v) => updateField("disabilityDescription", v)}
-                      placeholder="Brief description of condition or disability (optional)..."
-                      rows={2}
-                    />
-                  )}
+                  <TextArea
+                    value={formData.disabilityDescription}
+                    onChange={(v) => updateField("disabilityDescription", v)}
+                    placeholder="Brief description of condition or disability (optional)..."
+                    rows={2}
+                  />
                 </Field>
               </div>
 
