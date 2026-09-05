@@ -483,30 +483,36 @@ function OfficialIdCardModal({
   } catch {}
 
   const emergencyPerson =
-    (app as any).emergencyName ||
     [(app as any).emergencyFirstName, (app as any).emergencyLastName].filter(Boolean).join(" ") ||
+    (app as any).emergencyContactPerson ||
+    (app as any).emergencyName ||
+    (app as any).emergencyPerson ||
     (app as any).guardianName ||
     (app as any).familyMemberName ||
     localEmergencyName ||
-    "CLARENCE MILLARES"
+    "—"
 
   const emergencyPhone =
     (app as any).emergencyContactNo ||
-    (app as any).guardianContact ||
     (app as any).emergencyPhone ||
+    (app as any).guardianContact ||
     localEmergencyPhone ||
-    "09151312123"
+    contactNumber ||
+    "—"
 
   const emergencyRel =
     (app as any).emergencyRelationship ||
+    (app as any).relationshipToApplicant ||
     (app as any).familyRelationship ||
     localEmergencyRel ||
     (isPwdApp ? "Guardian" : "Immediate Family")
 
   const emergencyAddr =
+    (app as any).emergencyResidentialAddress ||
     (app as any).emergencyAddress ||
     (app as any).guardianAddress ||
     localEmergencyAddr ||
+    app.address ||
     "Quezon City"
 
   const photoDoc = (app.documents || []).find(
@@ -871,28 +877,32 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
   } catch {}
 
   const emergencyPerson =
-    (app as any).emergencyName ||
     [(app as any).emergencyFirstName, (app as any).emergencyLastName].filter(Boolean).join(" ") ||
+    (app as any).emergencyContactPerson ||
+    (app as any).emergencyName ||
+    (app as any).emergencyPerson ||
     (app as any).guardianName ||
     (app as any).familyMemberName ||
     localEmergencyName ||
-    (isPWD(app) ? "Parent / Guardian Contact" : "Designated Emergency Contact")
+    "—"
 
   const emergencyPhone =
     (app as any).emergencyContactNo ||
-    (app as any).guardianContact ||
     (app as any).emergencyPhone ||
+    (app as any).guardianContact ||
     localEmergencyPhone ||
     contactNumber ||
     "—"
 
   const emergencyRelation =
     (app as any).emergencyRelationship ||
+    (app as any).relationshipToApplicant ||
     (app as any).familyRelationship ||
     localEmergencyRel ||
     (isPWD(app) ? "Guardian / Parent" : "Immediate Family")
 
   const emergencyAddress =
+    (app as any).emergencyResidentialAddress ||
     (app as any).emergencyAddress ||
     (app as any).guardianAddress ||
     localEmergencyAddr ||
