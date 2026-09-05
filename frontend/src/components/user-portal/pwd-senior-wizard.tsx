@@ -734,8 +734,14 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [isFormDirty])
 
-  const updateField = (key: keyof FormData, value: string) =>
+  const updateField = (key: keyof FormData, value: string) => {
+    if (key === "existingPwdIdNumber") {
+      setIsIdVerified(false)
+      setVerifyError(null)
+      setApprovedPwdRecord(null)
+    }
     setFormData((prev) => ({ ...prev, [key]: value }))
+  }
 
   // handles the actual <input type="file"> change event
   const handleFileChange = (title: string, fileList: FileList | null) => {
@@ -836,11 +842,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
   const handleVerifyId = async () => {
     setVerifyError(null)
-    const typed = (formData.existingPwdIdNumber || "").trim().toLowerCase()
+    const typed = (formData.existingPwdIdNumber || "").trim()
+    const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
     const userQcid = (userProfile?.qcidNo || "110000116932100").trim().toLowerCase()
     const userEmail = (userProfile?.email || "dimalmae@gmail.com").trim().toLowerCase()
 
-    if (!dontKnowId && !typed) {
+    if (!dontKnowId && !cleanTyped) {
       setVerifyError("Please enter your PWD ID number before verifying.")
       return
     }
@@ -849,34 +856,44 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     try {
       const apps = await fetchAllPwdApps()
 
-      // Hanapin ang aprubadong PWD application
+      // Hanapin ang tunay na PWD application / rehistradong PWD record sa system
       const matchedApp = apps.find((a) => {
-        if (a.category !== "PWD") return false
-        // Dapat approved o may assigned ID number
-        if (a.status !== "approved" && !a.assignedIdNumber) return false
+        if (!a) return false
+        const cat = (a.category || "").trim().toUpperCase()
+        if (cat !== "PWD") return false
+
+        // Ang record ay dapat nagmula sa valid application (approved o may assigned/reference number mula sa New App)
+        const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const refClean = (a.referenceNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const idClean = (a.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const emailClean = (a.email || "").trim().toLowerCase()
 
         if (dontKnowId) {
           // Verify gamit ang QCID / email
+          const qcidClean = userQcid.replace(/[^a-z0-9]/gi, "")
           return (
-            (a.referenceNumber && a.referenceNumber.toLowerCase() === userQcid) ||
-            (a.email && a.email.toLowerCase() === userEmail) ||
-            (a.assignedIdNumber && a.assignedIdNumber.toLowerCase() === userQcid)
+            (refClean !== "" && refClean === qcidClean) ||
+            (assignedClean !== "" && assignedClean === qcidClean) ||
+            (emailClean !== "" && emailClean === userEmail)
           )
         }
 
-        // Verify gamit ang typed PWD ID number o reference number (flexible matching: may PWD- man o wala)
-        const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const refClean = (a.referenceNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-
+        // STRICT MATCHING: dapat tumutugma nang eksakto sa assigned ID o reference number o app ID
         const matchAssigned =
-          (a.assignedIdNumber && a.assignedIdNumber.trim().toLowerCase() === typed) ||
-          (assignedClean !== "" && (assignedClean === cleanTyped || assignedClean.endsWith(cleanTyped) || cleanTyped.endsWith(assignedClean)))
-        const matchRef =
-          (a.referenceNumber && a.referenceNumber.trim().toLowerCase() === typed) ||
-          (refClean !== "" && (refClean === cleanTyped || refClean.endsWith(cleanTyped) || cleanTyped.endsWith(refClean)))
+          assignedClean !== "" &&
+          (cleanTyped === assignedClean ||
+           cleanTyped === `pwd${assignedClean}` ||
+           `pwd${cleanTyped}` === assignedClean)
 
-        return Boolean(matchAssigned || matchRef)
+        const matchRef =
+          refClean !== "" &&
+          (cleanTyped === refClean ||
+           cleanTyped === `pwd${refClean}` ||
+           `pwd${cleanTyped}` === refClean)
+
+        const matchId = idClean !== "" && cleanTyped === idClean
+
+        return Boolean(matchAssigned || matchRef || matchId)
       })
 
       if (matchedApp) {
@@ -908,16 +925,16 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
           otherMarks: prev.otherMarks || "None",
         }))
       } else {
-        // NO APPROVED PWD ID RECORD FOUND
+        // NO VALID PWD ID RECORD FOUND
         setIsIdVerified(false)
         setApprovedPwdRecord(null)
         setVerifyError(
-          "No approved PWD ID record found in the system for this ID. You cannot apply for Renewal or Replacement / Lost ID without an existing registered and approved New PWD ID application."
+          "Hindi nahanap ang PWD ID number sa sistema. Bawal ang random o hindi rehistradong ID number. Kailangan mayroon kang naunang New PWD ID application sa system bago mag-apply para sa Renewal o Replacement / Lost ID."
         )
       }
     } catch {
       setIsIdVerified(false)
-      setVerifyError("An error occurred while verifying the ID. Please try again.")
+      setVerifyError("Nagkaroon ng error sa pag-verify ng PWD ID. Pakisubukan muli.")
     } finally {
       setIsVerifying(false)
     }
