@@ -82,7 +82,7 @@ async function sendPwdApprovalEmail({
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>GovServe - Official PWD ID Approval</title>
+      <title>Gov Services - Official PWD ID Approval</title>
       <style>
         body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
@@ -93,8 +93,8 @@ async function sendPwdApprovalEmail({
         .badge { display: inline-block; background-color: #ecfdf5; color: #047857; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 9999px; border: 1px solid #a7f3d0; margin-bottom: 20px; }
         .card { background: #f8fafc; border: 2px dashed #93c5fd; border-radius: 14px; padding: 24px; margin: 20px 0; }
         .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 14px; margin-bottom: 16px; }
-        .id-number-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin: 12px 0; text-align: center; }
-        .id-number-label { font-size: 11px; text-transform: uppercase; color: #1e40af; font-weight: 700; letter-spacing: 0.5px; }
+        .id-number-box { background: #eff6ff; border: 1.5px solid #2563eb; border-radius: 10px; padding: 12px 16px; margin: 12px 0; text-align: center; }
+        .id-number-label { font-size: 12px; text-transform: uppercase; color: #1e40af; font-weight: 800; letter-spacing: 0.5px; }
         .id-number-val { font-size: 22px; font-family: monospace; font-weight: 800; color: #1d4ed8; letter-spacing: 2px; margin-top: 4px; }
         .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
         .info-label { color: #64748b; font-weight: 600; }
@@ -106,31 +106,31 @@ async function sendPwdApprovalEmail({
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="GovServe Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
-          <h1>GovServe</h1>
-          <p>Social Services &amp; Development Department — Persons with Disability Affairs Division</p>
+          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="Gov Services Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
+          <h1>Gov Services</h1>
+          <p>Persons with Disability Affairs Division — Gov Services</p>
         </div>
 
         <div class="content">
           <div style="text-align: center;">
-            <span class="badge">✓ APPLICATION APPROVED</span>
+            <span class="badge">✓ OFFICIAL PWD ID ISSUED</span>
           </div>
 
           <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Greetings, ${recipientName || 'Applicant'}!</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
-            Your application for the <strong>Persons with Disability (PWD) ID</strong> has been officially <strong>APPROVED</strong> by GovServe Social Services &amp; Development Department.
+            We are pleased to inform you that your application for an official <strong>Persons with Disability (PWD) ID</strong> has been officially <strong>APPROVED</strong> by Gov Services - Persons with Disability Affairs Division.
           </p>
 
           <div class="card">
             <div class="id-number-box">
-              <div class="id-number-label">Official PWD ID / QCID Number</div>
-              <div class="id-number-val">${pwdIdNumber || referenceNumber || '110000116932100'}</div>
+              <div class="id-number-label">OFFICIAL PWD ID</div>
+              <div class="id-number-val">${pwdIdNumber || referenceNumber || 'PWD-137404-2026-000000'}</div>
             </div>
 
             <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 14px;">
               <tr>
                 <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Beneficiary Name:</td>
-                <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right;">${recipientName || '—'}</td>
+                <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right; text-transform: uppercase;">${recipientName || '—'}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Disability Category:</td>
@@ -147,23 +147,23 @@ async function sendPwdApprovalEmail({
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Status:</td>
-                <td style="padding: 6px 0; color: #047857; font-weight: 700; text-align: right;">ACTIVE / VALID</td>
+                <td style="padding: 6px 0; color: #047857; font-weight: 800; text-align: right;">ACTIVE AND REGISTERED</td>
               </tr>
             </table>
           </div>
 
-          <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #166534; line-height: 1.5;">
-            <strong>Notice:</strong> You can now access and view your <strong>Digital PWD ID</strong> via the GovServe User Portal to avail of statutory benefits and social assistance.
+          <div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #1e40af; line-height: 1.5;">
+            <strong>Privileges and Benefits:</strong> You can now access and view your <strong>Digital PWD ID</strong> via the Gov Services User Portal to avail of statutory discounts (20% discount &amp; VAT exemption) and government assistance programs.
           </div>
 
           <a href="https://frontend-production-1c51.up.railway.app/portal" class="button" target="_blank">
-            OPEN MY DIGITAL PWD ID PORTAL
+            ACCESS DIGITAL PWD ID
           </a>
         </div>
 
         <div class="footer">
-          <p style="margin: 0 0 4px;">This is an official automated notification from the GovServe Social Services Management System.</p>
-          <p style="margin: 0;">GovServe Social Services Management Portal | Online Support</p>
+          <p style="margin: 0 0 4px;">This is an official automated email notification from the Gov Services Portal.</p>
+          <p style="margin: 0;">Gov Services | Persons with Disability Affairs Division</p>
         </div>
       </div>
     </body>
@@ -177,10 +177,10 @@ async function sendPwdApprovalEmail({
   const attachments = getLogoAttachments();
 
   const mailOptions = {
-    from: `"GovServe (PWD Affairs)" <${senderEmail}>`,
+    from: `"Gov Services (PWD Affairs)" <${senderEmail}>`,
     to: recipientEmail.trim(),
-    subject: `[GovServe] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
-    text: `Greetings ${recipientName}! Your PWD ID Application has been approved. Official ID: ${pwdIdNumber || referenceNumber}.`,
+    subject: `[Gov Services] Official PWD ID Card Approved: ${pwdIdNumber || referenceNumber}`,
+    text: `Greetings ${recipientName}! Your PWD ID Application has been officially approved. Official ID: ${pwdIdNumber || referenceNumber}.`,
     html: htmlContent,
     attachments,
   };
@@ -231,9 +231,9 @@ async function sendPwdApprovalEmail({
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          sender: { name: 'GovServe (PWD Affairs)', email: senderEmail },
+          sender: { name: 'Gov Services (PWD Affairs)', email: senderEmail },
           to: [{ email: recipientEmail.trim(), name: recipientName || 'Applicant' }],
-          subject: `[GovServe] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
+          subject: `[Gov Services] Official PWD ID Card Approved: ${pwdIdNumber || referenceNumber}`,
           htmlContent: htmlContent,
         }),
       });
@@ -261,13 +261,14 @@ async function sendPwdApprovalEmail({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'GovServe <onboarding@resend.dev>',
+          from: 'Gov Services <onboarding@resend.dev>',
           to: [recipientEmail.trim()],
-          subject: `[GovServe] Approved: Official PWD ID Record (${pwdIdNumber || referenceNumber})`,
+          subject: `[Gov Services] Official PWD ID Card Approved: ${pwdIdNumber || referenceNumber}`,
           text: `Greetings ${recipientName}! Your PWD ID Application has been approved. Official ID: ${pwdIdNumber || referenceNumber}.`,
           html: htmlContent,
         }),
       });
+
 
       const data = await res.json();
       if (res.ok && data.id) {
