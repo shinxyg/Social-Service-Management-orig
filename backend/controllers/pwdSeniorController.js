@@ -111,7 +111,7 @@ const SEED_PWD_SENIOR_APPS = [
 let memoryApplications = [...SEED_PWD_SENIOR_APPS];
 
 
-// Ensure table exists
+// Ensure table exists and has all required columns
 async function initPwdSeniorTable() {
   try {
     await db.query(`
@@ -144,6 +144,25 @@ async function initPwdSeniorTable() {
         submitted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_first_name VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_last_name VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_contact_person VARCHAR(200);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_contact_no VARCHAR(50);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_relationship VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_address TEXT;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_residential_address TEXT;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS house_no VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS street VARCHAR(150);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS barangay VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS blood_type VARCHAR(20);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS existing_id_number VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS reason_for_renewal TEXT;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS reason_for_replacement TEXT;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
     `);
     console.log('[DB] pwd_senior_applications table ready.');
 
@@ -219,6 +238,20 @@ exports.getAllApplications = async (req, res) => {
           parsedDocs = [];
         }
       }
+      let extra = {};
+      if (row.extra_data && typeof row.extra_data === 'object') {
+        extra = row.extra_data;
+      } else if (typeof row.extra_data === 'string') {
+        try {
+          extra = JSON.parse(row.extra_data);
+        } catch {}
+      }
+
+      const emFirst = row.emergency_first_name || extra.emergencyFirstName || '';
+      const emLast = row.emergency_last_name || extra.emergencyLastName || '';
+      const emFullName = [emFirst, emLast].filter(Boolean).join(' ').trim();
+      const emPerson = row.emergency_contact_person || extra.emergencyContactPerson || extra.emergencyName || emFullName || '';
+
       return {
         id: row.id,
         submittedAt: row.submitted_at || row.created_at,
@@ -247,6 +280,26 @@ exports.getAllApplications = async (req, res) => {
         approvedBy: row.approved_by,
         approvedDate: row.approved_date,
         rejectionReason: row.rejection_reason,
+        emergencyFirstName: emFirst,
+        emergencyLastName: emLast,
+        emergencyContactPerson: emPerson,
+        emergencyName: emPerson,
+        emergencyContactNo: row.emergency_contact_no || extra.emergencyContactNo || extra.emergencyPhone || '',
+        emergencyPhone: row.emergency_contact_no || extra.emergencyContactNo || extra.emergencyPhone || '',
+        emergencyRelationship: row.emergency_relationship || extra.emergencyRelationship || extra.relationshipToApplicant || '',
+        relationshipToApplicant: row.emergency_relationship || extra.emergencyRelationship || extra.relationshipToApplicant || '',
+        emergencyAddress: row.emergency_address || extra.emergencyAddress || '',
+        emergencyResidentialAddress: row.emergency_residential_address || row.emergency_address || extra.emergencyResidentialAddress || extra.emergencyAddress || '',
+        houseNo: row.house_no || extra.houseNo || '',
+        street: row.street || extra.street || '',
+        barangay: row.barangay || extra.barangay || '',
+        city: row.city || extra.city || '',
+        bloodType: row.blood_type || extra.bloodType || '',
+        nationality: row.nationality || extra.nationality || '',
+        existingIdNumber: row.existing_id_number || extra.existingIdNumber || '',
+        reasonForRenewal: row.reason_for_renewal || extra.reasonForRenewal || '',
+        reasonForReplacement: row.reason_for_replacement || extra.reasonForReplacement || '',
+        isArchived: row.is_archived || false,
       };
     });
     return res.json(mapped);
@@ -265,6 +318,13 @@ exports.createApplication = async (req, res) => {
     const body = req.body;
     const appId = body.id || `APP-${Date.now()}`;
     const refNum = body.referenceNumber || '110000116932100';
+
+    const emFirst = body.emergencyFirstName || '';
+    const emLast = body.emergencyLastName || '';
+    const emPerson = body.emergencyContactPerson || body.emergencyName || [emFirst, emLast].filter(Boolean).join(' ').trim();
+    const emPhone = body.emergencyContactNo || body.emergencyPhone || '';
+    const emRel = body.emergencyRelationship || body.relationshipToApplicant || '';
+    const emAddr = body.emergencyAddress || body.emergencyResidentialAddress || '';
 
     const newApp = {
       id: appId,
@@ -294,6 +354,25 @@ exports.createApplication = async (req, res) => {
       approvedBy: null,
       approvedDate: null,
       rejectionReason: null,
+      emergencyFirstName: emFirst,
+      emergencyLastName: emLast,
+      emergencyContactPerson: emPerson,
+      emergencyName: emPerson,
+      emergencyContactNo: emPhone,
+      emergencyPhone: emPhone,
+      emergencyRelationship: emRel,
+      relationshipToApplicant: emRel,
+      emergencyAddress: emAddr,
+      emergencyResidentialAddress: emAddr,
+      houseNo: body.houseNo || '',
+      street: body.street || '',
+      barangay: body.barangay || '',
+      city: body.city || '',
+      bloodType: body.bloodType || '',
+      nationality: body.nationality || '',
+      existingIdNumber: body.existingIdNumber || '',
+      reasonForRenewal: body.reasonForRenewal || '',
+      reasonForReplacement: body.reasonForReplacement || '',
     };
 
     try {
@@ -305,8 +384,16 @@ exports.createApplication = async (req, res) => {
         `INSERT INTO pwd_senior_applications (
           id, reference_number, category, type, first_name, middle_name, last_name, suffix,
           date_of_birth, age, sex, civil_status, contact_no, email, address, disability_type,
-          disability_class, cause_of_disability, applying_for, documents, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
+          disability_class, cause_of_disability, applying_for, documents, status,
+          emergency_first_name, emergency_last_name, emergency_contact_person, emergency_contact_no,
+          emergency_relationship, emergency_address, emergency_residential_address,
+          house_no, street, barangay, city, blood_type, nationality, existing_id_number,
+          reason_for_renewal, reason_for_replacement, extra_data
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+          $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+          $31, $32, $33, $34, $35, $36, $37, $38
+        )`,
         [
           newApp.id,
           newApp.referenceNumber,
@@ -329,6 +416,23 @@ exports.createApplication = async (req, res) => {
           newApp.applyingFor,
           JSON.stringify(newApp.documents),
           'pending',
+          newApp.emergencyFirstName,
+          newApp.emergencyLastName,
+          newApp.emergencyContactPerson,
+          newApp.emergencyContactNo,
+          newApp.emergencyRelationship,
+          newApp.emergencyAddress,
+          newApp.emergencyResidentialAddress,
+          newApp.houseNo,
+          newApp.street,
+          newApp.barangay,
+          newApp.city,
+          newApp.bloodType,
+          newApp.nationality,
+          newApp.existingIdNumber,
+          newApp.reasonForRenewal,
+          newApp.reasonForReplacement,
+          JSON.stringify(body),
         ]
       );
     } catch (dbErr) {

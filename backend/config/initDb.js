@@ -167,6 +167,23 @@ async function initDb() {
 
       ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
       ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_first_name VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_last_name VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_contact_person VARCHAR(200);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_contact_no VARCHAR(50);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_relationship VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_address TEXT;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS emergency_residential_address TEXT;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS house_no VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS street VARCHAR(150);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS barangay VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS blood_type VARCHAR(20);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS existing_id_number VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS reason_for_renewal TEXT;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS reason_for_replacement TEXT;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
 
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
