@@ -683,7 +683,11 @@ export default function ChildWelfareApplicationWizard({
     formData.firstName.trim() !== "" &&
     formData.lastName.trim() !== "" &&
     formData.parentFullName.trim() !== "" &&
-    formData.parentContactNo.trim().length >= 11
+    formData.parentContactNo.trim().length >= 11 &&
+    (!selectedProgram.hasProtectionConcern || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== "")) &&
+    (!selectedProgram.hasEmergencyInfo || (formData.emergencyType.trim() !== "" && formData.emergencyDateTime.trim() !== "" && formData.briefDescription.trim() !== "")) &&
+    (!selectedProgram.hasPsychosocialReason || (formData.psychosocialReason.trim() !== "" && formData.briefDescription.trim() !== "")) &&
+    (!selectedProgram.hasInterventionReason || (formData.interventionReason.trim() !== "" && formData.briefDescription.trim() !== ""))
 
   const requiredDocItems = selectedProgram.documents.filter((d) => d.required)
   const step3Valid = requiredDocItems.every((d) => (uploadedFiles[d.id] || []).length > 0)

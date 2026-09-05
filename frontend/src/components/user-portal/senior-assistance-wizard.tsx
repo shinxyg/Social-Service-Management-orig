@@ -1149,6 +1149,13 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                   />
                 </div>
               </div>
+
+              {attemptedNext && !isStep2Valid && (
+                <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>Pakikumpleto ang lahat ng kinakailangang impormasyon sa Step 2 bago magpatuloy sa susunod na hakbang.</span>
+                </div>
+              )}
             </div>
           )}
 

@@ -997,7 +997,9 @@ export default function SoloParentApplicationWizard({
     (formData.emergencyFirstName || "").trim() !== "" &&
     (formData.emergencyLastName || "").trim() !== "" &&
     (formData.emergencyContactNo || "").trim().length === 11 &&
-    (formData.emergencyRelationship || "").trim() !== ""
+    (formData.emergencyRelationship || "").trim() !== "" &&
+    (formData.emergencyAddress || "").trim() !== "" &&
+    (formData.bloodType || "").trim() !== ""
 
   const step3Valid = requiredDocs.every((doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0)
 
@@ -1994,8 +1996,37 @@ export default function SoloParentApplicationWizard({
                       )}
                     </div>
                   </div>
+                  <div className="mt-3">
+                    <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyAddress || "").trim() ? "text-red-600" : "text-gray-700"}`}>
+                      {t("address") || "Emergency Address"} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
+                      value={formData.emergencyAddress}
+                      onChange={(e) => updateField("emergencyAddress", e.target.value)}
+                      placeholder="Emergency Residential Address"
+                      className={`w-full h-11 rounded-lg border px-3.5 text-sm transition-colors ${
+                        idStatus !== "new" && !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : isEditingInfo
+                          ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                          : attemptedNext && !(formData.emergencyAddress || "").trim()
+                          ? "border-red-400 focus:ring-red-300 bg-red-50"
+                          : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                      }`}
+                    />
+                  </div>
                 </div>
               </div>
+
+              {attemptedNext && !step2Valid && (
+                <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>Pakikumpleto ang lahat ng kinakailangang impormasyon sa Step 2 bago magpatuloy sa susunod na hakbang.</span>
+                </div>
+              )}
             </div>
           )}
 
