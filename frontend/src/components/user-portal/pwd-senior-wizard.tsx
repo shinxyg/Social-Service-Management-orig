@@ -733,6 +733,15 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
       if (matchedApproved) {
         setLatestApprovedApp(matchedApproved)
+        setApprovedPwdRecord(matchedApproved)
+        const officialId = matchedApproved.assignedIdNumber || matchedApproved.referenceNumber || ""
+        if (officialId && (initialIdStatus === "renewal" || initialIdStatus === "loss")) {
+          setFormData((prev) => ({
+            ...prev,
+            existingPwdIdNumber: prev.existingPwdIdNumber || officialId,
+          }))
+          setIsIdVerified(true)
+        }
       } else {
         setLatestApprovedApp(null)
       }
@@ -906,11 +915,34 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     try {
       const apps = await fetchAllPwdApps()
 
-      // Hanapin ang tunay na PWD application / rehistradong PWD record sa system
+      const prof = getCurrentUserProfile()
+      const loggedQcid = (getLoggedInUserQcid() || userProfile?.qcidNo || prof?.qcidNo || prof?.qcidNumber || "").trim().toLowerCase()
+      const email = (userProfile?.email || prof?.email || "").trim().toLowerCase()
+      const userLastName = (userProfile?.lastName || prof?.lastName || "").trim().toLowerCase()
+      const userFirstName = (userProfile?.firstName || prof?.firstName || "").trim().toLowerCase()
+
+      const checkUserMatches = (a: any) => {
+        if (!a) return false
+        const aEmail = (a.email || "").trim().toLowerCase()
+        const aRef = (a.referenceNumber || a.reference_no || a.qcid || a.qcidNo || a.qcid_number || "").trim().toLowerCase()
+        const aAssigned = (a.assignedIdNumber || "").trim().toLowerCase()
+        const aLastName = (a.lastName || "").trim().toLowerCase()
+        const aFirstName = (a.firstName || "").trim().toLowerCase()
+
+        const isQcidMatch = loggedQcid && (aRef === loggedQcid || aAssigned === loggedQcid || aRef.includes(loggedQcid) || loggedQcid.includes(aRef))
+        const isEmailMatch = email && aEmail && aEmail === email
+        const isNameMatch = userLastName && aLastName && userLastName === aLastName && (!userFirstName || !aFirstName || userFirstName === aFirstName)
+
+        return Boolean(isQcidMatch || isEmailMatch || isNameMatch)
+      }
+
+      // Hanapin ang tunay na PWD application / rehistradong PWD record sa system na pagmamay-ari ng user account
       const matchedApp = apps.find((a) => {
         if (!a) return false
         const cat = (a.category || "").trim().toUpperCase()
         if (cat !== "PWD") return false
+
+        if (!checkUserMatches(a)) return false
 
         // Ang record ay dapat nagmula sa valid application (approved o may assigned/reference number mula sa New App)
         const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()

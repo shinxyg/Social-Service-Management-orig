@@ -312,11 +312,37 @@ export default function SeniorCitizenApplicationWizard({
     setIsVerifying(true)
     try {
       const apps = await fetchAllSeniorApps()
+
+      const prof = getCurrentUserProfile()
+      const loggedQcid = (getLoggedInUserQcid() || userProfile?.qcidNo || prof?.qcidNo || prof?.qcidNumber || "").trim().toLowerCase()
+      const email = (userProfile?.email || prof?.email || "").trim().toLowerCase()
+      const userLastName = (userProfile?.lastName || prof?.lastName || "").trim().toLowerCase()
+      const userFirstName = (userProfile?.firstName || prof?.firstName || "").trim().toLowerCase()
+
+      const checkUserMatches = (a: any) => {
+        if (!a) return false
+        const aEmail = (a.email || "").trim().toLowerCase()
+        const aRef = (a.referenceNumber || a.reference_no || a.qcid || a.qcidNo || a.qcid_number || "").trim().toLowerCase()
+        const aAssigned = (a.assignedIdNumber || "").trim().toLowerCase()
+        const aLastName = (a.lastName || "").trim().toLowerCase()
+        const aFirstName = (a.firstName || "").trim().toLowerCase()
+
+        const isQcidMatch = loggedQcid && (aRef === loggedQcid || aAssigned === loggedQcid || aRef.includes(loggedQcid) || loggedQcid.includes(aRef))
+        const isEmailMatch = email && aEmail && aEmail === email
+        const isNameMatch = userLastName && aLastName && userLastName === aLastName && (!userFirstName || !aFirstName || userFirstName === aFirstName)
+
+        return Boolean(isQcidMatch || isEmailMatch || isNameMatch)
+      }
+
+      // Check for approved application belonging to this user account
       const matchedApp = apps.find((a) => {
         if (!a) return false
         const cat = String(a.category || a.service || "").trim().toUpperCase()
         const isSeniorCategory = cat.includes("SENIOR") || cat === "SENIOR CITIZEN"
         if (!isSeniorCategory) return false
+
+        // Strict: Must belong to currently logged-in account
+        if (!checkUserMatches(a)) return false
 
         const assignedClean = String(a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const refClean = String(a.referenceNumber || a.reference_no || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
@@ -372,7 +398,7 @@ export default function SeniorCitizenApplicationWizard({
         setIsIdVerified(false)
         setApprovedSeniorRecord(null)
         setVerifyError(
-          "No registered Senior Citizen ID found in the system for this number. Renewal and Replacement / Lost ID are only available for applicants who have an existing approved New Senior Citizen ID application. Please verify your ID number or submit a New Application first."
+          "No approved Senior Citizen application found on your account for this ID. Renewal and Replacement / Lost ID are based on your approved New Application. Please check your ID number or submit a New Application first."
         )
       }
     } catch {
@@ -594,6 +620,12 @@ export default function SeniorCitizenApplicationWizard({
 
       if (matchedApproved) {
         setLatestApprovedApp(matchedApproved)
+        setApprovedSeniorRecord(matchedApproved)
+        const officialId = (matchedApproved.assignedIdNumber || matchedApproved.referenceNumber || "").replace("OSCA-", "SENIOR-")
+        if (officialId && (appFlow === "renewal" || appFlow === "loss")) {
+          setExistingIdNumber((prev) => prev || officialId)
+          setIsIdVerified(true)
+        }
       } else {
         setLatestApprovedApp(null)
       }
@@ -1090,6 +1122,19 @@ export default function SeniorCitizenApplicationWizard({
                         </span>
                       )}
                     </div>
+
+                    {!latestApprovedApp && !isIdVerified && (
+                      <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-start gap-2.5">
+                        <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold">Account Requirement: </span>
+                          <span>
+                            Renewal and Replacement / Lost ID applications are based on your registered account. You must have an approved <strong>New Senior Citizen ID Application</strong> on this account to proceed.
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex flex-col sm:flex-row gap-2 max-w-md">
                       <div className="flex items-center flex-1 rounded-lg border border-gray-300 bg-white overflow-hidden transition-all focus-within:ring-2 focus-within:ring-[#3b82f6]/40 focus-within:border-[#3b82f6]">
                         <span className="px-3 py-2.5 bg-gray-100 text-gray-600 font-mono font-bold text-xs border-r border-gray-300 select-none">
