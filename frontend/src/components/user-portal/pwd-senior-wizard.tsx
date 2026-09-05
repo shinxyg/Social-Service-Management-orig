@@ -845,7 +845,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [approvedPwdRecord, setApprovedPwdRecord] = useState<any | null>(null)
   const [reasonForReplacement, setReasonForReplacement] = useState("")
   const [reasonForRenewal, setReasonForRenewal] = useState("")
-  const [dontKnowId, setDontKnowId] = useState(false)
 
   // Function to fetch all PWD applications from Backend + LocalStorage
   const fetchAllPwdApps = async (): Promise<any[]> => {
@@ -883,7 +882,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     const userQcid = (userProfile?.qcidNo || "110000116932100").trim().toLowerCase()
     const userEmail = (userProfile?.email || "dimalmae@gmail.com").trim().toLowerCase()
 
-    if (!dontKnowId && !cleanTyped) {
+    if (!cleanTyped) {
       setVerifyError(t("pwdEnterIdPrompt") || "Please enter your PWD ID number before verifying.")
       return
     }
@@ -988,7 +987,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     hasDisability &&
     idStatus !== null &&
     (idStatus === "loss"
-      ? (dontKnowId || (formData.existingPwdIdNumber || "").trim() !== "") && isIdVerified && reasonForReplacement !== ""
+      ? (formData.existingPwdIdNumber || "").trim() !== "" && isIdVerified && reasonForReplacement !== ""
       : idStatus === "renewal"
       ? (formData.existingPwdIdNumber || "").trim() !== "" && isIdVerified && reasonForRenewal !== ""
       : (disabilityType || "").trim() !== "")
@@ -1641,19 +1640,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                           </button>
                         </div>
 
-                        <label className="flex items-center gap-2 text-xs text-blue-700 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={dontKnowId}
-                            onChange={(e) => {
-                              setDontKnowId(e.target.checked)
-                              setIsIdVerified(false)
-                            }}
-                            className="h-3.5 w-3.5 rounded border-border accent-blue-600 cursor-pointer"
-                          />
-                          <span>Hindi alam ang PWD ID number (Gamitin ang QC ID / personal information para i-verify)</span>
-                        </label>
-
                         <div className="pt-2 border-t border-blue-100">
                           <label className={`block text-xs font-semibold ${attemptedNext && reasonForReplacement === "" ? "text-red-600" : "text-foreground"} mb-1.5`}>
                             Reason for Replacement <span className="text-red-500">*</span>
@@ -1978,19 +1964,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               )}
                             </button>
                           </div>
-
-                          <label className="flex items-center gap-2 text-xs text-blue-700 cursor-pointer select-none">
-                            <input
-                              type="checkbox"
-                              checked={dontKnowId}
-                              onChange={(e) => {
-                                setDontKnowId(e.target.checked)
-                                setIsIdVerified(false)
-                              }}
-                              className="h-3.5 w-3.5 rounded border-border accent-blue-600 cursor-pointer"
-                            />
-                            <span>Hindi alam ang PWD ID number (Gamitin ang QC ID / personal information para i-verify)</span>
-                          </label>
 
                           <div className="pt-2 border-t border-blue-100">
                             <label className={`block text-xs font-semibold ${attemptedNext && reasonForReplacement === "" ? "text-red-600" : "text-foreground"} mb-1.5`}>
