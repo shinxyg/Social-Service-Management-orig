@@ -652,9 +652,19 @@ const handleFinalSubmit = async () => {
   setStep("matching")
 
   try {
-    const formData = new FormData()
+    const assistanceTypeName = isEducationalAssistance
+      ? "Educational Assistance"
+      : isFuneralAssistance
+      ? "Funeral Assistance"
+      : type?.toLowerCase().includes("material")
+      ? "Material Assistance"
+      : type?.toLowerCase().includes("food")
+      ? "Food Assistance"
+      : type?.toLowerCase().includes("transport")
+      ? "Transportation Assistance"
+      : "Medical Assistance"
 
-    formData.append("assistanceType", type)
+    formData.append("assistanceType", assistanceTypeName)
     formData.append("qcId", qcId)
     formData.append("firstName", pFirstName)
     formData.append("middleName", pMiddleName)

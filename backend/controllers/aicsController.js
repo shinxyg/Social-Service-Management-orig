@@ -1,5 +1,58 @@
 const db = require('../config/db');
-const { logActivity } = require('./activityLogController');
+let logActivity = null;
+try {
+  const actCtrl = require('./activityLogController');
+  logActivity = actCtrl.logActivity;
+} catch {}
+
+async function initAicsTable() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS aics_applications (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(100) UNIQUE NOT NULL,
+        assistance_type VARCHAR(150) NOT NULL,
+        qc_id VARCHAR(100),
+        first_name VARCHAR(150) NOT NULL,
+        middle_name VARCHAR(150),
+        last_name VARCHAR(150) NOT NULL,
+        suffix VARCHAR(50),
+        nationality VARCHAR(100),
+        birth_date VARCHAR(50),
+        age INTEGER,
+        gender VARCHAR(50),
+        civil_status VARCHAR(50),
+        phone VARCHAR(50),
+        email VARCHAR(150),
+        address TEXT,
+        details JSONB DEFAULT '{}'::jsonb,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_aics_reference_no ON aics_applications(reference_no);
+      CREATE INDEX IF NOT EXISTS idx_aics_status ON aics_applications(status);
+      CREATE INDEX IF NOT EXISTS idx_aics_qc_id ON aics_applications(qc_id);
+
+      CREATE TABLE IF NOT EXISTS aics_documents (
+        id SERIAL PRIMARY KEY,
+        application_id INTEGER REFERENCES aics_applications(id) ON DELETE CASCADE,
+        document_label VARCHAR(255),
+        original_filename VARCHAR(255),
+        file_type VARCHAR(100),
+        file_data BYTEA,
+        file_path TEXT,
+        uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+    console.log('[DB] aics_applications & aics_documents tables ready.');
+  } catch (err) {
+    console.warn('[DB] Could not initialize aics tables:', err.message);
+  }
+}
+
+initAicsTable();
 
 function generateReferenceNo(qcId) {
   if (qcId && String(qcId).trim()) return String(qcId).trim();
@@ -32,9 +85,26 @@ exports.createApplication = async (req, res) => {
 
     const finalFirstName = firstName || 'CLARISA MAE';
     const finalLastName = lastName || 'DIMAL';
-    const finalAssistanceType = assistanceType || 'Medical Assistance';
+    const finalAssistanceType = assistanceType || 'Educational Assistance';
 
-    const referenceNo = req.body.referenceNo || req.body.reference_no || (qcId && String(qcId).trim()) || generateReferenceNo(qcId);
+    let referenceNo = req.body.referenceNo || req.body.reference_no || (qcId && String(qcId).trim()) || generateReferenceNo(qcId);
+
+    // Check if referenceNo already exists in DB to prevent unique key violation
+    try {
+      const existingCheck = await client.query('SELECT id FROM aics_applications WHERE reference_no = $1', [referenceNo]);
+      if (existingCheck.rows.length > 0) {
+        referenceNo = `${referenceNo}-${Date.now().toString().slice(-4)}`;
+      }
+    } catch {
+      // Table might still be initializing
+    }
+
+    let parsedAge = null;
+    if (age !== undefined && age !== null && String(age).trim() !== '') {
+      const num = parseInt(String(age).trim(), 10);
+      if (!isNaN(num)) parsedAge = num;
+    }
+
     let parsedDetails = {};
     try {
       parsedDetails = typeof details === 'string' ? JSON.parse(details) : (details || {});
@@ -66,8 +136,8 @@ exports.createApplication = async (req, res) => {
         finalLastName,
         suffix || null,
         nationality || null,
-        birthDate || null,
-        age || null,
+        birthDate ? String(birthDate) : null,
+        parsedAge,
         gender || null,
         civilStatus || null,
         phone || null,
@@ -92,14 +162,18 @@ exports.createApplication = async (req, res) => {
 
     await client.query('COMMIT');
 
+    if (logActivity) {
+      logActivity(req, 'SUBMIT_AICS_APPLICATION', `Application submitted for ${finalAssistanceType} (Ref: ${referenceNo})`).catch(() => {});
+    }
+
     res.status(201).json({
       message: 'Matagumpay na na-submit ang application.',
       application,
     });
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error(err);
-    res.status(500).json({ error: 'May naganap na error sa pag-submit ng application.' });
+    console.error('Error submitting AICS application:', err);
+    res.status(500).json({ error: 'May naganap na error sa pag-submit ng application.', details: err.message });
   } finally {
     client.release();
   }
