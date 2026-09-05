@@ -5,6 +5,14 @@ try {
   logActivity = actCtrl.logActivity;
 } catch {}
 
+let sendPwdApprovalEmail = null;
+let sendSeniorCitizenApprovalEmail = null;
+try {
+  const emailService = require('../services/emailService');
+  sendPwdApprovalEmail = emailService.sendPwdApprovalEmail;
+  sendSeniorCitizenApprovalEmail = emailService.sendSeniorCitizenApprovalEmail;
+} catch {}
+
 const SEED_PWD_SENIOR_APPS = [
   {
     id: "APP-PWD-2026-001",
@@ -484,8 +492,39 @@ exports.updateApplicationStatus = async (req, res) => {
               ]
             );
           }
-        } catch (e) {
-          console.warn('Could not insert financial disbursement for PWD/Senior:', e.message);
+      // 3. Directly dispatch generated Official ID Email to Gmail
+      const targetEmail = targetApp?.email || targetApp?.contact_email;
+      if (targetEmail && targetEmail.includes('@')) {
+        if (!isPwd) {
+          // Senior Citizen ID
+          if (sendSeniorCitizenApprovalEmail) {
+            sendSeniorCitizenApprovalEmail({
+              recipientEmail: targetEmail,
+              recipientName: fullName,
+              seniorIdNumber: assignedIdNumber || refNo,
+              referenceNumber: refNo,
+              applicationType: appType === 'renewal' ? 'Senior ID Renewal' : appType === 'loss' || appType === 'replacement' ? 'Replacement / Lost ID' : 'New Application',
+              bloodType: targetApp?.blood_type || targetApp?.bloodType || 'O+',
+              approvedDate: approvedDate || new Date().toISOString(),
+              contactNumber: targetApp?.contact_no || targetApp?.contactNo || targetApp?.cellphoneNo,
+              address: targetApp?.address,
+            }).catch((err) => console.warn('[Email Error] Failed to send Senior Citizen approval email:', err.message));
+          }
+        } else {
+          // PWD ID
+          if (sendPwdApprovalEmail) {
+            sendPwdApprovalEmail({
+              recipientEmail: targetEmail,
+              recipientName: fullName,
+              pwdIdNumber: assignedIdNumber || refNo,
+              referenceNumber: refNo,
+              disabilityType: targetApp?.disability_type || targetApp?.disabilityType || 'Physical / Visual Disability',
+              bloodType: targetApp?.blood_type || targetApp?.bloodType || 'O+',
+              approvedDate: approvedDate || new Date().toISOString(),
+              contactNumber: targetApp?.contact_no || targetApp?.contactNo || targetApp?.cellphoneNo,
+              address: targetApp?.address,
+            }).catch((err) => console.warn('[Email Error] Failed to send PWD approval email:', err.message));
+          }
         }
       }
     } else if (status === 'rejected') {

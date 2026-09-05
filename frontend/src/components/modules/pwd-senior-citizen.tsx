@@ -1644,6 +1644,41 @@ export default function PWDSeniorCitizen() {
           applicationRef: targetApp.referenceNumber,
           assistanceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
         })
+
+        // 3. Dispatch official ID approval email directly to applicant's Gmail
+        const targetEmail = targetApp.email
+        if (targetEmail && targetEmail.includes("@")) {
+          const endpoint = isPWD(targetApp) ? `${API_BASE}/api/email/send-pwd-id` : `${API_BASE}/api/email/send-senior-id`
+          const payload = isPWD(targetApp)
+            ? {
+                recipientEmail: targetEmail,
+                recipientName: displayName(targetApp),
+                pwdIdNumber: idNumber,
+                referenceNumber: targetApp.referenceNumber,
+                disabilityType: (targetApp as any).disabilityType || "Physical / Visual Disability",
+                bloodType: (targetApp as any).bloodType || "O+",
+                approvedDate,
+                contactNumber: targetApp.contactNo || (targetApp as any).cellphoneNo,
+                address: targetApp.address,
+              }
+            : {
+                recipientEmail: targetEmail,
+                recipientName: displayName(targetApp),
+                seniorIdNumber: idNumber,
+                referenceNumber: targetApp.referenceNumber,
+                applicationType: typeLabel,
+                bloodType: (targetApp as any).bloodType || "O+",
+                approvedDate,
+                contactNumber: targetApp.contactNo || (targetApp as any).cellphoneNo,
+                address: targetApp.address,
+              }
+
+          fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }).catch((err) => console.warn("Could not dispatch approval email:", err))
+        }
       }
     }
   }
