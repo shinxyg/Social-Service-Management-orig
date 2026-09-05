@@ -465,7 +465,7 @@ async function sendSeniorCitizenApprovalEmail({
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>GovServe - Official Senior Citizen ID Approval</title>
+      <title>Gov Services - Official Senior Citizen ID Approval</title>
       <style>
         body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
@@ -476,7 +476,7 @@ async function sendSeniorCitizenApprovalEmail({
         .badge { display: inline-block; background-color: #ecfdf5; color: #047857; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 9999px; border: 1px solid #a7f3d0; margin-bottom: 20px; }
         .card { background: #f0fdf4; border: 2px dashed #86efac; border-radius: 14px; padding: 24px; margin: 20px 0; }
         .id-number-box { background: #ffffff; border: 1.5px solid #0284c7; border-radius: 10px; padding: 12px 16px; margin: 12px 0; text-align: center; box-shadow: 0 2px 4px rgba(2,132,199,0.08); }
-        .id-number-label { font-size: 11px; text-transform: uppercase; color: #0369a1; font-weight: 800; letter-spacing: 0.5px; }
+        .id-number-label { font-size: 12px; text-transform: uppercase; color: #0369a1; font-weight: 800; letter-spacing: 0.5px; }
         .id-number-val { font-size: 22px; font-family: monospace; font-weight: 800; color: #0c4a6e; letter-spacing: 2px; margin-top: 4px; }
         .button { display: block; width: 100%; text-align: center; background: #0284c7; color: #ffffff !important; padding: 14px 0; border-radius: 10px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 24px; box-shadow: 0 2px 6px rgba(2,132,199,0.3); }
         .footer { background: #f8fafc; padding: 20px 24px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
@@ -485,9 +485,9 @@ async function sendSeniorCitizenApprovalEmail({
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="GovServe Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
-          <h1>GovServe</h1>
-          <p>Office for Senior Citizens Affairs (OSCA) — Quezon City Government</p>
+          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="Gov Services Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
+          <h1>Gov Services</h1>
+          <p>Office for Senior Citizens Affairs (OSCA) — Gov Services</p>
         </div>
 
         <div class="content">
@@ -495,14 +495,14 @@ async function sendSeniorCitizenApprovalEmail({
             <span class="badge">✓ OFFICIAL SENIOR CITIZEN ID ISSUED</span>
           </div>
 
-          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Mabuhay, ${recipientName || 'Senior Citizen'}!</h2>
+          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Greetings, ${recipientName || 'Senior Citizen'}!</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
-            Malugod naming ipinapaalam na ang inyong aplikasyon para sa <strong>Senior Citizen (OSCA) ID</strong> ay opisyal nang <strong>NA-APRUBAHAN</strong> ng Social Services Development Department at Office for Senior Citizens Affairs (OSCA).
+            We are pleased to inform you that your application for an official <strong>Senior Citizen ID</strong> has been officially <strong>APPROVED</strong> by Gov Services - Office for Senior Citizens Affairs (OSCA).
           </p>
 
           <div class="card">
             <div class="id-number-box">
-              <div class="id-number-label">Official Senior Citizen / OSCA ID Number</div>
+              <div class="id-number-label">OFFICIAL SENIOR CITIZEN</div>
               <div class="id-number-val">${officialId}</div>
             </div>
 
@@ -530,23 +530,23 @@ async function sendSeniorCitizenApprovalEmail({
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Status:</td>
-                <td style="padding: 6px 0; color: #047857; font-weight: 800; text-align: right;">AKTIBO AT REHISTURADO</td>
+                <td style="padding: 6px 0; color: #047857; font-weight: 800; text-align: right;">ACTIVE AND REGISTERED</td>
               </tr>
             </table>
           </div>
 
           <div style="background: #eff6ff; border-left: 4px solid #0284c7; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #0369a1; line-height: 1.5;">
-            <strong>Paalala at Pribilehiyo (R.A. 9994):</strong> Gamit ang inyong opisyal na OSCA ID, may karapatan kayo sa 20% discount at VAT exemption sa mga gamot, pagkain, pampublikong transportasyon, libreng panonood ng sine sa QC, at iba pang serbisyo ng pamahalaan.
+            <strong>Privileges and Benefits (R.A. 9994):</strong> As an official Senior Citizen ID cardholder, you are entitled to a 20% discount and VAT exemption on qualified medicines, grocery purchases, public transportation fares, dining, medical and dental services, and other authorized government privileges.
           </div>
 
           <a href="https://frontend-production-1c51.up.railway.app/portal/my-applications" class="button" target="_blank">
-            BUKSAN ANG AKING DIGITAL SENIOR ID
+            ACCESS DIGITAL SENIOR CITIZEN ID
           </a>
         </div>
 
         <div class="footer">
-          <p style="margin: 0 0 4px;">Ito ay opisyal na automated email mula sa GovServe Social Services Management Portal.</p>
-          <p style="margin: 0;">Quezon City Social Services &amp; Development Department | OSCA Division</p>
+          <p style="margin: 0 0 4px;">This is an official automated email notification from the Gov Services Portal.</p>
+          <p style="margin: 0;">Gov Services | Office for Senior Citizens Affairs (OSCA)</p>
         </div>
       </div>
     </body>
@@ -560,10 +560,10 @@ async function sendSeniorCitizenApprovalEmail({
   const attachments = getLogoAttachments();
 
   const mailOptions = {
-    from: `"GovServe (Senior Citizen OSCA)" <${senderEmail}>`,
+    from: `"Gov Services (Senior Citizen Services)" <${senderEmail}>`,
     to: recipientEmail.trim(),
-    subject: `[GovServe OSCA] Official Senior Citizen ID Card Approved: ${officialId}`,
-    text: `Mabuhay ${recipientName}! Ang inyong Senior Citizen ID Application ay naaprubahan na. Official ID: ${officialId}.`,
+    subject: `[Gov Services] Official Senior Citizen ID Card Approved: ${officialId}`,
+    text: `Greetings ${recipientName}! Your Senior Citizen ID Application has been officially approved. Official ID: ${officialId}.`,
     html: htmlContent,
     attachments,
   };
@@ -614,9 +614,9 @@ async function sendSeniorCitizenApprovalEmail({
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          sender: { name: 'GovServe (Senior Citizen OSCA)', email: senderEmail },
+          sender: { name: 'Gov Services (Senior Citizen Services)', email: senderEmail },
           to: [{ email: recipientEmail.trim(), name: recipientName || 'Senior Citizen' }],
-          subject: `[GovServe OSCA] Official Senior Citizen ID Card Approved: ${officialId}`,
+          subject: `[Gov Services] Official Senior Citizen ID Card Approved: ${officialId}`,
           htmlContent: htmlContent,
         }),
       });
@@ -642,14 +642,13 @@ async function sendSeniorCitizenApprovalEmail({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'GovServe <onboarding@resend.dev>',
+          from: 'Gov Services <onboarding@resend.dev>',
           to: [recipientEmail.trim()],
-          subject: `[GovServe OSCA] Official Senior Citizen ID Card Approved: ${officialId}`,
-          text: `Mabuhay ${recipientName}! Ang inyong Senior Citizen ID Application ay naaprubahan na. Official ID: ${officialId}.`,
+          subject: `[Gov Services] Official Senior Citizen ID Card Approved: ${officialId}`,
+          text: `Greetings ${recipientName}! Your Senior Citizen ID Application has been approved. Official ID: ${officialId}.`,
           html: htmlContent,
         }),
       });
-
       const data = await res.json();
       if (res.ok && data.id) {
         console.log(`[Resend HTTPS API] Senior ID email delivered to ${recipientEmail}. MessageId: ${data.id}`);
