@@ -22,12 +22,14 @@ export interface UserProfile {
   middleName?: string
   lastName: string
   suffix?: string
+  nationality?: string
   dobMonth: string
   dobDay: string
   dobYear: string
   age?: string
   sex?: string
   gender?: string
+  civilStatus?: string
   citizenship?: string
   contactNo?: string
   email?: string
@@ -1287,87 +1289,93 @@ export default function PWDSocialAssistanceWizard({
           {/* ──────────────── STEP 2: PERSONAL INFORMATION ──────────────── */}
           {step === 2 && (
             <div className="space-y-6">
-              {/* QCID Profile Notice Banner */}
+              {/* IMPORTANT REMINDER BOX matching Pic 1 */}
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-semibold text-blue-700">QCID CITIZEN PROFILE RECORD</p>
+                  <p className="font-semibold text-blue-600">IMPORTANT REMINDER</p>
                   <p className="text-blue-600/90 mt-0.5 text-xs">
-                    Ang inyong impormasyon sa ibaba ay awtomatikong naka-sync at naka-fix mula sa inyong opisyal na QCID profile record.
+                    Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service.
                   </p>
                 </div>
               </div>
 
-              {/* APPLICANT INFORMATION */}
+              {/* APPLICANT FIELDS matching Pic 1 */}
               <div className="space-y-4">
-                <SectionHeader title="APPLICANT INFORMATION" />
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="QC ID Number *">
-                    <LockedField value={userProfile?.qcidNo || "110000116932100"} />
+                  <Field label="QC ID *">
+                    <LockedField value={userProfile?.qcidNo || "110000572516915"} />
                   </Field>
-                  <Field label="First Name *">
-                    <LockedField value={formData.firstName || userProfile?.firstName || "RENZ"} />
-                  </Field>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Field label="Middle Name">
-                    <LockedField value={formData.middleName || userProfile?.middleName || "MAHINAY"} placeholder="—" />
-                  </Field>
-                  <Field label="Last Name *">
-                    <LockedField value={formData.lastName || userProfile?.lastName || "MILLARES"} />
-                  </Field>
-                  <Field label="Suffix">
-                    <LockedField value={formData.suffix || userProfile?.suffix || ""} placeholder="—" />
+                  <Field label="First name *">
+                    <LockedField value={formData.firstName || userProfile?.firstName || "RENZ"} placeholder="First name" />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Field label="Date of Birth / Birthday *">
+                  <Field label="Middle name">
+                    <LockedField value={formData.middleName || userProfile?.middleName || "MAHINAY"} placeholder="Middle name" />
+                  </Field>
+                  <Field label="Last name *">
+                    <LockedField value={formData.lastName || userProfile?.lastName || "MILLARES"} placeholder="Last name" />
+                  </Field>
+                  <Field label="Suffix (Jr., Sr., III, etc.)">
+                    <LockedField value={formData.suffix || userProfile?.suffix || ""} placeholder="Suffix (Jr., Sr., III, etc.)" />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Field label="Nationality *">
+                    <LockedField value={userProfile?.nationality || userProfile?.citizenship || "FILIPINO"} placeholder="Nationality" />
+                  </Field>
+                  <Field label="Date of birth *">
                     <LockedField
                       value={
                         formData.dobMonth && formData.dobDay && formData.dobYear
-                          ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
+                          ? `${formData.dobMonth.padStart(2, "0")}/${formData.dobDay.padStart(2, "0")}/${formData.dobYear}`
                           : userProfile?.dobMonth && userProfile?.dobDay && userProfile?.dobYear
-                          ? `${userProfile.dobMonth}/${userProfile.dobDay}/${userProfile.dobYear}`
-                          : "10/29/2004"
+                          ? `${userProfile.dobMonth.padStart(2, "0")}/${userProfile.dobDay.padStart(2, "0")}/${userProfile.dobYear}`
+                          : "06/09/2005"
                       }
                     />
                   </Field>
                   <Field label="Age *">
-                    <LockedField value={formData.age || userProfile?.age || "21"} />
-                  </Field>
-                  <Field label="Sex *">
-                    <LockedField value={formData.sex || userProfile?.sex || "Female"} />
-                  </Field>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Contact Number *">
-                    <LockedField value={formData.contactNumber || userProfile?.contactNo || "09155212353"} />
-                  </Field>
-                  <Field label="Email Address">
-                    <LockedField value={formData.email || userProfile?.email || "applicant@example.com"} />
+                    <LockedField value={formData.age || userProfile?.age || "21"} placeholder="Age" />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Field label="House No. / Street *">
+                  <Field label="Gender *">
+                    <LockedField value={formData.sex || userProfile?.sex || userProfile?.gender || "Female"} />
+                  </Field>
+                  <Field label="Civil status *">
+                    <LockedField value={userProfile?.civilStatus || "Single"} />
+                  </Field>
+                  <Field label="House/Building number *">
                     <LockedField
-                      value={
-                        `${formData.houseNo || userProfile?.addressHouseNo || ""} ${formData.street || userProfile?.addressStreet || ""}`.trim() || "123 Street Name"
-                      }
-                      placeholder="House #, Street Name"
+                      value={formData.houseNo || userProfile?.addressHouseNo || "11"}
+                      placeholder="House/Building number"
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Field label="Street name *">
+                    <LockedField
+                      value={formData.street || userProfile?.addressStreet || "ACACIA ST."}
+                      placeholder="Street name"
                     />
                   </Field>
                   <Field label="Barangay *">
-                    <LockedField value={formData.barangay || userProfile?.addressBarangay || "Central"} />
+                    <LockedField value={formData.barangay || userProfile?.addressBarangay || "SAUYO"} placeholder="Barangay" />
                   </Field>
-                  <Field label="City / Municipality">
-                    <LockedField value={formData.cityMunicipality || userProfile?.addressCityMunicipality || "QUEZON CITY"} />
+                  <Field label="Phone number *">
+                    <LockedField value={formData.contactNumber || userProfile?.contactNo || "09155212353"} placeholder="0900 000 0000" />
                   </Field>
                 </div>
+
+                <Field label="Email *">
+                  <LockedField value={formData.email || userProfile?.email || "rencemillares619@gmail.com"} placeholder="email@example.com" />
+                </Field>
               </div>
 
               {/* DISABILITY INFORMATION */}
