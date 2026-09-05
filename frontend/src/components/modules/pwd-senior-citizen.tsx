@@ -1453,23 +1453,20 @@ export default function PWDSeniorCitizenAdmin() {
 
     // Dispatch in-portal bell notification to applicant
     if (targetApp) {
+      const rawType = String(targetApp.type || "").toLowerCase()
       const typeLabel =
-        targetApp.type === "renewal"
+        rawType === "renewal"
           ? "Renewal"
-          : targetApp.type === "replacement"
+          : rawType === "replacement" || rawType === "loss"
           ? "Replacement / Lost ID"
           : "New Application"
       const serviceName = isPWD(targetApp) ? "PWD ID" : "Senior Citizen ID"
 
       pushUserNotification({
-        applicantEmail: emailToSend,
-        recipientName: displayName(targetApp),
         title: `${serviceName} Application (${typeLabel}): Approved`,
-        message: `Congratulations! Your application for ${serviceName} (${typeLabel}) has been officially approved. Official Assigned ID Number: ${idNumber}.`,
-        type: "success",
-        serviceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
-        referenceNo: targetApp.referenceNumber,
-        actionUrl: "/portal/my-applications",
+        desc: `Congratulations! Your application for ${serviceName} (${typeLabel}) has been officially approved. Official Assigned ID Number: ${idNumber}.`,
+        applicationRef: targetApp.referenceNumber,
+        assistanceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
       })
     }
 
@@ -1515,14 +1512,10 @@ export default function PWDSeniorCitizenAdmin() {
 
     if (targetApp) {
       pushUserNotification({
-        applicantEmail: isPWD(targetApp) ? targetApp.email : targetApp.email,
-        recipientName: displayName(targetApp),
         title: `${isPWD(targetApp) ? "PWD" : "Senior Citizen"} ID Application: Not Approved`,
-        message: `We regret to inform you that your application was not approved. Reason: ${reason || "Additional documents or verification required."}`,
-        type: "warning",
-        serviceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
-        referenceNo: targetApp.referenceNumber,
-        actionUrl: "/portal/my-applications",
+        desc: `We regret to inform you that your application was not approved. Reason: ${reason || "Additional documents or verification required."}`,
+        applicationRef: targetApp.referenceNumber,
+        assistanceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
       })
     }
 
