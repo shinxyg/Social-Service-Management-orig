@@ -195,6 +195,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [qcId] = useState(() => getLoggedInUserQcid())
   const [checkingEligibility, setCheckingEligibility] = useState(true)
   const [isBlocked, setIsBlocked] = useState(false)
+  const [blockedApp, setBlockedApp] = useState<any>(null)
   const [pFirstName, setPFirstName] = useState("")
   const [pMiddleName, setPMiddleName] = useState("")
   const [pLastName, setPLastName] = useState("")
@@ -288,12 +289,15 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
       if (res.ok) {
         const data = await res.json()
         // Block ONLY if may pending application na PAREHONG assistance type
-        const hasPendingForThisType = (data.applications || []).some(
+        const matchedApp = (data.applications || []).find(
           (app: any) =>
             app.status === "pending" &&
-            app.assistance_type === type   // snake_case, tugma sa DB column
+            (app.assistance_type === type ||
+              app.assistance_type?.toLowerCase().includes((type || "").toLowerCase()) ||
+              (type || "").toLowerCase().includes((app.assistance_type || "").toLowerCase()))
         )
-        setIsBlocked(hasPendingForThisType)
+        setIsBlocked(Boolean(matchedApp))
+        setBlockedApp(matchedApp || null)
       }
     } catch (err) {
       console.warn("Eligibility check skipped/offline:", err)
@@ -790,7 +794,7 @@ if (checkingEligibility) {
 
 if (isBlocked) {
   return (
-    <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
+    <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
       {onBack && (
         <button
           onClick={onBack}
@@ -799,17 +803,60 @@ if (isBlocked) {
           ← Bumalik
         </button>
       )}
-      <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-        <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-          <Info className="h-7 w-7 text-amber-500" />
+      <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+        <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+          <Info className="h-8 w-8 text-amber-500" />
         </div>
-        <h2 className="text-lg font-bold text-gray-900">
-          May Kasalukuyang Application Ka Pa
-        </h2>
-        <p className="text-sm text-gray-500 max-w-sm">
-          Mayroon ka pang nakabinbing aplikasyon para sa {type}. Maghintay
-          ng pagsusuri bago magsumite ng panibagong aplikasyon.
-        </p>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">
+            May Kasalukuyang Application Ka Pa
+          </h2>
+          <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+            Matagumpay na naisumite at nakabinbin (Pending) na ang inyong aplikasyon para sa <span className="font-semibold text-gray-800">{type}</span>. Maghintay muna ng pagsusuri ng Social Worker bago magsumite ng panibagong aplikasyon.
+          </p>
+        </div>
+
+        {blockedApp && (
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">Application Reference No.:</span>
+              <span className="font-mono font-bold text-blue-600">{blockedApp.reference_no || blockedApp.qc_id}</span>
+            </div>
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">Katayuan (Status):</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                ● Kasalukuyang Sinusuri (Pending)
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">Petsa ng Pagsumite:</span>
+              <span className="font-semibold text-gray-700">
+                {blockedApp.created_at ? new Date(blockedApp.created_at).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }) : "Kamakailan"}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = "/portal/my-applications"
+            }}
+            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+          >
+            TINGNAN SA MY APPLICATIONS
+          </button>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              BUMALIK SA DASHBOARD
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
