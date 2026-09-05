@@ -204,6 +204,7 @@ export default function AICSServiceWizard({
 
   // Eligibility check state
   const [isBlocked, setIsBlocked] = useState(false)
+  const [blockedApp, setBlockedApp] = useState<any>(null)
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -355,12 +356,13 @@ export default function AICSServiceWizard({
         const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcIdNumber}`)
         if (res.ok) {
           const data = await res.json()
-          const hasPendingForThisType = (data.applications || []).some(
+          const matchedApp = (data.applications || []).find(
             (app: any) =>
               app.status === "pending" &&
               app.assistance_type?.toLowerCase().includes(serviceType)
           )
-          setIsBlocked(hasPendingForThisType)
+          setIsBlocked(Boolean(matchedApp))
+          setBlockedApp(matchedApp || null)
         }
       } catch (err) {
         console.warn("AICS Eligibility check offline/skipped:", err)
@@ -381,6 +383,11 @@ export default function AICSServiceWizard({
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
+          setBlockedApp({
+            reference_no: referenceNo || qcIdNumber,
+            status: "pending",
+            created_at: new Date().toISOString()
+          })
           setIsBlocked(true)
           setCurrentStep(1)
           return 0
@@ -390,7 +397,7 @@ export default function AICSServiceWizard({
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [currentStep])
+  }, [currentStep, referenceNo, qcIdNumber])
 
   // Reload / Navigation warning protection — active from Step 2 onwards
   const isFormDirty = currentStep >= 2 && currentStep <= 4 && !showRequirementsModal
@@ -658,8 +665,13 @@ export default function AICSServiceWizard({
 
   // If blocked
   if (isBlocked) {
+    const displayRef = blockedApp?.reference_no || blockedApp?.qc_id || referenceNo || qcIdNumber || "110008572516915"
+    const displayDate = blockedApp?.created_at
+      ? new Date(blockedApp.created_at).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+      : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+
     return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
         {onBack && (
           <button
             onClick={onBack}
@@ -668,29 +680,57 @@ export default function AICSServiceWizard({
             ← Bumalik
           </button>
         )}
-        <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-7 w-7 text-amber-500" />
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <Info className="h-8 w-8 text-amber-500" />
           </div>
-          <h2 className="text-lg font-bold text-gray-900">
-            May Kasalukuyang Application Ka Pa
-          </h2>
-          <p className="text-sm text-gray-500 max-w-sm">
-            Matagumpay nang naisumite ang inyong aplikasyon para sa <strong>{serviceTitle}</strong>! Maghintay lamang ng pagsusuri o pag-apruba ng Social Worker sa Admin Panel.
-          </p>
-          <div className="pt-2 flex flex-col sm:flex-row items-center gap-2 w-full justify-center">
-            <a
-              href="/portal/my-applications"
-              className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-all shadow-xs"
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              May Kasalukuyang Application Ka Pa
+            </h2>
+            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+              Matagumpay na naisumite at nakabinbin (Pending) na ang inyong aplikasyon para sa <span className="font-semibold text-gray-800">{serviceTitle}</span>. Maghintay muna ng pagsusuri ng Social Worker bago magsumite ng panibagong aplikasyon.
+            </p>
+          </div>
+
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">Application Reference No.:</span>
+              <span className="font-mono font-bold text-blue-600">{displayRef}</span>
+            </div>
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">Katayuan (Status):</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                ● Kasalukuyang Sinusuri (Pending)
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">Petsa ng Pagsumite:</span>
+              <span className="font-semibold text-gray-700">
+                {displayDate}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              Tingnan ang Aking Aplikasyon
-            </a>
-            <a
-              href="/portal/aics"
-              className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-xs transition-colors"
-            >
-              Bumalik sa AICS
-            </a>
+              TINGNAN SA MY APPLICATIONS
+            </button>
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Bumalik sa AICS
+              </button>
+            )}
           </div>
         </div>
       </div>
