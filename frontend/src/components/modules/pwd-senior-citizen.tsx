@@ -15,6 +15,7 @@ import {
   HeartHandshake,
   IdCard,
   Printer,
+  Trash2,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import {
@@ -740,15 +741,16 @@ interface ApplicationCardProps {
   app: ApplicationSubmission
   onView: (app: ApplicationSubmission) => void
   onShowCard?: (app: ApplicationSubmission) => void
+  onDelete?: (app: ApplicationSubmission) => void
 }
 
-function ApplicationCard({ app, onView, onShowCard }: ApplicationCardProps) {
+function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardProps) {
   const subLabel = subLabelForApp(app)
 
   return (
     <div
       onClick={() => onView(app)}
-      className={`gw-card ${isPWD(app) ? "gw-card--pwd" : "gw-card--senior"} p-4 transition-shadow hover:shadow-sm cursor-pointer`}
+      className={`gw-card ${isPWD(app) ? "gw-card--pwd" : "gw-card--senior"} p-4 transition-shadow hover:shadow-sm cursor-pointer relative group`}
     >
       <div className="flex items-start gap-4">
         <div className="hidden sm:flex">
@@ -782,7 +784,22 @@ function ApplicationCard({ app, onView, onShowCard }: ApplicationCardProps) {
           </div>
         </div>
         <div className="flex flex-col items-end gap-2.5 shrink-0">
-          <StatusBadge status={app.status} />
+          <div className="flex items-center gap-1.5">
+            <StatusBadge status={app.status} />
+            {onDelete && (
+              <button
+                type="button"
+                title="Delete application"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(app)
+                }}
+                className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
           {app.status === "approved" && app.assignedIdNumber && onShowCard && (
             <button
               type="button"
@@ -811,9 +828,10 @@ interface DetailedViewProps {
   onApprove: (app: ApplicationSubmission, idNumber: string) => void
   onReject: (id: string, reason: string) => void
   onShowCard?: (app: ApplicationSubmission) => void
+  onDelete?: (app: ApplicationSubmission) => void
 }
 
-function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: DetailedViewProps) {
+function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete }: DetailedViewProps) {
   const idNumber = generateOfficialIdNumber(app)
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
@@ -1274,13 +1292,30 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard }: Detaile
 
         {/* Sticky Footer */}
         <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-3" style={{ background: "var(--surface-sunk)" }}>
-          <button
-            type="button"
-            onClick={onClose}
-            className="gw-btn-ghost px-5 h-10 text-sm cursor-pointer"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="gw-btn-ghost px-5 h-10 text-sm cursor-pointer"
+            >
+              Close
+            </button>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Delete application for ${displayName(app)}?`)) {
+                    onDelete(app)
+                    onClose()
+                  }
+                }}
+                className="px-3 h-10 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg inline-flex items-center gap-1.5 cursor-pointer transition-colors border border-red-200"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Record
+              </button>
+            )}
+          </div>
 
           {app.status === "pending" && actionMode === "view" && (
             <div className="flex items-center gap-3">
@@ -1402,37 +1437,8 @@ const DEFAULT_SEED_APPLICATIONS: ApplicationSubmission[] = [
     ],
     status: "pending",
   },
-  {
-    id: "APP-SNR-2026-004",
-    submittedAt: "2026-08-21T08:45:00.000Z",
-    referenceNumber: "OSCA-QC-2026-8802",
-    category: "Senior Citizen",
-    type: "new",
-    firstName: "Teresa",
-    middleName: "Manalo",
-    lastName: "Lopez",
-    suffix: "",
-    dateOfBirth: "1960-04-12",
-    age: "66",
-    sex: "Female",
-    civilStatus: "Widowed",
-    contactNo: "09193337788",
-    cellphoneNo: "09193337788",
-    email: "teresa.lopez@gmail.com",
-    address: "15 Dahlia St., Brgy. Fairview, Quezon City",
-    disabilityType: "",
-    disabilityClass: "",
-    causeOfDisability: "",
-    vaccinatedCovid: "Yes",
-    applyingFor: "myself",
-    documents: [
-      { name: "Birth Certificate / Valid ID", filename: "birth_cert.jpg", fileUrl: "/samples/BIRTH CERTIFICATE OF MINOR.jpg", uploadedAt: "2026-08-21T08:40:00.000Z", status: "verified" },
-      { name: "Barangay Residency Certificate", filename: "barangay_cert.webp", fileUrl: "/samples/BARANGAY CERTIFICATE.webp", uploadedAt: "2026-08-21T08:42:00.000Z", status: "verified" },
-      { name: "2x2 ID Picture", filename: "id_picture.webp", fileUrl: "/samples/ID PICTURE (2X2).webp", uploadedAt: "2026-08-21T08:43:00.000Z", status: "verified" },
-    ],
-    status: "pending",
-  },
 ]
+
 
 export default function PWDSeniorCitizen() {
   const [applications, setApplications] = useState<ApplicationSubmission[]>(DEFAULT_SEED_APPLICATIONS)
@@ -1721,6 +1727,68 @@ export default function PWDSeniorCitizen() {
     }
   }
 
+  // Delete an individual application
+  const handleDeleteApplication = async (targetApp: ApplicationSubmission) => {
+    const appId = targetApp.id || targetApp.referenceNumber
+    setApplications((prev) => prev.filter((a) => a.id !== targetApp.id && a.referenceNumber !== targetApp.referenceNumber))
+
+    // Remove from localStorage
+    try {
+      const raw = localStorage.getItem("pwd_senior_applications")
+      if (raw) {
+        const list = JSON.parse(raw)
+        if (Array.isArray(list)) {
+          const filtered = list.filter((a) => a.id !== targetApp.id && a.referenceNumber !== targetApp.referenceNumber)
+          localStorage.setItem("pwd_senior_applications", JSON.stringify(filtered))
+        }
+      }
+    } catch {}
+
+    // Delete in backend database
+    try {
+      await fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(appId)}`, {
+        method: "DELETE",
+      })
+    } catch (err) {
+      console.warn("Failed deleting backend application:", err)
+    }
+
+    window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+    window.dispatchEvent(new Event("storage"))
+  }
+
+  // Clear all senior applications
+  const handleClearSeniorApplications = async () => {
+    if (!window.confirm("Are you sure you want to clear all Senior Citizen applications to test fresh?")) return
+
+    setApplications((prev) => prev.filter((a) => a.category && !String(a.category).toLowerCase().includes("senior")))
+
+    // Remove from localStorage
+    try {
+      const raw = localStorage.getItem("pwd_senior_applications")
+      if (raw) {
+        const list = JSON.parse(raw)
+        if (Array.isArray(list)) {
+          const filtered = list.filter((a) => !a.category || !String(a.category).toLowerCase().includes("senior"))
+          localStorage.setItem("pwd_senior_applications", JSON.stringify(filtered))
+        }
+      }
+    } catch {}
+
+    // Call backend endpoint
+    try {
+      await fetch(`${API_BASE}/api/pwd-senior/applications/clear-senior`, {
+        method: "DELETE",
+      })
+    } catch (err) {
+      console.warn("Failed clearing senior applications:", err)
+    }
+
+    window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+    window.dispatchEvent(new Event("storage"))
+  }
+
+
   // Filter applications
   const filteredApps = applications.filter((app) => {
     const appCat = String(app.category || "").toUpperCase()
@@ -1886,9 +1954,21 @@ export default function PWDSeniorCitizen() {
 
         {/* Applications List */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h2 className="gw-serif text-lg font-semibold" style={{ color: "var(--ink)" }}>Applications</h2>
-            <span className="gw-mono text-sm" style={{ color: "var(--ink-faint)" }}>({filteredApps.length})</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <h2 className="gw-serif text-lg font-semibold" style={{ color: "var(--ink)" }}>Applications</h2>
+              <span className="gw-mono text-sm" style={{ color: "var(--ink-faint)" }}>({filteredApps.length})</span>
+            </div>
+            {applications.some((a) => a.category && String(a.category).toLowerCase().includes("senior")) && (
+              <button
+                type="button"
+                onClick={handleClearSeniorApplications}
+                className="px-2.5 py-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md inline-flex items-center gap-1 border border-red-200 transition-colors cursor-pointer"
+              >
+                <Trash2 className="h-3 w-3" />
+                Clear Senior Records
+              </button>
+            )}
           </div>
 
           {filteredApps.length === 0 ? (
@@ -1905,6 +1985,7 @@ export default function PWDSeniorCitizen() {
                   app={app}
                   onView={() => setSelectedApp(app)}
                   onShowCard={() => setCardApp(app)}
+                  onDelete={handleDeleteApplication}
                 />
               ))}
             </div>
@@ -1919,8 +2000,10 @@ export default function PWDSeniorCitizen() {
             onApprove={handleApprove}
             onReject={handleReject}
             onShowCard={(app) => setCardApp(app)}
+            onDelete={handleDeleteApplication}
           />
         )}
+
 
         {/* Official QC ID Card Modal */}
         {cardApp && (

@@ -105,40 +105,11 @@ const SEED_PWD_SENIOR_APPS = [
     ],
     status: "pending",
   },
-  {
-    id: "APP-SNR-2026-004",
-    submittedAt: "2026-08-21T08:45:00.000Z",
-    referenceNumber: "OSCA-QC-2026-8802",
-    category: "Senior Citizen",
-    type: "new",
-    firstName: "Teresa",
-    middleName: "Manalo",
-    lastName: "Lopez",
-    suffix: "",
-    dateOfBirth: "1960-04-12",
-    age: "66",
-    sex: "Female",
-    civilStatus: "Widowed",
-    contactNo: "09193337788",
-    cellphoneNo: "09193337788",
-    email: "teresa.lopez@gmail.com",
-    address: "15 Dahlia St., Brgy. Fairview, Quezon City",
-    disabilityType: "",
-    disabilityClass: "",
-    causeOfDisability: "",
-    vaccinatedCovid: "Yes",
-    applyingFor: "myself",
-    documents: [
-      { name: "Birth Certificate / Valid ID", filename: "birth_cert.jpg", fileUrl: "/samples/BIRTH CERTIFICATE OF MINOR.jpg", uploadedAt: "2026-08-21T08:40:00.000Z", status: "verified" },
-      { name: "Barangay Residency Certificate", filename: "barangay_cert.webp", fileUrl: "/samples/BARANGAY CERTIFICATE.webp", uploadedAt: "2026-08-21T08:42:00.000Z", status: "verified" },
-      { name: "2x2 ID Picture", filename: "id_picture.webp", fileUrl: "/samples/ID PICTURE (2X2).webp", uploadedAt: "2026-08-21T08:43:00.000Z", status: "verified" },
-    ],
-    status: "pending",
-  },
 ];
 
 // In-memory fallback if database table is initializing or offline
 let memoryApplications = [...SEED_PWD_SENIOR_APPS];
+
 
 // Ensure table exists
 async function initPwdSeniorTable() {
@@ -555,5 +526,35 @@ exports.updateApplicationStatus = async (req, res) => {
   } catch (err) {
     console.error('Error updating status:', err);
     return res.status(500).json({ error: 'Failed to update status', details: err.message });
+  }
+};
+
+// Delete single application
+exports.deleteApplication = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Delete from DB
+    await db.query(`DELETE FROM pwd_senior_applications WHERE id = $1 OR reference_number = $1`, [id]);
+    
+    // Also remove from memoryApplications
+    memoryApplications = memoryApplications.filter(app => app.id !== id && app.referenceNumber !== id);
+
+    return res.json({ success: true, message: `Application ${id} deleted successfully` });
+  } catch (err) {
+    console.error('Error deleting application:', err);
+    return res.status(500).json({ error: 'Failed to delete application', details: err.message });
+  }
+};
+
+// Clear/Delete all Senior Citizen applications (for fresh testing)
+exports.clearSeniorApplications = async (req, res) => {
+  try {
+    await db.query(`DELETE FROM pwd_senior_applications WHERE category ILIKE '%senior%' OR category = 'Senior Citizen'`);
+    memoryApplications = memoryApplications.filter(app => !app.category || !app.category.toLowerCase().includes('senior'));
+
+    return res.json({ success: true, message: 'All Senior Citizen applications cleared for fresh testing' });
+  } catch (err) {
+    console.error('Error clearing senior applications:', err);
+    return res.status(500).json({ error: 'Failed to clear senior applications', details: err.message });
   }
 };
