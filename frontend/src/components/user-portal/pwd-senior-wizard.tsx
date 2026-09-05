@@ -650,9 +650,16 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   // Check if there is an active application for this user
   useEffect(() => {
     const checkActiveApp = async () => {
-      let currentAppStatus: string | null = null
       let matchedApproved: any = null
-      let matchedPending: any = null
+      let matchedPendingForFlow: any = null
+      let matchedPendingAny: any = null
+
+      const expectedType =
+        initialIdStatus === "renewal"
+          ? "renewal"
+          : initialIdStatus === "loss"
+          ? "replacement"
+          : "new"
 
       const checkUserMatches = (a: any) => {
         const qcid = userProfile?.qcidNo || "110000116932100"
@@ -670,56 +677,55 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
           const apps = await res.json()
           if (Array.isArray(apps)) {
             const userApps = apps.filter(checkUserMatches)
-            const pendingApp = userApps.find((a) => a.status === "pending")
-            const approvedApp = userApps.find((a) => a.status === "approved")
-            if (pendingApp) {
-              currentAppStatus = "pending"
-              matchedPending = pendingApp
-            }
-            if (approvedApp) matchedApproved = approvedApp
+            const pendingFlow = userApps.find(
+              (a) => a.status === "pending" && (a.type === expectedType || (!a.type && expectedType === "new"))
+            )
+            const pendingAny = userApps.find((a) => a.status === "pending")
+            const approvedNew = userApps.find((a) => a.status === "approved")
+            if (pendingFlow) matchedPendingForFlow = pendingFlow
+            if (pendingAny) matchedPendingAny = pendingAny
+            if (approvedNew) matchedApproved = approvedNew
           }
         }
       } catch {}
 
       // Fallback check localStorage if backend unavailable
-      if (!matchedApproved || !currentAppStatus) {
+      if (!matchedApproved || !matchedPendingForFlow) {
         try {
           const saved = localStorage.getItem("pwd_senior_applications")
           if (saved) {
             const apps = JSON.parse(saved)
             if (Array.isArray(apps)) {
               const userApps = apps.filter(checkUserMatches)
-              const pendingApp = userApps.find((a) => a.status === "pending")
-              const approvedApp = userApps.find((a) => a.status === "approved")
-              if (!currentAppStatus && pendingApp) {
-                currentAppStatus = "pending"
-                matchedPending = pendingApp
-              }
-              if (!matchedApproved && approvedApp) matchedApproved = approvedApp
+              const pendingFlow = userApps.find(
+                (a) => a.status === "pending" && (a.type === expectedType || (!a.type && expectedType === "new"))
+              )
+              const pendingAny = userApps.find((a) => a.status === "pending")
+              const approvedNew = userApps.find((a) => a.status === "approved")
+              if (!matchedPendingForFlow && pendingFlow) matchedPendingForFlow = pendingFlow
+              if (!matchedPendingAny && pendingAny) matchedPendingAny = pendingAny
+              if (!matchedApproved && approvedNew) matchedApproved = approvedNew
             }
           }
         } catch {}
       }
 
-      setActiveAppStatus(currentAppStatus)
-      if (matchedPending) {
-        setBlockedApp(matchedPending)
+      setActiveAppStatus(matchedPendingAny ? "pending" : matchedApproved ? "approved" : null)
+
+      if (matchedPendingForFlow) {
+        setBlockedApp(matchedPendingForFlow)
+      } else {
+        setBlockedApp(null)
       }
 
-      if (matchedApproved && !matchedPending) {
+      if (matchedApproved) {
         setLatestApprovedApp(matchedApproved)
-        // When approved and no pending application, reset blocked or submitted states
-        if (isBlocked || submitStatus === "submitted") {
-          setIsBlocked(false)
-          setSubmitStatus("idle")
-          setStep(1)
-        }
-      } else if (!matchedApproved) {
+      } else {
         setLatestApprovedApp(null)
       }
 
-      // Block if user has an active pending application
-      if (!bypassedBlock && currentAppStatus === "pending") {
+      // Block ONLY for Renewal flow when there is a pending renewal application
+      if (initialIdStatus === "renewal" && !bypassedBlock && matchedPendingForFlow) {
         setIsBlocked(true)
       } else {
         setIsBlocked(false)
@@ -729,9 +735,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, initialIdStatus, isBlocked, submitStatus])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, initialIdStatus])
 
-  // Auto-redirect to pending status screen after 3 seconds on submitted
+  // Auto-redirect to pending status screen after 3 seconds on submitted (only for renewal)
   useEffect(() => {
     if (submitStatus !== "submitted") return
 
@@ -740,7 +746,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
-          setIsBlocked(true)
+          if (initialIdStatus === "renewal") {
+            setIsBlocked(true)
+          }
           setSubmitStatus("idle")
           return 0
         }
@@ -749,7 +757,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [submitStatus])
+  }, [submitStatus, initialIdStatus])
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

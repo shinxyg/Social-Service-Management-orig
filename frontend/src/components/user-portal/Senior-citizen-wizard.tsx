@@ -391,9 +391,16 @@ export default function SeniorCitizenApplicationWizard({
   // Check if there is an active application for this user
   useEffect(() => {
     const checkActiveApp = async () => {
-      let activeAppStatus: string | null = null
       let matchedApproved: any = null
-      let matchedPending: any = null
+      let matchedPendingForFlow: any = null
+      let matchedPendingAny: any = null
+
+      const expectedType =
+        appFlow === "renewal"
+          ? "renewal"
+          : appFlow === "loss"
+          ? "replacement"
+          : "new"
 
       const checkUserMatches = (a: any) => {
         const qcid = userProfile?.qcidNo || "110000116932100"
@@ -411,55 +418,53 @@ export default function SeniorCitizenApplicationWizard({
           const apps = await res.json()
           if (Array.isArray(apps)) {
             const userApps = apps.filter(checkUserMatches)
-            const pendingApp = userApps.find((a) => a.status === "pending")
-            const approvedApp = userApps.find((a) => a.status === "approved")
-            if (pendingApp) {
-              activeAppStatus = "pending"
-              matchedPending = pendingApp
-            }
-            if (approvedApp) matchedApproved = approvedApp
+            const pendingFlow = userApps.find(
+              (a) => a.status === "pending" && (a.type === expectedType || (!a.type && expectedType === "new"))
+            )
+            const pendingAny = userApps.find((a) => a.status === "pending")
+            const approvedNew = userApps.find((a) => a.status === "approved")
+            if (pendingFlow) matchedPendingForFlow = pendingFlow
+            if (pendingAny) matchedPendingAny = pendingAny
+            if (approvedNew) matchedApproved = approvedNew
           }
         }
       } catch {}
 
       // Fallback check localStorage if backend unavailable
-      if (!matchedApproved || !activeAppStatus) {
+      if (!matchedApproved || !matchedPendingForFlow) {
         try {
           const saved = localStorage.getItem("pwd_senior_applications")
           if (saved) {
             const apps = JSON.parse(saved)
             if (Array.isArray(apps)) {
               const userApps = apps.filter(checkUserMatches)
-              const pendingApp = userApps.find((a) => a.status === "pending")
-              const approvedApp = userApps.find((a) => a.status === "approved")
-              if (!activeAppStatus && pendingApp) {
-                activeAppStatus = "pending"
-                matchedPending = pendingApp
-              }
-              if (!matchedApproved && approvedApp) matchedApproved = approvedApp
+              const pendingFlow = userApps.find(
+                (a) => a.status === "pending" && (a.type === expectedType || (!a.type && expectedType === "new"))
+              )
+              const pendingAny = userApps.find((a) => a.status === "pending")
+              const approvedNew = userApps.find((a) => a.status === "approved")
+              if (!matchedPendingForFlow && pendingFlow) matchedPendingForFlow = pendingFlow
+              if (!matchedPendingAny && pendingAny) matchedPendingAny = pendingAny
+              if (!matchedApproved && approvedNew) matchedApproved = approvedNew
             }
           }
         } catch {}
       }
 
-      if (matchedPending) {
-        setBlockedApp(matchedPending)
+      if (matchedPendingForFlow) {
+        setBlockedApp(matchedPendingForFlow)
+      } else {
+        setBlockedApp(null)
       }
 
-      if (matchedApproved && !matchedPending) {
+      if (matchedApproved) {
         setLatestApprovedApp(matchedApproved)
-        // When approved and no pending application, reset blocked or submitted states
-        if (isBlocked || isSubmitted) {
-          setIsBlocked(false)
-          setIsSubmitted(false)
-          setStep(1)
-        }
-      } else if (!matchedApproved) {
+      } else {
         setLatestApprovedApp(null)
       }
 
-      // Block if user has an active pending application
-      if (!bypassedBlock && activeAppStatus === "pending") {
+      // Block ONLY for Renewal flow when there is a pending renewal application
+      if (appFlow === "renewal" && !bypassedBlock && matchedPendingForFlow) {
         setIsBlocked(true)
       } else {
         setIsBlocked(false)
@@ -469,9 +474,9 @@ export default function SeniorCitizenApplicationWizard({
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow, isBlocked, isSubmitted])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow])
 
-  // Auto-redirect to pending status screen after 3 seconds on submitted
+  // Auto-redirect to pending status screen after 3 seconds on submitted (only for renewal)
   useEffect(() => {
     if (!isSubmitted) return
 
@@ -480,7 +485,9 @@ export default function SeniorCitizenApplicationWizard({
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
-          setIsBlocked(true)
+          if (appFlow === "renewal") {
+            setIsBlocked(true)
+          }
           setIsSubmitted(false)
           return 0
         }
@@ -489,7 +496,7 @@ export default function SeniorCitizenApplicationWizard({
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [isSubmitted])
+  }, [isSubmitted, appFlow])
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
