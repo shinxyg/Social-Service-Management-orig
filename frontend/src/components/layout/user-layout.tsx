@@ -8,7 +8,6 @@ import {
   GraduationCap,
   Moon,
   Sun,
-  HelpCircle,
   Bell,
   LogOut,
   ChevronRight,
@@ -23,8 +22,10 @@ import { Tooltip } from "../ui/tooltip"
 import { AIChatWidget } from "../ui/ai-chat-widget"
 import { ProfileModal } from "../ui/profile-modal"
 import { useLanguage } from "../ui/language-context"
-import { API_BASE } from "../../config/api"
+import RequirementsModal, { AICS_REQUIREMENTS } from "../user-portal/Requirements-modal"
 import { getSavedProfilePhoto } from "../../utils/profilePhoto"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { API_BASE } from "../../config/api"
 
 function WheelchairIcon({ className, ...props }: React.ComponentProps<"svg">) {
   return (
@@ -181,7 +182,8 @@ function Avatar({ size = 36 }: { size?: number }) {
 
   useEffect(() => {
     const readPhoto = () => {
-      const photo = getSavedProfilePhoto(QC_ID)
+      const qcid = getLoggedInUserQcid()
+      const photo = getSavedProfilePhoto(qcid)
       setPhotoUrl(photo)
       setImgFailed(false)
     }
@@ -513,149 +515,167 @@ function ResidentHeader({
   }, [])
 
   useEffect(() => {
-  const fetchNotifs = async () => {
-    try {
-      const readIds = getReadNotifIds()
-      const dismissedIds = getDismissedNotifIds()
-      const items: AicsNotification[] = []
-      const userId = "1" // TODO: palitan ng tunay na logged-in user ID
-
-      // ---- AICS ----
+    const fetchNotifs = async () => {
       try {
-        const aicsRes = await fetch(`${API_BASE}/api/aics/applications?qcId=${QC_ID}`)
-        if (aicsRes.ok) {
-          const aicsData = await aicsRes.json()
-          const relevant = (aicsData.applications || []).filter(
-            (app: any) =>
-              (app.status === "approved" || app.status === "rejected") &&
-              !dismissedIds.includes(`aics-${app.id}-${app.status}`)
-          )
-          relevant.forEach((app: any) => {
-            const notifId = `aics-${app.id}-${app.status}`
-            const isApproved = app.status === "approved"
-            items.push({
-              id: notifId,
-              title: isApproved ? "Na-approve ang AICS Aplikasyon" : "Hindi Na-approve ang AICS Aplikasyon",
-              desc: `${app.assistance_type} — Ref: ${app.reference_no}`,
-              time: new Date(app.updated_at || app.created_at).toLocaleString("en-PH"),
-              unread: !readIds.includes(notifId),
-            })
-          })
-        }
-      } catch {}
+        const readIds = getReadNotifIds()
+        const dismissedIds = getDismissedNotifIds()
+        const items: AicsNotification[] = []
+        const prof = getCurrentUserProfile()
+        const userQcId = prof.qcidNumber || prof.qcidNo || getLoggedInUserQcid()
+        const userEmail = (prof.email || "").toLowerCase().trim()
+        const userId = String(prof.id || "1")
 
-      // ---- Solo Parent ----
-      try {
-        const spRes = await fetch(`${API_BASE}/api/solo-parent/user/${userId}`)
-        if (spRes.ok) {
-          const spData = await spRes.json()
-          const relevant = (spData.applications || []).filter(
-            (app: any) =>
-              (app.application_status === "approved" || app.application_status === "rejected") &&
-              !dismissedIds.includes(`sp-${app.id}-${app.application_status}`)
-          )
-          relevant.forEach((app: any) => {
-            const notifId = `sp-${app.id}-${app.application_status}`
-            const isApproved = app.application_status === "approved"
-            items.push({
-              id: notifId,
-              title: isApproved ? "Na-approve ang Solo Parent Aplikasyon" : "Hindi Na-approve ang Solo Parent Aplikasyon",
-              desc: `Solo Parent — Ref: ${app.reference_number}`,
-              time: new Date(app.updated_at || app.created_at).toLocaleString("en-PH"),
-              unread: !readIds.includes(notifId),
-              reason: app.rejection_reason || null,
-            })
-          })
-        }
-      } catch {}
-
-      // ---- Child Welfare ----
-      try {
-        const cwRes = await fetch(`${API_BASE}/api/child-welfare/user/${userId}`)
-        if (cwRes.ok) {
-          const cwData = await cwRes.json()
-          const relevant = (cwData.applications || []).filter(
-            (app: any) =>
-              (app.application_status === "approved" || app.application_status === "rejected") &&
-              !dismissedIds.includes(`cw-${app.id}-${app.application_status}`)
-          )
-          relevant.forEach((app: any) => {
-            const notifId = `cw-${app.id}-${app.application_status}`
-            const isApproved = app.application_status === "approved"
-            items.push({
-              id: notifId,
-              title: isApproved ? "Na-approve ang Child Welfare Aplikasyon" : "Hindi Na-approve ang Child Welfare Aplikasyon",
-              desc: `Child Welfare — Ref: ${app.reference_number}`,
-              time: new Date(app.updated_at || app.created_at).toLocaleString("en-PH"),
-              unread: !readIds.includes(notifId),
-            })
-          })
-        }
-      } catch {}
-
-      // ---- Financial Aid & Appointment Synced Notifications from Backend API & LocalStorage ----
-      try {
-        const resDbNotifs = await fetch(`${API_BASE}/api/notifications`)
-        if (resDbNotifs.ok) {
-          const dataDbNotifs = await resDbNotifs.json()
-          if (dataDbNotifs.notifications && Array.isArray(dataDbNotifs.notifications)) {
-            dataDbNotifs.notifications.forEach((n: any) => {
-              const notifId = `db-notif-${n.id}`
-              if (!dismissedIds.includes(notifId)) {
+        // ---- AICS (Only for this logged-in user) ----
+        if (userQcId) {
+          try {
+            const aicsRes = await fetch(`${API_BASE}/api/aics/applications?qcId=${userQcId}`)
+            if (aicsRes.ok) {
+              const aicsData = await aicsRes.json()
+              const relevant = (aicsData.applications || []).filter(
+                (app: any) =>
+                  (app.status === "approved" || app.status === "rejected") &&
+                  (app.qc_id === userQcId || (userEmail && (app.email || "").toLowerCase() === userEmail)) &&
+                  !dismissedIds.includes(`aics-${app.id}-${app.status}`)
+              )
+              relevant.forEach((app: any) => {
+                const notifId = `aics-${app.id}-${app.status}`
+                const isApproved = app.status === "approved"
                 items.push({
                   id: notifId,
-                  title: n.title,
-                  desc: n.description,
-                  time: new Date(n.created_at || Date.now()).toLocaleString("en-PH"),
-                  unread: !readIds.includes(notifId) && !n.is_read,
+                  title: isApproved ? "Na-approve ang AICS Aplikasyon" : "Hindi Na-approve ang AICS Aplikasyon",
+                  desc: `${app.assistance_type} — Ref: ${app.reference_no || app.qc_id}`,
+                  time: new Date(app.updated_at || app.created_at).toLocaleString("en-PH"),
+                  unread: !readIds.includes(notifId),
                 })
-              }
-            })
-          }
+              })
+            }
+          } catch {}
         }
-      } catch {}
 
-      try {
-        const stored = localStorage.getItem("all_user_notifications")
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          if (Array.isArray(parsed)) {
-            parsed.forEach((n: any) => {
-              if (!dismissedIds.includes(n.id) && !items.some((it) => it.title === n.title && it.desc === n.desc)) {
+        // ---- PWD & Senior Citizen (Only for this user) ----
+        try {
+          const storedPwd = localStorage.getItem("pwd_senior_applications")
+          if (storedPwd) {
+            const parsedPwd = JSON.parse(storedPwd)
+            if (Array.isArray(parsedPwd)) {
+              const userPwdApps = parsedPwd.filter(
+                (app: any) =>
+                  (app.qcid === userQcId || app.qcId === userQcId || (userEmail && (app.email || "").toLowerCase() === userEmail)) &&
+                  (app.status === "approved" || app.status === "rejected") &&
+                  !dismissedIds.includes(`pwd-${app.id}-${app.status}`)
+              )
+              userPwdApps.forEach((app: any) => {
+                const notifId = `pwd-${app.id}-${app.status}`
+                const isApproved = app.status === "approved"
                 items.push({
-                  id: n.id,
-                  title: n.title,
-                  desc: n.desc,
-                  time: n.time || new Date().toLocaleString("en-PH"),
-                  unread: !readIds.includes(n.id),
+                  id: notifId,
+                  title: isApproved ? "Na-approve ang PWD / Senior Application" : "Hindi Na-approve ang PWD / Senior Application",
+                  desc: `${app.serviceType || "PWD/Senior Service"} — Ref: ${app.id}`,
+                  time: new Date(app.approvedDate || app.submissionDate || Date.now()).toLocaleString("en-PH"),
+                  unread: !readIds.includes(notifId),
                 })
-              }
+              })
+            }
+          }
+        } catch {}
+
+        // ---- Solo Parent (Only for this user) ----
+        try {
+          const spRes = await fetch(`${API_BASE}/api/solo-parent/user/${userId}`)
+          if (spRes.ok) {
+            const spData = await spRes.json()
+            const relevant = (spData.applications || []).filter(
+              (app: any) =>
+                (app.application_status === "approved" || app.application_status === "rejected") &&
+                !dismissedIds.includes(`sp-${app.id}-${app.application_status}`)
+            )
+            relevant.forEach((app: any) => {
+              const notifId = `sp-${app.id}-${app.application_status}`
+              const isApproved = app.application_status === "approved"
+              items.push({
+                id: notifId,
+                title: isApproved ? "Na-approve ang Solo Parent Aplikasyon" : "Hindi Na-approve ang Solo Parent Aplikasyon",
+                desc: `Solo Parent — Ref: ${app.reference_number}`,
+                time: new Date(app.updated_at || app.created_at).toLocaleString("en-PH"),
+                unread: !readIds.includes(notifId),
+                reason: app.rejection_reason || null,
+              })
             })
           }
-        }
+        } catch {}
+
+        // ---- Child Welfare (Only for this user) ----
+        try {
+          const cwRes = await fetch(`${API_BASE}/api/child-welfare/user/${userId}`)
+          if (cwRes.ok) {
+            const cwData = await cwRes.json()
+            const relevant = (cwData.applications || []).filter(
+              (app: any) =>
+                (app.application_status === "approved" || app.application_status === "rejected") &&
+                !dismissedIds.includes(`cw-${app.id}-${app.application_status}`)
+            )
+            relevant.forEach((app: any) => {
+              const notifId = `cw-${app.id}-${app.application_status}`
+              const isApproved = app.application_status === "approved"
+              items.push({
+                id: notifId,
+                title: isApproved ? "Na-approve ang Child Welfare Aplikasyon" : "Hindi Na-approve ang Child Welfare Aplikasyon",
+                desc: `Child Welfare — Ref: ${app.reference_number}`,
+                time: new Date(app.updated_at || app.created_at).toLocaleString("en-PH"),
+                unread: !readIds.includes(notifId),
+              })
+            })
+          }
+        } catch {}
+
+        // ---- Livelihood & Training (Only for this user) ----
+        try {
+          const storedLiv = localStorage.getItem("livelihood_applications")
+          if (storedLiv) {
+            const parsedLiv = JSON.parse(storedLiv)
+            if (Array.isArray(parsedLiv)) {
+              const userLivApps = parsedLiv.filter(
+                (app: any) =>
+                  (app.qcId === userQcId || app.qcid === userQcId || (userEmail && (app.email || "").toLowerCase() === userEmail)) &&
+                  (app.status === "approved" || app.status === "rejected") &&
+                  !dismissedIds.includes(`liv-${app.id}-${app.status}`)
+              )
+              userLivApps.forEach((app: any) => {
+                const notifId = `liv-${app.id}-${app.status}`
+                const isApproved = app.status === "approved"
+                items.push({
+                  id: notifId,
+                  title: isApproved ? "Na-approve ang Livelihood Application" : "Hindi Na-approve ang Livelihood Application",
+                  desc: `${app.programName || "Livelihood"} — Ref: ${app.id}`,
+                  time: new Date(app.approvedDate || app.createdAt || Date.now()).toLocaleString("en-PH"),
+                  unread: !readIds.includes(notifId),
+                })
+              })
+            }
+          }
+        } catch {}
+
+        items.sort((a, b) => Number(b.unread) - Number(a.unread))
+        setNotifications(items)
       } catch {}
+    }
 
-      items.sort((a, b) => Number(b.unread) - Number(a.unread))
-      setNotifications(items)
-    } catch {}
-  }
+    fetchNotifs()
+    const interval = setInterval(fetchNotifs, 4000)
+    const handleNotifUpdate = () => fetchNotifs()
+    window.addEventListener("user_notifications_updated", handleNotifUpdate)
+    window.addEventListener("storage", handleNotifUpdate)
 
-  fetchNotifs()
-  const interval = setInterval(fetchNotifs, 8000)
-  const handleNotifUpdate = () => fetchNotifs()
-  window.addEventListener("user_notifications_updated", handleNotifUpdate)
-  window.addEventListener("storage", handleNotifUpdate)
-
-  return () => {
-    clearInterval(interval)
-    window.removeEventListener("user_notifications_updated", handleNotifUpdate)
-    window.removeEventListener("storage", handleNotifUpdate)
-  }
-}, [])
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("user_notifications_updated", handleNotifUpdate)
+      window.removeEventListener("storage", handleNotifUpdate)
+    }
+  }, [])
 
   const unreadNotifCount = notifications.filter((n) => n.unread).length
 
-    const handleNotifClick = (id: string) => {
+  const handleNotifClick = (id: string) => {
     markNotifAsRead(id)
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, unread: false } : n)))
     const notif = notifications.find((n) => n.id === id)
@@ -670,7 +690,6 @@ function ResidentHeader({
     dismissNotif(id)
     setNotifications((prev) => prev.filter((n) => n.id !== id))
   }
-
 
   const timeString = now.toLocaleTimeString("en-PH", {
     hour: "2-digit",
@@ -704,15 +723,6 @@ function ResidentHeader({
             className="h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
-        </Tooltip>
-
-        <Tooltip label="Help">
-          <button
-            aria-label="Help"
-            className="h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          >
-            <HelpCircle className="h-5 w-5" />
           </button>
         </Tooltip>
                 <div className="relative" ref={notifRef}>
