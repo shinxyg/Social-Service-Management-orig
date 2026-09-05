@@ -1503,11 +1503,11 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                 <div>
                                   <span className="text-emerald-700 block">PWD ID Status:</span>
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold mt-0.5 ${
-                                    activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending"
+                                    activeAppStatus === "pending" || approvedPwdRecord?.status === "pending"
                                       ? "bg-amber-100 text-amber-800 border border-amber-300"
                                       : "bg-emerald-100 text-emerald-800 border border-emerald-300"
                                   }`}>
-                                    {activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
+                                    {activeAppStatus === "pending" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
                                   </span>
                                 </div>
                               </div>
@@ -1684,11 +1684,11 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                               <div>
                                 <span className="text-emerald-700 block">PWD ID Status:</span>
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold mt-0.5 ${
-                                  activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending"
+                                  activeAppStatus === "pending" || approvedPwdRecord?.status === "pending"
                                     ? "bg-amber-100 text-amber-800 border border-amber-300"
                                     : "bg-emerald-100 text-emerald-800 border border-emerald-300"
                                 }`}>
-                                  {activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
+                                  {activeAppStatus === "pending" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
                                 </span>
                               </div>
                               <div>
@@ -1851,11 +1851,11 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                   <div>
                                     <span className="text-emerald-700 block">PWD ID Status:</span>
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold mt-0.5 ${
-                                      activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending"
+                                      activeAppStatus === "pending" || approvedPwdRecord?.status === "pending"
                                         ? "bg-amber-100 text-amber-800 border border-amber-300"
                                         : "bg-emerald-100 text-emerald-800 border border-emerald-300"
                                     }`}>
-                                      {activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
+                                      {activeAppStatus === "pending" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
                                     </span>
                                   </div>
                                 </div>
@@ -2022,11 +2022,11 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                 <div>
                                   <span className="text-emerald-700 block">PWD ID Status:</span>
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold mt-0.5 ${
-                                    activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending"
+                                    activeAppStatus === "pending" || approvedPwdRecord?.status === "pending"
                                       ? "bg-amber-100 text-amber-800 border border-amber-300"
                                       : "bg-emerald-100 text-emerald-800 border border-emerald-300"
                                   }`}>
-                                    {activeAppStatus === "pending" || submitStatus === "submitted" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
+                                    {activeAppStatus === "pending" || approvedPwdRecord?.status === "pending" ? "Pending" : "Active"}
                                   </span>
                                 </div>
                                 <div>
