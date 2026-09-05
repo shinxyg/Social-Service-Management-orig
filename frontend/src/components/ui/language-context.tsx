@@ -445,7 +445,7 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   deceasedResidentCheckLabel: { en: "The deceased was a resident of Quezon City", tl: "Ang namatay ay residente ng Quezon City", bis: "Ang namatay residente sa Quezon City" },
   informantRelativeCheckLabel: { en: "The informant is a close relative of the deceased", tl: "Ang informant ay malapit na kamag-anak ng namatay", bis: "Ang informant duol nga paryente sa namatay" },
   priorAidTypeCheckLabel: { en: "Type of assistance received:", tl: "Uri ng tulong na natanggap:", bis: "Matang sa tabang nga nadawat:" },
-  assistanceTypeCheckLabel: { en: "Type of assistance: Medicines / Medical Supplies", tl: "Type ng Assistance: Medicines / Medical Supplies", bis: "Type sa Assistance: Medicines / Medical Supplies" },
+  assistanceTypeCheckLabel: { en: "Type of assistance: Medical Assistance", tl: "Uri ng Assistance: Medical Assistance", bis: "Matang sa Assistance: Medical Assistance" },
   submitConfirmNote: {
     en: "By clicking \"Submit\", you confirm that all information provided is true and complete. Your application will be reviewed by an evaluator, and you will receive a notification to your email about the status of your application.",
     tl: "Sa pag-click ng \"Submit\", kinukumpirma mo na ang lahat ng impormasyong ibinigay ay tama at kumpleto. Ang iyong application ay susuriin ng isang evaluator, at makakatanggap ka ng notification sa iyong email tungkol sa status ng iyong application.",

@@ -165,7 +165,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [step, setStep] = useState<Step>(
     hasRequirements ? "checklist" : "form"
   )
-  const [returnToReview, setReturnToReview] = useState(false)
   const [showRequirementsModal, setShowRequirementsModal] = useState(false)
 
   const [reqAccepted, setReqAccepted] = useState(false)
@@ -1169,14 +1168,7 @@ if (isBlocked) {
 
           <div className="px-6 sm:px-8 pb-6 sm:pb-8 flex justify-end">
             <button
-              onClick={() => {
-                if (returnToReview) {
-                  setStep("review")
-                  setReturnToReview(false)
-                } else {
-                  setStep("personal")
-                }
-              }}
+              onClick={() => setStep("personal")}
               disabled={!canProceedChecklist}
               className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 canProceedChecklist
@@ -1884,14 +1876,7 @@ if (isBlocked) {
               {t("backButton").toUpperCase()}
             </button>
             <button
-              onClick={() => {
-                if (returnToReview) {
-                  setStep("review")
-                  setReturnToReview(false)
-                } else {
-                  setStep("documents")
-                }
-              }}
+              onClick={() => setStep("documents")}
               disabled={!canProceedPersonal}
               className="px-6 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-opacity"
             >
@@ -2108,10 +2093,7 @@ if (isBlocked) {
               {t("backButton").toUpperCase()}
             </button>
             <button
-              onClick={() => {
-                setStep("review")
-                setReturnToReview(false)
-              }}
+              onClick={() => setStep("review")}
               disabled={!canProceedDocuments}
               className="px-6 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-opacity"
             >
@@ -2188,10 +2170,7 @@ if (isBlocked) {
 
             <ReviewSection
               title={t("requirementsSectionTitle")}
-              onEdit={() => {
-                setReturnToReview(true)
-                setStep("checklist")
-              }}
+              onEdit={() => setStep("checklist")}
               editLabel={t("editButton")}
             >
               <div className="divide-y divide-border">
@@ -2226,10 +2205,7 @@ if (isBlocked) {
             </ReviewSection>
             <ReviewSection
               title={t("personalInfoSectionTitle")}
-              onEdit={() => {
-                setReturnToReview(true)
-                setStep("personal")
-              }}
+              onEdit={() => setStep("personal")}
               editLabel={t("editButton")}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 p-4">
@@ -2333,10 +2309,7 @@ if (isBlocked) {
 
             <ReviewSection
               title={t("documentsSectionTitle")}
-              onEdit={() => {
-                setReturnToReview(true)
-                setStep("documents")
-              }}
+              onEdit={() => setStep("documents")}
               editLabel={t("editButton")}
             >
               <div className="p-4 space-y-6">
