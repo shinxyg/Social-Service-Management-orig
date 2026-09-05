@@ -16,6 +16,7 @@ import {
   IdCard,
   Search,
   AlertCircle,
+  ExternalLink,
 } from "lucide-react"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
@@ -384,10 +385,22 @@ export default function SeniorCitizenApplicationWizard({
     }
   }, [isFormDirty])
 
-  // Check if there is an active PENDING application for this user
+  const [latestApprovedApp, setLatestApprovedApp] = useState<any>(null)
+
+  // Check if there is an active application for this user
   useEffect(() => {
     const checkActiveApp = async () => {
       let activeAppStatus: string | null = null
+      let matchedApproved: any = null
+
+      const checkUserMatches = (a: any) => {
+        const qcid = userProfile?.qcidNo || "110000116932100"
+        const email = userProfile?.email || "dimalmae@gmail.com"
+        return (
+          (a.referenceNumber === qcid || a.email === email) &&
+          a.category === "Senior Citizen"
+        )
+      }
 
       // Check backend API first
       try {
@@ -395,38 +408,42 @@ export default function SeniorCitizenApplicationWizard({
         if (res.ok) {
           const apps = await res.json()
           if (Array.isArray(apps)) {
-            const userApp = apps.find(
-              (a) =>
-                (a.referenceNumber === (userProfile?.qcidNo || "110000116932100") ||
-                 a.email === (userProfile?.email || "dimalmae@gmail.com")) &&
-                a.category === "Senior Citizen"
-            )
-            if (userApp) {
-              activeAppStatus = userApp.status
-            }
+            const userApps = apps.filter(checkUserMatches)
+            const pendingApp = userApps.find((a) => a.status === "pending")
+            const approvedApp = userApps.find((a) => a.status === "approved")
+            if (pendingApp) activeAppStatus = "pending"
+            if (approvedApp) matchedApproved = approvedApp
           }
         }
       } catch {}
 
       // Fallback check localStorage if backend unavailable
-      if (!activeAppStatus) {
+      if (!matchedApproved || !activeAppStatus) {
         try {
           const saved = localStorage.getItem("pwd_senior_applications")
           if (saved) {
             const apps = JSON.parse(saved)
             if (Array.isArray(apps)) {
-              const userApp = apps.find(
-                (a) =>
-                  (a.referenceNumber === (userProfile?.qcidNo || "110000116932100") ||
-                   a.email === (userProfile?.email || "dimalmae@gmail.com")) &&
-                  a.category === "Senior Citizen"
-              )
-              if (userApp) {
-                activeAppStatus = userApp.status
-              }
+              const userApps = apps.filter(checkUserMatches)
+              const pendingApp = userApps.find((a) => a.status === "pending")
+              const approvedApp = userApps.find((a) => a.status === "approved")
+              if (!activeAppStatus && pendingApp) activeAppStatus = "pending"
+              if (!matchedApproved && approvedApp) matchedApproved = approvedApp
             }
           }
         } catch {}
+      }
+
+      if (matchedApproved) {
+        setLatestApprovedApp(matchedApproved)
+        // When approved, reset blocked or submitted states and return to step 1
+        if (isBlocked || isSubmitted) {
+          setIsBlocked(false)
+          setIsSubmitted(false)
+          setStep(1)
+        }
+      } else {
+        setLatestApprovedApp(null)
       }
 
       // Block ONLY if status is strictly 'pending' AND user is applying for a new ID
@@ -442,7 +459,7 @@ export default function SeniorCitizenApplicationWizard({
     checkActiveApp()
     const interval = setInterval(checkActiveApp, 2000)
     return () => clearInterval(interval)
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow])
+  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, appFlow, isBlocked, isSubmitted])
 
   // Auto-redirect to pending status screen after 3 seconds on submitted
   useEffect(() => {
@@ -771,6 +788,101 @@ export default function SeniorCitizenApplicationWizard({
           {/* ──────────────── STEP 1: COMPLETE CHECKLIST ──────────────── */}
           {step === 1 && (
             <div className="space-y-6">
+              {/* APPROVED BANNER / CARD on Step 1 */}
+              {latestApprovedApp && (
+                <div className="rounded-2xl border-2 border-emerald-500 bg-linear-to-br from-emerald-50 via-white to-emerald-50/40 p-5 md:p-6 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-100 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-11 w-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0 ring-4 ring-emerald-100">
+                        <Check className="h-6 w-6 stroke-[3]" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-base font-extrabold text-emerald-950 uppercase tracking-wide">
+                            {t("seniorAppApprovedTitle") || "Senior Citizen Application Approved"}
+                          </h4>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-600 text-white shadow-xs">
+                            ✓ APPROVED
+                          </span>
+                        </div>
+                        <p className="text-xs text-emerald-800 mt-0.5">
+                          {t("seniorAppApprovedDesc") || "Your Senior Citizen ID application has been verified and approved."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Quick link to My Applications */}
+                    <a
+                      href="/portal/my-applications"
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      <span>{t("viewInMyApplications") || "View in My Applications"}</span>
+                    </a>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-white/80 backdrop-blur-xs p-4 rounded-xl border border-emerald-200">
+                    <div>
+                      <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
+                        {t("officialIdNumberLabel") || "Official Assigned ID"}
+                      </span>
+                      <span className="font-mono font-extrabold text-sm text-emerald-950 tracking-wide select-all bg-emerald-100/70 px-2 py-0.5 rounded-md mt-1 inline-block border border-emerald-200">
+                        {latestApprovedApp.assignedIdNumber || latestApprovedApp.referenceNumber}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
+                        Applicant Name
+                      </span>
+                      <span className="font-semibold text-xs text-gray-900 mt-1 block truncate">
+                        {[latestApprovedApp.firstName, latestApprovedApp.middleName, latestApprovedApp.lastName].filter(Boolean).join(" ")}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
+                        Application Category
+                      </span>
+                      <span className="font-semibold text-xs text-gray-900 mt-1 block truncate">
+                        Senior Citizen ID
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
+                        {t("dateApprovedLabel") || "Date Approved"}
+                      </span>
+                      <span className="font-semibold text-xs text-emerald-900 mt-1 block">
+                        {latestApprovedApp.approvedDate || (latestApprovedApp.updatedAt ? new Date(latestApprovedApp.updatedAt).toLocaleDateString() : "Active")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* If this is Renewal or Replacement flow and user hasn't filled/verified their ID yet, offer 1-click apply */}
+                  {appFlow !== "new" && !isIdVerified && (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-emerald-100/60 p-3 rounded-xl border border-emerald-200">
+                      <p className="text-xs text-emerald-900 font-medium">
+                        💡 Gusto mo bang gamitin ang opisyal na Senior Citizen ID number na ito para sa renewal/replacement?
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const officialId = latestApprovedApp.assignedIdNumber || latestApprovedApp.referenceNumber
+                          if (officialId) {
+                            setExistingIdNumber(officialId)
+                            setIsIdVerified(true)
+                          }
+                        }}
+                        className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                      >
+                        {t("useThisIdForRenewal") || "Gamitin ang ID na Ito"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
                   {appFlow === "new"

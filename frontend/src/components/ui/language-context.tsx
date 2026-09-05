@@ -579,6 +579,46 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Paalala: Kailangan munang magparehistro at maaprubahan sa \"New App PWD ID\" bago mag-apply para sa Replacement / Lost ID.",
     bis: "Pahibalo: Kinahanglan una magparehistro ug maaprubahan sa \"New App PWD ID\" una mag-apply para sa Replacement / Lost ID.",
   },
+  pwdAppApprovedTitle: {
+    en: "PWD Application Approved",
+    tl: "Aprubado na ang Iyong Aplikasyon sa PWD ID",
+    bis: "Naaprobahan na ang Imong Aplikasyon sa PWD ID",
+  },
+  pwdAppApprovedDesc: {
+    en: "Congratulations! Your PWD ID application has been verified and approved by the Social Services Development Department.",
+    tl: "Binabati kita! Ang iyong aplikasyon para sa PWD ID ay opisyal nang nasuri at naaprubahan ng Social Services Development Department.",
+    bis: "Pahalipay! Ang imong aplikasyon para sa PWD ID opisyal nang nasusi ug naaprobahan sa Social Services Development Department.",
+  },
+  seniorAppApprovedTitle: {
+    en: "Senior Citizen Application Approved",
+    tl: "Aprubado na ang Iyong Aplikasyon sa Senior Citizen ID",
+    bis: "Naaprobahan na ang Imong Aplikasyon sa Senior Citizen ID",
+  },
+  seniorAppApprovedDesc: {
+    en: "Congratulations! Your Senior Citizen ID application has been verified and approved by the Social Services Development Department.",
+    tl: "Binabati kita! Ang iyong aplikasyon para sa Senior Citizen ID ay opisyal nang nasuri at naaprubahan ng Social Services Development Department.",
+    bis: "Pahalipay! Ang imong aplikasyon para sa Senior Citizen ID opisyal nang nasusi ug naaprobahan sa Social Services Development Department.",
+  },
+  officialIdNumberLabel: {
+    en: "Official Assigned ID Number",
+    tl: "Opisyal na Numero ng ID",
+    bis: "Opisyal nga Numero sa ID",
+  },
+  dateApprovedLabel: {
+    en: "Date Approved",
+    tl: "Petsa ng Pag-apruba",
+    bis: "Petsa sa Pag-aprobar",
+  },
+  viewInMyApplications: {
+    en: "View in My Applications",
+    tl: "Tingnan sa Aking mga Aplikasyon",
+    bis: "Tan-awa sa Akong mga Aplikasyon",
+  },
+  useThisIdForRenewal: {
+    en: "Use this Approved ID",
+    tl: "Gamitin ang Aprubadong ID na Ito",
+    bis: "Gamita kini nga Naaprobahang ID",
+  },
   pwdEnterIdPrompt: {
     en: "Please enter your PWD ID number before verifying.",
     tl: "Mangyaring ilagay ang iyong PWD ID number bago mag-verify.",
