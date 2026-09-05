@@ -1462,8 +1462,8 @@ export default function PWDSeniorCitizenAdmin() {
       pushUserNotification({
         applicantEmail: emailToSend,
         recipientName: displayName(targetApp),
-        title: `Aplikasyon sa ${serviceName} (${typeLabel}): Naaprubahan`,
-        message: `Binabati kita! Ang iyong aplikasyon para sa ${typeLabel} ng ${serviceName} ay opisyal nang naaprubahan. Opisyal na ID Number: ${idNumber}.`,
+        title: `${serviceName} Application (${typeLabel}): Approved`,
+        message: `Congratulations! Your application for ${serviceName} (${typeLabel}) has been officially approved. Official Assigned ID Number: ${idNumber}.`,
         type: "success",
         serviceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
         referenceNo: targetApp.referenceNumber,
@@ -1515,8 +1515,8 @@ export default function PWDSeniorCitizenAdmin() {
       pushUserNotification({
         applicantEmail: isPWD(targetApp) ? targetApp.email : targetApp.email,
         recipientName: displayName(targetApp),
-        title: `Aplikasyon sa ${isPWD(targetApp) ? "PWD" : "Senior Citizen"} ID: Hindi Naaprubahan`,
-        message: `Paumanhin, ang iyong aplikasyon ay hindi naaprubahan. Dahilan: ${reason || "Nangangailangan ng karagdagang dokumento."}`,
+        title: `${isPWD(targetApp) ? "PWD" : "Senior Citizen"} ID Application: Not Approved`,
+        message: `We regret to inform you that your application was not approved. Reason: ${reason || "Additional documents or verification required."}`,
         type: "warning",
         serviceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
         referenceNo: targetApp.referenceNumber,
