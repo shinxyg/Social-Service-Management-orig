@@ -264,12 +264,29 @@ exports.getApplicationByReference = async (req, res) => {
   try {
     const { referenceNo } = req.params;
 
-    const appResult = await db.query(
-      'SELECT * FROM aics_applications WHERE reference_no = $1 OR qc_id = $1',
-      [referenceNo]
-    );
+    let appResult;
+    // 1. Prioritize lookup by unique database primary key ID if numeric
+    if (/^\d+$/.test(referenceNo) && parseInt(referenceNo, 10) < 1000000) {
+      appResult = await db.query('SELECT * FROM aics_applications WHERE id = $1', [parseInt(referenceNo, 10)]);
+    }
 
-    if (appResult.rows.length === 0) {
+    // 2. Try lookup by exact reference_no
+    if (!appResult || appResult.rows.length === 0) {
+      appResult = await db.query(
+        'SELECT * FROM aics_applications WHERE reference_no = $1',
+        [referenceNo]
+      );
+    }
+
+    // 3. Fallback to lookup by qc_id
+    if (!appResult || appResult.rows.length === 0) {
+      appResult = await db.query(
+        'SELECT * FROM aics_applications WHERE qc_id = $1 ORDER BY created_at DESC',
+        [referenceNo]
+      );
+    }
+
+    if (!appResult || appResult.rows.length === 0) {
       return res.status(404).json({ error: 'Walang nahanap na application.' });
     }
 

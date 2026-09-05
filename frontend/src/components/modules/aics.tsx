@@ -141,16 +141,20 @@ export default function AICS() {
 
   const openReview = async (app: AicsApplication) => {
     setActionLoading(true)
+    setReviewingApp(app)
+    setCurrentView('admin-review')
     try {
-      const res = await fetch(`${API_BASE}/applications/${encodeURIComponent(app.reference_no || app.qc_id || '')}`)
-      if (!res.ok) throw new Error('Failed to fetch application details')
-      const data = await res.json()
-      setReviewingApp(data.application)
-      setReviewingDocs(data.documents || [])
-      setCurrentView('admin-review')
+      const targetIdentifier = app.id ? String(app.id) : encodeURIComponent(app.reference_no || app.qc_id || '')
+      const res = await fetch(`${API_BASE}/applications/${targetIdentifier}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.application) {
+          setReviewingApp(data.application)
+        }
+        setReviewingDocs(data.documents || [])
+      }
     } catch (err) {
-      console.error(err)
-      alert('Hindi makuha ang detalye ng application na ito.')
+      console.error('Error fetching application details:', err)
     } finally {
       setActionLoading(false)
     }
