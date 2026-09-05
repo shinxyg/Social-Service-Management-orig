@@ -830,11 +830,8 @@ export default function PWDSocialAssistanceWizard({
 
   // Step 2 Validation (Personal Information / Application Form)
   const step2Valid =
-    (formData.firstName || userProfile?.firstName || "RENZ").trim() !== "" &&
-    (formData.lastName || userProfile?.lastName || "MILLARES").trim() !== "" &&
-    (formData.householdMembersCount || "").trim() !== "" &&
-    (formData.monthlyHouseholdIncome || "").trim() !== "" &&
-    (formData.reasonForRequest || "").trim() !== ""
+    Boolean((formData.householdMembersCount || "").trim()) &&
+    Boolean((formData.reasonForRequest || "").trim())
 
   // Step 3 Validation (Upload Documents)
   const step3Valid = REQUIRED_DOCUMENTS.every(
@@ -858,7 +855,15 @@ export default function PWDSocialAssistanceWizard({
       : true
 
   const goNext = () => {
-    if (!canGoNext) {
+    if (step === 1 && !step1Valid) {
+      setAttemptedNext(true)
+      return
+    }
+    if (step === 2 && !step2Valid) {
+      setAttemptedNext(true)
+      return
+    }
+    if (step === 3 && !step3Valid) {
       setAttemptedNext(true)
       return
     }
