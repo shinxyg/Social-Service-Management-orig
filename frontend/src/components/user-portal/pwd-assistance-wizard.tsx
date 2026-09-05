@@ -1185,10 +1185,7 @@ export default function PWDSocialAssistanceWizard({
                           <span>Verifying...</span>
                         </>
                       ) : (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>VERIFY PWD ID</span>
-                        </>
+                        <span>VERIFY PWD ID</span>
                       )}
                     </button>
                   </div>
