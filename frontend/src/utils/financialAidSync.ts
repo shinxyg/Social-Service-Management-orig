@@ -44,6 +44,34 @@ export interface UserNotificationItem {
 // ── INITIAL SEED DATA (Empty so only real applications appear) ──
 export const INITIAL_DISBURSEMENTS: SyncedDisbursementRecord[] = []
 
+// ── CHECK IF SERVICE IS PURELY AN ID / BOOKLET APPLICATION (NOT CASH AID) ──
+export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
+  if (!serviceOrConcern) return false
+  const lower = serviceOrConcern.toLowerCase()
+  if (
+    lower.includes("social assistance") ||
+    lower.includes("financial assistance") ||
+    lower.includes("cash assistance") ||
+    lower.includes("medical assistance") ||
+    lower.includes("funeral assistance") ||
+    lower.includes("educational assistance") ||
+    lower.includes("food assistance") ||
+    lower.includes("material assistance") ||
+    lower.includes("transportation assistance") ||
+    lower.includes("burial assistance")
+  ) {
+    return false
+  }
+
+  return (
+    lower.includes("id") ||
+    lower.includes("booklet") ||
+    lower.includes("solo parent") ||
+    lower.includes("pwd") ||
+    lower.includes("senior")
+  )
+}
+
 // ── GET DISBURSEMENTS ──
 export function getSavedDisbursements(): SyncedDisbursementRecord[] {
   try {
@@ -51,9 +79,11 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
     if (raw) {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) {
-        // Filter out dummy sample records (d1 to d8)
+        // Filter out dummy sample records (d1 to d8) and any pure ID services
         const realOnes = parsed.filter(
-          (p) => !["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"].includes(p.id)
+          (p) =>
+            !["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"].includes(p.id) &&
+            !isIdOrDocumentService(p.assistanceType)
         )
         return realOnes
       }
@@ -124,6 +154,11 @@ export function syncAppointmentToFinancialAid(params: {
   location: string
   notes?: string
 }) {
+  // If the appointment concern is an ID application (PWD ID, Senior ID, Solo Parent ID), do not treat as cash payout
+  if (isIdOrDocumentService(params.concern)) {
+    return
+  }
+
   const currentDisbursements = getSavedDisbursements()
   let found = false
 

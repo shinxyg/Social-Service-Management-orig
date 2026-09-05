@@ -15,6 +15,7 @@ import {
   Trash2,
   RotateCcw,
   AlertTriangle,
+  CreditCard,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile } from "../../utils/userProfile"
@@ -22,6 +23,7 @@ import {
   FIXED_ASSISTANCE_AMOUNTS,
   getSavedDisbursements,
   checkAndAutoReleaseScheduledDisbursements,
+  isIdOrDocumentService,
 } from "../../utils/financialAidSync"
 import { useLanguage } from "../ui/language-context"
 
@@ -46,6 +48,10 @@ export interface ApplicationRecord {
   email?: string
   remarks?: string
   deletedAt?: string
+}
+
+export function isIdOrDocumentApplication(app: { assistance?: string; assistanceCategory?: string }) {
+  return isIdOrDocumentService(`${app.assistanceCategory || ""} ${app.assistance || ""}`)
 }
 
 export default function MyApplications() {
@@ -911,10 +917,11 @@ export default function MyApplications() {
           </div>
         </div>
 
-        {/* Card 2: Financial Aid & Payout Appointment (Only when Approved / For Release / Released) */}
+        {/* Card 2: Official ID Record OR Financial Aid & Payout Appointment */}
         {(() => {
           const isApprovedOrReleased =
             selectedApp.status === "Approved" || selectedApp.status === "For Release" || selectedApp.status === "Released"
+          const isIdApp = isIdOrDocumentApplication(selectedApp)
 
           if (!isApprovedOrReleased) {
             return (
@@ -922,11 +929,72 @@ export default function MyApplications() {
                 <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-0.5 text-xs text-amber-900">
                   <p className="font-bold text-sm text-amber-950">
-                    Kasalukuyang Sinusuri ang Aplikasyon (Pending / Under Review)
+                    {isIdApp
+                      ? "Kasalukuyang Sinusuri ang ID Aplikasyon (Pending / Under Review)"
+                      : "Kasalukuyang Sinusuri ang Aplikasyon (Pending / Under Review)"}
                   </p>
                   <p className="text-amber-800 leading-relaxed">
-                    Ang inyong aplikasyon ay pinoproseso at sinusuri pa ng Social Worker. Awtomatikong magkakaroon ng Fixed Financial Aid record at appointment schedule para sa payout kapag na-aprubahan na ito.
+                    {isIdApp
+                      ? "Ang inyong ID aplikasyon at mga isinumiteng dokumento ay pinoproseso at sinusuri pa ng Social Worker / Verification Officer. Awtomatikong magkakaroon ng Official ID Record at Digital ID kapag na-aprubahan na ito."
+                      : "Ang inyong aplikasyon ay pinoproseso at sinusuri pa ng Social Worker. Awtomatikong magkakaroon ng Fixed Financial Aid record at appointment schedule para sa payout kapag na-aprubahan na ito."}
                   </p>
+                </div>
+              </div>
+            )
+          }
+
+          if (isIdApp) {
+            const isPwd =
+              selectedApp.assistanceCategory === "PWD" ||
+              selectedApp.assistance.toLowerCase().includes("pwd") ||
+              selectedApp.assistance.toLowerCase().includes("disability")
+            const isSenior =
+              selectedApp.assistanceCategory === "Senior Citizen" ||
+              selectedApp.assistance.toLowerCase().includes("senior")
+            const officeName = isPwd
+              ? "Persons with Disability Affairs Division (PDAO)"
+              : isSenior
+              ? "Office of Senior Citizens Affairs (OSCA)"
+              : "Solo Parent Welfare Division"
+
+            return (
+              <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-blue-200/80 pb-3">
+                  <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-blue-600" />
+                    OFFICIAL ID RECORD &amp; ISSUANCE DETAILS
+                  </h3>
+                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                    ✓ ID Active &amp; Valid
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
+                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Official ID / QCID Number</span>
+                    <span className="text-lg font-mono font-black text-blue-700 block">{selectedApp.applicationNo}</span>
+                    <p className="text-[10px] text-gray-500">Official identification record number</p>
+                  </div>
+
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
+                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Issuance Status</span>
+                    <span className="text-sm font-extrabold text-emerald-700 block">ACTIVE / VALID</span>
+                    <span className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Ready for Digital Use
+                    </span>
+                  </div>
+
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
+                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Issuing Office</span>
+                    <span className="text-sm font-bold text-gray-900 block">{officeName}</span>
+                    <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-blue-600" /> SSDD Division Office
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-3 text-xs text-blue-900 leading-relaxed">
+                  <strong>Paunawa:</strong> Maaari nang ipakita ang inyong <strong>Digital ID</strong> sa User Portal o kunin ang opisyal na physical ID card sa kinauukulang tanggapan para sa inyong mga statutory privileges at discounts.
                 </div>
               </div>
             )
@@ -952,7 +1020,7 @@ export default function MyApplications() {
               <div className="flex items-center justify-between border-b border-emerald-200/80 pb-3">
                 <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
                   <Banknote className="w-4 h-4 text-emerald-600" />
-                  FINANCIAL AID & PAYOUT APPOINTMENT
+                  FINANCIAL AID &amp; PAYOUT APPOINTMENT
                 </h3>
                 <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
                   Automatically Linked
@@ -1187,13 +1255,64 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                {/* ── CONNECTED FINANCIAL AID & PAYOUT APPOINTMENT BANNER (Only when Approved / For Release / Released) ── */}
+                {/* ── CONNECTED ID RECORD OR FINANCIAL AID & PAYOUT BANNER (Only when Approved / For Release / Released) ── */}
                 {(() => {
                   const isApprovedOrReleased =
                     app.status === "Approved" || app.status === "For Release" || app.status === "Released"
 
                   if (!isApprovedOrReleased) {
                     return null
+                  }
+
+                  const isIdApp = isIdOrDocumentApplication(app)
+
+                  if (isIdApp) {
+                    const isPwd =
+                      app.assistanceCategory === "PWD" ||
+                      app.assistance.toLowerCase().includes("pwd") ||
+                      app.assistance.toLowerCase().includes("disability")
+                    const isSenior =
+                      app.assistanceCategory === "Senior Citizen" ||
+                      app.assistance.toLowerCase().includes("senior")
+                    const officeName = isPwd
+                      ? "Persons with Disability Affairs Division (PDAO)"
+                      : isSenior
+                      ? "Office of Senior Citizens Affairs (OSCA)"
+                      : "Solo Parent Welfare Division"
+
+                    return (
+                      <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                            <CreditCard className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-0.5 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-extrabold uppercase text-blue-800 bg-blue-100 px-2 py-0.5 rounded border border-blue-300">
+                                Official ID Record
+                              </span>
+                              <span className="text-[11px] font-mono text-blue-900 font-bold">
+                                {app.applicationNo}
+                              </span>
+                            </div>
+                            <p className="font-bold text-gray-900">
+                              Assigned ID Number: <span className="text-blue-700 font-mono font-black text-sm">{app.applicationNo}</span>
+                            </p>
+                            <p className="text-[11px] text-gray-600 flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                              <span>Issuing Office: <strong className="text-blue-950">{officeName}</strong></span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="sm:text-right shrink-0">
+                          <span className="text-[10px] text-gray-400 font-bold uppercase block">ID Status</span>
+                          <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300 inline-block mt-0.5">
+                            ✓ ACTIVE &amp; READY
+                          </span>
+                        </div>
+                      </div>
+                    )
                   }
 
                   const rawType = (app.assistance || "").replace(/\s*assistance/gi, "").trim()
