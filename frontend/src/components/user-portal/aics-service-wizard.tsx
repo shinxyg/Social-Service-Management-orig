@@ -779,7 +779,7 @@ export default function AICSServiceWizard({
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
       {/* Top Requirements Banner with Button to Open Modal (shown only on Step 1) */}
-      {programRequirements && step === "checklist" && (
+      {programRequirements && currentStep === 1 && (
         <div className="mb-4 animate-in fade-in duration-150">
           <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
