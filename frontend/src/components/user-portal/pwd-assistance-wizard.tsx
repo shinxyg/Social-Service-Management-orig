@@ -652,17 +652,6 @@ export default function PWDSocialAssistanceWizard({
   }, [step, submissionStage])
 
   const [formData, setFormData] = useState<FormData>(() => {
-    let initialPwdId = ""
-    try {
-      const savedApps = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
-      if (Array.isArray(savedApps)) {
-        const approved = savedApps.find((a) => a.category === "PWD" && (a.assignedIdNumber || a.status === "approved"))
-        if (approved) {
-          initialPwdId = formatPwdId(approved.assignedIdNumber || approved.referenceNumber || "")
-        }
-      }
-    } catch {}
-
     return {
       ...EMPTY_FORM,
       firstName: userProfile.firstName || "",
@@ -673,7 +662,7 @@ export default function PWDSocialAssistanceWizard({
       dobMonth: userProfile.dobMonth || "",
       dobDay: userProfile.dobDay || "",
       age: userProfile.age || "20",
-      pwdIdNumber: initialPwdId,
+      pwdIdNumber: "",
       contactNumber: userProfile.contactNo || "09123456789",
       email: userProfile.email || "",
       houseNo: userProfile.addressHouseNo || "",
