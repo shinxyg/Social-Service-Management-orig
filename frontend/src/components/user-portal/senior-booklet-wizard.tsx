@@ -1598,18 +1598,11 @@ export default function SeniorBookletWizard({
             <button
               type="button"
               onClick={() => {
-                setAttemptedNext(true)
-                if (!formData.certified) return
                 setShowConfirmModal(true)
               }}
-              disabled={!formData.certified}
-              className={`px-8 h-10 rounded-lg text-xs font-bold transition-colors shadow-sm select-none ${
-                formData.certified
-                  ? "bg-[#3b82f6] text-white hover:bg-blue-700 cursor-pointer"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              }`}
+              className="px-8 h-10 rounded-lg text-xs font-bold transition-colors shadow-sm select-none bg-[#3b82f6] text-white hover:bg-blue-700 cursor-pointer flex items-center justify-center gap-1.5"
             >
-              SUBMIT APPLICATION
+              <span>SUBMIT APPLICATION</span>
             </button>
           )}
         </div>
