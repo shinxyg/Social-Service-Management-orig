@@ -334,24 +334,11 @@ export default function ApplyPWDSenior() {
             <button
               type="button"
               onClick={() => {
-                window.location.href = isAssistance || isSeniorSocial ? "/portal/financial-aid" : "/portal/my-applications"
+                window.location.href = isAssistance || isSeniorSocial ? "/portal/financial-aid" : "/portal/applications"
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
               {isAssistance || isSeniorSocial ? "VIEW IN FINANCIAL AID / MY APPLICATIONS" : "VIEW IN MY APPLICATIONS"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                bypassedBlockRef.current = true
-                setBypassedBlock(true)
-                setIsBlocked(false)
-                setBlockedApp(null)
-                setCurrentStep(1)
-              }}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-            >
-              Submit Another Application (Apply Again)
             </button>
           </div>
         </div>

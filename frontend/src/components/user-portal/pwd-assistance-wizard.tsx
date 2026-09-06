@@ -1058,19 +1058,6 @@ export default function PWDSocialAssistanceWizard({
             >
               VIEW IN FINANCIAL AID / MY APPLICATIONS
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setLatestSubmittedApp(null)
-                setReference("")
-                setSubmissionStage("form")
-                setStep(1)
-                setUploadedDocs({})
-              }}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-            >
-              Submit Another Application (Apply Again)
-            </button>
           </div>
         </div>
       </div>
