@@ -582,6 +582,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [isBlocked, setIsBlocked] = useState(false)
   const [bypassedBlock, setBypassedBlock] = useState(false)
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
+  const [latestApprovedApp, setLatestApprovedApp] = useState<any>(null)
+  const [activeAppStatus, setActiveAppStatus] = useState<string | null>(null)
+  const [blockedApp, setBlockedApp] = useState<any>(null)
 
   useEffect(() => {
     if (latestApprovedApp && (!initialIdStatus || initialIdStatus === "new") && !bypassedBlock) {
@@ -676,10 +679,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       ;(window as any).__isFormDirty = false
     }
   }, [step, submitStatus])
-
-  const [latestApprovedApp, setLatestApprovedApp] = useState<any>(null)
-  const [activeAppStatus, setActiveAppStatus] = useState<string | null>(null)
-  const [blockedApp, setBlockedApp] = useState<any>(null)
 
   // Check if there is an active application for this user
   useEffect(() => {
@@ -2283,7 +2282,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                       value={
                         formData.dobMonth && formData.dobDay && formData.dobYear
                           ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
-                          : userProfile?.birthDateDisplay || "—"
+                          : (userProfile as any)?.birthDateDisplay || "—"
                       }
                     />
                   </Field>
@@ -2300,19 +2299,19 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     <LockedField value={formData.civilStatus || userProfile?.civilStatus || "Single"} />
                   </Field>
                   <Field label={`${t("houseNumberLabel")} *`}>
-                    <LockedField value={formData.addressHouseNo || userProfile?.addressHouseNo || userProfile?.houseNo || ""} />
+                    <LockedField value={formData.addressHouseNo || userProfile?.addressHouseNo || (userProfile as any)?.houseNo || ""} />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label={`${t("streetNameLabel")} *`}>
-                    <LockedField value={formData.addressStreet || userProfile?.addressStreet || userProfile?.street || ""} />
+                    <LockedField value={formData.addressStreet || userProfile?.addressStreet || (userProfile as any)?.street || ""} />
                   </Field>
                   <Field label={`${t("barangayLabel")} *`}>
-                    <LockedField value={formData.addressBarangay || userProfile?.addressBarangay || userProfile?.barangay || "Sauyo"} />
+                    <LockedField value={formData.addressBarangay || userProfile?.addressBarangay || (userProfile as any)?.barangay || "Sauyo"} />
                   </Field>
                   <Field label={`${t("pwdContactNoLabel")} *`}>
-                    <LockedField value={formData.contactNo || userProfile?.contactNo || userProfile?.mobileNumber || ""} />
+                    <LockedField value={formData.contactNo || userProfile?.contactNo || (userProfile as any)?.mobileNumber || ""} />
                   </Field>
                 </div>
 

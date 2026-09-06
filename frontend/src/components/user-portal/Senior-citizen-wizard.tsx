@@ -252,6 +252,8 @@ export default function SeniorCitizenApplicationWizard({
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
+  const [latestApprovedApp, setLatestApprovedApp] = useState<any>(null)
+  const [blockedApp, setBlockedApp] = useState<any>(null)
 
   useEffect(() => {
     if (latestApprovedApp && appFlow === "new") {
@@ -565,9 +567,6 @@ export default function SeniorCitizenApplicationWizard({
       ;(window as any).__isFormDirty = false
     }
   }, [isFormDirty])
-
-  const [latestApprovedApp, setLatestApprovedApp] = useState<any>(null)
-  const [blockedApp, setBlockedApp] = useState<any>(null)
 
   // Check if there is an active application for this user (Real-time syncing)
   useEffect(() => {
