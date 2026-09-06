@@ -203,19 +203,65 @@ export function ProfileModal({
         }),
       });
 
+      const localUpdated = {
+        ...(currentUser || {}),
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        suffix: formData.suffix,
+        birthMonth: formData.birthMonth,
+        birthDay: formData.birthDay,
+        birthYear: formData.birthYear,
+        city: formData.city,
+        houseNo: formData.houseNo,
+        street: formData.street,
+        barangay: formData.barangay,
+        workingInQC: formData.workingInCity ? "Yes" : "No",
+        occupation: formData.occupation,
+        sex: formData.sex,
+        gender: formData.sex,
+        mobileNumber: formData.mobileNumber,
+        contactNo: formData.mobileNumber,
+        profilePhotoUrl: photoUrl,
+      };
+
       const data = await res.json();
       if (res.ok && data.success) {
         setSavedFormData(formData);
         setIsEditing(false);
-        if (data.user) {
-          localStorage.setItem("currentUser", JSON.stringify(data.user));
-        }
+        localStorage.setItem("currentUser", JSON.stringify(data.user || localUpdated));
+        window.dispatchEvent(new Event("user_profile_updated"));
+        window.dispatchEvent(new Event("storage"));
         alert(t("profileUpdatedSuccess") || "Profile updated successfully in database!");
       } else {
         alert(data.message || "Failed to update profile.");
       }
     } catch (err) {
       console.error("Profile update error:", err);
+      const localUpdated = {
+        ...(currentUser || {}),
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        suffix: formData.suffix,
+        birthMonth: formData.birthMonth,
+        birthDay: formData.birthDay,
+        birthYear: formData.birthYear,
+        city: formData.city,
+        houseNo: formData.houseNo,
+        street: formData.street,
+        barangay: formData.barangay,
+        workingInQC: formData.workingInCity ? "Yes" : "No",
+        occupation: formData.occupation,
+        sex: formData.sex,
+        gender: formData.sex,
+        mobileNumber: formData.mobileNumber,
+        contactNo: formData.mobileNumber,
+        profilePhotoUrl: photoUrl,
+      };
+      localStorage.setItem("currentUser", JSON.stringify(localUpdated));
+      window.dispatchEvent(new Event("user_profile_updated"));
+      window.dispatchEvent(new Event("storage"));
       setSavedFormData(formData);
       setIsEditing(false);
       alert("Profile updated locally.");

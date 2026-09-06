@@ -170,6 +170,9 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
   const rawBirthDate = u?.birthDate || u?.birth_date || `${u?.birthMonth || 'JANUARY'} ${u?.birthDay || '1'}, ${birthYear}`
   const isoBirthDate = toISODateString(rawBirthDate)
 
+  const rawSex = String(u?.sex || u?.gender || 'MALE').toUpperCase()
+  const formattedSex = rawSex.includes('FEMALE') ? 'Female' : 'Male'
+
   return {
     id: u?.id || '1',
     firstName: String(u?.firstName || u?.first_name || 'Resident').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 50).toUpperCase(),
@@ -179,6 +182,9 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
     birthMonth: (u?.birthMonth || u?.birth_month || 'JANUARY').toUpperCase(),
     birthDay: u?.birthDay || u?.birth_day || '1',
     birthYear: birthYear,
+    dobMonth: u?.dobMonth || (u?.birthMonth || u?.birth_month || '10'),
+    dobDay: u?.dobDay || u?.birthDay || u?.birth_day || '29',
+    dobYear: u?.dobYear || birthYear,
     birthDate: isoBirthDate || `${birthYear}-01-01`,
     birthDateIso: isoBirthDate || `${birthYear}-01-01`,
     birthDateDisplay: `${u?.birthMonth || 'JANUARY'} ${u?.birthDay || '1'}, ${birthYear}`,
@@ -187,9 +193,14 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
     barangay: (u?.barangay || 'SAUYO').toUpperCase(),
     street: (u?.street || '').toUpperCase(),
     houseNo: u?.houseNo || u?.house_no || '',
+    addressHouseNo: u?.addressHouseNo || u?.houseNo || u?.house_no || '',
+    addressStreet: u?.addressStreet || u?.street || '',
+    addressBarangay: u?.addressBarangay || u?.barangay || 'SAUYO',
+    addressCityMunicipality: u?.addressCityMunicipality || u?.city || 'QUEZON CITY',
     workingInQC: u?.workingInQC || u?.working_in_qc || 'No',
     occupation: (u?.occupation || '').toUpperCase(),
-    sex: (u?.sex || 'FEMALE').toUpperCase(),
+    sex: formattedSex,
+    gender: formattedSex,
     civilStatus: u?.civilStatus || 'Single',
     mobileNumber: u?.mobileNumber || u?.mobile_number || u?.contactNo || '09000000000',
     contactNo: u?.mobileNumber || u?.mobile_number || u?.contactNo || '09000000000',

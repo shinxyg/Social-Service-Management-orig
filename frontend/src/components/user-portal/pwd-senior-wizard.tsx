@@ -636,7 +636,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       dobDay: prof.dobDay || prof.birthDay || prof.birth_day || "",
       dobYear: prof.dobYear || prof.birthYear || prof.birth_year || "",
       age: String(prof.age || ""),
-      sex: prof.sex || "Female",
+      sex: prof.sex || (prof as any).gender || "Male",
       civilStatus: prof.civilStatus || "Single",
       addressCity: prof.addressCity || prof.city || "QUEZON CITY",
       addressHouseNo: prof.addressHouseNo || prof.houseNo || prof.house_no || "",

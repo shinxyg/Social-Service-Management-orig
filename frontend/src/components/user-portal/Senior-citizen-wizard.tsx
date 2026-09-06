@@ -481,7 +481,7 @@ export default function SeniorCitizenApplicationWizard({
     dobDay: userProfile?.dobDay || "29",
     dobYear: userProfile?.dobYear || "1960",
     age: userProfile?.age || "65",
-    sex: userProfile?.sex || "Female",
+    sex: userProfile?.sex || (userProfile as any)?.gender || "Male",
     civilStatus: userProfile?.civilStatus || "Single",
     contactNo: (userProfile?.contactNo || "09000000000").replace(/\s+/g, ""),
     houseNo: userProfile?.addressHouseNo || "11",

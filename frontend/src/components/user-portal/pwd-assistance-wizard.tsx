@@ -179,7 +179,7 @@ const EMPTY_FORM: FormData = {
   dobMonth: "",
   dobDay: "",
   age: "",
-  sex: "Female",
+  sex: "Male",
   pwdIdNumber: "",
   contactNumber: "",
   email: "",
@@ -539,11 +539,43 @@ interface PWDSocialAssistanceWizardProps {
 
 // ── Main Wizard Component ──
 export default function PWDSocialAssistanceWizard({
-  userProfile = MOCK_USER_PROFILE,
+  userProfile: propUserProfile,
   onBack,
   onStepChange,
 }: PWDSocialAssistanceWizardProps) {
   const { t } = useLanguage()
+  const [profile, setProfile] = useState<UserProfile>(() => (propUserProfile || getCurrentUserProfile()) as any)
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const p = getCurrentUserProfile() as any
+      setProfile(p)
+      if (p) {
+        setFormData((prev) => ({
+          ...prev,
+          firstName: p.firstName || prev.firstName,
+          middleName: p.middleName || prev.middleName,
+          lastName: p.lastName || prev.lastName,
+          suffix: p.suffix || prev.suffix,
+          sex: p.sex || p.gender || prev.sex,
+          contactNumber: p.contactNo || p.mobileNumber || prev.contactNumber,
+          email: p.email || prev.email,
+          houseNo: p.addressHouseNo || p.houseNo || prev.houseNo,
+          street: p.addressStreet || p.street || prev.street,
+          barangay: p.addressBarangay || p.barangay || prev.barangay,
+          cityMunicipality: p.addressCityMunicipality || p.city || prev.cityMunicipality,
+        }))
+      }
+    }
+    window.addEventListener("user_profile_updated", handleProfileUpdate)
+    window.addEventListener("storage", handleProfileUpdate)
+    return () => {
+      window.removeEventListener("user_profile_updated", handleProfileUpdate)
+      window.removeEventListener("storage", handleProfileUpdate)
+    }
+  }, [])
+
+  const userProfile = propUserProfile || profile
 
   const STEPS = [
     { id: 1, label: t("wizardChecklist").toUpperCase() },
@@ -678,7 +710,8 @@ export default function PWDSocialAssistanceWizard({
       dobYear: userProfile.dobYear || "",
       dobMonth: userProfile.dobMonth || "",
       dobDay: userProfile.dobDay || "",
-      age: userProfile.age || "20",
+      age: userProfile.age || "21",
+      sex: userProfile.sex || (userProfile as any).gender || "Male",
       pwdIdNumber: "",
       disabilityType: "",
       causeOfDisability: initialCauseOfDisability || "Congenital / Inborn",
@@ -937,8 +970,8 @@ export default function PWDSocialAssistanceWizard({
       lastName: formData.lastName || userProfile?.lastName || "Dimal",
       suffix: formData.suffix || "",
       dateOfBirth: `${formData.dobYear || "2000"}-${(formData.dobMonth || "01").padStart(2, "0")}-${(formData.dobDay || "01").padStart(2, "0")}`,
-      age: formData.age || "24",
-      sex: formData.sex || "Male",
+      age: formData.age || userProfile?.age || "24",
+      sex: userProfile?.sex || (userProfile as any)?.gender || formData.sex || "Male",
       civilStatus: "Single",
       contactNo: formData.contactNumber || userProfile?.contactNo || "09123456789",
       cellphoneNo: formData.contactNumber || userProfile?.contactNo || "09123456789",
@@ -1342,7 +1375,7 @@ export default function PWDSocialAssistanceWizard({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label="Gender *">
-                    <LockedField value={formData.sex || userProfile?.sex || userProfile?.gender || "Female"} />
+                    <LockedField value={userProfile?.sex || (userProfile as any)?.gender || formData.sex || "Male"} />
                   </Field>
                   <Field label="Civil status *">
                     <LockedField value={userProfile?.civilStatus || "Single"} />
