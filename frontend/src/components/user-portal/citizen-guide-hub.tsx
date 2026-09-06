@@ -311,8 +311,21 @@ export default function CitizenGuideHub() {
     }
   ]
 
+  const hasSearch = searchTerm.trim().length > 0
+
+  const filteredAics = aicsServices.filter((s) => {
+    if (!hasSearch) return true
+    const term = searchTerm.toLowerCase()
+    return (
+      s.title.toLowerCase().includes(term) ||
+      s.desc.toLowerCase().includes(term) ||
+      s.requirements.some((r) => r.toLowerCase().includes(term))
+    )
+  })
+
   const filteredModules = modulesList.filter((m) => {
     const matchesSearch =
+      !hasSearch ||
       m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.desc.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.features.some((f) => f.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -323,6 +336,8 @@ export default function CitizenGuideHub() {
     if (selectedCategory === "livelihood") return matchesSearch && (m.id === "livelihood" || m.id === "disbursement")
     return matchesSearch
   })
+
+  const totalResultsCount = (hasSearch ? filteredAics.length : 0) + filteredModules.length
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-16">
@@ -371,8 +386,17 @@ export default function CitizenGuideHub() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)..."
-              className="w-full pl-12 pr-4 py-3.5 bg-white text-gray-900 placeholder-gray-400 rounded-2xl shadow-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 border-0"
+              className="w-full pl-12 pr-10 py-3.5 bg-white text-gray-900 placeholder-gray-400 rounded-2xl shadow-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 border-0"
             />
+            {hasSearch && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg font-bold cursor-pointer transition-colors"
+              >
+                ✕ Clear
+              </button>
+            )}
           </div>
 
           {/* Category Filter Pills */}
@@ -387,7 +411,9 @@ export default function CitizenGuideHub() {
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => {
+                  setSelectedCategory(cat.id)
+                }}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                   selectedCategory === cat.id
                     ? "bg-white text-blue-900 shadow-sm"
@@ -402,8 +428,92 @@ export default function CitizenGuideHub() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 space-y-8">
+        {/* LIVE SEARCH RESULTS BANNER (SHOWN WHEN USER TYPES) */}
+        {hasSearch && (
+          <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-md space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-blue-600" />
+                <h2 className="text-base sm:text-lg font-bold text-gray-900">
+                  Search Results for <span className="text-blue-600">"{searchTerm}"</span>
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+                  {totalResultsCount} found
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="text-xs font-bold text-gray-500 hover:text-gray-800 cursor-pointer"
+              >
+                Reset Search
+              </button>
+            </div>
+
+            {totalResultsCount === 0 ? (
+              <div className="py-8 text-center space-y-2">
+                <p className="text-sm font-bold text-gray-700">No matching social service or requirement found.</p>
+                <p className="text-xs text-gray-500">Try searching for keywords like "Medical", "PWD", "Senior", "Solo Parent", "Funeral", or "Livelihood".</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Matching Modules */}
+                {filteredModules.map((mod) => (
+                  <div
+                    key={mod.id}
+                    className="p-4 rounded-xl border border-gray-200 bg-slate-50 flex flex-col justify-between gap-3 hover:border-blue-400 hover:bg-white transition-all"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">
+                          {mod.badge}
+                        </span>
+                        <h3 className="font-bold text-gray-900 text-sm">{mod.title}</h3>
+                      </div>
+                      <p className="text-xs text-gray-600 leading-relaxed">{mod.desc}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigate(mod.primaryAction.path)}
+                      className="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      {mod.primaryAction.label} <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Matching AICS Services */}
+                {filteredAics.map((svc) => (
+                  <div
+                    key={svc.type}
+                    className="p-4 rounded-xl border border-red-200 bg-red-50/40 flex flex-col justify-between gap-3 hover:bg-white transition-all"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{svc.icon}</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">
+                          AICS Crisis Aid
+                        </span>
+                        <h3 className="font-bold text-gray-900 text-sm">{svc.title}</h3>
+                      </div>
+                      <p className="text-xs text-gray-600 leading-relaxed">{svc.desc}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigate(svc.path)}
+                      className="w-full py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      Apply for {svc.title} <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 2. RECENT APPLICATIONS STATUS BANNER (IF ANY) */}
-        {recentApps.length > 0 && (
+        {!hasSearch && recentApps.length > 0 && (
           <div className="bg-white border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-blue-900 font-bold text-sm">
@@ -451,6 +561,7 @@ export default function CitizenGuideHub() {
         )}
 
         {/* 3. HOW IT WORKS (STEP-BY-STEP PROCESS) */}
+        {!hasSearch && (
         <div className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs">
           <div className="text-center max-w-2xl mx-auto mb-8 space-y-1">
             <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
@@ -510,6 +621,7 @@ export default function CitizenGuideHub() {
             ))}
           </div>
         </div>
+        )}
 
         {/* 4. AICS 6 SERVICE TYPES BREAKDOWN */}
         <div id="aics-breakdown" className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
