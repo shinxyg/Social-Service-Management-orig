@@ -410,7 +410,6 @@ const canProceedPersonal = Boolean(
     pStreetName.trim() &&
     pBarangay.trim() &&
     pPhoneNumber.trim() &&
-    pEmail.trim() &&
     (isFuneralAssistance
       ? dFirstName.trim() &&
         dLastName.trim() &&
@@ -1216,9 +1215,6 @@ const handleFinalSubmit = async () => {
 
               <Field label={`${t("phoneNumberLabel")} *`}>
                 <input value={pPhoneNumber} disabled className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`} placeholder="0900 000 0000" />
-              </Field>
-              <Field label={`${t("emailLabel")} *`} full>
-                <input type="email" value={pEmail} disabled className={`${inputCls} h-10 disabled:cursor-not-allowed disabled:opacity-80`} placeholder="email@example.com" />
               </Field>
             </div>
 
@@ -2155,7 +2151,6 @@ const handleFinalSubmit = async () => {
                   value={`${[pHouseNumber, pStreetName].filter(Boolean).join(" ")}${pBarangay ? ` Brgy. ${pBarangay}` : ""} Quezon City`}
                 />
                 <ReviewField label={t("phoneNumberLabel")} value={pPhoneNumber} />
-                <ReviewField label={t("emailLabel")} value={pEmail} />
               </div>
 
               {isFuneralAssistance ? (

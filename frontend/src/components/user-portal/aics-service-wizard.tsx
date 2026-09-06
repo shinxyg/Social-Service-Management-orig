@@ -1259,9 +1259,6 @@ export default function AICSServiceWizard({
                   <Field label="Phone number *">
                     <input value={contactNumber} disabled className={disabledInputCls} placeholder="0900 000 0000" />
                   </Field>
-                  <Field label="Email *" full>
-                    <input type="email" value={email} disabled className={disabledInputCls} placeholder="email@example.com" />
-                  </Field>
                 </div>
 
                 {/* Sub-sections per assistance type */}
@@ -1851,7 +1848,6 @@ export default function AICSServiceWizard({
                     <ReviewField label="CIVIL STATUS" value={civilStatus} />
                     <ReviewField label="COMPLETE ADDRESS" value={completeAddress} />
                     <ReviewField label="PHONE NUMBER" value={contactNumber} />
-                    <ReviewField label="EMAIL" value={email} />
 
                     {serviceType === "material" && (
                       <div className="sm:col-span-2 pt-3 border-t border-gray-100">

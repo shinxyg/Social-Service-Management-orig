@@ -1041,22 +1041,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-gray-700">{t("emailLabel") || "Email"} *</label>
-                  <input
-                    type="text"
-                    value={formData.emailAddress}
-                    onChange={(e) => updateField("emailAddress", e.target.value)}
-                    readOnly={!isEditingInfo}
-                    disabled={!isEditingInfo}
-                    className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                      !isEditingInfo
-                        ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                        : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                    }`}
-                  />
-                </div>
               </div>
 
               {/* Household & Economic Situation */}

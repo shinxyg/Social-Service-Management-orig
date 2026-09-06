@@ -410,10 +410,6 @@ export default function AICS() {
                       <label style={labelStyle}>Phone Number</label>
                       <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.phone || '—'}</p>
                     </div>
-                    <div>
-                      <label style={labelStyle}>Email</label>
-                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.email || '—'}</p>
-                    </div>
                   </div>
 
                   <div style={{ borderTopColor: DESIGN.colors.border }} className="pt-4 border-t">

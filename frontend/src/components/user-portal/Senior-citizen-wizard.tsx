@@ -1534,16 +1534,6 @@ export default function SeniorCitizenApplicationWizard({
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1 font-mono"
                     />
                   </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("emailLabel") || "Email"} *</label>
-                    <input
-                      type="text"
-                      value={formData.email || userProfile?.email || "dimalmae@gmail.com"}
-                      readOnly
-                      disabled
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1"
-                    />
-                  </div>
                 </div>
 
                 {/* Existing Senior Citizen ID for Renewal & Lost ID */}
@@ -1996,12 +1986,6 @@ export default function SeniorCitizenApplicationWizard({
                       <p className="text-gray-500">{t("barangayLabel") || "Barangay"}</p>
                       <p className="font-semibold text-gray-900 text-sm mt-0.5">{formData.barangay}</p>
                     </div>
-                    {formData.email && (
-                      <div>
-                        <p className="text-gray-500">{t("emailLabel") || "Email"}</p>
-                        <p className="font-semibold text-gray-900 text-sm mt-0.5">{formData.email}</p>
-                      </div>
-                    )}
                     {formData.qcidNumber && (
                       <div>
                         <p className="text-gray-500">{t("qcIdLabel") || "QCID Number"}</p>
