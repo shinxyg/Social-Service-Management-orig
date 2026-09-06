@@ -221,7 +221,7 @@ function generateOfficialIdNumber(app: ApplicationSubmission): string {
     return `137404-${year}-${randomSeq}`
   }
 
-  // 2. Medicine Booklet: always generate freshly randomized MB-YYYY-XXXXXX
+  // 2. Medicine Booklet: always generate freshly randomized 137404-YYYY-XXXXXX
   if (
     rawType === "medicine-booklet" ||
     rawType.includes("medicine") ||
@@ -230,7 +230,7 @@ function generateOfficialIdNumber(app: ApplicationSubmission): string {
     rawCat.includes("booklet") ||
     rawType.includes("booklet")
   ) {
-    return `MB-${year}-${randomSeq}`
+    return `137404-${year}-${randomSeq}`
   }
 
   // 3. PWD ID
