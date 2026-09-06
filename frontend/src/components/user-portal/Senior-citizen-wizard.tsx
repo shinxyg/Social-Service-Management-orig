@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import {
   Check,
+  CheckCircle2,
   FileText,
   Upload,
   Camera,
@@ -1169,8 +1170,16 @@ export default function SeniorCitizenApplicationWizard({
                     </label>
 
                     <div className="flex flex-col sm:flex-row gap-2 max-w-md">
-                      <div className="flex items-center flex-1 rounded-lg border border-gray-300 bg-white overflow-hidden transition-all focus-within:ring-2 focus-within:ring-[#3b82f6]/40 focus-within:border-[#3b82f6]">
-                        <span className="px-3 py-2.5 bg-gray-100 text-gray-600 font-mono font-bold text-xs border-r border-gray-300 select-none">
+                      <div className={`flex items-center flex-1 rounded-lg border overflow-hidden transition-all ${
+                        isIdVerified
+                          ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
+                          : "border-gray-300 bg-white focus-within:ring-2 focus-within:ring-[#3b82f6]/40 focus-within:border-[#3b82f6]"
+                      }`}>
+                        <span className={`px-3 py-2.5 font-mono font-bold text-xs border-r select-none transition-colors ${
+                          isIdVerified
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                            : "bg-gray-100 text-gray-600 border-gray-300"
+                        }`}>
                           SENIOR-
                         </span>
                         <input
@@ -1184,19 +1193,39 @@ export default function SeniorCitizenApplicationWizard({
                           }}
                           placeholder="137404-2026-516915"
                           maxLength={18}
-                          className="flex-1 h-11 px-3.5 bg-white text-sm font-mono text-gray-900 focus:outline-none"
+                          className="flex-1 h-11 px-3.5 bg-transparent text-sm font-mono text-gray-900 focus:outline-none"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={handleVerifyId}
                         disabled={!(existingIdNumber || "").trim() || isVerifying}
-                        className="px-5 py-2.5 rounded-lg bg-[#3b82f6] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
+                        className={`px-5 py-2.5 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 ${
+                          isIdVerified
+                            ? "bg-emerald-600 hover:bg-emerald-700"
+                            : "bg-[#3b82f6] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        }`}
                       >
-                        <Search className="w-3.5 h-3.5" />
-                        <span>{isVerifying ? "Verifying..." : "VERIFY ID"}</span>
+                        {isIdVerified ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>VERIFIED</span>
+                          </>
+                        ) : (
+                          <>
+                            <Search className="w-3.5 h-3.5" />
+                            <span>{isVerifying ? "Verifying..." : "VERIFY ID"}</span>
+                          </>
+                        )}
                       </button>
                     </div>
+
+                    {isIdVerified && (
+                      <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold mt-1 animate-in fade-in duration-150">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Senior Citizen ID Verified Successfully</span>
+                      </div>
+                    )}
 
                     {verifyError && (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-start gap-2 animate-in fade-in duration-150">

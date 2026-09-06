@@ -775,18 +775,31 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                       setIsIdVerified(false)
                     }}
                     placeholder="Hal. QC-SC-2022-09412"
-                    className="flex-1 border border-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 font-mono"
+                    className={`flex-1 border rounded-lg px-3 py-2.5 text-sm font-mono transition-all focus:outline-none ${
+                      isIdVerified
+                        ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20 text-gray-900"
+                        : "border-border bg-white focus:ring-2 focus:ring-blue-400"
+                    }`}
                   />
                   <button
                     type="button"
                     onClick={handleVerifyId}
                     disabled={!formData.seniorIdNumber.trim() || isVerifying}
-                    className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
+                    className={`px-5 py-2.5 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 ${
+                      isIdVerified
+                        ? "bg-emerald-600 hover:bg-emerald-700"
+                        : "bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    }`}
                   >
                     {isVerifying ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         <span>Verifying...</span>
+                      </>
+                    ) : isIdVerified ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>VERIFIED</span>
                       </>
                     ) : (
                       <>

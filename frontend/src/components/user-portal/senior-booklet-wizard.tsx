@@ -673,26 +673,38 @@ export default function SeniorBookletWizard({
                     <div className="flex flex-col sm:flex-row gap-2.5 max-w-md">
                       <input
                         type="text"
-                        inputMode="numeric"
                         value={oscaIdInput}
                         onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, "")
+                          const val = e.target.value.toUpperCase()
                           setOscaIdInput(val)
                           setIsIdVerified(false)
                         }}
                         placeholder="Enter OSCA ID Number"
-                        className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6] font-mono"
+                        className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none font-mono transition-all ${
+                          isIdVerified
+                            ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
+                            : "border-gray-300 bg-white focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        }`}
                       />
                       <button
                         type="button"
                         onClick={handleVerifyId}
                         disabled={isVerifying || !oscaIdInput.trim()}
-                        className="px-5 h-11 rounded-lg bg-[#3b82f6] hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`px-5 h-11 rounded-lg text-white text-xs font-bold transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          isIdVerified
+                            ? "bg-emerald-600 hover:bg-emerald-700"
+                            : "bg-[#3b82f6] hover:bg-blue-700"
+                        }`}
                       >
                         {isVerifying ? (
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             <span>VERIFYING...</span>
+                          </>
+                        ) : isIdVerified ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>VERIFIED</span>
                           </>
                         ) : (
                           <span>VERIFY ID</span>

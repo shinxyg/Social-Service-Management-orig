@@ -293,6 +293,7 @@ function TextInput({
   type = "text",
   disabled = false,
   invalid = false,
+  verified = false,
   numbersOnly = false,
   maxLength,
   prefix,
@@ -304,6 +305,7 @@ function TextInput({
   type?: string
   disabled?: boolean
   invalid?: boolean
+  verified?: boolean
   numbersOnly?: boolean
   maxLength?: number
   prefix?: string
@@ -339,11 +341,17 @@ function TextInput({
       <div className={`flex items-center w-full rounded-lg border overflow-hidden transition-all focus-within:ring-2 ${
         disabled
           ? "border-border bg-gray-100 cursor-not-allowed opacity-60"
+          : verified
+          ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
           : invalid
           ? "border-red-400 focus-within:ring-red-300 bg-red-50"
           : "border-border focus-within:ring-blue-400 bg-white"
       }`}>
-        <span className="inline-flex items-center justify-center px-3.5 py-2.5 bg-slate-100 border-r border-border text-xs font-bold text-slate-700 select-none tracking-wider shrink-0 font-mono">
+        <span className={`inline-flex items-center justify-center px-3.5 py-2.5 border-r text-xs font-bold select-none tracking-wider shrink-0 font-mono transition-colors ${
+          verified
+            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+            : "bg-slate-100 border-border text-slate-700"
+        }`}>
           {prefix}
         </span>
         <input
@@ -369,9 +377,11 @@ function TextInput({
       onChange={handleChange}
       disabled={disabled}
       maxLength={isPwdIdMask ? 18 : maxLength}
-      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-all ${
         disabled
           ? "border-border bg-gray-100 text-muted-foreground cursor-not-allowed"
+          : verified
+          ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20 text-gray-900"
           : invalid
           ? "border-red-400 focus:ring-red-300 bg-red-50"
           : "border-border focus:ring-blue-400"
@@ -1946,24 +1956,31 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                                 setIsIdVerified(false)
                               }}
                               placeholder="137404-2026-847708"
+                              verified={isIdVerified}
                               invalid={attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified)}
                             />
                             <button
                               type="button"
                               onClick={handleVerifyId}
                               disabled={!(formData.existingPwdIdNumber || "").trim() || isVerifying}
-                              className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
+                              className={`px-5 py-2.5 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 ${
+                                isIdVerified
+                                  ? "bg-emerald-600 hover:bg-emerald-700"
+                                  : "bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                              }`}
                             >
                               {isVerifying ? (
                                 <>
                                   <div className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                   <span>Verifying...</span>
                                 </>
-                              ) : (
+                              ) : isIdVerified ? (
                                 <>
                                   <Check className="w-3.5 h-3.5" />
-                                  <span>VERIFY PWD ID</span>
+                                  <span>VERIFIED</span>
                                 </>
+                              ) : (
+                                <span>VERIFY PWD ID</span>
                               )}
                             </button>
                           </div>
