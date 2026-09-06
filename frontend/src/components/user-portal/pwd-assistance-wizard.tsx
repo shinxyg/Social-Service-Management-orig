@@ -1621,6 +1621,11 @@ export default function PWDSocialAssistanceWizard({
                     <ReviewField label="Lungsod" value={formData.cityMunicipality} />
                     <ReviewField label="Dahilan ng Kapansanan" value={formData.causeOfDisability} />
                   </div>
+                  {formData.disabilityDescription && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <ReviewField label="Maikling Paglalarawan ng Kapansanan" value={formData.disabilityDescription} />
+                    </div>
+                  )}
                 </AccordionSection>
 
                 <AccordionSection title="Household & Assistance Details" onEdit={() => { setReturnToReview(true); setStep(2) }}>
