@@ -820,7 +820,7 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardP
               </button>
             )}
           </div>
-          {onShowCard && (
+          {onShowCard && app.status === "approved" && (
             <button
               type="button"
               onClick={(e) => {
@@ -955,7 +955,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                   <CategoryTag category={app.category} />
                   <span className="gw-tag gw-tag--ghost max-w-64 truncate">{subLabel}</span>
                   <StatusBadge status={app.status} />
-                  {onShowCard && (
+                  {onShowCard && app.status === "approved" && (
                     <button
                       type="button"
                       onClick={() => onShowCard(app)}
@@ -1485,7 +1485,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 </button>
               </>
             )}
-            {onShowCard && (
+            {onShowCard && app.status === "approved" && (
               <button
                 type="button"
                 onClick={() => onShowCard(app)}
