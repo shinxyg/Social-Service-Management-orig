@@ -615,17 +615,15 @@ export default function SeniorBookletWizard({
   }
 
   // Booklet Number validation against QCID / OSCA ID
-  const cleanOscaId = (oscaIdInput || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+  const cleanOscaId = (verifiedSeniorId || (oscaIdInput.includes("MB-") || oscaIdInput.includes("MV-") ? "" : oscaIdInput)).replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
   const cleanQcid = (formData.qcidNo || userProfile?.qcidNo || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
   const cleanBooklet = (bookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
 
+  // Only consider it same as ID if the user literally entered the 16-digit Senior ID into the booklet field
   const isBookletSameAsId = Boolean(
-    cleanBooklet && (
-      cleanBooklet === cleanOscaId ||
-      cleanBooklet === cleanQcid ||
-      (cleanOscaId.length >= 6 && cleanBooklet.includes(cleanOscaId)) ||
-      (cleanQcid.length >= 6 && cleanBooklet.includes(cleanQcid))
-    )
+    cleanBooklet &&
+    cleanBooklet.length === 16 &&
+    ((cleanOscaId && cleanBooklet === cleanOscaId) || (cleanQcid && cleanBooklet === cleanQcid))
   )
 
   const isBookletFormatValid = Boolean(
@@ -634,7 +632,7 @@ export default function SeniorBookletWizard({
     !isBookletSameAsId
   )
 
-  const isExistingBookletValid = hasPriorBooklet === "no" || (bookletNumber.trim() !== "" && isBookletFormatValid && !isBookletSameAsId)
+  const isExistingBookletValid = hasPriorBooklet === "no" || isIdVerified || (bookletNumber.trim() !== "" && isBookletFormatValid && !isBookletSameAsId)
 
   // Step validations
   const isStep1Valid =
@@ -1112,112 +1110,34 @@ export default function SeniorBookletWizard({
                   </div>
 
                   {hasPriorBooklet === "yes" && isIdVerified && (
-                    <div className="space-y-3 max-w-md">
-                      {/* Detected Previous Booklet Helper */}
-                      {detectedPreviousBooklet && (
-                        <div className="p-3 rounded-lg border border-sky-200 bg-sky-50 text-xs text-sky-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-sky-600 shrink-0" />
-                            <span>
-                              Nakitang Booklet Record sa Gmail: <strong className="font-mono text-sky-800 font-bold">{detectedPreviousBooklet}</strong>
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setBookletNumber(detectedPreviousBooklet)}
-                            className="px-2.5 py-1 rounded-md bg-sky-600 hover:bg-sky-700 text-white font-bold text-[11px] transition-colors cursor-pointer shrink-0 shadow-xs"
-                          >
-                            Gamitin ang Booklet Number
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <label className="block text-xs font-semibold text-gray-700 uppercase">
-                              Existing Booklet Number *
-                            </label>
-                            {bookletNumber.trim() && (
-                              isBookletSameAsId ? (
-                                <span className="text-[10px] font-bold text-red-600 flex items-center gap-0.5">
-                                  <X className="w-3 h-3" /> Bawal: Same as ID
-                                </span>
-                              ) : isBookletFormatValid ? (
-                                <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
-                                  <Check className="w-3 h-3" /> Valid Booklet
-                                </span>
-                              ) : null
-                            )}
-                          </div>
-                          <input
-                            type="text"
-                            value={bookletNumber}
-                            onChange={(e) => setBookletNumber(e.target.value.toUpperCase())}
-                            placeholder={isMedicine ? "MB-2026-XXXXXX" : "MV-2026-XXXXXX"}
-                            className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 outline-none font-mono transition-all ${
-                              bookletNumber.trim()
-                                ? isBookletSameAsId
-                                  ? "border-red-500 bg-red-50/40 ring-2 ring-red-500/20 text-red-900"
-                                  : isBookletFormatValid
-                                  ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
-                                  : "border-amber-400 bg-amber-50/20"
-                                : attemptedNext
-                                ? "border-red-500 bg-red-50/20"
-                                : "border-gray-300 bg-white focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                            }`}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase">
-                            Reason *
-                          </label>
-                          <select
-                            value={applicationType === "renewal" ? renewalReason : replacementReason}
-                            onChange={(e) => {
-                              if (applicationType === "renewal") setRenewalReason(e.target.value)
-                              else setReplacementReason(e.target.value)
-                            }}
-                            className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                          >
-                            {applicationType === "renewal" ? (
-                              <>
-                                <option value="Booklet pages are full">Booklet pages are full</option>
-                                <option value="Renewal due">Renewal due</option>
-                                <option value="Other">Other</option>
-                              </>
-                            ) : (
-                              <>
-                                <option value="Lost">Lost</option>
-                                <option value="Damaged">Damaged / Torn</option>
-                                <option value="Stolen">Stolen</option>
-                              </>
-                            )}
-                          </select>
-                        </div>
+                    <div className="space-y-4 max-w-md pt-1 animate-in fade-in">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase">
+                          Reason for {applicationType === "renewal" ? "Renewal" : "Replacement"} *
+                        </label>
+                        <select
+                          value={applicationType === "renewal" ? renewalReason : replacementReason}
+                          onChange={(e) => {
+                            if (applicationType === "renewal") setRenewalReason(e.target.value)
+                            else setReplacementReason(e.target.value)
+                          }}
+                          className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        >
+                          {applicationType === "renewal" ? (
+                            <>
+                              <option value="Booklet pages are full">Booklet pages are full</option>
+                              <option value="Renewal due">Renewal due</option>
+                              <option value="Other">Other</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="Lost">Lost</option>
+                              <option value="Damaged">Damaged / Torn</option>
+                              <option value="Stolen">Stolen</option>
+                            </>
+                          )}
+                        </select>
                       </div>
-
-                      {/* Validation & Information helper messages */}
-                      {isBookletSameAsId && (
-                        <div className="p-2.5 rounded-lg border border-red-200 bg-red-50 text-xs text-red-700 flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                          <div>
-                            <p className="font-bold">Hindi pwede ang parehong Numero:</p>
-                            <p className="text-[11px] mt-0.5 text-red-600">
-                              Ang Booklet Number ay hindi dapat kapareho ng inyong QCID o OSCA ID Number ({oscaIdInput || formData.qcidNo}). Tingnan ang inyong natatanging Booklet Number sa inyong lumang booklet o sa natanggap na email sa inyong Gmail.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {!isBookletSameAsId && (
-                        <p className="text-[11px] text-gray-500 flex items-center gap-1.5">
-                          <Info className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                          <span>
-                            Ang opisyal na Booklet Number ay matatagpuan sa inyong lumang booklet o sa confirmation email na ipinadala sa inyong Gmail (hal. <strong className="font-mono text-gray-700">{isMedicine ? "MB-2026-XXXXXX" : "MV-2026-XXXXXX"}</strong>).
-                          </span>
-                        </p>
-                      )}
                     </div>
                   )}
                 </div>

@@ -189,30 +189,29 @@ function isPWD(app: ApplicationSubmission): app is PWDApplicationSubmission {
 function generateOfficialIdNumber(app: ApplicationSubmission): string {
   const isPwdApp = isPWD(app)
   const appType = String(app.type || "").toLowerCase()
-  const cleanDigits = (app.referenceNumber || app.id || "").replace(/\D/g, "")
-  const seq = cleanDigits.length >= 6 ? cleanDigits.slice(-6) : String(Math.floor(100000 + Math.random() * 900000))
+  const randomSeq = String(Math.floor(100000 + Math.random() * 900000))
   const year = new Date().getFullYear()
 
   if (isPwdApp) {
     if (app.assignedIdNumber && app.assignedIdNumber.startsWith("PWD-")) {
       return app.assignedIdNumber
     }
-    return `PWD-137404-${year}-${seq}`
+    return `PWD-137404-${year}-${randomSeq}`
   } else if (appType === "medicine-booklet" || String(app.category || "").toLowerCase().includes("medicine")) {
     if (app.assignedIdNumber && app.assignedIdNumber.startsWith("MB-")) {
       return app.assignedIdNumber
     }
-    return `MB-${year}-${seq}`
+    return `MB-${year}-${randomSeq}`
   } else if (appType === "movie-booklet" || String(app.category || "").toLowerCase().includes("movie")) {
     if (app.assignedIdNumber && app.assignedIdNumber.startsWith("MV-")) {
       return app.assignedIdNumber
     }
-    return `MV-${year}-${seq}`
+    return `MV-${year}-${randomSeq}`
   } else {
     if (app.assignedIdNumber && (app.assignedIdNumber.startsWith("SENIOR-") || app.assignedIdNumber.startsWith("OSCA-"))) {
       return app.assignedIdNumber.replace("OSCA-", "SENIOR-")
     }
-    return `SENIOR-137404-${year}-${seq}`
+    return `SENIOR-137404-${year}-${randomSeq}`
   }
 }
 
