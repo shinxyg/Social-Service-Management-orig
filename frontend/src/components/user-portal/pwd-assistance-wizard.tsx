@@ -555,8 +555,14 @@ export default function PWDSocialAssistanceWizard({
   const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
-    onStepChange?.(step)
-  }, [step, onStepChange])
+    if (isBlocked && !bypassedBlock) {
+      onStepChange?.(0)
+    } else if (submissionStage !== "form" && !bypassedBlock) {
+      onStepChange?.(0)
+    } else {
+      onStepChange?.(step)
+    }
+  }, [step, isBlocked, bypassedBlock, submissionStage, onStepChange])
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<RequiredDocument | null>(null)
   const [showSampleModal, setShowSampleModal] = useState(false)

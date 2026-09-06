@@ -184,8 +184,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
-    onStepChange?.(step)
-  }, [step, onStepChange])
+    if (isBlocked && !bypassedBlock) {
+      onStepChange?.(0)
+    } else if (submitted && !bypassedBlock) {
+      onStepChange?.(0)
+    } else {
+      onStepChange?.(step)
+    }
+  }, [step, isBlocked, bypassedBlock, submitted, onStepChange])
 
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)

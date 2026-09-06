@@ -355,8 +355,8 @@ export default function ApplyPWDSenior() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {/* Top Service Quick Info Banner - shown only on Step 1 when user is not already approved */}
-      {currentStep === 1 && !hasApprovedApp && (
+      {/* Top Service Quick Info Banner - shown only on Step 1 when user is actively filling out the form */}
+      {currentStep === 1 && !isBlocked && !blockedApp && !hasApprovedApp && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3 animate-in fade-in duration-150">
           <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -368,7 +368,7 @@ export default function ApplyPWDSenior() {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-sm md:text-base font-bold text-foreground">
-                    {modalTitle}
+                    {serviceCleanTitle}
                   </h1>
                   <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${typeBadge.color}`}>
                     {typeBadge.label}
