@@ -404,31 +404,52 @@ export default function SeniorBookletWizard({
 
         const userEmail = (userProfile?.email || formData.emailAddress || "").toLowerCase().trim()
         const currentQcid = (userProfile?.qcidNo || formData.qcidNo || "").trim()
-        const oscaNum = (oscaIdInput || "").trim()
+        const oscaNum = (verifiedSeniorId || oscaIdInput || "").trim()
+        const cleanOsca = oscaNum.replace(/\D/g, "")
+        const userFirst = (formData.firstName || userProfile?.firstName || "").toLowerCase().trim()
+        const userLast = (formData.lastName || userProfile?.lastName || "").toLowerCase().trim()
+        const lastRef = localStorage.getItem(isMedicine ? "last_medicine_booklet_ref" : "last_movie_booklet_ref")
+        const lastId = localStorage.getItem(isMedicine ? "last_medicine_booklet_app_id" : "last_movie_booklet_app_id")
 
         const isUserMatch = (a: any) => {
           if (!a) return false
+          if (lastRef && String(a.referenceNumber || a.reference_number || "").trim() === lastRef) return true
+          if (lastId && String(a.id || "").trim() === lastId) return true
+
           const aEmail = String(a.email || "").toLowerCase().trim()
           const aRef = String(a.referenceNumber || a.reference_number || "").trim()
           const aQcid = String(a.qcid || a.qc_id || "").trim()
           const aExisting = String(a.existingIdNumber || a.existing_id_number || "").trim()
           const aAssigned = String(a.assignedIdNumber || a.assigned_id_number || "").trim()
+          const aFirst = String(a.firstName || a.first_name || "").toLowerCase().trim()
+          const aLast = String(a.lastName || a.last_name || "").toLowerCase().trim()
 
-          return Boolean(
-            (userEmail && aEmail === userEmail) ||
-            (currentQcid && (aRef.includes(currentQcid) || aQcid === currentQcid || aAssigned === currentQcid)) ||
-            (oscaNum && (aExisting.includes(oscaNum) || aRef.includes(oscaNum) || aAssigned.includes(oscaNum)))
-          )
+          if (userEmail && aEmail && userEmail === aEmail) return true
+          if (currentQcid && (aRef.includes(currentQcid) || aQcid === currentQcid || aAssigned === currentQcid)) return true
+          if (userFirst && userLast && aFirst === userFirst && aLast === userLast) return true
+
+          if (cleanOsca && cleanOsca.length >= 6) {
+            const cExist = aExisting.replace(/\D/g, "")
+            const cAssigned = aAssigned.replace(/\D/g, "")
+            const cRef = aRef.replace(/\D/g, "")
+            const cQcid = aQcid.replace(/\D/g, "")
+            if (cExist && (cExist.includes(cleanOsca) || cleanOsca.includes(cExist))) return true
+            if (cAssigned && cAssigned.includes(cleanOsca)) return true
+            if (cRef && cRef.includes(cleanOsca)) return true
+            if (cQcid && cQcid.includes(cleanOsca)) return true
+          }
+
+          return false
         }
 
         // 1. Check if user has an active or approved application for this booklet type
         const targetBookletApp = allApps.find((a) => {
           if (!a) return false
-          const appType = String(a.type || a.service || "").toLowerCase()
-          const appCategory = String(a.category || "").toLowerCase()
+          const appType = String(a.type || a.service || a.extra_data?.type || "").toLowerCase()
+          const appCategory = String(a.category || a.extra_data?.category || "").toLowerCase()
           const isTargetType = isMedicine
-            ? appType === "medicine-booklet" || appType.includes("medicine") || appCategory.includes("medicine")
-            : appType === "movie-booklet" || appType.includes("movie") || appCategory.includes("movie")
+            ? appType.includes("medicine") || appCategory.includes("medicine")
+            : appType.includes("movie") || appCategory.includes("movie")
           if (!isTargetType) return false
           const status = String(a.status || "").toLowerCase()
           if (status !== "pending" && status !== "under_review" && status !== "approved" && status !== "completed" && status !== "for_release") return false
@@ -553,6 +574,50 @@ export default function SeniorBookletWizard({
 
       const isProfileMatch = (userProfileQcidDigits.length >= 16 && userProfileQcidDigits === cleanTypedNormalized) ||
         (userProfile && String((userProfile as any).seniorIdNumber || "").replace(/\D/g, "") === cleanTypedNormalized)
+
+      // Check if this senior citizen already has an approved or active application for this booklet
+      const existingBookletApp = allApps.find((a) => {
+        if (!a) return false
+        const aType = String(a.type || a.service || a.extra_data?.type || "").toLowerCase()
+        const aCat = String(a.category || a.extra_data?.category || "").toLowerCase()
+        const isTarget = isMedicine
+          ? aType.includes("medicine") || aCat.includes("medicine")
+          : aType.includes("movie") || aCat.includes("movie")
+        if (!isTarget) return false
+
+        const aStatus = String(a.status || "").toLowerCase()
+        const isValidStatus = aStatus === "approved" || aStatus === "completed" || aStatus === "for_release" || aStatus === "pending" || aStatus === "under_review"
+        if (!isValidStatus) return false
+
+        const aExistingDigits = String(a.existingIdNumber || a.existing_id_number || "").replace(/\D/g, "")
+        const aAssignedDigits = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/\D/g, "")
+        const aRefDigits = String(a.referenceNumber || a.reference_number || "").replace(/\D/g, "")
+        const aQcidDigits = String(a.qcid || a.qc_id || "").replace(/\D/g, "")
+
+        if (cleanTypedNormalized.length >= 6) {
+          if (aExistingDigits && (aExistingDigits.includes(cleanTypedNormalized) || cleanTypedNormalized.includes(aExistingDigits))) return true
+          if (aAssignedDigits && (aAssignedDigits.includes(cleanTypedNormalized) || cleanTypedNormalized.includes(aAssignedDigits))) return true
+          if (aRefDigits && aRefDigits.includes(cleanTypedNormalized)) return true
+          if (aQcidDigits && aQcidDigits.includes(cleanTypedNormalized)) return true
+        }
+
+        if (matchedApp) {
+          const mFirst = String(matchedApp.firstName || matchedApp.first_name || "").toLowerCase().trim()
+          const mLast = String(matchedApp.lastName || matchedApp.last_name || "").toLowerCase().trim()
+          const af = String(a.firstName || a.first_name || "").toLowerCase().trim()
+          const al = String(a.lastName || a.last_name || "").toLowerCase().trim()
+          if (mFirst && mLast && af === mFirst && al === mLast) return true
+        }
+        return false
+      })
+
+      if (existingBookletApp && !bypassedBlockRef.current) {
+        setBlockedApp(existingBookletApp)
+        setIsBlocked(true)
+        setIsIdVerified(true)
+        setIsVerifying(false)
+        return
+      }
 
       if (matchedApp) {
         const foundName = [
@@ -759,6 +824,8 @@ export default function SeniorBookletWizard({
       // 1. Save to localStorage
       const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
       localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing]))
+      localStorage.setItem(isMedicine ? "last_medicine_booklet_ref" : "last_movie_booklet_ref", refNum)
+      localStorage.setItem(isMedicine ? "last_medicine_booklet_app_id" : "last_movie_booklet_app_id", appId)
 
       // 2. Submit to backend API
       await fetch(`${API_BASE}/api/pwd-senior/applications`, {

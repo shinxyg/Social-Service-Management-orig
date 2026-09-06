@@ -412,13 +412,12 @@ exports.updateApplicationStatus = async (req, res) => {
       String(targetApp?.type || '').toLowerCase().includes('movie')
     );
 
-    // If approving a booklet application, ensure a brand new unique random booklet number format (MB-2026-XXXXXX / MV-2026-XXXXXX)
+    // If approving a booklet application, ensure a brand new unique random booklet number format (137404-YYYY-XXXXXX)
     if (status === 'approved' && isSeniorBooklet) {
-      if (!assignedIdNumber || (!assignedIdNumber.startsWith('MB-') && !assignedIdNumber.startsWith('MV-'))) {
-        const prefix = isMovieBooklet ? 'MV' : 'MB';
+      if (!assignedIdNumber || (!assignedIdNumber.startsWith('137404-') && !assignedIdNumber.startsWith('MB-') && !assignedIdNumber.startsWith('MV-'))) {
         const year = new Date().getFullYear();
         const randomSeq = String(Math.floor(100000 + Math.random() * 900000));
-        assignedIdNumber = `${prefix}-${year}-${randomSeq}`;
+        assignedIdNumber = `137404-${year}-${randomSeq}`;
       }
     }
 
