@@ -176,7 +176,7 @@ export default function SeniorBookletWizard({
 
   // STEP 2 Personal Information
   const [isEditingInfo, setIsEditingInfo] = useState(false)
-  const [formData] = useState({
+  const [formData, setFormData] = useState({
     qcidNo: userProfile?.qcidNo || "110000116932100",
     firstName: userProfile?.firstName || "CLARISA MAE",
     middleName: userProfile?.middleName || "GALIAS",
@@ -463,7 +463,41 @@ export default function SeniorBookletWizard({
 
         setIsIdVerified(true)
         setVerifyError(null)
-        setVerifiedSeniorName(foundName || [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase())
+        setVerifiedSeniorName(foundName || "SENIOR CITIZEN BENEFICIARY")
+
+        let bMonth = matchedApp.dobMonth || ""
+        let bDay = matchedApp.dobDay || ""
+        let bYear = matchedApp.dobYear || ""
+        if (matchedApp.dateOfBirth && (!bMonth || !bYear)) {
+          const parts = String(matchedApp.dateOfBirth).split("T")[0].split("-")
+          if (parts.length === 3) {
+            bYear = parts[0]
+            bMonth = parts[1]
+            bDay = parts[2]
+          }
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          qcidNo: matchedApp.qcid || matchedApp.qcidNo || matchedApp.referenceNumber || prev.qcidNo,
+          firstName: String(matchedApp.firstName || matchedApp.first_name || prev.firstName).toUpperCase(),
+          middleName: String(matchedApp.middleName || matchedApp.middle_name || prev.middleName || "").toUpperCase(),
+          lastName: String(matchedApp.lastName || matchedApp.last_name || prev.lastName).toUpperCase(),
+          suffix: matchedApp.suffix || prev.suffix || "",
+          nationality: matchedApp.nationality || prev.nationality || "FILIPINO",
+          dobMonth: bMonth || prev.dobMonth,
+          dobDay: bDay || prev.dobDay,
+          dobYear: bYear || prev.dobYear,
+          age: matchedApp.age || prev.age || "65",
+          sex: matchedApp.sex || matchedApp.gender || prev.sex || "Female",
+          civilStatus: matchedApp.civilStatus || prev.civilStatus || "Single",
+          addressHouseNo: matchedApp.houseNo || matchedApp.addressHouseNo || prev.addressHouseNo,
+          addressStreet: matchedApp.street || matchedApp.addressStreet || prev.addressStreet,
+          addressBarangay: matchedApp.barangay || matchedApp.addressBarangay || prev.addressBarangay,
+          addressCity: matchedApp.city || matchedApp.addressCity || prev.addressCity || "QUEZON CITY",
+          contactNumber: matchedApp.contactNo || matchedApp.cellphoneNo || matchedApp.contactNumber || prev.contactNumber,
+          emailAddress: matchedApp.email || prev.emailAddress,
+        }))
       } else if (isProfileMatch) {
         const profileName = [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase()
         setIsIdVerified(true)
@@ -645,7 +679,7 @@ export default function SeniorBookletWizard({
     }, 1000)
   }
 
-  // Submitted Screen
+  // Blocked Screen
   if (isBlocked) {
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
@@ -654,7 +688,7 @@ export default function SeniorBookletWizard({
             onClick={onBack}
             className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            ← Bumalik
+            ← Back
           </button>
         )}
         <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
@@ -662,11 +696,10 @@ export default function SeniorBookletWizard({
             <Info className="h-7 w-7 text-amber-500" />
           </div>
           <h2 className="text-lg font-bold text-gray-900">
-            May Kasalukuyang Application Ka Pa
+            Active Application In Progress
           </h2>
           <p className="text-sm text-gray-500 max-w-sm">
-            Mayroon ka pang nakabinbing aplikasyon para sa {title}. Maghintay
-            ng pagsusuri bago magsumite ng panibagong aplikasyon.
+            You currently have a pending application for {title}. Please wait for it to be reviewed before submitting a new request.
           </p>
         </div>
       </div>
@@ -686,10 +719,10 @@ export default function SeniorBookletWizard({
               <Sparkles className="w-3.5 h-3.5" /> Application Submitted Successfully!
             </span>
             <h2 className="text-2xl font-bold text-foreground">
-              Mabuhay! Ang inyong aplikasyon ay Natanggap Na
+              Application Successfully Received
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Ang inyong {title} application ay matagumpay na naisumite at kasalukuyang sinusuri.
+              Your {title} application has been successfully submitted and is currently being reviewed.
             </p>
           </div>
 
@@ -706,7 +739,7 @@ export default function SeniorBookletWizard({
             <div className="flex justify-between items-center text-xs text-foreground">
               <span className="text-muted-foreground">Application Type:</span>
               <span className="font-semibold text-foreground uppercase">
-                {applicationType === "new" ? "BAGONG BOOKLET" : applicationType === "renewal" ? "RENEWAL" : "REPLACEMENT"}
+                {applicationType === "new" ? "NEW BOOKLET" : applicationType === "renewal" ? "RENEWAL" : "REPLACEMENT"}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
@@ -720,13 +753,13 @@ export default function SeniorBookletWizard({
               </div>
             )}
             <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Aplikante:</span>
+              <span className="text-muted-foreground">Applicant:</span>
               <span className="font-semibold text-foreground">
                 {formData.firstName} {formData.middleName ? `${formData.middleName} ` : ""}{formData.lastName}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Petsa:</span>
+              <span className="text-muted-foreground">Date:</span>
               <span className="text-foreground">{submissionDate}</span>
             </div>
           </div>
@@ -734,14 +767,14 @@ export default function SeniorBookletWizard({
           <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
             <Info className="w-4 h-4 text-blue-600 shrink-0" />
             <p>
-              Maaari ninyong tingnan ang Notifications para sa mga update sa inyong aplikasyon.
+              You may check your Notifications for status updates regarding your application.
             </p>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
             <span>
-              Awtomatikong lilipat sa application status sa loob ng {redirectCountdown} segundo...
+              Automatically redirecting to application status in {redirectCountdown} second{redirectCountdown === 1 ? "" : "s"}...
             </span>
           </div>
         </div>
@@ -1095,13 +1128,10 @@ export default function SeniorBookletWizard({
                     Personal Information
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Please review your personal information from your QCID profile. Fill in the additional details below.
+                    Please review your personal information verified from your official Senior Citizen record.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                    <Check className="w-3.5 h-3.5" /> Auto-filled from QCID Record
-                  </span>
                   <button
                     type="button"
                     onClick={() => setIsEditingInfo((v) => !v)}
@@ -1119,7 +1149,7 @@ export default function SeniorBookletWizard({
                 <div className="text-sm">
                   <p className="font-semibold text-blue-600">Important reminder</p>
                   <p className="text-blue-600/90 mt-0.5">
-                    Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service.
+                    Please make sure your personal information is correct and complete. If any detail is missing or incorrect, please contact the Office for Senior Citizens Affairs (OSCA) to update your records. Accurate information is important for fast and smooth processing of your booklet request.
                   </p>
                 </div>
               </div>
