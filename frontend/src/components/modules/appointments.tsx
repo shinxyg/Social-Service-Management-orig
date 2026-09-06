@@ -304,6 +304,13 @@ export default function Appointments() {
       try {
         let appts: AppointmentRequest[] = []
 
+        // Local cache for instantly scheduled/completed appointments
+        let localScheduledMap: Record<string, any> = {}
+        try {
+          const raw = localStorage.getItem("all_appointments_scheduled")
+          if (raw) localScheduledMap = JSON.parse(raw)
+        } catch {}
+
         // 1. Fetch from PostgreSQL /api/appointments
         const resDb = await fetch(`${API_BASE}/api/appointments`)
         if (resDb.ok) {
@@ -317,19 +324,22 @@ export default function Appointments() {
                 }
                 return true
               })
-              .map((a: any) => ({
-                id: `db-appt-${a.id}`,
-                referenceNo: a.reference_no,
-                module: (a.module || "AICS") as ModuleKey,
-                applicantName: a.applicant_name,
-                submittedAt: a.created_at || new Date().toISOString(),
-                concern: a.concern,
-                status: (a.status || "pending") as AppointmentStatus,
-                scheduledDate: a.scheduled_date,
-                scheduledTime: a.scheduled_time,
-                officeLocation: a.office_location,
-                notes: a.notes,
-              }))
+              .map((a: any) => {
+                const cached = localScheduledMap[a.reference_no] || localScheduledMap[String(a.id)]
+                return {
+                  id: `db-appt-${a.id}`,
+                  referenceNo: a.reference_no,
+                  module: (a.module || "AICS") as ModuleKey,
+                  applicantName: a.applicant_name,
+                  submittedAt: a.created_at || new Date().toISOString(),
+                  concern: a.concern,
+                  status: (cached?.status || a.status || "pending") as AppointmentStatus,
+                  scheduledDate: cached?.scheduledDate || a.scheduled_date,
+                  scheduledTime: cached?.scheduledTime || a.scheduled_time,
+                  officeLocation: cached?.officeLocation || a.office_location,
+                  notes: cached?.notes || a.notes,
+                }
+              })
             appts.push(...mapped)
           }
         }
@@ -349,6 +359,7 @@ export default function Appointments() {
                   const fullName = [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") || "APPLICANT"
                   const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                   const cleanType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
+                  const cached = localScheduledMap[ref]
                   appts.push({
                     id: `aics-appt-${app.id}`,
                     referenceNo: ref,
@@ -356,7 +367,11 @@ export default function Appointments() {
                     applicantName: fullName,
                     submittedAt: app.created_at || new Date().toISOString(),
                     concern: cleanType,
-                    status: "pending",
+                    status: (cached?.status || "pending") as AppointmentStatus,
+                    scheduledDate: cached?.scheduledDate,
+                    scheduledTime: cached?.scheduledTime,
+                    officeLocation: cached?.officeLocation,
+                    notes: cached?.notes,
                   })
                 }
               }
@@ -406,6 +421,7 @@ export default function Appointments() {
                     "APPLICANT"
                   const isPwdApp = String(app.category || "").toUpperCase().includes("PWD")
                   const concernName = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
+                  const cached = localScheduledMap[ref]
 
                   appts.push({
                     id: `pwd-senior-appt-${app.id || ref}`,
@@ -414,7 +430,11 @@ export default function Appointments() {
                     applicantName: fullName,
                     submittedAt: app.submittedAt || app.created_at || new Date().toISOString(),
                     concern: concernName,
-                    status: "pending",
+                    status: (cached?.status || "pending") as AppointmentStatus,
+                    scheduledDate: cached?.scheduledDate,
+                    scheduledTime: cached?.scheduledTime,
+                    officeLocation: cached?.officeLocation,
+                    notes: cached?.notes,
                   })
                 }
               }
@@ -465,9 +485,23 @@ export default function Appointments() {
     }
   }, [])
 
-  const handleSaveSchedule = (id: string, date: string, time: string, location: string, notes: string) => {
+  const handleSaveSchedule = async (id: string, date: string, time: string, location: string, notes: string) => {
     const targetAppt = appointments.find((a) => a.id === id)
     if (targetAppt) {
+      // Save directly into local cache so it NEVER reverts to pending during poll
+      try {
+        const raw = localStorage.getItem("all_appointments_scheduled")
+        const localScheduledMap = raw ? JSON.parse(raw) : {}
+        localScheduledMap[targetAppt.referenceNo] = {
+          status: "scheduled",
+          scheduledDate: date,
+          scheduledTime: time,
+          officeLocation: location,
+          notes,
+        }
+        localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
+      } catch {}
+
       // Auto-connect with Financial Aid Disbursement and User Notifications
       syncAppointmentToFinancialAid({
         referenceNo: targetAppt.referenceNo,
@@ -478,6 +512,24 @@ export default function Appointments() {
         location,
         notes,
       })
+
+      // Explicit API PUT call
+      try {
+        await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetAppt.referenceNo)}/schedule`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduledDate: date,
+            scheduledTime: time,
+            officeLocation: location,
+            notes,
+            applicantName: targetAppt.applicantName,
+            concern: targetAppt.concern,
+          }),
+        })
+      } catch (err) {
+        console.warn("Backend schedule PUT error:", err)
+      }
     }
 
     setAppointments((prev) =>
@@ -497,8 +549,21 @@ export default function Appointments() {
     setSchedulingAppt(null)
   }
 
-  const handleMarkCompleted = (id: string) => {
+  const handleMarkCompleted = async (id: string) => {
+    const targetAppt = appointments.find((a) => a.id === id)
+    const ref = targetAppt?.referenceNo || id.replace('db-appt-', '')
+    try {
+      const raw = localStorage.getItem("all_appointments_scheduled")
+      const localScheduledMap = raw ? JSON.parse(raw) : {}
+      localScheduledMap[ref] = { status: "completed" }
+      localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
+    } catch {}
+
     setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: "completed" as const } : a)))
+
+    try {
+      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(ref)}/complete`, { method: "PUT" })
+    } catch {}
   }
 
   const filtered = appointments.filter((a) => {
