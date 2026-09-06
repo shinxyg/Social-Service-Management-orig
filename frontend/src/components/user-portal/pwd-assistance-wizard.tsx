@@ -892,7 +892,7 @@ export default function PWDSocialAssistanceWizard({
   )
 
   // Step 4 Validation (Review & Submit)
-  const step4Valid = formData.isCertified
+  const step4Valid = true
 
   const canGoNext =
     step === 1
@@ -1718,24 +1718,6 @@ export default function PWDSocialAssistanceWizard({
                 <p className="text-sm text-blue-700">
                   Ang lahat ng impormasyon at dokumentong inyong isinumite ay susuriin ng Social Worker alinsunod sa mga patakaran ng Quezon City Government.
                 </p>
-              </div>
-
-              {/* Declaration */}
-              <div className="pt-2">
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={formData.isCertified}
-                    onChange={(e) => updateField("isCertified", e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-semibold text-gray-900">
-                    I certify that the information provided is true and correct. <span className="text-red-500">*</span>
-                  </span>
-                </label>
-                {attemptedNext && !formData.isCertified && (
-                  <p className="text-xs text-red-600 font-semibold mt-1">Please check the box to certify before submitting.</p>
-                )}
               </div>
             </div>
           )}

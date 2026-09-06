@@ -2105,15 +2105,6 @@ export default function SeniorCitizenApplicationWizard({
                 </div>
               </div>
 
-              {/* Certification Checkbox */}
-              <div className="pt-2">
-                <CustomCheckbox
-                  checked={certified}
-                  onChange={setCertified}
-                  label={t("certifyTrueAndCorrect") || "I certify that all information provided is true and correct. *"}
-                />
-              </div>
-
               {/* Footer Actions */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <button
@@ -2127,12 +2118,7 @@ export default function SeniorCitizenApplicationWizard({
                 <button
                   type="button"
                   onClick={() => setShowConfirmModal(true)}
-                  disabled={!certified}
-                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center ${
-                    certified
-                      ? "bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
+                  className="px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
                 >
                   <span>{t("submitApplicationUpper") || "SUBMIT APPLICATION"}</span>
                 </button>

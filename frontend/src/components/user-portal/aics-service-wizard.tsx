@@ -1969,19 +1969,6 @@ export default function AICSServiceWizard({
                   </p>
                 </div>
 
-                {/* Declaration */}
-                <div className="pt-2">
-                  <CustomCheckbox
-                    checked={declarationCertified}
-                    onChange={setDeclarationCertified}
-                    label={
-                      <span className="font-semibold text-gray-900">
-                        I certify that the information provided is true and correct. *
-                      </span>
-                    }
-                  />
-                </div>
-
                 {/* Back and Submit Application */}
                 <div className="pt-4 flex justify-between">
                   <button
@@ -1995,12 +1982,8 @@ export default function AICSServiceWizard({
                   <button
                     type="button"
                     onClick={() => setShowConfirmModal(true)}
-                    disabled={!declarationCertified || isSubmitting}
-                    className={`px-6 h-10 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
-                      declarationCertified && !isSubmitting
-                        ? "bg-[#3b82f6] text-white hover:opacity-90 cursor-pointer shadow-sm"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    }`}
+                    disabled={isSubmitting}
+                    className="px-6 h-10 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-[#3b82f6] text-white hover:opacity-90 cursor-pointer shadow-sm"
                   >
                     SUBMIT APPLICATION
                   </button>

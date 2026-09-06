@@ -391,7 +391,7 @@ export default function SeniorBookletWizard({
 
   const isStep3Valid = currentRequiredDocs.every((doc) => !doc.required || !!uploadedFiles[doc.id])
 
-  const isStep4Valid = formData.certified
+  const isStep4Valid = true
 
   const canGoNext =
     step === 1
@@ -1274,21 +1274,6 @@ export default function SeniorBookletWizard({
                     )
                   })}
                 </div>
-              </div>
-
-              {/* Certification Checkbox */}
-              <div className="border border-border rounded-xl p-5 bg-gray-50/70 space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.certified}
-                    onChange={(e) => updateField("certified", e.target.checked)}
-                    className="mt-0.5 h-4 w-4 text-blue-600 rounded"
-                  />
-                  <span className={`text-xs md:text-sm font-semibold leading-relaxed ${attemptedNext && !formData.certified ? "text-red-600" : "text-foreground"}`}>
-                    I certify that the information provided is true and correct. <span className="text-red-500">*</span>
-                  </span>
-                </label>
               </div>
             </div>
           )}
