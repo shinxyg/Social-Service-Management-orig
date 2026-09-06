@@ -274,8 +274,10 @@ export default function ApplyPWDSenior() {
     t("seniorReq6"),
   ]
 
-  // Render blocked active application UI directly
-  if (isBlocked && !bypassedBlock) {
+  const isPwdId = !isSenior && !isAssistance
+
+  // Render blocked active application UI directly (for Senior and Assistance wizards)
+  if (isBlocked && !bypassedBlock && !isPwdId) {
     const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
     const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || blockedApp?.id || blockedApp?.qc_id || blockedApp?.qcid || getLoggedInUserQcid() || "110000572516915"
     const displayDate = blockedApp?.created_at || blockedApp?.submittedAt || blockedApp?.dateSubmitted

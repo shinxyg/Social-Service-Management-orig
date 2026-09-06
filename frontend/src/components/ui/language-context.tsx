@@ -619,6 +619,11 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Gamitin ang Aprubadong ID na Ito",
     bis: "Gamita kini nga Naaprobahang ID",
   },
+  applyForRenewal: {
+    en: "Apply for Renewal",
+    tl: "Mag-apply para sa Renewal",
+    bis: "Mag-apply para sa Renewal",
+  },
   pwdEnterIdPrompt: {
     en: "Please enter your PWD ID number before verifying.",
     tl: "Mangyaring ilagay ang iyong PWD ID number bago mag-verify.",
