@@ -155,6 +155,28 @@ export default function ApplyFinancialAid() {
       }
 
       const now = new Date()
+
+      // Fetch appointments & read local schedule cache to bridge schedule & completed status
+      let appointmentsMap: Record<string, any> = {}
+      try {
+        const resAppts = await fetch(`${API_BASE}/api/appointments`)
+        if (resAppts.ok) {
+          const dataAppts = await resAppts.json()
+          if (dataAppts.appointments && Array.isArray(dataAppts.appointments)) {
+            dataAppts.appointments.forEach((a: any) => {
+              if (a.reference_no) appointmentsMap[a.reference_no] = a
+              if (a.applicant_name) appointmentsMap[a.applicant_name.toLowerCase().trim()] = a
+            })
+          }
+        }
+      } catch {}
+
+      let localScheduledMap: Record<string, any> = {}
+      try {
+        const rawSched = localStorage.getItem("all_appointments_scheduled")
+        if (rawSched) localScheduledMap = JSON.parse(rawSched)
+      } catch {}
+
       // Merge records: remote from db takes precedence
       let combined = [...remoteRecords]
       localDisbursements.forEach((l) => {
@@ -164,18 +186,37 @@ export default function ApplyFinancialAid() {
       })
 
       combined = combined.map((d) => {
-        if (d.status === "PENDING" && d.appointmentDate) {
-          const dt = parseAppointmentDateTime(d.appointmentDate, d.appointmentTime)
+        const appt = appointmentsMap[d.applicationRef] || appointmentsMap[d.applicantName?.toLowerCase()?.trim()]
+        const cachedSched = localScheduledMap[d.applicationRef] || localScheduledMap[d.applicantName?.toLowerCase()?.trim()]
+
+        const finalApptDate = d.appointmentDate || appt?.scheduled_date || cachedSched?.scheduledDate || null
+        const finalApptTime = d.appointmentTime || appt?.scheduled_time || cachedSched?.scheduledTime || null
+        const finalVenue = d.venue || appt?.office_location || cachedSched?.officeLocation || "Quezon City Hall"
+        const isApptCompleted = appt?.status === "completed" || cachedSched?.status === "completed"
+
+        let isTimeReached = false
+        if (finalApptDate) {
+          const dt = parseAppointmentDateTime(finalApptDate, finalApptTime)
           if (dt && now.getTime() >= dt.getTime()) {
-            return {
-              ...d,
-              status: "RELEASED" as DisbursementStage,
-              releasedDate: `${now.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })} ${d.appointmentTime || now.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}`,
-              releasedBy: "Automated Scheduled Payout System / Disbursing Officer",
-            }
+            isTimeReached = true
           }
         }
-        return d
+
+        const isReleased = d.status === "RELEASED" || isApptCompleted || (Boolean(finalApptDate) && isTimeReached)
+
+        return {
+          ...d,
+          appointmentDate: finalApptDate,
+          appointmentTime: finalApptTime,
+          venue: finalVenue,
+          status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
+          releasedDate: isReleased
+            ? d.releasedDate || (finalApptDate && finalApptTime ? `${finalApptDate} ${finalApptTime}` : `${now.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })} ${finalApptTime || now.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}`)
+            : undefined,
+          releasedBy: isReleased
+            ? d.releasedBy || "Automated Scheduled Payout System / Disbursing Officer"
+            : undefined,
+        }
       })
 
       setDisbursements(combined)
