@@ -2643,10 +2643,20 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
               {/* Requirements */}
               <div className="border border-border rounded-xl overflow-hidden">
-                <p className="flex items-center gap-1.5 text-sm font-bold text-foreground px-5 pt-5 pb-3">
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  {t("requirementsSectionTitle")}
-                </p>
+                <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                  <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    {t("requirementsSectionTitle")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setReturnToReview(true); setStep(1) }}
+                    className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline cursor-pointer"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    {t("editButton").toUpperCase()}
+                  </button>
+                </div>
                 <div>
                   {[
                     { ok: isResident, label: t("pwdResidentQuestion") },

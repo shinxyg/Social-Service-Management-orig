@@ -1877,9 +1877,18 @@ export default function SeniorCitizenApplicationWizard({
 
               {/* Card 1: Application Details */}
               <div className="border border-gray-200 rounded-xl p-5 bg-gray-50/70 space-y-2.5">
-                <h3 className="text-xs font-bold uppercase text-gray-700 tracking-wide">
-                  {t("applicationDetails") || "Application Details"}
-                </h3>
+                <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                  <h3 className="text-xs font-bold uppercase text-gray-700 tracking-wide">
+                    {t("applicationDetails") || "Application Details"}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => { setReturnToReview(true); setStep(1) }}
+                    className="text-xs font-semibold text-[#3b82f6] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Pencil className="w-3 h-3" /> {t("editLabel") || "Edit"}
+                  </button>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
                   <div>
                     <span className="text-gray-500">{t("serviceLabel") || "Service"}:</span>{" "}
