@@ -47,10 +47,6 @@ export interface UserProfile {
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 import { API_BASE } from "../../config/api"
 
-const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
-
-
-
 const ASSISTANCE_TYPES = [
   "Financial Assistance / Cash Aid",
   "Medical & Medicine Support",
