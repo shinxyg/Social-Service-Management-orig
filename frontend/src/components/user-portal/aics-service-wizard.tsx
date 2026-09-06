@@ -347,31 +347,6 @@ export default function AICSServiceWizard({
     { value: "Emergency Transportation", label: "Emergency Transportation" },
   ]
 
-  // Check eligibility against backend
-  useEffect(() => {
-    const checkEligibility = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcIdNumber}`)
-        if (res.ok) {
-          const data = await res.json()
-          const matchedApp = (data.applications || []).find(
-            (app: any) =>
-              app.status === "pending" &&
-              app.assistance_type?.toLowerCase().includes(serviceType)
-          )
-          setIsBlocked(Boolean(matchedApp))
-          setBlockedApp(matchedApp || null)
-        }
-      } catch (err) {
-        console.warn("AICS Eligibility check offline/skipped:", err)
-      }
-    }
-
-    if (qcIdNumber) {
-      checkEligibility()
-    }
-  }, [qcIdNumber, serviceType])
-
   // Auto-redirect to pending status screen after 3 seconds on Step 5
   useEffect(() => {
     if (currentStep !== 5) return
@@ -702,15 +677,26 @@ export default function AICSServiceWizard({
             </div>
           </div>
 
-          <div className="w-full pt-2">
+          <div className="w-full pt-2 flex flex-col gap-2">
             <button
               type="button"
               onClick={() => {
-                window.location.href = "/portal/my-applications"
+                window.location.href = "/portal/financial-aid"
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              {t("viewMyApplications")}
+              VIEW IN FINANCIAL AID / MY APPLICATIONS
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsBlocked(false)
+                setBlockedApp(null)
+                setCurrentStep(1)
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Submit Another Application (Apply Again)
             </button>
           </div>
         </div>

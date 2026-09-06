@@ -283,42 +283,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   }, [qcId])
 
   useEffect(() => {
-    const checkEligibility = async () => {
-      setCheckingEligibility(true)
-      try {
-        const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcId}`)
-        if (res.ok) {
-          const data = await res.json()
-          // Robust matching across assistance categories
-          const isSameAssistanceType = (dbType: string) => {
-            const dbT = (dbType || "").toLowerCase().trim()
-            if (isEducationalAssistance) {
-              return dbT.includes("educ") || dbT.includes("aral")
-            }
-            if (isFuneralAssistance) {
-              return dbT.includes("funeral") || dbT.includes("burial") || dbT.includes("libing")
-            }
-            const currentT = (type || "").toLowerCase().trim()
-            return dbT === currentT || dbT.includes(currentT) || currentT.includes(dbT) || (dbT.includes("medic") && currentT.includes("medic"))
-          }
-
-          const matchedApp = (data.applications || []).find(
-            (app: any) =>
-              app.status === "pending" && isSameAssistanceType(app.assistance_type)
-          )
-          setIsBlocked(Boolean(matchedApp))
-          setBlockedApp(matchedApp || null)
-        }
-      } catch (err) {
-        console.warn("Eligibility check skipped/offline:", err)
-      } finally {
-        setCheckingEligibility(false)
-      }
-    }
-    checkEligibility()
-  }, [qcId, type, isEducationalAssistance, isFuneralAssistance])
-
-   useEffect(() => {
     if (dSameAddressAsApplicant) {
       setDHouseNumber(pHouseNumber)
       setDStreetName(pStreetName)
@@ -795,69 +759,7 @@ const handleFinalSubmit = async () => {
   }
 }
 
-if (checkingEligibility) {
-  return (
-    <div className="p-4 md:p-6 max-w-xl mx-auto">
-      <div className="bg-card border border-border rounded-2xl p-8 shadow-soft flex flex-col items-center text-center gap-3">
-        <Loader2 className="h-7 w-7 text-primary animate-spin" />
-        <p className="text-sm text-muted-foreground">{t("checkingEligibility")}</p>
-      </div>
-    </div>
-  )
-}
 
-if (isBlocked) {
-  return (
-    <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
-      <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-          <Info className="h-8 w-8 text-amber-500" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-gray-900">
-            {t("hasPendingAppTitle")}
-          </h2>
-          <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
-            {t("hasPendingAppDesc").replace("{type}", type)}
-          </p>
-        </div>
-
-        {blockedApp && (
-          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
-            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">{t("appRefNoLabel")}</span>
-              <span className="font-mono font-bold text-blue-600">{blockedApp.reference_no || blockedApp.qc_id}</span>
-            </div>
-            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">{t("appStatusLabel")}</span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                {t("statusPendingBadge")}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">{t("dateFiledLabel")}</span>
-              <span className="font-semibold text-gray-700">
-                {blockedApp.created_at ? new Date(blockedApp.created_at).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }) : t("recentlySubmitted")}
-              </span>
-            </div>
-          </div>
-        )}
-
-        <div className="w-full pt-2">
-          <button
-            type="button"
-            onClick={() => {
-              window.location.href = "/portal/my-applications"
-            }}
-            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-          >
-            {t("viewMyApplications")}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
   const renderTopRequirementsBanner = () => (
     <>

@@ -1,29 +1,393 @@
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "react-router-dom"
+import { CheckCircle2, Info } from "lucide-react"
 import ApplyAICS from "./apply-aics"
 import AICSServiceWizard, { type AICSServiceType } from "./aics-service-wizard"
 import { useLanguage } from "../ui/language-context"
+import { API_BASE } from "../../config/api"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
-const TYPE_MAP: Record<string, { key: string; reqKey: string }> = {
-  medical: { key: "aicsMedical", reqKey: "aicsMedical" },
-  funeral: { key: "aicsFuneral", reqKey: "aicsFuneral" },
-  educational: { key: "Educational Assistance", reqKey: "aicsEducational" },
-  material: { key: "aicsMaterial", reqKey: "aicsMaterial" },
-  food: { key: "aicsFood", reqKey: "aicsFood" },
-  transportation: { key: "aicsTransportation", reqKey: "aicsTransportation" },
+const AICS_CONFIG: Record<
+  string,
+  { title: string; key: string; reqKey: string; matchers: string[] }
+> = {
+  medical: {
+    title: "Medical Assistance",
+    key: "aicsMedical",
+    reqKey: "aicsMedical",
+    matchers: ["medical", "gamot", "hospital", "medicine", "medikal"],
+  },
+  funeral: {
+    title: "Funeral Assistance",
+    key: "aicsFuneral",
+    reqKey: "aicsFuneral",
+    matchers: ["funeral", "burial", "libing", "patay", "burol"],
+  },
+  educational: {
+    title: "Educational Assistance",
+    key: "Educational Assistance",
+    reqKey: "aicsEducational",
+    matchers: ["educational", "education", "aral", "school", "tuition", "edukasyon"],
+  },
+  material: {
+    title: "Material Assistance",
+    key: "aicsMaterial",
+    reqKey: "aicsMaterial",
+    matchers: ["material", "materyal"],
+  },
+  food: {
+    title: "Food Assistance",
+    key: "aicsFood",
+    reqKey: "aicsFood",
+    matchers: ["food", "pagkain", "grocery"],
+  },
+  transportation: {
+    title: "Transportation Assistance",
+    key: "aicsTransportation",
+    reqKey: "aicsTransportation",
+    matchers: ["transportation", "pamasahe", "transpo", "travel", "transport"],
+  },
 }
 
 export default function AICSUser() {
   const { t } = useLanguage()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const typeParam = searchParams.get("type")?.toLowerCase() || "medical"
-  const selectedConfig = TYPE_MAP[typeParam] || TYPE_MAP.medical
+  const rawType = searchParams.get("type")?.toLowerCase() || "medical"
+  const typeParam = AICS_CONFIG[rawType] ? rawType : "medical"
+  const selectedConfig = AICS_CONFIG[typeParam] || AICS_CONFIG.medical
+
+  const [isBlocked, setIsBlocked] = useState(false)
+  const [blockedApp, setBlockedApp] = useState<any>(null)
+  const [bypassedBlock, setBypassedBlock] = useState(false)
+  const bypassedBlockRef = useRef(false)
 
   const handleNavigateType = (newType: string) => {
     setSearchParams({ type: newType.toLowerCase() })
   }
 
-  if (typeParam === "material" || typeParam === "food" || typeParam === "transportation") {
+  // Reset bypass state on service tab change
+  useEffect(() => {
+    bypassedBlockRef.current = false
+    setBypassedBlock(false)
+    setIsBlocked(false)
+    setBlockedApp(null)
+  }, [typeParam])
+
+  // Real-time polling & eligibility check for active/approved AICS applications
+  useEffect(() => {
+    let isMounted = true
+
+    const isMatchForService = (app: any, serviceType: string) => {
+      if (!app) return false
+      const cfg = AICS_CONFIG[serviceType] || AICS_CONFIG.medical
+      const appType = String(
+        app.assistance_type || app.type || app.assistanceType || app.service || ""
+      ).toLowerCase()
+
+      const isMatchCategory = cfg.matchers.some((m) => appType.includes(m))
+      if (!isMatchCategory) return false
+
+      const prof = getCurrentUserProfile()
+      const currentQcid = (
+        getLoggedInUserQcid() ||
+        prof?.qcidNo ||
+        prof?.qcidNumber ||
+        "110000572516915"
+      )
+        .toLowerCase()
+        .trim()
+      const currentEmail = (prof?.email || "").toLowerCase().trim()
+      const currentLastName = (prof?.lastName || "").toLowerCase().trim()
+      const currentFirstName = (prof?.firstName || "").toLowerCase().trim()
+
+      const appRef = String(
+        app.reference_no ||
+          app.referenceNumber ||
+          app.reference_number ||
+          app.qc_id ||
+          app.id ||
+          ""
+      )
+        .toLowerCase()
+        .trim()
+      const appEmail = String(app.email || "").toLowerCase().trim()
+      const appName = String(
+        app.full_name || `${app.first_name || ""} ${app.last_name || ""}`
+      )
+        .toLowerCase()
+        .trim()
+
+      const matchQcid =
+        currentQcid &&
+        (appRef === currentQcid ||
+          appRef.includes(currentQcid) ||
+          currentQcid.includes(appRef))
+      const matchEmail = currentEmail && appEmail && currentEmail === appEmail
+      const matchName =
+        currentLastName &&
+        currentFirstName &&
+        appName.includes(currentLastName) &&
+        appName.includes(currentFirstName)
+
+      return Boolean(matchQcid || matchEmail || matchName)
+    }
+
+    const checkActiveApp = async () => {
+      if (bypassedBlockRef.current) return
+      try {
+        let allApps: any[] = []
+        const currentQcid = getLoggedInUserQcid() || "110000572516915"
+
+        // 1. Fetch user-specific AICS applications
+        try {
+          const res = await fetch(
+            `${API_BASE}/api/aics/applications?qcId=${encodeURIComponent(currentQcid)}`
+          )
+          if (res.ok) {
+            const data = await res.json()
+            if (data.applications && Array.isArray(data.applications)) {
+              allApps = data.applications
+            } else if (Array.isArray(data)) {
+              allApps = data
+            }
+          }
+        } catch {}
+
+        // 2. Global applications fallback
+        try {
+          const resGlobal = await fetch(`${API_BASE}/api/aics/applications`)
+          if (resGlobal.ok) {
+            const dataGlobal = await resGlobal.json()
+            const list = Array.isArray(dataGlobal)
+              ? dataGlobal
+              : dataGlobal.applications || []
+            for (const item of list) {
+              if (
+                item &&
+                !allApps.some(
+                  (a) =>
+                    (a.id && a.id === item.id) ||
+                    (a.reference_no && a.reference_no === item.reference_no)
+                )
+              ) {
+                allApps.push(item)
+              }
+            }
+          }
+        } catch {}
+
+        // 3. LocalStorage items fallback
+        const localKeys = [
+          "aics_applications",
+          "applications",
+          "all_user_applications",
+          "active_applications",
+        ]
+        for (const k of localKeys) {
+          try {
+            const local = JSON.parse(localStorage.getItem(k) || "[]")
+            if (Array.isArray(local)) {
+              for (const la of local) {
+                if (
+                  la &&
+                  !allApps.some(
+                    (a) =>
+                      (a.id && a.id === la.id) ||
+                      (a.reference_no && a.reference_no === la.reference_no)
+                  )
+                ) {
+                  allApps.push(la)
+                }
+              }
+            }
+          } catch {}
+        }
+
+        const userMatchingApps = allApps.filter((a) =>
+          isMatchForService(a, typeParam)
+        )
+        const matchedApproved = userMatchingApps.find((a) => {
+          const s = String(a.status || "").toLowerCase()
+          return (
+            s === "approved" ||
+            s === "completed" ||
+            s === "for_release" ||
+            s === "released"
+          )
+        })
+        const matchedPending = userMatchingApps.find((a) => {
+          const s = String(a.status || "pending").toLowerCase()
+          return (
+            s === "pending" ||
+            s === "under_review" ||
+            s === "assessment" ||
+            s === "for_assessment"
+          )
+        })
+
+        if (isMounted && !bypassedBlockRef.current) {
+          if (matchedApproved) {
+            setIsBlocked(true)
+            setBlockedApp(matchedApproved)
+          } else if (matchedPending) {
+            setIsBlocked(true)
+            setBlockedApp(matchedPending)
+          } else {
+            setIsBlocked(false)
+            setBlockedApp(null)
+          }
+        }
+      } catch (err) {
+        console.warn("AICS Active check offline/skipped:", err)
+      }
+    }
+
+    checkActiveApp()
+    const pollInterval = setInterval(checkActiveApp, 2000)
+
+    const handleUpdated = () => checkActiveApp()
+    window.addEventListener("aics_applications_updated", handleUpdated)
+    window.addEventListener("aics_application_submitted", handleUpdated)
+    window.addEventListener("applications_updated", handleUpdated)
+    window.addEventListener("financial_disbursements_updated", handleUpdated)
+    window.addEventListener("storage", handleUpdated)
+
+    return () => {
+      isMounted = false
+      clearInterval(pollInterval)
+      window.removeEventListener("aics_applications_updated", handleUpdated)
+      window.removeEventListener("aics_application_submitted", handleUpdated)
+      window.removeEventListener("applications_updated", handleUpdated)
+      window.removeEventListener("financial_disbursements_updated", handleUpdated)
+      window.removeEventListener("storage", handleUpdated)
+    }
+  }, [typeParam])
+
+  if (isBlocked && !bypassedBlock) {
+    const isAppApproved =
+      String(blockedApp?.status || "").toLowerCase() === "approved" ||
+      String(blockedApp?.status || "").toLowerCase() === "completed" ||
+      String(blockedApp?.status || "").toLowerCase() === "for_release" ||
+      String(blockedApp?.status || "").toLowerCase() === "released"
+    const displayRef =
+      blockedApp?.reference_no ||
+      blockedApp?.reference_number ||
+      blockedApp?.referenceNumber ||
+      blockedApp?.qc_id ||
+      blockedApp?.id ||
+      getLoggedInUserQcid() ||
+      "110000635534129"
+    const displayDate =
+      blockedApp?.created_at ||
+      blockedApp?.submittedAt ||
+      blockedApp?.dateSubmitted
+        ? new Date(
+            blockedApp.created_at ||
+              blockedApp.submittedAt ||
+              blockedApp.dateSubmitted
+          ).toLocaleDateString("en-PH", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : new Date().toLocaleDateString("en-PH", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+
+    return (
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150 py-8">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div
+            className={`h-16 w-16 rounded-2xl flex items-center justify-center ${
+              isAppApproved
+                ? "bg-emerald-500/10 text-emerald-600"
+                : "bg-amber-500/10 text-amber-500"
+            }`}
+          >
+            {isAppApproved ? (
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            ) : (
+              <Info className="h-8 w-8 text-amber-500" />
+            )}
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              {isAppApproved
+                ? "Application Approved"
+                : "You Have an Active Application"}
+            </h2>
+            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+              {isAppApproved
+                ? `Your application for ${selectedConfig.title} has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications.`
+                : `Your application for ${selectedConfig.title} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.`}
+            </p>
+          </div>
+
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">
+                Application Reference No.:
+              </span>
+              <span className="font-mono font-bold text-blue-600">
+                {displayRef}
+              </span>
+            </div>
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">Status:</span>
+              {isAppApproved ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Approved
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Under Review (Pending)
+                </span>
+              )}
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">Date Filed:</span>
+              <span className="font-semibold text-gray-700">{displayDate}</span>
+            </div>
+          </div>
+
+          <div className="w-full pt-2 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/financial-aid"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              VIEW IN FINANCIAL AID / MY APPLICATIONS
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                bypassedBlockRef.current = true
+                setBypassedBlock(true)
+                setIsBlocked(false)
+                setBlockedApp(null)
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Submit Another Application (Apply Again)
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (
+    typeParam === "material" ||
+    typeParam === "food" ||
+    typeParam === "transportation"
+  ) {
     return (
       <div className="py-2">
         <AICSServiceWizard
