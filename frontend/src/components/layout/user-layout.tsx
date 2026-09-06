@@ -551,60 +551,93 @@ function ResidentHeader({
           } catch {}
         }
 
-        // ---- PWD & Senior Citizen (Only for this user) ----
+        // ---- PWD & Senior Citizen (API + LocalStorage for this user) ----
         try {
+          let pwdSeniorList: any[] = []
+          try {
+            const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+            if (res.ok) {
+              const data = await res.json()
+              if (Array.isArray(data)) pwdSeniorList = data
+            }
+          } catch {}
+
           const storedPwd = localStorage.getItem("pwd_senior_applications")
           if (storedPwd) {
             const parsedPwd = JSON.parse(storedPwd)
             if (Array.isArray(parsedPwd)) {
-              const userPwdApps = parsedPwd.filter(
-                (app: any) =>
-                  (app.qcid === userQcId || app.qcId === userQcId || (userEmail && (app.email || "").toLowerCase() === userEmail)) &&
-                  (app.status === "approved" || app.status === "rejected") &&
-                  !dismissedIds.includes(`pwd-${app.id}-${app.status}`)
-              )
-              userPwdApps.forEach((app: any) => {
-                const notifId = `pwd-${app.id}-${app.status}`
-                const isApproved = app.status === "approved"
-                const isSenior = (app.category || "").toLowerCase().includes("senior")
-                const isRenewal = app.type === "renewal"
-                const isLoss = app.type === "replacement" || app.type === "loss"
-
-                let title = ""
-                if (isSenior) {
-                  if (isApproved) {
-                    title = isRenewal
-                      ? (t("notifSeniorRenewalApprovedTitle") || "Senior Citizen ID Application (Renewal): Approved")
-                      : isLoss
-                      ? (t("notifSeniorReplacementApprovedTitle") || "Senior Citizen ID Application (Replacement): Approved")
-                      : (t("notifSeniorApprovedTitle") || "Senior Citizen ID Application: Approved")
-                  } else {
-                    title = t("notifSeniorRejectedTitle") || "Senior Citizen ID Application: Not Approved"
-                  }
-                } else {
-                  if (isApproved) {
-                    title = isRenewal
-                      ? (t("notifPwdRenewalApprovedTitle") || "PWD ID Application (Renewal): Approved")
-                      : isLoss
-                      ? (t("notifPwdReplacementApprovedTitle") || "PWD ID Application (Replacement): Approved")
-                      : (t("notifPwdApprovedTitle") || "PWD ID Application: Approved")
-                  } else {
-                    title = t("notifPwdRejectedTitle") || "PWD ID Application: Not Approved"
-                  }
+              parsedPwd.forEach((p: any) => {
+                if (!pwdSeniorList.some((pl) => (pl.id && pl.id === p.id) || (pl.referenceNumber && pl.referenceNumber === p.referenceNumber))) {
+                  pwdSeniorList.push(p)
                 }
+              })
+            }
+          }
 
-                const serviceLabel = isSenior
-                  ? `${t("seniorCitizenServices") || "Senior Citizen Services"} (${isRenewal ? (t("renewal") || "Renewal") : isLoss ? (t("replacement") || "Replacement") : (t("newApplication") || "New Application")})`
-                  : `${t("pwdServices") || "PWD Services"} (${isRenewal ? (t("renewal") || "Renewal") : isLoss ? (t("replacement") || "Replacement") : (t("newApplication") || "New Application")})`
+          const userPwdApps = pwdSeniorList.filter(
+            (app: any) =>
+              (app.qcid === userQcId || app.qcId === userQcId || app.referenceNumber === userQcId || app.reference_number === userQcId || (userEmail && (app.email || "").toLowerCase() === userEmail)) &&
+              (app.status === "approved" || app.status === "rejected" || app.status === "completed" || app.status === "for_release") &&
+              !dismissedIds.includes(`pwd-${app.id || app.referenceNumber}-${app.status}`)
+          )
 
-                items.push({
-                  id: notifId,
-                  title,
-                  desc: `${serviceLabel} — Ref: ${app.assignedIdNumber || app.referenceNumber || app.id}`,
-                  time: new Date(app.approvedDate || app.submittedAt || app.submissionDate || Date.now()).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
-                  unread: !readIds.includes(notifId),
-                  reason: app.rejectionReason || null,
-                })
+          userPwdApps.forEach((app: any) => {
+            const notifId = `pwd-${app.id || app.referenceNumber}-${app.status}`
+            const isApproved = app.status === "approved" || app.status === "completed" || app.status === "for_release"
+            const isSenior = (app.category || "").toLowerCase().includes("senior")
+            const isAssistance =
+              app.type === "assistance" ||
+              app.type === "social-assistance" ||
+              String(app.category || "").toLowerCase().includes("assistance") ||
+              String(app.service || "").toLowerCase().includes("assistance") ||
+              String(app.assistanceType || "").toLowerCase().includes("assistance")
+            const isRenewal = app.type === "renewal"
+            const isLoss = app.type === "replacement" || app.type === "loss"
+
+            let title = ""
+            let serviceLabel = ""
+            if (isAssistance) {
+              serviceLabel = isSenior ? "Senior Citizen Social Assistance" : "PWD Social Assistance"
+              title = isApproved ? `${serviceLabel} Application: Approved` : `${serviceLabel} Application: Not Approved`
+            } else if (isSenior) {
+              serviceLabel = `Senior Citizen Services (${isRenewal ? "Renewal" : isLoss ? "Replacement" : "New Application"})`
+              title = isApproved
+                ? (isRenewal ? "Senior Citizen ID (Renewal): Approved" : isLoss ? "Senior Citizen ID (Replacement): Approved" : "Senior Citizen ID Application: Approved")
+                : "Senior Citizen ID Application: Not Approved"
+            } else {
+              serviceLabel = `PWD Services (${isRenewal ? "Renewal" : isLoss ? "Replacement" : "New Application"})`
+              title = isApproved
+                ? (isRenewal ? "PWD ID (Renewal): Approved" : isLoss ? "PWD ID (Replacement): Approved" : "PWD ID Application: Approved")
+                : "PWD ID Application: Not Approved"
+            }
+
+            items.push({
+              id: notifId,
+              title,
+              desc: `${serviceLabel} — Ref: ${app.assignedIdNumber || app.referenceNumber || app.reference_number || app.id}`,
+              time: new Date(app.approvedDate || app.submittedAt || app.submissionDate || Date.now()).toLocaleString("en-US"),
+              unread: !readIds.includes(notifId),
+              reason: app.rejectionReason || null,
+            })
+          })
+        } catch {}
+
+        // ---- General User Notifications & Disbursements Payouts ----
+        try {
+          const rawUserNotifs = localStorage.getItem("all_user_notifications")
+          if (rawUserNotifs) {
+            const parsedUserNotifs = JSON.parse(rawUserNotifs)
+            if (Array.isArray(parsedUserNotifs)) {
+              parsedUserNotifs.forEach((un: any) => {
+                if (!dismissedIds.includes(un.id) && !items.some((it) => it.id === un.id)) {
+                  items.push({
+                    id: un.id,
+                    title: un.title,
+                    desc: un.desc,
+                    time: un.time || new Date().toLocaleString("en-US"),
+                    unread: !readIds.includes(un.id),
+                  })
+                }
               })
             }
           }

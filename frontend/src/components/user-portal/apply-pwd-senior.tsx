@@ -213,6 +213,18 @@ export default function ApplyPWDSenior() {
     ? { label: "Replacement / Lost ID", color: "bg-orange-100 text-orange-700 border-orange-200" }
     : { label: t("badgeRenewal"), color: "bg-amber-100 text-amber-700 border-amber-200" }
 
+  const serviceCleanTitle = isSeniorMedicine
+    ? "Medicine Discount Booklet"
+    : isSeniorMovie
+    ? "Free Movie Booklet"
+    : isSeniorSocial
+    ? "Senior Citizen Social Assistance"
+    : isSeniorId
+    ? "Senior Citizen ID"
+    : isAssistance
+    ? "PWD Social Assistance"
+    : "PWD ID"
+
   const modalTitle = isSeniorMedicine
     ? t("seniorMedicineReqTitle")
     : isSeniorMovie
@@ -278,36 +290,36 @@ export default function ApplyPWDSenior() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {isAppApproved ? "Naaprubahan ang Inyong Aplikasyon (Application Approved)" : (t("hasPendingAppTitle") || "You Have an Active Application")}
+              {isAppApproved ? "Application Approved" : "You Have an Active Application"}
             </h2>
             <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
               {isAppApproved
-                ? `Ang inyong aplikasyon para sa ${modalTitle} ay opisyal nang naaprubahan! Maaari na ninyong tingnan ang inyong takdang iskedyul o release status.`
-                : (t("hasPendingAppDesc") ? t("hasPendingAppDesc").replace("{type}", modalTitle) : `Your application for ${modalTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.`)}
+                ? `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications.`
+                : `Your application for ${serviceCleanTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.`}
             </p>
           </div>
 
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">{t("appRefNoLabel") || "Application Reference No.:"}</span>
+              <span className="text-gray-500 font-medium">Application Reference No.:</span>
               <span className="font-mono font-bold text-blue-600">{displayRef}</span>
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
+              <span className="text-gray-500 font-medium">Status:</span>
               {isAppApproved ? (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Naaprubahan (Approved)
+                  Approved
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  {t("statusPendingBadge") || "• Under Review (Pending)"}
+                  Under Review (Pending)
                 </span>
               )}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
+              <span className="text-gray-500 font-medium">Date Filed:</span>
               <span className="font-semibold text-gray-700">
                 {displayDate}
               </span>
@@ -322,7 +334,7 @@ export default function ApplyPWDSenior() {
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              {isAssistance || isSeniorSocial ? "TINGNAN SA FINANCIAL AID / MY APPLICATIONS" : (t("viewMyApplications") || "VIEW IN MY APPLICATIONS")}
+              {isAssistance || isSeniorSocial ? "VIEW IN FINANCIAL AID / MY APPLICATIONS" : "VIEW IN MY APPLICATIONS"}
             </button>
             <button
               type="button"
@@ -333,7 +345,7 @@ export default function ApplyPWDSenior() {
               }}
               className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
             >
-              Mag-apply Muli / Buksan ang Form (Apply Again)
+              Submit Another Application (Apply Again)
             </button>
           </div>
         </div>
