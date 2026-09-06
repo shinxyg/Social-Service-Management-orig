@@ -591,6 +591,29 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     }
   }, [step, latestApprovedApp, initialIdStatus, bypassedBlock, onStepChange])
 
+  // Reset wizard to Step 1 whenever flow/type changes or an application becomes approved
+  useEffect(() => {
+    setStep(1)
+    setReturnToReview(false)
+    setAttemptedNext(false)
+    setShowConfirmModal(false)
+    setIsIdVerified(false)
+    setVerifyError(null)
+    setReasonForRenewal("")
+    setReasonForReplacement("")
+    setIsResident(false)
+    setHasDisability(false)
+    setIdStatus(initialIdStatus ?? null)
+  }, [initialIdStatus])
+
+  useEffect(() => {
+    if (latestApprovedApp) {
+      setStep(1)
+      setReturnToReview(false)
+      setAttemptedNext(false)
+    }
+  }, [latestApprovedApp?.id, latestApprovedApp?.status])
+
   const [isResident, setIsResident] = useState(false)
   const [hasDisability, setHasDisability] = useState(false)
   const [idStatus, setIdStatus] = useState<IdStatus>(initialIdStatus ?? null)
@@ -776,6 +799,8 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
           clearInterval(interval)
           setIsBlocked(true)
           setSubmitStatus("idle")
+          setStep(1)
+          setReturnToReview(false)
           return 0
         }
         return prev - 1

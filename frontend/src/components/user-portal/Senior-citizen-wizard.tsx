@@ -261,6 +261,28 @@ export default function SeniorCitizenApplicationWizard({
     }
   }, [step, latestApprovedApp, appFlow, onStepChange])
 
+  // Reset wizard to Step 1 whenever flow/type changes or an application becomes approved
+  useEffect(() => {
+    setStep(1)
+    setReturnToReview(false)
+    setAttemptedNext(false)
+    setIsIdVerified(false)
+    setVerifyError(null)
+    setReasonForRenewal("")
+    setReasonForReplacement("")
+    setIsResidencyChecked(false)
+    setIsAgeChecked(false)
+    setIsDeclarationChecked(false)
+  }, [initialIdStatus])
+
+  useEffect(() => {
+    if (latestApprovedApp) {
+      setStep(1)
+      setReturnToReview(false)
+      setAttemptedNext(false)
+    }
+  }, [latestApprovedApp?.id, latestApprovedApp?.status])
+
   // Step 1: Checklist state
   const [isResidencyChecked, setIsResidencyChecked] = useState(false)
   const [isAgeChecked, setIsAgeChecked] = useState(false)
@@ -788,6 +810,8 @@ export default function SeniorCitizenApplicationWizard({
       setReferenceNo(refNum)
       setIsSubmitting(false)
       setIsSubmitted(true)
+      setStep(1)
+      setReturnToReview(false)
     }, 1200)
   }
 
