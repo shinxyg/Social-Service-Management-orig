@@ -551,8 +551,7 @@ const canProceedPersonal = Boolean(
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
-          setIsBlocked(true)
-          setStep("form")
+          window.dispatchEvent(new CustomEvent("aics_applications_updated"))
           return 0
         }
         return prev - 1

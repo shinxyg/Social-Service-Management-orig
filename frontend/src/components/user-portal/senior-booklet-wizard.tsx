@@ -58,11 +58,6 @@ interface RequiredDoc {
   required: boolean
 }
 
-const MONTHS = [
-  "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
-  "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
-]
-
 function formatFileSize(bytes: number) {
   if (!bytes) return "0.0 KB"
   const kb = bytes / 1024
