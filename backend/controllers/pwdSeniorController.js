@@ -7,10 +7,12 @@ try {
 
 let sendPwdApprovalEmail = null;
 let sendSeniorCitizenApprovalEmail = null;
+let sendSeniorBookletApprovalEmail = null;
 try {
   const emailService = require('../services/emailService');
   sendPwdApprovalEmail = emailService.sendPwdApprovalEmail;
   sendSeniorCitizenApprovalEmail = emailService.sendSeniorCitizenApprovalEmail;
+  sendSeniorBookletApprovalEmail = emailService.sendSeniorBookletApprovalEmail;
 } catch {}
 
 // In-memory fallback if database table is initializing or offline
@@ -63,6 +65,7 @@ async function initPwdSeniorTable() {
       ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS blood_type VARCHAR(20);
       ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50);
       ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS existing_id_number VARCHAR(100);
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS existing_booklet_number VARCHAR(100);
       ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS reason_for_renewal TEXT;
       ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS reason_for_replacement TEXT;
       ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
@@ -167,6 +170,7 @@ exports.getAllApplications = async (req, res) => {
         bloodType: row.blood_type || extra.bloodType || '',
         nationality: row.nationality || extra.nationality || '',
         existingIdNumber: row.existing_id_number || extra.existingIdNumber || '',
+        existingBookletNumber: row.existing_booklet_number || extra.existingBookletNumber || extra.bookletNumber || '',
         reasonForRenewal: row.reason_for_renewal || extra.reasonForRenewal || '',
         reasonForReplacement: row.reason_for_replacement || extra.reasonForReplacement || '',
         pobCity: extra.pobCity || extra.placeOfBirthCity || '',
@@ -263,6 +267,7 @@ exports.createApplication = async (req, res) => {
       bloodType: body.bloodType || '',
       nationality: body.nationality || '',
       existingIdNumber: body.existingIdNumber || '',
+      existingBookletNumber: body.existingBookletNumber || body.bookletNumber || '',
       reasonForRenewal: body.reasonForRenewal || '',
       reasonForReplacement: body.reasonForReplacement || '',
     };
@@ -280,11 +285,11 @@ exports.createApplication = async (req, res) => {
           emergency_first_name, emergency_last_name, emergency_contact_person, emergency_contact_no,
           emergency_relationship, emergency_address, emergency_residential_address,
           house_no, street, barangay, city, blood_type, nationality, existing_id_number,
-          reason_for_renewal, reason_for_replacement, extra_data
+          existing_booklet_number, reason_for_renewal, reason_for_replacement, extra_data
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
           $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-          $31, $32, $33, $34, $35, $36, $37, $38
+          $31, $32, $33, $34, $35, $36, $37, $38, $39
         )`,
         [
           newApp.id,
@@ -322,6 +327,7 @@ exports.createApplication = async (req, res) => {
           newApp.bloodType,
           newApp.nationality,
           newApp.existingIdNumber,
+          newApp.existingBookletNumber,
           newApp.reasonForRenewal,
           newApp.reasonForReplacement,
           JSON.stringify(body),
@@ -368,9 +374,55 @@ exports.createApplication = async (req, res) => {
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, assignedIdNumber, approvedBy, approvedDate, rejectionReason } = req.body;
+    let { status, assignedIdNumber, approvedBy, approvedDate, rejectionReason } = req.body;
 
     let targetApp = null;
+    try {
+      const q = await db.query(
+        `SELECT * FROM pwd_senior_applications WHERE reference_number = $1 OR id::text = $1`,
+        [id]
+      );
+      if (q.rows.length > 0) {
+        targetApp = q.rows[0];
+      }
+    } catch (_) {}
+
+    if (!targetApp) {
+      targetApp = memoryApplications.find((a) => a.id === id || a.referenceNumber === id || a.reference_number === id);
+    }
+
+    const refNo = targetApp?.reference_number || targetApp?.referenceNumber || id;
+    const fullName = targetApp ? [
+      targetApp.first_name || targetApp.firstName,
+      targetApp.middle_name || targetApp.middleName,
+      targetApp.last_name || targetApp.lastName,
+      targetApp.suffix
+    ].filter(Boolean).join(' ').trim().toUpperCase() : 'BENEFICIARY';
+    const isPwd = String(targetApp?.category || '').toUpperCase().includes('PWD');
+    const appType = String(targetApp?.type || '').toLowerCase();
+    const isAssistance = appType === 'assistance' || appType === 'social-assistance' || String(targetApp?.category || '').toLowerCase().includes('assistance') || String(targetApp?.service || '').toLowerCase().includes('assistance') || String(targetApp?.disability_class || '').toLowerCase().includes('assistance') || String(targetApp?.disabilityClass || '').toLowerCase().includes('assistance');
+    const isSeniorBooklet = !isPwd && (
+      appType === 'medicine-booklet' ||
+      appType === 'movie-booklet' ||
+      String(targetApp?.type || '').toLowerCase().includes('booklet') ||
+      String(targetApp?.category || '').toLowerCase().includes('booklet')
+    );
+    const isMovieBooklet = isSeniorBooklet && (
+      appType === 'movie-booklet' ||
+      String(targetApp?.type || '').toLowerCase().includes('movie')
+    );
+
+    // If approving a booklet application, ensure a distinct booklet number format (MB-2026-XXXXXX / MV-2026-XXXXXX)
+    if (status === 'approved' && isSeniorBooklet) {
+      if (!assignedIdNumber || (!assignedIdNumber.startsWith('MB-') && !assignedIdNumber.startsWith('MV-'))) {
+        const prefix = isMovieBooklet ? 'MV' : 'MB';
+        const year = new Date().getFullYear();
+        const cleanDigits = String(refNo).replace(/\D/g, '');
+        const seq = cleanDigits.length >= 6 ? cleanDigits.slice(-6) : String(Math.floor(100000 + Math.random() * 900000));
+        assignedIdNumber = `${prefix}-${year}-${seq}`;
+      }
+    }
+
     try {
       const q = await db.query(
         `UPDATE pwd_senior_applications
@@ -400,21 +452,6 @@ exports.updateApplicationStatus = async (req, res) => {
         return app;
       });
     }
-
-    if (!targetApp) {
-      targetApp = memoryApplications.find((a) => a.id === id || a.referenceNumber === id || a.reference_number === id);
-    }
-
-    const refNo = targetApp?.reference_number || targetApp?.referenceNumber || id;
-    const fullName = targetApp ? [
-      targetApp.first_name || targetApp.firstName,
-      targetApp.middle_name || targetApp.middleName,
-      targetApp.last_name || targetApp.lastName,
-      targetApp.suffix
-    ].filter(Boolean).join(' ').trim().toUpperCase() : 'BENEFICIARY';
-    const isPwd = String(targetApp?.category || '').toUpperCase().includes('PWD');
-    const appType = String(targetApp?.type || '').toLowerCase();
-    const isAssistance = appType === 'assistance' || appType === 'social-assistance' || String(targetApp?.category || '').toLowerCase().includes('assistance') || String(targetApp?.service || '').toLowerCase().includes('assistance') || String(targetApp?.disability_class || '').toLowerCase().includes('assistance') || String(targetApp?.disabilityClass || '').toLowerCase().includes('assistance');
 
     if (status === 'approved') {
       if (isAssistance) {
@@ -463,17 +500,33 @@ exports.updateApplicationStatus = async (req, res) => {
           console.warn('Could not insert financial disbursement for PWD/Senior:', e.message);
         }
       } else {
-        // For ID card issuance, remove any existing appointment or disbursement
+        // For ID / Booklet card issuance, remove any existing appointment or disbursement
         try {
           await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [refNo]);
           await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref = $1`, [refNo]);
         } catch (_) {}
       }
 
-      // 3. Directly dispatch generated Official ID Email to Gmail
+      // 3. Directly dispatch generated Official ID / Booklet Email to Gmail
       const targetEmail = targetApp?.email || targetApp?.contact_email;
       if (targetEmail && targetEmail.includes('@')) {
-        if (!isPwd) {
+        if (isSeniorBooklet) {
+          // Senior Citizen Booklet (Medicine / Movie)
+          if (sendSeniorBookletApprovalEmail) {
+            sendSeniorBookletApprovalEmail({
+              recipientEmail: targetEmail,
+              recipientName: fullName,
+              bookletNumber: assignedIdNumber,
+              oscaIdNumber: targetApp?.existing_id_number || targetApp?.existingIdNumber || targetApp?.reference_number || targetApp?.referenceNumber,
+              referenceNumber: refNo,
+              bookletType: isMovieBooklet ? 'movie' : 'medicine',
+              applicationType: appType === 'renewal' ? 'Renewal' : appType === 'replacement' || appType === 'loss' ? 'Replacement' : 'Bagong Booklet',
+              approvedDate: approvedDate || new Date().toISOString(),
+              contactNumber: targetApp?.contact_no || targetApp?.contactNo || targetApp?.cellphoneNo,
+              address: targetApp?.address,
+            }).catch((err) => console.warn('[Email Error] Failed to send Senior Booklet approval email:', err.message));
+          }
+        } else if (!isPwd) {
           // Senior Citizen ID
           if (sendSeniorCitizenApprovalEmail) {
             sendSeniorCitizenApprovalEmail({
@@ -520,7 +573,7 @@ exports.updateApplicationStatus = async (req, res) => {
         module: 'PWD & Senior Citizen',
         referenceNo: assignedIdNumber || refNo,
         subject: `${status === 'approved' ? 'Approved' : 'Rejected'} PWD/Senior Application`,
-        detail: status === 'approved' ? `Official ID: ${assignedIdNumber || 'Assigned'}` : (rejectionReason || 'Requirements not met'),
+        detail: status === 'approved' ? (isSeniorBooklet ? `Official Booklet: ${assignedIdNumber}` : `Official ID: ${assignedIdNumber || 'Assigned'}`) : (rejectionReason || 'Requirements not met'),
       });
     }
 

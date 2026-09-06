@@ -9,6 +9,9 @@ export interface LoggedInUserProfile {
   birthMonth?: string
   birthDay?: string
   birthYear?: string
+  dobMonth?: string
+  dobDay?: string
+  dobYear?: string
   birthDate?: string
   birthDateIso?: string
   birthDateDisplay?: string
@@ -17,9 +20,15 @@ export interface LoggedInUserProfile {
   barangay?: string
   street?: string
   houseNo?: string
+  addressHouseNo?: string
+  addressStreet?: string
+  addressBarangay?: string
+  addressCityMunicipality?: string
+  addressCity?: string
   workingInQC?: string
   occupation?: string
   sex?: string
+  gender?: string
   civilStatus?: string
   mobileNumber?: string
   contactNo?: string
@@ -28,6 +37,11 @@ export interface LoggedInUserProfile {
   qcidNumber: string
   role?: string
   profilePhotoUrl?: string | null
+  nationality?: string
+  emergencyFirstName?: string
+  emergencyLastName?: string
+  emergencyContactNo?: string
+  emergencyRelationship?: string
 }
 
 export function getCurrentUser(): any {

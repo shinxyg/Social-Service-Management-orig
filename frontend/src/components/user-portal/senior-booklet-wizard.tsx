@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { useLanguage } from "../ui/language-context"
+import { API_BASE } from "../../config/api"
 
 export interface UserProfile {
   qcidNo?: string
@@ -63,6 +64,18 @@ function formatFileSize(bytes: number) {
   const kb = bytes / 1024
   if (kb < 1024) return `${kb.toFixed(1)} KB`
   return `${(kb / 1024).toFixed(1)} MB`
+}
+
+function formatSeniorId(val: string): string {
+  const digits = val
+    .replace(/^(SENIOR|OSCA)-?/i, "")
+    .replace(/^(SENIOR|OSCA)\s*-\s*/i, "")
+    .replace(/\D/g, "")
+    .slice(0, 16)
+  if (!digits) return ""
+  if (digits.length <= 6) return digits
+  if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
+  return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10, 16)}`
 }
 
 export default function SeniorBookletWizard({
@@ -327,14 +340,171 @@ export default function SeniorBookletWizard({
     })
   }
 
-  const handleVerifyId = () => {
-    if (!oscaIdInput.trim()) return
+  const [detectedPreviousBooklet, setDetectedPreviousBooklet] = useState<string | null>(null)
+
+  useEffect(() => {
+    const checkPreviousBooklet = async () => {
+      try {
+        let allApps: any[] = []
+        try {
+          const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+          if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data)) allApps = data
+          }
+        } catch {}
+
+        try {
+          const local = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+          if (Array.isArray(local)) allApps = [...allApps, ...local]
+        } catch {}
+
+        const userEmail = (userProfile?.email || formData.emailAddress || "").toLowerCase().trim()
+        const currentQcid = (userProfile?.qcidNo || formData.qcidNo || "").trim()
+
+        const found = allApps.find((a) => {
+          const appType = String(a.type || "").toLowerCase()
+          const isTargetType = isMedicine
+            ? appType === "medicine-booklet" || String(a.category || "").toLowerCase().includes("medicine")
+            : appType === "movie-booklet" || String(a.category || "").toLowerCase().includes("movie")
+          if (!isTargetType) return false
+          if (a.status !== "approved" && a.status !== "completed") return false
+
+          const aEmail = String(a.email || "").toLowerCase().trim()
+          const aRef = String(a.referenceNumber || a.reference_number || "").trim()
+          const aQcid = String(a.qcid || a.qc_id || "").trim()
+
+          return (userEmail && aEmail === userEmail) || (currentQcid && (aRef.includes(currentQcid) || aQcid === currentQcid))
+        })
+
+        if (found && (found.assignedIdNumber || found.assigned_id_number)) {
+          const num = found.assignedIdNumber || found.assigned_id_number
+          setDetectedPreviousBooklet(num)
+        }
+      } catch {}
+    }
+
+    checkPreviousBooklet()
+  }, [isMedicine, userProfile, formData.emailAddress, formData.qcidNo])
+
+  const [verifyError, setVerifyError] = useState<string | null>(null)
+  const [verifiedSeniorName, setVerifiedSeniorName] = useState<string>("")
+
+  const handleVerifyId = async () => {
+    setVerifyError(null)
+    const typed = (oscaIdInput || "").trim()
+    const cleanDigits = typed.replace(/\D/g, "")
+
+    // Exact length check: must have exactly 16 digits (e.g. 137404-2026-516915)
+    if (cleanDigits.length !== 16) {
+      setIsIdVerified(false)
+      setVerifyError(
+        "Kulang o labis ang Senior Citizen ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-516915)."
+      )
+      return
+    }
+
     setIsVerifying(true)
-    setTimeout(() => {
+    try {
+      let allApps: any[] = []
+      try {
+        const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data)) allApps = data
+        }
+      } catch {}
+
+      const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
+      for (const k of localKeys) {
+        try {
+          const local = JSON.parse(localStorage.getItem(k) || "[]")
+          if (Array.isArray(local)) {
+            for (const la of local) {
+              if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
+                allApps.push(la)
+              }
+            }
+          }
+        } catch {}
+      }
+
+      const cleanTypedNormalized = cleanDigits
+      const userProfileQcidDigits = (userProfile?.qcidNo || formData.qcidNo || "").replace(/\D/g, "")
+
+      // Strict match: Look for Senior Citizen record where assignedIdNumber or referenceNumber matches EXACTLY
+      const matchedApp = allApps.find((a) => {
+        if (!a) return false
+        const cat = String(a.category || a.service || "").toUpperCase()
+        const isSenior = cat.includes("SENIOR") || cat === "SENIOR CITIZEN" || String(a.service || "").toLowerCase().includes("senior")
+        if (!isSenior) return false
+
+        const assignedDigits = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/\D/g, "")
+        const refDigits = String(a.referenceNumber || a.reference_number || "").replace(/\D/g, "")
+
+        // EXACT 16-digit match
+        const matchAssigned = assignedDigits.length >= 16 && (assignedDigits === cleanTypedNormalized || assignedDigits.endsWith(cleanTypedNormalized))
+        const matchRef = refDigits.length >= 16 && (refDigits === cleanTypedNormalized || refDigits.endsWith(cleanTypedNormalized))
+
+        return Boolean(matchAssigned || matchRef)
+      })
+
+      const isProfileMatch = (userProfileQcidDigits.length >= 16 && userProfileQcidDigits === cleanTypedNormalized) ||
+        (userProfile && String((userProfile as any).seniorIdNumber || "").replace(/\D/g, "") === cleanTypedNormalized)
+
+      if (matchedApp) {
+        const foundName = [
+          matchedApp.firstName || matchedApp.first_name,
+          matchedApp.middleName || matchedApp.middle_name,
+          matchedApp.lastName || matchedApp.last_name,
+          matchedApp.suffix
+        ].filter(Boolean).join(" ").trim().toUpperCase()
+
+        setIsIdVerified(true)
+        setVerifyError(null)
+        setVerifiedSeniorName(foundName || [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase())
+      } else if (isProfileMatch) {
+        const profileName = [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase()
+        setIsIdVerified(true)
+        setVerifyError(null)
+        setVerifiedSeniorName(profileName || "SENIOR CITIZEN BENEFICIARY")
+      } else {
+        // STRICT ERROR: Even changing a single digit fails!
+        setIsIdVerified(false)
+        setVerifyError(
+          `Hindi natagpuan ang Senior Citizen ID (${typed}). Pakisuri ang opisyal na ID Number na natanggap sa inyong email o na-isyung Senior ID card.`
+        )
+      }
+    } catch (err) {
+      console.warn("Error verifying Senior ID:", err)
+      setIsIdVerified(false)
+      setVerifyError("Nagkaroon ng aberya sa pagsusuri ng Senior ID. Pakisubukang muli.")
+    } finally {
       setIsVerifying(false)
-      setIsIdVerified(true)
-    }, 600)
+    }
   }
+
+  // Booklet Number validation against QCID / OSCA ID
+  const cleanOscaId = (oscaIdInput || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+  const cleanQcid = (formData.qcidNo || userProfile?.qcidNo || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+  const cleanBooklet = (bookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+
+  const isBookletSameAsId = Boolean(
+    cleanBooklet && (
+      cleanBooklet === cleanOscaId ||
+      cleanBooklet === cleanQcid ||
+      (cleanOscaId.length >= 6 && cleanBooklet.includes(cleanOscaId)) ||
+      (cleanQcid.length >= 6 && cleanBooklet.includes(cleanQcid))
+    )
+  )
+
+  const isBookletFormatValid = Boolean(
+    cleanBooklet &&
+    cleanBooklet.length >= 4 &&
+    !isBookletSameAsId
+  )
+
+  const isExistingBookletValid = hasPriorBooklet === "no" || (bookletNumber.trim() !== "" && isBookletFormatValid && !isBookletSameAsId)
 
   // Step validations
   const isStep1Valid =
@@ -344,7 +514,7 @@ export default function SeniorBookletWizard({
     hasPriorBooklet !== "" &&
     oscaIdInput.trim() !== "" &&
     isIdVerified &&
-    (hasPriorBooklet === "no" || bookletNumber.trim() !== "")
+    isExistingBookletValid
 
   const isStep2Valid =
     formData.firstName.trim() !== "" &&
@@ -389,19 +559,82 @@ export default function SeniorBookletWizard({
   }
 
   // Submits after modal confirmation
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
     setShowConfirmModal(false)
     setIsSubmitting(true)
+
+    const qcid = userProfile?.qcidNo || formData.qcidNo || "110000116932100"
+    const refNum = oscaIdInput.trim() || qcid
+    const appId = `APP-SNR-BK-${Date.now()}`
+    const subDate = new Date().toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+
+    const newApp = {
+      id: appId,
+      referenceNumber: refNum,
+      category: "Senior Citizen",
+      type: isMedicine ? "medicine-booklet" : "movie-booklet",
+      applicationType,
+      existingIdNumber: oscaIdInput.trim(),
+      existingBookletNumber: bookletNumber.trim(),
+      reasonForRenewal: applicationType === "renewal" ? renewalReason : undefined,
+      reasonForReplacement: applicationType === "replacement" ? replacementReason : undefined,
+      firstName: formData.firstName,
+      middleName: formData.middleName,
+      lastName: formData.lastName,
+      suffix: formData.suffix,
+      dateOfBirth: `${formData.dobYear}-${formData.dobMonth.padStart(2, "0")}-${formData.dobDay.padStart(2, "0")}`,
+      age: formData.age,
+      sex: formData.sex,
+      civilStatus: formData.civilStatus,
+      contactNo: formData.contactNumber,
+      cellphoneNo: formData.contactNumber,
+      email: formData.emailAddress,
+      address: `${formData.addressHouseNo} ${formData.addressStreet}, ${formData.addressBarangay}, ${formData.addressCity}`,
+      houseNo: formData.addressHouseNo,
+      street: formData.addressStreet,
+      barangay: formData.addressBarangay,
+      city: formData.addressCity,
+      emergencyFirstName: formData.emergencyFirstName,
+      emergencyLastName: formData.emergencyLastName,
+      emergencyContactNo: formData.emergencyContactNo,
+      emergencyRelationship: formData.emergencyRelationship,
+      status: "pending",
+      submittedAt: new Date().toISOString(),
+      documents: Object.entries(uploadedFiles).map(([id, file]) => ({
+        id,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uploadedAt: new Date().toISOString(),
+      })),
+    }
+
+    try {
+      // 1. Save to localStorage
+      const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+      localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing]))
+
+      // 2. Submit to backend API
+      await fetch(`${API_BASE}/api/pwd-senior/applications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newApp),
+      })
+    } catch (err) {
+      console.warn("Failed saving application to backend API:", err)
+    }
+
+    // Trigger storage and update events
+    window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+    window.dispatchEvent(new Event("storage"))
+
     setTimeout(() => {
-      const qcid = userProfile?.qcidNo || "110000116932100"
-      setReferenceNumber(qcid)
-      setSubmissionDate(
-        new Date().toLocaleDateString("en-PH", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      )
+      setReferenceNumber(refNum)
+      setSubmissionDate(subDate)
       setIsSubmitting(false)
       setSubmitted(true)
     }, 1000)
@@ -589,10 +822,10 @@ export default function SeniorBookletWizard({
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
                 <div>
                   <p className="text-sm font-semibold text-blue-900">
-                    {title.toUpperCase()} — PRIMARY REQUIREMENTS
+                    {t("seniorBookletAlertTitle", { title: title.toUpperCase() }) || `${title.toUpperCase()} — PRIMARY REQUIREMENTS`}
                   </p>
                   <p className="text-xs text-blue-700 mt-0.5">
-                    Kumpletuhin ang mga pangunahing kwalipikasyon at ihanda ang inyong Senior Citizen / OSCA ID upang makapag-apply.
+                    {t("seniorBookletAlertDesc") || "Complete the primary qualifications and prepare your Senior Citizen / OSCA ID to apply."}
                   </p>
                 </div>
               </div>
@@ -675,14 +908,18 @@ export default function SeniorBookletWizard({
                         type="text"
                         value={oscaIdInput}
                         onChange={(e) => {
-                          const val = e.target.value.toUpperCase()
-                          setOscaIdInput(val)
+                          const formatted = formatSeniorId(e.target.value)
+                          setOscaIdInput(formatted)
                           setIsIdVerified(false)
+                          setVerifyError(null)
                         }}
-                        placeholder="Enter OSCA ID Number"
+                        placeholder="137404-2026-516915"
+                        maxLength={18}
                         className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none font-mono transition-all ${
                           isIdVerified
                             ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
+                            : verifyError
+                            ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
                             : "border-gray-300 bg-white focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                         }`}
                       />
@@ -712,55 +949,131 @@ export default function SeniorBookletWizard({
                       </button>
                     </div>
 
+                    {verifyError && (
+                      <div className="border border-red-200 bg-red-50 rounded-lg p-3 flex items-start gap-2.5 text-xs text-red-800 max-w-md mt-2 animate-in fade-in">
+                        <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold">Hindi Matanggap ang ID Number</p>
+                          <p className="mt-0.5 text-red-700">{verifyError}</p>
+                        </div>
+                      </div>
+                    )}
+
                     {isIdVerified && (
-                      <div className="border border-emerald-200 bg-emerald-50 rounded-lg p-3 flex items-center gap-2.5 text-xs font-semibold text-emerald-800 max-w-md mt-2">
+                      <div className="border border-emerald-200 bg-emerald-50 rounded-lg p-3 flex items-center gap-2.5 text-xs font-semibold text-emerald-800 max-w-md mt-2 animate-in fade-in">
                         <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Senior Citizen Record Found: {[userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ") || "CLARISA MAE GALIAS DIMAL"}</span>
+                        <span>Senior Citizen Record Found: {verifiedSeniorName || [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ") || "CLARISA MAE GALIAS DIMAL"}</span>
                       </div>
                     )}
                   </div>
 
                   {hasPriorBooklet === "yes" && isIdVerified && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">
-                          Existing Booklet Number *
-                        </label>
-                        <input
-                          type="text"
-                          value={bookletNumber}
-                          onChange={(e) => setBookletNumber(e.target.value)}
-                          placeholder="MB-XXXXXX"
-                          className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6] font-mono"
-                        />
+                    <div className="space-y-3 max-w-md">
+                      {/* Detected Previous Booklet Helper */}
+                      {detectedPreviousBooklet && (
+                        <div className="p-3 rounded-lg border border-sky-200 bg-sky-50 text-xs text-sky-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-sky-600 shrink-0" />
+                            <span>
+                              Nakitang Booklet Record sa Gmail: <strong className="font-mono text-sky-800 font-bold">{detectedPreviousBooklet}</strong>
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setBookletNumber(detectedPreviousBooklet)}
+                            className="px-2.5 py-1 rounded-md bg-sky-600 hover:bg-sky-700 text-white font-bold text-[11px] transition-colors cursor-pointer shrink-0 shadow-xs"
+                          >
+                            Gamitin ang Booklet Number
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-xs font-semibold text-gray-700 uppercase">
+                              Existing Booklet Number *
+                            </label>
+                            {bookletNumber.trim() && (
+                              isBookletSameAsId ? (
+                                <span className="text-[10px] font-bold text-red-600 flex items-center gap-0.5">
+                                  <X className="w-3 h-3" /> Bawal: Same as ID
+                                </span>
+                              ) : isBookletFormatValid ? (
+                                <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
+                                  <Check className="w-3 h-3" /> Valid Booklet
+                                </span>
+                              ) : null
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            value={bookletNumber}
+                            onChange={(e) => setBookletNumber(e.target.value.toUpperCase())}
+                            placeholder={isMedicine ? "MB-2026-XXXXXX" : "MV-2026-XXXXXX"}
+                            className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 outline-none font-mono transition-all ${
+                              bookletNumber.trim()
+                                ? isBookletSameAsId
+                                  ? "border-red-500 bg-red-50/40 ring-2 ring-red-500/20 text-red-900"
+                                  : isBookletFormatValid
+                                  ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
+                                  : "border-amber-400 bg-amber-50/20"
+                                : attemptedNext
+                                ? "border-red-500 bg-red-50/20"
+                                : "border-gray-300 bg-white focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase">
+                            Reason *
+                          </label>
+                          <select
+                            value={applicationType === "renewal" ? renewalReason : replacementReason}
+                            onChange={(e) => {
+                              if (applicationType === "renewal") setRenewalReason(e.target.value)
+                              else setReplacementReason(e.target.value)
+                            }}
+                            className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                          >
+                            {applicationType === "renewal" ? (
+                              <>
+                                <option value="Booklet pages are full">Booklet pages are full</option>
+                                <option value="Renewal due">Renewal due</option>
+                                <option value="Other">Other</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="Lost">Lost</option>
+                                <option value="Damaged">Damaged / Torn</option>
+                                <option value="Stolen">Stolen</option>
+                              </>
+                            )}
+                          </select>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">
-                          Reason *
-                        </label>
-                        <select
-                          value={applicationType === "renewal" ? renewalReason : replacementReason}
-                          onChange={(e) => {
-                            if (applicationType === "renewal") setRenewalReason(e.target.value)
-                            else setReplacementReason(e.target.value)
-                          }}
-                          className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                        >
-                          {applicationType === "renewal" ? (
-                            <>
-                              <option value="Booklet pages are full">Booklet pages are full</option>
-                              <option value="Renewal due">Renewal due</option>
-                              <option value="Other">Other</option>
-                            </>
-                          ) : (
-                            <>
-                              <option value="Lost">Lost</option>
-                              <option value="Damaged">Damaged / Torn</option>
-                              <option value="Stolen">Stolen</option>
-                            </>
-                          )}
-                        </select>
-                      </div>
+
+                      {/* Validation & Information helper messages */}
+                      {isBookletSameAsId && (
+                        <div className="p-2.5 rounded-lg border border-red-200 bg-red-50 text-xs text-red-700 flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-bold">Hindi pwede ang parehong Numero:</p>
+                            <p className="text-[11px] mt-0.5 text-red-600">
+                              Ang Booklet Number ay hindi dapat kapareho ng inyong QCID o OSCA ID Number ({oscaIdInput || formData.qcidNo}). Tingnan ang inyong natatanging Booklet Number sa inyong lumang booklet o sa natanggap na email sa inyong Gmail.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {!isBookletSameAsId && (
+                        <p className="text-[11px] text-gray-500 flex items-center gap-1.5">
+                          <Info className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                          <span>
+                            Ang opisyal na Booklet Number ay matatagpuan sa inyong lumang booklet o sa confirmation email na ipinadala sa inyong Gmail (hal. <strong className="font-mono text-gray-700">{isMedicine ? "MB-2026-XXXXXX" : "MV-2026-XXXXXX"}</strong>).
+                          </span>
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

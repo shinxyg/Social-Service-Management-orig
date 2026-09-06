@@ -333,8 +333,9 @@ export default function SeniorCitizenApplicationWizard({
     const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
     const cleanDigits = typed.replace(/\D/g, "")
 
-    if (!cleanTyped || cleanDigits.length < 5) {
-      setVerifyError("Please enter your valid Senior Citizen ID number before verifying.")
+    if (cleanDigits.length !== 16) {
+      setVerifyError("Kulang o labis ang Senior Citizen ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-516915).")
+      setIsIdVerified(false)
       return
     }
 
@@ -342,7 +343,7 @@ export default function SeniorCitizenApplicationWizard({
     try {
       const apps = await fetchAllSeniorApps()
 
-      // Look for matching registered Senior Citizen record
+      // Look for matching registered Senior Citizen record with EXACT 16 digits
       const matchedApp = apps.find((a) => {
         if (!a) return false
         const cat = String(a.category || a.service || "").trim().toUpperCase()
@@ -351,31 +352,15 @@ export default function SeniorCitizenApplicationWizard({
 
         const assignedClean = String(a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const refClean = String(a.referenceNumber || a.reference_no || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const idClean = String(a.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const assignedDigits = String(a.assignedIdNumber || "").replace(/\D/g, "")
         const refDigits = String(a.referenceNumber || a.reference_no || "").replace(/\D/g, "")
 
-        const matchAssigned =
-          assignedClean !== "" &&
-          (cleanTyped === assignedClean ||
-           cleanTyped === `senior${assignedClean}` ||
-           `senior${cleanTyped}` === assignedClean ||
-           cleanTyped === `osca${assignedClean}` ||
-           `osca${cleanTyped}` === assignedClean ||
-           (cleanDigits.length >= 6 && assignedDigits.includes(cleanDigits)) ||
-           (assignedDigits.length >= 6 && cleanDigits.includes(assignedDigits)))
+        // STRICT EXACT MATCH: Must match full 16 digits exactly
+        const matchAssigned = assignedDigits.length >= 16 && (assignedDigits === cleanDigits || assignedDigits.endsWith(cleanDigits))
+        const matchRef = refDigits.length >= 16 && (refDigits === cleanDigits || refDigits.endsWith(cleanDigits))
+        const matchFullString = assignedClean === cleanTyped || refClean === cleanTyped
 
-        const matchRef =
-          refClean !== "" &&
-          (cleanTyped === refClean ||
-           cleanTyped === `senior${refClean}` ||
-           `senior${cleanTyped}` === refClean ||
-           (cleanDigits.length >= 6 && refDigits.includes(cleanDigits)) ||
-           (refDigits.length >= 6 && cleanDigits.includes(refDigits)))
-
-        const matchId = idClean !== "" && cleanTyped === idClean
-
-        return Boolean(matchAssigned || matchRef || matchId)
+        return Boolean(matchAssigned || matchRef || matchFullString)
       })
 
       if (matchedApp) {

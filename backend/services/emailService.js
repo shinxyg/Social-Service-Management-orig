@@ -666,8 +666,255 @@ async function sendSeniorCitizenApprovalEmail({
   };
 }
 
+/**
+ * Sends an official Senior Citizen Discount Booklet (Medicine / Movie) Approval email to the recipient.
+ */
+async function sendSeniorBookletApprovalEmail({
+  recipientEmail,
+  recipientName,
+  bookletNumber,
+  oscaIdNumber,
+  referenceNumber,
+  bookletType = 'medicine',
+  applicationType = 'Renewal',
+  approvedDate,
+  contactNumber,
+  address,
+}) {
+  if (!recipientEmail || !recipientEmail.includes('@')) {
+    console.warn(`[Mailer] Invalid recipient email for Senior Booklet: "${recipientEmail}". Skipped.`);
+    return { success: false, message: 'Invalid recipient email' };
+  }
+
+  const isMovie = String(bookletType).toLowerCase().includes('movie');
+  const bookletTitle = isMovie ? 'Free Movie Booklet' : 'Medicine Discount Booklet';
+  const bookletShort = isMovie ? 'Movie Booklet' : 'Medicine Booklet';
+  const generatedBookletNo = bookletNumber || (isMovie ? `MV-2026-${Math.floor(100000 + Math.random() * 900000)}` : `MB-2026-${Math.floor(100000 + Math.random() * 900000)}`);
+  const officialOscaId = oscaIdNumber || referenceNumber || '137484-2026-516915';
+
+  const dateStr = approvedDate
+    ? new Date(approvedDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+    : new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Gov Services - Official Senior Citizen ${bookletTitle} Issued</title>
+      <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+        .header { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); padding: 30px 24px; text-align: center; color: #ffffff; }
+        .header h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
+        .header p { margin: 6px 0 0; font-size: 13px; opacity: 0.95; }
+        .content { padding: 32px 24px; color: #1e293b; }
+        .badge { display: inline-block; background-color: #ecfdf5; color: #047857; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 9999px; border: 1px solid #a7f3d0; margin-bottom: 20px; }
+        .card { background: #f0f9ff; border: 2px dashed #7dd3fc; border-radius: 14px; padding: 24px; margin: 20px 0; }
+        .id-number-box { background: #ffffff; border: 2px solid #0284c7; border-radius: 10px; padding: 14px 16px; margin: 12px 0; text-align: center; box-shadow: 0 2px 8px rgba(2,132,199,0.12); }
+        .id-number-label { font-size: 11px; text-transform: uppercase; color: #0369a1; font-weight: 800; letter-spacing: 1px; }
+        .id-number-val { font-size: 24px; font-family: monospace; font-weight: 800; color: #0c4a6e; letter-spacing: 2px; margin-top: 4px; }
+        .id-number-sub { font-size: 11px; color: #64748b; margin-top: 4px; }
+        .button { display: block; width: 100%; text-align: center; background: #0284c7; color: #ffffff !important; padding: 14px 0; border-radius: 10px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 24px; box-shadow: 0 2px 6px rgba(2,132,199,0.3); }
+        .footer { background: #f8fafc; padding: 20px 24px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="Gov Services Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
+          <h1>Gov Services</h1>
+          <p>Office for Senior Citizens Affairs (OSCA) — Gov Services</p>
+        </div>
+
+        <div class="content">
+          <div style="text-align: center;">
+            <span class="badge">✓ OFFICIAL ${bookletTitle.toUpperCase()} ISSUED</span>
+          </div>
+
+          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Mabuhay, ${recipientName || 'Senior Citizen'}!</h2>
+          <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
+            Ang inyong aplikasyon para sa opisyal na <strong>${bookletTitle}</strong> ay matagumpay na <strong>NAAPRUBAHAN</strong> ng Office for Senior Citizens Affairs (OSCA).
+          </p>
+
+          <div class="card">
+            <div class="id-number-box">
+              <div class="id-number-label">OFFICIAL ${bookletShort.toUpperCase()} NUMBER</div>
+              <div class="id-number-val">${generatedBookletNo}</div>
+              <div class="id-number-sub">Bukod at natatanging Booklet Control Number para sa inyong rekord at renewal</div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 14px;">
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Pangalan ng May-ari:</td>
+                <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right; text-transform: uppercase;">${recipientName || '—'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Senior Citizen / OSCA ID No.:</td>
+                <td style="padding: 6px 0; color: #0f172a; font-family: monospace; font-weight: 700; text-align: right;">${officialOscaId}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Uri ng Serbisyo:</td>
+                <td style="padding: 6px 0; color: #0284c7; font-weight: 700; text-align: right;">${bookletTitle}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Uri ng Aplikasyon:</td>
+                <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right; text-transform: uppercase;">${applicationType}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Petsa ng Pagkaka-isyu:</td>
+                <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right;">${dateStr}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Katayuan:</td>
+                <td style="padding: 6px 0; color: #047857; font-weight: 800; text-align: right;">ACTIVE AND REGISTERED</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #166534; line-height: 1.5; margin-bottom: 16px;">
+            <strong>Paano Gamitin:</strong> ${
+              isMovie
+                ? 'Ipakita ang booklet number na ito kasama ang inyong opisyal na QC Senior Citizen ID sa mga sinehan sa Quezon City para sa libreng panonood.'
+                : 'Ipakita ang Booklet Number na ito kasama ang inyong Senior Citizen ID at reseta ng doktor sa mga botika/drugstore para sa 20% discount at VAT exemption alinsunod sa R.A. 9994.'
+            }
+          </div>
+
+          <div style="background: #eff6ff; border-left: 4px solid #0284c7; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #0369a1; line-height: 1.5;">
+            <strong>Mahalagang Paalala:</strong> I-save ang email na ito. Kung sakaling kailanganin mong mag-renew o mag-apply ng replacement sa hinaharap, gamitin ang Booklet Number (<strong>${generatedBookletNo}</strong>) na ito bilang inyong Existing Booklet Number.
+          </div>
+
+          <a href="https://frontend-production-1c51.up.railway.app/portal/my-applications" class="button" target="_blank">
+            TINGNAN ANG AKING MGA APLIKASYON
+          </a>
+        </div>
+
+        <div class="footer">
+          <p style="margin: 0 0 4px;">Ito ay opisyal na automated email notification mula sa Gov Services Portal.</p>
+          <p style="margin: 0;">Gov Services | Office for Senior Citizens Affairs (OSCA)</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // 1. PRIMARY: Direct Gmail SMTP
+  const transporter = createTransporter();
+  const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
+  const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
+  const attachments = getLogoAttachments();
+
+  const mailOptions = {
+    from: `"Gov Services (Senior Citizen Services)" <${senderEmail}>`,
+    to: recipientEmail.trim(),
+    subject: `[Gov Services] Official ${bookletTitle} Approved: ${generatedBookletNo}`,
+    text: `Mabuhay ${recipientName}! Ang inyong ${bookletTitle} ay naaprubahan na. Official Booklet Number: ${generatedBookletNo}. OSCA ID: ${officialOscaId}.`,
+    html: htmlContent,
+    attachments,
+  };
+
+  if (transporter) {
+    try {
+      console.log(`[Gmail SMTP 465] Dispatching Senior Booklet email to: ${recipientEmail}...`);
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`[Gmail SMTP 465] Successfully delivered Senior Booklet email to ${recipientEmail}. MessageId: ${info.messageId}`);
+      return { success: true, messageId: info.messageId, delivered: true, recipient: recipientEmail, provider: 'gmail-smtp-465' };
+    } catch (primaryErr) {
+      console.warn(`[Gmail SMTP 465 Failed] ${primaryErr.message}, attempting Port 587 STARTTLS...`);
+      try {
+        const fallbackTransporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: {
+            user: senderEmail,
+            pass: emailPass,
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        });
+        const info = await fallbackTransporter.sendMail(mailOptions);
+        console.log(`[Gmail SMTP 587] Successfully delivered Senior Booklet email to ${recipientEmail}. MessageId: ${info.messageId}`);
+        return { success: true, messageId: info.messageId, delivered: true, recipient: recipientEmail, provider: 'gmail-smtp-587' };
+      } catch (fallbackErr) {
+        console.warn(`[Gmail SMTP 587 Failed] ${fallbackErr.message}, attempting Brevo REST API fallback...`);
+      }
+    }
+  }
+
+  // 2. SECONDARY FALLBACK: Brevo HTTPS REST API
+  const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
+  if (brevoApiKey) {
+    try {
+      console.log(`[Brevo HTTPS API Fallback] Dispatching Senior Booklet email to: ${recipientEmail}...`);
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': brevoApiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: 'Gov Services (Senior Citizen Services)', email: senderEmail },
+          to: [{ email: recipientEmail.trim(), name: recipientName || 'Senior Citizen' }],
+          subject: `[Gov Services] Official ${bookletTitle} Approved: ${generatedBookletNo}`,
+          htmlContent: htmlContent,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.messageId) {
+        console.log(`[Brevo HTTPS API] Successfully delivered Senior Booklet email to ${recipientEmail}. MessageId: ${data.messageId}`);
+        return { success: true, messageId: data.messageId, delivered: true, recipient: recipientEmail, provider: 'brevo' };
+      }
+    } catch (err) {
+      console.warn(`[Brevo API Exception] ${err.message}`);
+    }
+  }
+
+  // 3. TERTIARY FALLBACK: Resend HTTPS API
+  const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+  if (resendApiKey) {
+    try {
+      console.log(`[Resend HTTPS API Fallback] Sending Senior Booklet email to: ${recipientEmail}...`);
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Gov Services <onboarding@resend.dev>',
+          to: [recipientEmail.trim()],
+          subject: `[Gov Services] Official ${bookletTitle} Approved: ${generatedBookletNo}`,
+          text: `Mabuhay ${recipientName}! Ang inyong ${bookletTitle} ay naaprubahan na. Official Booklet Number: ${generatedBookletNo}.`,
+          html: htmlContent,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.id) {
+        console.log(`[Resend HTTPS API] Senior Booklet email delivered to ${recipientEmail}. MessageId: ${data.id}`);
+        return { success: true, messageId: data.id, delivered: true, recipient: recipientEmail, provider: 'resend' };
+      }
+    } catch (apiErr) {
+      console.warn(`[Resend API Exception] ${apiErr.message}`);
+    }
+  }
+
+  return {
+    success: false,
+    message: `Failed to deliver Senior Booklet email to ${recipientEmail}.`,
+  };
+}
+
 module.exports = {
   sendPwdApprovalEmail,
   sendSeniorCitizenApprovalEmail,
+  sendSeniorBookletApprovalEmail,
   sendOtpEmail,
 };
+

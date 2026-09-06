@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { sendPwdApprovalEmail, sendSeniorCitizenApprovalEmail } = require('../services/emailService');
+const {
+  sendPwdApprovalEmail,
+  sendSeniorCitizenApprovalEmail,
+  sendSeniorBookletApprovalEmail,
+} = require('../services/emailService');
 
 // POST /api/email/send-pwd-id
 router.post('/send-pwd-id', async (req, res) => {
@@ -74,6 +78,46 @@ router.post('/send-senior-id', async (req, res) => {
     return res.status(200).json(result);
   } catch (err) {
     console.error('Error in send-senior-id endpoint:', err);
+    return res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
+
+// POST /api/email/send-senior-booklet
+router.post('/send-senior-booklet', async (req, res) => {
+  try {
+    const {
+      recipientEmail,
+      recipientName,
+      bookletNumber,
+      oscaIdNumber,
+      referenceNumber,
+      bookletType,
+      applicationType,
+      approvedDate,
+      contactNumber,
+      address,
+    } = req.body;
+
+    if (!recipientEmail) {
+      return res.status(400).json({ error: 'Recipient email is required' });
+    }
+
+    const result = await sendSeniorBookletApprovalEmail({
+      recipientEmail,
+      recipientName,
+      bookletNumber,
+      oscaIdNumber,
+      referenceNumber,
+      bookletType: bookletType || 'medicine',
+      applicationType: applicationType || 'Renewal',
+      approvedDate,
+      contactNumber,
+      address,
+    });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('Error in send-senior-booklet endpoint:', err);
     return res.status(500).json({ error: 'Internal Server Error', details: err.message });
   }
 });

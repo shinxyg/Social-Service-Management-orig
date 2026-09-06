@@ -939,9 +939,11 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     setVerifyError(null)
     const typed = (formData.existingPwdIdNumber || "").trim()
     const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
+    const cleanDigits = typed.replace(/\D/g, "")
 
-    if (!cleanTyped) {
-      setVerifyError(t("pwdEnterIdPrompt") || "Please enter your PWD ID number before verifying.")
+    if (cleanDigits.length !== 16) {
+      setVerifyError(t("pwdInvalidIdLength") || "Kulang o labis ang PWD ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-847708).")
+      setIsIdVerified(false)
       return
     }
 
@@ -949,40 +951,23 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     try {
       const apps = await fetchAllPwdApps()
 
-      // Hanapin ang tunay na PWD application / rehistradong PWD record sa system
+      // Hanapin ang tunay na PWD application / rehistradong PWD record sa system nang eksakto
       const matchedApp = apps.find((a) => {
         if (!a) return false
         const cat = (a.category || a.service || "").trim().toUpperCase()
         if (cat !== "PWD" && !cat.includes("PWD")) return false
 
-        // Ang record ay dapat nagmula sa valid application (approved o may assigned/reference number mula sa New App)
         const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const refClean = (a.referenceNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const idClean = (a.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const cleanDigits = cleanTyped.replace(/\D/g, "")
         const assignedDigits = (a.assignedIdNumber || "").replace(/\D/g, "")
         const refDigits = (a.referenceNumber || "").replace(/\D/g, "")
 
-        // STRICT MATCHING: dapat tumutugma nang eksakto sa assigned ID o reference number o app ID
-        const matchAssigned =
-          assignedClean !== "" &&
-          (cleanTyped === assignedClean ||
-           cleanTyped === `pwd${assignedClean}` ||
-           `pwd${cleanTyped}` === assignedClean ||
-           (cleanDigits.length >= 6 && assignedDigits.includes(cleanDigits)) ||
-           (assignedDigits.length >= 6 && cleanDigits.includes(assignedDigits)))
+        // STRICT EXACT MATCH: Must match full 16 digits exactly
+        const matchAssigned = assignedDigits.length >= 16 && (assignedDigits === cleanDigits || assignedDigits.endsWith(cleanDigits))
+        const matchRef = refDigits.length >= 16 && (refDigits === cleanDigits || refDigits.endsWith(cleanDigits))
+        const matchFullString = assignedClean === cleanTyped || refClean === cleanTyped
 
-        const matchRef =
-          refClean !== "" &&
-          (cleanTyped === refClean ||
-           cleanTyped === `pwd${refClean}` ||
-           `pwd${cleanTyped}` === refClean ||
-           (cleanDigits.length >= 6 && refDigits.includes(cleanDigits)) ||
-           (refDigits.length >= 6 && cleanDigits.includes(refDigits)))
-
-        const matchId = idClean !== "" && cleanTyped === idClean
-
-        return Boolean(matchAssigned || matchRef || matchId)
+        return Boolean(matchAssigned || matchRef || matchFullString)
       })
 
       if (matchedApp) {

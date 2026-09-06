@@ -65,6 +65,18 @@ const LIVING_ARRANGEMENTS = [
   { id: "With Caregiver", label: "With Caregiver (Kasama ang Tagapag-alaga)", desc: "May tagapag-alaga na nag-aasikaso" },
 ]
 
+function formatSeniorId(val: string): string {
+  const digits = val
+    .replace(/^(SENIOR|OSCA)-?/i, "")
+    .replace(/^(SENIOR|OSCA)\s*-\s*/i, "")
+    .replace(/\D/g, "")
+    .slice(0, 16)
+  if (!digits) return ""
+  if (digits.length <= 6) return digits
+  if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
+  return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10, 16)}`
+}
+
 const EMPLOYMENT_STATUSES = [
   "Retired / Pensyonado",
   "Unemployed (Walang Trabaho)",
@@ -366,14 +378,90 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
   const [isVerifying, setIsVerifying] = useState(false)
   const [isIdVerified, setIsIdVerified] = useState(false)
+  const [verifyError, setVerifyError] = useState<string | null>(null)
+  const [verifiedSeniorName, setVerifiedSeniorName] = useState<string>("")
 
-  const handleVerifyId = () => {
-    if (!formData.seniorIdNumber.trim()) return
+  const handleVerifyId = async () => {
+    setVerifyError(null)
+    const typed = (formData.seniorIdNumber || "").trim()
+    const cleanDigits = typed.replace(/\D/g, "")
+
+    if (cleanDigits.length !== 16) {
+      setIsIdVerified(false)
+      setVerifyError("Kulang o labis ang Senior Citizen ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-516915).")
+      return
+    }
+
     setIsVerifying(true)
-    setTimeout(() => {
+    try {
+      let allApps: any[] = []
+      try {
+        const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data)) allApps = data
+        }
+      } catch {}
+
+      const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
+      for (const k of localKeys) {
+        try {
+          const local = JSON.parse(localStorage.getItem(k) || "[]")
+          if (Array.isArray(local)) {
+            for (const la of local) {
+              if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
+                allApps.push(la)
+              }
+            }
+          }
+        } catch {}
+      }
+
+      const matchedApp = allApps.find((a) => {
+        if (!a) return false
+        const cat = String(a.category || a.service || "").toUpperCase()
+        const isSenior = cat.includes("SENIOR") || cat === "SENIOR CITIZEN" || String(a.service || "").toLowerCase().includes("senior")
+        if (!isSenior) return false
+
+        const assignedDigits = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/\D/g, "")
+        const refDigits = String(a.referenceNumber || a.reference_number || "").replace(/\D/g, "")
+
+        return (
+          (assignedDigits.length >= 16 && (assignedDigits === cleanDigits || assignedDigits.endsWith(cleanDigits))) ||
+          (refDigits.length >= 16 && (refDigits === cleanDigits || refDigits.endsWith(cleanDigits)))
+        )
+      })
+
+      const userProfileDigits = (userProfile?.qcidNo || "").replace(/\D/g, "")
+      const isProfileMatch = userProfileDigits.length >= 16 && userProfileDigits === cleanDigits
+
+      if (matchedApp) {
+        const foundName = [
+          matchedApp.firstName || matchedApp.first_name,
+          matchedApp.middleName || matchedApp.middle_name,
+          matchedApp.lastName || matchedApp.last_name,
+          matchedApp.suffix,
+        ].filter(Boolean).join(" ").trim().toUpperCase()
+
+        setIsIdVerified(true)
+        setVerifyError(null)
+        setVerifiedSeniorName(foundName || "SENIOR CITIZEN BENEFICIARY")
+      } else if (isProfileMatch) {
+        const profileName = [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase()
+        setIsIdVerified(true)
+        setVerifyError(null)
+        setVerifiedSeniorName(profileName || "SENIOR CITIZEN BENEFICIARY")
+      } else {
+        setIsIdVerified(false)
+        setVerifyError(`Hindi matagpuan ang Senior Citizen ID (${typed}). Pakitiyak na tama ang bawat numero mula sa na-isyung ID card o approval email.`)
+      }
+    } catch (err) {
+      console.warn("Verification error:", err)
+      setIsIdVerified(false)
+      setVerifyError("Nagkaroon ng aberya sa pagsusuri ng Senior ID. Pakisubukang muli.")
+    } finally {
       setIsVerifying(false)
-      setIsIdVerified(true)
-    }, 600)
+    }
   }
 
   const updateField = (field: string, val: string | boolean) => {
@@ -771,13 +859,18 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                     type="text"
                     value={formData.seniorIdNumber}
                     onChange={(e) => {
-                      updateField("seniorIdNumber", e.target.value)
+                      const formatted = formatSeniorId(e.target.value)
+                      updateField("seniorIdNumber", formatted)
                       setIsIdVerified(false)
+                      setVerifyError(null)
                     }}
-                    placeholder="Hal. QC-SC-2022-09412"
+                    placeholder="137404-2026-516915"
+                    maxLength={18}
                     className={`flex-1 border rounded-lg px-3 py-2.5 text-sm font-mono transition-all focus:outline-none ${
                       isIdVerified
                         ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20 text-gray-900"
+                        : verifyError
+                        ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20 text-gray-900"
                         : "border-border bg-white focus:ring-2 focus:ring-blue-400"
                     }`}
                   />
@@ -809,20 +902,29 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                     )}
                   </button>
                 </div>
+                {verifyError && (
+                  <div className="border border-red-200 bg-red-50 rounded-lg p-3 flex items-start gap-2.5 text-xs text-red-800 animate-in fade-in">
+                    <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold">Hindi Matanggap ang ID Number</p>
+                      <p className="mt-0.5 text-red-700">{verifyError}</p>
+                    </div>
+                  </div>
+                )}
                 {attemptedNext && !formData.seniorIdNumber.trim() && (
                   <p className="text-xs text-red-500">Kailangang ilagay ang inyong Senior Citizen / OSCA ID Number.</p>
                 )}
-                {attemptedNext && formData.seniorIdNumber.trim() !== "" && !isIdVerified && (
+                {attemptedNext && formData.seniorIdNumber.trim() !== "" && !isIdVerified && !verifyError && (
                   <p className="text-xs text-red-500">Pakipindot ang VERIFY ID at tiyaking verified ang ID bago magpatuloy.</p>
                 )}
                 {isIdVerified && (
-                  <div className="mt-1 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2 text-xs text-emerald-800">
+                  <div className="mt-1 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2 text-xs text-emerald-800 animate-in fade-in">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Matagumpay na na-verify ang OSCA ID record <strong>({formData.seniorIdNumber})</strong>.</span>
+                    <span>Matagumpay na na-verify ang Senior Citizen Record: <strong>{verifiedSeniorName || formData.seniorIdNumber}</strong>.</span>
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Ilagay ang inyong rehistradong OSCA ID number sa Quezon City.
+                  Ilagay ang 16-digit na Senior Citizen / OSCA ID Number (hal. 137404-2026-516915).
                 </p>
               </div>
             </div>

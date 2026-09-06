@@ -188,6 +188,7 @@ function isPWD(app: ApplicationSubmission): app is PWDApplicationSubmission {
 
 function generateOfficialIdNumber(app: ApplicationSubmission): string {
   const isPwdApp = isPWD(app)
+  const appType = String(app.type || "").toLowerCase()
   const cleanDigits = (app.referenceNumber || app.id || "").replace(/\D/g, "")
   const seq = cleanDigits.length >= 6 ? cleanDigits.slice(-6) : String(Math.floor(100000 + Math.random() * 900000))
   const year = new Date().getFullYear()
@@ -197,6 +198,16 @@ function generateOfficialIdNumber(app: ApplicationSubmission): string {
       return app.assignedIdNumber
     }
     return `PWD-137404-${year}-${seq}`
+  } else if (appType === "medicine-booklet" || String(app.category || "").toLowerCase().includes("medicine")) {
+    if (app.assignedIdNumber && app.assignedIdNumber.startsWith("MB-")) {
+      return app.assignedIdNumber
+    }
+    return `MB-${year}-${seq}`
+  } else if (appType === "movie-booklet" || String(app.category || "").toLowerCase().includes("movie")) {
+    if (app.assignedIdNumber && app.assignedIdNumber.startsWith("MV-")) {
+      return app.assignedIdNumber
+    }
+    return `MV-${year}-${seq}`
   } else {
     if (app.assignedIdNumber && (app.assignedIdNumber.startsWith("SENIOR-") || app.assignedIdNumber.startsWith("OSCA-"))) {
       return app.assignedIdNumber.replace("OSCA-", "SENIOR-")
@@ -204,6 +215,7 @@ function generateOfficialIdNumber(app: ApplicationSubmission): string {
     return `SENIOR-137404-${year}-${seq}`
   }
 }
+
 
 
 
@@ -1689,57 +1701,95 @@ export default function PWDSeniorCitizen() {
         amount: 2000,
       })
     } else {
-      // 1. Dispatch in-portal bell notification to applicant for ID cards
+      // 1. Dispatch in-portal bell notification to applicant for ID cards / Booklets
       if (targetApp) {
         const rawType = String(targetApp.type || "").toLowerCase()
+        const isSeniorBooklet = !isPWD(targetApp) && (
+          rawType === "medicine-booklet" ||
+          rawType === "movie-booklet" ||
+          String(targetApp.category || "").toLowerCase().includes("booklet")
+        )
+        const isMovieBooklet = isSeniorBooklet && (
+          rawType === "movie-booklet" ||
+          String(targetApp.type || "").toLowerCase().includes("movie")
+        )
         const typeLabel =
           rawType === "renewal"
             ? "Renewal"
             : rawType === "replacement" || rawType === "loss"
             ? "Replacement / Lost ID"
+            : isSeniorBooklet
+            ? "Bagong Booklet"
             : "New Application"
-        const serviceName = isPWD(targetApp) ? "PWD ID" : "Senior Citizen ID"
+        const serviceName = isSeniorBooklet
+          ? isMovieBooklet
+            ? "Free Movie Booklet"
+            : "Medicine Discount Booklet"
+          : isPWD(targetApp)
+          ? "PWD ID"
+          : "Senior Citizen ID"
         const targetEmail = targetApp.email
 
         pushUserNotification({
           title: `${serviceName} Application (${typeLabel}): Approved`,
-          desc: `Congratulations! Your application for ${serviceName} (${typeLabel}) has been approved. Your official Digital ID (${idNumber}) was sent directly to your Gmail (${targetEmail || "registered email"}).`,
+          desc: isSeniorBooklet
+            ? `Congratulations! Your application for ${serviceName} (${typeLabel}) has been approved. Your official Booklet Number (${idNumber}) was sent directly to your Gmail (${targetEmail || "registered email"}).`
+            : `Congratulations! Your application for ${serviceName} (${typeLabel}) has been approved. Your official Digital ID (${idNumber}) was sent directly to your Gmail (${targetEmail || "registered email"}).`,
           applicationRef: targetApp.referenceNumber,
           assistanceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
         })
 
-        // 2. Dispatch official ID approval email directly to applicant's Gmail
+        // 2. Dispatch official ID / Booklet approval email directly to applicant's Gmail
         if (targetEmail && targetEmail.includes("@")) {
-          const endpoint = isPWD(targetApp) ? `${API_BASE}/api/email/send-pwd-id` : `${API_BASE}/api/email/send-senior-id`
-          const payload = isPWD(targetApp)
-            ? {
+          if (isSeniorBooklet) {
+            fetch(`${API_BASE}/api/email/send-senior-booklet`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
                 recipientEmail: targetEmail,
                 recipientName: displayName(targetApp),
-                pwdIdNumber: idNumber,
+                bookletNumber: idNumber,
+                oscaIdNumber: (targetApp as any).existingIdNumber || targetApp.referenceNumber,
                 referenceNumber: targetApp.referenceNumber,
-                disabilityType: (targetApp as any).disabilityType || "Physical / Visual Disability",
-                bloodType: (targetApp as any).bloodType || "O+",
-                approvedDate,
-                contactNumber: targetApp.contactNo || (targetApp as any).cellphoneNo,
-                address: targetApp.address,
-              }
-            : {
-                recipientEmail: targetEmail,
-                recipientName: displayName(targetApp),
-                seniorIdNumber: idNumber,
-                referenceNumber: targetApp.referenceNumber,
+                bookletType: isMovieBooklet ? "movie" : "medicine",
                 applicationType: typeLabel,
-                bloodType: (targetApp as any).bloodType || "O+",
                 approvedDate,
                 contactNumber: targetApp.contactNo || (targetApp as any).cellphoneNo,
                 address: targetApp.address,
-              }
+              }),
+            }).catch((err) => console.warn("Could not dispatch booklet approval email:", err))
+          } else {
+            const endpoint = isPWD(targetApp) ? `${API_BASE}/api/email/send-pwd-id` : `${API_BASE}/api/email/send-senior-id`
+            const payload = isPWD(targetApp)
+              ? {
+                  recipientEmail: targetEmail,
+                  recipientName: displayName(targetApp),
+                  pwdIdNumber: idNumber,
+                  referenceNumber: targetApp.referenceNumber,
+                  disabilityType: (targetApp as any).disabilityType || "Physical / Visual Disability",
+                  bloodType: (targetApp as any).bloodType || "O+",
+                  approvedDate,
+                  contactNumber: targetApp.contactNo || (targetApp as any).cellphoneNo,
+                  address: targetApp.address,
+                }
+              : {
+                  recipientEmail: targetEmail,
+                  recipientName: displayName(targetApp),
+                  seniorIdNumber: idNumber,
+                  referenceNumber: targetApp.referenceNumber,
+                  applicationType: typeLabel,
+                  bloodType: (targetApp as any).bloodType || "O+",
+                  approvedDate,
+                  contactNumber: targetApp.contactNo || (targetApp as any).cellphoneNo,
+                  address: targetApp.address,
+                }
 
-          fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          }).catch((err) => console.warn("Could not dispatch approval email:", err))
+            fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }).catch((err) => console.warn("Could not dispatch approval email:", err))
+          }
         }
       }
     }
