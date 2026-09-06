@@ -280,12 +280,13 @@ export default function ApplyPWDSenior() {
   if (isBlocked && !bypassedBlock && !isPwdId) {
     const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
     const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || blockedApp?.id || blockedApp?.qc_id || blockedApp?.qcid || getLoggedInUserQcid() || "110000572516915"
+    const assignedBookletNo = blockedApp?.assignedIdNumber || blockedApp?.assigned_id_number || blockedApp?.bookletNumber || blockedApp?.existingBookletNumber
     const displayDate = blockedApp?.created_at || blockedApp?.submittedAt || blockedApp?.dateSubmitted
       ? new Date(blockedApp.created_at || blockedApp.submittedAt || blockedApp.dateSubmitted).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
       : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
 
     return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150 py-8">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
           <div className={`h-16 w-16 rounded-2xl flex items-center justify-center ${isAppApproved ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-500"}`}>
             {isAppApproved ? (
@@ -300,8 +301,12 @@ export default function ApplyPWDSenior() {
             </h2>
             <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
               {isAppApproved
-                ? `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications.`
-                : `Your application for ${serviceCleanTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.`}
+                ? (isSeniorMedicine
+                    ? `Your application for Medicine Discount Booklet has been officially approved! Your official booklet number has been issued and sent to your registered email.`
+                    : isSeniorMovie
+                    ? `Your application for Free Movie Booklet has been officially approved! Your official booklet number has been issued and sent to your registered email.`
+                    : `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications.`)
+                : `Your application for ${serviceCleanTitle} has been successfully submitted and is currently pending review. Please wait for an assessment before submitting a new application.`}
             </p>
           </div>
 
@@ -310,6 +315,16 @@ export default function ApplyPWDSenior() {
               <span className="text-gray-500 font-medium">Application Reference No.:</span>
               <span className="font-mono font-bold text-blue-600">{displayRef}</span>
             </div>
+            {assignedBookletNo && (
+              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+                <span className="text-gray-500 font-medium">
+                  {isSeniorMedicine || isSeniorMovie ? "Official Booklet Number:" : "Official ID Number:"}
+                </span>
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  {assignedBookletNo}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">Status:</span>
               {isAppApproved ? (
@@ -340,23 +355,21 @@ export default function ApplyPWDSenior() {
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              {isAssistance || isSeniorSocial ? "VIEW IN FINANCIAL AID / MY APPLICATIONS" : "VIEW IN MY APPLICATIONS"}
+              {isAssistance || isSeniorSocial ? "VIEW IN FINANCIAL AID / DISBURSEMENT" : "VIEW IN MY APPLICATIONS"}
             </button>
-            {isAppApproved && (
-              <button
-                type="button"
-                onClick={() => {
-                  bypassedBlockRef.current = true
-                  setBypassedBlock(true)
-                  setIsBlocked(false)
-                  setBlockedApp(null)
-                  setCurrentStep(1)
-                }}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-              >
-                Submit Another Application (Apply Again)
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                bypassedBlockRef.current = true
+                setBypassedBlock(true)
+                setIsBlocked(false)
+                setBlockedApp(null)
+                setCurrentStep(1)
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Submit Another Application (Apply Again)
+            </button>
           </div>
         </div>
       </div>

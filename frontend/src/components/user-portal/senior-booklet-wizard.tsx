@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Check,
+  CheckCircle2,
   ChevronRight,
   Upload,
   Camera,
@@ -83,23 +85,27 @@ export default function SeniorBookletWizard({
     { id: 4, label: t("wizardReview") || "REVIEW & SUBMIT" },
   ]
 
+  const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
+  const [blockedApp, setBlockedApp] = useState<any>(null)
+  const [bypassedBlock, setBypassedBlock] = useState(false)
+  const bypassedBlockRef = useRef(false)
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
   const [referenceNumber, setReferenceNumber] = useState("")
   const [submissionDate, setSubmissionDate] = useState("")
 
   useEffect(() => {
-    if (isBlocked) {
+    if (isBlocked && !bypassedBlock) {
       onStepChange?.(0)
     } else {
       onStepChange?.(step)
     }
-  }, [step, isBlocked, onStepChange])
+  }, [step, isBlocked, bypassedBlock, onStepChange])
 
   // Reload / Navigation warning protection
   useEffect(() => {
@@ -377,45 +383,33 @@ export default function SeniorBookletWizard({
           )
         }
 
-        // 1. Check if user has an active pending application for this booklet type
-        const pendingBookletApp = allApps.find((a) => {
+        // 1. Check if user has an active or approved application for this booklet type
+        const targetBookletApp = allApps.find((a) => {
           if (!a) return false
-          const appType = String(a.type || "").toLowerCase()
+          const appType = String(a.type || a.service || "").toLowerCase()
+          const appCategory = String(a.category || "").toLowerCase()
           const isTargetType = isMedicine
-            ? appType === "medicine-booklet" || String(a.category || "").toLowerCase().includes("medicine")
-            : appType === "movie-booklet" || String(a.category || "").toLowerCase().includes("movie")
+            ? appType === "medicine-booklet" || appType.includes("medicine") || appCategory.includes("medicine")
+            : appType === "movie-booklet" || appType.includes("movie") || appCategory.includes("movie")
           if (!isTargetType) return false
-          if (a.status !== "pending") return false
+          const status = String(a.status || "").toLowerCase()
+          if (status !== "pending" && status !== "under_review" && status !== "approved" && status !== "completed" && status !== "for_release") return false
           return isUserMatch(a)
         })
 
-        if (pendingBookletApp) {
-          if (!submitted && !isBlocked) {
+        if (targetBookletApp) {
+          setBlockedApp(targetBookletApp)
+          if (!submitted && !isBlocked && !bypassedBlockRef.current) {
             setIsBlocked(true)
           }
-        } else {
-          // If was blocked before and now approved/completed, unblock in real-time
-          if (isBlocked && !submitted) {
-            setIsBlocked(false)
-          }
-        }
-
-        // 2. Check if user has an approved booklet record
-        const approvedBookletApp = allApps.find((a) => {
-          if (!a) return false
-          const appType = String(a.type || "").toLowerCase()
-          const isTargetType = isMedicine
-            ? appType === "medicine-booklet" || String(a.category || "").toLowerCase().includes("medicine")
-            : appType === "movie-booklet" || String(a.category || "").toLowerCase().includes("movie")
-          if (!isTargetType) return false
-          if (a.status !== "approved" && a.status !== "completed") return false
-          return isUserMatch(a)
-        })
-
-        if (approvedBookletApp && (approvedBookletApp.assignedIdNumber || approvedBookletApp.assigned_id_number)) {
-          const num = approvedBookletApp.assignedIdNumber || approvedBookletApp.assigned_id_number
-          if (!bookletNumber) {
+          const num = targetBookletApp.assignedIdNumber || targetBookletApp.assigned_id_number || targetBookletApp.bookletNumber || targetBookletApp.existingBookletNumber
+          if (num && !bookletNumber) {
             setBookletNumber(num)
+          }
+        } else {
+          if (isBlocked && !submitted && !bypassedBlockRef.current) {
+            setIsBlocked(false)
+            setBlockedApp(null)
           }
         }
       } catch (err) {
@@ -757,28 +751,141 @@ export default function SeniorBookletWizard({
     }, 1000)
   }
 
-  // Blocked Screen
-  if (isBlocked) {
+  // Blocked Screen (Approved or Pending Active Status)
+  if (isBlocked && !bypassedBlock) {
+    const isAppApproved =
+      String(blockedApp?.status || "").toLowerCase() === "approved" ||
+      String(blockedApp?.status || "").toLowerCase() === "completed" ||
+      String(blockedApp?.status || "").toLowerCase() === "for_release"
+    const displayRef =
+      blockedApp?.referenceNumber ||
+      blockedApp?.reference_no ||
+      blockedApp?.reference_number ||
+      blockedApp?.id ||
+      referenceNumber ||
+      oscaIdInput ||
+      userProfile?.qcidNo ||
+      formData.qcidNo ||
+      "110000572516915"
+    const assignedBookletNo =
+      blockedApp?.assignedIdNumber ||
+      blockedApp?.assigned_id_number ||
+      blockedApp?.bookletNumber ||
+      blockedApp?.existingBookletNumber ||
+      bookletNumber
+    const displayDate = blockedApp?.submittedAt || blockedApp?.created_at || blockedApp?.dateSubmitted
+      ? new Date(blockedApp.submittedAt || blockedApp.created_at || blockedApp.dateSubmitted).toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : submissionDate ||
+        new Date().toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+
     return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150 py-8">
         {onBack && (
           <button
             onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer mb-2"
           >
             ← Back
           </button>
         )}
-        <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-7 w-7 text-amber-500" />
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div
+            className={`h-16 w-16 rounded-2xl flex items-center justify-center ${
+              isAppApproved
+                ? "bg-emerald-500/10 text-emerald-600"
+                : "bg-amber-500/10 text-amber-500"
+            }`}
+          >
+            {isAppApproved ? (
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            ) : (
+              <Info className="h-8 w-8 text-amber-500" />
+            )}
           </div>
-          <h2 className="text-lg font-bold text-gray-900">
-            Active Application In Progress
-          </h2>
-          <p className="text-sm text-gray-500 max-w-sm">
-            You currently have a pending application for {title}. Please wait for it to be reviewed before submitting a new request.
-          </p>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              {isAppApproved
+                ? "Application Approved"
+                : "You Have an Active Application"}
+            </h2>
+            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+              {isAppApproved
+                ? `Your application for ${title} has been officially approved! Your official booklet number has been issued and sent to your registered email.`
+                : `Your application for ${title} has been successfully submitted and is currently pending review. Please wait for an OSCA officer's assessment before submitting a new application.`}
+            </p>
+          </div>
+
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">
+                Application Reference No.:
+              </span>
+              <span className="font-mono font-bold text-blue-600">
+                {displayRef}
+              </span>
+            </div>
+            {assignedBookletNo && (
+              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+                <span className="text-gray-500 font-medium">
+                  Official Booklet Number:
+                </span>
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  {assignedBookletNo}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">Status:</span>
+              {isAppApproved ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Approved
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Under Review (Pending)
+                </span>
+              )}
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">Date Filed:</span>
+              <span className="font-semibold text-gray-700">{displayDate}</span>
+            </div>
+          </div>
+
+          <div className="w-full pt-2 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                navigate("/portal/financial-aid")
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              VIEW IN FINANCIAL AID / DISBURSEMENT
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                bypassedBlockRef.current = true
+                setBypassedBlock(true)
+                setIsBlocked(false)
+                setBlockedApp(null)
+                setStep(1)
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Submit Another Application (Apply Again)
+            </button>
+          </div>
         </div>
       </div>
     )
