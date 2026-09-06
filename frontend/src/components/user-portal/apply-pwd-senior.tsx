@@ -96,14 +96,28 @@ export default function ApplyPWDSenior() {
               appService.includes("senior social")
             if (!isSeniorSocialType) return false
           } else if (isSeniorMedicine) {
-            if (!(appCategory === "senior" && appType === "medicine-booklet")) return false
+            if (!(appCategory === "senior" && (appType === "medicine-booklet" || appType.includes("medicine")))) return false
           } else if (isSeniorMovie) {
-            if (!(appCategory === "senior" && appType === "movie-booklet")) return false
+            if (!(appCategory === "senior" && (appType === "movie-booklet" || appType.includes("movie")))) return false
           } else if (isSeniorId) {
             if (appCategory !== "senior" || appType.includes("assistance") || appType.includes("booklet") || appService.includes("assistance")) return false
+            if (urlType === "loss") {
+              if (appType !== "loss" && appType !== "replacement") return false
+            } else if (urlType === "renewal") {
+              if (appType !== "renewal") return false
+            } else {
+              if (appType === "loss" || appType === "replacement" || appType === "renewal") return false
+            }
           } else {
             // PWD ID
             if (appCategory === "senior" || appType.includes("assistance") || appCategory.includes("assistance") || appService.includes("assistance")) return false
+            if (urlType === "loss") {
+              if (appType !== "loss" && appType !== "replacement") return false
+            } else if (urlType === "renewal") {
+              if (appType !== "renewal") return false
+            } else {
+              if (appType === "loss" || appType === "replacement" || appType === "renewal") return false
+            }
           }
 
           const appRef = String(a.referenceNumber || a.reference_number || a.id || a.qc_id || a.qcid || "").trim()

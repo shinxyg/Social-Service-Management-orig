@@ -610,16 +610,25 @@ export default function SeniorCitizenApplicationWizard({
           if (Array.isArray(apps)) {
             const userApps = apps.filter(checkUserMatches)
             const pendingFlow = userApps.find((a) => {
-              if (a.status !== "pending") return false
+              if (a.status !== "pending" && a.status !== "under_review") return false
               if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
               if (expectedType === "renewal") return a.type === "renewal"
               return a.type === "new" || !a.type
             })
-            const pendingAny = userApps.find((a) => a.status === "pending")
-            const approvedNew = userApps.find((a) => a.status === "approved")
+            const approvedFlow = userApps.find((a) => {
+              if (a.status !== "approved" && a.status !== "completed" && a.status !== "for_release") return false
+              if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
+              if (expectedType === "renewal") return a.type === "renewal"
+              return a.type === "new" || !a.type
+            })
+            const pendingAny = userApps.find((a) => a.status === "pending" || a.status === "under_review")
+            const approvedAny = userApps.find((a) => a.status === "approved" || a.status === "completed" || a.status === "for_release")
+
+            if (approvedFlow) matchedApproved = approvedFlow
+            else if (expectedType === "new" && approvedAny) matchedApproved = approvedAny
+
             if (pendingFlow) matchedPendingForFlow = pendingFlow
             if (pendingAny) matchedPendingAny = pendingAny
-            if (approvedNew) matchedApproved = approvedNew
           }
         }
       } catch {}
@@ -635,16 +644,25 @@ export default function SeniorCitizenApplicationWizard({
               if (Array.isArray(apps)) {
                 const userApps = apps.filter(checkUserMatches)
                 const pendingFlow = userApps.find((a) => {
-                  if (a.status !== "pending") return false
+                  if (a.status !== "pending" && a.status !== "under_review") return false
                   if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
                   if (expectedType === "renewal") return a.type === "renewal"
                   return a.type === "new" || !a.type
                 })
-                const pendingAny = userApps.find((a) => a.status === "pending")
-                const approvedNew = userApps.find((a) => a.status === "approved")
+                const approvedFlow = userApps.find((a) => {
+                  if (a.status !== "approved" && a.status !== "completed" && a.status !== "for_release") return false
+                  if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
+                  if (expectedType === "renewal") return a.type === "renewal"
+                  return a.type === "new" || !a.type
+                })
+                const pendingAny = userApps.find((a) => a.status === "pending" || a.status === "under_review")
+                const approvedAny = userApps.find((a) => a.status === "approved" || a.status === "completed" || a.status === "for_release")
+
+                if (!matchedApproved && approvedFlow) matchedApproved = approvedFlow
+                else if (!matchedApproved && expectedType === "new" && approvedAny) matchedApproved = approvedAny
+
                 if (!matchedPendingForFlow && pendingFlow) matchedPendingForFlow = pendingFlow
                 if (!matchedPendingAny && pendingAny) matchedPendingAny = pendingAny
-                if (!matchedApproved && approvedNew) matchedApproved = approvedNew
               }
             }
           } catch {}
@@ -653,28 +671,17 @@ export default function SeniorCitizenApplicationWizard({
 
       if (!isMounted) return
 
-      if (matchedPendingForFlow) {
+      if (matchedApproved) {
+        setBlockedApp(matchedApproved)
+        setLatestApprovedApp(matchedApproved)
+        setIsBlocked(true)
+      } else if (matchedPendingForFlow) {
         setBlockedApp(matchedPendingForFlow)
+        setLatestApprovedApp(null)
+        setIsBlocked(true)
       } else {
         setBlockedApp(null)
-      }
-
-      if (matchedApproved) {
-        setLatestApprovedApp(matchedApproved)
-      } else {
         setLatestApprovedApp(null)
-      }
-
-      // Block when there is a pending application matching this flow
-      if (matchedPendingForFlow) {
-        if (appFlow === "renewal" || appFlow === "loss") {
-          setIsBlocked(true)
-        } else if (!matchedApproved) {
-          setIsBlocked(true)
-        } else {
-          setIsBlocked(false)
-        }
-      } else {
         setIsBlocked(false)
       }
     }
@@ -824,157 +831,121 @@ export default function SeniorCitizenApplicationWizard({
       ? "Renewal Application"
       : "Replacement / Lost ID"
 
-  // ---- APPROVED state (Bungad bago mag Step 1) ----
-  if (latestApprovedApp && appFlow === "new") {
-    const rawAppDate = latestApprovedApp.approvedDate || latestApprovedApp.approved_date || latestApprovedApp.updatedAt || latestApprovedApp.submittedAt
-    let formattedApprovedDate = "Active"
-    if (rawAppDate) {
-      const d = new Date(rawAppDate)
-      formattedApprovedDate = !isNaN(d.getTime())
-        ? d.toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
-        : String(rawAppDate)
-    }
+  // ---- BLOCKED / APPROVED state ----
+  if ((isBlocked || (latestApprovedApp && appFlow === "new")) && !isSubmitted) {
+    const targetApp = blockedApp || latestApprovedApp
+    const isAppApproved =
+      String(targetApp?.status || "").toLowerCase() === "approved" ||
+      String(targetApp?.status || "").toLowerCase() === "completed" ||
+      String(targetApp?.status || "").toLowerCase() === "for_release"
 
-    const assignedId = (latestApprovedApp.assignedIdNumber || latestApprovedApp.referenceNumber || "").replace("OSCA-", "SENIOR-")
+    const serviceTitle =
+      appFlow === "renewal"
+        ? "Senior Citizen ID Renewal"
+        : appFlow === "loss"
+        ? "Senior Citizen ID Replacement"
+        : "Senior Citizen ID"
+
+    const displayRef =
+      targetApp?.referenceNumber ||
+      targetApp?.reference_no ||
+      targetApp?.reference_number ||
+      targetApp?.id ||
+      userProfile?.qcidNo ||
+      formData.qcid ||
+      "110000572516915"
+
+    const assignedIdNo = (targetApp?.assignedIdNumber || targetApp?.assigned_id_number || "").replace("OSCA-", "SENIOR-")
+
+    const displayDate = targetApp?.submittedAt || targetApp?.created_at || targetApp?.dateSubmitted
+      ? new Date(targetApp.submittedAt || targetApp.created_at || targetApp.dateSubmitted).toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : new Date().toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
 
     return (
-      <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4 animate-in fade-in duration-300">
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150 py-8">
         {onBack && (
           <button
             onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer mb-2"
           >
             ← Back
           </button>
         )}
-        <div className="bg-white border-2 border-emerald-500/80 rounded-2xl p-6 sm:p-8 shadow-md flex flex-col items-center text-center gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md ring-8 ring-emerald-50">
-            <Check className="h-8 w-8 stroke-[3]" />
-          </div>
-
-          <div className="space-y-1.5 max-w-lg">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-              ✓ APPROVED APPLICATION
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-              Senior Citizen Application Approved
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-              Congratulations! Your Senior Citizen ID application has been verified and approved by Gov Services.
-            </p>
-          </div>
-
-          {/* Details Card */}
-          <div className="w-full bg-linear-to-br from-emerald-50/70 to-slate-50 border border-emerald-200 rounded-xl p-4 sm:p-5 text-left space-y-3">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-100 pb-3">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                OFFICIAL ASSIGNED SENIOR ID NUMBER
-              </span>
-              <span className="font-mono font-black text-base text-emerald-950 tracking-wider bg-white px-3 py-1 rounded-lg border border-emerald-300 select-all shadow-2xs">
-                {assignedId}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-gray-500 block">Applicant Name:</span>
-                <span className="font-bold text-gray-900 text-sm">
-                  {[latestApprovedApp.firstName, latestApprovedApp.middleName, latestApprovedApp.lastName].filter(Boolean).join(" ")}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500 block">Category:</span>
-                <span className="font-bold text-gray-900 text-sm">
-                  Senior Citizen ID
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500 block">Date Approved:</span>
-                <span className="font-semibold text-emerald-900">
-                  {formattedApprovedDate}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500 block">Status:</span>
-                <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Active / Registered
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="pt-2 flex flex-col sm:flex-row gap-3 w-full justify-center">
-            <a
-              href="/portal/my-applications"
-              className="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <ExternalLink className="h-4 w-4" />
-              <span>View in My Applications</span>
-            </a>
-            <a
-              href="/portal/apply-pwd-senior?category=senior&type=renewal"
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
-            >
-              <span>Apply for Renewal →</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (isBlocked) {
-    const serviceTitle =
-      appFlow === "renewal"
-        ? "Renewal SENIOR ID"
-        : appFlow === "loss"
-        ? "Replacement / Lost SENIOR ID"
-        : "New App SENIOR ID"
-
-    const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || userProfile?.qcidNo || "110000572516915"
-    const displayDate = blockedApp?.submittedAt
-      ? new Date(blockedApp.submittedAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
-      : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
-
-    return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-8 w-8 text-amber-500" />
+          <div
+            className={`h-16 w-16 rounded-2xl flex items-center justify-center ${
+              isAppApproved
+                ? "bg-emerald-500/10 text-emerald-600"
+                : "bg-amber-500/10 text-amber-500"
+            }`}
+          >
+            {isAppApproved ? (
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            ) : (
+              <Info className="h-8 w-8 text-amber-500" />
+            )}
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {t("hasPendingAppTitle") || "You Have an Active Application"}
+              {isAppApproved
+                ? "Application Approved"
+                : "You Have an Active Application"}
             </h2>
             <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
-              Your application for {serviceTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.
+              {isAppApproved
+                ? `Your application for ${serviceTitle} has been officially approved! You can check your scheduled appointment or ID release status in Financial Aid / My Applications.`
+                : `Your application for ${serviceTitle} has been successfully submitted and is currently pending review. Please wait for an OSCA officer's assessment before submitting a new application.`}
             </p>
           </div>
 
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">{t("appRefNoLabel") || "Application Reference No.:"}</span>
+              <span className="text-gray-500 font-medium">
+                Application Reference No.:
+              </span>
               <span className="font-mono font-bold text-blue-600">
                 {displayRef}
               </span>
             </div>
+            {assignedIdNo && (
+              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+                <span className="text-gray-500 font-medium">
+                  Official Senior ID Number:
+                </span>
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  {assignedIdNo}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                {t("statusPendingBadge") || "• Under Review (Pending)"}
-              </span>
+              <span className="text-gray-500 font-medium">Status:</span>
+              {isAppApproved ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Approved
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Under Review (Pending)
+                </span>
+              )}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
-              <span className="font-semibold text-gray-700">
-                {displayDate}
-              </span>
+              <span className="text-gray-500 font-medium">Date Filed:</span>
+              <span className="font-semibold text-gray-700">{displayDate}</span>
             </div>
           </div>
 
-          <div className="w-full pt-2">
+          <div className="w-full pt-2 flex flex-col gap-2">
             <button
               type="button"
               onClick={() => {
@@ -982,7 +953,19 @@ export default function SeniorCitizenApplicationWizard({
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
+              VIEW IN FINANCIAL AID / DISBURSEMENT
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsBlocked(false)
+                setLatestApprovedApp(null)
+                setBlockedApp(null)
+                setStep(1)
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Submit Another Application (Apply Again)
             </button>
           </div>
         </div>
