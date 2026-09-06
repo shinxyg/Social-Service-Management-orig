@@ -561,112 +561,49 @@ export default function PWDSocialAssistanceWizard({
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [reference, setReference] = useState("")
-  const [isBlocked, setIsBlocked] = useState(false)
-  const [blockedApp, setBlockedApp] = useState<any | null>(null)
-  const [bypassedBlock, setBypassedBlock] = useState(false)
+  const [latestSubmittedApp, setLatestSubmittedApp] = useState<any | null>(null)
 
   useEffect(() => {
-    if (isBlocked && !bypassedBlock) {
-      onStepChange?.(0)
-    } else if (submissionStage !== "form" && !bypassedBlock) {
+    if (submissionStage !== "form") {
       onStepChange?.(0)
     } else {
       onStepChange?.(step)
     }
-  }, [step, isBlocked, bypassedBlock, submissionStage, onStepChange])
+  }, [step, submissionStage, onStepChange])
 
-  // Check on mount if user already has an active pending or submitted PWD assistance application
+  // Poll for status update when user just submitted an application in this session
   useEffect(() => {
+    if (submissionStage !== "pending") return
     let isMounted = true
 
-    const checkActiveApp = async () => {
+    const checkStatus = async () => {
       try {
-        let allApps: any[] = []
-        try {
-          const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
-          if (res.ok) {
-            const data = await res.json()
-            if (Array.isArray(data)) allApps = data
-          }
-        } catch {}
-
-        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
-        for (const k of localKeys) {
-          try {
-            const local = JSON.parse(localStorage.getItem(k) || "[]")
-            if (Array.isArray(local)) {
-              for (const la of local) {
-                if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
-                  allApps.push(la)
-                }
-              }
+        const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data) && isMounted) {
+            const currentQcid = getLoggedInUserQcid() || (userProfile as any)?.qcidNumber || userProfile?.qcidNo || "110000572516915"
+            const matched = data.find((a: any) => {
+              const appRef = String(a.referenceNumber || a.reference_number || a.id || "").trim()
+              return (
+                (reference && (appRef === reference || appRef.includes(reference))) ||
+                (currentQcid && (appRef === currentQcid || appRef.includes(currentQcid)))
+              )
+            })
+            if (matched) {
+              setLatestSubmittedApp(matched)
             }
-          } catch {}
-        }
-
-        const currentQcid = getLoggedInUserQcid() || (userProfile as any)?.qcidNumber || userProfile?.qcidNo || "110000572516915"
-        const currentEmail = (userProfile?.email || "").toLowerCase().trim()
-        const currentLastName = (userProfile?.lastName || "").toLowerCase().trim()
-        const currentFirstName = (userProfile?.firstName || "").toLowerCase().trim()
-
-        const isMatchUser = (a: any) => {
-          if (!a) return false
-          const isAssistance =
-            a.type === "assistance" ||
-            a.type === "social-assistance" ||
-            String(a.category || "").toLowerCase().includes("assistance") ||
-            String(a.service || "").toLowerCase().includes("assistance") ||
-            String(a.assistanceType || "").toLowerCase().includes("assistance") ||
-            (a.documents || []).some((d: any) => String(d.name || "").toLowerCase().includes("indigency") || String(d.name || "").toLowerCase().includes("pwdqcid"))
-
-          if (!isAssistance) return false
-
-          const appRef = String(a.referenceNumber || a.reference_number || a.id || "").trim()
-          const appEmail = String(a.email || "").toLowerCase().trim()
-          const appLastName = String(a.lastName || a.last_name || a.firstName || "").toLowerCase().trim()
-          const appFirstName = String(a.firstName || a.first_name || "").toLowerCase().trim()
-
-          return (
-            (currentQcid && (appRef === currentQcid || appRef.includes(currentQcid) || currentQcid.includes(appRef))) ||
-            (currentEmail && appEmail && currentEmail === appEmail) ||
-            (currentLastName && appLastName && (currentLastName === appLastName || appLastName.includes(currentLastName))) ||
-            (currentFirstName && appFirstName && currentFirstName === appFirstName)
-          )
-        }
-
-        const matchingApps = allApps.filter(isMatchUser)
-        const matchedApproved = matchingApps.find((a) => {
-          const s = String(a.status || "").toLowerCase()
-          return s === "approved" || s === "completed" || s === "for_release"
-        })
-        const matchedPending = matchingApps.find((a) => {
-          const s = String(a.status || "pending").toLowerCase()
-          return s === "pending" || s === "under_review"
-        })
-
-        if (isMounted) {
-          if (matchedApproved) {
-            setBlockedApp(matchedApproved)
-            setReference(matchedApproved.referenceNumber || matchedApproved.reference_number || matchedApproved.id || currentQcid)
-            setIsBlocked(true)
-          } else if (matchedPending) {
-            setBlockedApp(matchedPending)
-            setReference(matchedPending.referenceNumber || matchedPending.reference_number || matchedPending.id || currentQcid)
-            setIsBlocked(true)
-          } else {
-            setIsBlocked(false)
-            setBlockedApp(null)
           }
         }
       } catch (e) {
-        console.warn("Could not check active PWD assistance application:", e)
+        console.warn("Could not check PWD assistance application status:", e)
       }
     }
 
-    checkActiveApp()
-    const pollInterval = setInterval(checkActiveApp, 2000)
+    checkStatus()
+    const pollInterval = setInterval(checkStatus, 2000)
 
-    const handleUpdated = () => checkActiveApp()
+    const handleUpdated = () => checkStatus()
     window.addEventListener("pwd_senior_applications_updated", handleUpdated)
     window.addEventListener("applications_updated", handleUpdated)
     window.addEventListener("financial_disbursements_updated", handleUpdated)
@@ -680,7 +617,7 @@ export default function PWDSocialAssistanceWizard({
       window.removeEventListener("financial_disbursements_updated", handleUpdated)
       window.removeEventListener("storage", handleUpdated)
     }
-  }, [userProfile])
+  }, [submissionStage, reference, userProfile])
 
   // Reload / Navigation warning protection
   useEffect(() => {
@@ -1038,23 +975,29 @@ export default function PWDSocialAssistanceWizard({
     .filter(Boolean)
     .join(" ")
 
-  if (isBlocked && !bypassedBlock) {
-    const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
-    const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || reference || userProfile?.qcidNo || "110000572516915"
-    const displayDate = blockedApp?.submittedAt || blockedApp?.created_at || blockedApp?.dateSubmitted
-      ? new Date(blockedApp.submittedAt || blockedApp.created_at || blockedApp.dateSubmitted).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+  if (submissionStage === "matching") {
+    return (
+      <div className="p-4 md:p-6 max-w-xl mx-auto">
+        <div className="bg-card border border-border rounded-2xl p-8 shadow-soft flex flex-col items-center text-center gap-3">
+          <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+            <Loader2 className="h-7 w-7 text-blue-600 animate-spin" />
+          </div>
+          <h2 className="text-lg font-bold text-foreground">Submitting Your Application</h2>
+          <p className="text-sm text-muted-foreground max-w-sm">This will only take a few seconds...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (submissionStage === "pending") {
+    const isAppApproved = String(latestSubmittedApp?.status || "").toLowerCase() === "approved" || String(latestSubmittedApp?.status || "").toLowerCase() === "completed" || String(latestSubmittedApp?.status || "").toLowerCase() === "for_release"
+    const displayRef = latestSubmittedApp?.referenceNumber || latestSubmittedApp?.reference_no || latestSubmittedApp?.reference_number || reference || (userProfile as any)?.qcidNo || "110000572516915"
+    const displayDate = latestSubmittedApp?.submittedAt || latestSubmittedApp?.created_at || latestSubmittedApp?.dateSubmitted
+      ? new Date(latestSubmittedApp.submittedAt || latestSubmittedApp.created_at || latestSubmittedApp.dateSubmitted).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
       : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
 
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            ← Back
-          </button>
-        )}
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
           <div className={`h-16 w-16 rounded-2xl flex items-center justify-center ${isAppApproved ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-500"}`}>
             {isAppApproved ? (
@@ -1077,9 +1020,7 @@ export default function PWDSocialAssistanceWizard({
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">Application Reference No.:</span>
-              <span className="font-mono font-bold text-blue-600">
-                {displayRef}
-              </span>
+              <span className="font-mono font-bold text-blue-600">{displayRef}</span>
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">Status:</span>
@@ -1116,105 +1057,11 @@ export default function PWDSocialAssistanceWizard({
             <button
               type="button"
               onClick={() => {
-                setBypassedBlock(true)
-                setIsBlocked(false)
-                setBlockedApp(null)
-                setStep(1)
+                setLatestSubmittedApp(null)
+                setReference("")
                 setSubmissionStage("form")
-              }}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-            >
-              Submit Another Application (Apply Again)
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (submissionStage === "matching") {
-    return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto">
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-soft flex flex-col items-center text-center gap-3">
-          <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-            <Loader2 className="h-7 w-7 text-blue-600 animate-spin" />
-          </div>
-          <h2 className="text-lg font-bold text-foreground">Submitting Your Application</h2>
-          <p className="text-sm text-muted-foreground max-w-sm">This will only take a few seconds...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (submissionStage === "pending" && !bypassedBlock) {
-    const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
-
-    return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
-          <div className={`h-16 w-16 rounded-2xl flex items-center justify-center ${isAppApproved ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-500"}`}>
-            {isAppApproved ? (
-              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-            ) : (
-              <Info className="h-8 w-8 text-amber-500" />
-            )}
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">
-              {isAppApproved ? "Application Approved" : "You Have an Active Application"}
-            </h2>
-            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
-              {isAppApproved
-                ? "Your application for PWD Social Assistance has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications."
-                : "Your application for PWD Social Assistance has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."}
-            </p>
-          </div>
-
-          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
-            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">Application Reference No.:</span>
-              <span className="font-mono font-bold text-blue-600">{reference || userProfile?.qcidNo || "110000572516915"}</span>
-            </div>
-            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">Status:</span>
-              {isAppApproved ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Approved
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  Under Review (Pending)
-                </span>
-              )}
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Date Filed:</span>
-              <span className="font-semibold text-gray-700">
-                {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
-              </span>
-            </div>
-          </div>
-
-          <div className="w-full pt-2 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/portal/financial-aid"
-              }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              VIEW IN FINANCIAL AID / MY APPLICATIONS
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setBypassedBlock(true)
-                setIsBlocked(false)
-                setBlockedApp(null)
                 setStep(1)
-                setSubmissionStage("form")
+                setUploadedDocs({})
               }}
               className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
             >

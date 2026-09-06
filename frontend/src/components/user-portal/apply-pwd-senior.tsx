@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "react-router-dom"
 import { AlertCircle, RefreshCw, HeartHandshake, X, FileText, Info, CheckCircle2 } from "lucide-react"
 import PWDApplicationWizard from "./pwd-senior-wizard"
@@ -32,12 +32,14 @@ export default function ApplyPWDSenior() {
   const isSeniorId = isSenior && !isSeniorMedicine && !isSeniorMovie && !isSeniorSocial
   const isAssistance = !isSenior && urlType === "assistance"
   const [bypassedBlock, setBypassedBlock] = useState(false)
+  const bypassedBlockRef = useRef(false)
 
   // Check for existing pending/active applications for this category & service
   useEffect(() => {
     let isMounted = true
 
     const checkActiveApp = async () => {
+      if (bypassedBlockRef.current) return
       try {
         let allApps: any[] = []
         try {
@@ -155,7 +157,7 @@ export default function ApplyPWDSenior() {
         })
         const matchedApprovedGlobal = allApps.find(isApprovedMatch)
 
-        if (isMounted) {
+        if (isMounted && !bypassedBlockRef.current) {
           if (matchedApproved) {
             setIsBlocked(true)
             setBlockedApp(matchedApproved)
@@ -194,6 +196,8 @@ export default function ApplyPWDSenior() {
 
   // Keep modal closed on navigation so user can see and access the form UI directly
   useEffect(() => {
+    bypassedBlockRef.current = false
+    setBypassedBlock(false)
     setShowModal(false)
     setUnderstood(false)
     setCurrentStep(1)
@@ -339,9 +343,11 @@ export default function ApplyPWDSenior() {
             <button
               type="button"
               onClick={() => {
+                bypassedBlockRef.current = true
                 setBypassedBlock(true)
                 setIsBlocked(false)
                 setBlockedApp(null)
+                setCurrentStep(1)
               }}
               className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
             >
