@@ -1185,8 +1185,10 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 {isSeniorBooklet ? "Senior Citizen Booklet Details" : "Senior Citizen Program Details"}
               </SectionHeading>
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                <Field label="Service & Application Type" value={subLabel} />
-                <Field label="Application category" value={isSeniorBooklet ? bookletTitle : "Senior Citizen Services"} />
+                <Field label="Service & Application Type" value={isSeniorBooklet ? bookletTitle : subLabel} />
+                {!isSeniorBooklet && (
+                  <Field label="Application category" value="Senior Citizen Services" />
+                )}
                 {((app as any).existingIdNumber || (app as any).oldSeniorId || (app as any).oscaId || (app as any).seniorIdNumber) && (
                   <Field
                     label="Senior Citizen / OSCA ID Number"
