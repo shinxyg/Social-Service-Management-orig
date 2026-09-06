@@ -225,17 +225,49 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
   const location = useLocation()
   const currentFullUrl = location.pathname + location.search
 
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    aics: true,
-    pwd: true,
-    senior: true,
-    soloParent: true,
-    childWelfare: true,
-    livelihood: true,
+  // Determine which section contains the active route
+  const getActiveGroupId = () => {
+    for (const item of residentNav) {
+      if (item.children) {
+        const isMatch = item.children.some(
+          (child) =>
+            currentFullUrl === child.path ||
+            (location.pathname === "/portal/apply-pwd-senior" && child.path.includes(location.search)) ||
+            (location.pathname === "/portal/apply-solo-parent" && child.path.includes(location.search)) ||
+            (location.pathname === "/portal/apply-livelihood" && child.path.includes(location.search)) ||
+            (location.pathname === "/portal/aics" && child.path.includes(location.search))
+        )
+        if (isMatch) return item.id
+      }
+    }
+    return null
+  }
+
+  // Accordion state: by default only open the active group (or all closed)
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
+    const activeId = getActiveGroupId()
+    return activeId ? { [activeId]: true } : {}
   })
 
+  // Auto-sync accordion when user navigates
+  useEffect(() => {
+    const activeId = getActiveGroupId()
+    if (activeId) {
+      setExpandedMenus({ [activeId]: true })
+    }
+  }, [location.pathname, location.search])
+
   const toggleExpand = (id: string) => {
-    setExpandedMenus((prev) => ({ ...prev, [id]: !prev[id] }))
+    setExpandedMenus((prev) => {
+      const willBeOpen = !prev[id]
+      if (willBeOpen) {
+        // Accordion behavior: open clicked group and collapse all other groups
+        return { [id]: true }
+      } else {
+        // Collapse clicked group
+        return {}
+      }
+    })
   }
 
   const handleNavClick = (e: React.MouseEvent, targetPath: string) => {
