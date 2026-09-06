@@ -1719,7 +1719,7 @@ export default function PWDSeniorCitizen() {
             : rawType === "replacement" || rawType === "loss"
             ? "Replacement / Lost ID"
             : isSeniorBooklet
-            ? "Bagong Booklet"
+            ? "New Booklet"
             : "New Application"
         const serviceName = isSeniorBooklet
           ? isMovieBooklet

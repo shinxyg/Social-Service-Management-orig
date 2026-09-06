@@ -520,7 +520,7 @@ exports.updateApplicationStatus = async (req, res) => {
               oscaIdNumber: targetApp?.existing_id_number || targetApp?.existingIdNumber || targetApp?.reference_number || targetApp?.referenceNumber,
               referenceNumber: refNo,
               bookletType: isMovieBooklet ? 'movie' : 'medicine',
-              applicationType: appType === 'renewal' ? 'Renewal' : appType === 'replacement' || appType === 'loss' ? 'Replacement' : 'Bagong Booklet',
+              applicationType: appType === 'renewal' ? 'Renewal' : appType === 'replacement' || appType === 'loss' ? 'Replacement' : 'New Booklet',
               approvedDate: approvedDate || new Date().toISOString(),
               contactNumber: targetApp?.contact_no || targetApp?.contactNo || targetApp?.cellphoneNo,
               address: targetApp?.address,

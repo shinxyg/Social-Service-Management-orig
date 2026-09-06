@@ -733,21 +733,21 @@ async function sendSeniorBookletApprovalEmail({
             <span class="badge">✓ OFFICIAL ${bookletTitle.toUpperCase()} ISSUED</span>
           </div>
 
-          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Mabuhay, ${recipientName || 'Senior Citizen'}!</h2>
+          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Greetings, ${recipientName || 'Senior Citizen'}!</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
-            Ang inyong aplikasyon para sa opisyal na <strong>${bookletTitle}</strong> ay matagumpay na <strong>NAAPRUBAHAN</strong> ng Office for Senior Citizens Affairs (OSCA).
+            We are pleased to inform you that your application for an official <strong>${bookletTitle}</strong> has been successfully <strong>APPROVED</strong> by the Office for Senior Citizens Affairs (OSCA).
           </p>
 
           <div class="card">
             <div class="id-number-box">
               <div class="id-number-label">OFFICIAL ${bookletShort.toUpperCase()} NUMBER</div>
               <div class="id-number-val">${generatedBookletNo}</div>
-              <div class="id-number-sub">Bukod at natatanging Booklet Control Number para sa inyong rekord at renewal</div>
+              <div class="id-number-sub">Official Unique Booklet Control Number for your records and renewals</div>
             </div>
 
             <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 14px;">
               <tr>
-                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Pangalan ng May-ari:</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Booklet Holder Name:</td>
                 <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right; text-transform: uppercase;">${recipientName || '—'}</td>
               </tr>
               <tr>
@@ -755,43 +755,43 @@ async function sendSeniorBookletApprovalEmail({
                 <td style="padding: 6px 0; color: #0f172a; font-family: monospace; font-weight: 700; text-align: right;">${officialOscaId}</td>
               </tr>
               <tr>
-                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Uri ng Serbisyo:</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Service Type:</td>
                 <td style="padding: 6px 0; color: #0284c7; font-weight: 700; text-align: right;">${bookletTitle}</td>
               </tr>
               <tr>
-                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Uri ng Aplikasyon:</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Application Type:</td>
                 <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right; text-transform: uppercase;">${applicationType}</td>
               </tr>
               <tr>
-                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Petsa ng Pagkaka-isyu:</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Date of Issuance:</td>
                 <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right;">${dateStr}</td>
               </tr>
               <tr>
-                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Katayuan:</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Status:</td>
                 <td style="padding: 6px 0; color: #047857; font-weight: 800; text-align: right;">ACTIVE AND REGISTERED</td>
               </tr>
             </table>
           </div>
 
           <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #166534; line-height: 1.5; margin-bottom: 16px;">
-            <strong>Paano Gamitin:</strong> ${
+            <strong>How to Use:</strong> ${
               isMovie
-                ? 'Ipakita ang booklet number na ito kasama ang inyong opisyal na QC Senior Citizen ID sa mga sinehan sa Quezon City para sa libreng panonood.'
-                : 'Ipakita ang Booklet Number na ito kasama ang inyong Senior Citizen ID at reseta ng doktor sa mga botika/drugstore para sa 20% discount at VAT exemption alinsunod sa R.A. 9994.'
+                ? 'Present this Booklet Number along with your official Senior Citizen ID at participating cinemas for free movie screening privileges.'
+                : 'Present this Booklet Number along with your official Senior Citizen ID and doctor\'s prescription at participating pharmacies and drugstores for a 20% discount and VAT exemption pursuant to R.A. 9994.'
             }
           </div>
 
           <div style="background: #eff6ff; border-left: 4px solid #0284c7; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #0369a1; line-height: 1.5;">
-            <strong>Mahalagang Paalala:</strong> I-save ang email na ito. Kung sakaling kailanganin mong mag-renew o mag-apply ng replacement sa hinaharap, gamitin ang Booklet Number (<strong>${generatedBookletNo}</strong>) na ito bilang inyong Existing Booklet Number.
+            <strong>Important Reminder:</strong> Please keep and save this email. If you need to renew or apply for a replacement booklet in the future, use this Booklet Number (<strong>${generatedBookletNo}</strong>) as your Existing Booklet Reference.
           </div>
 
           <a href="https://frontend-production-1c51.up.railway.app/portal/my-applications" class="button" target="_blank">
-            TINGNAN ANG AKING MGA APLIKASYON
+            VIEW MY APPLICATIONS
           </a>
         </div>
 
         <div class="footer">
-          <p style="margin: 0 0 4px;">Ito ay opisyal na automated email notification mula sa Gov Services Portal.</p>
+          <p style="margin: 0 0 4px;">This is an official automated email notification from the Gov Services Portal.</p>
           <p style="margin: 0;">Gov Services | Office for Senior Citizens Affairs (OSCA)</p>
         </div>
       </div>
@@ -809,7 +809,7 @@ async function sendSeniorBookletApprovalEmail({
     from: `"Gov Services (Senior Citizen Services)" <${senderEmail}>`,
     to: recipientEmail.trim(),
     subject: `[Gov Services] Official ${bookletTitle} Approved: ${generatedBookletNo}`,
-    text: `Mabuhay ${recipientName}! Ang inyong ${bookletTitle} ay naaprubahan na. Official Booklet Number: ${generatedBookletNo}. OSCA ID: ${officialOscaId}.`,
+    text: `Greetings ${recipientName}! Your ${bookletTitle} application has been successfully approved. Official Booklet Number: ${generatedBookletNo}. OSCA ID: ${officialOscaId}.`,
     html: htmlContent,
     attachments,
   };
@@ -891,7 +891,7 @@ async function sendSeniorBookletApprovalEmail({
           from: 'Gov Services <onboarding@resend.dev>',
           to: [recipientEmail.trim()],
           subject: `[Gov Services] Official ${bookletTitle} Approved: ${generatedBookletNo}`,
-          text: `Mabuhay ${recipientName}! Ang inyong ${bookletTitle} ay naaprubahan na. Official Booklet Number: ${generatedBookletNo}.`,
+          text: `Greetings ${recipientName}! Your ${bookletTitle} application has been successfully approved. Official Booklet Number: ${generatedBookletNo}.`,
           html: htmlContent,
         }),
       });
