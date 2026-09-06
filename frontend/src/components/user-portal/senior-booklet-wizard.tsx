@@ -168,6 +168,37 @@ export default function SeniorBookletWizard({
   const [renewalReason, setRenewalReason] = useState("Booklet pages are full")
   const [replacementReason, setReplacementReason] = useState("Lost")
 
+  const combinedRequestType =
+    applicationType === "renewal"
+      ? renewalReason === "Renewal due"
+        ? "renewal:due"
+        : "renewal:full"
+      : replacementReason === "Damaged / Torn" || replacementReason === "Damaged"
+      ? "replacement:damaged"
+      : replacementReason === "Stolen"
+      ? "replacement:stolen"
+      : "replacement:lost"
+
+  const handleCombinedRequestChange = (val: string) => {
+    if (val.startsWith("renewal")) {
+      setApplicationType("renewal")
+      if (val === "renewal:due") {
+        setRenewalReason("Renewal due")
+      } else {
+        setRenewalReason("Booklet pages are full")
+      }
+    } else {
+      setApplicationType("replacement")
+      if (val === "replacement:damaged") {
+        setReplacementReason("Damaged / Torn")
+      } else if (val === "replacement:stolen") {
+        setReplacementReason("Stolen")
+      } else {
+        setReplacementReason("Lost")
+      }
+    }
+  }
+
   // STEP 2 Personal Information
   const [isEditingInfo, setIsEditingInfo] = useState(false)
   const [formData, setFormData] = useState({
@@ -1099,35 +1130,6 @@ export default function SeniorBookletWizard({
 
               {hasPriorBooklet !== "" && (
                 <div className="space-y-4 pt-2">
-                  {hasPriorBooklet === "yes" && (
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">
-                        Select Type of Request *
-                      </label>
-                      <div className="flex items-center gap-8">
-                        <label className="flex items-center gap-2 text-sm text-gray-900 cursor-pointer select-none">
-                          <input
-                            type="radio"
-                            name="bookletSubtype"
-                            checked={applicationType === "renewal"}
-                            onChange={() => setApplicationType("renewal")}
-                            className="h-4 w-4 accent-[#3b82f6]"
-                          />
-                          Renewal (Booklet pages full / Expired)
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-gray-900 cursor-pointer select-none">
-                          <input
-                            type="radio"
-                            name="bookletSubtype"
-                            checked={applicationType === "replacement"}
-                            onChange={() => setApplicationType("replacement")}
-                            className="h-4 w-4 accent-[#3b82f6]"
-                          />
-                          Replacement (Lost / Damaged)
-                        </label>
-                      </div>
-                    </div>
-                  )}
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">
@@ -1233,28 +1235,22 @@ export default function SeniorBookletWizard({
 
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase">
-                          Reason for {applicationType === "renewal" ? "Renewal" : "Replacement"} *
+                          Type of Request &amp; Reason *
                         </label>
                         <select
-                          value={applicationType === "renewal" ? renewalReason : replacementReason}
-                          onChange={(e) => {
-                            if (applicationType === "renewal") setRenewalReason(e.target.value)
-                            else setReplacementReason(e.target.value)
-                          }}
+                          value={combinedRequestType}
+                          onChange={(e) => handleCombinedRequestChange(e.target.value)}
                           className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                         >
-                          {applicationType === "renewal" ? (
-                            <>
-                              <option value="Booklet pages are full">Booklet pages are full</option>
-                              <option value="Renewal due">Renewal due</option>
-                            </>
-                          ) : (
-                            <>
-                              <option value="Lost">Lost</option>
-                              <option value="Damaged">Damaged / Torn</option>
-                              <option value="Stolen">Stolen</option>
-                            </>
-                          )}
+                          <optgroup label="Renewal">
+                            <option value="renewal:full">Renewal — Booklet pages are full</option>
+                            <option value="renewal:due">Renewal — Renewal due / Expired</option>
+                          </optgroup>
+                          <optgroup label="Replacement">
+                            <option value="replacement:lost">Replacement — Lost Booklet</option>
+                            <option value="replacement:damaged">Replacement — Damaged / Torn</option>
+                            <option value="replacement:stolen">Replacement — Stolen</option>
+                          </optgroup>
                         </select>
                       </div>
                     </div>
