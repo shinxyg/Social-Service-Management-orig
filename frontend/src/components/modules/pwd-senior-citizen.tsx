@@ -783,6 +783,13 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardP
     String(app.type || "").toLowerCase() === "medicine-booklet" ||
     String(app.type || "").toLowerCase() === "movie-booklet"
   )
+  const isAssistance =
+    app.type === "assistance" ||
+    (app as any).type === "social-assistance" ||
+    String(app.category || "").toLowerCase().includes("assistance") ||
+    String(subLabel || "").toLowerCase().includes("assistance") ||
+    String((app as any).service || "").toLowerCase().includes("assistance") ||
+    String((app as any).assistanceType || "").toLowerCase().includes("assistance")
 
   return (
     <div
