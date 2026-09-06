@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, type ReactNode } from "react"
-import { Check, CheckCircle2, Upload, Camera, ChevronRight, ChevronDown, Pencil, FileText, AlertCircle, Info, X, Sparkles, Loader2, ExternalLink } from "lucide-react"
+import { Check, CheckCircle2, Upload, Camera, ChevronRight, ChevronDown, Pencil, FileText, AlertCircle, Info, X, Sparkles, Loader2 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
@@ -1307,7 +1307,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       targetApp?.id ||
       referenceNumber ||
       userProfile?.qcidNo ||
-      formData.qcidNo ||
+      formData.existingPwdIdNumber ||
       "110000572516915"
 
     const assignedIdNo =
