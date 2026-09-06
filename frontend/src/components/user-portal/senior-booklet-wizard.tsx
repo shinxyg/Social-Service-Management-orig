@@ -85,8 +85,12 @@ export default function SeniorBookletWizard({
   const [step, setStep] = useState(1)
 
   useEffect(() => {
-    onStepChange?.(step)
-  }, [step, onStepChange])
+    if (isBlocked) {
+      onStepChange?.(0)
+    } else {
+      onStepChange?.(step)
+    }
+  }, [step, isBlocked, onStepChange])
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)

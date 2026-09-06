@@ -587,12 +587,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [blockedApp, setBlockedApp] = useState<any>(null)
 
   useEffect(() => {
-    if (latestApprovedApp && (!initialIdStatus || initialIdStatus === "new") && !bypassedBlock) {
+    if (((latestApprovedApp && (!initialIdStatus || initialIdStatus === "new")) || isBlocked) && !bypassedBlock) {
       onStepChange?.(0)
     } else {
       onStepChange?.(step)
     }
-  }, [step, latestApprovedApp, initialIdStatus, bypassedBlock, onStepChange])
+  }, [step, latestApprovedApp, isBlocked, initialIdStatus, bypassedBlock, onStepChange])
 
   // Reset wizard to Step 1 whenever flow/type changes or an application becomes approved
   useEffect(() => {

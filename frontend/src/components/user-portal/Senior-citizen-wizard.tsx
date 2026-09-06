@@ -256,12 +256,12 @@ export default function SeniorCitizenApplicationWizard({
   const [blockedApp, setBlockedApp] = useState<any>(null)
 
   useEffect(() => {
-    if (latestApprovedApp && appFlow === "new") {
+    if ((latestApprovedApp && appFlow === "new") || isBlocked) {
       onStepChange?.(0)
     } else {
       onStepChange?.(step)
     }
-  }, [step, latestApprovedApp, appFlow, onStepChange])
+  }, [step, latestApprovedApp, isBlocked, appFlow, onStepChange])
 
   // Reset wizard to Step 1 whenever flow/type changes or an application becomes approved
   useEffect(() => {
