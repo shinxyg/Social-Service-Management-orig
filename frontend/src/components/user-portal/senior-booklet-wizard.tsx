@@ -1211,7 +1211,7 @@ export default function SeniorBookletWizard({
                     )}
                   </div>
 
-                  {hasPriorBooklet === "yes" && isIdVerified && (
+                  {hasPriorBooklet === "yes" && (
                     <div className="space-y-4 max-w-md pt-1 animate-in fade-in">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase">
