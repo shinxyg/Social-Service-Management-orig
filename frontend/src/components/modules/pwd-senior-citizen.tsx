@@ -974,7 +974,9 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
           <div>
             <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>Personal Information</SectionHeading>
             <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+              <Field label="QC ID Number" value={<span className="font-mono font-bold text-blue-700">{app.referenceNumber || (app as any).qcid || "—"}</span>} />
               <Field label="Full name" value={displayName(app)} />
+              <Field label="Nationality" value={(app as any).nationality || "FILIPINO"} />
               <Field
                 label="Date of birth"
                 value={
@@ -984,26 +986,19 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                   </span>
                 }
               />
-              <Field label="Age / Sex" value={`${app.age || "—"} / ${app.sex || "—"}`} />
+              <Field label="Age / Sex" value={`${app.age || "—"} / ${app.sex || (app as any).gender || "—"}`} />
               <Field label="Civil status" value={app.civilStatus || "—"} />
-              <Field
-                label="Contact number"
-                value={
-                  <span className="inline-flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                    {contactNumber || "—"}
-                  </span>
-                }
-              />
-              <Field
-                label="Email address"
-                value={
-                  <span className="inline-flex items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                    {app.email || "—"}
-                  </span>
-                }
-              />
+              <div className="col-span-2">
+                <Field
+                  label="Phone number"
+                  value={
+                    <span className="inline-flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                      {contactNumber || "—"}
+                    </span>
+                  }
+                />
+              </div>
               <div className="col-span-2">
                 <Field
                   label="Registered residential address"
@@ -1018,83 +1013,151 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
             </div>
           </div>
 
-          {/* Section 02: Program Specific Details */}
-          <div>
-            <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>
-              {isPWD(app) ? "Disability Information" : "Senior Citizen Program Details"}
-            </SectionHeading>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-              {isPWD(app) ? (
-                <>
-                  <Field label="Disability type" value={app.disabilityType} />
-                  <Field label="Classification" value={<span className="capitalize">{app.disabilityClass}</span>} />
-                  <div className="col-span-2">
-                    <Field label="Cause of disability" value={app.causeOfDisability} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Field label="Service & Application Type" value={subLabel} />
-                  <Field label="Application category" value="Senior Citizen Services" />
-                  {((app as any).existingIdNumber || (app as any).oldSeniorId) && (
-                    <Field
-                      label={app.type === "renewal" ? "Existing / Expired Senior ID" : "Previous / Lost Senior ID"}
-                      value={
-                        <span className="font-mono font-bold text-blue-700">
-                          {(app as any).existingIdNumber || (app as any).oldSeniorId}
-                        </span>
-                      }
-                    />
-                  )}
-                  {((app as any).reasonForRenewal || (app as any).reasonForReplacement) && (
-                    <Field
-                      label={app.type === "renewal" ? "Reason for Renewal" : "Reason for Replacement"}
-                      value={(app as any).reasonForRenewal || (app as any).reasonForReplacement}
-                    />
-                  )}
-                </>
-              )}
+          {/* Section 02: Disability Information (for PWD) or Program Details */}
+          {isPWD(app) && (
+            <div>
+              <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>
+                Disability Information
+              </SectionHeading>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                <Field label="Disability type" value={app.disabilityType || (app as any).disability_type || "—"} />
+                <Field label="Cause of disability" value={app.causeOfDisability || (app as any).cause_of_disability || "—"} />
+                <div className="col-span-2">
+                  <Field
+                    label="Brief description of disability"
+                    value={(app as any).disabilityDescription || (app as any).briefDescription || (app as any).description || "—"}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Section: Emergency Contact Information */}
-          <div>
-            <SectionHeading number={nextNum()} icon={<Phone className="h-4 w-4" />}>
-              Emergency Contact Information
-            </SectionHeading>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-              <Field label="Emergency contact person" value={emergencyPerson} />
-              <Field
-                label="Contact number"
-                value={
-                  emergencyPhone !== "—" ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                      {emergencyPhone}
-                    </span>
-                  ) : (
-                    "—"
-                  )
-                }
-              />
-              <Field label="Relationship to applicant" value={emergencyRelation} />
-              <div className="col-span-2">
+          {!isPWD(app) && !isAssistance && (
+            <div>
+              <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>
+                Senior Citizen Program Details
+              </SectionHeading>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                <Field label="Service & Application Type" value={subLabel} />
+                <Field label="Application category" value="Senior Citizen Services" />
+                {((app as any).existingIdNumber || (app as any).oldSeniorId) && (
+                  <Field
+                    label={app.type === "renewal" ? "Existing / Expired Senior ID" : "Previous / Lost Senior ID"}
+                    value={
+                      <span className="font-mono font-bold text-blue-700">
+                        {(app as any).existingIdNumber || (app as any).oldSeniorId}
+                      </span>
+                    }
+                  />
+                )}
+                {((app as any).reasonForRenewal || (app as any).reasonForReplacement) && (
+                  <Field
+                    label={app.type === "renewal" ? "Reason for Renewal" : "Reason for Replacement"}
+                    value={(app as any).reasonForRenewal || (app as any).reasonForReplacement}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Section: Household & Socio-Economic Information (for Social Assistance) */}
+          {isAssistance && (
+            <div>
+              <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>
+                Household &amp; Socio-Economic Information
+              </SectionHeading>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
                 <Field
-                  label="Emergency residential address"
+                  label="Number of household members"
+                  value={(app as any).householdMembers || (app as any).numberOfHouseholdMembers || (app as any).numHouseholdMembers || "—"}
+                />
+                <Field
+                  label="Total monthly household income"
+                  value={(app as any).monthlyHouseholdIncome || (app as any).monthlyIncome || (app as any).householdIncome || "—"}
+                />
+                <div className="col-span-2">
+                  <Field
+                    label="Total monthly household expenses (₱)"
+                    value={(app as any).monthlyHouseholdExpenses || (app as any).monthlyExpenses || (app as any).householdExpenses || "—"}
+                  />
+                </div>
+                {(app as any).livingArrangement && (
+                  <Field label="Living arrangement" value={(app as any).livingArrangement} />
+                )}
+                {(app as any).pensionSource && (
+                  <Field label="Pension / Financial support" value={(app as any).pensionSource} />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Section: Assistance Details (for Social Assistance) */}
+          {isAssistance && (
+            <div>
+              <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>
+                Assistance Details
+              </SectionHeading>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                <div className="col-span-2">
+                  <Field
+                    label="Type of assistance requested"
+                    value={
+                      <span className="font-semibold text-blue-700">
+                        {(app as any).assistanceType || (app as any).service || subLabel || "Social Assistance"}
+                      </span>
+                    }
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Field
+                    label="Reason for request"
+                    value={(app as any).reasonForRequest || (app as any).notes || "—"}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section: Emergency Contact Information (for ID Applications) */}
+          {!isAssistance && (
+            <div>
+              <SectionHeading number={nextNum()} icon={<Phone className="h-4 w-4" />}>
+                Emergency Contact Information
+              </SectionHeading>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                <Field label="Emergency contact person" value={emergencyPerson} />
+                <Field
+                  label="Contact number"
                   value={
-                    emergencyAddress !== "—" ? (
-                      <span className="inline-flex items-start gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
-                        {emergencyAddress}
+                    emergencyPhone !== "—" ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                        {emergencyPhone}
                       </span>
                     ) : (
                       "—"
                     )
                   }
                 />
+                <Field label="Relationship to applicant" value={emergencyRelation} />
+                <div className="col-span-2">
+                  <Field
+                    label="Emergency residential address"
+                    value={
+                      emergencyAddress !== "—" ? (
+                        <span className="inline-flex items-start gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
+                          {emergencyAddress}
+                        </span>
+                      ) : (
+                        "—"
+                      )
+                    }
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Documents */}
           <div>
