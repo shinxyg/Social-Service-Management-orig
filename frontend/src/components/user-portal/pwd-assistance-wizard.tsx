@@ -566,9 +566,12 @@ export default function PWDSocialAssistanceWizard({
   const [reference, setReference] = useState("")
   const [isBlocked, setIsBlocked] = useState(false)
   const [blockedApp, setBlockedApp] = useState<any | null>(null)
+  const [bypassedBlock, setBypassedBlock] = useState(false)
 
   // Check on mount if user already has an active pending or submitted PWD assistance application
   useEffect(() => {
+    let isMounted = true
+
     const checkActiveApp = async () => {
       try {
         let allApps: any[] = []
@@ -580,7 +583,7 @@ export default function PWDSocialAssistanceWizard({
           }
         } catch {}
 
-        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications"]
+        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
         for (const k of localKeys) {
           try {
             const local = JSON.parse(localStorage.getItem(k) || "[]")
@@ -599,7 +602,7 @@ export default function PWDSocialAssistanceWizard({
         const currentLastName = (userProfile?.lastName || "").toLowerCase().trim()
         const currentFirstName = (userProfile?.firstName || "").toLowerCase().trim()
 
-        const activeApp = allApps.find((a) => {
+        const isMatchUser = (a: any) => {
           if (!a) return false
           const isAssistance =
             a.type === "assistance" ||
@@ -611,27 +614,42 @@ export default function PWDSocialAssistanceWizard({
 
           if (!isAssistance) return false
 
-          const appStatus = String(a.status || "pending").toLowerCase()
-          if (appStatus !== "pending" && appStatus !== "under_review" && appStatus !== "for_release") return false
-
           const appRef = String(a.referenceNumber || a.reference_number || a.id || "").trim()
           const appEmail = String(a.email || "").toLowerCase().trim()
           const appLastName = String(a.lastName || a.last_name || a.firstName || "").toLowerCase().trim()
           const appFirstName = String(a.firstName || a.first_name || "").toLowerCase().trim()
 
-          const matchUser =
+          return (
             (currentQcid && (appRef === currentQcid || appRef.includes(currentQcid) || currentQcid.includes(appRef))) ||
             (currentEmail && appEmail && currentEmail === appEmail) ||
             (currentLastName && appLastName && (currentLastName === appLastName || appLastName.includes(currentLastName))) ||
             (currentFirstName && appFirstName && currentFirstName === appFirstName)
+          )
+        }
 
-          return matchUser
+        const matchingApps = allApps.filter(isMatchUser)
+        const matchedApproved = matchingApps.find((a) => {
+          const s = String(a.status || "").toLowerCase()
+          return s === "approved" || s === "completed" || s === "for_release"
+        })
+        const matchedPending = matchingApps.find((a) => {
+          const s = String(a.status || "pending").toLowerCase()
+          return s === "pending" || s === "under_review"
         })
 
-        if (activeApp) {
-          setBlockedApp(activeApp)
-          setReference(activeApp.referenceNumber || activeApp.reference_number || activeApp.id || currentQcid)
-          setIsBlocked(true)
+        if (isMounted) {
+          if (matchedApproved) {
+            setBlockedApp(matchedApproved)
+            setReference(matchedApproved.referenceNumber || matchedApproved.reference_number || matchedApproved.id || currentQcid)
+            setIsBlocked(true)
+          } else if (matchedPending) {
+            setBlockedApp(matchedPending)
+            setReference(matchedPending.referenceNumber || matchedPending.reference_number || matchedPending.id || currentQcid)
+            setIsBlocked(true)
+          } else {
+            setIsBlocked(false)
+            setBlockedApp(null)
+          }
         }
       } catch (e) {
         console.warn("Could not check active PWD assistance application:", e)
@@ -639,6 +657,22 @@ export default function PWDSocialAssistanceWizard({
     }
 
     checkActiveApp()
+    const pollInterval = setInterval(checkActiveApp, 2000)
+
+    const handleUpdated = () => checkActiveApp()
+    window.addEventListener("pwd_senior_applications_updated", handleUpdated)
+    window.addEventListener("applications_updated", handleUpdated)
+    window.addEventListener("financial_disbursements_updated", handleUpdated)
+    window.addEventListener("storage", handleUpdated)
+
+    return () => {
+      isMounted = false
+      clearInterval(pollInterval)
+      window.removeEventListener("pwd_senior_applications_updated", handleUpdated)
+      window.removeEventListener("applications_updated", handleUpdated)
+      window.removeEventListener("financial_disbursements_updated", handleUpdated)
+      window.removeEventListener("storage", handleUpdated)
+    }
   }, [userProfile])
 
   // Reload / Navigation warning protection
@@ -997,7 +1031,13 @@ export default function PWDSocialAssistanceWizard({
     .filter(Boolean)
     .join(" ")
 
-  if (isBlocked) {
+  if (isBlocked && !bypassedBlock) {
+    const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
+    const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || reference || userProfile?.qcidNo || "110000572516915"
+    const displayDate = blockedApp?.submittedAt || blockedApp?.created_at || blockedApp?.dateSubmitted
+      ? new Date(blockedApp.submittedAt || blockedApp.created_at || blockedApp.dateSubmitted).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+      : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
         {onBack && (
@@ -1009,15 +1049,21 @@ export default function PWDSocialAssistanceWizard({
           </button>
         )}
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-8 w-8 text-amber-500" />
+          <div className={`h-16 w-16 rounded-2xl flex items-center justify-center ${isAppApproved ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-500"}`}>
+            {isAppApproved ? (
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            ) : (
+              <Info className="h-8 w-8 text-amber-500" />
+            )}
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {t("hasPendingAppTitle") || "You Have an Active Application"}
+              {isAppApproved ? "Naaprubahan ang Inyong Aplikasyon (Application Approved)" : (t("hasPendingAppTitle") || "You Have an Active Application")}
             </h2>
             <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
-              {t("hasPendingAppDesc") ? t("hasPendingAppDesc").replace("{type}", "PWD Social Assistance") : "Your application for PWD Social Assistance has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."}
+              {isAppApproved
+                ? "Ang inyong aplikasyon para sa PWD Social Assistance ay opisyal nang naaprubahan! Maaari na ninyong tingnan ang inyong iskedyul ng payout sa Financial Aid o sa My Applications."
+                : (t("hasPendingAppDesc") ? t("hasPendingAppDesc").replace("{type}", "PWD Social Assistance") : "Your application for PWD Social Assistance has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.")}
             </p>
           </div>
 
@@ -1025,34 +1071,53 @@ export default function PWDSocialAssistanceWizard({
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">{t("appRefNoLabel") || "Application Reference No.:"}</span>
               <span className="font-mono font-bold text-blue-600">
-                {blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || reference || userProfile?.qcidNo || "110000572516915"}
+                {displayRef}
               </span>
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                {t("statusPendingBadge") || "• Under Review (Pending)"}
-              </span>
+              {isAppApproved ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Naaprubahan (Approved)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  {t("statusPendingBadge") || "• Under Review (Pending)"}
+                </span>
+              )}
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
               <span className="font-semibold text-gray-700">
-                {blockedApp?.submittedAt || blockedApp?.created_at || blockedApp?.dateSubmitted
-                  ? new Date(blockedApp.submittedAt || blockedApp.created_at || blockedApp.dateSubmitted).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
-                  : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
+                {displayDate}
               </span>
             </div>
           </div>
 
-          <div className="w-full pt-2">
+          <div className="w-full pt-2 flex flex-col gap-2">
             <button
               type="button"
               onClick={() => {
-                window.location.href = "/portal/my-applications"
+                window.location.href = "/portal/financial-aid"
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
+              TINGNAN SA FINANCIAL AID / MY APPLICATIONS
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBypassedBlock(true)
+                setIsBlocked(false)
+                setBlockedApp(null)
+                setStep(1)
+                setSubmissionStage("form")
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Mag-apply Muli / Buksan ang Form (Apply Again)
             </button>
           </div>
         </div>
@@ -1074,19 +1139,27 @@ export default function PWDSocialAssistanceWizard({
     )
   }
 
-  if (submissionStage === "pending") {
+  if (submissionStage === "pending" && !bypassedBlock) {
+    const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
+
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-8 w-8 text-amber-500" />
+          <div className={`h-16 w-16 rounded-2xl flex items-center justify-center ${isAppApproved ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-500"}`}>
+            {isAppApproved ? (
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            ) : (
+              <Info className="h-8 w-8 text-amber-500" />
+            )}
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {t("hasPendingAppTitle") || "You Have an Active Application"}
+              {isAppApproved ? "Naaprubahan ang Inyong Aplikasyon (Application Approved)" : (t("hasPendingAppTitle") || "You Have an Active Application")}
             </h2>
             <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
-              {t("hasPendingAppDesc") ? t("hasPendingAppDesc").replace("{type}", "PWD Social Assistance") : "Your application for PWD Social Assistance has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."}
+              {isAppApproved
+                ? "Ang inyong aplikasyon para sa PWD Social Assistance ay opisyal nang naaprubahan! Maaari na ninyong tingnan ang inyong iskedyul ng payout sa Financial Aid o sa My Applications."
+                : (t("hasPendingAppDesc") ? t("hasPendingAppDesc").replace("{type}", "PWD Social Assistance") : "Your application for PWD Social Assistance has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.")}
             </p>
           </div>
 
@@ -1097,9 +1170,17 @@ export default function PWDSocialAssistanceWizard({
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                {t("statusPendingBadge") || "• Under Review (Pending)"}
-              </span>
+              {isAppApproved ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Naaprubahan (Approved)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  {t("statusPendingBadge") || "• Under Review (Pending)"}
+                </span>
+              )}
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
@@ -1109,15 +1190,28 @@ export default function PWDSocialAssistanceWizard({
             </div>
           </div>
 
-          <div className="w-full pt-2">
+          <div className="w-full pt-2 flex flex-col gap-2">
             <button
               type="button"
               onClick={() => {
-                window.location.href = "/portal/my-applications"
+                window.location.href = "/portal/financial-aid"
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
+              TINGNAN SA FINANCIAL AID / MY APPLICATIONS
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBypassedBlock(true)
+                setIsBlocked(false)
+                setBlockedApp(null)
+                setStep(1)
+                setSubmissionStage("form")
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Mag-apply Muli / Buksan ang Form (Apply Again)
             </button>
           </div>
         </div>

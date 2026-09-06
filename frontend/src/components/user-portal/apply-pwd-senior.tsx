@@ -31,6 +31,7 @@ export default function ApplyPWDSenior() {
   const isSeniorSocial = isSenior && urlType === "social-assistance"
   const isSeniorId = isSenior && !isSeniorMedicine && !isSeniorMovie && !isSeniorSocial
   const isAssistance = !isSenior && urlType === "assistance"
+  const [bypassedBlock, setBypassedBlock] = useState(false)
 
   // Check for existing pending/active applications for this category & service
   useEffect(() => {
@@ -103,9 +104,6 @@ export default function ApplyPWDSenior() {
             if (appCategory === "senior" || appType.includes("assistance") || appCategory.includes("assistance") || appService.includes("assistance")) return false
           }
 
-          const appStatus = String(a.status || "pending").toLowerCase()
-          if (appStatus !== "pending" && appStatus !== "under_review" && appStatus !== "for_release") return false
-
           const appRef = String(a.referenceNumber || a.reference_number || a.id || a.qc_id || a.qcid || "").trim()
           const appEmail = String(a.email || "").toLowerCase().trim()
           const appLastName = String(a.lastName || a.last_name || "").toLowerCase().trim()
@@ -127,7 +125,7 @@ export default function ApplyPWDSenior() {
           const appService = String(a.service || "").toLowerCase()
           const appStatus = String(a.status || "").toLowerCase()
 
-          if (appStatus !== "approved" && appStatus !== "completed") return false
+          if (appStatus !== "approved" && appStatus !== "completed" && appStatus !== "for_release") return false
 
           if (isSenior) {
             if (appCategory !== "senior" && !appCategory.includes("senior")) return false
@@ -146,18 +144,29 @@ export default function ApplyPWDSenior() {
           )
         }
 
-        const matchedApp = allApps.find(isMatchForCurrentService)
-        const matchedApproved = allApps.find(isApprovedMatch)
+        const userMatchingApps = allApps.filter(isMatchForCurrentService)
+        const matchedPending = userMatchingApps.find((a) => {
+          const s = String(a.status || "pending").toLowerCase()
+          return s === "pending" || s === "under_review"
+        })
+        const matchedApproved = userMatchingApps.find((a) => {
+          const s = String(a.status || "").toLowerCase()
+          return s === "approved" || s === "completed" || s === "for_release"
+        })
+        const matchedApprovedGlobal = allApps.find(isApprovedMatch)
 
         if (isMounted) {
-          if (matchedApp) {
+          if (matchedApproved) {
             setIsBlocked(true)
-            setBlockedApp(matchedApp)
+            setBlockedApp(matchedApproved)
+          } else if (matchedPending) {
+            setIsBlocked(true)
+            setBlockedApp(matchedPending)
           } else {
             setIsBlocked(false)
             setBlockedApp(null)
           }
-          setHasApprovedApp(Boolean(matchedApproved && (urlType === "new" || !urlType)))
+          setHasApprovedApp(Boolean(matchedApprovedGlobal && (urlType === "new" || !urlType)))
         }
       } catch (err) {
         console.warn("Eligibility check skipped/offline:", err)
@@ -165,14 +174,20 @@ export default function ApplyPWDSenior() {
     }
 
     checkActiveApp()
+    const pollInterval = setInterval(checkActiveApp, 2000)
 
     const handleUpdated = () => checkActiveApp()
     window.addEventListener("pwd_senior_applications_updated", handleUpdated)
+    window.addEventListener("applications_updated", handleUpdated)
+    window.addEventListener("financial_disbursements_updated", handleUpdated)
     window.addEventListener("storage", handleUpdated)
 
     return () => {
       isMounted = false
+      clearInterval(pollInterval)
       window.removeEventListener("pwd_senior_applications_updated", handleUpdated)
+      window.removeEventListener("applications_updated", handleUpdated)
+      window.removeEventListener("financial_disbursements_updated", handleUpdated)
       window.removeEventListener("storage", handleUpdated)
     }
   }, [urlCategory, urlType, isSenior, isAssistance, isSeniorSocial, isSeniorMedicine, isSeniorMovie, isSeniorId])
@@ -243,8 +258,9 @@ export default function ApplyPWDSenior() {
     t("seniorReq6"),
   ]
 
-  // Render blocked active application UI directly (matching Pic 2)
-  if (isBlocked) {
+  // Render blocked active application UI directly
+  if (isBlocked && !bypassedBlock) {
+    const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
     const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || blockedApp?.id || blockedApp?.qc_id || blockedApp?.qcid || getLoggedInUserQcid() || "110000572516915"
     const displayDate = blockedApp?.created_at || blockedApp?.submittedAt || blockedApp?.dateSubmitted
       ? new Date(blockedApp.created_at || blockedApp.submittedAt || blockedApp.dateSubmitted).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
@@ -253,15 +269,21 @@ export default function ApplyPWDSenior() {
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-8 w-8 text-amber-500" />
+          <div className={`h-16 w-16 rounded-2xl flex items-center justify-center ${isAppApproved ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-500"}`}>
+            {isAppApproved ? (
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            ) : (
+              <Info className="h-8 w-8 text-amber-500" />
+            )}
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {t("hasPendingAppTitle") || "You Have an Active Application"}
+              {isAppApproved ? "Naaprubahan ang Inyong Aplikasyon (Application Approved)" : (t("hasPendingAppTitle") || "You Have an Active Application")}
             </h2>
             <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
-              {t("hasPendingAppDesc") ? t("hasPendingAppDesc").replace("{type}", modalTitle) : `Your application for ${modalTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.`}
+              {isAppApproved
+                ? `Ang inyong aplikasyon para sa ${modalTitle} ay opisyal nang naaprubahan! Maaari na ninyong tingnan ang inyong takdang iskedyul o release status.`
+                : (t("hasPendingAppDesc") ? t("hasPendingAppDesc").replace("{type}", modalTitle) : `Your application for ${modalTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.`)}
             </p>
           </div>
 
@@ -272,9 +294,17 @@ export default function ApplyPWDSenior() {
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">{t("appStatusLabel") || "Status:"}</span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                {t("statusPendingBadge") || "• Under Review (Pending)"}
-              </span>
+              {isAppApproved ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Naaprubahan (Approved)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  {t("statusPendingBadge") || "• Under Review (Pending)"}
+                </span>
+              )}
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-500 font-medium">{t("dateFiledLabel") || "Date Filed:"}</span>
@@ -284,15 +314,26 @@ export default function ApplyPWDSenior() {
             </div>
           </div>
 
-          <div className="w-full pt-2">
+          <div className="w-full pt-2 flex flex-col gap-2">
             <button
               type="button"
               onClick={() => {
-                window.location.href = "/portal/my-applications"
+                window.location.href = isAssistance || isSeniorSocial ? "/portal/financial-aid" : "/portal/my-applications"
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              {t("viewMyApplications") || "VIEW IN MY APPLICATIONS"}
+              {isAssistance || isSeniorSocial ? "TINGNAN SA FINANCIAL AID / MY APPLICATIONS" : (t("viewMyApplications") || "VIEW IN MY APPLICATIONS")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBypassedBlock(true)
+                setIsBlocked(false)
+                setBlockedApp(null)
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Mag-apply Muli / Buksan ang Form (Apply Again)
             </button>
           </div>
         </div>
