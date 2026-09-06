@@ -820,7 +820,7 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardP
               <Paperclip className="h-3.5 w-3.5" />
               {(app.documents || []).length} documents
             </span>
-            {app.status === "approved" && app.assignedIdNumber && (
+            {app.status === "approved" && app.assignedIdNumber && !isAssistance && (
               <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>
                 {isSeniorBooklet ? "Booklet " : "ID "}{app.assignedIdNumber}
               </span>
@@ -1033,7 +1033,10 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
           <div>
             <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>Personal Information</SectionHeading>
             <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-              <Field label="QC ID Number" value={<span className="font-mono font-bold text-blue-700">{app.referenceNumber || (app as any).qcid || "—"}</span>} />
+              <Field
+                label={isAssistance ? "QC Reference Number" : "QC ID Number"}
+                value={<span className="font-mono font-bold text-blue-700">{app.referenceNumber || (app as any).qcid || "—"}</span>}
+              />
               <Field label="Full name" value={displayName(app)} />
               <Field label="Nationality" value={(app as any).nationality || "FILIPINO"} />
               <Field
@@ -1060,7 +1063,13 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
               </div>
               <div>
                 <Field
-                  label="Registered Email (for ID / Notification)"
+                  label={
+                    isAssistance
+                      ? "Registered Email Address"
+                      : isSeniorBooklet
+                      ? "Registered Email (for Booklet Number)"
+                      : "Registered Email (for Digital ID Delivery)"
+                  }
                   value={
                     <span className="inline-flex items-center gap-1.5 text-blue-700 font-medium truncate">
                       <Mail className="h-3.5 w-3.5 shrink-0 text-blue-600" />
