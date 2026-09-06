@@ -807,7 +807,7 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardP
               </button>
             )}
           </div>
-          {app.status === "approved" && app.assignedIdNumber && onShowCard && (
+          {onShowCard && (
             <button
               type="button"
               onClick={(e) => {
@@ -942,6 +942,16 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                   <CategoryTag category={app.category} />
                   <span className="gw-tag gw-tag--ghost max-w-64 truncate">{subLabel}</span>
                   <StatusBadge status={app.status} />
+                  {onShowCard && (
+                    <button
+                      type="button"
+                      onClick={() => onShowCard(app)}
+                      className="px-3 py-1 text-xs rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                    >
+                      <IdCard className="h-3.5 w-3.5" />
+                      View ID Card
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1251,7 +1261,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 Approved on {new Date(app.approvedDate || app.submittedAt).toLocaleDateString()} by {app.approvedBy || "Admin Staff"}
               </p>
               {isAssistance ? (
-                <div className="pt-2 text-xs space-y-1">
+                <div className="pt-2 text-xs space-y-2">
                   <p className="text-emerald-800 font-semibold flex items-center gap-1.5">
                     <Check className="h-3.5 w-3.5 text-emerald-600" />
                     Connected to Appointments (for payout schedule)
@@ -1260,6 +1270,18 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                     <Check className="h-3.5 w-3.5 text-emerald-600" />
                     Forwarded to Financial Aid Disbursement (₱2,000 Fixed Aid)
                   </p>
+                  {onShowCard && (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => onShowCard(app)}
+                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
+                      >
+                        <IdCard className="h-4 w-4" />
+                        Preview &amp; Print Official QC ID Card
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
@@ -1311,6 +1333,16 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
             >
               Close
             </button>
+            {onShowCard && (
+              <button
+                type="button"
+                onClick={() => onShowCard(app)}
+                className="px-4 h-10 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg inline-flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+              >
+                <IdCard className="h-4 w-4 text-blue-600" />
+                View ID Card
+              </button>
+            )}
             {onDelete && (
               <button
                 type="button"
