@@ -400,7 +400,7 @@ export default function SeniorBookletWizard({
       setIsIdVerified(false)
       setVerifyError(
         t("seniorIdExactLengthError") ||
-        "Senior Citizen ID Number must be exactly 16 digits (e.g. 137404-2026-516915)."
+        "Senior Citizen ID Number must be exactly 16 digits."
       )
       return
     }

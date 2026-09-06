@@ -336,7 +336,7 @@ export default function SeniorCitizenApplicationWizard({
     if (cleanDigits.length !== 16) {
       setVerifyError(
         t("seniorIdExactLengthError") ||
-        "Senior Citizen ID Number must be exactly 16 digits (e.g. 137404-2026-516915)."
+        "Senior Citizen ID Number must be exactly 16 digits."
       )
       setIsIdVerified(false)
       return
@@ -1309,7 +1309,7 @@ export default function SeniorCitizenApplicationWizard({
                     {appFlow === "new"
                       ? "First-time application for Senior Citizen ID. Complete all required personal information and supporting documents."
                       : appFlow === "renewal"
-                      ? "RENEWAL — Please enter your current Senior ID Number (e.g. SENIOR-137404-2026-516915) and prepare the required documents before proceeding."
+                      ? "RENEWAL — Please enter your current Senior ID Number and prepare the required documents before proceeding."
                       : "For lost or damaged Senior Citizen IDs. Please upload a Notarized Affidavit of Loss and required identification documents."}
                   </p>
                 </div>

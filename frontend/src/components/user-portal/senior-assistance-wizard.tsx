@@ -390,7 +390,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
       setIsIdVerified(false)
       setVerifyError(
         t("seniorIdExactLengthError") ||
-        "Senior Citizen ID Number must be exactly 16 digits (e.g. 137404-2026-516915)."
+        "Senior Citizen ID Number must be exactly 16 digits."
       )
       return
     }
@@ -933,7 +933,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Ilagay ang 16-digit na Senior Citizen / OSCA ID Number (hal. 137404-2026-516915).
+                  Ilagay ang 16-digit na Senior Citizen / OSCA ID Number.
                 </p>
               </div>
             </div>

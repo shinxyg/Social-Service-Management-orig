@@ -1329,9 +1329,9 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Dili Madawat ang ID Number",
   },
   seniorIdExactLengthError: {
-    en: "Senior Citizen ID Number must be exactly 16 digits (e.g. 137404-2026-516915).",
-    tl: "Kulang o labis ang Senior Citizen ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-516915).",
-    bis: "Kulang o sobra ang Senior Citizen ID Number. Kinahanglan eksaktong 16 digits (pananglitan: 137404-2026-516915).",
+    en: "Senior Citizen ID Number must be exactly 16 digits.",
+    tl: "Kulang o labis ang Senior Citizen ID Number. Dapat ay eksaktong 16 digits.",
+    bis: "Kulang o sobra ang Senior Citizen ID Number. Kinahanglan eksaktong 16 digits.",
   },
   seniorIdNotFoundError: {
     en: "Senior Citizen ID was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card.",
@@ -1349,9 +1349,9 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Nakit-an nga Rekord sa Senior Citizen: {name}",
   },
   pwdIdExactLengthError: {
-    en: "PWD ID Number must be exactly 16 digits (e.g. 137404-2026-847708).",
-    tl: "Kulang o labis ang PWD ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-847708).",
-    bis: "Kulang o sobra ang PWD ID Number. Kinahanglan eksaktong 16 digits (pananglitan: 137404-2026-847708).",
+    en: "PWD ID Number must be exactly 16 digits.",
+    tl: "Kulang o labis ang PWD ID Number. Dapat ay eksaktong 16 digits.",
+    bis: "Kulang o sobra ang PWD ID Number. Kinahanglan eksaktong 16 digits.",
   },
   pwdIdNotFoundError: {
     en: "PWD ID was not found in the official records. Please verify the official ID Number received in your email or on your issued PWD ID card.",
