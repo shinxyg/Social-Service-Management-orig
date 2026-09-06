@@ -340,6 +340,21 @@ export default function ApplyPWDSenior() {
             >
               {isAssistance || isSeniorSocial ? "VIEW IN FINANCIAL AID / MY APPLICATIONS" : "VIEW IN MY APPLICATIONS"}
             </button>
+            {isAppApproved && (
+              <button
+                type="button"
+                onClick={() => {
+                  bypassedBlockRef.current = true
+                  setBypassedBlock(true)
+                  setIsBlocked(false)
+                  setBlockedApp(null)
+                  setCurrentStep(1)
+                }}
+                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Submit Another Application (Apply Again)
+              </button>
+            )}
           </div>
         </div>
       </div>

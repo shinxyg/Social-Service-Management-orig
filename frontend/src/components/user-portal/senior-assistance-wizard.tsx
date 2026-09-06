@@ -547,6 +547,20 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
             >
               VIEW IN FINANCIAL AID / MY APPLICATIONS
             </button>
+            {isAppApproved && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLatestSubmittedApp(null)
+                  setSubmitted(false)
+                  setReferenceNumber("")
+                  setStep(1)
+                }}
+                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Submit Another Application (Apply Again)
+              </button>
+            )}
           </div>
         </div>
       </div>
