@@ -1356,103 +1356,10 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
   )
 }
 
-const DEFAULT_SEED_APPLICATIONS: ApplicationSubmission[] = [
-  {
-    id: "APP-PWD-2026-001",
-    submittedAt: "2026-08-20T09:30:00.000Z",
-    referenceNumber: "PWD-QC-2026-4891",
-    category: "PWD",
-    type: "new",
-    firstName: "Juan",
-    middleName: "Ramos",
-    lastName: "Dela Cruz",
-    suffix: "",
-    dateOfBirth: "1998-05-14",
-    age: "28",
-    sex: "Male",
-    civilStatus: "Single",
-    contactNo: "09171234567",
-    cellphoneNo: "09171234567",
-    email: "juan.delacruz@gmail.com",
-    address: "Block 12 Lot 4, Brgy. Batasan Hills, Quezon City",
-    disabilityType: "Visual Disability",
-    disabilityClass: "apparent",
-    causeOfDisability: "Congenital / Inborn",
-    applyingFor: "myself",
-    documents: [
-      { name: "Whole Body Picture", filename: "whole_body.jpg", fileUrl: "/samples/WHOLE BODY.jpg", uploadedAt: "2026-08-20T09:25:00.000Z", status: "verified" },
-      { name: "Certificate of Disability", filename: "cert_disability.jpg", fileUrl: "/samples/CERTIFICATE OF DISABILITY.jpg", uploadedAt: "2026-08-20T09:26:00.000Z", status: "verified" },
-      { name: "Proof of Residence", filename: "residency.webp", fileUrl: "/samples/PROOF OF RESIDENCE.webp", uploadedAt: "2026-08-20T09:27:00.000Z", status: "verified" },
-      { name: "2x2 ID Picture", filename: "id_picture.webp", fileUrl: "/samples/ID PICTURE (2X2).webp", uploadedAt: "2026-08-20T09:28:00.000Z", status: "verified" },
-    ],
-    status: "pending",
-  },
-  {
-    id: "APP-PWD-2026-002",
-    submittedAt: "2026-08-18T14:15:00.000Z",
-    referenceNumber: "PWD-QC-2026-3109",
-    category: "PWD",
-    type: "renewal",
-    firstName: "Maria",
-    middleName: "Clara",
-    lastName: "Santos",
-    suffix: "",
-    dateOfBirth: "1992-11-20",
-    age: "33",
-    sex: "Female",
-    civilStatus: "Married",
-    contactNo: "09189876543",
-    cellphoneNo: "09189876543",
-    email: "maria.santos@gmail.com",
-    address: "24 Malakas St., Brgy. Pinyahan, Quezon City",
-    disabilityType: "Orthopedic Disability",
-    disabilityClass: "apparent",
-    causeOfDisability: "Accident / Trauma",
-    applyingFor: "myself",
-    documents: [
-      { name: "Previous PWD ID Card", filename: "qc_id_pwd.jpg", fileUrl: "/samples/QC ID NG PERSON WITH DISABILITY.jpg", uploadedAt: "2026-08-18T14:10:00.000Z", status: "verified" },
-      { name: "Certificate of Disability", filename: "cert_disability.jpg", fileUrl: "/samples/CERTIFICATE OF DISABILITY.jpg", uploadedAt: "2026-08-18T14:12:00.000Z", status: "verified" },
-      { name: "2x2 ID Picture", filename: "id_picture.webp", fileUrl: "/samples/ID PICTURE (2X2).webp", uploadedAt: "2026-08-18T14:13:00.000Z", status: "verified" },
-    ],
-    status: "approved",
-    assignedIdNumber: "PWD-137404-2026-310901",
-    approvedBy: "Social Worker Admin",
-    approvedDate: "2026-08-19T10:00:00.000Z",
-  },
-  {
-    id: "APP-PWD-2026-003",
-    submittedAt: "2026-08-22T11:00:00.000Z",
-    referenceNumber: "PWD-QC-2026-5520",
-    category: "PWD",
-    type: "assistance",
-    firstName: "Ricardo",
-    middleName: "Bautista",
-    lastName: "Dimal",
-    suffix: "Jr.",
-    dateOfBirth: "2001-03-08",
-    age: "25",
-    sex: "Male",
-    civilStatus: "Single",
-    contactNo: "09205554321",
-    cellphoneNo: "09205554321",
-    email: "ricardo.dimal@gmail.com",
-    address: "Zone 3, Brgy. Holy Spirit, Quezon City",
-    disabilityType: "Psychosocial Disability",
-    disabilityClass: "non-apparent",
-    causeOfDisability: "Illness / Disease",
-    applyingFor: "myself",
-    documents: [
-      { name: "Certificate of Disability from Specialist", filename: "cert_disability.jpg", fileUrl: "/samples/CERTIFICATE OF DISABILITY.jpg", uploadedAt: "2026-08-22T10:50:00.000Z", status: "verified" },
-      { name: "Barangay Indigency Certificate", filename: "barangay_cert.webp", fileUrl: "/samples/BARANGAY CERTIFICATE.webp", uploadedAt: "2026-08-22T10:52:00.000Z", status: "verified" },
-      { name: "Proof of Residence", filename: "residency.webp", fileUrl: "/samples/PROOF OF RESIDENCE.webp", uploadedAt: "2026-08-22T10:55:00.000Z", status: "verified" },
-    ],
-    status: "pending",
-  },
-]
-
+const DEFAULT_SEED_APPLICATIONS: ApplicationSubmission[] = []
 
 export default function PWDSeniorCitizen() {
-  const [applications, setApplications] = useState<ApplicationSubmission[]>(DEFAULT_SEED_APPLICATIONS)
+  const [applications, setApplications] = useState<ApplicationSubmission[]>([])
   const [filterCategory, setFilterCategory] = useState<"all" | "PWD" | "Senior Citizen">("all")
   const [filterType, setFilterType] = useState<"all" | "new" | "renewal" | "loss" | "assistance">("all")
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all")
@@ -1471,18 +1378,30 @@ export default function PWDSeniorCitizen() {
           const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
           if (res.ok) {
             const data = await res.json()
-            if (Array.isArray(data)) combined = data
+            if (Array.isArray(data)) {
+              combined = data.filter((a: any) =>
+                a &&
+                !["APP-PWD-2026-001", "APP-PWD-2026-002", "APP-PWD-2026-003"].includes(a.id) &&
+                !["PWD-QC-2026-4891", "PWD-QC-2026-3109", "PWD-QC-2026-5520"].includes(a.referenceNumber)
+              )
+            }
           }
         } catch (err) {
           console.warn("Could not fetch PWD/Senior applications from backend:", err)
         }
 
-        // Merge localStorage
+        // Merge localStorage and clean legacy dummy entries
         try {
           const raw = localStorage.getItem("pwd_senior_applications")
           if (raw) {
-            const localApps = JSON.parse(raw)
+            let localApps = JSON.parse(raw)
             if (Array.isArray(localApps)) {
+              localApps = localApps.filter((a: any) =>
+                a &&
+                !["APP-PWD-2026-001", "APP-PWD-2026-002", "APP-PWD-2026-003"].includes(a.id) &&
+                !["PWD-QC-2026-4891", "PWD-QC-2026-3109", "PWD-QC-2026-5520"].includes(a.referenceNumber)
+              )
+              localStorage.setItem("pwd_senior_applications", JSON.stringify(localApps))
               for (const la of localApps) {
                 if (la && !combined.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
                   combined.push(la)
@@ -1492,7 +1411,7 @@ export default function PWDSeniorCitizen() {
           }
         } catch {}
 
-        if (isMounted && combined.length > 0) {
+        if (isMounted) {
           setApplications(combined)
         }
       } catch (err) {
