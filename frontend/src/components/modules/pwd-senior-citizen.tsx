@@ -211,14 +211,14 @@ function generateOfficialIdNumber(app: ApplicationSubmission): string {
   const randomSeq = String(Math.floor(100000 + Math.random() * 900000))
   const year = new Date().getFullYear()
 
-  // 1. Movie Booklet: always generate freshly randomized MV-YYYY-XXXXXX
+  // 1. Movie Booklet: always generate freshly randomized 137404-YYYY-XXXXXX
   if (
     rawType === "movie-booklet" ||
     rawType.includes("movie") ||
     rawCat.includes("movie") ||
     rawService.includes("movie")
   ) {
-    return `MV-${year}-${randomSeq}`
+    return `137404-${year}-${randomSeq}`
   }
 
   // 2. Medicine Booklet: always generate freshly randomized MB-YYYY-XXXXXX

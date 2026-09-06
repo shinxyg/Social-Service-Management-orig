@@ -68,6 +68,13 @@ function formatFileSize(bytes: number) {
   return `${(kb / 1024).toFixed(1)} MB`
 }
 
+function formatMovieBookletInput(val: string): string {
+  const digits = val.replace(/\D/g, "").slice(0, 16)
+  if (digits.length <= 6) return digits
+  if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
+  return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10, 16)}`
+}
+
 export default function SeniorBookletWizard({
   bookletType = "medicine",
   onBack,
@@ -638,26 +645,20 @@ export default function SeniorBookletWizard({
   }
 
   // Booklet Number validation against QCID / OSCA ID
-  const expectedPrefix = isMedicine ? "MB-" : "MV-"
-  const cleanOscaId = (verifiedSeniorId || (oscaIdInput.includes("MB-") || oscaIdInput.includes("MV-") ? "" : oscaIdInput)).replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
-  const cleanQcid = (formData.qcidNo || userProfile?.qcidNo || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
   const cleanBooklet = (bookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
 
-  // Only consider it same as ID if the user literally entered the 16-digit Senior ID into the booklet field
-  const isBookletSameAsId = Boolean(
-    cleanBooklet &&
-    cleanBooklet.length === 16 &&
-    ((cleanOscaId && cleanBooklet === cleanOscaId) || (cleanQcid && cleanBooklet === cleanQcid))
-  )
+  const isBookletFormatValid = isMedicine
+    ? Boolean(
+        cleanBooklet &&
+        (cleanBooklet.startsWith("MB") || bookletNumber.trim().toUpperCase().startsWith("MB-")) &&
+        cleanBooklet.length >= 6
+      )
+    : Boolean(
+        cleanBooklet &&
+        (cleanBooklet.length === 16 || cleanBooklet.length >= 10)
+      )
 
-  const isBookletFormatValid = Boolean(
-    cleanBooklet &&
-    (cleanBooklet.startsWith(expectedPrefix.replace("-", "")) || bookletNumber.trim().toUpperCase().startsWith(expectedPrefix)) &&
-    cleanBooklet.length >= 6 &&
-    !isBookletSameAsId
-  )
-
-  const isExistingBookletValid = hasPriorBooklet === "no" || (bookletNumber.trim() !== "" && isBookletFormatValid && !isBookletSameAsId)
+  const isExistingBookletValid = hasPriorBooklet === "no" || (bookletNumber.trim() !== "" && isBookletFormatValid)
 
   // Step validations
   const isStep1Valid =
@@ -1224,8 +1225,15 @@ export default function SeniorBookletWizard({
                         <input
                           type="text"
                           value={bookletNumber}
-                          onChange={(e) => setBookletNumber(e.target.value.toUpperCase())}
-                          placeholder={isMedicine ? "e.g. MB-2026-394314" : "e.g. MV-2026-516915"}
+                          onChange={(e) => {
+                            if (isMedicine) {
+                              setBookletNumber(e.target.value.toUpperCase())
+                            } else {
+                              setBookletNumber(formatMovieBookletInput(e.target.value))
+                            }
+                          }}
+                          placeholder={isMedicine ? "MB-2026-394314" : "137404-2026-516915"}
+                          maxLength={isMedicine ? 20 : 18}
                           className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 font-mono outline-none transition-all ${
                             bookletNumber.trim() && !isBookletFormatValid
                               ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
@@ -1236,12 +1244,16 @@ export default function SeniorBookletWizard({
                         />
                         {bookletNumber.trim() !== "" && !isBookletFormatValid && (
                           <p className="text-xs text-red-600 mt-1 font-medium">
-                            Please enter a valid {isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"} Number starting with {expectedPrefix}.
+                            {isMedicine
+                              ? "Please enter a valid Medicine Discount Booklet Number starting with MB-."
+                              : "Please enter a valid 16-digit Free Movie Booklet Number in format 137404-2026-516915."}
                           </p>
                         )}
                         {attemptedNext && !bookletNumber.trim() && (
                           <p className="text-xs text-red-600 mt-1 font-medium">
-                            Please enter your existing {isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"} Number.
+                            {isMedicine
+                              ? "Please enter your existing Medicine Discount Booklet Number."
+                              : "Please enter your existing Free Movie Booklet Number (137404-2026-516915)."}
                           </p>
                         )}
                       </div>
