@@ -1050,7 +1050,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
               />
               <Field label="Age / Sex" value={`${app.age || "—"} / ${app.sex || (app as any).gender || "—"}`} />
               <Field label="Civil status" value={app.civilStatus || "—"} />
-              <div>
+              <div className={isAssistance ? "col-span-2" : ""}>
                 <Field
                   label="Phone number"
                   value={
@@ -1061,23 +1061,23 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                   }
                 />
               </div>
-              <div>
-                <Field
-                  label={
-                    isAssistance
-                      ? "Registered Email Address"
-                      : isSeniorBooklet
-                      ? "Registered Email (for Booklet Number)"
-                      : "Registered Email (for Digital ID Delivery)"
-                  }
-                  value={
-                    <span className="inline-flex items-center gap-1.5 text-blue-700 font-medium truncate">
-                      <Mail className="h-3.5 w-3.5 shrink-0 text-blue-600" />
-                      {emailAddress}
-                    </span>
-                  }
-                />
-              </div>
+              {!isAssistance && (
+                <div>
+                  <Field
+                    label={
+                      isSeniorBooklet
+                        ? "Registered Email (for Booklet Number)"
+                        : "Registered Email (for Digital ID Delivery)"
+                    }
+                    value={
+                      <span className="inline-flex items-center gap-1.5 text-blue-700 font-medium truncate">
+                        <Mail className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                        {emailAddress}
+                      </span>
+                    }
+                  />
+                </div>
+              )}
               <div className="col-span-2">
                 <Field
                   label="Registered residential address"
