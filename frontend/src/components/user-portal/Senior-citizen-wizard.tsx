@@ -13,7 +13,6 @@ import {
   IdCard,
   Search,
   AlertCircle,
-  ExternalLink,
 } from "lucide-react"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
@@ -852,7 +851,7 @@ export default function SeniorCitizenApplicationWizard({
       targetApp?.reference_number ||
       targetApp?.id ||
       userProfile?.qcidNo ||
-      formData.qcid ||
+      formData.oldSeniorId ||
       "110000572516915"
 
     const assignedIdNo = (targetApp?.assignedIdNumber || targetApp?.assigned_id_number || "").replace("OSCA-", "SENIOR-")
