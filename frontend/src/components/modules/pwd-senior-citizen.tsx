@@ -906,6 +906,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
   let localEmergencyPhone = ""
   let localEmergencyRel = ""
   let localEmergencyAddr = ""
+  let localEmail = ""
   try {
     const raw = localStorage.getItem("currentUser") || localStorage.getItem("userProfile") || localStorage.getItem("user")
     if (raw) {
@@ -921,9 +922,19 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
         localEmergencyPhone = u.emergencyContactNo || u.emergencyPhone || ""
         localEmergencyRel = u.emergencyRelationship || ""
         localEmergencyAddr = u.emergencyAddress || ""
+        localEmail = u.email || ""
       }
     }
   } catch {}
+
+  const emailAddress =
+    app.email ||
+    (app as any).emailAddress ||
+    (app as any).registeredEmail ||
+    (app as any).userEmail ||
+    (app as any).extra_data?.email ||
+    localEmail ||
+    "—"
 
   const emergencyPerson =
     [(app as any).emergencyFirstName, (app as any).emergencyLastName].filter(Boolean).join(" ") ||
@@ -1036,13 +1047,24 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
               />
               <Field label="Age / Sex" value={`${app.age || "—"} / ${app.sex || (app as any).gender || "—"}`} />
               <Field label="Civil status" value={app.civilStatus || "—"} />
-              <div className="col-span-2">
+              <div>
                 <Field
                   label="Phone number"
                   value={
                     <span className="inline-flex items-center gap-1.5">
                       <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
                       {contactNumber || "—"}
+                    </span>
+                  }
+                />
+              </div>
+              <div>
+                <Field
+                  label="Registered Email (for ID / Notification)"
+                  value={
+                    <span className="inline-flex items-center gap-1.5 text-blue-700 font-medium truncate">
+                      <Mail className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                      {emailAddress}
                     </span>
                   }
                 />
