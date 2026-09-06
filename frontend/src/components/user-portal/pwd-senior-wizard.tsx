@@ -597,23 +597,28 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     const prof: any = userProfile || {}
     return {
       ...EMPTY_FORM_DATA,
-      firstName: prof.firstName || prof.first_name || "CLARISA MAE",
-      middleName: prof.middleName || prof.middle_name || "GALIAS",
-      lastName: prof.lastName || prof.last_name || "DIMAL",
+      firstName: prof.firstName || prof.first_name || "",
+      middleName: prof.middleName || prof.middle_name || "",
+      lastName: prof.lastName || prof.last_name || "",
       suffix: prof.suffix || "",
       citizenship: prof.nationality || "FILIPINO",
-      dobMonth: prof.dobMonth || prof.birthMonth || prof.birth_month || "10",
-      dobDay: prof.dobDay || prof.birthDay || prof.birth_day || "29",
-      dobYear: prof.dobYear || prof.birthYear || prof.birth_year || "2000",
-      age: String(prof.age || "24"),
+      dobMonth: prof.dobMonth || prof.birthMonth || prof.birth_month || "",
+      dobDay: prof.dobDay || prof.birthDay || prof.birth_day || "",
+      dobYear: prof.dobYear || prof.birthYear || prof.birth_year || "",
+      age: String(prof.age || ""),
       sex: prof.sex || "Female",
       civilStatus: prof.civilStatus || "Single",
       addressCity: prof.addressCity || prof.city || "QUEZON CITY",
-      addressHouseNo: prof.addressHouseNo || prof.houseNo || prof.house_no || "11",
-      addressStreet: prof.addressStreet || prof.street || "OLD CABUYAO SAMPALOK ST",
+      addressHouseNo: prof.addressHouseNo || prof.houseNo || prof.house_no || "",
+      addressStreet: prof.addressStreet || prof.street || "",
       addressBarangay: prof.addressBarangay || prof.barangay || "Sauyo",
-      contactNo: String(prof.contactNo || prof.mobileNumber || prof.mobile_number || "09000000000").replace(/\s+/g, ""),
-      email: prof.email || "dimalmae@gmail.com",
+      contactNo: String(prof.contactNo || prof.mobileNumber || prof.mobile_number || "").replace(/\s+/g, ""),
+      email: prof.email || "",
+      emergencyFirstName: prof.emergencyFirstName || "",
+      emergencyLastName: prof.emergencyLastName || "",
+      emergencyContactNo: prof.emergencyContactNo || "",
+      emergencyRelationship: prof.emergencyRelationship || "",
+      emergencyAddress: prof.emergencyAddress || "",
     }
   })
 
@@ -949,26 +954,97 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         setApprovedPwdRecord(matchedApp)
         if (matchedApp.disabilityType) setDisabilityType(matchedApp.disabilityType)
         if (matchedApp.disabilityClass) setDisabilityClass(matchedApp.disabilityClass)
+
+        const emPerson = matchedApp.emergencyContactPerson || matchedApp.emergencyName || ""
+        let emFirst = matchedApp.emergencyFirstName || ""
+        let emLast = matchedApp.emergencyLastName || ""
+        if (emPerson && (!emFirst || !emLast || emFirst.toUpperCase() === "ROBERTO" || emLast.toUpperCase() === "DIMAL")) {
+          const parts = emPerson.trim().split(/\s+/)
+          if (parts.length > 1) {
+            emFirst = emFirst || parts.slice(0, -1).join(" ")
+            emLast = emLast || parts[parts.length - 1]
+          } else if (!emFirst) {
+            emFirst = emPerson
+          }
+        }
+        if (!emFirst && !emLast) {
+          emFirst = userProfile?.emergencyFirstName || ""
+          emLast = userProfile?.emergencyLastName || ""
+        }
+        const emContact = matchedApp.emergencyContactNo || matchedApp.emergencyPhone || userProfile?.emergencyContactNo || ""
+        const emRel = matchedApp.emergencyRelationship || matchedApp.relationshipToApplicant || userProfile?.emergencyRelationship || ""
+        const emAddr = matchedApp.emergencyAddress || matchedApp.emergencyResidentialAddress || userProfile?.emergencyAddress || ""
+
+        let birthYear = matchedApp.dobYear || ""
+        let birthMonth = matchedApp.dobMonth || ""
+        let birthDay = matchedApp.dobDay || ""
+        if (matchedApp.dateOfBirth) {
+          const parts = String(matchedApp.dateOfBirth).split("T")[0].split("-")
+          if (parts.length === 3) {
+            birthYear = birthYear || parts[0]
+            birthMonth = birthMonth || parts[1]
+            birthDay = birthDay || parts[2]
+          }
+        }
+
+        const house = matchedApp.houseNo || matchedApp.addressHouseNo || userProfile?.addressHouseNo || ""
+        const str = matchedApp.street || matchedApp.addressStreet || userProfile?.addressStreet || ""
+        const bgy = matchedApp.barangay || matchedApp.addressBarangay || userProfile?.addressBarangay || ""
+        const cty = matchedApp.city || matchedApp.addressCity || userProfile?.addressCity || "QUEZON CITY"
+        const fullAddr = matchedApp.address || `${house} ${str} ${bgy}, ${cty}`.trim()
+        const permAddr = matchedApp.permanentAddress || fullAddr
+        const presAddr = matchedApp.presentAddress || fullAddr
+
+        const hCm = matchedApp.heightCm || ""
+        const wKg = matchedApp.weightKg || ""
+        const cHair = matchedApp.colorOfHair || ""
+        const cEyes = matchedApp.colorOfEyes || ""
+        const oMarks = matchedApp.otherMarks || matchedApp.otherIdentifyingMarks || ""
+
+        const pCity = matchedApp.pobCity || matchedApp.placeOfBirthCity || ""
+        const pProv = matchedApp.pobProvince || matchedApp.placeOfBirthProvince || ""
+        const bType = matchedApp.bloodType || ""
+        const causeDis = matchedApp.causeOfDisability || ""
+        const specDis = matchedApp.specificDisability || ""
+
         setFormData((prev) => ({
           ...prev,
           existingPwdIdNumber: officialId,
-          causeOfDisability: matchedApp.causeOfDisability || prev.causeOfDisability || "Acquired",
-          specificDisability: matchedApp.specificDisability || prev.specificDisability || "Visual Impairment / Low Vision",
-          pobCity: prev.pobCity || "QUEZON CITY",
-          pobProvince: prev.pobProvince || "METRO MANILA",
-          bloodType: prev.bloodType || "O+",
-          permanentAddress: prev.permanentAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
-          presentAddress: prev.presentAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
-          emergencyLastName: prev.emergencyLastName || "DIMAL",
-          emergencyFirstName: prev.emergencyFirstName || "ROBERTO",
-          emergencyContactNo: prev.emergencyContactNo || "09171234567",
-          emergencyRelationship: prev.emergencyRelationship || "Father",
-          emergencyAddress: prev.emergencyAddress || `${prev.addressHouseNo || ""} ${prev.addressStreet || ""}, ${prev.addressBarangay || ""}, ${prev.addressCity || ""}`.trim(),
-          heightCm: prev.heightCm || "160",
-          weightKg: prev.weightKg || "52",
-          colorOfHair: prev.colorOfHair || "Black",
-          colorOfEyes: prev.colorOfEyes || "Brown",
-          otherMarks: prev.otherMarks || "None",
+          firstName: matchedApp.firstName || prev.firstName,
+          middleName: matchedApp.middleName !== undefined ? matchedApp.middleName : prev.middleName,
+          lastName: matchedApp.lastName || prev.lastName,
+          suffix: matchedApp.suffix !== undefined ? matchedApp.suffix : prev.suffix,
+          citizenship: matchedApp.nationality || matchedApp.citizenship || prev.citizenship || "FILIPINO",
+          dobMonth: birthMonth || prev.dobMonth,
+          dobDay: birthDay || prev.dobDay,
+          dobYear: birthYear || prev.dobYear,
+          age: String(matchedApp.age || prev.age || ""),
+          sex: matchedApp.sex || prev.sex,
+          civilStatus: matchedApp.civilStatus || prev.civilStatus,
+          contactNo: (matchedApp.contactNo || matchedApp.cellphoneNo || prev.contactNo || "").replace(/\s+/g, ""),
+          email: matchedApp.email || prev.email,
+          addressHouseNo: house || prev.addressHouseNo,
+          addressStreet: str || prev.addressStreet,
+          addressBarangay: bgy || prev.addressBarangay,
+          addressCity: cty || prev.addressCity,
+          pobCity: pCity || prev.pobCity,
+          pobProvince: pProv || prev.pobProvince,
+          bloodType: bType || prev.bloodType,
+          permanentAddress: permAddr || prev.permanentAddress,
+          presentAddress: presAddr || prev.presentAddress,
+          emergencyLastName: emLast || prev.emergencyLastName,
+          emergencyFirstName: emFirst || prev.emergencyFirstName,
+          emergencyMiddleName: matchedApp.emergencyMiddleName || prev.emergencyMiddleName || "",
+          emergencyContactNo: (emContact || prev.emergencyContactNo || "").replace(/\s+/g, ""),
+          emergencyRelationship: emRel || prev.emergencyRelationship,
+          emergencyAddress: emAddr || fullAddr || prev.emergencyAddress,
+          heightCm: hCm || prev.heightCm,
+          weightKg: wKg || prev.weightKg,
+          colorOfHair: cHair || prev.colorOfHair,
+          colorOfEyes: cEyes || prev.colorOfEyes,
+          otherMarks: oMarks || prev.otherMarks,
+          causeOfDisability: causeDis || prev.causeOfDisability,
+          specificDisability: specDis || prev.specificDisability,
         }))
       } else {
         // NO VALID PWD ID RECORD FOUND
@@ -1074,29 +1150,49 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         referenceNumber: refNum,
         category: "PWD",
         type: idStatus === "renewal" ? "renewal" : idStatus === "loss" ? "replacement" : "new",
-        firstName: formData.firstName || userProfile.firstName,
-        middleName: formData.middleName || userProfile.middleName || "",
-        lastName: formData.lastName || userProfile.lastName,
-        suffix: formData.suffix || "",
-        dateOfBirth: `${formData.dobYear || userProfile.dobYear || "2000"}-${(formData.dobMonth || userProfile.dobMonth || "01").padStart(2, "0")}-${(formData.dobDay || userProfile.dobDay || "01").padStart(2, "0")}`,
-        age: formData.age || userProfile.age || "21",
-        sex: formData.sex || userProfile.sex || "Female",
-        civilStatus: formData.civilStatus || userProfile.civilStatus || "Single",
-        contactNo: (formData.contactNo || userProfile.contactNo || "09171234567").replace(/\s+/g, ""),
-        cellphoneNo: (formData.contactNo || userProfile.contactNo || "09171234567").replace(/\s+/g, ""),
-        email: formData.email || userProfile.email || "applicant@example.com",
-        address: `${formData.addressHouseNo || userProfile.addressHouseNo || ""} ${formData.addressStreet || userProfile.addressStreet || ""} ${formData.addressBarangay || userProfile.addressBarangay || ""}, QUEZON CITY`.trim(),
+        firstName: formData.firstName || userProfile?.firstName || "",
+        middleName: formData.middleName || userProfile?.middleName || "",
+        lastName: formData.lastName || userProfile?.lastName || "",
+        suffix: formData.suffix || userProfile?.suffix || "",
+        dateOfBirth: `${formData.dobYear || userProfile?.dobYear || "2000"}-${(formData.dobMonth || userProfile?.dobMonth || "01").padStart(2, "0")}-${(formData.dobDay || userProfile?.dobDay || "01").padStart(2, "0")}`,
+        age: formData.age || String(userProfile?.age || ""),
+        sex: formData.sex || userProfile?.sex || "Female",
+        civilStatus: formData.civilStatus || userProfile?.civilStatus || "Single",
+        contactNo: (formData.contactNo || userProfile?.contactNo || "").replace(/\s+/g, ""),
+        cellphoneNo: (formData.contactNo || userProfile?.contactNo || "").replace(/\s+/g, ""),
+        email: formData.email || userProfile?.email || "",
+        address: `${formData.addressHouseNo || userProfile?.addressHouseNo || ""} ${formData.addressStreet || userProfile?.addressStreet || ""} ${formData.addressBarangay || userProfile?.addressBarangay || ""}, ${formData.addressCity || userProfile?.addressCity || "QUEZON CITY"}`.trim(),
+        houseNo: formData.addressHouseNo || userProfile?.addressHouseNo || "",
+        street: formData.addressStreet || userProfile?.addressStreet || "",
+        barangay: formData.addressBarangay || userProfile?.addressBarangay || "Sauyo",
+        city: formData.addressCity || userProfile?.addressCity || "QUEZON CITY",
+        bloodType: formData.bloodType || "O+",
+        nationality: formData.citizenship || userProfile?.nationality || "FILIPINO",
+        existingIdNumber: formData.existingPwdIdNumber || "",
+        reasonForRenewal: reasonForRenewal || "",
+        reasonForReplacement: reasonForReplacement || "",
         disabilityType: disabilityType || "Visual Disability",
         disabilityClass: effectiveDisabilityClass || "apparent",
         causeOfDisability: formData.causeOfDisability || "Congenital / Inborn",
+        specificDisability: formData.specificDisability || "",
+        pobCity: formData.pobCity || "",
+        pobProvince: formData.pobProvince || "",
+        permanentAddress: formData.permanentAddress || "",
+        presentAddress: formData.presentAddress || "",
+        heightCm: formData.heightCm || "",
+        weightKg: formData.weightKg || "",
+        colorOfHair: formData.colorOfHair || "",
+        colorOfEyes: formData.colorOfEyes || "",
+        otherMarks: formData.otherMarks || "",
         applyingFor: "myself",
-        emergencyFirstName: formData.emergencyFirstName || userProfile?.emergencyFirstName || "Clarence",
-        emergencyLastName: formData.emergencyLastName || userProfile?.emergencyLastName || "Millares",
+        emergencyFirstName: formData.emergencyFirstName || userProfile?.emergencyFirstName || "",
+        emergencyLastName: formData.emergencyLastName || userProfile?.emergencyLastName || "",
         emergencyMiddleName: formData.emergencyMiddleName || "",
-        emergencyName: `${formData.emergencyFirstName || userProfile?.emergencyFirstName || "Clarence"} ${formData.emergencyLastName || userProfile?.emergencyLastName || "Millares"}`.trim(),
-        emergencyContactNo: formData.emergencyContactNo || userProfile?.emergencyContactNo || "09151312123",
-        emergencyRelationship: formData.emergencyRelationship || userProfile?.emergencyRelationship || "Guardian",
-        emergencyAddress: formData.emergencyAddress || userProfile?.emergencyAddress || "Quezon City",
+        emergencyName: `${formData.emergencyFirstName || userProfile?.emergencyFirstName || ""} ${formData.emergencyLastName || userProfile?.emergencyLastName || ""}`.trim(),
+        emergencyContactNo: (formData.emergencyContactNo || userProfile?.emergencyContactNo || "").replace(/\s+/g, ""),
+        emergencyRelationship: formData.emergencyRelationship || userProfile?.emergencyRelationship || "",
+        emergencyAddress: formData.emergencyAddress || userProfile?.emergencyAddress || "",
+        emergencyResidentialAddress: formData.emergencyAddress || userProfile?.emergencyAddress || "",
         documents: Object.keys(uploaded).map((k) => ({
           name: k,
           filename: uploaded[k]?.file.name || "doc.jpg",
@@ -2133,66 +2229,66 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     <LockedField value={userProfile?.qcidNo || "110000116932100"} />
                   </Field>
                   <Field label={`${t("firstNameLabel")} *`}>
-                    <LockedField value={formData.firstName || "CLARISA MAE"} />
+                    <LockedField value={formData.firstName || userProfile?.firstName || ""} />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label={t("middleNameLabel")}>
-                    <LockedField value={formData.middleName || "GALIAS"} placeholder="—" />
+                    <LockedField value={formData.middleName || userProfile?.middleName || ""} placeholder="—" />
                   </Field>
                   <Field label={`${t("lastNameLabel")} *`}>
-                    <LockedField value={formData.lastName || "DIMAL"} />
+                    <LockedField value={formData.lastName || userProfile?.lastName || ""} />
                   </Field>
                   <Field label={t("suffixLabel")}>
-                    <LockedField value={formData.suffix || ""} placeholder={t("suffixLabel")} />
+                    <LockedField value={formData.suffix || userProfile?.suffix || ""} placeholder={t("suffixLabel")} />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label={`${t("nationalityLabel")} *`}>
-                    <LockedField value={formData.citizenship || "FILIPINO"} />
+                    <LockedField value={formData.citizenship || userProfile?.nationality || "FILIPINO"} />
                   </Field>
                   <Field label={`${t("birthDateLabel")} *`}>
                     <LockedField
                       value={
                         formData.dobMonth && formData.dobDay && formData.dobYear
                           ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
-                          : "10/29/2004"
+                          : userProfile?.birthDateDisplay || "—"
                       }
                     />
                   </Field>
                   <Field label={`${t("ageLabel")} *`}>
-                    <LockedField value={formData.age || "21"} />
+                    <LockedField value={formData.age || String(userProfile?.age || "")} />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label={`${t("genderLabel")} *`}>
-                    <LockedField value={formData.sex || "Female"} />
+                    <LockedField value={formData.sex || userProfile?.sex || "Female"} />
                   </Field>
                   <Field label={`${t("civilStatusLabel")} *`}>
-                    <LockedField value={formData.civilStatus || "Single"} />
+                    <LockedField value={formData.civilStatus || userProfile?.civilStatus || "Single"} />
                   </Field>
                   <Field label={`${t("houseNumberLabel")} *`}>
-                    <LockedField value={formData.addressHouseNo || "11"} />
+                    <LockedField value={formData.addressHouseNo || userProfile?.addressHouseNo || userProfile?.houseNo || ""} />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label={`${t("streetNameLabel")} *`}>
-                    <LockedField value={formData.addressStreet || "OLD CABUYAO SAMPALOK ST"} />
+                    <LockedField value={formData.addressStreet || userProfile?.addressStreet || userProfile?.street || ""} />
                   </Field>
                   <Field label={`${t("barangayLabel")} *`}>
-                    <LockedField value={formData.addressBarangay || "Sauyo"} />
+                    <LockedField value={formData.addressBarangay || userProfile?.addressBarangay || userProfile?.barangay || "Sauyo"} />
                   </Field>
                   <Field label={`${t("pwdContactNoLabel")} *`}>
-                    <LockedField value={formData.contactNo || userProfile?.contactNo || "09XXXXXXXXX"} />
+                    <LockedField value={formData.contactNo || userProfile?.contactNo || userProfile?.mobileNumber || ""} />
                   </Field>
                 </div>
 
                 <Field label={`${t("emailLabel")} *`}>
-                  <LockedField value={formData.email || userProfile?.email || "espelitadanny@gmail.com"} />
+                  <LockedField value={formData.email || userProfile?.email || ""} />
                 </Field>
               </div>
 

@@ -437,6 +437,7 @@ function OfficialIdCardModal({
 }) {
   if (!app) return null
   const isPwdApp = isPWD(app)
+  const contactNumber = isPwdApp ? (app.contactNo || app.cellphoneNo || "") : (app.cellphoneNo || app.contactNo || "")
   const idNumber = generateOfficialIdNumber(app)
   const issueDateObj = new Date(app.approvedDate || app.submittedAt || Date.now())
   const validIssueDate = isNaN(issueDateObj.getTime()) ? new Date() : issueDateObj
