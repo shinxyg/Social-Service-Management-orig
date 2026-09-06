@@ -874,6 +874,9 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
 
+  const subLabel = subLabelForApp(app)
+  const contactNumber = isPWD(app) ? app.contactNo : app.cellphoneNo
+
   const isSeniorBooklet = !isPWD(app) && Boolean(
     String(app.type || "").toLowerCase().includes("booklet") ||
     String(app.category || "").toLowerCase().includes("booklet") ||
@@ -884,9 +887,6 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
   )
   const isMovieBooklet = isSeniorBooklet && String(app.type || "").toLowerCase().includes("movie")
   const bookletTitle = isMovieBooklet ? "Free Movie Booklet" : "Medicine Discount Booklet"
-
-  const contactNumber = isPWD(app) ? app.contactNo : app.cellphoneNo
-  const subLabel = subLabelForApp(app)
   const isAssistance =
     app.type === "assistance" ||
     (app as any).type === "social-assistance" ||
