@@ -194,9 +194,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
     : checklistResident && checklistPatient
 
   const [qcId] = useState(() => getLoggedInUserQcid())
-  const [checkingEligibility, setCheckingEligibility] = useState(true)
-  const [isBlocked, setIsBlocked] = useState(false)
-  const [blockedApp, setBlockedApp] = useState<any>(null)
   const [pFirstName, setPFirstName] = useState("")
   const [pMiddleName, setPMiddleName] = useState("")
   const [pLastName, setPLastName] = useState("")
