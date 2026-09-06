@@ -709,10 +709,6 @@ export default function SeniorBookletWizard({
       street: formData.addressStreet,
       barangay: formData.addressBarangay,
       city: formData.addressCity,
-      emergencyFirstName: formData.emergencyFirstName,
-      emergencyLastName: formData.emergencyLastName,
-      emergencyContactNo: formData.emergencyContactNo,
-      emergencyRelationship: formData.emergencyRelationship,
       status: "pending",
       submittedAt: new Date().toISOString(),
       documents: Object.entries(uploadedFiles).map(([id, file]) => ({

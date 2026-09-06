@@ -874,11 +874,13 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
 
-  const isSeniorBooklet = !isPWD(app) && (
+  const isSeniorBooklet = !isPWD(app) && Boolean(
     String(app.type || "").toLowerCase().includes("booklet") ||
     String(app.category || "").toLowerCase().includes("booklet") ||
     String(app.type || "").toLowerCase() === "medicine-booklet" ||
-    String(app.type || "").toLowerCase() === "movie-booklet"
+    String(app.type || "").toLowerCase() === "movie-booklet" ||
+    String(subLabel || "").toLowerCase().includes("booklet") ||
+    String((app as any).service || "").toLowerCase().includes("booklet")
   )
   const isMovieBooklet = isSeniorBooklet && String(app.type || "").toLowerCase().includes("movie")
   const bookletTitle = isMovieBooklet ? "Free Movie Booklet" : "Medicine Discount Booklet"
@@ -1205,8 +1207,8 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
             </div>
           )}
 
-          {/* Section: Emergency Contact Information (for ID Applications) */}
-          {!isAssistance && (
+          {/* Section: Emergency Contact Information (for ID Applications only, not for Booklets or Assistance) */}
+          {!isAssistance && !isSeniorBooklet && (
             <div>
               <SectionHeading number={nextNum()} icon={<Phone className="h-4 w-4" />}>
                 Emergency Contact Information
