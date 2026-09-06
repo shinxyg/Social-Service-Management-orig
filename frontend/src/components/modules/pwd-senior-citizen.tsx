@@ -166,53 +166,86 @@ function isPWD(app: ApplicationSubmission): app is PWDApplicationSubmission {
   const id = String(app.id || "").toLowerCase()
   const ref = String(app.referenceNumber || "").toLowerCase()
   const assigned = String(app.assignedIdNumber || "").toLowerCase()
-  const disType = String((app as any).disabilityType || "").trim()
+  const type = String(app.type || "").toLowerCase()
+  const service = String((app as any).service || "").toLowerCase()
 
+  // 1. Explicit Senior Citizen or Booklet indicators mean NOT PWD
+  if (
+    cat.includes("senior") ||
+    cat.includes("osca") ||
+    type.includes("movie") ||
+    type.includes("medicine") ||
+    type.includes("booklet") ||
+    service.includes("senior") ||
+    service.includes("movie") ||
+    service.includes("medicine") ||
+    service.includes("booklet") ||
+    id.includes("snr") ||
+    ref.startsWith("osca") ||
+    assigned.startsWith("osca") ||
+    assigned.startsWith("mb-") ||
+    assigned.startsWith("mv-")
+  ) {
+    return false
+  }
+
+  // 2. Otherwise check PWD markers
   if (
     cat.includes("pwd") ||
     cat.includes("disabilit") ||
-    disType !== "" ||
     id.includes("pwd") ||
     ref.startsWith("pwd") ||
-    assigned.startsWith("pwd")
+    assigned.startsWith("pwd") ||
+    String((app as any).disabilityType || "").trim() !== ""
   ) {
     return true
   }
 
-  if (cat.includes("senior") || cat.includes("osca") || id.includes("snr") || ref.startsWith("osca") || assigned.startsWith("osca")) {
-    return false
-  }
-
-  return true
+  return false
 }
 
 function generateOfficialIdNumber(app: ApplicationSubmission): string {
-  const isPwdApp = isPWD(app)
-  const appType = String(app.type || "").toLowerCase()
+  const rawType = String(app.type || "").toLowerCase()
+  const rawCat = String(app.category || "").toLowerCase()
+  const rawService = String((app as any).service || "").toLowerCase()
   const randomSeq = String(Math.floor(100000 + Math.random() * 900000))
   const year = new Date().getFullYear()
 
-  if (isPwdApp) {
+  // 1. Movie Booklet: always generate freshly randomized MV-YYYY-XXXXXX
+  if (
+    rawType === "movie-booklet" ||
+    rawType.includes("movie") ||
+    rawCat.includes("movie") ||
+    rawService.includes("movie")
+  ) {
+    return `MV-${year}-${randomSeq}`
+  }
+
+  // 2. Medicine Booklet: always generate freshly randomized MB-YYYY-XXXXXX
+  if (
+    rawType === "medicine-booklet" ||
+    rawType.includes("medicine") ||
+    rawCat.includes("medicine") ||
+    rawService.includes("medicine") ||
+    rawCat.includes("booklet") ||
+    rawType.includes("booklet")
+  ) {
+    return `MB-${year}-${randomSeq}`
+  }
+
+  // 3. PWD ID
+  if (isPWD(app)) {
     if (app.assignedIdNumber && app.assignedIdNumber.startsWith("PWD-")) {
       return app.assignedIdNumber
     }
     return `PWD-137404-${year}-${randomSeq}`
-  } else if (appType === "medicine-booklet" || String(app.category || "").toLowerCase().includes("medicine")) {
-    if (app.assignedIdNumber && app.assignedIdNumber.startsWith("MB-")) {
-      return app.assignedIdNumber
-    }
-    return `MB-${year}-${randomSeq}`
-  } else if (appType === "movie-booklet" || String(app.category || "").toLowerCase().includes("movie")) {
-    if (app.assignedIdNumber && app.assignedIdNumber.startsWith("MV-")) {
-      return app.assignedIdNumber
-    }
-    return `MV-${year}-${randomSeq}`
-  } else {
-    if (app.assignedIdNumber && (app.assignedIdNumber.startsWith("SENIOR-") || app.assignedIdNumber.startsWith("OSCA-"))) {
-      return app.assignedIdNumber.replace("OSCA-", "SENIOR-")
-    }
-    return `SENIOR-137404-${year}-${randomSeq}`
   }
+
+  // 4. Senior Citizen ID
+  if (app.assignedIdNumber && (app.assignedIdNumber.startsWith("SENIOR-") || app.assignedIdNumber.startsWith("OSCA-"))) {
+    return app.assignedIdNumber.replace("OSCA-", "SENIOR-")
+  }
+  return `SENIOR-137404-${year}-${randomSeq}`
 }
 
 

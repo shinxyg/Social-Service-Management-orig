@@ -638,6 +638,7 @@ export default function SeniorBookletWizard({
   }
 
   // Booklet Number validation against QCID / OSCA ID
+  const expectedPrefix = isMedicine ? "MB-" : "MV-"
   const cleanOscaId = (verifiedSeniorId || (oscaIdInput.includes("MB-") || oscaIdInput.includes("MV-") ? "" : oscaIdInput)).replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
   const cleanQcid = (formData.qcidNo || userProfile?.qcidNo || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
   const cleanBooklet = (bookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
@@ -651,7 +652,8 @@ export default function SeniorBookletWizard({
 
   const isBookletFormatValid = Boolean(
     cleanBooklet &&
-    cleanBooklet.length >= 4 &&
+    (cleanBooklet.startsWith(expectedPrefix.replace("-", "")) || bookletNumber.trim().toUpperCase().startsWith(expectedPrefix)) &&
+    cleanBooklet.length >= 6 &&
     !isBookletSameAsId
   )
 
@@ -1224,11 +1226,22 @@ export default function SeniorBookletWizard({
                           value={bookletNumber}
                           onChange={(e) => setBookletNumber(e.target.value.toUpperCase())}
                           placeholder={isMedicine ? "e.g. MB-2026-394314" : "e.g. MV-2026-516915"}
-                          className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 font-mono outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                          className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 font-mono outline-none transition-all ${
+                            bookletNumber.trim() && !isBookletFormatValid
+                              ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
+                              : bookletNumber.trim() && isBookletFormatValid
+                              ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
+                              : "border-gray-300 bg-white focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                          }`}
                         />
+                        {bookletNumber.trim() !== "" && !isBookletFormatValid && (
+                          <p className="text-xs text-red-600 mt-1 font-medium">
+                            Kailangang valid na {isMedicine ? "Medicine Booklet" : "Free Movie Booklet"} Number na nagsisimula sa {expectedPrefix} (Halimbawa: {isMedicine ? "MB-2026-394314" : "MV-2026-516915"}).
+                          </p>
+                        )}
                         {attemptedNext && !bookletNumber.trim() && (
-                          <p className="text-xs text-red-500 mt-1">
-                            Pakilagay ang inyong existing {isMedicine ? "Medicine" : "Free Movie"} Booklet Number.
+                          <p className="text-xs text-red-600 mt-1 font-medium">
+                            Pakilagay ang inyong existing {isMedicine ? "Medicine" : "Free Movie"} Booklet Number ({expectedPrefix}2026-XXXXXX).
                           </p>
                         )}
                       </div>
