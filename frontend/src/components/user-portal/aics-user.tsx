@@ -82,7 +82,13 @@ export default function AICSUser() {
       if (!app) return false
       const cfg = AICS_CONFIG[serviceType] || AICS_CONFIG.medical
       const appType = String(
-        app.assistance_type || app.type || app.assistanceType || app.service || ""
+        app.assistance_type ||
+          app.type ||
+          app.assistanceType ||
+          app.service ||
+          app.assistance_program ||
+          app.program ||
+          ""
       ).toLowerCase()
 
       const isMatchCategory = cfg.matchers.some((m) => appType.includes(m))
@@ -105,15 +111,22 @@ export default function AICSUser() {
         app.reference_no ||
           app.referenceNumber ||
           app.reference_number ||
+          app.applicationRef ||
           app.qc_id ||
+          app.qcId ||
+          app.qcid ||
           app.id ||
           ""
       )
         .toLowerCase()
         .trim()
-      const appEmail = String(app.email || "").toLowerCase().trim()
+      const appEmail = String(app.email || app.applicantEmail || "").toLowerCase().trim()
       const appName = String(
-        app.full_name || `${app.first_name || ""} ${app.last_name || ""}`
+        app.full_name ||
+          app.applicantName ||
+          app.applicant_name ||
+          app.name ||
+          `${app.first_name || ""} ${app.last_name || ""}`
       )
         .toLowerCase()
         .trim()
@@ -123,14 +136,16 @@ export default function AICSUser() {
         (appRef === currentQcid ||
           appRef.includes(currentQcid) ||
           currentQcid.includes(appRef))
-      const matchEmail = currentEmail && appEmail && currentEmail === appEmail
-      const matchName =
+      const matchEmail = Boolean(currentEmail && appEmail && currentEmail === appEmail)
+      const matchName = Boolean(
         currentLastName &&
         currentFirstName &&
         appName.includes(currentLastName) &&
         appName.includes(currentFirstName)
+      )
 
-      return Boolean(matchQcid || matchEmail || matchName)
+      // If user profile is present, match by QCID/email/name, or if from local user storage
+      return Boolean(matchQcid || matchEmail || matchName || app.isCurrentUser)
     }
 
     const checkActiveApp = async () => {
@@ -180,9 +195,12 @@ export default function AICSUser() {
         // 3. LocalStorage items fallback
         const localKeys = [
           "aics_applications",
+          "all_financial_disbursements",
           "applications",
           "all_user_applications",
           "active_applications",
+          "citizen_applications",
+          "user_applications",
         ]
         for (const k of localKeys) {
           try {
@@ -194,10 +212,16 @@ export default function AICSUser() {
                   !allApps.some(
                     (a) =>
                       (a.id && a.id === la.id) ||
-                      (a.reference_no && a.reference_no === la.reference_no)
+                      (a.reference_no && a.reference_no === (la.reference_no || la.applicationRef))
                   )
                 ) {
-                  allApps.push(la)
+                  allApps.push({
+                    ...la,
+                    reference_no: la.reference_no || la.applicationRef || la.disbursementId || la.id,
+                    assistance_type: la.assistance_type || la.assistanceType || la.type || la.service,
+                    created_at: la.created_at || la.dateApproved || la.submittedAt,
+                    isCurrentUser: true,
+                  })
                 }
               }
             }

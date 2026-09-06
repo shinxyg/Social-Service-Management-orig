@@ -230,7 +230,8 @@ exports.getApplications = async (req, res) => {
 
     if (qcId) {
       params.push(qcId);
-      conditions.push(`qc_id = $${params.length}`);
+      params.push(`%${qcId}%`);
+      conditions.push(`(qc_id = $${params.length - 1} OR reference_no = $${params.length - 1} OR reference_no LIKE $${params.length})`);
     }
     if (status) {
       params.push(status);

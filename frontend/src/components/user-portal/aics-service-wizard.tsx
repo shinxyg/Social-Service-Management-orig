@@ -18,6 +18,7 @@ import DocumentCameraModal from "../ui/document-camera-modal"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
 import { FIXED_ASSISTANCE_AMOUNTS } from "../modules/financial-aid-disbursement"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
 export type AICSServiceType = "material" | "food" | "transportation"
 
@@ -236,43 +237,42 @@ export default function AICSServiceWizard({
   const [transportationPurpose, setTransportationPurpose] = useState("")
 
   // Step 2: Personal Information (Auto-filled from account / QCID & disabled like Pic 4)
-  const [qcIdNumber, setQcIdNumber] = useState("110000116932100")
-  const [firstName, setFirstName] = useState("CLARISA MAE")
-  const [middleName, setMiddleName] = useState("GALIAS")
-  const [lastName, setLastName] = useState("DIMAL")
-  const [suffix, setSuffix] = useState("")
+  const initialProf = getCurrentUserProfile()
+  const [qcIdNumber, setQcIdNumber] = useState(initialProf?.qcidNo || "110000572516915")
+  const [firstName, setFirstName] = useState(initialProf?.firstName || "RENZ")
+  const [middleName, setMiddleName] = useState(initialProf?.middleName || "")
+  const [lastName, setLastName] = useState(initialProf?.lastName || "MILLARES")
+  const [suffix, setSuffix] = useState(initialProf?.suffix || "")
   const [nationality, setNationality] = useState("FILIPINO")
-  const [birthDate, setBirthDate] = useState("10/29/2004")
-  const [age, setAge] = useState("21")
-  const [sex, setSex] = useState("Female")
-  const [civilStatus, setCivilStatus] = useState("Single")
-  const [houseNumber, setHouseNumber] = useState("11")
-  const [streetName, setStreetName] = useState("OLD CABUYAO SAMPALOK ST")
-  const [barangay, setBarangay] = useState("Sauyo")
-  const [contactNumber, setContactNumber] = useState("0900 000 0000")
-  const [email, setEmail] = useState("dimalmae@gmail.com")
+  const [birthDate, setBirthDate] = useState(initialProf?.birthDateIso || initialProf?.birthDate || "10/29/2004")
+  const [age, setAge] = useState(String(initialProf?.age || "21"))
+  const [sex, setSex] = useState(initialProf?.sex === "MALE" || initialProf?.sex === "LALAKI" ? "Male" : "Female")
+  const [civilStatus, setCivilStatus] = useState(initialProf?.civilStatus || "Single")
+  const [houseNumber, setHouseNumber] = useState(initialProf?.houseNo || "11")
+  const [streetName, setStreetName] = useState(initialProf?.street || "ACACIA ST.")
+  const [barangay, setBarangay] = useState(initialProf?.barangay || "Sauyo")
+  const [contactNumber, setContactNumber] = useState(initialProf?.mobileNumber || initialProf?.contactNo || "09155212353")
+  const [email, setEmail] = useState(initialProf?.email || "rencemillares619@gmail.com")
   const completeAddress = `${houseNumber} ${streetName}, Brgy. ${barangay}, Quezon City`
 
-  // Auto-fill from authenticated account if available in localStorage
+  // Auto-fill from authenticated account
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("user") || localStorage.getItem("userProfile")
-      if (stored) {
-        const u = JSON.parse(stored)
-        if (u.qcId || u.qcid) setQcIdNumber(u.qcId || u.qcid)
+      const u = getCurrentUserProfile()
+      if (u) {
+        if (u.qcidNo) setQcIdNumber(u.qcidNo)
         if (u.firstName) setFirstName(u.firstName)
         if (u.middleName) setMiddleName(u.middleName)
         if (u.lastName) setLastName(u.lastName)
         if (u.suffix) setSuffix(u.suffix)
-        if (u.nationality) setNationality(u.nationality)
-        if (u.phone || u.phoneNumber) setContactNumber(u.phone || u.phoneNumber)
+        if (u.mobileNumber || u.contactNo) setContactNumber(u.mobileNumber || u.contactNo)
         if (u.email) setEmail(u.email)
-        if (u.birthDate) setBirthDate(u.birthDate)
+        if (u.birthDateIso || u.birthDate) setBirthDate(u.birthDateIso || u.birthDate)
         if (u.age) setAge(String(u.age))
-        if (u.gender) setSex(u.gender === "Lalaki" || u.gender === "Male" ? "Male" : "Female")
+        if (u.sex) setSex(u.sex === "MALE" || u.sex === "LALAKI" ? "Male" : "Female")
         if (u.civilStatus) setCivilStatus(u.civilStatus)
-        if (u.houseNumber) setHouseNumber(u.houseNumber)
-        if (u.streetName) setStreetName(u.streetName)
+        if (u.houseNo) setHouseNumber(u.houseNo)
+        if (u.street) setStreetName(u.street)
         if (u.barangay) setBarangay(u.barangay)
       }
     } catch {}
@@ -619,6 +619,23 @@ export default function AICSServiceWizard({
         const updatedList = [newDisbursement, ...existingList.filter((item: any) => item.applicationRef !== generatedRef)]
         localStorage.setItem("all_financial_disbursements", JSON.stringify(updatedList))
         window.dispatchEvent(new Event("financial_disbursements_updated"))
+
+        const newAicsApp = {
+          id: `APP-AICS-${Date.now()}`,
+          created_at: new Date().toISOString(),
+          reference_no: generatedRef,
+          qc_id: qcIdNumber || generatedRef,
+          assistance_type: serviceTitle,
+          status: "pending",
+          full_name: `${firstName} ${middleName} ${lastName}`.trim(),
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+        }
+        const existingAics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
+        localStorage.setItem("aics_applications", JSON.stringify([newAicsApp, ...existingAics]))
+        window.dispatchEvent(new CustomEvent("aics_applications_updated"))
+        window.dispatchEvent(new CustomEvent("aics_application_submitted"))
       } catch (errDisb) {
         console.warn("Could not save auto-disbursement entry:", errDisb)
       }
