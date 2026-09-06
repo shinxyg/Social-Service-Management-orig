@@ -778,6 +778,12 @@ interface ApplicationCardProps {
 
 function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardProps) {
   const subLabel = subLabelForApp(app)
+  const isSeniorBooklet = !isPWD(app) && (
+    String(app.type || "").toLowerCase().includes("booklet") ||
+    String(app.category || "").toLowerCase().includes("booklet") ||
+    String(app.type || "").toLowerCase() === "medicine-booklet" ||
+    String(app.type || "").toLowerCase() === "movie-booklet"
+  )
 
   return (
     <div
@@ -810,7 +816,7 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardP
             </span>
             {app.status === "approved" && app.assignedIdNumber && (
               <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>
-                ID {app.assignedIdNumber}
+                {isSeniorBooklet ? "Booklet " : "ID "}{app.assignedIdNumber}
               </span>
             )}
           </div>
@@ -832,7 +838,7 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardP
               </button>
             )}
           </div>
-          {onShowCard && app.status === "approved" && (
+          {onShowCard && app.status === "approved" && !isSeniorBooklet && (
             <button
               type="button"
               onClick={(e) => {
@@ -868,6 +874,15 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
+
+  const isSeniorBooklet = !isPWD(app) && (
+    String(app.type || "").toLowerCase().includes("booklet") ||
+    String(app.category || "").toLowerCase().includes("booklet") ||
+    String(app.type || "").toLowerCase() === "medicine-booklet" ||
+    String(app.type || "").toLowerCase() === "movie-booklet"
+  )
+  const isMovieBooklet = isSeniorBooklet && String(app.type || "").toLowerCase().includes("movie")
+  const bookletTitle = isMovieBooklet ? "Free Movie Booklet" : "Medicine Discount Booklet"
 
   const contactNumber = isPWD(app) ? app.contactNo : app.cellphoneNo
   const subLabel = subLabelForApp(app)
@@ -1307,14 +1322,22 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                     <div>
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                          Confirm {app.category} Approval
+                          Confirm {isSeniorBooklet ? bookletTitle : app.category} Approval
                         </label>
                         <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md">
-                          Official QC ID: {idNumber}
+                          {isSeniorBooklet ? "Official Booklet No" : "Official QC ID"}: {idNumber}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                        Official ID Number <strong className="font-mono text-foreground">{idNumber}</strong> has been assigned. Approving will automatically connect this application to <strong>Appointments</strong> for claiming/pickup schedule.
+                        {isSeniorBooklet ? (
+                          <>
+                            Official Booklet Number <strong className="font-mono text-foreground">{idNumber}</strong> has been generated. Approving will automatically send this official Booklet Number directly to the applicant's registered Gmail.
+                          </>
+                        ) : (
+                          <>
+                            Official ID Number <strong className="font-mono text-foreground">{idNumber}</strong> has been assigned. Approving will automatically connect this application to <strong>Appointments</strong> for claiming/pickup schedule.
+                          </>
+                        )}
                       </p>
                     </div>
                     <div className="flex gap-3">
@@ -1333,7 +1356,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                         }}
                         className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
                       >
-                        Confirm Approval &amp; Connect to Appointment
+                        {isSeniorBooklet ? "Confirm Approval & Issue Booklet" : "Confirm Approval & Connect to Appointment"}
                       </button>
                     </div>
                   </div>
@@ -1413,7 +1436,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 <>
                   {app.assignedIdNumber && (
                     <p className="text-xs">
-                      <strong>Assigned ID Number:</strong> {app.assignedIdNumber}
+                      <strong>{isSeniorBooklet ? "Official Booklet Number:" : "Assigned ID Number:"}</strong> {app.assignedIdNumber}
                     </p>
                   )}
                   {app.notes && <p className="text-xs"><strong>Notes:</strong> {app.notes}</p>}
@@ -1421,7 +1444,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                     <Mail className="h-3.5 w-3.5 text-emerald-600" />
                     Directly Sent to Registered Gmail ({app.email || "Applicant Email"})
                   </p>
-                  {onShowCard && (
+                  {onShowCard && !isSeniorBooklet && (
                     <div className="pt-2">
                       <button
                         type="button"

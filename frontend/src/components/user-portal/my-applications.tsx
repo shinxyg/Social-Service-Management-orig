@@ -473,6 +473,10 @@ export default function MyApplications() {
             else if (p.status === "for_release") appStatus = "For Release"
             else if (p.status === "under_review" || p.status === "review") appStatus = "Under Review"
 
+            const isBooklet =
+              String(p.type || "").toLowerCase().includes("booklet") ||
+              String(p.category || "").toLowerCase().includes("booklet")
+
             return {
               applicationNo: p.assignedIdNumber || p.referenceNumber || p.qcidNo || qcId,
               assistance: serviceTitle,
@@ -492,7 +496,9 @@ export default function MyApplications() {
               email: p.email || userProfile.email,
               remarks:
                 p.status === "approved"
-                  ? `Approved. Assigned ID Number: ${p.assignedIdNumber || "Available at office"}`
+                  ? isBooklet
+                    ? `Approved. Official Booklet Number: ${p.assignedIdNumber || "Sent to your registered Gmail"}`
+                    : `Approved. Assigned ID Number: ${p.assignedIdNumber || "Available at office"}`
                   : p.status === "rejected"
                   ? `Review required: ${p.rejectionReason || "Incomplete documentation."}`
                   : "Currently being reviewed by social worker.",

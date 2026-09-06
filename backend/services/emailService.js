@@ -751,12 +751,17 @@ async function sendSeniorBookletApprovalEmail({
                 <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right; text-transform: uppercase;">${recipientName || '—'}</td>
               </tr>
               <tr>
-                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Senior Citizen / OSCA ID No.:</td>
-                <td style="padding: 6px 0; color: #0f172a; font-family: monospace; font-weight: 700; text-align: right;">${officialOscaId}</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Official Booklet No.:</td>
+                <td style="padding: 6px 0; color: #0284c7; font-family: monospace; font-weight: 800; text-align: right;">${generatedBookletNo}</td>
               </tr>
+              ${referenceNumber ? `
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Application Ref No.:</td>
+                <td style="padding: 6px 0; color: #0f172a; font-family: monospace; font-weight: 700; text-align: right;">${referenceNumber}</td>
+              </tr>` : ''}
               <tr>
                 <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Service Type:</td>
-                <td style="padding: 6px 0; color: #0284c7; font-weight: 700; text-align: right;">${bookletTitle}</td>
+                <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right;">${bookletTitle}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Application Type:</td>
