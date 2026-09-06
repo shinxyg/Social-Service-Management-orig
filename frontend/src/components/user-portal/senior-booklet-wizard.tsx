@@ -342,8 +342,12 @@ export default function SeniorBookletWizard({
 
   const [detectedPreviousBooklet, setDetectedPreviousBooklet] = useState<string | null>(null)
 
+  // Real-time Active Application Status & Booklet sync
   useEffect(() => {
-    const checkPreviousBooklet = async () => {
+    let isMounted = true
+
+    const syncRealtimeStatus = async () => {
+      if (!isMounted) return
       try {
         let allApps: any[] = []
         try {
@@ -354,38 +358,99 @@ export default function SeniorBookletWizard({
           }
         } catch {}
 
-        try {
-          const local = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
-          if (Array.isArray(local)) allApps = [...allApps, ...local]
-        } catch {}
+        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
+        for (const k of localKeys) {
+          try {
+            const local = JSON.parse(localStorage.getItem(k) || "[]")
+            if (Array.isArray(local)) {
+              for (const la of local) {
+                if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
+                  allApps.push(la)
+                }
+              }
+            }
+          } catch {}
+        }
 
         const userEmail = (userProfile?.email || formData.emailAddress || "").toLowerCase().trim()
         const currentQcid = (userProfile?.qcidNo || formData.qcidNo || "").trim()
+        const oscaNum = (oscaIdInput || "").trim()
 
-        const found = allApps.find((a) => {
+        const isUserMatch = (a: any) => {
+          if (!a) return false
+          const aEmail = String(a.email || "").toLowerCase().trim()
+          const aRef = String(a.referenceNumber || a.reference_number || "").trim()
+          const aQcid = String(a.qcid || a.qc_id || "").trim()
+          const aExisting = String(a.existingIdNumber || a.existing_id_number || "").trim()
+          const aAssigned = String(a.assignedIdNumber || a.assigned_id_number || "").trim()
+
+          return Boolean(
+            (userEmail && aEmail === userEmail) ||
+            (currentQcid && (aRef.includes(currentQcid) || aQcid === currentQcid || aAssigned === currentQcid)) ||
+            (oscaNum && (aExisting.includes(oscaNum) || aRef.includes(oscaNum) || aAssigned.includes(oscaNum)))
+          )
+        }
+
+        // 1. Check if user has an active pending application for this booklet type
+        const pendingBookletApp = allApps.find((a) => {
+          if (!a) return false
+          const appType = String(a.type || "").toLowerCase()
+          const isTargetType = isMedicine
+            ? appType === "medicine-booklet" || String(a.category || "").toLowerCase().includes("medicine")
+            : appType === "movie-booklet" || String(a.category || "").toLowerCase().includes("movie")
+          if (!isTargetType) return false
+          if (a.status !== "pending") return false
+          return isUserMatch(a)
+        })
+
+        if (pendingBookletApp) {
+          if (!submitted && !isBlocked) {
+            setIsBlocked(true)
+          }
+        } else {
+          // If was blocked before and now approved/completed, unblock in real-time
+          if (isBlocked && !submitted) {
+            setIsBlocked(false)
+          }
+        }
+
+        // 2. Check if user has an approved booklet record
+        const approvedBookletApp = allApps.find((a) => {
+          if (!a) return false
           const appType = String(a.type || "").toLowerCase()
           const isTargetType = isMedicine
             ? appType === "medicine-booklet" || String(a.category || "").toLowerCase().includes("medicine")
             : appType === "movie-booklet" || String(a.category || "").toLowerCase().includes("movie")
           if (!isTargetType) return false
           if (a.status !== "approved" && a.status !== "completed") return false
-
-          const aEmail = String(a.email || "").toLowerCase().trim()
-          const aRef = String(a.referenceNumber || a.reference_number || "").trim()
-          const aQcid = String(a.qcid || a.qc_id || "").trim()
-
-          return (userEmail && aEmail === userEmail) || (currentQcid && (aRef.includes(currentQcid) || aQcid === currentQcid))
+          return isUserMatch(a)
         })
 
-        if (found && (found.assignedIdNumber || found.assigned_id_number)) {
-          const num = found.assignedIdNumber || found.assigned_id_number
+        if (approvedBookletApp && (approvedBookletApp.assignedIdNumber || approvedBookletApp.assigned_id_number)) {
+          const num = approvedBookletApp.assignedIdNumber || approvedBookletApp.assigned_id_number
           setDetectedPreviousBooklet(num)
         }
-      } catch {}
+      } catch (err) {
+        console.warn("Real-time sync error:", err)
+      }
     }
 
-    checkPreviousBooklet()
-  }, [isMedicine, userProfile, formData.emailAddress, formData.qcidNo])
+    syncRealtimeStatus()
+    const interval = setInterval(syncRealtimeStatus, 1500)
+
+    const handleStorageUpdate = () => syncRealtimeStatus()
+    window.addEventListener("storage", handleStorageUpdate)
+    window.addEventListener("pwd_senior_applications_updated", handleStorageUpdate)
+    window.addEventListener("applications_updated", handleStorageUpdate)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      window.removeEventListener("storage", handleStorageUpdate)
+      window.removeEventListener("pwd_senior_applications_updated", handleStorageUpdate)
+      window.removeEventListener("applications_updated", handleStorageUpdate)
+    }
+  }, [isMedicine, userProfile, formData.emailAddress, formData.qcidNo, oscaIdInput, submitted, isBlocked])
 
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [verifiedSeniorName, setVerifiedSeniorName] = useState<string>("")
