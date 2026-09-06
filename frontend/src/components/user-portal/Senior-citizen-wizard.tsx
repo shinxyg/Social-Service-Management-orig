@@ -851,7 +851,8 @@ export default function SeniorCitizenApplicationWizard({
       targetApp?.reference_number ||
       targetApp?.id ||
       userProfile?.qcidNo ||
-      formData.oldSeniorId ||
+      formData.qcidNumber ||
+      existingIdNumber ||
       "110000572516915"
 
     const assignedIdNo = (targetApp?.assignedIdNumber || targetApp?.assigned_id_number || "").replace("OSCA-", "SENIOR-")
