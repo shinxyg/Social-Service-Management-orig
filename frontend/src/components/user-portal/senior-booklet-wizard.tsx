@@ -1222,7 +1222,6 @@ export default function SeniorBookletWizard({
                             <>
                               <option value="Booklet pages are full">Booklet pages are full</option>
                               <option value="Renewal due">Renewal due</option>
-                              <option value="Other">Other</option>
                             </>
                           ) : (
                             <>
