@@ -729,17 +729,21 @@ export default function MyApplications() {
     }
 
     fetchUserApps()
-    const interval = setInterval(fetchUserApps, 3000)
+    const interval = setInterval(fetchUserApps, 2000)
     const handleUpdate = () => fetchUserApps()
     window.addEventListener("storage", handleUpdate)
     window.addEventListener("pwd_senior_applications_updated", handleUpdate)
     window.addEventListener("user_notifications_updated", handleUpdate)
+    window.addEventListener("appointments_updated", handleUpdate)
+    window.addEventListener("financial_disbursements_updated", handleUpdate)
 
     return () => {
       clearInterval(interval)
       window.removeEventListener("storage", handleUpdate)
       window.removeEventListener("pwd_senior_applications_updated", handleUpdate)
       window.removeEventListener("user_notifications_updated", handleUpdate)
+      window.removeEventListener("appointments_updated", handleUpdate)
+      window.removeEventListener("financial_disbursements_updated", handleUpdate)
     }
   }, [])
 

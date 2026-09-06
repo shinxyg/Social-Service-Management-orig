@@ -106,6 +106,50 @@ export default function ApplyFinancialAid() {
             })
           }
         }
+
+        // PWD / Senior Social Assistance for user
+        try {
+          const resPwd = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+          if (resPwd.ok) {
+            const pwdApps = await resPwd.json()
+            if (Array.isArray(pwdApps)) {
+              const myApprovedPwd = pwdApps.filter((app: any) => {
+                const matchUser = (app.referenceNumber === qcId || app.reference_number === qcId || app.id === qcId)
+                const isAssistance =
+                  app.type === "assistance" ||
+                  app.type === "social-assistance" ||
+                  String(app.category || "").toLowerCase().includes("assistance") ||
+                  String(app.service || "").toLowerCase().includes("assistance") ||
+                  String(app.assistanceType || "").toLowerCase().includes("assistance") ||
+                  String(app.disabilityClass || "").toLowerCase().includes("assistance")
+                return matchUser && isAssistance && (app.status === "approved" || app.status === "completed" || app.status === "for_release")
+              })
+              myApprovedPwd.forEach((app: any) => {
+                const isPwdApp = String(app.category || "").toUpperCase().includes("PWD")
+                const assistanceType = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
+                const ref = app.referenceNumber || app.reference_number || qcId
+                if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
+                  remoteRecords.push({
+                    id: `user-pwd-${app.id || ref}`,
+                    disbursementId: `DISB-2026-${String(app.id || ref).slice(-4).padStart(4, "0")}`,
+                    applicationRef: ref,
+                    applicantName: [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ").toUpperCase() || "BENEFICIARY",
+                    assistanceType: assistanceType,
+                    fixedAmount: 2000,
+                    dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }),
+                    status: (app.status === "released" || app.status === "completed") ? "RELEASED" : "PENDING",
+                    venue: "Quezon City Hall",
+                    remarks: "PWD / Senior Social Assistance payout.",
+                  })
+                }
+              })
+            }
+          }
+        } catch {}
       } catch (err) {
         console.warn("Could not fetch remote approved disbursements:", err)
       }
