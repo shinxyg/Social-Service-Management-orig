@@ -1447,16 +1447,6 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
             >
               Close
             </button>
-            {onShowCard && (
-              <button
-                type="button"
-                onClick={() => onShowCard(app)}
-                className="px-4 h-10 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg inline-flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-              >
-                <IdCard className="h-4 w-4 text-blue-600" />
-                View ID Card
-              </button>
-            )}
             {onDelete && (
               <button
                 type="button"
@@ -1474,26 +1464,38 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
             )}
           </div>
 
-          {app.status === "pending" && actionMode === "view" && (
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            {app.status === "pending" && actionMode === "view" && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActionMode("reject")}
+                  className="gw-btn-reject px-4 h-10 text-sm inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                  Reject
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActionMode("approve")}
+                  className="gw-btn-approve px-5 h-10 text-sm inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  <Check className="h-4 w-4" />
+                  Approve &amp; Forward
+                </button>
+              </>
+            )}
+            {onShowCard && (
               <button
                 type="button"
-                onClick={() => setActionMode("reject")}
-                className="gw-btn-reject px-4 h-10 text-sm inline-flex items-center gap-1.5 cursor-pointer"
+                onClick={() => onShowCard(app)}
+                className="px-4 h-10 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg inline-flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
               >
-                <X className="h-4 w-4" />
-                Reject
+                <IdCard className="h-4 w-4 text-blue-600" />
+                View ID Card
               </button>
-              <button
-                type="button"
-                onClick={() => setActionMode("approve")}
-                className="gw-btn-approve px-5 h-10 text-sm inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                <Check className="h-4 w-4" />
-                Approve &amp; Forward
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
