@@ -467,16 +467,69 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
   const handleFinalSubmit = () => {
     setIsSubmitting(true)
+    const qcid = userProfile?.qcidNo || "110000116932100"
+    setReferenceNumber(qcid)
+    setSubmissionDate(
+      new Date().toLocaleDateString("en-PH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    )
+
+    const newApp = {
+      id: `APP-SNR-AST-${Date.now()}`,
+      submittedAt: new Date().toISOString(),
+      referenceNumber: qcid,
+      category: "Senior Citizen",
+      type: "social-assistance",
+      firstName: formData.firstName || userProfile?.firstName || "CLARISA MAE",
+      middleName: formData.middleName || userProfile?.middleName || "GALIAS",
+      lastName: formData.lastName || userProfile?.lastName || "DIMAL",
+      suffix: formData.suffix || "",
+      dateOfBirth: `${formData.dobYear || "1960"}-${(formData.dobMonth || "10").padStart(2, "0")}-${(formData.dobDay || "29").padStart(2, "0")}`,
+      age: formData.age || "65",
+      sex: formData.sex || "Female",
+      civilStatus: formData.civilStatus || "Single",
+      contactNo: formData.contactNumber || userProfile?.contactNo || "09000000000",
+      cellphoneNo: formData.contactNumber || userProfile?.contactNo || "09000000000",
+      email: formData.emailAddress || userProfile?.email || "dimalmae@gmail.com",
+      houseNo: formData.addressHouseNo || userProfile?.addressHouseNo || "11",
+      street: formData.addressStreet || userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST",
+      barangay: formData.barangay || userProfile?.addressBarangay || "Sauyo",
+      city: "QUEZON CITY",
+      address: `${formData.addressHouseNo || "11"} ${formData.addressStreet || "OLD CABUYAO SAMPALOK ST"} ${formData.barangay || "Sauyo"}, QUEZON CITY`.trim(),
+      householdMembersCount: formData.familyMembersCount || "1",
+      householdMembers: formData.familyMembersCount || "1",
+      numberOfHouseholdMembers: formData.familyMembersCount || "1",
+      monthlyHouseholdIncome: formData.monthlyIncome || "Below ₱5,000",
+      monthlyIncome: formData.monthlyIncome || "Below ₱5,000",
+      livingArrangement: formData.livingArrangement || "Alone",
+      pensionSource: formData.employmentStatus || "",
+      assistanceType: "Social Assistance / Pension",
+      reasonForRequest: formData.needDescription || formData.purposeOfAssistance || "Financial Support",
+      applyingFor: "myself",
+      documents: Object.keys(uploadedFiles).map((k) => ({
+        name: k,
+        filename: uploadedFiles[k]?.name || "doc.pdf",
+        uploadedAt: new Date().toISOString(),
+        status: "verified",
+      })),
+      status: "pending",
+    }
+
+    try {
+      const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+      localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing]))
+      window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+      fetch(`${API_BASE}/api/pwd-senior/applications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newApp),
+      }).catch(() => {})
+    } catch {}
+
     setTimeout(() => {
-      const qcid = userProfile?.qcidNo || "110000116932100"
-      setReferenceNumber(qcid)
-      setSubmissionDate(
-        new Date().toLocaleDateString("en-PH", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      )
       setIsSubmitting(false)
       setSubmitted(true)
     }, 1000)

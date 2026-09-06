@@ -62,6 +62,19 @@ interface PWDApplicationSubmission {
   disabilityType: string
   disabilityClass: "apparent" | "non-apparent" | string
   causeOfDisability: string
+  disabilityDescription?: string
+  briefDescription?: string
+
+  // Socio-Economic / Assistance
+  householdMembersCount?: string | number
+  householdMembers?: string | number
+  numberOfHouseholdMembers?: string | number
+  monthlyHouseholdIncome?: string
+  monthlyHouseholdExpenses?: string
+  assistanceType?: string
+  reasonForRequest?: string
+  livingArrangement?: string
+  pensionSource?: string
 
   // Family / Emergency Info
   applyingFor?: "myself" | "family"
@@ -1025,7 +1038,15 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 <div className="col-span-2">
                   <Field
                     label="Brief description of disability"
-                    value={(app as any).disabilityDescription || (app as any).briefDescription || (app as any).description || "—"}
+                    value={
+                      (app as any).disabilityDescription ||
+                      (app as any).briefDescription ||
+                      (app as any).description ||
+                      (app as any).extra_data?.disabilityDescription ||
+                      (app as any).extra_data?.briefDescription ||
+                      (app as any).extra_data?.description ||
+                      "—"
+                    }
                   />
                 </div>
               </div>
@@ -1069,23 +1090,53 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
                 <Field
                   label="Number of household members"
-                  value={(app as any).householdMembers || (app as any).numberOfHouseholdMembers || (app as any).numHouseholdMembers || "—"}
+                  value={
+                    (app as any).householdMembersCount ||
+                    (app as any).householdMembers ||
+                    (app as any).numberOfHouseholdMembers ||
+                    (app as any).familyMembersCount ||
+                    (app as any).numHouseholdMembers ||
+                    (app as any).extra_data?.householdMembersCount ||
+                    (app as any).extra_data?.householdMembers ||
+                    (app as any).extra_data?.numberOfHouseholdMembers ||
+                    (app as any).extra_data?.familyMembersCount ||
+                    "—"
+                  }
                 />
                 <Field
                   label="Total monthly household income"
-                  value={(app as any).monthlyHouseholdIncome || (app as any).monthlyIncome || (app as any).householdIncome || "—"}
+                  value={
+                    (app as any).monthlyHouseholdIncome ||
+                    (app as any).monthlyIncome ||
+                    (app as any).householdIncome ||
+                    (app as any).extra_data?.monthlyHouseholdIncome ||
+                    (app as any).extra_data?.monthlyIncome ||
+                    "—"
+                  }
                 />
                 <div className="col-span-2">
                   <Field
                     label="Total monthly household expenses (₱)"
-                    value={(app as any).monthlyHouseholdExpenses || (app as any).monthlyExpenses || (app as any).householdExpenses || "—"}
+                    value={
+                      (app as any).monthlyHouseholdExpenses ||
+                      (app as any).monthlyExpenses ||
+                      (app as any).householdExpenses ||
+                      (app as any).extra_data?.monthlyHouseholdExpenses ||
+                      "—"
+                    }
                   />
                 </div>
-                {(app as any).livingArrangement && (
-                  <Field label="Living arrangement" value={(app as any).livingArrangement} />
+                {((app as any).livingArrangement || (app as any).extra_data?.livingArrangement) && (
+                  <Field
+                    label="Living arrangement"
+                    value={(app as any).livingArrangement || (app as any).extra_data?.livingArrangement}
+                  />
                 )}
-                {(app as any).pensionSource && (
-                  <Field label="Pension / Financial support" value={(app as any).pensionSource} />
+                {((app as any).pensionSource || (app as any).extra_data?.pensionSource) && (
+                  <Field
+                    label="Pension / Financial support"
+                    value={(app as any).pensionSource || (app as any).extra_data?.pensionSource}
+                  />
                 )}
               </div>
             </div>

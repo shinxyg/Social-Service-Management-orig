@@ -179,6 +179,17 @@ exports.getAllApplications = async (req, res) => {
         specificDisability: extra.specificDisability || '',
         permanentAddress: extra.permanentAddress || '',
         presentAddress: extra.presentAddress || '',
+        disabilityDescription: extra.disabilityDescription || extra.briefDescription || extra.description || '',
+        briefDescription: extra.disabilityDescription || extra.briefDescription || extra.description || '',
+        householdMembersCount: extra.householdMembersCount || extra.householdMembers || extra.numberOfHouseholdMembers || '',
+        householdMembers: extra.householdMembers || extra.householdMembersCount || extra.numberOfHouseholdMembers || '',
+        numberOfHouseholdMembers: extra.numberOfHouseholdMembers || extra.householdMembers || extra.householdMembersCount || '',
+        monthlyHouseholdIncome: extra.monthlyHouseholdIncome || extra.monthlyIncome || '',
+        monthlyHouseholdExpenses: extra.monthlyHouseholdExpenses || extra.monthlyExpenses || '',
+        assistanceType: extra.assistanceType || row.type || '',
+        reasonForRequest: extra.reasonForRequest || '',
+        livingArrangement: extra.livingArrangement || '',
+        pensionSource: extra.pensionSource || '',
         isArchived: row.is_archived || false,
       };
     });
@@ -207,6 +218,7 @@ exports.createApplication = async (req, res) => {
     const emAddr = body.emergencyAddress || body.emergencyResidentialAddress || '';
 
     const newApp = {
+      ...body,
       id: appId,
       submittedAt: body.submittedAt || new Date().toISOString(),
       referenceNumber: refNum,

@@ -940,10 +940,20 @@ export default function PWDSocialAssistanceWizard({
       contactNo: formData.contactNumber || userProfile?.contactNo || "09123456789",
       cellphoneNo: formData.contactNumber || userProfile?.contactNo || "09123456789",
       email: formData.email || userProfile?.email || "applicant@example.com",
+      houseNo: formData.houseNo || "",
+      street: formData.street || "",
+      barangay: formData.barangay || "",
+      city: formData.cityMunicipality || "QUEZON CITY",
       address: `${formData.houseNo || ""} ${formData.street || ""} ${formData.barangay || ""}, ${formData.cityMunicipality || "QUEZON CITY"}`.trim(),
       disabilityType: formData.disabilityType || "Visual Disability",
       disabilityClass: "non-apparent",
       causeOfDisability: formData.causeOfDisability || "Acquired",
+      disabilityDescription: formData.disabilityDescription || "",
+      briefDescription: formData.disabilityDescription || "",
+      description: formData.disabilityDescription || "",
+      householdMembersCount: formData.householdMembersCount || "",
+      householdMembers: formData.householdMembersCount || "",
+      numberOfHouseholdMembers: formData.householdMembersCount || "",
       assistanceType: formData.assistanceType || "Educational Assistance",
       reasonForRequest: formData.reasonForRequest || "Support",
       monthlyHouseholdIncome: formData.monthlyHouseholdIncome || "",
@@ -963,6 +973,7 @@ export default function PWDSocialAssistanceWizard({
     try {
       const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
       localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing]))
+      window.dispatchEvent(new Event("pwd_senior_applications_updated"))
       fetch(`${API_BASE}/api/pwd-senior/applications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
