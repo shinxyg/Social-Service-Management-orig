@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
-import { AlertCircle, RefreshCw, HeartHandshake, X, FileText, Info } from "lucide-react"
+import { AlertCircle, RefreshCw, HeartHandshake, X, FileText, Info, CheckCircle2 } from "lucide-react"
 import PWDApplicationWizard from "./pwd-senior-wizard"
 import SeniorCitizenApplicationWizard from "./Senior-citizen-wizard"
 import PWDSocialAssistanceWizard from "./pwd-assistance-wizard"

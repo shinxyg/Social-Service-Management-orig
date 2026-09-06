@@ -1,6 +1,7 @@
 import React, { useState, useEffect, type ReactNode } from "react"
 import {
   Check,
+  CheckCircle2,
   Upload,
   Camera,
   ChevronDown,
