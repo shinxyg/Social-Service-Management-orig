@@ -190,36 +190,20 @@ exports.scheduleAppointment = async (req, res) => {
       }
     } catch {}
 
-    const isNumericId = /^\d+$/.test(id);
-    let result;
+    const cleanId = String(id || '').trim();
 
-    if (isNumericId) {
-      result = await db.query(
-        `UPDATE appointments
-         SET status = 'scheduled',
-             scheduled_date = $1,
-             scheduled_time = $2,
-             office_location = COALESCE($3, office_location),
-             notes = COALESCE($4, notes),
-             updated_at = NOW()
-         WHERE id = $5 OR reference_no = $6
-         RETURNING *`,
-        [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', notes, parseInt(id, 10), id]
-      );
-    } else {
-      result = await db.query(
-        `UPDATE appointments
-         SET status = 'scheduled',
-             scheduled_date = $1,
-             scheduled_time = $2,
-             office_location = COALESCE($3, office_location),
-             notes = COALESCE($4, notes),
-             updated_at = NOW()
-         WHERE reference_no = $5
-         RETURNING *`,
-        [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', notes, id]
-      );
-    }
+    const result = await db.query(
+      `UPDATE appointments
+       SET status = 'scheduled',
+           scheduled_date = $1,
+           scheduled_time = $2,
+           office_location = COALESCE($3, office_location),
+           notes = COALESCE($4, notes),
+           updated_at = NOW()
+       WHERE reference_no = $5 OR id::text = $5
+       RETURNING *`,
+      [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', notes, cleanId]
+    );
 
     let appt;
     if (result.rows.length === 0) {
@@ -230,9 +214,9 @@ exports.scheduleAppointment = async (req, res) => {
          VALUES ($1, 'AICS', $2, $3, 'scheduled', $4, $5, $6, $7)
          RETURNING *`,
         [
-          id,
-          applicantName || 'CLARISA MAE GALIAS DIMAL',
-          concern || 'Food Assistance',
+          cleanId,
+          applicantName || 'BENEFICIARY',
+          concern || 'Social Assistance',
           formattedDate,
           scheduledTime,
           officeLocation || 'Quezon City Hall',
@@ -341,9 +325,10 @@ async function syncAppointmentWithDisbursement(appt) {
 exports.completeAppointment = async (req, res) => {
   try {
     const { id } = req.params;
+    const cleanId = String(id || '').trim();
     const result = await db.query(
-      `UPDATE appointments SET status = 'completed', updated_at = NOW() WHERE id = $1 OR reference_no = $1 RETURNING *`,
-      [id]
+      `UPDATE appointments SET status = 'completed', updated_at = NOW() WHERE reference_no = $1 OR id::text = $1 RETURNING *`,
+      [cleanId]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Appointment not found.' });

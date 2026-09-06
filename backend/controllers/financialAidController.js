@@ -367,12 +367,11 @@ exports.getUserDisbursements = async (req, res) => {
 exports.deleteDisbursement = async (req, res) => {
   try {
     const { id } = req.params;
-    const isNum = /^\d+$/.test(id);
-    if (isNum) {
-      await db.query(`DELETE FROM financial_aid_disbursements WHERE id = $1 OR disbursement_id = $2 OR application_ref = $2`, [parseInt(id, 10), id]);
-    } else {
-      await db.query(`DELETE FROM financial_aid_disbursements WHERE disbursement_id = $1 OR application_ref = $1`, [id]);
-    }
+    const cleanId = String(id || '').trim();
+    await db.query(
+      `DELETE FROM financial_aid_disbursements WHERE id::text = $1 OR disbursement_id = $1 OR application_ref = $1`,
+      [cleanId]
+    );
     res.json({ message: 'Disbursement record deleted successfully.' });
   } catch (err) {
     console.error('Error deleting disbursement:', err);
@@ -459,36 +458,20 @@ exports.releaseDisbursement = async (req, res) => {
     const finalDate = releasedDate || new Date().toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
     const finalOfficer = releasedBy || 'Authorized Admin / Disbursing Officer';
     const finalVenue = venue || 'Quezon City Hall';
+    const cleanId = String(id || '').trim();
 
-    const isNum = /^\d+$/.test(id);
-    let result;
-    if (isNum) {
-      result = await db.query(
-        `UPDATE financial_aid_disbursements
-         SET status = 'RELEASED',
-             released_date = $1,
-             released_by = $2,
-             venue = $3,
-             remarks = COALESCE($4, remarks),
-             updated_at = NOW()
-         WHERE id = $5 OR disbursement_id = $6 OR application_ref = $6
-         RETURNING *`,
-        [finalDate, finalOfficer, finalVenue, remarks, parseInt(id, 10), id]
-      );
-    } else {
-      result = await db.query(
-        `UPDATE financial_aid_disbursements
-         SET status = 'RELEASED',
-             released_date = $1,
-             released_by = $2,
-             venue = $3,
-             remarks = COALESCE($4, remarks),
-             updated_at = NOW()
-         WHERE disbursement_id = $5 OR application_ref = $5
-         RETURNING *`,
-        [finalDate, finalOfficer, finalVenue, remarks, id]
-      );
-    }
+    const result = await db.query(
+      `UPDATE financial_aid_disbursements
+       SET status = 'RELEASED',
+           released_date = $1,
+           released_by = $2,
+           venue = $3,
+           remarks = COALESCE($4, remarks),
+           updated_at = NOW()
+       WHERE id::text = $5 OR disbursement_id = $5 OR application_ref = $5
+       RETURNING *`,
+      [finalDate, finalOfficer, finalVenue, remarks, cleanId]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Disbursement not found.' });
