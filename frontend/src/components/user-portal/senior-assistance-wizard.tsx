@@ -182,17 +182,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
   const [step, setStep] = useState(1)
   const [returnToReview, setReturnToReview] = useState(false)
-
-  useEffect(() => {
-    if (isBlocked && !bypassedBlock) {
-      onStepChange?.(0)
-    } else if (submitted && !bypassedBlock) {
-      onStepChange?.(0)
-    } else {
-      onStepChange?.(step)
-    }
-  }, [step, isBlocked, bypassedBlock, submitted, onStepChange])
-
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -203,6 +192,16 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   const [referenceNumber, setReferenceNumber] = useState("")
   const [submissionDate, setSubmissionDate] = useState("")
   const [isEditingInfo, setIsEditingInfo] = useState(false)
+
+  useEffect(() => {
+    if (isBlocked && !bypassedBlock) {
+      onStepChange?.(0)
+    } else if (submitted && !bypassedBlock) {
+      onStepChange?.(0)
+    } else {
+      onStepChange?.(step)
+    }
+  }, [step, isBlocked, bypassedBlock, submitted, onStepChange])
 
   // Check on mount if user already has an active pending Senior assistance application
   useEffect(() => {

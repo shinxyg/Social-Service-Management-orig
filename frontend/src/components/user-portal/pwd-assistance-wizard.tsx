@@ -553,16 +553,6 @@ export default function PWDSocialAssistanceWizard({
   ]
   const [step, setStep] = useState(1)
   const [returnToReview, setReturnToReview] = useState(false)
-
-  useEffect(() => {
-    if (isBlocked && !bypassedBlock) {
-      onStepChange?.(0)
-    } else if (submissionStage !== "form" && !bypassedBlock) {
-      onStepChange?.(0)
-    } else {
-      onStepChange?.(step)
-    }
-  }, [step, isBlocked, bypassedBlock, submissionStage, onStepChange])
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<RequiredDocument | null>(null)
   const [showSampleModal, setShowSampleModal] = useState(false)
@@ -574,6 +564,16 @@ export default function PWDSocialAssistanceWizard({
   const [isBlocked, setIsBlocked] = useState(false)
   const [blockedApp, setBlockedApp] = useState<any | null>(null)
   const [bypassedBlock, setBypassedBlock] = useState(false)
+
+  useEffect(() => {
+    if (isBlocked && !bypassedBlock) {
+      onStepChange?.(0)
+    } else if (submissionStage !== "form" && !bypassedBlock) {
+      onStepChange?.(0)
+    } else {
+      onStepChange?.(step)
+    }
+  }, [step, isBlocked, bypassedBlock, submissionStage, onStepChange])
 
   // Check on mount if user already has an active pending or submitted PWD assistance application
   useEffect(() => {
