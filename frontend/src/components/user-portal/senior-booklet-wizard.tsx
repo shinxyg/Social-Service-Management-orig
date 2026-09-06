@@ -624,7 +624,7 @@ export default function SeniorBookletWizard({
     !isBookletSameAsId
   )
 
-  const isExistingBookletValid = hasPriorBooklet === "no" || isIdVerified || (bookletNumber.trim() !== "" && isBookletFormatValid && !isBookletSameAsId)
+  const isExistingBookletValid = hasPriorBooklet === "no" || (bookletNumber.trim() !== "" && isBookletFormatValid && !isBookletSameAsId)
 
   // Step validations
   const isStep1Valid =
@@ -1131,7 +1131,7 @@ export default function SeniorBookletWizard({
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">
-                      {hasPriorBooklet === "yes" ? "Senior Citizen ID or Existing Booklet Number *" : "Senior Citizen / OSCA ID Number *"}
+                      Senior Citizen / OSCA ID Number *
                     </label>
                     <div className="flex flex-col sm:flex-row gap-2.5 max-w-md">
                       <input
@@ -1143,7 +1143,7 @@ export default function SeniorBookletWizard({
                           setIsIdVerified(false)
                           setVerifyError(null)
                         }}
-                        placeholder={hasPriorBooklet === "yes" ? "137404-2026-516915 or MB-2026-516915" : "137404-2026-516915"}
+                        placeholder="137404-2026-516915"
                         maxLength={22}
                         className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none font-mono transition-all ${
                           isIdVerified
@@ -1213,6 +1213,24 @@ export default function SeniorBookletWizard({
 
                   {hasPriorBooklet === "yes" && isIdVerified && (
                     <div className="space-y-4 max-w-md pt-1 animate-in fade-in">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase">
+                          {isMedicine ? "Existing Medicine Discount Booklet Number *" : "Existing Free Movie Booklet Number *"}
+                        </label>
+                        <input
+                          type="text"
+                          value={bookletNumber}
+                          onChange={(e) => setBookletNumber(e.target.value.toUpperCase())}
+                          placeholder={isMedicine ? "e.g. MB-2026-394314" : "e.g. MV-2026-516915"}
+                          className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 font-mono outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        />
+                        {attemptedNext && !bookletNumber.trim() && (
+                          <p className="text-xs text-red-500 mt-1">
+                            Pakilagay ang inyong existing {isMedicine ? "Medicine" : "Free Movie"} Booklet Number.
+                          </p>
+                        )}
+                      </div>
+
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase">
                           Reason for {applicationType === "renewal" ? "Renewal" : "Replacement"} *
