@@ -1502,10 +1502,6 @@ export default function PWDSocialAssistanceWizard({
                     <LockedField value={formData.contactNumber || userProfile?.contactNo || "09155212353"} placeholder="0900 000 0000" />
                   </Field>
                 </div>
-
-                <Field label="Email *">
-                  <LockedField value={formData.email || userProfile?.email || "rencemillares619@gmail.com"} placeholder="email@example.com" />
-                </Field>
               </div>
 
               {/* DISABILITY INFORMATION */}
