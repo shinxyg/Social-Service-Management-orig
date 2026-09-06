@@ -80,7 +80,8 @@ exports.getAppointments = async (req, res) => {
       const approvedPwdSenior = await db.query(
         `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix 
          FROM pwd_senior_applications 
-         WHERE status = 'approved' AND (type = 'assistance' OR type = 'social-assistance' OR category ILIKE '%assistance%' OR service ILIKE '%assistance%')`
+         WHERE status IN ('approved', 'completed', 'for_release') 
+           AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR service ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data ILIKE '%assist%')`
       );
       for (const row of approvedPwdSenior.rows) {
         const isPwd = String(row.category || '').toUpperCase().includes('PWD');

@@ -254,7 +254,7 @@ exports.getDisbursements = async (req, res) => {
         `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, approved_date
          FROM pwd_senior_applications 
          WHERE status IN ('approved', 'completed', 'for_release') 
-           AND (type = 'assistance' OR type = 'social-assistance' OR category ILIKE '%assistance%' OR disability_class ILIKE '%assistance%' OR service ILIKE '%assistance%')`
+           AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR service ILIKE '%assist%' OR extra_data ILIKE '%assist%')`
       );
       for (const row of approvedPwdAssistance.rows) {
         const disbCheck = await db.query(
@@ -346,10 +346,12 @@ exports.getUserDisbursements = async (req, res) => {
          f.created_at,
          f.updated_at
        FROM financial_aid_disbursements f
-       INNER JOIN aics_applications app ON f.application_ref = app.reference_no
-       LEFT JOIN appointments a ON f.application_ref = a.reference_no
+       LEFT JOIN (
+         SELECT DISTINCT ON (reference_no) *
+         FROM appointments
+         ORDER BY reference_no, created_at DESC
+       ) a ON f.application_ref = a.reference_no
        WHERE (f.application_ref = $1 OR f.applicant_name ILIKE $2)
-         AND app.status IN ('approved', 'completed', 'for_release')
        ORDER BY f.created_at DESC`,
       [refOrQcId, `%${refOrQcId}%`]
     );
