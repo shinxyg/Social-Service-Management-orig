@@ -363,7 +363,7 @@ exports.updateApplicationStatus = async (req, res) => {
       const q = await db.query(
         `UPDATE pwd_senior_applications
          SET status = $1, assigned_id_number = $2, approved_by = $3, approved_date = $4, rejection_reason = $5
-         WHERE id = $6 OR reference_number = $6
+         WHERE reference_number = $6 OR id::text = $6
          RETURNING *`,
         [status, assignedIdNumber || null, approvedBy || null, approvedDate || null, rejectionReason || null, id]
       );
@@ -402,29 +402,29 @@ exports.updateApplicationStatus = async (req, res) => {
     ].filter(Boolean).join(' ').trim().toUpperCase() : 'BENEFICIARY';
     const isPwd = String(targetApp?.category || '').toUpperCase().includes('PWD');
     const appType = String(targetApp?.type || '').toLowerCase();
-    const isAssistance = appType === 'assistance' || appType === 'social-assistance' || String(targetApp?.category || '').toLowerCase().includes('assistance') || String(targetApp?.service || '').toLowerCase().includes('assistance');
+    const isAssistance = appType === 'assistance' || appType === 'social-assistance' || String(targetApp?.category || '').toLowerCase().includes('assistance') || String(targetApp?.service || '').toLowerCase().includes('assistance') || String(targetApp?.disability_class || '').toLowerCase().includes('assistance') || String(targetApp?.disabilityClass || '').toLowerCase().includes('assistance');
 
     if (status === 'approved') {
-      const concernName = isAssistance ? (isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance') : (isPwd ? 'PWD ID Card Issuance' : 'Senior ID Card Issuance');
-
-      // 1. Insert into appointments
-      try {
-        const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [refNo]);
-        if (checkAppt.rows.length === 0) {
-          await db.query(
-            `INSERT INTO appointments
-              (reference_no, module, applicant_name, concern, status, office_location, notes)
-             VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang aplikasyon para sa scheduling.')
-             ON CONFLICT DO NOTHING`,
-            [refNo, isPwd ? 'PWD' : 'Senior Citizen', fullName, concernName]
-          );
-        }
-      } catch (e) {
-        console.warn('Could not insert appointment for PWD/Senior:', e.message);
-      }
-
-      // 2. Insert into financial_aid_disbursements if social assistance
       if (isAssistance) {
+        const concernName = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
+
+        // 1. Insert into appointments only for Social Assistance
+        try {
+          const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [refNo]);
+          if (checkAppt.rows.length === 0) {
+            await db.query(
+              `INSERT INTO appointments
+                (reference_no, module, applicant_name, concern, status, office_location, notes)
+               VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang PWD/Senior Social Assistance aplikasyon para sa scheduling.')
+               ON CONFLICT DO NOTHING`,
+              [refNo, isPwd ? 'PWD' : 'Senior Citizen', fullName, concernName]
+            );
+          }
+        } catch (e) {
+          console.warn('Could not insert appointment for PWD/Senior:', e.message);
+        }
+
+        // 2. Insert into financial_aid_disbursements if social assistance
         try {
           const disbCheck = await db.query('SELECT id FROM financial_aid_disbursements WHERE application_ref = $1', [refNo]);
           if (disbCheck.rows.length === 0) {
@@ -450,6 +450,12 @@ exports.updateApplicationStatus = async (req, res) => {
         } catch (e) {
           console.warn('Could not insert financial disbursement for PWD/Senior:', e.message);
         }
+      } else {
+        // For ID card issuance, remove any existing appointment or disbursement
+        try {
+          await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [refNo]);
+          await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref = $1`, [refNo]);
+        } catch (_) {}
       }
 
       // 3. Directly dispatch generated Official ID Email to Gmail

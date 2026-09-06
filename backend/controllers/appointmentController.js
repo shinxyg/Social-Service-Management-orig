@@ -65,26 +65,35 @@ exports.getAppointments = async (req, res) => {
       }
     } catch (_) {}
 
-    // Auto-populate appointments from approved PWD & Senior Citizen applications if not yet present
+    // Purge any appointments belonging to ID card issuance (only social assistance goes to appointments)
+    try {
+      await db.query(`
+        DELETE FROM appointments
+        WHERE concern ILIKE '%ID Card Issuance%'
+           OR concern ILIKE '%ID Issuance%'
+           OR ((module = 'PWD' OR module = 'Senior Citizen') AND (concern NOT ILIKE '%assistance%' AND concern NOT ILIKE '%financial%'))
+      `);
+    } catch (_) {}
+
+    // Auto-populate appointments from approved PWD & Senior Citizen Social Assistance applications if not yet present
     try {
       const approvedPwdSenior = await db.query(
         `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix 
          FROM pwd_senior_applications 
-         WHERE status = 'approved'`
+         WHERE status = 'approved' AND (type = 'assistance' OR type = 'social-assistance' OR category ILIKE '%assistance%' OR service ILIKE '%assistance%')`
       );
       for (const row of approvedPwdSenior.rows) {
+        const isPwd = String(row.category || '').toUpperCase().includes('PWD');
+        const mod = isPwd ? 'PWD' : 'Senior Citizen';
+        const concern = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
+
         const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [row.reference_number]);
         if (checkAppt.rows.length === 0) {
           const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-          const isPwd = String(row.category || '').toUpperCase().includes('PWD');
-          const mod = isPwd ? 'PWD' : 'Senior Citizen';
-          const appType = String(row.type || '').toLowerCase();
-          const isAssistance = appType === 'assistance' || appType === 'social-assistance' || String(row.category || '').toLowerCase().includes('assistance');
-          const concern = isAssistance ? (isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance') : (isPwd ? 'PWD ID Card Issuance' : 'Senior ID Card Issuance');
           await db.query(
             `INSERT INTO appointments
               (reference_no, module, applicant_name, concern, status, office_location, notes)
-             VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang aplikasyon para sa scheduling.')
+             VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang Social Assistance aplikasyon para sa scheduling.')
              ON CONFLICT DO NOTHING`,
             [row.reference_number, mod, fullName, concern]
           );

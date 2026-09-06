@@ -179,6 +179,14 @@ exports.getDisbursements = async (req, res) => {
   try {
     await autoReleaseScheduledDisbursements();
 
+    // Auto-clean any ID card issuances from disbursements (only financial/social assistance is disbursed)
+    try {
+      await db.query(`
+        DELETE FROM financial_aid_disbursements
+        WHERE assistance_type ILIKE '%ID Card%' OR assistance_type ILIKE '%Issuance%'
+      `);
+    } catch (_) {}
+
     // Auto-clean any orphan disbursements that do not exist in active approved applications
     try {
       await db.query(`
@@ -188,16 +196,12 @@ exports.getDisbursements = async (req, res) => {
           AND application_ref NOT IN (
             SELECT reference_number FROM pwd_senior_applications WHERE status IN ('approved', 'completed', 'for_release')
           )
-          AND application_ref IN (
-            SELECT f.application_ref FROM financial_aid_disbursements f
-            LEFT JOIN aics_applications a ON f.application_ref = a.reference_no
-            WHERE a.id IS NULL OR a.status NOT IN ('approved', 'completed', 'for_release')
+          AND application_ref NOT IN (
+            SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
           )
         ) OR (
-          application_ref LIKE 'LP-%' AND application_ref IN (
-            SELECT f.application_ref FROM financial_aid_disbursements f
-            LEFT JOIN livelihood_applications l ON f.application_ref = l.reference_number
-            WHERE l.id IS NULL OR l.application_status != 'approved'
+          application_ref LIKE 'LP-%' AND application_ref NOT IN (
+            SELECT reference_number FROM livelihood_applications WHERE application_status = 'approved'
           )
         )
       `);
@@ -249,7 +253,8 @@ exports.getDisbursements = async (req, res) => {
       const approvedPwdAssistance = await db.query(
         `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, approved_date
          FROM pwd_senior_applications 
-         WHERE status = 'approved' AND (type = 'assistance' OR type = 'social-assistance' OR category ILIKE '%assistance%')`
+         WHERE status IN ('approved', 'completed', 'for_release') 
+           AND (type = 'assistance' OR type = 'social-assistance' OR category ILIKE '%assistance%' OR disability_class ILIKE '%assistance%' OR service ILIKE '%assistance%')`
       );
       for (const row of approvedPwdAssistance.rows) {
         const disbCheck = await db.query(

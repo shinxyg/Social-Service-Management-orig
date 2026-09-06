@@ -309,19 +309,27 @@ export default function Appointments() {
         if (resDb.ok) {
           const dataDb = await resDb.json()
           if (dataDb.appointments && Array.isArray(dataDb.appointments)) {
-            const mapped = dataDb.appointments.map((a: any) => ({
-              id: `db-appt-${a.id}`,
-              referenceNo: a.reference_no,
-              module: (a.module || "AICS") as ModuleKey,
-              applicantName: a.applicant_name,
-              submittedAt: a.created_at || new Date().toISOString(),
-              concern: a.concern,
-              status: (a.status || "pending") as AppointmentStatus,
-              scheduledDate: a.scheduled_date,
-              scheduledTime: a.scheduled_time,
-              officeLocation: a.office_location,
-              notes: a.notes,
-            }))
+            const mapped = dataDb.appointments
+              .filter((a: any) => {
+                const concern = String(a.concern || '').toLowerCase()
+                if (concern.includes('id card') || concern.includes('issuance') || concern.includes('replacement') || concern.includes('renewal')) {
+                  return false
+                }
+                return true
+              })
+              .map((a: any) => ({
+                id: `db-appt-${a.id}`,
+                referenceNo: a.reference_no,
+                module: (a.module || "AICS") as ModuleKey,
+                applicantName: a.applicant_name,
+                submittedAt: a.created_at || new Date().toISOString(),
+                concern: a.concern,
+                status: (a.status || "pending") as AppointmentStatus,
+                scheduledDate: a.scheduled_date,
+                scheduledTime: a.scheduled_time,
+                officeLocation: a.office_location,
+                notes: a.notes,
+              }))
             appts.push(...mapped)
           }
         }
@@ -384,7 +392,8 @@ export default function Appointments() {
               app.type === "social-assistance" ||
               String(app.category || "").toLowerCase().includes("assistance") ||
               String(app.service || "").toLowerCase().includes("assistance") ||
-              String(app.assistanceType || "").toLowerCase().includes("assistance")
+              String(app.assistanceType || "").toLowerCase().includes("assistance") ||
+              String(app.disabilityClass || "").toLowerCase().includes("assistance")
 
             if (isAssistance) {
               if (app.status === "rejected" || app.status === "pending") {
@@ -414,6 +423,12 @@ export default function Appointments() {
 
           appts = appts.filter((a) => !unapprovedPwdRefs.has(a.referenceNo))
         }
+
+        // Final safety check: remove any ID card issuance from appts
+        appts = appts.filter((a) => {
+          const c = (a.concern || '').toLowerCase()
+          return !c.includes('id card') && !c.includes('issuance') && !c.includes('replacement') && !c.includes('renewal')
+        })
 
         setAppointments(appts)
       } catch (err) {
