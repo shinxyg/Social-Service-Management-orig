@@ -1088,20 +1088,30 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
                 <Field label="Service & Application Type" value={subLabel} />
                 <Field label="Application category" value="Senior Citizen Services" />
-                {((app as any).existingIdNumber || (app as any).oldSeniorId) && (
+                {((app as any).existingIdNumber || (app as any).oldSeniorId || (app as any).oscaId || (app as any).seniorIdNumber || app.referenceNumber) && (
                   <Field
-                    label={app.type === "renewal" ? "Existing / Expired Senior ID" : "Previous / Lost Senior ID"}
+                    label="Senior Citizen / OSCA ID Number"
                     value={
                       <span className="font-mono font-bold text-blue-700">
-                        {(app as any).existingIdNumber || (app as any).oldSeniorId}
+                        {(app as any).existingIdNumber || (app as any).oldSeniorId || (app as any).oscaId || (app as any).seniorIdNumber || app.referenceNumber}
                       </span>
                     }
                   />
                 )}
-                {((app as any).reasonForRenewal || (app as any).reasonForReplacement) && (
+                {((app as any).existingBookletNumber || (app as any).bookletNumber || (app as any).extra_data?.existingBookletNumber || (app as any).extra_data?.bookletNumber) && (
                   <Field
-                    label={app.type === "renewal" ? "Reason for Renewal" : "Reason for Replacement"}
-                    value={(app as any).reasonForRenewal || (app as any).reasonForReplacement}
+                    label="Existing Booklet Number"
+                    value={
+                      <span className="font-mono font-bold text-emerald-700">
+                        {(app as any).existingBookletNumber || (app as any).bookletNumber || (app as any).extra_data?.existingBookletNumber || (app as any).extra_data?.bookletNumber}
+                      </span>
+                    }
+                  />
+                )}
+                {((app as any).reasonForRenewal || (app as any).reasonForReplacement || (app as any).reason) && (
+                  <Field
+                    label={app.type === "renewal" || String((app as any).applicationType).toLowerCase() === "renewal" ? "Reason for Renewal" : "Reason for Replacement"}
+                    value={(app as any).reasonForRenewal || (app as any).reasonForReplacement || (app as any).reason}
                   />
                 )}
               </div>

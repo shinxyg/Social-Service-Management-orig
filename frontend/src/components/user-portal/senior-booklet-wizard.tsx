@@ -454,18 +454,20 @@ export default function SeniorBookletWizard({
 
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [verifiedSeniorName, setVerifiedSeniorName] = useState<string>("")
+  const [verifiedSeniorId, setVerifiedSeniorId] = useState<string>("")
 
   const handleVerifyId = async () => {
     setVerifyError(null)
-    const typed = (oscaIdInput || "").trim()
+    const typed = (oscaIdInput || "").trim().toUpperCase()
     const cleanDigits = typed.replace(/\D/g, "")
+    const isBookletInput = typed.startsWith("MB-") || typed.startsWith("MV-") || typed.includes("MB") || typed.includes("MV")
 
-    // Exact length check: must have exactly 16 digits (e.g. 137404-2026-516915)
-    if (cleanDigits.length !== 16) {
+    // Validation: either 16 digits Senior ID, or valid Booklet Number / sequence
+    if (!isBookletInput && cleanDigits.length !== 16 && cleanDigits.length < 6) {
       setIsIdVerified(false)
       setVerifyError(
         t("seniorIdExactLengthError") ||
-        "Senior Citizen ID Number must be exactly 16 digits."
+        "Please enter a valid 16-digit Senior Citizen ID (e.g. 137404-2026-516915) or Official Booklet Number (e.g. MB-2026-516915)."
       )
       return
     }
@@ -498,7 +500,7 @@ export default function SeniorBookletWizard({
       const cleanTypedNormalized = cleanDigits
       const userProfileQcidDigits = (userProfile?.qcidNo || formData.qcidNo || "").replace(/\D/g, "")
 
-      // Strict match: Look for Senior Citizen record where assignedIdNumber or referenceNumber matches EXACTLY
+      // Search across all applications for matching Senior ID or Booklet Number
       const matchedApp = allApps.find((a) => {
         if (!a) return false
         const cat = String(a.category || a.service || "").toUpperCase()
@@ -507,12 +509,26 @@ export default function SeniorBookletWizard({
 
         const assignedDigits = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/\D/g, "")
         const refDigits = String(a.referenceNumber || a.reference_number || "").replace(/\D/g, "")
+        const assignedStr = String(a.assignedIdNumber || a.assigned_id_number || "").toUpperCase()
+        const existingBk = String(a.existingBookletNumber || a.bookletNumber || "").toUpperCase()
+        const existingId = String(a.existingIdNumber || a.existing_id_number || "").replace(/\D/g, "")
 
-        // EXACT 16-digit match
+        // 1. Booklet match: MB-2026-XXXXXX / MV-2026-XXXXXX
+        if (isBookletInput || (cleanTypedNormalized.length >= 6 && cleanTypedNormalized.length <= 10)) {
+          if (assignedStr.includes(typed) || typed.includes(assignedStr) || existingBk.includes(typed) || typed.includes(existingBk)) {
+            return true
+          }
+          if (cleanDigits.length >= 6 && (assignedDigits.endsWith(cleanDigits) || refDigits.endsWith(cleanDigits))) {
+            return true
+          }
+        }
+
+        // 2. Senior Citizen ID 16-digit match
         const matchAssigned = assignedDigits.length >= 16 && (assignedDigits === cleanTypedNormalized || assignedDigits.endsWith(cleanTypedNormalized))
         const matchRef = refDigits.length >= 16 && (refDigits === cleanTypedNormalized || refDigits.endsWith(cleanTypedNormalized))
+        const matchExisting = existingId.length >= 16 && (existingId === cleanTypedNormalized || existingId.endsWith(cleanTypedNormalized))
 
-        return Boolean(matchAssigned || matchRef)
+        return Boolean(matchAssigned || matchRef || matchExisting)
       })
 
       const isProfileMatch = (userProfileQcidDigits.length >= 16 && userProfileQcidDigits === cleanTypedNormalized) ||
@@ -526,9 +542,18 @@ export default function SeniorBookletWizard({
           matchedApp.suffix
         ].filter(Boolean).join(" ").trim().toUpperCase()
 
+        const seniorId = matchedApp.existingIdNumber || matchedApp.existing_id_number || matchedApp.referenceNumber || matchedApp.assignedIdNumber || oscaIdInput
+        const foundBooklet = String(matchedApp.assignedIdNumber || "").startsWith("MB-") || String(matchedApp.assignedIdNumber || "").startsWith("MV-")
+          ? matchedApp.assignedIdNumber
+          : matchedApp.existingBookletNumber || matchedApp.bookletNumber || ""
+
         setIsIdVerified(true)
         setVerifyError(null)
         setVerifiedSeniorName(foundName || "SENIOR CITIZEN BENEFICIARY")
+        setVerifiedSeniorId(seniorId)
+        if (foundBooklet && !bookletNumber) {
+          setBookletNumber(foundBooklet)
+        }
 
         let bMonth = matchedApp.dobMonth || ""
         let bDay = matchedApp.dobDay || ""
@@ -565,15 +590,16 @@ export default function SeniorBookletWizard({
         }))
       } else if (isProfileMatch) {
         const profileName = [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase()
+        const seniorId = userProfile?.qcidNo || (userProfile as any)?.seniorIdNumber || oscaIdInput
         setIsIdVerified(true)
         setVerifyError(null)
         setVerifiedSeniorName(profileName || "SENIOR CITIZEN BENEFICIARY")
+        setVerifiedSeniorId(seniorId)
       } else {
-        // STRICT ERROR: Even changing a single digit fails!
         setIsIdVerified(false)
         setVerifyError(
           t("seniorIdNotFoundError") ||
-          "Senior Citizen ID was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card."
+          "Record was not found. Please verify your Senior Citizen ID Number (16-digit) or Existing Booklet Number (MB-2026-XXXXXX)."
         )
       }
     } catch (err) {
@@ -581,7 +607,7 @@ export default function SeniorBookletWizard({
       setIsIdVerified(false)
       setVerifyError(
         t("seniorIdVerifyGeneralError") ||
-        "An error occurred while verifying the Senior ID. Please try again."
+        "An error occurred while verifying the record. Please try again."
       )
     } finally {
       setIsVerifying(false)
@@ -682,8 +708,9 @@ export default function SeniorBookletWizard({
       category: "Senior Citizen",
       type: isMedicine ? "medicine-booklet" : "movie-booklet",
       applicationType,
-      existingIdNumber: oscaIdInput.trim(),
+      existingIdNumber: verifiedSeniorId || oscaIdInput.trim(),
       existingBookletNumber: bookletNumber.trim(),
+      bookletNumber: bookletNumber.trim(),
       reasonForRenewal: applicationType === "renewal" ? renewalReason : undefined,
       reasonForReplacement: applicationType === "replacement" ? replacementReason : undefined,
       firstName: formData.firstName,
@@ -1004,20 +1031,20 @@ export default function SeniorBookletWizard({
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">
-                      SENIOR CITIZEN / OSCA ID NUMBER *
+                      {hasPriorBooklet === "yes" ? "Senior Citizen ID or Existing Booklet Number *" : "Senior Citizen / OSCA ID Number *"}
                     </label>
                     <div className="flex flex-col sm:flex-row gap-2.5 max-w-md">
                       <input
                         type="text"
                         value={oscaIdInput}
                         onChange={(e) => {
-                          const formatted = formatSeniorId(e.target.value)
-                          setOscaIdInput(formatted)
+                          const val = e.target.value.toUpperCase()
+                          setOscaIdInput(val)
                           setIsIdVerified(false)
                           setVerifyError(null)
                         }}
-                        placeholder="137404-2026-516915"
-                        maxLength={18}
+                        placeholder={hasPriorBooklet === "yes" ? "137404-2026-516915 or MB-2026-516915" : "137404-2026-516915"}
+                        maxLength={22}
                         className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none font-mono transition-all ${
                           isIdVerified
                             ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
@@ -1047,7 +1074,7 @@ export default function SeniorBookletWizard({
                             <span>VERIFIED</span>
                           </>
                         ) : (
-                          <span>VERIFY ID</span>
+                          <span>VERIFY RECORD</span>
                         )}
                       </button>
                     </div>
@@ -1056,16 +1083,30 @@ export default function SeniorBookletWizard({
                       <div className="border border-red-200 bg-red-50 rounded-lg p-3 flex items-start gap-2.5 text-xs text-red-800 max-w-md mt-2 animate-in fade-in">
                         <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-bold">{t("idVerificationErrorTitle") || "Invalid ID Number"}</p>
+                          <p className="font-bold">{t("idVerificationErrorTitle") || "Invalid ID / Booklet Number"}</p>
                           <p className="mt-0.5 text-red-700">{verifyError}</p>
                         </div>
                       </div>
                     )}
 
                     {isIdVerified && (
-                      <div className="border border-emerald-200 bg-emerald-50 rounded-lg p-3 flex items-center gap-2.5 text-xs font-semibold text-emerald-800 max-w-md mt-2 animate-in fade-in">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>{t("seniorIdRecordFound", { name: verifiedSeniorName || [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ") || "CLARISA MAE GALIAS DIMAL" })}</span>
+                      <div className="border border-emerald-200 bg-emerald-50 rounded-xl p-3.5 space-y-1.5 text-xs font-semibold text-emerald-800 max-w-md mt-2 animate-in fade-in">
+                        <div className="flex items-center gap-2 text-emerald-900 font-bold">
+                          <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>{verifiedSeniorName || "SENIOR CITIZEN BENEFICIARY"}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-emerald-200/60 font-mono">
+                          <div>
+                            <span className="text-gray-500 font-sans block text-[10px] uppercase">Senior Citizen ID:</span>
+                            <span className="text-blue-800 font-bold">{verifiedSeniorId || oscaIdInput || "137484-2026-516915"}</span>
+                          </div>
+                          {bookletNumber && (
+                            <div>
+                              <span className="text-gray-500 font-sans block text-[10px] uppercase">Existing Booklet No:</span>
+                              <span className="text-emerald-800 font-bold">{bookletNumber}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
