@@ -404,7 +404,10 @@ export default function SeniorBookletWizard({
           }
           const num = targetBookletApp.assignedIdNumber || targetBookletApp.assigned_id_number || targetBookletApp.bookletNumber || targetBookletApp.existingBookletNumber
           if (num && !bookletNumber) {
-            setBookletNumber(num)
+            const isMatch = isMedicine ? String(num).startsWith("MB-") : String(num).startsWith("MV-")
+            if (isMatch) {
+              setBookletNumber(num)
+            }
           }
         } else {
           if (isBlocked && !submitted && !bypassedBlockRef.current) {
@@ -525,15 +528,22 @@ export default function SeniorBookletWizard({
         ].filter(Boolean).join(" ").trim().toUpperCase()
 
         const seniorId = matchedApp.existingIdNumber || matchedApp.existing_id_number || matchedApp.referenceNumber || matchedApp.assignedIdNumber || oscaIdInput
-        const foundBooklet = String(matchedApp.assignedIdNumber || "").startsWith("MB-") || String(matchedApp.assignedIdNumber || "").startsWith("MV-")
-          ? matchedApp.assignedIdNumber
-          : matchedApp.existingBookletNumber || matchedApp.bookletNumber || ""
+        let foundBooklet = ""
+        const rawAssigned = String(matchedApp.assignedIdNumber || "")
+        const rawExisting = String(matchedApp.existingBookletNumber || matchedApp.bookletNumber || "")
+        if (isMedicine) {
+          if (rawAssigned.startsWith("MB-")) foundBooklet = rawAssigned
+          else if (rawExisting.startsWith("MB-")) foundBooklet = rawExisting
+        } else {
+          if (rawAssigned.startsWith("MV-")) foundBooklet = rawAssigned
+          else if (rawExisting.startsWith("MV-")) foundBooklet = rawExisting
+        }
 
         setIsIdVerified(true)
         setVerifyError(null)
         setVerifiedSeniorName(foundName || "SENIOR CITIZEN BENEFICIARY")
         setVerifiedSeniorId(seniorId)
-        if (foundBooklet && !bookletNumber) {
+        if (hasPriorBooklet === "yes" && foundBooklet && !bookletNumber) {
           setBookletNumber(foundBooklet)
         }
 
@@ -689,8 +699,8 @@ export default function SeniorBookletWizard({
       type: isMedicine ? "medicine-booklet" : "movie-booklet",
       applicationType,
       existingIdNumber: verifiedSeniorId || oscaIdInput.trim(),
-      existingBookletNumber: bookletNumber.trim(),
-      bookletNumber: bookletNumber.trim(),
+      existingBookletNumber: hasPriorBooklet === "yes" ? bookletNumber.trim() : "",
+      bookletNumber: hasPriorBooklet === "yes" ? bookletNumber.trim() : "",
       reasonForRenewal: applicationType === "renewal" ? renewalReason : undefined,
       reasonForReplacement: applicationType === "replacement" ? replacementReason : undefined,
       firstName: formData.firstName,
@@ -1078,6 +1088,7 @@ export default function SeniorBookletWizard({
                       onChange={() => {
                         setHasPriorBooklet("no")
                         setApplicationType("new")
+                        setBookletNumber("")
                       }}
                       className="h-4 w-4 accent-[#3b82f6]"
                     />
@@ -1184,12 +1195,12 @@ export default function SeniorBookletWizard({
                           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                           <span>{verifiedSeniorName || "SENIOR CITIZEN BENEFICIARY"}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-emerald-200/60 font-mono">
+                        <div className={`grid ${hasPriorBooklet === "yes" && bookletNumber && (isMedicine ? bookletNumber.startsWith("MB-") : bookletNumber.startsWith("MV-")) ? "grid-cols-2" : "grid-cols-1"} gap-2 text-[11px] pt-1 border-t border-emerald-200/60 font-mono`}>
                           <div>
                             <span className="text-gray-500 font-sans block text-[10px] uppercase">Senior Citizen ID:</span>
-                            <span className="text-blue-800 font-bold">{verifiedSeniorId || oscaIdInput || "137484-2026-516915"}</span>
+                            <span className="text-blue-800 font-bold">{verifiedSeniorId || oscaIdInput || "137404-2026-516915"}</span>
                           </div>
-                          {bookletNumber && (
+                          {hasPriorBooklet === "yes" && bookletNumber && (isMedicine ? bookletNumber.startsWith("MB-") : bookletNumber.startsWith("MV-")) && (
                             <div>
                               <span className="text-gray-500 font-sans block text-[10px] uppercase">Existing Booklet No:</span>
                               <span className="text-emerald-800 font-bold">{bookletNumber}</span>
