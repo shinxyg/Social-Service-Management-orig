@@ -23,6 +23,7 @@ export default function ApplyPWDSenior() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isBlocked, setIsBlocked] = useState(false)
   const [blockedApp, setBlockedApp] = useState<any>(null)
+  const [hasApprovedApp, setHasApprovedApp] = useState(false)
 
   const isSenior = urlCategory === "senior"
   const isSeniorMedicine = isSenior && urlType === "medicine-booklet"
@@ -119,7 +120,34 @@ export default function ApplyPWDSenior() {
           return Boolean(matchUser)
         }
 
+        const isApprovedMatch = (a: any) => {
+          if (!a) return false
+          const appCategory = String(a.category || "").toLowerCase()
+          const appType = String(a.type || a.assistanceType || a.service || "").toLowerCase()
+          const appService = String(a.service || "").toLowerCase()
+          const appStatus = String(a.status || "").toLowerCase()
+
+          if (appStatus !== "approved" && appStatus !== "completed") return false
+
+          if (isSenior) {
+            if (appCategory !== "senior" && !appCategory.includes("senior")) return false
+          } else {
+            if (appCategory === "senior" || appType.includes("assistance") || appService.includes("assistance")) return false
+          }
+
+          const appRef = String(a.referenceNumber || a.reference_number || a.id || a.qc_id || a.qcid || "").trim().toLowerCase()
+          const appAssigned = String(a.assignedIdNumber || "").trim().toLowerCase()
+          const appEmail = String(a.email || "").toLowerCase().trim()
+          const qcidClean = (currentQcid || "").toLowerCase()
+
+          return (
+            (qcidClean && (appRef === qcidClean || appRef.includes(qcidClean) || qcidClean.includes(appRef) || appAssigned === qcidClean)) ||
+            (currentEmail && appEmail && currentEmail === appEmail)
+          )
+        }
+
         const matchedApp = allApps.find(isMatchForCurrentService)
+        const matchedApproved = allApps.find(isApprovedMatch)
 
         if (isMounted) {
           if (matchedApp) {
@@ -129,6 +157,7 @@ export default function ApplyPWDSenior() {
             setIsBlocked(false)
             setBlockedApp(null)
           }
+          setHasApprovedApp(Boolean(matchedApproved && (urlType === "new" || !urlType)))
         }
       } catch (err) {
         console.warn("Eligibility check skipped/offline:", err)
@@ -273,8 +302,8 @@ export default function ApplyPWDSenior() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {/* Top Service Quick Info Banner - shown only on Step 1 (Complete Checklist) */}
-      {currentStep === 1 && (
+      {/* Top Service Quick Info Banner - shown only on Step 1 when user is not already approved */}
+      {currentStep === 1 && !hasApprovedApp && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3 animate-in fade-in duration-150">
           <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">

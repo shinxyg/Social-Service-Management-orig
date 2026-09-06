@@ -584,8 +584,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
 
   useEffect(() => {
-    onStepChange?.(step)
-  }, [step, onStepChange])
+    if (latestApprovedApp && (!initialIdStatus || initialIdStatus === "new") && !bypassedBlock) {
+      onStepChange?.(0)
+    } else {
+      onStepChange?.(step)
+    }
+  }, [step, latestApprovedApp, initialIdStatus, bypassedBlock, onStepChange])
 
   const [isResident, setIsResident] = useState(false)
   const [hasDisability, setHasDisability] = useState(false)

@@ -254,8 +254,12 @@ export default function SeniorCitizenApplicationWizard({
   const [isBlocked, setIsBlocked] = useState(false)
 
   useEffect(() => {
-    onStepChange?.(step)
-  }, [step, onStepChange])
+    if (latestApprovedApp && appFlow === "new") {
+      onStepChange?.(0)
+    } else {
+      onStepChange?.(step)
+    }
+  }, [step, latestApprovedApp, appFlow, onStepChange])
 
   // Step 1: Checklist state
   const [isResidencyChecked, setIsResidencyChecked] = useState(false)
