@@ -1502,8 +1502,6 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
   )
 }
 
-const DEFAULT_SEED_APPLICATIONS: ApplicationSubmission[] = []
-
 export default function PWDSeniorCitizen() {
   const [applications, setApplications] = useState<ApplicationSubmission[]>([])
   const [filterCategory, setFilterCategory] = useState<"all" | "PWD" | "Senior Citizen">("all")
