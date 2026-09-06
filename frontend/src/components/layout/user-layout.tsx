@@ -17,6 +17,7 @@ import {
   X,
   FileText,
   Wallet,
+  BookOpen,
 } from "lucide-react"
 import { Tooltip } from "../ui/tooltip"
 import { AIChatWidget } from "../ui/ai-chat-widget"
@@ -63,6 +64,12 @@ interface ResidentNavItem {
 
 function getResidentNav(t: (key: string, vars?: Record<string, string>) => string): ResidentNavItem[] {
   return [
+    {
+      id: "overview",
+      path: "/portal/overview",
+      label: t("navServiceGuide") || "Help & Service Guide",
+      icon: BookOpen,
+    },
     {
       id: "aics",
       label: t("navAICSAssistance"),

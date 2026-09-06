@@ -63,7 +63,7 @@ export const Login = () => {
             } else if (detectedRole === 'staff') {
               window.location.href = '/aics';
             } else {
-              window.location.href = '/portal/aics';
+              window.location.href = '/portal/overview';
             }
           }, 1200);
         } else {

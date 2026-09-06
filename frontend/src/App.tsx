@@ -9,6 +9,7 @@ import { Login } from "./components/entry-login/Login"
 import { Register } from "./components/entry-login/Register"
 import LandingPage from "./pages/landing"
 
+import CitizenGuideHub from "./components/user-portal/citizen-guide-hub"
 import AICSUser from "./components/user-portal/aics-user"
 import ApplyPWDSenior from "./components/user-portal/apply-pwd-senior"
 import ApplySoloParent from "./components/user-portal/apply-solo-parent"
@@ -35,7 +36,7 @@ export default function App() {
   const isSuperAdmin = isAuthenticated && userRole === 'super_admin'
   const isStaff = isAuthenticated && userRole === 'staff';
   const isResident = isAuthenticated && userRole === 'user';
-  const homePath = isSuperAdmin ? "/super-admin" : isStaff ? defaultModulePath : "/portal/aics"
+  const homePath = isSuperAdmin ? "/super-admin" : isStaff ? defaultModulePath : "/portal/overview"
 
   return (
     <LanguageProvider>
@@ -78,8 +79,10 @@ export default function App() {
           {/* Resident Routes */}
           {isResident && (
             <Route element={<UserLayout />}>
-              <Route index element={<Navigate to="/portal/aics" replace />} />
-              <Route path="/portal" element={<Navigate to="/portal/aics" replace />} />
+              <Route index element={<Navigate to="/portal/overview" replace />} />
+              <Route path="/portal" element={<Navigate to="/portal/overview" replace />} />
+              <Route path="/portal/overview" element={<CitizenGuideHub />} />
+              <Route path="/portal/guide" element={<CitizenGuideHub />} />
               <Route path="/portal/aics" element={<AICSUser />} />
               <Route path="/portal/apply-pwd-senior" element={<ApplyPWDSenior />} />
               <Route path="/portal/apply-solo-parent" element={<ApplySoloParent />} />

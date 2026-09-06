@@ -1,6 +1,18 @@
 import { useState, useEffect, useRef } from "react"
-import { useSearchParams } from "react-router-dom"
-import { CheckCircle2, Info } from "lucide-react"
+import { useSearchParams, useNavigate } from "react-router-dom"
+import {
+  CheckCircle2,
+  Info,
+  ShieldAlert,
+  ArrowRight,
+  BookOpen,
+  HelpCircle,
+  Clock,
+  Sparkles,
+  FileCheck,
+  Building2,
+  PhoneCall
+} from "lucide-react"
 import ApplyAICS from "./apply-aics"
 import AICSServiceWizard, { type AICSServiceType } from "./aics-service-wizard"
 import { useLanguage } from "../ui/language-context"
@@ -9,48 +21,67 @@ import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProf
 
 const AICS_CONFIG: Record<
   string,
-  { title: string; key: string; reqKey: string; matchers: string[] }
+  { title: string; key: string; reqKey: string; icon: string; matchers: string[]; desc: string; requirements: string[] }
 > = {
   medical: {
     title: "Medical Assistance",
     key: "aicsMedical",
     reqKey: "aicsMedical",
+    icon: "🩺",
     matchers: ["medical", "gamot", "hospital", "medicine", "medikal"],
+    desc: "Hospitalization expenses, medicines, chemotherapy, dialysis, and diagnostic laboratory procedures.",
+    requirements: ["Medical Abstract / Certificate", "Hospital Statement of Account / Pharmacy Quotation", "Barangay Indigency", "Valid QCID / Gov ID"]
   },
   funeral: {
     title: "Funeral Assistance",
     key: "aicsFuneral",
     reqKey: "aicsFuneral",
+    icon: "🕊️",
     matchers: ["funeral", "burial", "libing", "patay", "burol"],
+    desc: "Burial, cremation, and casket assistance for deceased indigent family members.",
+    requirements: ["Death Certificate (Certified Copy)", "Funeral Contract / Official Receipt", "Barangay Indigency", "Valid QCID / Gov ID"]
   },
   educational: {
     title: "Educational Assistance",
     key: "Educational Assistance",
     reqKey: "aicsEducational",
+    icon: "🎓",
     matchers: ["educational", "education", "aral", "school", "tuition", "edukasyon"],
+    desc: "Tuition support, school supplies, learning aids, and student subsistence allowances.",
+    requirements: ["Certificate of Registration / Enrollment", "School ID / Assessment Form", "Barangay Indigency", "Parent/Guardian ID"]
   },
   material: {
     title: "Material Assistance",
     key: "aicsMaterial",
     reqKey: "aicsMaterial",
+    icon: "📦",
     matchers: ["material", "materyal"],
+    desc: "Provisions of assistive medical devices, relief supplies, and emergency family essentials.",
+    requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Social Worker Case Report"]
   },
   food: {
     title: "Food Assistance",
     key: "aicsFood",
     reqKey: "aicsFood",
+    icon: "🍲",
     matchers: ["food", "pagkain", "grocery"],
+    desc: "Emergency nutritional food packages and subsistence grocery assistance for families in crisis.",
+    requirements: ["Barangay Certificate of Indigency", "Valid QCID / Government ID", "Proof of Family Dependency"]
   },
   transportation: {
     title: "Transportation Assistance",
     key: "aicsTransportation",
     reqKey: "aicsTransportation",
+    icon: "🚌",
     matchers: ["transportation", "pamasahe", "transpo", "travel", "transport"],
+    desc: "Emergency transit fares and repatriation allowance for stranded citizens returning to their provinces.",
+    requirements: ["Barangay Certificate / Police Blotter if stranded", "Valid QCID / Government ID", "Proof of Travel Need"]
   },
 }
 
 export default function AICSUser() {
   const { t } = useLanguage()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const rawType = searchParams.get("type")?.toLowerCase() || "medical"
@@ -63,6 +94,8 @@ export default function AICSUser() {
   const bypassedBlockRef = useRef(false)
 
   const handleNavigateType = (newType: string) => {
+    bypassedBlockRef.current = false
+    setBypassedBlock(false)
     setSearchParams({ type: newType.toLowerCase() })
   }
 
@@ -150,7 +183,6 @@ export default function AICSUser() {
           appName.includes("millares")
       )
 
-      // If user profile is present, match by QCID/email/name, or if from local user storage
       return Boolean(matchQcid || matchEmail || matchName || app.isCurrentUser)
     }
 
@@ -328,8 +360,30 @@ export default function AICSUser() {
           })
 
     return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150 py-8">
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+      <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-150 py-6">
+        {/* Top Header & Breadcrumb / Guide Link */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-blue-900 text-white p-5 rounded-2xl shadow-sm">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-200">
+              <ShieldAlert className="h-4 w-4" />
+              AICS Crisis Intervention Program
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white">
+              {selectedConfig.title} Status & Service Hub
+            </h1>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/portal/overview")}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all border border-white/20 cursor-pointer self-start sm:self-auto"
+          >
+            <BookOpen className="h-4 w-4" />
+            View Citizen Service Guide
+          </button>
+        </div>
+
+        {/* Status Card */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col items-center text-center gap-4 max-w-2xl mx-auto">
           <div
             className={`h-16 w-16 rounded-2xl flex items-center justify-center ${
               isAppApproved
@@ -385,30 +439,92 @@ export default function AICSUser() {
             </div>
           </div>
 
-          <div className="w-full pt-2 flex flex-col gap-2">
+          <div className="w-full pt-2 flex flex-col sm:flex-row gap-2.5">
             <button
               type="button"
               onClick={() => {
-                window.location.href = "/portal/financial-aid"
+                navigate("/portal/financial-aid")
               }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              className="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-1.5"
             >
-              VIEW IN FINANCIAL AID / MY APPLICATIONS
+              VIEW IN FINANCIAL AID / DISBURSEMENT
             </button>
-            {isAppApproved && (
-              <button
-                type="button"
-                onClick={() => {
-                  bypassedBlockRef.current = true
-                  setBypassedBlock(true)
-                  setIsBlocked(false)
-                  setBlockedApp(null)
-                }}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-              >
-                Submit Another Application (Apply Again)
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                bypassedBlockRef.current = true
+                setBypassedBlock(true)
+                setIsBlocked(false)
+                setBlockedApp(null)
+              }}
+              className="py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
+            >
+              {isAppApproved ? "Submit Another Application" : "Edit / Open Application Form"}
+            </button>
+          </div>
+        </div>
+
+        {/* Helpful AICS Program Guide & Other Assistance Types (Below Status) */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-gray-900">
+              Explore Other Available AICS Crisis Programs & Requirements
+            </h3>
+            <p className="text-xs text-gray-500">
+              Need assistance in other categories? You can apply for any of the 6 specialized programs below:
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(AICS_CONFIG).map(([k, cfg]) => {
+              const isCurrent = k === typeParam
+              return (
+                <div
+                  key={k}
+                  className={`p-4 rounded-xl border flex flex-col justify-between transition-all gap-3 ${
+                    isCurrent
+                      ? "bg-blue-50/50 border-blue-300 ring-1 ring-blue-300"
+                      : "bg-slate-50 border-gray-200 hover:bg-white hover:shadow-sm"
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl">{cfg.icon}</span>
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm">{cfg.title}</h4>
+                        {isCurrent && (
+                          <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                            Currently Selected
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed">{cfg.desc}</p>
+                    
+                    <div className="text-[11px] text-gray-500 bg-white/80 p-2.5 rounded-lg border border-gray-200/60">
+                      <span className="font-bold text-gray-700 block mb-1">Key Documents:</span>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {cfg.requirements.slice(0, 2).map((r, rIdx) => (
+                          <li key={rIdx} className="truncate">{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleNavigateType(k)}
+                    className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 ${
+                      isCurrent
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-slate-900 text-white hover:bg-blue-600"
+                    }`}
+                  >
+                    {isCurrent ? "View Current Service" : `Switch to ${cfg.title}`} <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -421,7 +537,28 @@ export default function AICSUser() {
     typeParam === "transportation"
   ) {
     return (
-      <div className="py-2">
+      <div className="py-2 space-y-4">
+        {/* Top Service Guide Context Banner */}
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 sm:p-5 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl p-2 rounded-xl bg-white/10">{selectedConfig.icon}</span>
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-white">{selectedConfig.title}</h2>
+                <p className="text-xs text-blue-200">{selectedConfig.desc}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/portal/overview")}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              Help & Guide
+            </button>
+          </div>
+        </div>
+
         <AICSServiceWizard
           key={typeParam}
           serviceType={typeParam as AICSServiceType}
@@ -432,7 +569,28 @@ export default function AICSUser() {
   }
 
   return (
-    <div className="py-2">
+    <div className="py-2 space-y-4">
+      {/* Top Service Guide Context Banner */}
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 sm:p-5 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl p-2 rounded-xl bg-white/10">{selectedConfig.icon}</span>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-white">{selectedConfig.title}</h2>
+              <p className="text-xs text-blue-200">{selectedConfig.desc}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/portal/overview")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            Help & Guide
+          </button>
+        </div>
+      </div>
+
       <ApplyAICS
         key={selectedConfig.reqKey}
         initialType={t(selectedConfig.key)}
