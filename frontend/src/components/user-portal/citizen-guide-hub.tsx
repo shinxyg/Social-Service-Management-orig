@@ -413,10 +413,16 @@ export default function CitizenGuideHub() {
                 type="button"
                 onClick={() => {
                   setSelectedCategory(cat.id)
+                  setTimeout(() => {
+                    const el = document.getElementById("services-section")
+                    if (el) {
+                      el.scrollIntoView({ behavior: "smooth", block: "start" })
+                    }
+                  }, 50)
                 }}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                   selectedCategory === cat.id
-                    ? "bg-white text-blue-900 shadow-sm"
+                    ? "bg-white text-blue-900 shadow-sm ring-2 ring-white/50"
                     : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
                 }`}
               >
@@ -624,6 +630,7 @@ export default function CitizenGuideHub() {
         )}
 
         {/* 4. AICS 6 SERVICE TYPES BREAKDOWN */}
+        {!hasSearch && (selectedCategory === "all" || selectedCategory === "aics") && (
         <div id="aics-breakdown" className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
             <div className="space-y-1">
@@ -688,16 +695,44 @@ export default function CitizenGuideHub() {
             ))}
           </div>
         </div>
+        )}
 
         {/* 5. ALL MODULES & SOCIAL SERVICES DIRECTORY */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-              Explore All Social Welfare Modules & Services
-            </h2>
-            <span className="text-xs font-bold text-gray-500">
-              Showing {filteredModules.length} programs
-            </span>
+        <div id="services-section" className="space-y-4 pt-2 scroll-mt-20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200/80 pb-3">
+            <div className="space-y-0.5">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
+                {selectedCategory === "pwd-senior"
+                  ? "PWD & Senior Citizen Welfare Services"
+                  : selectedCategory === "family"
+                  ? "Solo Parent & Child Welfare Services"
+                  : selectedCategory === "livelihood"
+                  ? "Livelihood, Training & Financial Aid Services"
+                  : selectedCategory === "aics"
+                  ? "AICS Crisis Intervention Programs"
+                  : "Explore All Social Welfare Modules & Services"}
+              </h2>
+              {selectedCategory !== "all" && (
+                <p className="text-xs text-blue-600 font-semibold">
+                  Filtered by Category • Showing {filteredModules.length} programs
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                {filteredModules.length} programs
+              </span>
+              {selectedCategory !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory("all")}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 cursor-pointer underline"
+                >
+                  Show All Services
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
