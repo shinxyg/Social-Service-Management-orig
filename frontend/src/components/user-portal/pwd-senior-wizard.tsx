@@ -942,7 +942,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     const cleanDigits = typed.replace(/\D/g, "")
 
     if (cleanDigits.length !== 16) {
-      setVerifyError(t("pwdInvalidIdLength") || "Kulang o labis ang PWD ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-847708).")
+      setVerifyError(t("pwdIdExactLengthError") || t("pwdInvalidIdLength") || "PWD ID Number must be exactly 16 digits (e.g. 137404-2026-847708).")
       setIsIdVerified(false)
       return
     }
@@ -1074,8 +1074,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         setIsIdVerified(false)
         setApprovedPwdRecord(null)
         setVerifyError(
+          t("pwdIdNotFoundError", { id: typed }) ||
           t("pwdNoRecordFoundDesc") ||
-          "No existing PWD ID record found in the system for this number. Random or unregistered ID numbers are not allowed. You must have a registered New PWD ID application in the system before applying for Renewal or Replacement / Lost ID."
+          `PWD ID (${typed}) was not found in the official records. Please verify the official ID Number received in your email or on your issued PWD ID card.`
         )
       }
     } catch {

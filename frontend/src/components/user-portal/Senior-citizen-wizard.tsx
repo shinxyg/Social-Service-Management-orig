@@ -334,7 +334,10 @@ export default function SeniorCitizenApplicationWizard({
     const cleanDigits = typed.replace(/\D/g, "")
 
     if (cleanDigits.length !== 16) {
-      setVerifyError("Kulang o labis ang Senior Citizen ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-516915).")
+      setVerifyError(
+        t("seniorIdExactLengthError") ||
+        "Senior Citizen ID Number must be exactly 16 digits (e.g. 137404-2026-516915)."
+      )
       setIsIdVerified(false)
       return
     }
@@ -435,12 +438,16 @@ export default function SeniorCitizenApplicationWizard({
       } else {
         setIsIdVerified(false)
         setVerifyError(
-          "No registered Senior Citizen record found in the system for this ID. Renewal and Replacement are only available for registered Senior Citizen ID holders. Please check your ID number or submit a New Application first."
+          t("seniorIdNotFoundError", { id: typed }) ||
+          `Senior Citizen ID (${typed}) was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card.`
         )
       }
     } catch {
       setIsIdVerified(false)
-      setVerifyError("An error occurred while verifying the Senior Citizen ID. Please try again.")
+      setVerifyError(
+        t("seniorIdVerifyGeneralError") ||
+        "An error occurred while verifying the Senior Citizen ID. Please try again."
+      )
     } finally {
       setIsVerifying(false)
     }

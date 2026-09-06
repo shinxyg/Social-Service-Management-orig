@@ -388,7 +388,10 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
     if (cleanDigits.length !== 16) {
       setIsIdVerified(false)
-      setVerifyError("Kulang o labis ang Senior Citizen ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-516915).")
+      setVerifyError(
+        t("seniorIdExactLengthError") ||
+        "Senior Citizen ID Number must be exactly 16 digits (e.g. 137404-2026-516915)."
+      )
       return
     }
 
@@ -453,12 +456,18 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
         setVerifiedSeniorName(profileName || "SENIOR CITIZEN BENEFICIARY")
       } else {
         setIsIdVerified(false)
-        setVerifyError(`Hindi matagpuan ang Senior Citizen ID (${typed}). Pakitiyak na tama ang bawat numero mula sa na-isyung ID card o approval email.`)
+        setVerifyError(
+          t("seniorIdNotFoundError", { id: typed }) ||
+          `Senior Citizen ID (${typed}) was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card.`
+        )
       }
     } catch (err) {
       console.warn("Verification error:", err)
       setIsIdVerified(false)
-      setVerifyError("Nagkaroon ng aberya sa pagsusuri ng Senior ID. Pakisubukang muli.")
+      setVerifyError(
+        t("seniorIdVerifyGeneralError") ||
+        "An error occurred while verifying the Senior ID. Please try again."
+      )
     } finally {
       setIsVerifying(false)
     }
@@ -906,7 +915,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                   <div className="border border-red-200 bg-red-50 rounded-lg p-3 flex items-start gap-2.5 text-xs text-red-800 animate-in fade-in">
                     <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold">Hindi Matanggap ang ID Number</p>
+                      <p className="font-bold">{t("idVerificationErrorTitle") || "Invalid ID Number"}</p>
                       <p className="mt-0.5 text-red-700">{verifyError}</p>
                     </div>
                   </div>
@@ -920,7 +929,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                 {isIdVerified && (
                   <div className="mt-1 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2 text-xs text-emerald-800 animate-in fade-in">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Matagumpay na na-verify ang Senior Citizen Record: <strong>{verifiedSeniorName || formData.seniorIdNumber}</strong>.</span>
+                    <span>{t("seniorIdRecordFound", { name: verifiedSeniorName || formData.seniorIdNumber })}</span>
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">

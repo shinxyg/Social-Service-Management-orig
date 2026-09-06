@@ -1313,6 +1313,51 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Alisin ang notification",
     bis: "Kuhaa ang pahibalo",
   },
+  seniorBookletAlertTitle: {
+    en: "{title} — PRIMARY REQUIREMENTS",
+    tl: "{title} — PANGUNAHING MGA KINAKAILANGAN",
+    bis: "{title} — PANGUNANG MGA KINAHANGLANON",
+  },
+  seniorBookletAlertDesc: {
+    en: "Complete the primary qualifications and prepare your Senior Citizen / OSCA ID to apply.",
+    tl: "Kumpletuhin ang mga pangunahing kwalipikasyon at ihanda ang inyong Senior Citizen / OSCA ID upang makapag-apply.",
+    bis: "Kompletoha ang mga pangunang kwalipikasyon ug ihanda ang inyong Senior Citizen / OSCA ID aron maka-apply.",
+  },
+  idVerificationErrorTitle: {
+    en: "Invalid ID Number",
+    tl: "Hindi Matanggap ang ID Number",
+    bis: "Dili Madawat ang ID Number",
+  },
+  seniorIdExactLengthError: {
+    en: "Senior Citizen ID Number must be exactly 16 digits (e.g. 137404-2026-516915).",
+    tl: "Kulang o labis ang Senior Citizen ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-516915).",
+    bis: "Kulang o sobra ang Senior Citizen ID Number. Kinahanglan eksaktong 16 digits (pananglitan: 137404-2026-516915).",
+  },
+  seniorIdNotFoundError: {
+    en: "Senior Citizen ID ({id}) was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card.",
+    tl: "Hindi natagpuan ang Senior Citizen ID ({id}). Pakisuri ang opisyal na ID Number na natanggap sa inyong email o na-isyung Senior ID card.",
+    bis: "Wala makit-i ang Senior Citizen ID ({id}). Palihug susiha ang opisyal nga ID Number nga nadawat sa inyong email o gi-isyu nga Senior ID card.",
+  },
+  seniorIdVerifyGeneralError: {
+    en: "An error occurred while verifying the Senior ID. Please try again.",
+    tl: "Nagkaroon ng aberya sa pagsusuri ng Senior ID. Pakisubukang muli.",
+    bis: "Adunay problema sa pagsusi sa Senior ID. Palihug sulayi pag-usab.",
+  },
+  seniorIdRecordFound: {
+    en: "Senior Citizen Record Found: {name}",
+    tl: "Natagpuang Rekord ng Senior Citizen: {name}",
+    bis: "Nakit-an nga Rekord sa Senior Citizen: {name}",
+  },
+  pwdIdExactLengthError: {
+    en: "PWD ID Number must be exactly 16 digits (e.g. 137404-2026-847708).",
+    tl: "Kulang o labis ang PWD ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-847708).",
+    bis: "Kulang o sobra ang PWD ID Number. Kinahanglan eksaktong 16 digits (pananglitan: 137404-2026-847708).",
+  },
+  pwdIdNotFoundError: {
+    en: "PWD ID ({id}) was not found in the official records. Please verify the official ID Number received in your email or on your issued PWD ID card.",
+    tl: "Hindi natagpuan ang PWD ID ({id}). Pakisuri ang opisyal na ID Number na natanggap sa inyong email o na-isyung PWD ID card.",
+    bis: "Wala makit-i ang PWD ID ({id}). Palihug susiha ang opisyal nga ID Number nga nadawat sa inyong email o gi-isyu nga PWD ID card.",
+  },
 }
 
 interface LanguageContextValue {

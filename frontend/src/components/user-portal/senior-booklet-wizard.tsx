@@ -399,7 +399,8 @@ export default function SeniorBookletWizard({
     if (cleanDigits.length !== 16) {
       setIsIdVerified(false)
       setVerifyError(
-        "Kulang o labis ang Senior Citizen ID Number. Dapat ay eksaktong 16 digits (halimbawa: 137404-2026-516915)."
+        t("seniorIdExactLengthError") ||
+        "Senior Citizen ID Number must be exactly 16 digits (e.g. 137404-2026-516915)."
       )
       return
     }
@@ -472,13 +473,17 @@ export default function SeniorBookletWizard({
         // STRICT ERROR: Even changing a single digit fails!
         setIsIdVerified(false)
         setVerifyError(
-          `Hindi natagpuan ang Senior Citizen ID (${typed}). Pakisuri ang opisyal na ID Number na natanggap sa inyong email o na-isyung Senior ID card.`
+          t("seniorIdNotFoundError", { id: typed }) ||
+          `Senior Citizen ID (${typed}) was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card.`
         )
       }
     } catch (err) {
       console.warn("Error verifying Senior ID:", err)
       setIsIdVerified(false)
-      setVerifyError("Nagkaroon ng aberya sa pagsusuri ng Senior ID. Pakisubukang muli.")
+      setVerifyError(
+        t("seniorIdVerifyGeneralError") ||
+        "An error occurred while verifying the Senior ID. Please try again."
+      )
     } finally {
       setIsVerifying(false)
     }
@@ -953,7 +958,7 @@ export default function SeniorBookletWizard({
                       <div className="border border-red-200 bg-red-50 rounded-lg p-3 flex items-start gap-2.5 text-xs text-red-800 max-w-md mt-2 animate-in fade-in">
                         <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-bold">Hindi Matanggap ang ID Number</p>
+                          <p className="font-bold">{t("idVerificationErrorTitle") || "Invalid ID Number"}</p>
                           <p className="mt-0.5 text-red-700">{verifyError}</p>
                         </div>
                       </div>
@@ -962,7 +967,7 @@ export default function SeniorBookletWizard({
                     {isIdVerified && (
                       <div className="border border-emerald-200 bg-emerald-50 rounded-lg p-3 flex items-center gap-2.5 text-xs font-semibold text-emerald-800 max-w-md mt-2 animate-in fade-in">
                         <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Senior Citizen Record Found: {verifiedSeniorName || [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ") || "CLARISA MAE GALIAS DIMAL"}</span>
+                        <span>{t("seniorIdRecordFound", { name: verifiedSeniorName || [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ") || "CLARISA MAE GALIAS DIMAL" })}</span>
                       </div>
                     )}
                   </div>
