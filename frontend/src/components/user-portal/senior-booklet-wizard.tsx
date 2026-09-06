@@ -66,18 +66,6 @@ function formatFileSize(bytes: number) {
   return `${(kb / 1024).toFixed(1)} MB`
 }
 
-function formatSeniorId(val: string): string {
-  const digits = val
-    .replace(/^(SENIOR|OSCA)-?/i, "")
-    .replace(/^(SENIOR|OSCA)\s*-\s*/i, "")
-    .replace(/\D/g, "")
-    .slice(0, 16)
-  if (!digits) return ""
-  if (digits.length <= 6) return digits
-  if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
-  return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10, 16)}`
-}
-
 export default function SeniorBookletWizard({
   bookletType = "medicine",
   onBack,
@@ -340,8 +328,6 @@ export default function SeniorBookletWizard({
     })
   }
 
-  const [detectedPreviousBooklet, setDetectedPreviousBooklet] = useState<string | null>(null)
-
   // Real-time Active Application Status & Booklet sync
   useEffect(() => {
     let isMounted = true
@@ -428,7 +414,9 @@ export default function SeniorBookletWizard({
 
         if (approvedBookletApp && (approvedBookletApp.assignedIdNumber || approvedBookletApp.assigned_id_number)) {
           const num = approvedBookletApp.assignedIdNumber || approvedBookletApp.assigned_id_number
-          setDetectedPreviousBooklet(num)
+          if (!bookletNumber) {
+            setBookletNumber(num)
+          }
         }
       } catch (err) {
         console.warn("Real-time sync error:", err)
