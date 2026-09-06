@@ -1236,12 +1236,12 @@ export default function SeniorBookletWizard({
                         />
                         {bookletNumber.trim() !== "" && !isBookletFormatValid && (
                           <p className="text-xs text-red-600 mt-1 font-medium">
-                            Kailangang valid na {isMedicine ? "Medicine Booklet" : "Free Movie Booklet"} Number na nagsisimula sa {expectedPrefix} (Halimbawa: {isMedicine ? "MB-2026-394314" : "MV-2026-516915"}).
+                            Please enter a valid {isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"} Number starting with {expectedPrefix} (e.g. {isMedicine ? "MB-2026-394314" : "MV-2026-516915"}).
                           </p>
                         )}
                         {attemptedNext && !bookletNumber.trim() && (
                           <p className="text-xs text-red-600 mt-1 font-medium">
-                            Pakilagay ang inyong existing {isMedicine ? "Medicine" : "Free Movie"} Booklet Number ({expectedPrefix}2026-XXXXXX).
+                            Please enter your existing {isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"} Number ({expectedPrefix}2026-XXXXXX).
                           </p>
                         )}
                       </div>
