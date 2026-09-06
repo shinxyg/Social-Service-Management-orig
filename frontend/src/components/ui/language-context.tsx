@@ -1314,16 +1314,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Alisin ang notification",
     bis: "Kuhaa ang pahibalo",
   },
-  seniorBookletAlertTitle: {
-    en: "{title} — PRIMARY REQUIREMENTS",
-    tl: "{title} — PANGUNAHING MGA KINAKAILANGAN",
-    bis: "{title} — PANGUNANG MGA KINAHANGLANON",
-  },
-  seniorBookletAlertDesc: {
-    en: "Complete the primary qualifications and prepare your Senior Citizen / OSCA ID to apply.",
-    tl: "Kumpletuhin ang mga pangunahing kwalipikasyon at ihanda ang inyong Senior Citizen / OSCA ID upang makapag-apply.",
-    bis: "Kompletoha ang mga pangunang kwalipikasyon ug ihanda ang inyong Senior Citizen / OSCA ID aron maka-apply.",
-  },
   idVerificationErrorTitle: {
     en: "Invalid ID Number",
     tl: "Hindi Matanggap ang ID Number",
