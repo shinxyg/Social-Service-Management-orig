@@ -837,7 +837,7 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardP
               </button>
             )}
           </div>
-          {onShowCard && app.status === "approved" && !isSeniorBooklet && (
+          {onShowCard && app.status === "approved" && !isSeniorBooklet && !isAssistance && (
             <button
               type="button"
               onClick={(e) => {
@@ -983,7 +983,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                   <CategoryTag category={app.category} />
                   <span className="gw-tag gw-tag--ghost max-w-64 truncate">{subLabel}</span>
                   <StatusBadge status={app.status} />
-                  {onShowCard && app.status === "approved" && (
+                  {onShowCard && app.status === "approved" && !isAssistance && !isSeniorBooklet && (
                     <button
                       type="button"
                       onClick={() => onShowCard(app)}
@@ -1063,20 +1063,47 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
                 <Field label="Disability type" value={app.disabilityType || (app as any).disability_type || "—"} />
                 <Field label="Cause of disability" value={app.causeOfDisability || (app as any).cause_of_disability || "—"} />
-                <div className="col-span-2">
+                {((app as any).bloodType || (app as any).blood_type) && (
+                  <Field label="Blood type" value={(app as any).bloodType || (app as any).blood_type} />
+                )}
+                {((app as any).existingIdNumber || (app as any).pwdIdNumber || (app as any).oldPwdId) && (
                   <Field
-                    label="Brief description of disability"
+                    label="Existing / Verified PWD ID"
                     value={
-                      (app as any).disabilityDescription ||
-                      (app as any).briefDescription ||
-                      (app as any).description ||
-                      (app as any).extra_data?.disabilityDescription ||
-                      (app as any).extra_data?.briefDescription ||
-                      (app as any).extra_data?.description ||
-                      "—"
+                      <span className="font-mono font-bold text-blue-700">
+                        {(app as any).existingIdNumber || (app as any).pwdIdNumber || (app as any).oldPwdId}
+                      </span>
                     }
                   />
-                </div>
+                )}
+                {((app as any).reasonForRenewal || (app as any).reasonForReplacement || (app as any).reason) && !isAssistance && (
+                  <Field
+                    label={app.type === "renewal" || String((app as any).applicationType).toLowerCase() === "renewal" ? "Reason for Renewal" : "Reason for Replacement / Loss"}
+                    value={(app as any).reasonForRenewal || (app as any).reasonForReplacement || (app as any).reason}
+                  />
+                )}
+                {Boolean(
+                  (app as any).disabilityDescription ||
+                  (app as any).briefDescription ||
+                  (app as any).description ||
+                  (app as any).extra_data?.disabilityDescription ||
+                  (app as any).extra_data?.briefDescription ||
+                  (app as any).extra_data?.description
+                ) && (
+                  <div className="col-span-2">
+                    <Field
+                      label="Brief description of disability"
+                      value={
+                        (app as any).disabilityDescription ||
+                        (app as any).briefDescription ||
+                        (app as any).description ||
+                        (app as any).extra_data?.disabilityDescription ||
+                        (app as any).extra_data?.briefDescription ||
+                        (app as any).extra_data?.description
+                      }
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1084,17 +1111,17 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
           {!isPWD(app) && !isAssistance && (
             <div>
               <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>
-                Senior Citizen Program Details
+                {isSeniorBooklet ? "Senior Citizen Booklet Details" : "Senior Citizen Program Details"}
               </SectionHeading>
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
                 <Field label="Service & Application Type" value={subLabel} />
-                <Field label="Application category" value="Senior Citizen Services" />
-                {((app as any).existingIdNumber || (app as any).oldSeniorId || (app as any).oscaId || (app as any).seniorIdNumber || app.referenceNumber) && (
+                <Field label="Application category" value={isSeniorBooklet ? bookletTitle : "Senior Citizen Services"} />
+                {((app as any).existingIdNumber || (app as any).oldSeniorId || (app as any).oscaId || (app as any).seniorIdNumber) && (
                   <Field
                     label="Senior Citizen / OSCA ID Number"
                     value={
                       <span className="font-mono font-bold text-blue-700">
-                        {(app as any).existingIdNumber || (app as any).oldSeniorId || (app as any).oscaId || (app as any).seniorIdNumber || app.referenceNumber}
+                        {(app as any).existingIdNumber || (app as any).oldSeniorId || (app as any).oscaId || (app as any).seniorIdNumber}
                       </span>
                     }
                   />
@@ -1111,7 +1138,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 )}
                 {((app as any).reasonForRenewal || (app as any).reasonForReplacement || (app as any).reason) && (
                   <Field
-                    label={app.type === "renewal" || String((app as any).applicationType).toLowerCase() === "renewal" ? "Reason for Renewal" : "Reason for Replacement"}
+                    label={app.type === "renewal" || String((app as any).applicationType).toLowerCase() === "renewal" ? "Reason for Renewal" : "Reason for Replacement / Loss"}
                     value={(app as any).reasonForRenewal || (app as any).reasonForReplacement || (app as any).reason}
                   />
                 )}
@@ -1430,18 +1457,6 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                     <Check className="h-3.5 w-3.5 text-emerald-600" />
                     Forwarded to Financial Aid Disbursement (₱2,000 Fixed Aid)
                   </p>
-                  {onShowCard && (
-                    <div className="pt-1">
-                      <button
-                        type="button"
-                        onClick={() => onShowCard(app)}
-                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
-                      >
-                        <IdCard className="h-4 w-4" />
-                        Preview &amp; Print Official QC ID Card
-                      </button>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <>
@@ -1531,7 +1546,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 </button>
               </>
             )}
-            {onShowCard && app.status === "approved" && (
+            {onShowCard && app.status === "approved" && !isAssistance && !isSeniorBooklet && (
               <button
                 type="button"
                 onClick={() => onShowCard(app)}
