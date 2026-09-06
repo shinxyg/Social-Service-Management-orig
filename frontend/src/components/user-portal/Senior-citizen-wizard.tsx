@@ -760,7 +760,7 @@ export default function SeniorCitizenApplicationWizard({
         suffix: formData.suffix || "",
         dateOfBirth: `${formData.dobYear || "1955"}-${(formData.dobMonth || "01").padStart(2, "0")}-${(formData.dobDay || "01").padStart(2, "0")}`,
         age: formData.age || "60",
-        sex: formData.sex || "Female",
+        sex: formData.sex || userProfile?.sex || (userProfile as any)?.gender || "Male",
         civilStatus: formData.civilStatus || "Married",
         cellphoneNo: formData.contactNo || userProfile?.contactNo || "09175552233",
         contactNo: formData.contactNo || userProfile?.contactNo || "09175552233",
@@ -1534,6 +1534,16 @@ export default function SeniorCitizenApplicationWizard({
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1 font-mono"
                     />
                   </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{t("emailLabel") || "Email Address"} *</label>
+                    <input
+                      type="email"
+                      value={formData.email || userProfile?.email || "senior@quezoncity.gov.ph"}
+                      readOnly
+                      disabled
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1"
+                    />
+                  </div>
                 </div>
 
                 {/* Existing Senior Citizen ID for Renewal & Lost ID */}
@@ -1977,6 +1987,10 @@ export default function SeniorCitizenApplicationWizard({
                     <div>
                       <p className="text-gray-500">{t("phoneNumberLabel") || "Contact Number"}</p>
                       <p className="font-semibold text-gray-900 text-sm mt-0.5 font-mono">{formData.contactNo}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">{t("emailLabel") || "Email Address"}</p>
+                      <p className="font-semibold text-gray-900 text-sm mt-0.5">{formData.email || userProfile?.email || "—"}</p>
                     </div>
                     <div className="sm:col-span-2">
                       <p className="text-gray-500">{t("fullAddressLabel") || "Complete Address"}</p>
