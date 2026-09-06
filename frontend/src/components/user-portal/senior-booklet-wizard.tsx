@@ -63,23 +63,6 @@ const MONTHS = [
   "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
 ]
 
-function calculateAge(monthStr: string, dayStr: string, yearStr: string): string {
-  if (!monthStr || !dayStr || !yearStr) return ""
-  let mIdx = MONTHS.indexOf(monthStr.toUpperCase())
-  if (mIdx === -1 && !isNaN(parseInt(monthStr, 10))) {
-    mIdx = parseInt(monthStr, 10) - 1
-  }
-  if (mIdx === -1) return ""
-  const birthDate = new Date(parseInt(yearStr), mIdx, parseInt(dayStr))
-  const today = new Date(2026, 7, 29)
-  let age = today.getFullYear() - birthDate.getFullYear()
-  const m = today.getMonth() - birthDate.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--
-  }
-  return age > 0 ? String(age) : ""
-}
-
 function formatFileSize(bytes: number) {
   if (!bytes) return "0.0 KB"
   const kb = bytes / 1024
@@ -181,7 +164,7 @@ export default function SeniorBookletWizard({
 
   // STEP 2 Personal Information
   const [isEditingInfo, setIsEditingInfo] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData] = useState({
     qcidNo: userProfile?.qcidNo || "110000116932100",
     firstName: userProfile?.firstName || "CLARISA MAE",
     middleName: userProfile?.middleName || "GALIAS",
