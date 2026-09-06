@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useLocation } from "react-router-dom"
-import { HelpCircle, Bell, User, Settings, Sun, Moon, ShieldAlert, Users, Baby, GraduationCap, Wallet, LifeBuoy, LogOut } from "lucide-react"
+import { Bell, User, Settings, Sun, Moon, LogOut } from "lucide-react"
 import { moduleRoutes } from "./routes"
 import { Tooltip } from "../ui/tooltip"
 import { SettingsModal } from "../ui/settings-modal"
@@ -19,13 +19,11 @@ export function AppHeader({
   const current = moduleRoutes.find((r) => r.path === location.pathname)
   const [menuOpen, setMenuOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
-  const [helpOpen, setHelpOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [now, setNow] = useState(new Date())
   const menuRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
-  const helpRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -57,13 +55,7 @@ export function AppHeader({
     },
   ]
 
-  const helpTopics = [
-    { icon: ShieldAlert, title: t("helpAicsTitle"), desc: t("helpAicsDesc") },
-    { icon: Users, title: t("helpPwdTitle"), desc: t("helpPwdDesc") },
-    { icon: Baby, title: t("helpSoloTitle"), desc: t("helpSoloDesc") },
-    { icon: GraduationCap, title: t("helpLivelihoodTitle"), desc: t("helpLivelihoodDesc") },
-    { icon: Wallet, title: t("helpDisbursementTitle"), desc: t("helpDisbursementDesc") },
-  ]
+
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -72,9 +64,6 @@ export function AppHeader({
       }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false)
-      }
-      if (helpRef.current && !helpRef.current.contains(e.target as Node)) {
-        setHelpOpen(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -127,51 +116,7 @@ export function AppHeader({
           </button>
         </Tooltip>
 
-        {/* Help & guides with dropdown */}
-        <div className="relative" ref={helpRef}>
-          <Tooltip label={t("helpAndGuides")}>
-            <button
-              aria-label="Help"
-              onClick={() => setHelpOpen((v) => !v)}
-              className="h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              <HelpCircle className="h-5 w-5" />
-            </button>
-          </Tooltip>
 
-          {helpOpen && (
-            <div className="absolute right-0 mt-2 w-96 bg-card border border-border rounded-xl shadow-medium z-50 overflow-hidden">
-              <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                <LifeBuoy className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-foreground">{t("helpAndGuides")}</span>
-              </div>
-              <div className="max-h-96 overflow-y-auto">
-                {helpTopics.map((h, i) => {
-                  const Icon = h.icon
-                  return (
-                    <button
-                      key={i}
-                      className="w-full text-left px-4 py-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors flex items-start gap-3"
-                    >
-                      <div className="h-8 w-8 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground">{h.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{h.desc}</p>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-              <div className="px-4 py-2.5 border-t border-border">
-                <button className="w-full text-center text-xs font-medium text-primary hover:underline">
-                  {t("viewFullDocumentation")}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Notifications with dropdown */}
         <div className="relative" ref={notifRef}>
