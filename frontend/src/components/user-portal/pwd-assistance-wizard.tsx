@@ -861,7 +861,10 @@ export default function PWDSocialAssistanceWizard({
 
   // Step 2 Validation (Personal Information / Application Form)
   const step2Valid =
+    Boolean((formData.disabilityDescription || "").trim()) &&
     Boolean((formData.householdMembersCount || "").trim()) &&
+    Boolean((formData.monthlyHouseholdIncome || "").trim()) &&
+    Boolean((formData.monthlyHouseholdExpenses || "").trim()) &&
     Boolean((formData.reasonForRequest || "").trim())
 
   // Step 3 Validation (Upload Documents)
@@ -1379,12 +1382,17 @@ export default function PWDSocialAssistanceWizard({
                     <LockedField value={formData.causeOfDisability || "Congenital / Inborn"} />
                   </Field>
                 </div>
-                <Field label="Brief Description of Disability">
+                <Field
+                  label="Brief Description of Disability *"
+                  required
+                  invalid={attemptedNext && formData.disabilityDescription.trim() === ""}
+                >
                   <TextArea
                     value={formData.disabilityDescription}
                     onChange={(v) => updateField("disabilityDescription", v)}
-                    placeholder="Brief description of condition or disability (optional)..."
+                    placeholder="Describe your condition or disability in detail..."
                     rows={2}
+                    invalid={attemptedNext && formData.disabilityDescription.trim() === ""}
                   />
                 </Field>
               </div>
