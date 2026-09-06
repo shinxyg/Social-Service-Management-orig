@@ -1074,9 +1074,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         setIsIdVerified(false)
         setApprovedPwdRecord(null)
         setVerifyError(
-          t("pwdIdNotFoundError", { id: typed }) ||
+          t("pwdIdNotFoundError") ||
           t("pwdNoRecordFoundDesc") ||
-          `PWD ID (${typed}) was not found in the official records. Please verify the official ID Number received in your email or on your issued PWD ID card.`
+          "PWD ID was not found in the official records. Please verify the official ID Number received in your email or on your issued PWD ID card."
         )
       }
     } catch {

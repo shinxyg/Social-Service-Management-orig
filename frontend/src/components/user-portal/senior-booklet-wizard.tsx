@@ -473,8 +473,8 @@ export default function SeniorBookletWizard({
         // STRICT ERROR: Even changing a single digit fails!
         setIsIdVerified(false)
         setVerifyError(
-          t("seniorIdNotFoundError", { id: typed }) ||
-          `Senior Citizen ID (${typed}) was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card.`
+          t("seniorIdNotFoundError") ||
+          "Senior Citizen ID was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card."
         )
       }
     } catch (err) {

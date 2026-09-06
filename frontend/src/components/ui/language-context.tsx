@@ -1334,9 +1334,9 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Kulang o sobra ang Senior Citizen ID Number. Kinahanglan eksaktong 16 digits (pananglitan: 137404-2026-516915).",
   },
   seniorIdNotFoundError: {
-    en: "Senior Citizen ID ({id}) was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card.",
-    tl: "Hindi natagpuan ang Senior Citizen ID ({id}). Pakisuri ang opisyal na ID Number na natanggap sa inyong email o na-isyung Senior ID card.",
-    bis: "Wala makit-i ang Senior Citizen ID ({id}). Palihug susiha ang opisyal nga ID Number nga nadawat sa inyong email o gi-isyu nga Senior ID card.",
+    en: "Senior Citizen ID was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card.",
+    tl: "Hindi natagpuan ang Senior Citizen ID sa talaan. Pakisuri ang opisyal na ID Number na natanggap sa inyong email o na-isyung Senior ID card.",
+    bis: "Wala makit-i ang Senior Citizen ID sa talaan. Palihug susiha ang opisyal nga ID Number nga nadawat sa inyong email o gi-isyu nga Senior ID card.",
   },
   seniorIdVerifyGeneralError: {
     en: "An error occurred while verifying the Senior ID. Please try again.",
@@ -1354,9 +1354,9 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Kulang o sobra ang PWD ID Number. Kinahanglan eksaktong 16 digits (pananglitan: 137404-2026-847708).",
   },
   pwdIdNotFoundError: {
-    en: "PWD ID ({id}) was not found in the official records. Please verify the official ID Number received in your email or on your issued PWD ID card.",
-    tl: "Hindi natagpuan ang PWD ID ({id}). Pakisuri ang opisyal na ID Number na natanggap sa inyong email o na-isyung PWD ID card.",
-    bis: "Wala makit-i ang PWD ID ({id}). Palihug susiha ang opisyal nga ID Number nga nadawat sa inyong email o gi-isyu nga PWD ID card.",
+    en: "PWD ID was not found in the official records. Please verify the official ID Number received in your email or on your issued PWD ID card.",
+    tl: "Hindi natagpuan ang PWD ID sa talaan. Pakisuri ang opisyal na ID Number na natanggap sa inyong email o na-isyung PWD ID card.",
+    bis: "Wala makit-i ang PWD ID sa talaan. Palihug susiha ang opisyal nga ID Number nga nadawat sa inyong email o gi-isyu nga PWD ID card.",
   },
 }
 
