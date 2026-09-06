@@ -910,7 +910,11 @@ export default function PWDSocialAssistanceWizard({
 
   const goBack = () => {
     setAttemptedNext(false)
-    setStep((s) => Math.max(s - 1, 1))
+    if (step > 1) {
+      setStep((s) => Math.max(s - 1, 1))
+    } else {
+      onBack?.()
+    }
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -1672,9 +1676,9 @@ export default function PWDSocialAssistanceWizard({
           <button
             type="button"
             onClick={goBack}
-            disabled={step === 1}
+            disabled={step === 1 && !onBack}
             className={`px-5 py-2 rounded-lg text-xs font-semibold transition-colors ${
-              step === 1 ? "invisible" : "bg-white border border-border text-foreground hover:bg-gray-100 cursor-pointer"
+              step === 1 && !onBack ? "invisible" : "bg-white border border-border text-foreground hover:bg-gray-100 cursor-pointer"
             }`}
           >
             PREV
