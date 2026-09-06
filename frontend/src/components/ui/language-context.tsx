@@ -37,6 +37,7 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   views: { en: "Views", tl: "Mga View", bis: "Mga View" },
 
   // Resident sidebar nav
+  navServiceGuide: { en: "Help & Service Guide", tl: "Tulong at Gabay", bis: "Tabang ug Giya" },
   navAICS: { en: "AICS", tl: "AICS", bis: "AICS" },
   navAICSAssistance: { en: "AICS Assistance", tl: "Tulong ng AICS", bis: "Tabang sa AICS" },
   navPWDServices: { en: "PWD Services", tl: "Serbisyo para sa PWD", bis: "Serbisyo para sa PWD" },
