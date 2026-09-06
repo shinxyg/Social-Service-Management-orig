@@ -243,7 +243,7 @@ export default function AICSServiceWizard({
   const [middleName, setMiddleName] = useState(initialProf?.middleName || "")
   const [lastName, setLastName] = useState(initialProf?.lastName || "MILLARES")
   const [suffix, setSuffix] = useState(initialProf?.suffix || "")
-  const [nationality, setNationality] = useState("FILIPINO")
+  const nationality = "FILIPINO"
   const [birthDate, setBirthDate] = useState(initialProf?.birthDateIso || initialProf?.birthDate || "10/29/2004")
   const [age, setAge] = useState(String(initialProf?.age || "21"))
   const [sex, setSex] = useState(initialProf?.sex === "MALE" || initialProf?.sex === "LALAKI" ? "Male" : "Female")
