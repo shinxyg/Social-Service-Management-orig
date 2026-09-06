@@ -20,10 +20,8 @@ import {
   FileCheck,
   Building2,
   CreditCard,
-  PhoneCall,
-  ExternalLink
+  PhoneCall
 } from "lucide-react"
-import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
@@ -50,13 +48,11 @@ function WheelchairIcon({ className, ...props }: React.ComponentProps<"svg">) {
 }
 
 export default function CitizenGuideHub() {
-  const { t } = useLanguage()
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [recentApps, setRecentApps] = useState<any[]>([])
-  const [isLoadingStatus, setIsLoadingStatus] = useState(true)
 
   const profile = getCurrentUserProfile()
   const qcid = getLoggedInUserQcid() || profile?.qcidNo || profile?.qcidNumber || ""
@@ -145,10 +141,9 @@ export default function CitizenGuideHub() {
 
         if (isMounted) {
           setRecentApps(found)
-          setIsLoadingStatus(false)
         }
       } catch {
-        if (isMounted) setIsLoadingStatus(false)
+        // ignore fetch error
       }
     }
 

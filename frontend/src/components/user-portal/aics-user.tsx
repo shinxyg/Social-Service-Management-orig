@@ -6,12 +6,6 @@ import {
   ShieldAlert,
   ArrowRight,
   BookOpen,
-  HelpCircle,
-  Clock,
-  Sparkles,
-  FileCheck,
-  Building2,
-  PhoneCall
 } from "lucide-react"
 import ApplyAICS from "./apply-aics"
 import AICSServiceWizard, { type AICSServiceType } from "./aics-service-wizard"
