@@ -83,14 +83,6 @@ export default function SeniorBookletWizard({
   ]
 
   const [step, setStep] = useState(1)
-
-  useEffect(() => {
-    if (isBlocked) {
-      onStepChange?.(0)
-    } else {
-      onStepChange?.(step)
-    }
-  }, [step, isBlocked, onStepChange])
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -99,6 +91,14 @@ export default function SeniorBookletWizard({
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
   const [referenceNumber, setReferenceNumber] = useState("")
   const [submissionDate, setSubmissionDate] = useState("")
+
+  useEffect(() => {
+    if (isBlocked) {
+      onStepChange?.(0)
+    } else {
+      onStepChange?.(step)
+    }
+  }, [step, isBlocked, onStepChange])
 
   // Reload / Navigation warning protection
   useEffect(() => {
