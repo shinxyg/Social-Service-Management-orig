@@ -500,7 +500,7 @@ export default function AICSServiceWizard({
     if (isSubmitting) return
 
     setIsSubmitting(true)
-    const generatedRef = qcIdNumber || "110000116932100"
+    const generatedRef = qcIdNumber || getLoggedInUserQcid() || "110000572516915"
 
     try {
       const formData = new FormData()
