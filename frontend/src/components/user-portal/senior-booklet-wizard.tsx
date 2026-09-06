@@ -333,20 +333,6 @@ export default function SeniorBookletWizard({
 
   const currentRequiredDocs = getRequiredDocuments()
 
-  const updateField = (field: string, val: string | boolean) => {
-    setFormData((prev) => {
-      const next = { ...prev, [field]: val }
-      if (field === "dobMonth" || field === "dobDay" || field === "dobYear") {
-        next.age = calculateAge(
-          field === "dobMonth" ? (val as string) : next.dobMonth,
-          field === "dobDay" ? (val as string) : next.dobDay,
-          field === "dobYear" ? (val as string) : next.dobYear
-        )
-      }
-      return next
-    })
-  }
-
   const handleFileUpload = (docId: string, file: File) => {
     setUploadedFiles((prev) => ({ ...prev, [docId]: file }))
   }

@@ -737,8 +737,7 @@ export default function SeniorCitizenApplicationWizard({
     (d) => (uploadedFiles[d.id]?.length ?? 0) > 0
   )
 
-  // Step 4: Review & Certification
-  const [certified, setCertified] = useState(false)
+  // Step 4: Review & Submission
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [referenceNo, setReferenceNo] = useState("")

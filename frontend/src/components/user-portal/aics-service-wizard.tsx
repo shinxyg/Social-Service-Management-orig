@@ -298,9 +298,6 @@ export default function AICSServiceWizard({
   const [supportingDocFiles, setSupportingDocFiles] = useState<File[]>([])
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
-  // Step 4: Declaration
-  const [declarationCertified, setDeclarationCertified] = useState(false)
-
 
   // Title strings
   const serviceTitle =
@@ -525,7 +522,7 @@ export default function AICSServiceWizard({
 
   // Form submit handler
   const handleSubmit = async () => {
-    if (!declarationCertified || isSubmitting) return
+    if (isSubmitting) return
 
     setIsSubmitting(true)
     const generatedRef = qcIdNumber || "110000116932100"
