@@ -130,10 +130,24 @@ export default function Reports() {
   const [barsAnimated, setBarsAnimated] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
+  const handleRangeChange = (newRange: RangeOption) => {
+    setRange(newRange)
+    setBarsAnimated(false)
+    setTimeout(() => setBarsAnimated(true), 80)
+  }
+
   // Real-time dynamic stats
   const [moduleStats, setModuleStats] = useState<ModuleStat[]>(BASELINE_MODULE_STATS)
   const [disbursementSources, setDisbursementSources] = useState<DisbursementSource[]>(BASELINE_DISBURSEMENTS)
   const [recentMonths, setRecentMonths] = useState<MonthlyData[]>(BASELINE_MONTHS)
+
+  // Helper to avoid unnecessary re-renders when data hasn't changed
+  const updateIfChanged = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, nextVal: T) => {
+    setter((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(nextVal)) return prev
+      return nextVal
+    })
+  }
 
   // Calculate live analytics from database endpoints and local live state
   const fetchLiveAnalytics = useCallback(async (isSilent = false) => {
@@ -196,10 +210,10 @@ export default function Reports() {
               }
             }
 
-            setModuleStats(finalStats)
-            setDisbursementSources(finalDisb)
+            updateIfChanged(setModuleStats, finalStats)
+            updateIfChanged(setDisbursementSources, finalDisb)
             if (apiMonths && apiMonths.length > 0) {
-              setRecentMonths(apiMonths)
+              updateIfChanged(setRecentMonths, apiMonths)
             }
           }
         }
@@ -267,7 +281,7 @@ export default function Reports() {
           { module: "Livelihood & Training", total: liveCount, pending: liveP, approved: liveA, rejected: liveR },
         ]
 
-        setModuleStats(updatedStats)
+        updateIfChanged(setModuleStats, updatedStats)
 
         if (disbList.length > 0) {
           let aicsAmt = 0, pensionAmt = 0, eduAmt = 0, liveAmt = 0
@@ -279,7 +293,7 @@ export default function Reports() {
             else if (type.includes("livelihood") || type.includes("training")) liveAmt += amt
             else aicsAmt += amt
           }
-          setDisbursementSources([
+          updateIfChanged(setDisbursementSources, [
             { label: "AICS", amount: aicsAmt || 1284600 },
             { label: "Social pension", amount: pensionAmt || 412300 },
             { label: "Educational assistance", amount: eduAmt || 296700 },
@@ -419,8 +433,8 @@ export default function Reports() {
         <div className="flex items-center gap-2">
           <select
             value={range}
-            onChange={(e) => setRange(e.target.value as RangeOption)}
-            className="px-3 py-2 border border-border rounded-lg text-sm bg-card focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+            onChange={(e) => handleRangeChange(e.target.value as RangeOption)}
+            className="px-3 py-2 border border-border rounded-lg text-sm bg-card focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer shadow-2xs"
           >
             <option>This Month</option>
             <option>Last 3 Months</option>
@@ -429,16 +443,20 @@ export default function Reports() {
           </select>
           <button
             type="button"
-            onClick={() => fetchLiveAnalytics(false)}
+            onClick={() => {
+              setBarsAnimated(false)
+              setTimeout(() => setBarsAnimated(true), 60)
+              fetchLiveAnalytics(false)
+            }}
             title="Refresh analytics data"
-            className="p-2 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-gray-50 transition-colors cursor-pointer"
+            className="p-2 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-gray-50 transition-colors cursor-pointer shadow-2xs"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin text-blue-600" : ""}`} />
           </button>
           <button
             type="button"
             onClick={handleExport}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-gray-50 transition-colors cursor-pointer shadow-2xs"
           >
             <Download className="h-4 w-4 text-blue-600" />
             Export CSV
@@ -448,7 +466,7 @@ export default function Reports() {
 
       {/* Top-level stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-soft transition-transform hover:-translate-y-0.5 duration-200">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <FileCheck2 className="h-4 w-4 text-blue-600" />
             <p className="text-xs font-semibold uppercase tracking-wide">Total applications</p>
@@ -457,7 +475,7 @@ export default function Reports() {
           <p className="text-xs text-muted-foreground mt-1">across all programs</p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-soft transition-transform hover:-translate-y-0.5 duration-200">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <TrendingUp className="h-4 w-4 text-emerald-600" />
             <p className="text-xs font-semibold uppercase tracking-wide">Approval rate</p>
@@ -468,7 +486,7 @@ export default function Reports() {
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-soft transition-transform hover:-translate-y-0.5 duration-200">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <BarChart3 className="h-4 w-4 text-amber-600" />
             <p className="text-xs font-semibold uppercase tracking-wide">Pending review</p>
@@ -477,7 +495,7 @@ export default function Reports() {
           <p className="text-xs text-muted-foreground mt-1">awaiting decision</p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-soft transition-transform hover:-translate-y-0.5 duration-200">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Wallet className="h-4 w-4 text-blue-600" />
             <p className="text-xs font-semibold uppercase tracking-wide">Total disbursed</p>
@@ -503,6 +521,9 @@ export default function Reports() {
                   outerRadius="90%"
                   paddingAngle={2}
                   strokeWidth={0}
+                  isAnimationActive={true}
+                  animationDuration={1200}
+                  animationEasing="ease-out"
                 >
                   {moduleShareData.map((entry) => (
                     <Cell key={entry.name} fill={entry.fill} />
@@ -523,26 +544,26 @@ export default function Reports() {
               const decided = m.approved + m.rejected
               const approvalPct = decided > 0 ? Math.round((m.approved / decided) * 100) : 0
               return (
-                <div key={m.module}>
+                <div key={m.module} className="group">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${colors?.chip || 'bg-slate-50 border-slate-200'} ${colors?.text || 'text-slate-700'}`}>
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${colors?.chip || 'bg-slate-50 border-slate-200'} ${colors?.text || 'text-slate-700'} transition-transform group-hover:scale-105`}>
                       <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: colors?.hex || '#64748b' }} />
                       {m.module}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground font-medium">
                       {m.total} total &middot; {share}% share &middot; {approvalPct}% approval
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden p-0.5 border border-slate-100/80">
                     <div
-                      className={`h-full rounded-full ${colors?.bar || 'bg-slate-500'} transition-[width] duration-1000 ease-out`}
+                      className={`h-full rounded-full ${colors?.bar || 'bg-slate-500'} transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-xs`}
                       style={{
                         width: `${barsAnimated ? share : 0}%`,
-                        transitionDelay: `${idx * 120}ms`,
+                        transitionDelay: `${idx * 140}ms`,
                       }}
                     />
                   </div>
-                  <div className="flex items-center gap-4 mt-1.5 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-4 mt-1.5 text-[11px] text-muted-foreground font-medium">
                     <span>{m.pending} pending</span>
                     <span>{m.approved} approved</span>
                     <span>{m.rejected} rejected</span>
@@ -565,6 +586,24 @@ export default function Reports() {
                 layout="vertical"
                 margin={{ top: 0, right: 16, bottom: 0, left: 0 }}
               >
+                <defs>
+                  <linearGradient id="barAicsGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#2563eb" />
+                    <stop offset="100%" stopColor="#60a5fa" />
+                  </linearGradient>
+                  <linearGradient id="barPensionGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#7c3aed" />
+                    <stop offset="100%" stopColor="#c084fc" />
+                  </linearGradient>
+                  <linearGradient id="barEduGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#e11d48" />
+                    <stop offset="100%" stopColor="#fb7185" />
+                  </linearGradient>
+                  <linearGradient id="barLiveGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#059669" />
+                    <stop offset="100%" stopColor="#34d399" />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-muted" />
                 <XAxis
                   type="number"
@@ -582,7 +621,31 @@ export default function Reports() {
                   tickLine={false}
                 />
                 <Tooltip content={<ChartTooltip formatter={(v: number) => peso(v)} />} />
-                <Bar dataKey="amount" name="Disbursed" fill={DISBURSEMENT_COLOR} radius={[0, 6, 6, 0]} barSize={18} />
+                <Bar
+                  dataKey="amount"
+                  name="Disbursed"
+                  radius={[0, 8, 8, 0]}
+                  barSize={18}
+                  isAnimationActive={true}
+                  animationDuration={1200}
+                  animationEasing="ease-out"
+                  animationBegin={100}
+                >
+                  {disbursementData.map((entry, index) => {
+                    const lower = entry.name.toLowerCase()
+                    let fillUrl = "url(#barAicsGrad)"
+                    if (lower.includes("pension") || lower.includes("senior") || lower.includes("pwd")) fillUrl = "url(#barPensionGrad)"
+                    else if (lower.includes("education") || lower.includes("child") || lower.includes("solo")) fillUrl = "url(#barEduGrad)"
+                    else if (lower.includes("livelihood") || lower.includes("training")) fillUrl = "url(#barLiveGrad)"
+                    return (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={fillUrl}
+                        className="transition-opacity duration-200 hover:opacity-85"
+                      />
+                    )
+                  })}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -598,6 +661,12 @@ export default function Reports() {
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={recentMonths} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
+                <defs>
+                  <linearGradient id="monthAppBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#93c5fd" stopOpacity={0.7} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis
@@ -606,6 +675,7 @@ export default function Reports() {
                   axisLine={false}
                   tickLine={false}
                   width={32}
+                  allowDecimals={false}
                 />
                 <YAxis
                   yAxisId="right"
@@ -628,9 +698,13 @@ export default function Reports() {
                   yAxisId="left"
                   dataKey="applications"
                   name="Applications"
-                  fill="#93c5fd"
-                  radius={[4, 4, 0, 0]}
+                  fill="url(#monthAppBarGrad)"
+                  radius={[5, 5, 0, 0]}
                   barSize={22}
+                  isAnimationActive={true}
+                  animationDuration={1000}
+                  animationEasing="ease-out"
+                  animationBegin={120}
                 />
                 <Line
                   yAxisId="right"
@@ -638,8 +712,13 @@ export default function Reports() {
                   dataKey="disbursed"
                   name="Disbursed"
                   stroke="#2563eb"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
+                  strokeWidth={2.5}
+                  dot={{ r: 3.5, fill: "#2563eb", stroke: "#ffffff", strokeWidth: 1.5 }}
+                  activeDot={{ r: 6, fill: "#1d4ed8", stroke: "#ffffff", strokeWidth: 2 }}
+                  isAnimationActive={true}
+                  animationDuration={1300}
+                  animationEasing="ease-out"
+                  animationBegin={220}
                 />
               </ComposedChart>
             </ResponsiveContainer>
