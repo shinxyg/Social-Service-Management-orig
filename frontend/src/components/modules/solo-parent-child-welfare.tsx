@@ -620,12 +620,17 @@ interface CardProps {
   onView: (app: WelfareSubmission) => void
   onShowCard?: (app: WelfareSubmission) => void
   onDelete?: (app: WelfareSubmission) => void
+  allSubmissions?: WelfareSubmission[]
 }
 
-function ApplicationCard({ app, onView, onShowCard, onDelete }: CardProps) {
+function ApplicationCard({ app, onView, onShowCard, onDelete, allSubmissions }: CardProps) {
   const subLabel = isSoloParent(app)
     ? (app as any).applicationType === "new" ? "New application" : (app as any).applicationType === "renewal" ? "Renewal" : "Lost ID replacement"
     : app.supportCategory.replace(/^\d+\.\s*/, "")
+
+  const soloOfficialId = isSoloParent(app) && app.status === "approved"
+    ? (app as any).assignedIdNumber || (app as any).soloParentIdNumber || generateOfficialSoloParentId(app, allSubmissions)
+    : ""
 
   return (
     <div
@@ -653,11 +658,15 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: CardProps) {
               {app.documents.length} documents
             </span>
             {isSoloParent(app)
-              ? app.status === "approved" && (app as any).assignedIdNumber && (
-                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>ID {(app as any).assignedIdNumber}</span>
+              ? app.status === "approved" && soloOfficialId && (
+                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>
+                    ID {soloOfficialId}
+                  </span>
                 )
               : app.status === "approved" && (app as any).approvedAmount && (
-                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>₱{(app as any).approvedAmount} approved</span>
+                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>
+                    ₱{(app as any).approvedAmount} approved
+                  </span>
                 )}
           </div>
         </div>
@@ -1893,6 +1902,7 @@ useEffect(() => {
                   onView={() => setSelectedApp(app)}
                   onShowCard={(app) => setCardApp(app)}
                   onDelete={handleDeleteApplication}
+                  allSubmissions={applications}
                 />
               ))}
             </div>

@@ -310,21 +310,29 @@ exports.getApplicationById = async (req, res) => {
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { applicationId } = req.params;
-    const { status, adminNotes, rejectionReason } = req.body;
+    const { status, adminNotes, rejectionReason, assignedIdNumber, soloParentIdNumber } = req.body;
 
     if (!['pending', 'approved', 'rejected', 'cancelled'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
+    const assignedId = assignedIdNumber || soloParentIdNumber || null;
+
     const result = await db.query(
       `UPDATE solo_parent_applications
-       SET application_status = $1, admin_notes = $2, rejection_reason = $3, approved_by = $4, updated_at = NOW()
-       WHERE id = $5 RETURNING *`,
+       SET application_status = $1,
+           admin_notes = $2,
+           rejection_reason = $3,
+           approved_by = $4,
+           solo_parent_id_number = COALESCE($5, solo_parent_id_number),
+           updated_at = NOW()
+       WHERE id::text = $6 OR reference_number = $6 RETURNING *`,
       [
         status,
         adminNotes || null,
         status === 'rejected' ? rejectionReason : null,
         status === 'approved' ? req.user?.id || null : null,
+        status === 'approved' ? assignedId : null,
         applicationId,
       ]
     );
