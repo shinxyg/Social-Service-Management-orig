@@ -657,10 +657,10 @@ export default function SeniorBookletWizard({
         const priorBookletRecord = allApps.find((a) => {
           if (!a) return false
           const cat = String(a.category || a.service || a.extra_data?.category || "").toLowerCase()
-          const typ = String(a.type || a.service || a.extra_data?.type || "").toLowerCase()
+          const typ = String(a.type || a.service || a.extra_data?.type || a.assistanceType || "").toLowerCase()
           const isTargetBooklet = isMedicine
-            ? (cat.includes("medicine") || typ.includes("medicine"))
-            : (cat.includes("movie") || typ.includes("movie"))
+            ? (cat.includes("medicine") || typ.includes("medicine") || a.assistanceType === "medicine-booklet")
+            : (cat.includes("movie") || typ.includes("movie") || a.assistanceType === "movie-booklet")
           if (!isTargetBooklet) return false
 
           const mFirst = String(matchedApp.firstName || matchedApp.first_name || "").toLowerCase().trim()
@@ -668,14 +668,21 @@ export default function SeniorBookletWizard({
           const af = String(a.firstName || a.first_name || "").toLowerCase().trim()
           const al = String(a.lastName || a.last_name || "").toLowerCase().trim()
 
-          return (mFirst && mLast && af === mFirst && al === mLast) ||
-            (a.existingIdNumber && a.existingIdNumber === oscaIdInput) ||
-            (a.assignedIdNumber && a.assignedIdNumber === oscaIdInput) ||
-            (a.referenceNumber && a.referenceNumber === oscaIdInput)
+          const mRef = String(matchedApp.referenceNumber || matchedApp.reference_number || "").replace(/[^A-Z0-9]/gi, "")
+          const aRef = String(a.referenceNumber || a.reference_number || "").replace(/[^A-Z0-9]/gi, "")
+          const aExt = String(a.existingIdNumber || a.existing_id_number || "").replace(/[^A-Z0-9]/gi, "")
+          const typedClean = oscaIdInput.replace(/[^A-Z0-9]/gi, "")
+
+          return (
+            (mFirst && mLast && af === mFirst && al === mLast) ||
+            (mRef && aRef && mRef === aRef) ||
+            (mRef && aExt && mRef === aExt) ||
+            (typedClean && (aRef === typedClean || aExt === typedClean))
+          )
         })
 
         if (priorBookletRecord) {
-          const pNum = priorBookletRecord.assignedIdNumber || priorBookletRecord.existingBookletNumber || priorBookletRecord.bookletNumber || priorBookletRecord.referenceNumber
+          const pNum = String(priorBookletRecord.assignedIdNumber || priorBookletRecord.assigned_id_number || priorBookletRecord.bookletNumber || priorBookletRecord.existingBookletNumber || "").trim()
           if (pNum) foundBooklet = pNum
         }
 
@@ -732,6 +739,7 @@ export default function SeniorBookletWizard({
         setExpectedBookletNumber("")
       } else {
         setIsIdVerified(false)
+        setExpectedBookletNumber("")
         setVerifyError(
           t("seniorIdNotFoundError") ||
           "Record was not found. Please verify your Senior Citizen ID Number (16-digit) or Existing Booklet Number (137404-2026-516915)."
@@ -740,6 +748,7 @@ export default function SeniorBookletWizard({
     } catch (err) {
       console.warn("Error verifying Senior ID:", err)
       setIsIdVerified(false)
+      setExpectedBookletNumber("")
       setVerifyError(
         t("seniorIdVerifyGeneralError") ||
         "An error occurred while verifying the record. Please try again."
@@ -752,20 +761,24 @@ export default function SeniorBookletWizard({
   // Booklet Number validation against registered/expected booklet number
   const cleanBooklet = (bookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
   const cleanExpected = (expectedBookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+  const cleanDigitsBooklet = (bookletNumber || "").replace(/\D/g, "")
+  const cleanDigitsExpected = (expectedBookletNumber || "").replace(/\D/g, "")
 
   const isBookletNumberMatch = Boolean(
-    hasPriorBooklet === "no" ||
+    isIdVerified &&
+    hasPriorBooklet === "yes" &&
+    bookletNumber.trim() !== "" &&
+    cleanBooklet.length >= 4 &&
+    cleanExpected &&
     (
-      cleanBooklet.length >= 6 &&
-      (
-        cleanExpected
-          ? (cleanBooklet === cleanExpected || (cleanExpected.length >= 10 && cleanExpected.endsWith(cleanBooklet)) || (cleanBooklet.length >= 10 && cleanBooklet.endsWith(cleanExpected)))
-          : (cleanBooklet.length === 16 || cleanBooklet.length >= 8)
-      )
+      cleanBooklet === cleanExpected ||
+      (cleanExpected.length >= 6 && cleanExpected.endsWith(cleanBooklet)) ||
+      (cleanBooklet.length >= 6 && cleanBooklet.endsWith(cleanExpected)) ||
+      (cleanDigitsBooklet.length >= 6 && cleanDigitsExpected.length >= 6 && (cleanDigitsBooklet === cleanDigitsExpected || cleanDigitsExpected.endsWith(cleanDigitsBooklet)))
     )
   )
 
-  const isExistingBookletValid = hasPriorBooklet === "no" || (bookletNumber.trim() !== "" && isBookletNumberMatch)
+  const isExistingBookletValid = hasPriorBooklet === "no" || (isIdVerified && isBookletNumberMatch)
 
   // Step validations
   const isStep1Valid =
@@ -1332,7 +1345,7 @@ export default function SeniorBookletWizard({
                           <label className="block text-xs font-semibold text-gray-700 uppercase">
                             {isMedicine ? "Existing Medicine Discount Booklet Number *" : "Existing Free Movie Booklet Number *"}
                           </label>
-                          {bookletNumber.trim() && isBookletNumberMatch && (
+                          {isIdVerified && bookletNumber.trim() && isBookletNumberMatch && (
                             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full animate-in fade-in">
                               <Check className="w-3 h-3" /> MATCHED
                             </span>
@@ -1342,19 +1355,25 @@ export default function SeniorBookletWizard({
                           type="text"
                           value={bookletNumber}
                           onChange={(e) => {
-                            setBookletNumber(formatSeniorNumber(e.target.value))
+                            setBookletNumber(e.target.value.toUpperCase())
                           }}
-                          placeholder="137404-2026-516915"
+                          placeholder={isMedicine ? "MB-2026-XXXXXX o 137404-2026-XXXXXX" : "MV-2026-XXXXXX o 137404-2026-XXXXXX"}
                           maxLength={24}
                           className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 font-mono outline-none transition-all ${
-                            bookletNumber.trim() && !isBookletNumberMatch
+                            !isIdVerified || (bookletNumber.trim() && !isBookletNumberMatch)
                               ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
-                              : bookletNumber.trim() && isBookletNumberMatch
+                              : isIdVerified && bookletNumber.trim() && isBookletNumberMatch
                               ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
                               : "border-gray-300 bg-white focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                           }`}
                         />
-                        {bookletNumber.trim() !== "" && !isBookletNumberMatch && (
+                        {!isIdVerified && (
+                          <div className="flex items-start gap-1.5 text-xs text-amber-700 mt-1.5 font-medium animate-in fade-in">
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                            <span>Pakiverify muna ang Senior Citizen / OSCA ID sa itaas upang masuri ang inyong opisyal na booklet record.</span>
+                          </div>
+                        )}
+                        {isIdVerified && bookletNumber.trim() !== "" && !isBookletNumberMatch && (
                           <div className="flex items-start gap-2 border border-red-200 bg-red-50 p-2.5 rounded-lg text-xs text-red-700 mt-2 animate-in fade-in">
                             <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                             <div>
