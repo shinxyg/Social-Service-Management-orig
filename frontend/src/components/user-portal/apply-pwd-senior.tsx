@@ -41,29 +41,67 @@ export default function ApplyPWDSenior() {
     const checkActiveApp = async () => {
       if (bypassedBlockRef.current) return
       try {
-        let allApps: any[] = []
+        let backendApps: any[] = []
         try {
           const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
           if (res.ok) {
             const data = await res.json()
-            if (Array.isArray(data)) allApps = data
+            if (Array.isArray(data)) backendApps = data
           }
         } catch (err) {
           console.warn("Could not fetch applications from backend:", err)
         }
 
-        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
-        for (const k of localKeys) {
-          try {
-            const local = JSON.parse(localStorage.getItem(k) || "[]")
-            if (Array.isArray(local)) {
-              for (const la of local) {
-                if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber) || (a.reference_number && a.reference_number === la.reference_number))) {
-                  allApps.push(la)
+        // Sync local storage with fresh backend records
+        let localApps: any[] = []
+        try {
+          const raw = localStorage.getItem("pwd_senior_applications")
+          if (raw) localApps = JSON.parse(raw)
+          if (!Array.isArray(localApps)) localApps = []
+        } catch {}
+
+        if (backendApps.length > 0) {
+          let updatedLocal = false
+          localApps = localApps.map((la: any) => {
+            const matchInBackend = backendApps.find((ba: any) => {
+              if (ba.id && ba.id === la.id) return true
+              const baRef = String(ba.referenceNumber || ba.reference_no || ba.reference_number || "").trim()
+              const laRef = String(la.referenceNumber || la.reference_no || la.reference_number || "").trim()
+              return baRef && laRef && baRef === laRef
+            })
+            if (matchInBackend) {
+              const bStatus = String(matchInBackend.status || "").toLowerCase()
+              const lStatus = String(la.status || "").toLowerCase()
+              if (bStatus && bStatus !== lStatus) {
+                updatedLocal = true
+                return {
+                  ...la,
+                  status: matchInBackend.status,
+                  assignedIdNumber: matchInBackend.assignedIdNumber || matchInBackend.assigned_id_number || la.assignedIdNumber,
+                  approvedDate: matchInBackend.approvedDate || matchInBackend.approved_date || la.approvedDate,
                 }
               }
             }
-          } catch {}
+            return la
+          })
+          if (updatedLocal) {
+            try {
+              localStorage.setItem("pwd_senior_applications", JSON.stringify(localApps))
+            } catch {}
+          }
+        }
+
+        const allApps: any[] = [...backendApps]
+        for (const la of localApps) {
+          const exists = allApps.some((a) => {
+            if (a.id && a.id === la.id) return true
+            const aRef = String(a.referenceNumber || a.reference_no || a.reference_number || "").trim()
+            const laRef = String(la.referenceNumber || la.reference_no || la.reference_number || "").trim()
+            return aRef && laRef && aRef === laRef
+          })
+          if (!exists) {
+            allApps.push(la)
+          }
         }
 
         const currentQcid = getLoggedInUserQcid() || "110000572516915"
@@ -161,23 +199,23 @@ export default function ApplyPWDSenior() {
         }
 
         const userMatchingApps = allApps.filter(isMatchForCurrentService)
-        const matchedPending = userMatchingApps.find((a) => {
-          const s = String(a.status || "pending").toLowerCase()
-          return s === "pending" || s === "under_review"
-        })
         const matchedApproved = userMatchingApps.find((a) => {
           const s = String(a.status || "").toLowerCase()
           return s === "approved" || s === "completed" || s === "for_release"
         })
+        const matchedPending = userMatchingApps.find((a) => {
+          const s = String(a.status || "pending").toLowerCase()
+          return (s === "pending" || s === "under_review") && (!matchedApproved || a.id !== matchedApproved.id)
+        })
         const matchedApprovedGlobal = allApps.find(isApprovedMatch)
 
         if (isMounted && !bypassedBlockRef.current) {
-          if (matchedPending) {
-            setIsBlocked(true)
-            setBlockedApp(matchedPending)
-          } else if (matchedApproved) {
+          if (matchedApproved) {
             setIsBlocked(true)
             setBlockedApp(matchedApproved)
+          } else if (matchedPending) {
+            setIsBlocked(true)
+            setBlockedApp(matchedPending)
           } else {
             setIsBlocked(false)
             setBlockedApp(null)

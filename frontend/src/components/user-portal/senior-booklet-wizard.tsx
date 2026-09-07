@@ -470,7 +470,7 @@ export default function SeniorBookletWizard({
           return status === "approved" || status === "completed" || status === "for_release" || status === "released"
         })
 
-        const targetBookletApp = matchedPending || matchedApproved || null
+        const targetBookletApp = matchedApproved || matchedPending || null
 
         if (targetBookletApp) {
           setBlockedApp(targetBookletApp)
