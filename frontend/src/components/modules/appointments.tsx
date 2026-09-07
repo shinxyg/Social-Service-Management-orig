@@ -325,7 +325,10 @@ export default function Appointments() {
                 return true
               })
               .map((a: any) => {
-                const cached = localScheduledMap[a.reference_no] || localScheduledMap[String(a.id)]
+                const cached =
+                  localScheduledMap[`db-appt-${a.id}`] ||
+                  localScheduledMap[String(a.id)] ||
+                  localScheduledMap[`${a.reference_no}_${a.concern}`]
                 return {
                   id: `db-appt-${a.id}`,
                   referenceNo: a.reference_no,
@@ -355,13 +358,14 @@ export default function Appointments() {
               if (app.status === "rejected" || app.status === "pending") {
                 unapprovedRefs.add(ref)
               } else if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
-                if (!appts.some((ap) => ap.referenceNo === ref)) {
+                if (!appts.some((ap) => ap.referenceNo === ref && ap.id === `aics-appt-${app.id}`)) {
                   const fullName = [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") || "APPLICANT"
                   const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                   const cleanType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
-                  const cached = localScheduledMap[ref]
+                  const apptId = `aics-appt-${app.id}`
+                  const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${cleanType}`]
                   appts.push({
-                    id: `aics-appt-${app.id}`,
+                    id: apptId,
                     referenceNo: ref,
                     module: "AICS",
                     applicantName: fullName,
@@ -414,17 +418,18 @@ export default function Appointments() {
               if (app.status === "rejected" || app.status === "pending") {
                 unapprovedPwdRefs.add(ref)
               } else if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
-                if (!appts.some((ap) => ap.referenceNo === ref)) {
+                const apptId = `pwd-senior-appt-${app.id || ref}`
+                if (!appts.some((ap) => ap.id === apptId)) {
                   const fullName =
                     [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ") ||
                     [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") ||
                     "APPLICANT"
                   const isPwdApp = String(app.category || "").toUpperCase().includes("PWD")
                   const concernName = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
-                  const cached = localScheduledMap[ref]
+                  const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${concernName}`]
 
                   appts.push({
-                    id: `pwd-senior-appt-${app.id || ref}`,
+                    id: apptId,
                     referenceNo: ref,
                     module: isPwdApp ? "PWD" : "Senior Citizen",
                     applicantName: fullName,
@@ -492,13 +497,16 @@ export default function Appointments() {
       try {
         const raw = localStorage.getItem("all_appointments_scheduled")
         const localScheduledMap = raw ? JSON.parse(raw) : {}
-        localScheduledMap[targetAppt.referenceNo] = {
+        const schedObj = {
           status: "scheduled",
           scheduledDate: date,
           scheduledTime: time,
           officeLocation: location,
           notes,
         }
+        localScheduledMap[targetAppt.id] = schedObj
+        localScheduledMap[`${targetAppt.referenceNo}_${targetAppt.concern}`] = schedObj
+        localScheduledMap[targetAppt.referenceNo] = schedObj
         localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
       } catch {}
 
@@ -555,7 +563,12 @@ export default function Appointments() {
     try {
       const raw = localStorage.getItem("all_appointments_scheduled")
       const localScheduledMap = raw ? JSON.parse(raw) : {}
-      localScheduledMap[ref] = { status: "completed" }
+      const compObj = { status: "completed" }
+      localScheduledMap[id] = compObj
+      if (targetAppt) {
+        localScheduledMap[`${targetAppt.referenceNo}_${targetAppt.concern}`] = compObj
+      }
+      localScheduledMap[ref] = compObj
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
     } catch {}
 
