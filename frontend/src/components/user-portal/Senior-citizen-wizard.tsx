@@ -680,13 +680,13 @@ export default function SeniorCitizenApplicationWizard({
 
       if (!isMounted) return
 
-      if (matchedApproved) {
-        setBlockedApp(matchedApproved)
-        setLatestApprovedApp(matchedApproved)
-        setIsBlocked(true)
-      } else if (matchedPendingForFlow) {
+      if (matchedPendingForFlow) {
         setBlockedApp(matchedPendingForFlow)
         setLatestApprovedApp(null)
+        setIsBlocked(true)
+      } else if (matchedApproved) {
+        setBlockedApp(matchedApproved)
+        setLatestApprovedApp(matchedApproved)
         setIsBlocked(true)
       } else {
         setBlockedApp(null)

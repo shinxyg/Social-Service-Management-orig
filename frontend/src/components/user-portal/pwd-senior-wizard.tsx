@@ -802,15 +802,15 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
       setActiveAppStatus(matchedPendingAny ? "pending" : matchedApproved ? "approved" : null)
 
-      if (matchedApproved) {
-        setBlockedApp(matchedApproved)
-        setLatestApprovedApp(matchedApproved)
+      if (matchedPendingForFlow) {
+        setBlockedApp(matchedPendingForFlow)
+        setLatestApprovedApp(null)
         if (!bypassedBlock) {
           setIsBlocked(true)
         }
-      } else if (matchedPendingForFlow) {
-        setBlockedApp(matchedPendingForFlow)
-        setLatestApprovedApp(null)
+      } else if (matchedApproved) {
+        setBlockedApp(matchedApproved)
+        setLatestApprovedApp(matchedApproved)
         if (!bypassedBlock) {
           setIsBlocked(true)
         }

@@ -257,18 +257,14 @@ export default function AICSUser() {
           } catch {}
         }
 
-        const userMatchingApps = allApps.filter((a) =>
-          isMatchForService(a, typeParam)
-        )
-        const matchedApproved = userMatchingApps.find((a) => {
-          const s = String(a.status || "").toLowerCase()
-          return (
-            s === "approved" ||
-            s === "completed" ||
-            s === "for_release" ||
-            s === "released"
-          )
-        })
+        const userMatchingApps = allApps
+          .filter((a) => isMatchForService(a, typeParam))
+          .sort((a, b) => {
+            const timeA = new Date(a.created_at || a.submittedAt || a.dateSubmitted || 0).getTime()
+            const timeB = new Date(b.created_at || b.submittedAt || b.dateSubmitted || 0).getTime()
+            return timeB - timeA
+          })
+
         const matchedPending = userMatchingApps.find((a) => {
           const s = String(a.status || "pending").toLowerCase()
           return (
@@ -279,13 +275,24 @@ export default function AICSUser() {
           )
         })
 
+        const matchedApproved = userMatchingApps.find((a) => {
+          const s = String(a.status || "").toLowerCase()
+          return (
+            s === "approved" ||
+            s === "completed" ||
+            s === "for_release" ||
+            s === "released"
+          )
+        })
+
         if (isMounted && !bypassedBlockRef.current) {
-          if (matchedApproved) {
-            setIsBlocked(true)
-            setBlockedApp(matchedApproved)
-          } else if (matchedPending) {
+          // If there is an active application pending review by admin, ALWAYS prioritize and display Pending!
+          if (matchedPending) {
             setIsBlocked(true)
             setBlockedApp(matchedPending)
+          } else if (matchedApproved) {
+            setIsBlocked(true)
+            setBlockedApp(matchedApproved)
           } else {
             setIsBlocked(false)
             setBlockedApp(null)

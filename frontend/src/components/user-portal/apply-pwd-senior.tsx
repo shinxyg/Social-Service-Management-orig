@@ -172,12 +172,12 @@ export default function ApplyPWDSenior() {
         const matchedApprovedGlobal = allApps.find(isApprovedMatch)
 
         if (isMounted && !bypassedBlockRef.current) {
-          if (matchedApproved) {
-            setIsBlocked(true)
-            setBlockedApp(matchedApproved)
-          } else if (matchedPending) {
+          if (matchedPending) {
             setIsBlocked(true)
             setBlockedApp(matchedPending)
+          } else if (matchedApproved) {
+            setIsBlocked(true)
+            setBlockedApp(matchedApproved)
           } else {
             setIsBlocked(false)
             setBlockedApp(null)
