@@ -204,7 +204,105 @@ function isPWD(app: ApplicationSubmission): app is PWDApplicationSubmission {
   return false
 }
 
-function generateOfficialIdNumber(app: ApplicationSubmission): string {
+function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: ApplicationSubmission[]): string | null {
+  const isPwdApp = isPWD(app)
+  const candidateFields = [
+    (app as any).existingIdNumber,
+    (app as any).existing_id_number,
+    (app as any).seniorIdNumber,
+    (app as any).existingPwdIdNumber,
+    (app as any).pwdIdNumber,
+    (app as any).oldPwdId,
+    (app as any).oldSeniorId,
+    (app as any).oscaId,
+    app.assignedIdNumber,
+    (app as any).assigned_id_number,
+    (app as any).idNumber,
+  ]
+
+  for (const c of candidateFields) {
+    if (c && typeof c === "string") {
+      const s = c.trim()
+      if (s && s !== "—" && !s.startsWith("110000") && (s.startsWith("PWD-") || s.startsWith("SENIOR-") || s.startsWith("OSCA-") || s.startsWith("137404-") || s.length > 5)) {
+        return s.replace("OSCA-", "SENIOR-")
+      }
+    }
+  }
+
+  // Look up applicant in allApps or localStorage
+  let pool: any[] = allApps || []
+  if (!pool.length) {
+    try {
+      const raw = localStorage.getItem("pwd_senior_applications")
+      if (raw) pool = JSON.parse(raw)
+    } catch {}
+  }
+
+  const appEmail = String(app.email || "").trim().toLowerCase()
+  const appRef = String(app.referenceNumber || (app as any).reference_no || "").trim().toLowerCase()
+  const appName = `${app.firstName || ""} ${app.lastName || ""}`.trim().toLowerCase()
+
+  if (Array.isArray(pool)) {
+    // 1. First look for prior approved application belonging to the same person
+    const priorApproved = pool.find((a) => {
+      if (!a || a.id === app.id) return false
+      const aIsPwd = isPWD(a)
+      if (aIsPwd !== isPwdApp) return false
+      const isApproved = a.status === "approved" || a.status === "completed" || a.status === "for_release"
+      if (!isApproved) return false
+      const assigned = a.assignedIdNumber || (a as any).assigned_id_number
+      if (!assigned || String(assigned).trim() === "" || String(assigned).trim() === "—") return false
+
+      const aEmail = String(a.email || "").trim().toLowerCase()
+      const aRef = String(a.referenceNumber || (a as any).reference_no || "").trim().toLowerCase()
+      const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase()
+
+      return (
+        (appEmail && aEmail && appEmail === aEmail) ||
+        (appRef && aRef && (appRef === aRef || appRef.includes(aRef) || aRef.includes(appRef))) ||
+        (appName && aName && appName === aName)
+      )
+    })
+
+    if (priorApproved) {
+      const assigned = priorApproved.assignedIdNumber || (priorApproved as any).assigned_id_number
+      if (assigned) return String(assigned).trim()
+    }
+
+    // 2. Look for any prior application of same user that had an existingIdNumber
+    const priorWithId = pool.find((a) => {
+      if (!a || a.id === app.id) return false
+      const aIsPwd = isPWD(a)
+      if (aIsPwd !== isPwdApp) return false
+      const existing = (a as any).existingIdNumber || (a as any).existing_id_number || (a as any).seniorIdNumber || (a as any).existingPwdIdNumber || (a as any).pwdIdNumber
+      if (!existing || String(existing).trim() === "" || String(existing).trim() === "—") return false
+
+      const aEmail = String(a.email || "").trim().toLowerCase()
+      const aRef = String(a.referenceNumber || (a as any).reference_no || "").trim().toLowerCase()
+      const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase()
+
+      return (
+        (appEmail && aEmail && appEmail === aEmail) ||
+        (appRef && aRef && (appRef === aRef || appRef.includes(aRef) || aRef.includes(appRef))) ||
+        (appName && aName && appName === aName)
+      )
+    })
+
+    if (priorWithId) {
+      const existing = (priorWithId as any).existingIdNumber || (priorWithId as any).existing_id_number || (priorWithId as any).seniorIdNumber || (priorWithId as any).existingPwdIdNumber || (priorWithId as any).pwdIdNumber
+      if (existing) return String(existing).trim()
+    }
+  }
+
+  // If user entered a reference number that starts with PWD- or SENIOR-
+  if (appRef.startsWith("pwd-") || appRef.startsWith("senior-") || appRef.startsWith("osca-")) {
+    return appRef.toUpperCase().replace("OSCA-", "SENIOR-")
+  }
+
+  return null
+}
+
+function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: ApplicationSubmission[]): string {
   const rawType = String(app.type || "").toLowerCase()
   const rawCat = String(app.category || "").toLowerCase()
   const rawService = String((app as any).service || "").toLowerCase()
@@ -249,22 +347,12 @@ function generateOfficialIdNumber(app: ApplicationSubmission): string {
     return `137404-${year}-${randomSeq}`
   }
 
-  // Check existing ID number across all possible fields for Renewal / Loss
-  const existingId =
-    (app as any).existingIdNumber ||
-    (app as any).existing_id_number ||
-    (app as any).seniorIdNumber ||
-    (app as any).existingPwdIdNumber ||
-    (app as any).pwdIdNumber ||
-    (app as any).oldPwdId ||
-    (app as any).oldSeniorId ||
-    (app as any).oscaId ||
-    app.assignedIdNumber ||
-    (app as any).assigned_id_number ||
-    (app as any).idNumber
-
-  if (isRenewalOrLoss && existingId && String(existingId).trim() && String(existingId).trim() !== "—") {
-    return String(existingId).trim()
+  // Retain fixed existing ID for Renewal or Loss
+  if (isRenewalOrLoss) {
+    const existingId = findExistingIdForApplicant(app, allApps)
+    if (existingId) {
+      return existingId
+    }
   }
 
   // 3. PWD ID
@@ -940,10 +1028,11 @@ interface DetailedViewProps {
   onReject: (id: string, reason: string) => void
   onShowCard?: (app: ApplicationSubmission) => void
   onDelete?: (app: ApplicationSubmission) => void
+  allApplications?: ApplicationSubmission[]
 }
 
-function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete }: DetailedViewProps) {
-  const idNumber = generateOfficialIdNumber(app)
+function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete, allApplications }: DetailedViewProps) {
+  const idNumber = app.status === "approved" && app.assignedIdNumber ? app.assignedIdNumber : generateOfficialIdNumber(app, allApplications)
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
@@ -2311,6 +2400,7 @@ export default function PWDSeniorCitizen() {
         {selectedApp && (
           <DetailedView
             app={selectedApp}
+            allApplications={applications}
             onClose={() => setSelectedApp(null)}
             onApprove={handleApprove}
             onReject={handleReject}

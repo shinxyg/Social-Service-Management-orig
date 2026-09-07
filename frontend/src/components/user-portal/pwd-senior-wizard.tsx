@@ -827,6 +827,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         setBlockedApp(matchedApproved)
         setLatestApprovedApp(matchedApproved)
         setIsBlocked(true)
+        const appAssignedId = matchedApproved.assignedIdNumber || matchedApproved.referenceNumber
+        if (appAssignedId) {
+          setFormData((prev) => ({
+            ...prev,
+            existingPwdIdNumber: prev.existingPwdIdNumber || appAssignedId,
+          }))
+        }
       } else if (matchedPendingForFlow) {
         setBlockedApp(matchedPendingForFlow)
         setLatestApprovedApp(null)
@@ -1287,7 +1294,18 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         city: formData.addressCity || userProfile?.addressCity || "QUEZON CITY",
         bloodType: formData.bloodType || "O+",
         nationality: formData.citizenship || userProfile?.nationality || "FILIPINO",
-        existingIdNumber: formData.existingPwdIdNumber || "",
+        existingIdNumber:
+          formData.existingPwdIdNumber ||
+          latestApprovedApp?.assignedIdNumber ||
+          approvedPwdRecord?.assignedIdNumber ||
+          latestApprovedApp?.referenceNumber ||
+          "",
+        existingPwdIdNumber:
+          formData.existingPwdIdNumber ||
+          latestApprovedApp?.assignedIdNumber ||
+          approvedPwdRecord?.assignedIdNumber ||
+          latestApprovedApp?.referenceNumber ||
+          "",
         reasonForRenewal: reasonForRenewal || "",
         reasonForReplacement: reasonForReplacement || "",
         disabilityType: disabilityType || "Visual Disability",
