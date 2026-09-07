@@ -1226,55 +1226,83 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 Household &amp; Socio-Economic Information
               </SectionHeading>
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                {((app as any).seniorIdNumber || (app as any).oscaId || (app as any).existingIdNumber) && (
+                  <div className="col-span-2">
+                    <Field
+                      label="Senior Citizen / OSCA ID Number"
+                      value={
+                        <span className="font-mono font-bold text-blue-700">
+                          {(app as any).seniorIdNumber || (app as any).oscaId || (app as any).existingIdNumber}
+                        </span>
+                      }
+                    />
+                  </div>
+                )}
+                <Field
+                  label="Living arrangement"
+                  value={(app as any).livingArrangement || (app as any).extra_data?.livingArrangement || "—"}
+                />
                 <Field
                   label="Number of household members"
                   value={
+                    (app as any).familyMembersCount ||
                     (app as any).householdMembersCount ||
                     (app as any).householdMembers ||
                     (app as any).numberOfHouseholdMembers ||
-                    (app as any).familyMembersCount ||
                     (app as any).numHouseholdMembers ||
+                    (app as any).extra_data?.familyMembersCount ||
                     (app as any).extra_data?.householdMembersCount ||
                     (app as any).extra_data?.householdMembers ||
                     (app as any).extra_data?.numberOfHouseholdMembers ||
-                    (app as any).extra_data?.familyMembersCount ||
                     "—"
                   }
                 />
                 <Field
                   label="Total monthly household income"
                   value={
-                    (app as any).monthlyHouseholdIncome ||
                     (app as any).monthlyIncome ||
+                    (app as any).monthlyHouseholdIncome ||
                     (app as any).householdIncome ||
-                    (app as any).extra_data?.monthlyHouseholdIncome ||
                     (app as any).extra_data?.monthlyIncome ||
+                    (app as any).extra_data?.monthlyHouseholdIncome ||
                     "—"
                   }
                 />
-                <div className="col-span-2">
-                  <Field
-                    label="Total monthly household expenses (₱)"
-                    value={
-                      (app as any).monthlyHouseholdExpenses ||
-                      (app as any).monthlyExpenses ||
-                      (app as any).householdExpenses ||
-                      (app as any).extra_data?.monthlyHouseholdExpenses ||
-                      "—"
-                    }
-                  />
-                </div>
-                {((app as any).livingArrangement || (app as any).extra_data?.livingArrangement) && (
-                  <Field
-                    label="Living arrangement"
-                    value={(app as any).livingArrangement || (app as any).extra_data?.livingArrangement}
-                  />
+                <Field
+                  label="Employment / Pension status"
+                  value={
+                    (app as any).employmentStatus ||
+                    (app as any).pensionSource ||
+                    (app as any).extra_data?.employmentStatus ||
+                    (app as any).extra_data?.pensionSource ||
+                    "—"
+                  }
+                />
+                {Boolean((app as any).sourceOfIncome || (app as any).extra_data?.sourceOfIncome) && (
+                  <div className="col-span-2">
+                    <Field
+                      label="Source of income / pension"
+                      value={(app as any).sourceOfIncome || (app as any).extra_data?.sourceOfIncome}
+                    />
+                  </div>
                 )}
-                {((app as any).pensionSource || (app as any).extra_data?.pensionSource) && (
-                  <Field
-                    label="Pension / Financial support"
-                    value={(app as any).pensionSource || (app as any).extra_data?.pensionSource}
-                  />
+                {Boolean(
+                  (app as any).monthlyHouseholdExpenses ||
+                  (app as any).monthlyExpenses ||
+                  (app as any).householdExpenses ||
+                  (app as any).extra_data?.monthlyHouseholdExpenses
+                ) && (
+                  <div className="col-span-2">
+                    <Field
+                      label="Total monthly household expenses (₱)"
+                      value={
+                        (app as any).monthlyHouseholdExpenses ||
+                        (app as any).monthlyExpenses ||
+                        (app as any).householdExpenses ||
+                        (app as any).extra_data?.monthlyHouseholdExpenses
+                      }
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -1299,8 +1327,14 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 </div>
                 <div className="col-span-2">
                   <Field
-                    label="Reason for request"
-                    value={(app as any).reasonForRequest || (app as any).notes || "—"}
+                    label="Reason and purpose of request"
+                    value={
+                      (app as any).purposeOfAssistance ||
+                      (app as any).reasonForRequest ||
+                      (app as any).needDescription ||
+                      (app as any).notes ||
+                      "—"
+                    }
                   />
                 </div>
               </div>
