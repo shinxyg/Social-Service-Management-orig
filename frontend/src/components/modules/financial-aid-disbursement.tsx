@@ -192,6 +192,39 @@ export default function FinancialAidDisbursement() {
 
           remoteRecords = remoteRecords.filter((rr) => !rejectedPwdRefs.has(rr.applicationRef))
         }
+
+        // 4. Fetch from /api/livelihood/applications (Approved Only)
+        try {
+          const resLiv = await fetch(`${API_BASE}/api/livelihood/applications`)
+          if (resLiv.ok) {
+            const dataLiv = await resLiv.json()
+            if (Array.isArray(dataLiv)) {
+              const approvedLiv = dataLiv.filter((l: any) => String(l.application_status || l.status).toLowerCase() === "approved")
+              approvedLiv.forEach((l: any) => {
+                const ref = l.reference_number || `LP-2026-${l.id}`
+                if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
+                  const fullName = `${l.first_name || ""} ${l.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY"
+                  remoteRecords.push({
+                    id: `remote-liv-${l.id || ref}`,
+                    disbursementId: `DISB-2026-${String(l.id || 101).padStart(4, "0")}`,
+                    applicationRef: ref,
+                    applicantName: fullName,
+                    assistanceType: "Livelihood Capital Assistance",
+                    fixedAmount: 15000,
+                    dateApproved: new Date(l.created_at || Date.now()).toLocaleDateString("en-PH", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }),
+                    status: "PENDING" as DisbursementStage,
+                    venue: "Quezon City Hall - SSDD Livelihood Center",
+                    remarks: "Awtomatikong pumasok mula sa na-aprubahang Livelihood application.",
+                  })
+                }
+              })
+            }
+          }
+        } catch {}
       } catch (err) {
         console.warn("Could not fetch remote disbursements/applications:", err)
       }
