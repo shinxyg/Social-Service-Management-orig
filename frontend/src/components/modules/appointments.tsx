@@ -269,21 +269,13 @@ function AppointmentCard({
             </button>
           )}
           {appt.status === "scheduled" && (
-            <div className="flex flex-col items-end gap-1.5">
-              <button
-                onClick={() => onSchedule(appt)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-foreground text-xs font-medium hover:bg-gray-50 transition-colors"
-              >
-                Reschedule
-              </button>
-              <button
-                onClick={() => onMarkCompleted(appt.id)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Mark Completed
-              </button>
-            </div>
+            <button
+              onClick={() => onMarkCompleted(appt.id)}
+              className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Mark Completed
+            </button>
           )}
         </div>
       </div>
