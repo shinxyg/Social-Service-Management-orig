@@ -989,28 +989,9 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
           {/* ──────────────── STEP 2: PERSONAL & HOUSEHOLD INFO ──────────────── */}
           {step === 2 && (
             <div className="space-y-6">
-              {/* Header with QCID Badge and Edit Button */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-3">
-                <div>
-                  <h3 className="text-base font-bold text-foreground">{(t("pwdPersonalInfoHeader") || "PERSONAL INFORMATION").toUpperCase()}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("qcidProfileDesc") || "Please review your personal information from your QCID profile. Fill in the additional details below."}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
-                    <Check className="w-3.5 h-3.5" />
-                    <span>{t("autoFilledQcidBadge") || "Auto-filled from QCID Record"}</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingInfo((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition-colors cursor-pointer"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span>{isEditingInfo ? (t("lockInformation") || "Lock Information") : (t("editInformation") || "Edit Information")}</span>
-                  </button>
-                </div>
+              {/* Header */}
+              <div className="border-b border-border pb-3">
+                <h3 className="text-base font-bold text-foreground">{(t("pwdPersonalInfoHeader") || "PERSONAL INFORMATION").toUpperCase()}</h3>
               </div>
 
               {/* IMPORTANT REMINDER BOX */}
