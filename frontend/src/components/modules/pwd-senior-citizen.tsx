@@ -1259,24 +1259,39 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                 />
                 <Field
                   label={isPWD(app) ? "Total monthly household income" : "Monthly family income"}
-                  value={
-                    (app as any).monthlyIncome ||
-                    (app as any).monthlyHouseholdIncome ||
-                    (app as any).householdIncome ||
-                    (app as any).extra_data?.monthlyIncome ||
-                    (app as any).extra_data?.monthlyHouseholdIncome ||
-                    "—"
-                  }
+                  value={(() => {
+                    const raw =
+                      (app as any).monthlyIncome ||
+                      (app as any).monthlyHouseholdIncome ||
+                      (app as any).householdIncome ||
+                      (app as any).extra_data?.monthlyIncome ||
+                      (app as any).extra_data?.monthlyHouseholdIncome ||
+                      "—"
+                    if (typeof raw === "string") {
+                      if (raw.toLowerCase().includes("walang regular") || raw.toLowerCase().includes("no income")) return "No Regular Income"
+                      if (raw.toLowerCase().includes("higit") || raw.toLowerCase().includes("above 25")) return "Above ₱25,000"
+                    }
+                    return raw
+                  })()}
                 />
                 <Field
                   label="Employment / pension status"
-                  value={
-                    (app as any).employmentStatus ||
-                    (app as any).pensionSource ||
-                    (app as any).extra_data?.employmentStatus ||
-                    (app as any).extra_data?.pensionSource ||
-                    "—"
-                  }
+                  value={(() => {
+                    const raw =
+                      (app as any).employmentStatus ||
+                      (app as any).pensionSource ||
+                      (app as any).extra_data?.employmentStatus ||
+                      (app as any).extra_data?.pensionSource ||
+                      "—"
+                    if (typeof raw === "string") {
+                      if (raw.toLowerCase().includes("unemployed") || raw.toLowerCase().includes("walang trabaho")) return "Unemployed"
+                      if (raw.toLowerCase().includes("retired") || raw.toLowerCase().includes("pensyonado")) return "Retired / Pensioner"
+                      if (raw.toLowerCase().includes("self-employed") || raw.toLowerCase().includes("negosyo")) return "Self-employed / Small Business"
+                      if (raw.toLowerCase().includes("part-time")) return "Part-time Worker"
+                      if (raw.toLowerCase().includes("employed") || raw.toLowerCase().includes("may trabaho")) return "Employed"
+                    }
+                    return raw
+                  })()}
                 />
                 {Boolean((app as any).sourceOfIncome || (app as any).extra_data?.sourceOfIncome) && (
                   <div className="col-span-2">

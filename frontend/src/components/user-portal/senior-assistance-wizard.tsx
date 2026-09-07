@@ -213,10 +213,10 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
     livingArrangement: "Alone",
     familyMembersCount: "1",
     monthlyIncome: "Below ₱5,000",
-    employmentStatus: "Retired / Pensyonado",
+    employmentStatus: "Retired / Pensioner",
     sourceOfIncome: "",
     purposeOfAssistance: "",
-    needDescription: "Kasalukuyang nag-iisa sa pamumuhay at walang regular na trabaho.",
+    needDescription: "Living independently and requesting financial assistance for maintenance medicine.",
 
     // Step 4 & 5
     signatureName: "Clarisa Mae G. Dimal",
@@ -1298,12 +1298,12 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                       className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
                       {[
-                        { value: "Walang Regular na Kita / No Income", label: t("seniorIncomeNoIncome") || "Walang Regular na Kita / No Income" },
+                        { value: "No Regular Income", label: t("seniorIncomeNoIncome") || "No Regular Income" },
                         { value: "Below ₱5,000", label: t("seniorIncomeBelow5k") || "Below ₱5,000" },
                         { value: "₱5,000 - ₱10,000", label: "₱5,000 - ₱10,000" },
                         { value: "₱10,001 - ₱15,000", label: "₱10,001 - ₱15,000" },
                         { value: "₱15,001 - ₱25,000", label: "₱15,001 - ₱25,000" },
-                        { value: "Higit sa ₱25,000", label: t("seniorIncomeAbove25k") || "Higit sa ₱25,000" },
+                        { value: "Above ₱25,000", label: t("seniorIncomeAbove25k") || "Above ₱25,000" },
                       ].map((inc) => (
                         <option key={inc.value} value={inc.value}>{inc.label}</option>
                       ))}
@@ -1320,11 +1320,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                       className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
                       {[
-                        { value: "Retired / Pensyonado", label: t("seniorEmpRetired") || "Retired / Pensyonado" },
-                        { value: "Unemployed (Walang Trabaho)", label: t("seniorEmpUnemployed") || "Unemployed (Walang Trabaho)" },
-                        { value: "Self-employed / Maliit na Negosyo", label: t("seniorEmpSelfEmployed") || "Self-employed / Maliit na Negosyo" },
+                        { value: "Retired / Pensioner", label: t("seniorEmpRetired") || "Retired / Pensioner" },
+                        { value: "Unemployed", label: t("seniorEmpUnemployed") || "Unemployed" },
+                        { value: "Self-employed / Small Business", label: t("seniorEmpSelfEmployed") || "Self-employed / Small Business" },
                         { value: "Part-time Worker", label: t("seniorEmpPartTime") || "Part-time Worker" },
-                        { value: "Employed (May Trabaho)", label: t("seniorEmpEmployed") || "Employed (May Trabaho)" },
+                        { value: "Employed", label: t("seniorEmpEmployed") || "Employed" },
                       ].map((emp) => (
                         <option key={emp.value} value={emp.value}>{emp.label}</option>
                       ))}
