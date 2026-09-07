@@ -961,6 +961,141 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Mangyaring dalhin ang lahat ng dokumento kasama ang napunang QCITIZEN ID at PWD ID Application Form kapag bumisita para sa beripikasyon.",
     bis: "Palihug dad-a ang tanang dokumento uban ang nasudlan nga QCITIZEN ID ug PWD ID Application Form kung mobisita para sa verification.",
   },
+  seniorSocialReminder: {
+    en: "Reminder: For Senior Citizen Social Assistance in Quezon City, please prepare the necessary documents and proof of need.",
+    tl: "Paalala: Para sa Tulong Panlipunan (Social Assistance) ng Senior Citizens sa Quezon City, ihanda ang mga kaukulang dokumento at katibayan ng pangangailangan.",
+    bis: "Pahibalo: Alang sa Social Assistance sa Senior Citizens sa Quezon City, i-andam ang mga gikinahanglang dokumento ug pruweba sa panginahanglan.",
+  },
+  seniorMedicineReminder: {
+    en: "Reminder: For Senior Citizen Medicine Discount Booklet, ensure you have a valid Senior Citizen / OSCA ID.",
+    tl: "Paalala: Para sa Medicine Discount Booklet ng Senior Citizen, tiyaking mayroong valid na Senior Citizen / OSCA ID.",
+    bis: "Pahibalo: Alang sa Medicine Discount Booklet sa Senior Citizen, siguroha nga adunay valid nga Senior Citizen / OSCA ID.",
+  },
+  seniorMovieReminder: {
+    en: "Reminder: For Senior Citizen Free Movie Booklet in Quezon City cinemas, prepare your valid OSCA ID.",
+    tl: "Paalala: Para sa Free Movie Booklet ng Senior Citizen sa Quezon City cinemas, ihanda ang inyong valid OSCA ID.",
+    bis: "Pahibalo: Alang sa Free Movie Booklet sa Senior Citizen sa mga sinehan sa Quezon City, i-andam ang inyong valid nga OSCA ID.",
+  },
+  seniorLossAlert: {
+    en: "Reminder: For replacement of lost or damaged Senior Citizen ID. Prepare a Notarized Affidavit of Loss and valid ID.",
+    tl: "Paalala: Para sa pagpapalit ng nawala o nasirang Senior Citizen ID. Ihanda ang Notarized Affidavit of Loss at valid ID.",
+    bis: "Pahibalo: Alang sa pag-ilis sa nawala o naguba nga Senior Citizen ID. I-andam ang Notarized Affidavit of Loss ug valid nga ID.",
+  },
+  seniorRenewalReminder: {
+    en: "Reminder: For renewal of expired or expiring Senior Citizen / OSCA ID.",
+    tl: "Paalala: Para sa pag-renew ng expired o nag-eexpire na Senior Citizen / OSCA ID.",
+    bis: "Pahibalo: Alang sa pag-renew sa expired o hapit na ma-expire nga Senior Citizen / OSCA ID.",
+  },
+  seniorSocialReq1: {
+    en: "Senior Citizen ID / OSCA ID (Front and back copy)",
+    tl: "Senior Citizen ID / OSCA ID (Kopya ng harapan at likod)",
+    bis: "Senior Citizen ID / OSCA ID (Kopya sa atubangan ug luyo)",
+  },
+  seniorSocialReq2: {
+    en: "Valid Government-issued ID with photo and signature",
+    tl: "Valid Government-issued ID na may larawan at lagda",
+    bis: "Valid nga Government-issued ID nga adunay litrato ug pirma",
+  },
+  seniorSocialReq3: {
+    en: "Barangay Certificate of Residency or Indigency",
+    tl: "Barangay Certificate of Residency o Indigency",
+    bis: "Barangay Certificate of Residency o Indigency",
+  },
+  seniorSocialReq4: {
+    en: "Recent 2×2 ID Picture (White background)",
+    tl: "Kasalukuyang 2×2 ID Picture (White background)",
+    bis: "Bag-ong 2×2 ID Picture (White background)",
+  },
+  seniorSocialReq5: {
+    en: "Proof of Income / Certificate of Indigency (if applicable)",
+    tl: "Proof of Income / Certificate of Indigency (kung kinakailangan)",
+    bis: "Proof of Income / Certificate of Indigency (kung gikinahanglan)",
+  },
+  seniorSocialReq6: {
+    en: "Medical Certificate / Prescription (for medical assistance)",
+    tl: "Medical Certificate / Prescription (para sa tulong-medikal)",
+    bis: "Medical Certificate / Prescription (para sa tabang-medikal)",
+  },
+  seniorSocialReq7: {
+    en: "Other supporting documents verifying the request",
+    tl: "Iba pang katibayan o dokumento na sumusuporta sa kahilingan",
+    bis: "Uban pang pruweba o dokumento nga nagsuporta sa hangyo",
+  },
+  seniorMedReq1: {
+    en: "Senior Citizen ID / OSCA ID (Valid and Active)",
+    tl: "Senior Citizen ID / OSCA ID (Valid at Aktibo)",
+    bis: "Senior Citizen ID / OSCA ID (Valid ug Aktibo)",
+  },
+  seniorMedReq2: {
+    en: "Valid Government-issued ID with photo and signature",
+    tl: "Valid Government-issued ID na may larawan at lagda",
+    bis: "Valid nga Government-issued ID nga adunay litrato ug pirma",
+  },
+  seniorMedReq3: {
+    en: "Recent 2×2 ID Picture (White background)",
+    tl: "Kasalukuyang 2×2 ID Picture (White background)",
+    bis: "Bag-ong 2×2 ID Picture (White background)",
+  },
+  seniorMedReq4: {
+    en: "Barangay Certificate of Residency in Quezon City",
+    tl: "Barangay Certificate of Residency sa Lungsod Quezon",
+    bis: "Barangay Certificate of Residency sa Dakbayan sa Quezon",
+  },
+  seniorMedReq5: {
+    en: "Copy of Medical Prescription or Doctor's Certificate",
+    tl: "Kopya ng Medical Prescription o Doctor's Certificate",
+    bis: "Kopya sa Medical Prescription o Doctor's Certificate",
+  },
+  seniorMovieReq1: {
+    en: "Senior Citizen ID / OSCA ID (Valid and Active)",
+    tl: "Senior Citizen ID / OSCA ID (Valid at Aktibo)",
+    bis: "Senior Citizen ID / OSCA ID (Valid ug Aktibo)",
+  },
+  seniorMovieReq2: {
+    en: "Valid Government-issued ID with photo and signature",
+    tl: "Valid Government-issued ID na may larawan at lagda",
+    bis: "Valid nga Government-issued ID nga adunay litrato ug pirma",
+  },
+  seniorMovieReq3: {
+    en: "Recent 2×2 ID Picture (White background)",
+    tl: "Kasalukuyang 2×2 ID Picture (White background)",
+    bis: "Bag-ong 2×2 ID Picture (White background)",
+  },
+  seniorMovieReq4: {
+    en: "Barangay Certificate of Residency in Quezon City",
+    tl: "Barangay Certificate of Residency sa Lungsod Quezon",
+    bis: "Barangay Certificate of Residency sa Dakbayan sa Quezon",
+  },
+  seniorLossReq1: {
+    en: "Notarized Affidavit of Loss stating the loss of ID",
+    tl: "Notarized Affidavit of Loss na nagsasaad ng pagkawala ng ID",
+    bis: "Notarized Affidavit of Loss nga nagpahayag sa pagkawala sa ID",
+  },
+  seniorLossReq2: {
+    en: "Valid Government-issued ID with photo and signature",
+    tl: "Valid Government-issued ID na may larawan at lagda",
+    bis: "Valid nga Government-issued ID nga adunay litrato ug pirma",
+  },
+  seniorRenewalReq1: {
+    en: "Old / Expired Senior Citizen / OSCA ID",
+    tl: "Lumang / Expired Senior Citizen / OSCA ID",
+    bis: "Karaang / Expired nga Senior Citizen / OSCA ID",
+  },
+  seniorRenewalReq3: {
+    en: "Barangay Certificate of Residency (if address changed)",
+    tl: "Barangay Certificate of Residency (kung nagbago ang tirahan)",
+    bis: "Barangay Certificate of Residency (kung nausab ang pinuy-anan)",
+  },
+  seniorRenewalReq4: {
+    en: "Valid Government ID as additional identification",
+    tl: "Valid Government ID bilang karagdagang pagkakakilanlan",
+    bis: "Valid nga Government ID isip dugang pag-ila",
+  },
+  continueApplicationBtn: {
+    en: "Continue Application",
+    tl: "Ipagpatuloy ang Aplikasyon",
+    bis: "Ipadayon ang Aplikasyon",
+  },
   seniorSocialWorkerVisitNote: {
     en: "A social worker will contact you for verification and to schedule an appointment. Please bring all required documents when you visit.",
     tl: "Kokontakin ka ng isang social worker para sa beripikasyon at magtakda ng appointment. Mangyaring dalhin ang lahat ng kinakailangang dokumento sa iyong pagbisita.",

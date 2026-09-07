@@ -288,6 +288,45 @@ export default function ApplyPWDSenior() {
     t("seniorReq6"),
   ]
 
+  const seniorSocialRequirements = [
+    t("seniorSocialReq1"),
+    t("seniorSocialReq2"),
+    t("seniorSocialReq3"),
+    t("seniorSocialReq4"),
+    t("seniorSocialReq5"),
+    t("seniorSocialReq6"),
+    t("seniorSocialReq7"),
+  ]
+
+  const seniorMedicineRequirements = [
+    t("seniorMedReq1"),
+    t("seniorMedReq2"),
+    t("seniorMedReq3"),
+    t("seniorMedReq4"),
+    t("seniorMedReq5"),
+  ]
+
+  const seniorMovieRequirements = [
+    t("seniorMovieReq1"),
+    t("seniorMovieReq2"),
+    t("seniorMovieReq3"),
+    t("seniorMovieReq4"),
+  ]
+
+  const seniorLossRequirements = [
+    t("seniorLossReq1"),
+    t("seniorLossReq2"),
+    t("seniorMedReq3"),
+    t("seniorMedReq4"),
+  ]
+
+  const seniorRenewalRequirements = [
+    t("seniorRenewalReq1"),
+    t("seniorMedReq3"),
+    t("seniorRenewalReq3"),
+    t("seniorRenewalReq4"),
+  ]
+
   // Render blocked active application UI directly (for PWD, Senior, Booklets, and Assistance wizards)
   if (isBlocked && !bypassedBlock) {
     const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
@@ -498,7 +537,7 @@ export default function ApplyPWDSenior() {
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
                     <RefreshCw className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                     <p className="text-sm font-semibold text-blue-900">
-                      Paalala: Para sa Medicine Discount Booklet ng Senior Citizen, tiyaking mayroong valid na Senior Citizen / OSCA ID.
+                      {t("seniorMedicineReminder") || "Paalala: Para sa Medicine Discount Booklet ng Senior Citizen, tiyaking mayroong valid na Senior Citizen / OSCA ID."}
                     </p>
                   </div>
 
@@ -507,13 +546,7 @@ export default function ApplyPWDSenior() {
                       {t("seniorRequirementsHeading") || "REQUIREMENTS:"}
                     </h3>
                     <ul className="space-y-2.5">
-                      {[
-                        "Senior Citizen ID / OSCA ID (Valid at Aktibo)",
-                        "Valid Government-issued ID na may larawan at lagda",
-                        "Kasalukuyang 2×2 ID Picture (White background)",
-                        "Barangay Certificate of Residency sa Lungsod Quezon",
-                        "Kopya ng Medical Prescription o Doctor's Certificate",
-                      ].map((req, idx) => (
+                      {seniorMedicineRequirements.map((req, idx) => (
                         <li key={idx} className="flex gap-2 text-sm text-foreground">
                           <span className="text-blue-600">•</span>
                           <span>{req}</span>
@@ -541,7 +574,7 @@ export default function ApplyPWDSenior() {
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
                     <RefreshCw className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                     <p className="text-sm font-semibold text-blue-900">
-                      Paalala: Para sa Free Movie Booklet ng Senior Citizen sa Quezon City cinemas, ihanda ang inyong valid OSCA ID.
+                      {t("seniorMovieReminder") || "Paalala: Para sa Free Movie Booklet ng Senior Citizen sa Quezon City cinemas, ihanda ang inyong valid OSCA ID."}
                     </p>
                   </div>
 
@@ -550,12 +583,7 @@ export default function ApplyPWDSenior() {
                       {t("seniorRequirementsHeading") || "REQUIREMENTS:"}
                     </h3>
                     <ul className="space-y-2.5">
-                      {[
-                        "Senior Citizen ID / OSCA ID (Valid at Aktibo)",
-                        "Valid Government-issued ID na may larawan at lagda",
-                        "Kasalukuyang 2×2 ID Picture (White background)",
-                        "Barangay Certificate of Residency sa Lungsod Quezon",
-                      ].map((req, idx) => (
+                      {seniorMovieRequirements.map((req, idx) => (
                         <li key={idx} className="flex gap-2 text-sm text-foreground">
                           <span className="text-blue-600">•</span>
                           <span>{req}</span>
@@ -583,7 +611,7 @@ export default function ApplyPWDSenior() {
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
                     <HeartHandshake className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                     <p className="text-sm font-semibold text-blue-900">
-                      Paalala: Para sa Tulong Panlipunan (Social Assistance) ng Senior Citizens sa Quezon City, ihanda ang mga kaukulang dokumento at katibayan ng pangangailangan.
+                      {t("seniorSocialReminder") || "Paalala: Para sa Tulong Panlipunan (Social Assistance) ng Senior Citizens sa Quezon City, ihanda ang mga kaukulang dokumento at katibayan ng pangangailangan."}
                     </p>
                   </div>
 
@@ -592,15 +620,7 @@ export default function ApplyPWDSenior() {
                       {t("seniorRequirementsHeading") || "REQUIREMENTS:"}
                     </h3>
                     <ul className="space-y-2.5">
-                      {[
-                        "Senior Citizen ID / OSCA ID (Kopya ng harapan at likod)",
-                        "Valid Government-issued ID na may larawan at lagda",
-                        "Barangay Certificate of Residency o Indigency",
-                        "Kasalukuyang 2×2 ID Picture (White background)",
-                        "Proof of Income / Certificate of Indigency (kung kinakailangan)",
-                        "Medical Certificate / Prescription (para sa tulong-medikal)",
-                        "Iba pang katibayan o dokumento na sumusuporta sa kahilingan",
-                      ].map((req, idx) => (
+                      {seniorSocialRequirements.map((req, idx) => (
                         <li key={idx} className="flex gap-2 text-sm text-foreground">
                           <span className="text-blue-600">•</span>
                           <span>{req}</span>
@@ -783,9 +803,9 @@ export default function ApplyPWDSenior() {
                         : "text-green-900"
                     }`}>
                       {urlType === "loss"
-                        ? "Paalala: Para sa pagpapalit ng nawala o nasirang Senior Citizen ID. Ihanda ang Notarized Affidavit of Loss at valid ID."
+                        ? t("seniorLossAlert") || "Paalala: Para sa pagpapalit ng nawala o nasirang Senior Citizen ID. Ihanda ang Notarized Affidavit of Loss at valid ID."
                         : urlType === "renewal"
-                        ? "Paalala: Para sa pag-renew ng expired o nag-eexpire na Senior Citizen / OSCA ID."
+                        ? t("seniorRenewalReminder") || "Paalala: Para sa pag-renew ng expired o nag-eexpire na Senior Citizen / OSCA ID."
                         : t("seniorNewAlert")}
                     </p>
                   </div>
@@ -795,19 +815,9 @@ export default function ApplyPWDSenior() {
                     <h3 className="text-base font-bold text-foreground mb-3">{t("seniorRequirementsHeading")}</h3>
                     <ul className="space-y-2.5">
                       {(urlType === "loss"
-                        ? [
-                            "Notarized Affidavit of Loss na nagsasaad ng pagkawala ng ID",
-                            "Valid Government-issued ID na may larawan at lagda",
-                            "Kasalukuyang 2×2 ID Picture (White background)",
-                            "Barangay Certificate of Residency sa Lungsod Quezon",
-                          ]
+                        ? seniorLossRequirements
                         : urlType === "renewal"
-                        ? [
-                            "Lumang / Expired Senior Citizen / OSCA ID",
-                            "Kasalukuyang 2×2 ID Picture (White background)",
-                            "Barangay Certificate of Residency (kung nagbago ang tirahan)",
-                            "Valid Government ID bilang karagdagang pagkakakilanlan",
-                          ]
+                        ? seniorRenewalRequirements
                         : seniorCitizenRequirements
                       ).map((req, idx) => (
                         <li key={idx} className="flex gap-2 text-sm text-foreground">
@@ -847,7 +857,7 @@ export default function ApplyPWDSenior() {
                 }}
                 className="px-5 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white transition-all shrink-0 cursor-pointer shadow-sm"
               >
-                Ipagpatuloy ang Aplikasyon
+                {t("continueApplicationBtn") || "Ipagpatuloy ang Aplikasyon"}
               </button>
             </div>
           </div>
