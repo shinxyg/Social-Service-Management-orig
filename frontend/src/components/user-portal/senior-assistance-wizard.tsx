@@ -225,14 +225,10 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   })
 
   // Reload / Navigation warning protection — only active starting Step 2
-  const isFormDirty = !submitted && step >= 2
+  const isFormDirty = !submitted && step > 1
 
   useEffect(() => {
-    if (isFormDirty) {
-      ;(window as any).__isFormDirty = true
-    } else {
-      ;(window as any).__isFormDirty = false
-    }
+    ;(window as any).__isFormDirty = isFormDirty
     return () => {
       ;(window as any).__isFormDirty = false
     }
@@ -240,14 +236,17 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isFormDirty) {
+      if (step > 1 && !submitted) {
         e.preventDefault()
         e.returnValue = ""
       }
     }
     window.addEventListener("beforeunload", handleBeforeUnload)
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [isFormDirty])
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+      ;(window as any).__isFormDirty = false
+    }
+  }, [step, submitted])
 
   useEffect(() => {
     if (submitted) {
