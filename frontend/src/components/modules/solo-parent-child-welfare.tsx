@@ -675,19 +675,61 @@ interface DetailedViewProps {
 function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) {
   const [approveValue, setApproveValue] = useState(() => {
     if (isSoloParent(app)) {
-      const existingId =
-        (app as any).existingIdNumber ||
-        (app as any).soloParentIdNumber ||
-        (app as any).existingSoloParentIdNumber ||
-        app.assignedIdNumber ||
-        (app as any).idNumber
       const isRenewalOrLoss =
         app.applicationType === "renewal" ||
         app.applicationType === "loss" ||
         app.applicationType === "replacement"
-      if (isRenewalOrLoss && existingId && String(existingId).trim() && String(existingId).trim() !== "—") {
-        return String(existingId).trim()
+
+      if (isRenewalOrLoss) {
+        const candidateFields = [
+          (app as any).existingIdNumber,
+          (app as any).soloParentIdNumber,
+          (app as any).existingSoloParentIdNumber,
+          app.assignedIdNumber,
+          (app as any).idNumber,
+        ]
+        for (const c of candidateFields) {
+          if (c && typeof c === "string") {
+            const s = c.trim()
+            if (s && s !== "—" && !s.startsWith("110000") && (s.startsWith("SP-") || s.length >= 6)) {
+              return s
+            }
+          }
+        }
+
+        // Check local storage records for matching user
+        try {
+          const raw = localStorage.getItem("all_user_applications") || localStorage.getItem("applications")
+          if (raw) {
+            const pool = JSON.parse(raw)
+            const appEmail = String(app.email || "").trim().toLowerCase()
+            const appRef = String(app.referenceNumber || "").trim().toLowerCase()
+            const appName = `${app.firstName || ""} ${app.lastName || ""}`.trim().toLowerCase()
+
+            const match = pool.find((a: any) => {
+              const aIsApproved = a.status === "approved" || a.status === "completed"
+              const assigned = a.assignedIdNumber || a.soloParentIdNumber
+              if (!aIsApproved || !assigned) return false
+
+              const aEmail = String(a.email || "").trim().toLowerCase()
+              const aRef = String(a.referenceNumber || "").trim().toLowerCase()
+              const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase()
+
+              return (
+                (appEmail && aEmail && appEmail === aEmail) ||
+                (appRef && aRef && (appRef === aRef || appRef.includes(aRef) || aRef.includes(appRef))) ||
+                (appName && aName && appName === aName)
+              )
+            })
+
+            if (match) {
+              const assigned = match.assignedIdNumber || match.soloParentIdNumber
+              if (assigned) return String(assigned).trim()
+            }
+          }
+        } catch {}
       }
+
       if (app.assignedIdNumber) return app.assignedIdNumber
       const year = new Date().getFullYear()
       const rand = Math.floor(10000 + Math.random() * 90000)
