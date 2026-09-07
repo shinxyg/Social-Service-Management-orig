@@ -618,7 +618,7 @@ const checkDuplicateBeneficiary = async () => {
 const handleFinalSubmit = async () => {
   const isDuplicate = await checkDuplicateBeneficiary()
   if (isDuplicate) {
-    alert("May kasalukuyang PENDING o APPROVED na application na may parehong impormasyon. Hindi ito maaaring i-file ulit hangga't hindi pa naresolba ang naunang application.")
+    alert("May kasalukuyang PENDING (Under Review) na application na may parehong impormasyon. Mangyaring maghintay muna sa pagsusuri bago magsumite ng panibagong aplikasyon.")
     return
   }
 

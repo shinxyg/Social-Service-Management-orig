@@ -414,7 +414,7 @@ exports.checkDuplicatePerson = async (req, res) => {
       return res.status(400).json({ error: 'Kulang ang kinakailangang impormasyon para sa duplicate check.' });
     }
     const result = await db.query(
-      `SELECT * FROM aics_applications WHERE assistance_type = $1 AND status IN ('pending', 'approved')`,
+      `SELECT * FROM aics_applications WHERE assistance_type = $1 AND status = 'pending'`,
       [assistanceType]
     );
     const norm = (s) => (s || '').toString().trim().toLowerCase();
