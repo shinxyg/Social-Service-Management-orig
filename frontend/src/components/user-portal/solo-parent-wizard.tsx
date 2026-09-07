@@ -749,7 +749,6 @@ export default function SoloParentApplicationWizard({
     barangay: string
     status: string
   } | null>(null)
-  const [agreedCertification, setAgreedCertification] = useState(false)
   const selectedCategory = SOLO_PARENT_CATEGORIES.find((c) => c.id === selectedCategoryId) || null
 
   const handleVerifyId = () => {
@@ -1031,7 +1030,7 @@ export default function SoloParentApplicationWizard({
   const step3Valid = requiredDocs.every((doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0)
 
   const canGoNext =
-    step === 1 ? step1Valid : step === 2 ? step2Valid : step === 3 ? step3Valid : agreedCertification
+    step === 1 ? step1Valid : step === 2 ? step2Valid : step === 3 ? step3Valid : true
 
   const goNext = () => {
     if (step === 1 && !step1Valid) {
@@ -2357,34 +2356,6 @@ export default function SoloParentApplicationWizard({
                   })}
                 </div>
               </ReviewSection>
-
-              {/* Certification Checkbox */}
-              <div className="border border-border rounded-xl p-4 bg-gray-50 space-y-2">
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreedCertification}
-                    onChange={(e) => setAgreedCertification(e.target.checked)}
-                    className="mt-0.5 accent-blue-600 h-4 w-4 shrink-0"
-                  />
-                  <span className="text-xs text-foreground font-medium leading-relaxed select-none">
-                    {language === "en"
-                      ? "I hereby certify that all information provided is true, correct, and complete to the best of my knowledge. I understand that any false statement may be grounds for cancellation of my application."
-                      : language === "bis"
-                      ? "Gipamatud-an nako nga ang tanang impormasyon nga akong gihatag tinuod, husto, ug kompleto sumala sa akong labing maayong kahibalo. Nasabtan nako nga ang bisan unsang bakak nga pamahayag mahimong hinungdan sa pagkansela sa akong aplikasyon."
-                      : "Pinatutunayan ko na ang lahat ng impormasyong aking ibinigay ay totoo, wasto, at kumpleto ayon sa aking pinakamahusay na kaalaman. Nauunawaan ko na ang anumang maling pahayag ay maaaring maging sanhi ng pagkakansela ng aking aplikasyon."} <span className="text-red-500">*</span>
-                  </span>
-                </label>
-                {attemptedNext && !agreedCertification && (
-                  <p className="text-xs text-red-500 ml-6 font-semibold">
-                    {language === "en"
-                      ? "You must check the certification checkbox before submitting."
-                      : language === "bis"
-                      ? "Kinahanglang markahan ang certification checkbox sa dili pa mag-submit."
-                      : "Kailangang lagyan ng tsek ang certification checkbox bago mag-submit."}
-                  </p>
-                )}
-              </div>
             </div>
           )}
         </div>
