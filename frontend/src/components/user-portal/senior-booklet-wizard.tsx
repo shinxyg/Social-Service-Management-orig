@@ -442,19 +442,35 @@ export default function SeniorBookletWizard({
           return false
         }
 
-        // 1. Check if user has an active or approved application for this booklet type
-        const targetBookletApp = allApps.find((a) => {
-          if (!a) return false
-          const appType = String(a.type || a.service || a.extra_data?.type || "").toLowerCase()
-          const appCategory = String(a.category || a.extra_data?.category || "").toLowerCase()
-          const isTargetType = isMedicine
-            ? appType.includes("medicine") || appCategory.includes("medicine")
-            : appType.includes("movie") || appCategory.includes("movie")
-          if (!isTargetType) return false
-          const status = String(a.status || "").toLowerCase()
-          if (status !== "pending" && status !== "under_review" && status !== "approved" && status !== "completed" && status !== "for_release") return false
-          return isUserMatch(a)
+        // 1. Check if user has an active or approved application for this booklet type (pending prioritized)
+        const matchingBookletApps = allApps
+          .filter((a) => {
+            if (!a) return false
+            const appType = String(a.type || a.service || a.extra_data?.type || "").toLowerCase()
+            const appCategory = String(a.category || a.extra_data?.category || "").toLowerCase()
+            const isTargetType = isMedicine
+              ? appType.includes("medicine") || appCategory.includes("medicine")
+              : appType.includes("movie") || appCategory.includes("movie")
+            if (!isTargetType) return false
+            return isUserMatch(a)
+          })
+          .sort((a, b) => {
+            const timeA = new Date(a.submitted_at || a.created_at || a.submittedAt || 0).getTime()
+            const timeB = new Date(b.submitted_at || b.created_at || b.submittedAt || 0).getTime()
+            return timeB - timeA
+          })
+
+        const matchedPending = matchingBookletApps.find((a) => {
+          const status = String(a.status || "pending").toLowerCase()
+          return status === "pending" || status === "under_review" || status === "assessment" || status === "for_assessment"
         })
+
+        const matchedApproved = matchingBookletApps.find((a) => {
+          const status = String(a.status || "").toLowerCase()
+          return status === "approved" || status === "completed" || status === "for_release" || status === "released"
+        })
+
+        const targetBookletApp = matchedPending || matchedApproved || null
 
         if (targetBookletApp) {
           setBlockedApp(targetBookletApp)
