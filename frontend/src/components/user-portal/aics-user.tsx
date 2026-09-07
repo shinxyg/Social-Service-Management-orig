@@ -418,7 +418,7 @@ export default function AICSUser() {
             >
               VIEW IN FINANCIAL AID / DISBURSEMENT
             </button>
-            {isAppApproved ? (
+            {isAppApproved && (
               <button
                 type="button"
                 onClick={() => {
@@ -430,19 +430,6 @@ export default function AICSUser() {
                 className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
               >
                 Submit Another Application (Apply Again)
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  bypassedBlockRef.current = true
-                  setBypassedBlock(true)
-                  setIsBlocked(false)
-                  setBlockedApp(null)
-                }}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-              >
-                Edit / View Form Details
               </button>
             )}
           </div>
