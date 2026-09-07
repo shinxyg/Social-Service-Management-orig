@@ -548,6 +548,12 @@ export default function SeniorBookletWizard({
         const isSenior = cat.includes("SENIOR") || cat === "SENIOR CITIZEN" || String(a.service || "").toLowerCase().includes("senior")
         if (!isSenior) return false
 
+        const aAssignedClean = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
+        const aRefClean = String(a.referenceNumber || a.reference_number || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
+        const aExistingClean = String(a.existingIdNumber || a.existing_id_number || a.seniorIdNumber || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
+        const aQcidClean = String(a.qcid || a.qcidNo || a.qc_id || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
+        const cleanTyped = typed.replace(/[^A-Z0-9]/gi, "").toUpperCase()
+
         const assignedDigits = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/\D/g, "")
         const refDigits = String(a.referenceNumber || a.reference_number || "").replace(/\D/g, "")
         const assignedStr = String(a.assignedIdNumber || a.assigned_id_number || "").toUpperCase()
@@ -564,12 +570,17 @@ export default function SeniorBookletWizard({
           }
         }
 
-        // 2. Senior Citizen ID 16-digit match
-        const matchAssigned = assignedDigits.length >= 16 && (assignedDigits === cleanTypedNormalized || assignedDigits.endsWith(cleanTypedNormalized))
-        const matchRef = refDigits.length >= 16 && (refDigits === cleanTypedNormalized || refDigits.endsWith(cleanTypedNormalized))
-        const matchExisting = existingId.length >= 16 && (existingId === cleanTypedNormalized || existingId.endsWith(cleanTypedNormalized))
+        // 2. Senior Citizen ID exact match (alphanumeric or exact digits)
+        const matchExactClean = (aAssignedClean && aAssignedClean === cleanTyped) ||
+          (aRefClean && aRefClean === cleanTyped) ||
+          (aExistingClean && aExistingClean === cleanTyped) ||
+          (aQcidClean && aQcidClean === cleanTyped)
 
-        return Boolean(matchAssigned || matchRef || matchExisting)
+        const matchAssigned = assignedDigits.length >= 6 && (assignedDigits === cleanTypedNormalized || (cleanTypedNormalized.length >= 16 && assignedDigits.endsWith(cleanTypedNormalized)))
+        const matchRef = refDigits.length >= 6 && (refDigits === cleanTypedNormalized || (cleanTypedNormalized.length >= 16 && refDigits.endsWith(cleanTypedNormalized)))
+        const matchExisting = existingId.length >= 6 && (existingId === cleanTypedNormalized || (cleanTypedNormalized.length >= 16 && existingId.endsWith(cleanTypedNormalized)))
+
+        return Boolean(matchExactClean || matchAssigned || matchRef || matchExisting)
       })
 
       const isProfileMatch = (userProfileQcidDigits.length >= 16 && userProfileQcidDigits === cleanTypedNormalized) ||

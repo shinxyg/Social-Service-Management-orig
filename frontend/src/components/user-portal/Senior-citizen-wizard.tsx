@@ -352,17 +352,27 @@ export default function SeniorCitizenApplicationWizard({
         const isSeniorCategory = cat.includes("SENIOR") || cat === "SENIOR CITIZEN" || String(a.service || "").toLowerCase().includes("senior")
         if (!isSeniorCategory) return false
 
-        const assignedClean = String(a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const refClean = String(a.referenceNumber || a.reference_no || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const assignedDigits = String(a.assignedIdNumber || "").replace(/\D/g, "")
-        const refDigits = String(a.referenceNumber || a.reference_no || "").replace(/\D/g, "")
+        const aAssignedClean = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const aRefClean = String(a.referenceNumber || a.reference_no || a.reference_number || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const aExistingClean = String(a.existingIdNumber || a.existing_id_number || a.seniorIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const aQcidClean = String(a.qcid || a.qcidNo || a.qc_id || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const assignedDigits = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/\D/g, "")
+        const refDigits = String(a.referenceNumber || a.reference_no || a.reference_number || "").replace(/\D/g, "")
+        const existingDigits = String(a.existingIdNumber || a.existing_id_number || a.seniorIdNumber || "").replace(/\D/g, "")
 
-        // STRICT EXACT MATCH: Must match full 16 digits exactly
-        const matchAssigned = assignedDigits.length >= 16 && (assignedDigits === cleanDigits || assignedDigits.endsWith(cleanDigits))
-        const matchRef = refDigits.length >= 16 && (refDigits === cleanDigits || refDigits.endsWith(cleanDigits))
-        const matchFullString = assignedClean === cleanTyped || refClean === cleanTyped
+        // STRICT EXACT MATCH: All characters or full sequence must match exactly
+        const matchExactClean = (aAssignedClean && aAssignedClean === cleanTyped) ||
+          (aRefClean && aRefClean === cleanTyped) ||
+          (aExistingClean && aExistingClean === cleanTyped) ||
+          (aQcidClean && aQcidClean === cleanTyped)
 
-        return Boolean(matchAssigned || matchRef || matchFullString)
+        const matchDigits = cleanDigits.length >= 6 && (
+          (assignedDigits.length >= 6 && (assignedDigits === cleanDigits || (cleanDigits.length >= 16 && assignedDigits.endsWith(cleanDigits)))) ||
+          (refDigits.length >= 6 && (refDigits === cleanDigits || (cleanDigits.length >= 16 && refDigits.endsWith(cleanDigits)))) ||
+          (existingDigits.length >= 6 && (existingDigits === cleanDigits || (cleanDigits.length >= 16 && existingDigits.endsWith(cleanDigits))))
+        )
+
+        return Boolean(matchExactClean || matchDigits)
       })
 
       if (matchedApp) {

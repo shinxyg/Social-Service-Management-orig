@@ -66,11 +66,11 @@ const LIVING_ARRANGEMENTS = [
 ]
 
 function formatSeniorId(val: string): string {
-  const digits = val
-    .replace(/^(SENIOR|OSCA)-?/i, "")
-    .replace(/^(SENIOR|OSCA)\s*-\s*/i, "")
-    .replace(/\D/g, "")
-    .slice(0, 16)
+  const trimmed = val.trim().toUpperCase()
+  if (trimmed.startsWith("QC-") || trimmed.startsWith("SENIOR-") || trimmed.startsWith("OSCA-")) {
+    return trimmed.slice(0, 24)
+  }
+  const digits = val.replace(/\D/g, "").slice(0, 16)
   if (!digits) return ""
   if (digits.length <= 6) return digits
   if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
@@ -383,14 +383,15 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
   const handleVerifyId = async () => {
     setVerifyError(null)
-    const typed = (formData.seniorIdNumber || "").trim()
+    const typed = (formData.seniorIdNumber || "").trim().toUpperCase()
+    const cleanTyped = typed.replace(/[^A-Z0-9]/gi, "").toUpperCase()
     const cleanDigits = typed.replace(/\D/g, "")
 
-    if (cleanDigits.length !== 16) {
+    if (!typed || (cleanDigits.length < 5 && cleanTyped.length < 5)) {
       setIsIdVerified(false)
       setVerifyError(
         t("seniorIdExactLengthError") ||
-        "Senior Citizen ID Number must be exactly 16 digits."
+        "Pakilagay ang inyong valid na Senior Citizen / OSCA ID Number."
       )
       return
     }
@@ -420,23 +421,43 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
         } catch {}
       }
 
+      // Strict matching against registered Senior Citizen records (New App, Renewal, or existing ID)
       const matchedApp = allApps.find((a) => {
         if (!a) return false
-        const cat = String(a.category || a.service || "").toUpperCase()
+        const cat = String(a.category || a.service || a.serviceCategory || "").toUpperCase()
         const isSenior = cat.includes("SENIOR") || cat === "SENIOR CITIZEN" || String(a.service || "").toLowerCase().includes("senior")
         if (!isSenior) return false
 
-        const assignedDigits = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/\D/g, "")
-        const refDigits = String(a.referenceNumber || a.reference_number || "").replace(/\D/g, "")
+        const aAssignedClean = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
+        const aRefClean = String(a.referenceNumber || a.reference_number || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
+        const aExistingClean = String(a.existingIdNumber || a.existing_id_number || a.seniorIdNumber || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
+        const aQcidClean = String(a.qcid || a.qcidNo || a.qc_id || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
 
-        return (
-          (assignedDigits.length >= 16 && (assignedDigits === cleanDigits || assignedDigits.endsWith(cleanDigits))) ||
-          (refDigits.length >= 16 && (refDigits === cleanDigits || refDigits.endsWith(cleanDigits)))
-        )
+        const aAssignedDigits = aAssignedClean.replace(/\D/g, "")
+        const aRefDigits = aRefClean.replace(/\D/g, "")
+        const aExistingDigits = aExistingClean.replace(/\D/g, "")
+        const aQcidDigits = aQcidClean.replace(/\D/g, "")
+
+        // 1. Strict exact alphanumeric match (all characters must match exactly)
+        if (aAssignedClean && aAssignedClean === cleanTyped) return true
+        if (aRefClean && aRefClean === cleanTyped) return true
+        if (aExistingClean && aExistingClean === cleanTyped) return true
+        if (aQcidClean && aQcidClean === cleanTyped) return true
+
+        // 2. Exact full 16-digit or exact sequence match
+        if (cleanDigits.length >= 6) {
+          if (aAssignedDigits && (aAssignedDigits === cleanDigits || (cleanDigits.length >= 16 && aAssignedDigits.endsWith(cleanDigits)))) return true
+          if (aRefDigits && (aRefDigits === cleanDigits || (cleanDigits.length >= 16 && aRefDigits.endsWith(cleanDigits)))) return true
+          if (aExistingDigits && (aExistingDigits === cleanDigits || (cleanDigits.length >= 16 && aExistingDigits.endsWith(cleanDigits)))) return true
+          if (aQcidDigits && aQcidDigits === cleanDigits) return true
+        }
+
+        return false
       })
 
-      const userProfileDigits = (userProfile?.qcidNo || "").replace(/\D/g, "")
-      const isProfileMatch = userProfileDigits.length >= 16 && userProfileDigits === cleanDigits
+      const userProfileClean = String(userProfile?.qcidNo || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
+      const userProfileSeniorClean = String((userProfile as any)?.seniorIdNumber || (userProfile as any)?.assignedIdNumber || "").replace(/[^A-Z0-9]/gi, "").toUpperCase()
+      const isProfileMatch = (userProfileClean && userProfileClean === cleanTyped) || (userProfileSeniorClean && userProfileSeniorClean === cleanTyped)
 
       if (matchedApp) {
         const foundName = [
@@ -449,6 +470,35 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
         setIsIdVerified(true)
         setVerifyError(null)
         setVerifiedSeniorName(foundName || "SENIOR CITIZEN BENEFICIARY")
+
+        // Auto-fill applicant details from verified Senior ID
+        const bMonth = matchedApp.dobMonth || ""
+        const bDay = matchedApp.dobDay || ""
+        const bYear = matchedApp.dobYear || ""
+        let compAge = matchedApp.age || ""
+        if (bMonth && bDay && bYear && bYear.length === 4) {
+          const calc = calculateAge(bMonth, bDay, bYear)
+          if (calc) compAge = calc
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          firstName: matchedApp.firstName || matchedApp.first_name || prev.firstName,
+          middleName: matchedApp.middleName || matchedApp.middle_name || prev.middleName,
+          lastName: matchedApp.lastName || matchedApp.last_name || prev.lastName,
+          suffix: matchedApp.suffix || prev.suffix,
+          dobMonth: bMonth || prev.dobMonth,
+          dobDay: bDay || prev.dobDay,
+          dobYear: bYear || prev.dobYear,
+          age: compAge || prev.age,
+          sex: matchedApp.sex || matchedApp.gender || prev.sex,
+          civilStatus: matchedApp.civilStatus || prev.civilStatus,
+          contactNumber: (matchedApp.contactNo || matchedApp.cellphoneNo || matchedApp.contactNumber || prev.contactNumber || "").replace(/\s+/g, ""),
+          emailAddress: matchedApp.email || prev.emailAddress,
+          addressHouseNo: matchedApp.houseNo || matchedApp.addressHouseNo || prev.addressHouseNo,
+          addressStreet: matchedApp.street || matchedApp.addressStreet || prev.addressStreet,
+          barangay: matchedApp.barangay || matchedApp.addressBarangay || prev.barangay,
+        }))
       } else if (isProfileMatch) {
         const profileName = [userProfile?.firstName, userProfile?.middleName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase()
         setIsIdVerified(true)
@@ -458,7 +508,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
         setIsIdVerified(false)
         setVerifyError(
           t("seniorIdNotFoundError") ||
-          "Senior Citizen ID was not found in the official records. Please verify the official ID Number received in your email or on your issued Senior ID card."
+          "Hindi nahanap ang Senior Citizen / OSCA ID sa opisyal na talaan ng New App / Senior ID. Kapag may nabagong numero, ito ay ituturing na invalid."
         )
       }
     } catch (err) {
@@ -466,7 +516,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
       setIsIdVerified(false)
       setVerifyError(
         t("seniorIdVerifyGeneralError") ||
-        "An error occurred while verifying the Senior ID. Please try again."
+        "May naganap na error habang bine-verify ang Senior Citizen ID. Pakisubukang muli."
       )
     } finally {
       setIsVerifying(false)
