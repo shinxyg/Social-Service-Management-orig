@@ -496,6 +496,7 @@ export default function SeniorBookletWizard({
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [verifiedSeniorName, setVerifiedSeniorName] = useState<string>("")
   const [verifiedSeniorId, setVerifiedSeniorId] = useState<string>("")
+  const [expectedBookletNumber, setExpectedBookletNumber] = useState<string>("")
 
   const handleVerifyId = async () => {
     setVerifyError(null)
@@ -640,23 +641,53 @@ export default function SeniorBookletWizard({
 
         const seniorId = matchedApp.existingIdNumber || matchedApp.existing_id_number || matchedApp.referenceNumber || matchedApp.assignedIdNumber || oscaIdInput
         let foundBooklet = ""
-        const rawAssigned = String(matchedApp.assignedIdNumber || "")
-        const rawExisting = String(matchedApp.existingBookletNumber || matchedApp.bookletNumber || "")
+        const rawAssigned = String(matchedApp.assignedIdNumber || matchedApp.assigned_id_number || "")
+        const rawExisting = String(matchedApp.existingBookletNumber || matchedApp.bookletNumber || matchedApp.existing_booklet_number || "")
         if (isMedicine) {
-          if (rawAssigned.startsWith("MB-") || rawAssigned.length >= 10) foundBooklet = rawAssigned
-          else if (rawExisting.startsWith("MB-") || rawExisting.length >= 10) foundBooklet = rawExisting
+          if (rawAssigned.startsWith("MB-") || rawAssigned.length >= 8) foundBooklet = rawAssigned
+          else if (rawExisting.startsWith("MB-") || rawExisting.length >= 8) foundBooklet = rawExisting
+          else if (matchedApp.medicineBookletNumber) foundBooklet = matchedApp.medicineBookletNumber
         } else {
-          if (rawAssigned.startsWith("MV-") || rawAssigned.length >= 10) foundBooklet = rawAssigned
-          else if (rawExisting.startsWith("MV-") || rawExisting.length >= 10) foundBooklet = rawExisting
+          if (rawAssigned.startsWith("MV-") || rawAssigned.length >= 8) foundBooklet = rawAssigned
+          else if (rawExisting.startsWith("MV-") || rawExisting.length >= 8) foundBooklet = rawExisting
+          else if (matchedApp.movieBookletNumber) foundBooklet = matchedApp.movieBookletNumber
+        }
+
+        // Also look through allApps for prior booklet records for this senior
+        const priorBookletRecord = allApps.find((a) => {
+          if (!a) return false
+          const cat = String(a.category || a.service || a.extra_data?.category || "").toLowerCase()
+          const typ = String(a.type || a.service || a.extra_data?.type || "").toLowerCase()
+          const isTargetBooklet = isMedicine
+            ? (cat.includes("medicine") || typ.includes("medicine"))
+            : (cat.includes("movie") || typ.includes("movie"))
+          if (!isTargetBooklet) return false
+
+          const mFirst = String(matchedApp.firstName || matchedApp.first_name || "").toLowerCase().trim()
+          const mLast = String(matchedApp.lastName || matchedApp.last_name || "").toLowerCase().trim()
+          const af = String(a.firstName || a.first_name || "").toLowerCase().trim()
+          const al = String(a.lastName || a.last_name || "").toLowerCase().trim()
+
+          return (mFirst && mLast && af === mFirst && al === mLast) ||
+            (a.existingIdNumber && a.existingIdNumber === oscaIdInput) ||
+            (a.assignedIdNumber && a.assignedIdNumber === oscaIdInput) ||
+            (a.referenceNumber && a.referenceNumber === oscaIdInput)
+        })
+
+        if (priorBookletRecord) {
+          const pNum = priorBookletRecord.assignedIdNumber || priorBookletRecord.existingBookletNumber || priorBookletRecord.bookletNumber || priorBookletRecord.referenceNumber
+          if (pNum) foundBooklet = pNum
+        }
+
+        if (!foundBooklet && (rawExisting || rawAssigned)) {
+          foundBooklet = rawExisting || rawAssigned
         }
 
         setIsIdVerified(true)
         setVerifyError(null)
         setVerifiedSeniorName(foundName || "SENIOR CITIZEN BENEFICIARY")
         setVerifiedSeniorId(seniorId)
-        if (hasPriorBooklet === "yes" && foundBooklet && !bookletNumber) {
-          setBookletNumber(foundBooklet)
-        }
+        setExpectedBookletNumber(foundBooklet)
 
         let bMonth = matchedApp.dobMonth || ""
         let bDay = matchedApp.dobDay || ""
@@ -698,6 +729,7 @@ export default function SeniorBookletWizard({
         setVerifyError(null)
         setVerifiedSeniorName(profileName || "SENIOR CITIZEN BENEFICIARY")
         setVerifiedSeniorId(seniorId)
+        setExpectedBookletNumber("")
       } else {
         setIsIdVerified(false)
         setVerifyError(
@@ -717,15 +749,23 @@ export default function SeniorBookletWizard({
     }
   }
 
-  // Booklet Number validation against QCID / OSCA ID
+  // Booklet Number validation against registered/expected booklet number
   const cleanBooklet = (bookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
+  const cleanExpected = (expectedBookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
 
-  const isBookletFormatValid = Boolean(
-    cleanBooklet &&
-    (cleanBooklet.length === 16 || cleanBooklet.length >= 8)
+  const isBookletNumberMatch = Boolean(
+    hasPriorBooklet === "no" ||
+    (
+      cleanBooklet.length >= 6 &&
+      (
+        cleanExpected
+          ? (cleanBooklet === cleanExpected || (cleanExpected.length >= 10 && cleanExpected.endsWith(cleanBooklet)) || (cleanBooklet.length >= 10 && cleanBooklet.endsWith(cleanExpected)))
+          : (cleanBooklet.length === 16 || cleanBooklet.length >= 8)
+      )
+    )
   )
 
-  const isExistingBookletValid = hasPriorBooklet === "no" || (bookletNumber.trim() !== "" && isBookletFormatValid)
+  const isExistingBookletValid = hasPriorBooklet === "no" || (bookletNumber.trim() !== "" && isBookletNumberMatch)
 
   // Step validations
   const isStep1Valid =
@@ -1269,15 +1309,15 @@ export default function SeniorBookletWizard({
                           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                           <span>{verifiedSeniorName || "SENIOR CITIZEN BENEFICIARY"}</span>
                         </div>
-                        <div className={`grid ${hasPriorBooklet === "yes" && bookletNumber ? "grid-cols-2" : "grid-cols-1"} gap-2 text-[11px] pt-1 border-t border-emerald-200/60 font-mono`}>
+                        <div className={`grid ${hasPriorBooklet === "yes" && (expectedBookletNumber || bookletNumber) ? "grid-cols-2" : "grid-cols-1"} gap-2 text-[11px] pt-1 border-t border-emerald-200/60 font-mono`}>
                           <div>
                             <span className="text-gray-500 font-sans block text-[10px] uppercase">Senior Citizen ID:</span>
                             <span className="text-blue-800 font-bold">{verifiedSeniorId || oscaIdInput || "137404-2026-516915"}</span>
                           </div>
-                          {hasPriorBooklet === "yes" && bookletNumber && (
+                          {hasPriorBooklet === "yes" && (expectedBookletNumber || bookletNumber) && (
                             <div>
                               <span className="text-gray-500 font-sans block text-[10px] uppercase">Existing Booklet No:</span>
-                              <span className="text-emerald-800 font-bold">{bookletNumber}</span>
+                              <span className="text-emerald-800 font-bold">{expectedBookletNumber || bookletNumber}</span>
                             </div>
                           )}
                         </div>
@@ -1288,9 +1328,16 @@ export default function SeniorBookletWizard({
                   {hasPriorBooklet === "yes" && (
                     <div className="space-y-4 max-w-md pt-1 animate-in fade-in">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase">
-                          {isMedicine ? "Existing Medicine Discount Booklet Number *" : "Existing Free Movie Booklet Number *"}
-                        </label>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block text-xs font-semibold text-gray-700 uppercase">
+                            {isMedicine ? "Existing Medicine Discount Booklet Number *" : "Existing Free Movie Booklet Number *"}
+                          </label>
+                          {bookletNumber.trim() && isBookletNumberMatch && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full animate-in fade-in">
+                              <Check className="w-3 h-3" /> MATCHED
+                            </span>
+                          )}
+                        </div>
                         <input
                           type="text"
                           value={bookletNumber}
@@ -1298,23 +1345,31 @@ export default function SeniorBookletWizard({
                             setBookletNumber(formatSeniorNumber(e.target.value))
                           }}
                           placeholder="137404-2026-516915"
-                          maxLength={18}
+                          maxLength={24}
                           className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 font-mono outline-none transition-all ${
-                            bookletNumber.trim() && !isBookletFormatValid
+                            bookletNumber.trim() && !isBookletNumberMatch
                               ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
-                              : bookletNumber.trim() && isBookletFormatValid
+                              : bookletNumber.trim() && isBookletNumberMatch
                               ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
                               : "border-gray-300 bg-white focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                           }`}
                         />
-                        {bookletNumber.trim() !== "" && !isBookletFormatValid && (
-                          <p className="text-xs text-red-600 mt-1 font-medium">
-                            {`Please enter a valid 16-digit ${isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"} Number in format 137404-2026-516915.`}
-                          </p>
+                        {bookletNumber.trim() !== "" && !isBookletNumberMatch && (
+                          <div className="flex items-start gap-2 border border-red-200 bg-red-50 p-2.5 rounded-lg text-xs text-red-700 mt-2 animate-in fade-in">
+                            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-bold">Hindi Tugma ang Booklet Number</p>
+                              <p className="mt-0.5">
+                                {expectedBookletNumber
+                                  ? `Ang inilagay na booklet number ay hindi tumutugma sa opisyal na na-generate sa inyong talaan (${expectedBookletNumber}). Pakitiyak na pareho ito bago magpatuloy.`
+                                  : `Hindi valid ang Booklet Number. Pakilagay ang tamang 16-digit Booklet Number na na-generate sa inyong booklet.`}
+                              </p>
+                            </div>
+                          </div>
                         )}
                         {attemptedNext && !bookletNumber.trim() && (
                           <p className="text-xs text-red-600 mt-1 font-medium">
-                            {`Please enter your existing ${isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"} Number (137404-2026-516915).`}
+                            {`Kailangang ilagay ang inyong existing ${isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"} Number.`}
                           </p>
                         )}
                       </div>
