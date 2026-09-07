@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Check,
   CheckCircle2,
@@ -179,6 +179,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   const [referenceNumber, setReferenceNumber] = useState("")
   const [submissionDate, setSubmissionDate] = useState("")
   const [isEditingInfo] = useState(false)
+  const bypassedActiveAppRef = useRef(false)
+  const dismissedAppRefCurrent = useRef<string | null>(null)
 
   // Checklist State (Step 1)
   const [isResident, setIsResident] = useState(false)
@@ -322,10 +324,16 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
           return isUserMatch(a)
         })
 
+        if (bypassedActiveAppRef.current) return
+
         if (activeAssistanceApp) {
+          const activeRef = String(activeAssistanceApp.referenceNumber || activeAssistanceApp.reference_number || "").trim()
+          if (dismissedAppRefCurrent.current && (dismissedAppRefCurrent.current === activeRef || dismissedAppRefCurrent.current === "all")) {
+            return
+          }
           setLatestSubmittedApp(activeAssistanceApp)
           setSubmitted(true)
-          setReferenceNumber(activeAssistanceApp.referenceNumber || activeAssistanceApp.reference_number || "")
+          setReferenceNumber(activeRef)
           const dateStr = activeAssistanceApp.submittedAt || activeAssistanceApp.created_at || activeAssistanceApp.dateSubmitted
           if (dateStr) {
             setSubmissionDate(new Date(dateStr).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }))
@@ -720,6 +728,9 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
       }).catch(() => {})
     } catch {}
 
+    bypassedActiveAppRef.current = false
+    dismissedAppRefCurrent.current = null
+
     setTimeout(() => {
       setIsSubmitting(false)
       setSubmitted(true)
@@ -795,9 +806,18 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
               <button
                 type="button"
                 onClick={() => {
+                  const currentRef = latestSubmittedApp?.referenceNumber || latestSubmittedApp?.reference_number || referenceNumber || "all"
+                  bypassedActiveAppRef.current = true
+                  dismissedAppRefCurrent.current = currentRef
                   setLatestSubmittedApp(null)
                   setSubmitted(false)
                   setReferenceNumber("")
+                  setIsResident(false)
+                  setIsSenior(false)
+                  setHasSeniorId(false)
+                  setIsIndigentOrInNeed(false)
+                  setIsIdVerified(false)
+                  setUploadedFiles({})
                   setStep(1)
                 }}
                 className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
