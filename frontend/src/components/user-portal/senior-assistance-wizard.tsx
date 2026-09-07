@@ -290,7 +290,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
   // Form Data (Step 1 & Step 2)
   const [formData, setFormData] = useState({
-    seniorIdNumber: "QC-SC-2022-09412",
+    seniorIdNumber: "",
 
     // Step 2: Personal (from QCID profile)
     qcidNumber: userProfile?.qcidNo || "110000116932100",
@@ -923,7 +923,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                       setIsIdVerified(false)
                       setVerifyError(null)
                     }}
-                    placeholder="137404-2026-516915"
+                    placeholder={t("seniorIdNumberPlaceholder") || "e.g. 137404-2026-XXXXXX"}
                     maxLength={18}
                     className={`flex-1 border rounded-lg px-3 py-2.5 text-sm font-mono transition-all focus:outline-none ${
                       isIdVerified
