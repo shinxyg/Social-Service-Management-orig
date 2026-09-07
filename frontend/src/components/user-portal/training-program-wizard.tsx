@@ -437,7 +437,7 @@ export default function TrainingProgramWizard({ onBack }: TrainingProgramWizardP
             onClick={onBack}
             className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            ← Bumalik
+            ← Back
           </button>
         )}
         <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
@@ -445,11 +445,10 @@ export default function TrainingProgramWizard({ onBack }: TrainingProgramWizardP
             <Info className="h-7 w-7 text-amber-500" />
           </div>
           <h2 className="text-lg font-bold text-gray-900">
-            May Kasalukuyang Application Ka Pa
+            You Have an Existing Pending Application
           </h2>
           <p className="text-sm text-gray-500 max-w-sm">
-            Mayroon ka pang nakabinbing aplikasyon para sa Training Program. Maghintay
-            ng pagsusuri bago magsumite ng panibagong aplikasyon.
+            You already have a pending application for the Training Program. Please wait for evaluation before submitting a new application.
           </p>
         </div>
       </div>

@@ -830,13 +830,13 @@ export default function SoloParentApplicationWizard({
   // ---- Submission & Application State ----
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [reference, setReference] = useState("")
-  const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
+  const [redirectCountdown, setRedirectCountdown] = useState<number>(1)
 
-  // Auto-redirect to pending status screen (Pic 2) after 3 seconds on pending
+  // Auto-redirect to pending status screen after 1 second on pending
   useEffect(() => {
     if (submissionStage !== "pending") return
 
-    setRedirectCountdown(3)
+    setRedirectCountdown(1)
     const interval = setInterval(() => {
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
@@ -1008,7 +1008,7 @@ export default function SoloParentApplicationWizard({
 
     setTimeout(() => {
       setSubmissionStage("pending")
-    }, 1200)
+    }, 1000)
   }
 
   const step1Valid =
@@ -1091,7 +1091,7 @@ export default function SoloParentApplicationWizard({
             onClick={onBack}
             className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            ← Bumalik
+            ← Back
           </button>
         )}
         <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
@@ -1099,11 +1099,18 @@ export default function SoloParentApplicationWizard({
             <Info className="h-7 w-7 text-amber-500" />
           </div>
           <h2 className="text-lg font-bold text-gray-900">
-            May Kasalukuyang Application Ka Pa
+            {language === "en"
+              ? "You Have an Existing Pending Application"
+              : language === "bis"
+              ? "Naa kay Kasamtangang Aplikasyon"
+              : "You Have an Existing Pending Application"}
           </h2>
           <p className="text-sm text-gray-500 max-w-sm">
-            Mayroon ka pang nakabinbing aplikasyon para sa Solo Parent ID. Maghintay
-            ng pagsusuri bago magsumite ng panibagong aplikasyon.
+            {language === "en"
+              ? "You already have a pending application for Solo Parent ID. Please wait for the evaluation before submitting a new application."
+              : language === "bis"
+              ? "Aduna ka pay nag-ung-ong nga aplikasyon para sa Solo Parent ID. Palihug hulata ang pagsusi sa dili pa magsumite og bag-ong aplikasyon."
+              : "You already have a pending application for Solo Parent ID. Please wait for the evaluation before submitting a new application."}
           </p>
         </div>
       </div>
