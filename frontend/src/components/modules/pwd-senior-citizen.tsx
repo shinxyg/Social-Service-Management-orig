@@ -302,12 +302,22 @@ function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: Applic
   return null
 }
 
+function getStableSequence(refOrId: string): string {
+  let hash = 0
+  for (let i = 0; i < refOrId.length; i++) {
+    hash = (hash << 5) - hash + refOrId.charCodeAt(i)
+    hash |= 0
+  }
+  const positive = Math.abs(hash)
+  return String(100000 + (positive % 900000))
+}
+
 function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: ApplicationSubmission[]): string {
   const rawType = String(app.type || "").toLowerCase()
   const rawCat = String(app.category || "").toLowerCase()
   const rawService = String((app as any).service || "").toLowerCase()
-  const randomSeq = String(Math.floor(100000 + Math.random() * 900000))
   const year = new Date().getFullYear()
+  const stableSeq = getStableSequence(app.referenceNumber || app.id || "110000")
 
   const isRenewalOrLoss =
     rawType.includes("renewal") ||
@@ -328,7 +338,7 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
     if (isRenewalOrLoss && existingBooklet && String(existingBooklet).trim()) {
       return String(existingBooklet).trim()
     }
-    return `137404-${year}-${randomSeq}`
+    return `137404-${year}-${stableSeq}`
   }
 
   // 2. Medicine Booklet
@@ -344,7 +354,7 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
     if (isRenewalOrLoss && existingBooklet && String(existingBooklet).trim()) {
       return String(existingBooklet).trim()
     }
-    return `137404-${year}-${randomSeq}`
+    return `137404-${year}-${stableSeq}`
   }
 
   // Retain fixed existing ID for Renewal or Loss
@@ -360,14 +370,14 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
     if (app.assignedIdNumber && app.assignedIdNumber.startsWith("PWD-")) {
       return app.assignedIdNumber
     }
-    return `PWD-137404-${year}-${randomSeq}`
+    return `PWD-137404-${year}-${stableSeq}`
   }
 
   // 4. Senior Citizen ID
   if (app.assignedIdNumber && (app.assignedIdNumber.startsWith("SENIOR-") || app.assignedIdNumber.startsWith("OSCA-"))) {
     return app.assignedIdNumber.replace("OSCA-", "SENIOR-")
   }
-  return `SENIOR-137404-${year}-${randomSeq}`
+  return `SENIOR-137404-${year}-${stableSeq}`
 }
 
 

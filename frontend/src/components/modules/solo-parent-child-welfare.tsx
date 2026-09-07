@@ -707,15 +707,32 @@ function ApplicationCard({ app, onView, onShowCard, onDelete, allSubmissions }: 
 }
 
 
+function getStableSequence(refOrId: string): string {
+  let hash = 0
+  for (let i = 0; i < refOrId.length; i++) {
+    hash = (hash << 5) - hash + refOrId.charCodeAt(i)
+    hash |= 0
+  }
+  const positive = Math.abs(hash)
+  return String(100000 + (positive % 900000))
+}
+
 function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: WelfareSubmission[]): string {
+  if ((app as any).assignedIdNumber && String((app as any).assignedIdNumber).trim().startsWith("SP-")) {
+    return String((app as any).assignedIdNumber).trim()
+  }
+  if ((app as any).soloParentIdNumber && String((app as any).soloParentIdNumber).trim().startsWith("SP-")) {
+    return String((app as any).soloParentIdNumber).trim()
+  }
+
   const rawType = String((app as any).applicationType || (app as any).type || "").toLowerCase()
   const isRenewalOrLoss =
     rawType.includes("renewal") ||
     rawType.includes("loss") ||
     rawType.includes("replacement")
 
-  const randomSeq = String(Math.floor(100000 + Math.random() * 900000))
   const year = new Date().getFullYear()
+  const stableSeq = getStableSequence(app.referenceNumber || app.id || "110000")
 
   if (isRenewalOrLoss) {
     const candidateFields = [
@@ -758,7 +775,7 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
 
         const aEmail = String((a as any).email || (a as any).guardianEmail || "").trim().toLowerCase()
         const aRef = String(a.referenceNumber || (a as any).reference_no || "").trim().toLowerCase()
-        const aName = `${(a as any).firstName || (a as any).guardianFirstName || ""} ${(a as any).lastName || (a as any).guardianLastName || ""}`.trim().toLowerCase()
+        const aName = `${(app as any).firstName || (app as any).guardianFirstName || ""} ${(app as any).lastName || (app as any).guardianLastName || ""}`.trim().toLowerCase()
 
         return (
           (appEmail && aEmail && appEmail === aEmail) ||
@@ -778,11 +795,7 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
     }
   }
 
-  if ((app as any).assignedIdNumber && String((app as any).assignedIdNumber).startsWith("SP-")) {
-    return String((app as any).assignedIdNumber)
-  }
-
-  return `SP-137404-${year}-${randomSeq}`
+  return `SP-137404-${year}-${stableSeq}`
 }
 
 function OfficialSoloParentIdCardModal({
