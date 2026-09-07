@@ -264,44 +264,44 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   const requiredDocuments: RequiredDoc[] = [
     {
       id: "seniorId",
-      label: "SENIOR CITIZEN ID / OSCA ID",
-      description: "Malinaw na kopya ng inyong OSCA / QC Senior Citizen ID (harapan at likod).",
+      label: t("docSeniorOscaIdTitle") || "SENIOR CITIZEN ID / OSCA ID",
+      description: t("docSeniorOscaIdDesc") || "Malinaw na kopya ng inyong OSCA / QC Senior Citizen ID (harapan at likod).",
       required: true,
     },
     {
       id: "validGovId",
-      label: "VALID GOVERNMENT-ISSUED ID",
-      description: "Passport, UMID, Driver's License, Postal ID, o Voter's Certificate.",
+      label: t("docValidGovIdTitle") || "VALID GOVERNMENT-ISSUED ID",
+      description: t("docValidGovIdDesc") || "Passport, UMID, Driver's License, Postal ID, o Voter's Certificate.",
       required: true,
     },
     {
       id: "proofOfResidency",
-      label: "BARANGAY CERTIFICATE OF RESIDENCY O INDIGENCY",
-      description: "Katibayan ng paninirahan o indigency mula sa inyong barangay.",
+      label: t("docBarangayIndigencyTitle") || "BARANGAY CERTIFICATE OF RESIDENCY O INDIGENCY",
+      description: t("docBarangayIndigencyDesc") || "Katibayan ng paninirahan o indigency mula sa inyong barangay.",
       required: true,
     },
     {
       id: "idPhoto",
-      label: "2×2 O RECENT ID PICTURE",
-      description: "Kamakailang 2x2 ID picture na may puting background.",
+      label: t("docIdPhotoTitle") || "2×2 O RECENT ID PICTURE",
+      description: t("docIdPhotoDesc") || "Kamakailang 2x2 ID picture na may puting background.",
       required: true,
     },
     {
       id: "proofOfIncome",
-      label: "PROOF OF INCOME (KUNG MAYROON)",
-      description: "Certificate of Indigency, Pension Voucher, o payslip kung may regular na pensyon.",
+      label: t("docProofOfIncomeTitle") || "PROOF OF INCOME (KUNG MAYROON)",
+      description: t("docProofOfIncomeDesc") || "Certificate of Indigency, Pension Voucher, o payslip kung may regular na pensyon.",
       required: false,
     },
     {
       id: "medicalPrescription",
-      label: "MEDICAL CERTIFICATE / RESETA (KUNG MEDICAL-RELATED)",
-      description: "Medical abstract, reseta ng doktor, o hospital bill kung medikal ang hinihiling.",
+      label: t("docMedicalPrescriptionTitle") || "MEDICAL CERTIFICATE / RESETA (KUNG MEDICAL-RELATED)",
+      description: t("docMedicalPrescriptionDesc") || "Medical abstract, reseta ng doktor, o hospital bill kung medikal ang hinihiling.",
       required: false,
     },
     {
       id: "otherDocs",
-      label: "OTHER SUPPORTING DOCUMENTS (OPTIONAL)",
-      description: "Iba pang katibayan o dokumento na sumusuporta sa inyong aplikasyon.",
+      label: t("docOtherDocsTitle") || "OTHER SUPPORTING DOCUMENTS (OPTIONAL)",
+      description: t("docOtherDocsDesc") || "Iba pang katibayan o dokumento na sumusuporta sa inyong aplikasyon.",
       required: false,
     },
   ]
@@ -1390,7 +1390,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                         <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
 
                         <p className="text-xs text-muted-foreground mt-2">
-                          Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
+                          {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)"}
                         </p>
 
                         <div className="mt-3 flex flex-wrap items-center gap-2.5">
@@ -1410,7 +1410,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
                           >
                             <Upload className="h-3.5 w-3.5" />
-                            UPLOAD PHOTO
+                            {t("uploadPhotoBtn") || "UPLOAD PHOTO"}
                           </label>
 
                           <button
@@ -1419,7 +1419,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
                           >
                             <Camera className="h-3.5 w-3.5" />
-                            KUMUHA NG LARAWAN (CAMERA)
+                            {t("takePhotoCameraBtn") || "KUMUHA NG LARAWAN (CAMERA)"}
                           </button>
                         </div>
 

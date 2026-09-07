@@ -1519,6 +1519,91 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Sigurado ka bang nais mong bumalik? Mawawala ang kasalukuyang impormasyon na iyong sinasagutan.",
     bis: "Sigurado ka ba nga gusto nimong mobalik? Mawala ang kasamtangang impormasyon nga imong gipangbutang.",
   },
+  takePhotoCameraBtn: {
+    en: "TAKE PHOTO (CAMERA)",
+    tl: "KUMUHA NG LARAWAN (CAMERA)",
+    bis: "KUHA OG LITRATO (CAMERA)",
+  },
+  uploadPhotoBtn: {
+    en: "UPLOAD PHOTO",
+    tl: "MAG-UPLOAD NG LARAWAN",
+    bis: "PAG-UPLOAD OG LITRATO",
+  },
+  allowedFileTypesCameraNote: {
+    en: "Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)",
+    tl: "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)",
+    bis: "Gitugotan nga mga file: JPG, JPEG, PNG, WEBP (o pagkuha gamit ang Camera)",
+  },
+  docSeniorOscaIdTitle: {
+    en: "SENIOR CITIZEN ID / OSCA ID",
+    tl: "SENIOR CITIZEN ID / OSCA ID",
+    bis: "SENIOR CITIZEN ID / OSCA ID",
+  },
+  docSeniorOscaIdDesc: {
+    en: "Clear copy of your OSCA / QC Senior Citizen ID (front and back).",
+    tl: "Malinaw na kopya ng inyong OSCA / QC Senior Citizen ID (harapan at likod).",
+    bis: "Klaro nga kopya sa inyong OSCA / QC Senior Citizen ID (atubangan ug luyo).",
+  },
+  docValidGovIdTitle: {
+    en: "VALID GOVERNMENT-ISSUED ID",
+    tl: "VALID GOVERNMENT-ISSUED ID",
+    bis: "VALID NGA GOBYERNO NGA ID",
+  },
+  docValidGovIdDesc: {
+    en: "Passport, UMID, Driver's License, Postal ID, or Voter's Certificate.",
+    tl: "Passport, UMID, Driver's License, Postal ID, o Voter's Certificate.",
+    bis: "Passport, UMID, Driver's License, Postal ID, o Voter's Certificate.",
+  },
+  docBarangayIndigencyTitle: {
+    en: "BARANGAY CERTIFICATE OF RESIDENCY OR INDIGENCY",
+    tl: "BARANGAY CERTIFICATE OF RESIDENCY O INDIGENCY",
+    bis: "BARANGAY CERTIFICATE OF RESIDENCY O INDIGENCY",
+  },
+  docBarangayIndigencyDesc: {
+    en: "Proof of residency or Certificate of Indigency from your barangay.",
+    tl: "Katibayan ng paninirahan o indigency mula sa inyong barangay.",
+    bis: "Pamatuod sa pagpuyo o indigency gikan sa inyong barangay.",
+  },
+  docIdPhotoTitle: {
+    en: "2×2 OR RECENT ID PICTURE",
+    tl: "2×2 O RECENT ID PICTURE",
+    bis: "2×2 O BAG-ONG ID PICTURE",
+  },
+  docIdPhotoDesc: {
+    en: "Recent 2x2 ID picture with a white background.",
+    tl: "Kamakailang 2x2 ID picture na may puting background.",
+    bis: "Bag-ong 2x2 ID picture nga adunay puti nga background.",
+  },
+  docProofOfIncomeTitle: {
+    en: "PROOF OF INCOME (IF AVAILABLE)",
+    tl: "PROOF OF INCOME (KUNG MAYROON)",
+    bis: "PROOF OF INCOME (KUNG NAA)",
+  },
+  docProofOfIncomeDesc: {
+    en: "Certificate of Indigency, Pension Voucher, or payslip if with regular pension.",
+    tl: "Certificate of Indigency, Pension Voucher, o payslip kung may regular na pensyon.",
+    bis: "Certificate of Indigency, Pension Voucher, o payslip kung adunay regular nga pensyon.",
+  },
+  docMedicalPrescriptionTitle: {
+    en: "MEDICAL CERTIFICATE / PRESCRIPTION (IF MEDICAL-RELATED)",
+    tl: "MEDICAL CERTIFICATE / RESETA (KUNG MEDICAL-RELATED)",
+    bis: "MEDICAL CERTIFICATE / RESETA (KUNG MEDICAL-RELATED)",
+  },
+  docMedicalPrescriptionDesc: {
+    en: "Medical abstract, doctor's prescription, or hospital bill if request is medical-related.",
+    tl: "Medical abstract, reseta ng doktor, o hospital bill kung medikal ang hinihiling.",
+    bis: "Medical abstract, reseta sa doktor, o hospital bill kung medikal ang gipangayo.",
+  },
+  docOtherDocsTitle: {
+    en: "OTHER SUPPORTING DOCUMENTS (OPTIONAL)",
+    tl: "OTHER SUPPORTING DOCUMENTS (OPTIONAL)",
+    bis: "UBAN PANG MGA DOKUMENTO (OPTIONAL)",
+  },
+  docOtherDocsDesc: {
+    en: "Other proof or documents supporting your application.",
+    tl: "Iba pang katibayan o dokumento na sumusuporta sa inyong aplikasyon.",
+    bis: "Uban pang pamatuod o dokumento nga nagsuporta sa inyong aplikasyon.",
+  },
 }
 
 interface LanguageContextValue {

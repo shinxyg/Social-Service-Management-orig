@@ -1819,7 +1819,7 @@ export default function SeniorCitizenApplicationWizard({
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
                           >
                             <Upload className="h-3.5 w-3.5" />
-                            UPLOAD PHOTO
+                            {t("uploadPhotoBtn") || "UPLOAD PHOTO"}
                           </label>
 
                           <button
@@ -1828,7 +1828,7 @@ export default function SeniorCitizenApplicationWizard({
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
                           >
                             <Camera className="h-3.5 w-3.5" />
-                            KUMUHA NG LARAWAN (CAMERA)
+                            {t("takePhotoCameraBtn") || "KUMUHA NG LARAWAN (CAMERA)"}
                           </button>
                         </div>
 
