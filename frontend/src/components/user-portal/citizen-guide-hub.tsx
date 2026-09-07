@@ -342,13 +342,22 @@ export default function CitizenGuideHub() {
   return (
     <div className="min-h-screen bg-slate-50/50 pb-16">
       {/* 1. HERO HEADER */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white pt-8 pb-12 px-4 sm:px-6 lg:px-8 shadow-sm">
-        <div className="max-w-6xl mx-auto">
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white pt-8 pb-12 px-4 sm:px-6 lg:px-8 shadow-sm">
+        {/* Blended Gov Serves Seal Watermark on the right side */}
+        <div className="absolute -right-12 sm:-right-6 md:right-0 lg:right-4 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0">
+          <img
+            src="/gov-serves-seal.png"
+            alt="Gov Serves Seal"
+            className="w-60 sm:w-72 md:w-88 lg:w-[420px] aspect-square object-contain opacity-20 md:opacity-25 mix-blend-screen filter drop-shadow-2xl"
+          />
+        </div>
+
+        <div className="max-w-6xl mx-auto relative z-10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-semibold backdrop-blur-sm">
                 <Sparkles className="h-3.5 w-3.5 text-blue-300" />
-                Quezon City Social Services Portal • Help & Service Guide
+                Gov Serves Social Services Portal • Help & Service Guide
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
                 Welcome, {userName}!
