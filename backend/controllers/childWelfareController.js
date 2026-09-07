@@ -359,14 +359,15 @@ exports.cancelApplication = async (req, res) => {
 exports.deleteApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
+    if (applicationId === 'clear-all' || applicationId === 'clear') {
+      await db.query('DELETE FROM child_welfare_applications');
+      return res.status(200).json({ success: true, message: 'All Child Welfare applications cleared successfully' });
+    }
     const cleanId = String(applicationId).replace(/^CW-/, '').trim();
-    const result = await db.query(
+    await db.query(
       'DELETE FROM child_welfare_applications WHERE id::text = $1 OR reference_number = $1 OR reference_number = $2 RETURNING id',
       [cleanId, applicationId]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Application not found' });
-    }
     res.status(200).json({ success: true, message: 'Child welfare application deleted successfully' });
   } catch (error) {
     console.error('Error deleting child welfare application:', error);
@@ -384,4 +385,5 @@ exports.clearApplications = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error clearing applications', error: error.message });
   }
 };
+
 

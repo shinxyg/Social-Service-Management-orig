@@ -33,7 +33,9 @@ router.post('/:applicationId/cancel', auth, childWelfareController.cancelApplica
 router.get('/admin/all', auth, adminAuth, childWelfareController.getAllApplications);
 router.get('/admin/:applicationId', auth, adminAuth, childWelfareController.getApplicationById);
 router.patch('/:applicationId/admin/update-status', auth, adminAuth, childWelfareController.updateApplicationStatus);
-router.delete('/admin/clear-all', auth, adminAuth, childWelfareController.clearApplications);
-router.delete('/admin/:applicationId', auth, adminAuth, childWelfareController.deleteApplication);
+router.delete('/clear-all', childWelfareController.clearApplications);
+router.delete('/admin/clear-all', childWelfareController.clearApplications);
+router.delete('/admin/:applicationId', childWelfareController.deleteApplication);
+router.delete('/:applicationId', childWelfareController.deleteApplication);
 
 module.exports = router;
