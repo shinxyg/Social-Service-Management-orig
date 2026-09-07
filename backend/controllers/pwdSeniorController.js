@@ -611,3 +611,30 @@ exports.clearSeniorApplications = async (req, res) => {
     return res.status(500).json({ error: 'Failed to clear senior applications', details: err.message });
   }
 };
+
+// Clear/Delete by user name or reference number
+exports.cleanupUserPwdSenior = async (req, res) => {
+  const { nameOrRef } = req.params;
+  try {
+    const term = `%${nameOrRef}%`;
+    const result = await db.query(
+      `DELETE FROM pwd_senior_applications 
+       WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
+          OR LOWER(first_name || ' ' || middle_name || ' ' || last_name) LIKE LOWER($1)
+          OR reference_number LIKE $1`,
+      [term]
+    );
+
+    memoryApplications = memoryApplications.filter(
+      app =>
+        !String(app.referenceNumber || '').includes(nameOrRef) &&
+        !String(app.reference_number || '').includes(nameOrRef) &&
+        !String(app.firstName || app.first_name || '').toLowerCase().includes(nameOrRef.toLowerCase())
+    );
+
+    return res.json({ success: true, message: `Deleted ${result.rowCount} PWD/Senior applications for ${nameOrRef}` });
+  } catch (err) {
+    console.error('Error clearing user PWD/Senior applications:', err);
+    return res.status(500).json({ error: 'Failed to clear user PWD/Senior applications', details: err.message });
+  }
+};

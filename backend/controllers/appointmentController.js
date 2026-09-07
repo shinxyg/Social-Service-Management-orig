@@ -361,8 +361,7 @@ exports.deleteUserAppointments = async (req, res) => {
     const result = await db.query(
       `DELETE FROM appointments 
        WHERE applicant_name ILIKE $1 
-          OR reference_no ILIKE $1 
-          OR qc_id ILIKE $1`,
+          OR reference_no ILIKE $1`,
       [term]
     );
     res.json({ message: `Deleted ${result.rowCount} appointments.` });

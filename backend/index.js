@@ -93,6 +93,132 @@ app.use('/api/training', trainingRoutes);
 app.use('/api/user-applications', userApplicationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
+// Global user cleanup endpoint for test data & history deletion
+app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
+  try {
+    const { nameOrRef } = req.params;
+    const term = `%${nameOrRef}%`;
+    const summary = {};
+
+    // 1. AICS
+    try {
+      const aicsApps = await db.query(
+        `SELECT id FROM aics_applications 
+         WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
+            OR LOWER(first_name || ' ' || middle_name || ' ' || last_name) LIKE LOWER($1)
+            OR reference_no LIKE $1 OR qc_id LIKE $1`,
+        [term]
+      );
+      if (aicsApps.rows.length > 0) {
+        const ids = aicsApps.rows.map((r) => r.id);
+        await db.query(`DELETE FROM aics_documents WHERE application_id = ANY($1::int[])`, [ids]).catch(() => {});
+        const del = await db.query(`DELETE FROM aics_applications WHERE id = ANY($1::int[])`, [ids]);
+        summary.aics = del.rowCount;
+      } else {
+        summary.aics = 0;
+      }
+    } catch (e) { summary.aics_error = e.message; }
+
+    // 2. Financial Aid Disbursements
+    try {
+      const del = await db.query(
+        `DELETE FROM financial_aid_disbursements 
+         WHERE applicant_name ILIKE $1 OR application_ref ILIKE $1`,
+        [term]
+      );
+      summary.financial_aid = del.rowCount;
+    } catch (e) { summary.financial_aid_error = e.message; }
+
+    // 3. Appointments
+    try {
+      const del = await db.query(
+        `DELETE FROM appointments 
+         WHERE applicant_name ILIKE $1 OR reference_no ILIKE $1`,
+        [term]
+      );
+      summary.appointments = del.rowCount;
+    } catch (e) { summary.appointments_error = e.message; }
+
+    // 4. PWD & Senior
+    try {
+      const del = await db.query(
+        `DELETE FROM pwd_senior_applications 
+         WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
+            OR LOWER(first_name || ' ' || middle_name || ' ' || last_name) LIKE LOWER($1)
+            OR reference_number LIKE $1`,
+        [term]
+      );
+      summary.pwd_senior = del.rowCount;
+    } catch (e) { summary.pwd_senior_error = e.message; }
+
+    // 5. Solo Parent
+    try {
+      const del = await db.query(
+        `DELETE FROM solo_parent_applications 
+         WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
+            OR user_id LIKE $1 OR reference_number LIKE $1 OR qcid_number LIKE $1`,
+        [term]
+      );
+      summary.solo_parent = del.rowCount;
+    } catch (e) { summary.solo_parent_error = e.message; }
+
+    // 6. Child Welfare
+    try {
+      const del = await db.query(
+        `DELETE FROM child_welfare_applications 
+         WHERE LOWER(guardian_first_name || ' ' || guardian_last_name) LIKE LOWER($1)
+            OR user_id LIKE $1 OR reference_number LIKE $1 OR child_name ILIKE $1`,
+        [term]
+      );
+      summary.child_welfare = del.rowCount;
+    } catch (e) { summary.child_welfare_error = e.message; }
+
+    // 7. Livelihood
+    try {
+      const lhApps = await db.query(
+        `SELECT id FROM livelihood_applications 
+         WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
+            OR user_id LIKE $1 OR reference_number LIKE $1 OR qcid LIKE $1`,
+        [term]
+      );
+      if (lhApps.rows.length > 0) {
+        const ids = lhApps.rows.map((r) => r.id);
+        await db.query(`DELETE FROM livelihood_monitoring WHERE application_id = ANY($1::int[])`, [ids]).catch(() => {});
+        await db.query(`DELETE FROM livelihood_assistance WHERE application_id = ANY($1::int[])`, [ids]).catch(() => {});
+        const del = await db.query(`DELETE FROM livelihood_applications WHERE id = ANY($1::int[])`, [ids]);
+        summary.livelihood = del.rowCount;
+      } else {
+        summary.livelihood = 0;
+      }
+    } catch (e) { summary.livelihood_error = e.message; }
+
+    // 8. Notifications
+    try {
+      const del = await db.query(
+        `DELETE FROM user_notifications 
+         WHERE user_id LIKE $1 OR application_ref LIKE $1`,
+        [term]
+      );
+      summary.notifications = del.rowCount;
+    } catch (e) { summary.notifications_error = e.message; }
+
+    // 9. Activity Log
+    try {
+      const del = await db.query(
+        `DELETE FROM activity_log 
+         WHERE actor ILIKE $1 OR reference_no LIKE $1 OR subject ILIKE $1`,
+        [term]
+      );
+      summary.activity_log = del.rowCount;
+    } catch (e) { summary.activity_log_error = e.message; }
+
+    res.json({ success: true, message: `Cleanup completed for ${nameOrRef}`, summary });
+  } catch (err) {
+    console.error('Error during cleanup:', err);
+    res.status(500).json({ error: 'Cleanup failed', details: err.message });
+  }
+});
+
 // Optional: Serve frontend static build if running fullstack single-service mode
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
 if (fs.existsSync(frontendDistPath)) {

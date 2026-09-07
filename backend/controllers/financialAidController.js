@@ -539,8 +539,7 @@ exports.deleteUserDisbursements = async (req, res) => {
     const result = await db.query(
       `DELETE FROM financial_aid_disbursements 
        WHERE applicant_name ILIKE $1 
-          OR application_ref ILIKE $1 
-          OR qc_id ILIKE $1`,
+          OR application_ref ILIKE $1`,
       [term]
     );
     res.json({ message: `Deleted ${result.rowCount} disbursements.` });

@@ -489,3 +489,61 @@ exports.getDocumentFile = async (req, res) => {
     res.status(500).json({ error: 'May error sa pagkuha ng file.' });
   }
 };
+
+// DELETE /api/aics/applications/:id
+exports.deleteApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cleanId = String(id || '').replace(/^aics-appt-/, '').replace(/^db-appt-/, '').trim();
+
+    const findRes = await db.query(
+      'SELECT id, reference_no, qc_id FROM aics_applications WHERE id::text = $1 OR reference_no = $1 OR qc_id = $1',
+      [cleanId]
+    );
+
+    if (findRes.rows.length > 0) {
+      for (const row of findRes.rows) {
+        await db.query('DELETE FROM aics_documents WHERE application_id = $1', [row.id]).catch(() => {});
+        await db.query('DELETE FROM appointments WHERE reference_no = $1 OR reference_no = $2', [row.reference_no, row.qc_id]).catch(() => {});
+        await db.query('DELETE FROM financial_aid_disbursements WHERE application_ref = $1 OR application_ref = $2', [row.reference_no, row.qc_id]).catch(() => {});
+        await db.query('DELETE FROM aics_applications WHERE id = $1', [row.id]);
+      }
+    } else {
+      await db.query('DELETE FROM aics_applications WHERE id::text = $1 OR reference_no = $1 OR qc_id = $1', [cleanId]);
+    }
+
+    res.json({ message: 'AICS application deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting AICS application:', err);
+    res.status(500).json({ error: 'Failed to delete AICS application', details: err.message });
+  }
+};
+
+// DELETE /api/aics/applications/cleanup-user/:nameOrRef
+exports.cleanupUserAics = async (req, res) => {
+  try {
+    const { nameOrRef } = req.params;
+    const term = `%${nameOrRef}%`;
+
+    const apps = await db.query(
+      `SELECT id, reference_no, qc_id FROM aics_applications 
+       WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
+          OR LOWER(first_name || ' ' || middle_name || ' ' || last_name) LIKE LOWER($1)
+          OR reference_no LIKE $1
+          OR qc_id LIKE $1`,
+      [term]
+    );
+
+    for (const app of apps.rows) {
+      await db.query('DELETE FROM aics_documents WHERE application_id = $1', [app.id]).catch(() => {});
+      await db.query('DELETE FROM appointments WHERE reference_no = $1 OR reference_no = $2', [app.reference_no, app.qc_id]).catch(() => {});
+      await db.query('DELETE FROM financial_aid_disbursements WHERE application_ref = $1 OR application_ref = $2', [app.reference_no, app.qc_id]).catch(() => {});
+      await db.query('DELETE FROM aics_applications WHERE id = $1', [app.id]);
+    }
+
+    res.json({ message: `Deleted ${apps.rows.length} AICS records for ${nameOrRef}.`, deletedCount: apps.rows.length });
+  } catch (err) {
+    console.error('Error clearing user AICS:', err);
+    res.status(500).json({ error: 'Failed to clear user AICS records', details: err.message });
+  }
+};

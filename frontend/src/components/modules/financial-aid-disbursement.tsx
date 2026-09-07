@@ -698,19 +698,27 @@ export default function FinancialAidDisbursement() {
                             type="button"
                             onClick={async () => {
                               if (confirm(`Burahin ang disbursement record para kay ${d.applicantName}?`)) {
+                                const cleanAppRef = d.applicationRef.replace(/^db-appt-/, '').replace(/^aics-appt-/, '').replace(/^pwd-senior-appt-/, '')
                                 try {
-                                  await fetch(`${API_BASE}/api/financial-aid/${d.id}`, { method: "DELETE" }).catch(() => {})
-                                  await fetch(`${API_BASE}/api/financial-aid/${d.disbursementId}`, { method: "DELETE" }).catch(() => {})
+                                  await Promise.allSettled([
+                                    fetch(`${API_BASE}/api/financial-aid/${d.id}`, { method: "DELETE" }),
+                                    fetch(`${API_BASE}/api/financial-aid/${d.disbursementId}`, { method: "DELETE" }),
+                                    fetch(`${API_BASE}/api/financial-aid/${d.applicationRef}`, { method: "DELETE" }),
+                                    fetch(`${API_BASE}/api/aics/applications/${cleanAppRef}`, { method: "DELETE" }),
+                                    fetch(`${API_BASE}/api/aics/applications/${d.applicationRef}`, { method: "DELETE" }),
+                                    fetch(`${API_BASE}/api/pwd-senior/applications/${cleanAppRef}`, { method: "DELETE" }),
+                                    fetch(`${API_BASE}/api/pwd-senior/applications/${d.applicationRef}`, { method: "DELETE" }),
+                                  ])
                                 } catch {}
                                 const raw = localStorage.getItem("all_financial_disbursements")
                                 if (raw) {
                                   const list = JSON.parse(raw)
                                   if (Array.isArray(list)) {
-                                    const next = list.filter((item: any) => item.id !== d.id && item.disbursementId !== d.disbursementId)
+                                    const next = list.filter((item: any) => item.id !== d.id && item.disbursementId !== d.disbursementId && item.applicationRef !== d.applicationRef)
                                     localStorage.setItem("all_financial_disbursements", JSON.stringify(next))
                                   }
                                 }
-                                setDisbursements((prev) => prev.filter((item) => item.id !== d.id && item.disbursementId !== d.disbursementId))
+                                setDisbursements((prev) => prev.filter((item) => item.id !== d.id && item.disbursementId !== d.disbursementId && item.applicationRef !== d.applicationRef))
                                 window.dispatchEvent(new Event("financial_disbursements_updated"))
                               }
                             }}

@@ -702,9 +702,17 @@ export default function Appointments() {
                 onMarkCompleted={handleMarkCompleted}
                 onDelete={async (id, ref) => {
                   if (confirm(`Burahin ang appointment request para kay ${appt.applicantName}?`)) {
+                    const rawId = id.replace(/^db-appt-/, '').replace(/^aics-appt-/, '').replace(/^pwd-senior-appt-/, '')
                     try {
-                      await fetch(`${API_BASE}/api/appointments/${id}`, { method: "DELETE" }).catch(() => {})
-                      await fetch(`${API_BASE}/api/appointments/${ref}`, { method: "DELETE" }).catch(() => {})
+                      await Promise.allSettled([
+                        fetch(`${API_BASE}/api/appointments/${id}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/appointments/${ref}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/appointments/${rawId}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/aics/applications/${rawId}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/aics/applications/${ref}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/pwd-senior/applications/${rawId}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/pwd-senior/applications/${ref}`, { method: "DELETE" }),
+                      ])
                     } catch {}
                     try {
                       const raw = localStorage.getItem("all_appointments_scheduled")
@@ -712,6 +720,7 @@ export default function Appointments() {
                         const localMap = JSON.parse(raw)
                         delete localMap[id]
                         delete localMap[ref]
+                        delete localMap[rawId]
                         localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
                       }
                     } catch {}

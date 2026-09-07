@@ -386,12 +386,19 @@ export async function cleanupRenzTestData() {
   try {
     // 1. Backend cleanup calls
     await Promise.allSettled([
-      fetch(`${API_BASE}/api/financial-aid/cleanup-user/110000572516915`, { method: "DELETE" }),
-      fetch(`${API_BASE}/api/financial-aid/cleanup-user/renz`, { method: "DELETE" }),
-      fetch(`${API_BASE}/api/appointments/cleanup-user/110000572516915`, { method: "DELETE" }),
-      fetch(`${API_BASE}/api/appointments/cleanup-user/renz`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/cleanup-user/110000572516915`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/cleanup-user/renz`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/cleanup-user/millares`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/aics/applications/cleanup-user/110000572516915`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/aics/applications/cleanup-user/renz`, { method: "DELETE" }),
       fetch(`${API_BASE}/api/aics/cleanup-user/110000572516915`, { method: "DELETE" }),
       fetch(`${API_BASE}/api/aics/cleanup-user/renz`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/appointments/cleanup-user/110000572516915`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/appointments/cleanup-user/renz`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/financial-aid/cleanup-user/110000572516915`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/financial-aid/cleanup-user/renz`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/pwd-senior/applications/cleanup-user/110000572516915`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/pwd-senior/applications/cleanup-user/renz`, { method: "DELETE" }),
     ])
   } catch {}
 
