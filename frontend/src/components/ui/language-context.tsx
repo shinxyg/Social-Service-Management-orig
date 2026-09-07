@@ -1355,9 +1355,9 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Dili Magkatukma ang Booklet Number",
   },
   bookletMismatchErrorDesc: {
-    en: "The entered booklet number does not match the official booklet number on record ({number}). Please make sure they match exactly to proceed.",
-    tl: "Ang inilagay na booklet number ay hindi tumutugma sa opisyal na na-generate sa inyong talaan ({number}). Pakitiyak na pareho ito bago magpatuloy.",
-    bis: "Ang gisulod nga booklet number wala magkatukma sa opisyal nga na-generate sa inyong talaan ({number}). Palihug siguroha nga pareho kini aron makapadayon.",
+    en: "The entered booklet number does not match the official booklet number on record. Please make sure they match exactly to proceed.",
+    tl: "Ang inilagay na booklet number ay hindi tumutugma sa opisyal na na-generate sa inyong talaan. Pakitiyak na pareho ito bago magpatuloy.",
+    bis: "Ang gisulod nga booklet number wala magkatukma sa opisyal nga na-generate sa inyong talaan. Palihug siguroha nga pareho kini aron makapadayon.",
   },
   bookletInvalidErrorDesc: {
     en: "Invalid Booklet Number. Please enter the correct 16-digit Booklet Number generated on your booklet.",

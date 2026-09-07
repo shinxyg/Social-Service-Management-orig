@@ -1322,17 +1322,11 @@ export default function SeniorBookletWizard({
                           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                           <span>{verifiedSeniorName || "SENIOR CITIZEN BENEFICIARY"}</span>
                         </div>
-                        <div className={`grid ${hasPriorBooklet === "yes" && (expectedBookletNumber || bookletNumber) ? "grid-cols-2" : "grid-cols-1"} gap-2 text-[11px] pt-1 border-t border-emerald-200/60 font-mono`}>
+                        <div className="grid grid-cols-1 gap-2 text-[11px] pt-1 border-t border-emerald-200/60 font-mono">
                           <div>
                             <span className="text-gray-500 font-sans block text-[10px] uppercase">Senior Citizen ID:</span>
                             <span className="text-blue-800 font-bold">{verifiedSeniorId || oscaIdInput || "137404-2026-516915"}</span>
                           </div>
-                          {hasPriorBooklet === "yes" && (expectedBookletNumber || bookletNumber) && (
-                            <div>
-                              <span className="text-gray-500 font-sans block text-[10px] uppercase">Existing Booklet No:</span>
-                              <span className="text-emerald-800 font-bold">{expectedBookletNumber || bookletNumber}</span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     )}
@@ -1379,11 +1373,8 @@ export default function SeniorBookletWizard({
                             <div>
                               <p className="font-bold">{t("bookletMismatchErrorTitle") || "Booklet Number Mismatch"}</p>
                               <p className="mt-0.5">
-                                {expectedBookletNumber
-                                  ? (t("bookletMismatchErrorDesc", { number: expectedBookletNumber }) ||
-                                      `The entered booklet number does not match the official booklet number on record (${expectedBookletNumber}). Please make sure they match exactly to proceed.`)
-                                  : (t("bookletInvalidErrorDesc") ||
-                                      "Invalid Booklet Number. Please enter the correct 16-digit Booklet Number generated on your booklet.")}
+                                {t("bookletMismatchErrorDesc") ||
+                                  "The entered booklet number does not match the official booklet number on record. Please make sure they match exactly to proceed."}
                               </p>
                             </div>
                           </div>
