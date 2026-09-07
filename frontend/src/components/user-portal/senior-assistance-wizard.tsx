@@ -1415,9 +1415,9 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                       className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
                       {[
-                        { value: "Below ₱5,000", label: t("seniorIncomeBelow5k") || "Below ₱5,000 (Indigent / High Priority)" },
-                        { value: "₱5,000 - ₱10,000", label: t("seniorIncome5kTo10k") || "₱5,000 – ₱10,000 (Low Income / Qualified)" },
-                        { value: "₱10,001 - ₱20,000", label: t("seniorIncome10kTo20k") || "₱10,001 – ₱20,000 (Lower-Middle Income)" },
+                        { value: "Below ₱5,000", label: t("seniorIncomeBelow5k") || "Below ₱5,000" },
+                        { value: "₱5,000 - ₱10,000", label: t("seniorIncome5kTo10k") || "₱5,000 – ₱10,000" },
+                        { value: "₱10,001 - ₱20,000", label: t("seniorIncome10kTo20k") || "₱10,001 – ₱20,000" },
                       ].map((inc) => (
                         <option key={inc.value} value={inc.value}>{inc.label}</option>
                       ))}

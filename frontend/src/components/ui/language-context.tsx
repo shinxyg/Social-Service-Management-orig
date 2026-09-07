@@ -1580,19 +1580,19 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Walay Regular nga Kita / No Income",
   },
   seniorIncomeBelow5k: {
-    en: "Below ₱5,000 (Indigent / High Priority)",
-    tl: "Mababang ₱5,000 (Indigent / Mataas na Priyoridad)",
-    bis: "Ubos sa ₱5,000 (Indigent / Taas nga Priyoridad)",
+    en: "Below ₱5,000",
+    tl: "Mababang ₱5,000",
+    bis: "Ubos sa ₱5,000",
   },
   seniorIncome5kTo10k: {
-    en: "₱5,000 – ₱10,000 (Low Income / Qualified)",
-    tl: "₱5,000 – ₱10,000 (Mababang Kita / Kwalipikado)",
-    bis: "₱5,000 – ₱10,000 (Ubos nga Kita / Kwalipikado)",
+    en: "₱5,000 – ₱10,000",
+    tl: "₱5,000 – ₱10,000",
+    bis: "₱5,000 – ₱10,000",
   },
   seniorIncome10kTo20k: {
-    en: "₱10,001 – ₱20,000 (Lower-Middle Income)",
-    tl: "₱10,001 – ₱20,000 (Mababang-Gitnang Kita)",
-    bis: "₱10,001 – ₱20,000 (Ubos-Tungatunga nga Kita)",
+    en: "₱10,001 – ₱20,000",
+    tl: "₱10,001 – ₱20,000",
+    bis: "₱10,001 – ₱20,000",
   },
   seniorEmploymentPensionStatusLabel: {
     en: "Employment / Pension Status",
