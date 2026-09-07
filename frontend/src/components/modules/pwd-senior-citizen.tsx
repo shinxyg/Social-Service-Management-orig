@@ -1258,7 +1258,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                   }
                 />
                 <Field
-                  label="Total monthly household income"
+                  label={isPWD(app) ? "Total monthly household income" : "Monthly family income"}
                   value={
                     (app as any).monthlyIncome ||
                     (app as any).monthlyHouseholdIncome ||
@@ -1269,7 +1269,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                   }
                 />
                 <Field
-                  label="Employment / Pension status"
+                  label="Employment / pension status"
                   value={
                     (app as any).employmentStatus ||
                     (app as any).pensionSource ||
@@ -1287,10 +1287,11 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete 
                   </div>
                 )}
                 {Boolean(
-                  (app as any).monthlyHouseholdExpenses ||
+                  !isSeniorBooklet && !String((app as any).service || "").toLowerCase().includes("senior") &&
+                  ((app as any).monthlyHouseholdExpenses ||
                   (app as any).monthlyExpenses ||
                   (app as any).householdExpenses ||
-                  (app as any).extra_data?.monthlyHouseholdExpenses
+                  (app as any).extra_data?.monthlyHouseholdExpenses)
                 ) && (
                   <div className="col-span-2">
                     <Field
