@@ -290,8 +290,6 @@ function getRequiredDocuments(idStatus: IdStatus, categoryId: number | null): Sa
   return getNewApplicantDocuments(categoryId)
 }
 
-const ALLOWED_UPLOAD_FILE_TYPES = "JPG, JPEG, PNG, WEBP"
-
 function formatFileSize(bytes: number) {
   if (!bytes) return "0.0 KB"
   const kb = bytes / 1024
@@ -737,7 +735,6 @@ export default function SoloParentApplicationWizard({
   // ---- Step 1: Complete Checklist / Verification ----
   const [isResident, setIsResident] = useState(false)
   const [hasSoleParentalCare, setHasSoleParentalCare] = useState(false)
-  const [hasOtherLguAssistance, setHasOtherLguAssistance] = useState<"yes" | "no">("no")
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(initialCategoryId ?? null)
   const [existingIdNumber, setExistingIdNumber] = useState("")
   const [isEditingInfo, setIsEditingInfo] = useState(false)
