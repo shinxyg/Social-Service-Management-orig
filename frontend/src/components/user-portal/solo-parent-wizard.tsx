@@ -1319,37 +1319,6 @@ export default function SoloParentApplicationWizard({
                 </div>
               </div>
 
-              {/* Radio question - only for NEW application */}
-              {idStatus === "new" && (
-                <div className="space-y-1.5 pt-1">
-                  <p className="text-sm text-blue-700 font-medium">
-                    Have you already received medical assistance or Solo Parent services from another Quezon City office? <span className="text-red-500">*</span>
-                  </p>
-                  <div className="flex items-center gap-6 pt-1">
-                    <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="otherLguAssistance"
-                        checked={hasOtherLguAssistance === "yes"}
-                        onChange={() => setHasOtherLguAssistance("yes")}
-                        className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                      />
-                      <span>Yes, I already received assistance</span>
-                    </label>
-                    <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="otherLguAssistance"
-                        checked={hasOtherLguAssistance === "no"}
-                        onChange={() => setHasOtherLguAssistance("no")}
-                        className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                      />
-                      <span>Not yet</span>
-                    </label>
-                  </div>
-                </div>
-              )}
-
               {/* Dropdown / ID verification section */}
               {idStatus === "new" && (
                 <div className="space-y-2 pt-2">
@@ -1369,7 +1338,7 @@ export default function SoloParentApplicationWizard({
                         : "border-border focus:ring-blue-400"
                     }`}
                   >
-                    <option value="">Choose category...</option>
+                    <option value="">-- Pumili ng Kategorya / Circumstance --</option>
                     {SOLO_PARENT_CATEGORIES.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.title}

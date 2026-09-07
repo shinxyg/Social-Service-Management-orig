@@ -98,12 +98,12 @@ export default function ApplySoloParent() {
 
   const [showRequirementsModal, setShowRequirementsModal] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(1)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
   const [understood, setUnderstood] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
 
   useEffect(() => {
-    setSelectedCategoryId(1)
+    setSelectedCategoryId(null)
     setUnderstood(false)
     setCurrentStep(1)
 
