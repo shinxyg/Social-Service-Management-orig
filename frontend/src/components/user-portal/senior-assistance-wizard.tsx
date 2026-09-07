@@ -59,12 +59,6 @@ interface RequiredDoc {
   required: boolean
 }
 
-const LIVING_ARRANGEMENTS = [
-  { id: "Alone", label: "Alone (Mag-isa)", desc: "Nakatira nang mag-isa sa tahanan" },
-  { id: "With Family", label: "With Family (Kasama ang Pamilya)", desc: "Kasama ang mga anak, apo, o asawa" },
-  { id: "With Caregiver", label: "With Caregiver (Kasama ang Tagapag-alaga)", desc: "May tagapag-alaga na nag-aasikaso" },
-]
-
 function formatSeniorId(val: string): string {
   const trimmed = val.trim().toUpperCase()
   if (trimmed.startsWith("QC-") || trimmed.startsWith("SENIOR-") || trimmed.startsWith("OSCA-")) {
@@ -76,23 +70,6 @@ function formatSeniorId(val: string): string {
   if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
   return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10, 16)}`
 }
-
-const EMPLOYMENT_STATUSES = [
-  "Retired / Pensyonado",
-  "Unemployed (Walang Trabaho)",
-  "Self-employed / Maliit na Negosyo",
-  "Part-time Worker",
-  "Employed (May Trabaho)",
-]
-
-const MONTHLY_INCOME_RANGES = [
-  "Walang Regular na Kita / No Income",
-  "Below ₱5,000",
-  "₱5,000 - ₱10,000",
-  "₱10,001 - ₱15,000",
-  "₱15,001 - ₱25,000",
-  "Higit sa ₱25,000",
-]
 
 const MONTHS = [
   "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
@@ -201,96 +178,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   const [latestSubmittedApp, setLatestSubmittedApp] = useState<any | null>(null)
   const [referenceNumber, setReferenceNumber] = useState("")
   const [submissionDate, setSubmissionDate] = useState("")
-  const [isEditingInfo, setIsEditingInfo] = useState(false)
-
-  useEffect(() => {
-    if (submitted) {
-      onStepChange?.(0)
-    } else {
-      onStepChange?.(step)
-    }
-  }, [step, submitted, onStepChange])
-
-  // Poll for status update when user just submitted an application in this session
-  useEffect(() => {
-    if (!submitted) return
-    let isMounted = true
-
-    const checkStatus = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
-        if (res.ok) {
-          const data = await res.json()
-          if (Array.isArray(data) && isMounted) {
-            const currentQcid = getLoggedInUserQcid() || (userProfile as any)?.qcidNumber || userProfile?.qcidNo || "110000116932100"
-            const matched = data.find((a: any) => {
-              const appRef = String(a.referenceNumber || a.reference_number || a.id || "").trim()
-              return (
-                (referenceNumber && (appRef === referenceNumber || appRef.includes(referenceNumber))) ||
-                (currentQcid && (appRef === currentQcid || appRef.includes(currentQcid)))
-              )
-            })
-            if (matched) {
-              setLatestSubmittedApp(matched)
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("Could not check Senior assistance application status:", e)
-      }
-    }
-
-    checkStatus()
-    const pollInterval = setInterval(checkStatus, 2000)
-
-    const handleUpdated = () => checkStatus()
-    window.addEventListener("pwd_senior_applications_updated", handleUpdated)
-    window.addEventListener("applications_updated", handleUpdated)
-    window.addEventListener("financial_disbursements_updated", handleUpdated)
-    window.addEventListener("storage", handleUpdated)
-
-    return () => {
-      isMounted = false
-      clearInterval(pollInterval)
-      window.removeEventListener("pwd_senior_applications_updated", handleUpdated)
-      window.removeEventListener("applications_updated", handleUpdated)
-      window.removeEventListener("financial_disbursements_updated", handleUpdated)
-      window.removeEventListener("storage", handleUpdated)
-    }
-  }, [submitted, referenceNumber, userProfile])
-
-  // Reload / Navigation warning protection
-  const isFormDirty =
-    !submitted &&
-    (step > 1 ||
-      isResident ||
-      isSenior ||
-      hasSeniorId ||
-      isIndigentOrInNeed ||
-      Boolean(formData.seniorIdNumber?.trim()) ||
-      Boolean(formData.purposeOfAssistance?.trim()))
-
-  useEffect(() => {
-    if (isFormDirty) {
-      ;(window as any).__isFormDirty = true
-    } else {
-      ;(window as any).__isFormDirty = false
-    }
-    return () => {
-      ;(window as any).__isFormDirty = false
-    }
-  }, [isFormDirty])
-
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isFormDirty) {
-        e.preventDefault()
-        e.returnValue = ""
-      }
-    }
-    window.addEventListener("beforeunload", handleBeforeUnload)
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [isFormDirty])
+  const [isEditingInfo] = useState(false)
 
   // Checklist State (Step 1)
   const [isResident, setIsResident] = useState(false)
@@ -335,6 +223,47 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
     agreedToCertification: false,
     districtOffice: "main",
   })
+
+  // Reload / Navigation warning protection
+  const isFormDirty =
+    !submitted &&
+    (step > 1 ||
+      isResident ||
+      isSenior ||
+      hasSeniorId ||
+      isIndigentOrInNeed ||
+      Boolean(formData.seniorIdNumber?.trim()) ||
+      Boolean(formData.purposeOfAssistance?.trim()))
+
+  useEffect(() => {
+    if (isFormDirty) {
+      ;(window as any).__isFormDirty = true
+    } else {
+      ;(window as any).__isFormDirty = false
+    }
+    return () => {
+      ;(window as any).__isFormDirty = false
+    }
+  }, [isFormDirty])
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isFormDirty) {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [isFormDirty])
+
+  useEffect(() => {
+    if (submitted) {
+      onStepChange?.(0)
+    } else {
+      onStepChange?.(step)
+    }
+  }, [step, submitted, onStepChange])
 
   // Uploaded Files (Step 3)
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({})
