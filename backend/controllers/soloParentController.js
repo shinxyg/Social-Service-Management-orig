@@ -450,3 +450,29 @@ exports.updateApplicationData = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error updating application data', error: error.message });
   }
 };
+
+// Delete single application (admin)
+exports.deleteApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const result = await db.query('DELETE FROM solo_parent_applications WHERE id = $1 OR reference_number = $1 RETURNING id', [applicationId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+    res.status(200).json({ success: true, message: 'Solo Parent application deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting solo parent application:', error);
+    res.status(500).json({ success: false, message: 'Error deleting application', error: error.message });
+  }
+};
+
+// Clear all solo parent applications (admin test cleanup)
+exports.clearApplications = async (req, res) => {
+  try {
+    await db.query('DELETE FROM solo_parent_applications');
+    res.status(200).json({ success: true, message: 'All Solo Parent applications cleared successfully' });
+  } catch (error) {
+    console.error('Error clearing solo parent applications:', error);
+    res.status(500).json({ success: false, message: 'Error clearing applications', error: error.message });
+  }
+};

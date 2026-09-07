@@ -82,4 +82,18 @@ router.patch(
   soloParentController.updateApplicationStatus
 );
 
+router.delete(
+  '/admin/clear-all',
+  auth,
+  adminAuth,
+  soloParentController.clearApplications
+);
+
+router.delete(
+  '/admin/:applicationId',
+  auth,
+  adminAuth,
+  soloParentController.deleteApplication
+);
+
 module.exports = router;

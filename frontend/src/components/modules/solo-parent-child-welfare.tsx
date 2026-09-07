@@ -19,6 +19,7 @@ import {
   Landmark,
   IdCard,
   Printer,
+  Trash2,
 } from "lucide-react"
 import { API_BASE as APP_API_BASE } from "../../config/api"
 import { getSavedProfilePhoto } from "../../utils/profilePhoto"
@@ -618,9 +619,10 @@ interface CardProps {
   app: WelfareSubmission
   onView: (app: WelfareSubmission) => void
   onShowCard?: (app: WelfareSubmission) => void
+  onDelete?: (app: WelfareSubmission) => void
 }
 
-function ApplicationCard({ app, onView, onShowCard }: CardProps) {
+function ApplicationCard({ app, onView, onShowCard, onDelete }: CardProps) {
   const subLabel = isSoloParent(app)
     ? (app as any).applicationType === "new" ? "New application" : (app as any).applicationType === "renewal" ? "Renewal" : "Lost ID replacement"
     : app.supportCategory.replace(/^\d+\.\s*/, "")
@@ -659,8 +661,23 @@ function ApplicationCard({ app, onView, onShowCard }: CardProps) {
                 )}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2.5 shrink-0">
-          <StatusBadge status={app.status} />
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <StatusBadge status={app.status} />
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(app)
+                }}
+                className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                title="Delete application record"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
           {onShowCard && app.status === "approved" && isSoloParent(app) && (
             <button
               type="button"
@@ -668,7 +685,7 @@ function ApplicationCard({ app, onView, onShowCard }: CardProps) {
                 e.stopPropagation()
                 onShowCard(app)
               }}
-              className="gw-btn-ghost px-2.5 py-1.5 text-xs text-blue-700 hover:text-blue-800 border-blue-200 bg-blue-50/60 inline-flex items-center gap-1 cursor-pointer"
+              className="gw-btn-ghost px-2.5 py-1 text-xs text-blue-700 hover:text-blue-800 border-blue-200 bg-blue-50/60 inline-flex items-center gap-1 cursor-pointer"
             >
               <IdCard className="h-3.5 w-3.5 text-blue-600" />
               View ID
@@ -1615,57 +1632,95 @@ useEffect(() => {
     window.removeEventListener("focus", handleSync)
   }
 }, [])
-const [selectedApp, setSelectedApp] = useState<WelfareSubmission | null>(null)
-const [filterCategory, setFilterCategory] = useState<"all" | "Solo Parent" | "Child Welfare">("all")
-const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected" | "needs_revision">("all")
-const [searchTerm, setSearchTerm] = useState("")
+  const [selectedApp, setSelectedApp] = useState<WelfareSubmission | null>(null)
+  const [cardApp, setCardApp] = useState<WelfareSubmission | null>(null)
+  const [filterCategory, setFilterCategory] = useState<"all" | "Solo Parent" | "Child Welfare">("all")
+  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected" | "needs_revision">("all")
+  const [searchTerm, setSearchTerm] = useState("")
 
   const handleApprove = async (id: string, value: string) => {
-  const app = applications.find((a) => a.id === id)
-  if (!app) return
-  try {
-    await approveSubmission(app, value)
+    const app = applications.find((a) => a.id === id)
+    if (!app) return
+    try {
+      await approveSubmission(app, value)
 
-    if (isSoloParent(app) && app.email) {
-      try {
-        fetch(`${API_BASE}/email/send-solo-parent-id`, {
-          method: "POST",
-          headers: authHeaders(),
-          body: JSON.stringify({
-            recipientEmail: app.email,
-            recipientName: displayName(app),
-            soloParentIdNumber: value,
-            referenceNumber: app.referenceNumber,
-            classification: app.classification,
-            applicationType: app.applicationType,
-            approvedDate: new Date().toISOString(),
-            contactNumber: app.contactNo,
-            address: [app.addressHouseNo, app.addressStreet, app.addressBarangay, app.addressCityMunicipality].filter(Boolean).join(", "),
-          }),
-        }).catch((e) => console.warn("[Solo Parent Email Error]:", e))
-      } catch (mailErr) {
-        console.warn("[Solo Parent Email Dispatch Failed]:", mailErr)
+      if (isSoloParent(app) && app.email) {
+        try {
+          fetch(`${API_BASE}/email/send-solo-parent-id`, {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({
+              recipientEmail: app.email,
+              recipientName: displayName(app),
+              soloParentIdNumber: value,
+              referenceNumber: app.referenceNumber,
+              classification: app.classification,
+              applicationType: app.applicationType,
+              approvedDate: new Date().toISOString(),
+              contactNumber: app.contactNo,
+              address: [app.addressHouseNo, app.addressStreet, app.addressBarangay, app.addressCityMunicipality].filter(Boolean).join(", "),
+            }),
+          }).catch((e) => console.warn("[Solo Parent Email Error]:", e))
+        } catch (mailErr) {
+          console.warn("[Solo Parent Email Dispatch Failed]:", mailErr)
+        }
       }
+
+      await loadApplications()
+    } catch (err) {
+      console.error(err)
+      alert("Hindi na-approve ang application. Subukan ulit.")
     }
-
-    await loadApplications()
-  } catch (err) {
-    console.error(err)
-    alert("Hindi na-approve ang application. Subukan ulit.")
   }
-}
 
-const handleReject = async (id: string, reason: string) => {
-  const app = applications.find((a) => a.id === id)
-  if (!app) return
-  try {
-    await rejectSubmission(app, reason)
-    await loadApplications()
-  } catch (err) {
-    console.error(err)
-    alert("Hindi na-reject ang application. Subukan ulit.")
+  const handleReject = async (id: string, reason: string) => {
+    const app = applications.find((a) => a.id === id)
+    if (!app) return
+    try {
+      await rejectSubmission(app, reason)
+      await loadApplications()
+    } catch (err) {
+      console.error(err)
+      alert("Hindi na-reject ang application. Subukan ulit.")
+    }
   }
-}
+
+  const handleDeleteApplication = async (targetApp: WelfareSubmission) => {
+    if (!window.confirm(`Are you sure you want to delete application ${targetApp.referenceNumber}?`)) return
+    const isSolo = isSoloParent(targetApp)
+    const rawId = targetApp.id.replace(/^(SP|CW)-/, "")
+    const url = isSolo
+      ? `${API_BASE}/solo-parent/admin/${rawId}`
+      : `${API_BASE}/child-welfare/admin/${rawId}`
+
+    setApplications((prev) => prev.filter((a) => a.id !== targetApp.id))
+
+    try {
+      await fetch(url, { method: "DELETE", headers: authHeaders() })
+    } catch (err) {
+      console.warn("Delete request failed:", err)
+    }
+  }
+
+  const handleClearSoloApplications = async () => {
+    if (!window.confirm("Are you sure you want to clear all Solo Parent records for fresh testing?")) return
+    setApplications((prev) => prev.filter((a) => a.category !== "Solo Parent"))
+    try {
+      await fetch(`${API_BASE}/solo-parent/admin/clear-all`, { method: "DELETE", headers: authHeaders() })
+    } catch (err) {
+      console.warn("Clear solo parent failed:", err)
+    }
+  }
+
+  const handleClearChildApplications = async () => {
+    if (!window.confirm("Are you sure you want to clear all Child Welfare records for fresh testing?")) return
+    setApplications((prev) => prev.filter((a) => a.category !== "Child Welfare"))
+    try {
+      await fetch(`${API_BASE}/child-welfare/admin/clear-all`, { method: "DELETE", headers: authHeaders() })
+    } catch (err) {
+      console.warn("Clear child welfare failed:", err)
+    }
+  }
 
   const filteredApps = applications.filter((app) => {
     const matchCategory = filterCategory === "all" || app.category === filterCategory
@@ -1782,9 +1837,33 @@ const handleReject = async (id: string, reason: string) => {
 
         {/* Applications List */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h2 className="gw-serif text-lg font-semibold" style={{ color: "var(--ink)" }}>Applications</h2>
-            <span className="gw-mono text-sm" style={{ color: "var(--ink-faint)" }}>({filteredApps.length})</span>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <h2 className="gw-serif text-lg font-semibold" style={{ color: "var(--ink)" }}>Applications</h2>
+              <span className="gw-mono text-sm" style={{ color: "var(--ink-faint)" }}>({filteredApps.length})</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {applications.some((a) => a.category === "Solo Parent") && (
+                <button
+                  type="button"
+                  onClick={handleClearSoloApplications}
+                  className="px-2.5 py-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md inline-flex items-center gap-1 border border-red-200 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Clear Solo Parent Records
+                </button>
+              )}
+              {applications.some((a) => a.category === "Child Welfare") && (
+                <button
+                  type="button"
+                  onClick={handleClearChildApplications}
+                  className="px-2.5 py-1 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md inline-flex items-center gap-1 border border-amber-200 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Clear Child Welfare Records
+                </button>
+              )}
+            </div>
           </div>
 
           {isLoading ? (
@@ -1810,6 +1889,7 @@ const handleReject = async (id: string, reason: string) => {
                   app={app}
                   onView={() => setSelectedApp(app)}
                   onShowCard={(app) => setCardApp(app)}
+                  onDelete={handleDeleteApplication}
                 />
               ))}
             </div>
