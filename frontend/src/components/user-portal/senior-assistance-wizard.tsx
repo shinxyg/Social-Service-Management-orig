@@ -982,9 +982,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                     <span>{t("seniorIdRecordFound", { name: verifiedSeniorName || formData.seniorIdNumber })}</span>
                   </div>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  Ilagay ang 16-digit na Senior Citizen / OSCA ID Number.
-                </p>
               </div>
             </div>
           )}
