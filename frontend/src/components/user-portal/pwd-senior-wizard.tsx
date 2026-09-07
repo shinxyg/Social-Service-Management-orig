@@ -2630,7 +2630,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             </span>
                           )}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)"}
+                        </p>
 
                         <div className="mt-3 flex flex-wrap items-center gap-2.5">
                           <button
@@ -2639,7 +2641,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
                           >
                             <Upload className="h-3.5 w-3.5" />
-                            UPLOAD PHOTO
+                            {t("uploadPhotoBtn") || "UPLOAD PHOTO"}
                           </button>
 
                           <button
@@ -2648,7 +2650,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide transition-colors cursor-pointer shadow-xs"
                           >
                             <Camera className="h-3.5 w-3.5" />
-                            KUMUHA NG LARAWAN (CAMERA)
+                            {t("takePhotoCameraBtn") || "KUMUHA NG LARAWAN (CAMERA)"}
                           </button>
                         </div>
 

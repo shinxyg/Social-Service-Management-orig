@@ -1450,7 +1450,7 @@ export default function AICSServiceWizard({
                       )}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Allowed file types: JPG, JPEG, PNG, WEBP
+                      {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)"}
                     </p>
 
                     <input
@@ -1468,7 +1468,7 @@ export default function AICSServiceWizard({
                         className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[#3b82f6] text-white text-xs font-semibold cursor-pointer hover:opacity-90 transition-opacity shadow-xs select-none"
                       >
                         <Upload className="h-3.5 w-3.5" />
-                        UPLOAD PHOTO
+                        {t("uploadPhotoBtn") || "UPLOAD PHOTO"}
                       </label>
                       <button
                         type="button"
@@ -1479,7 +1479,7 @@ export default function AICSServiceWizard({
                         className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
                       >
                         <Camera className="h-3.5 w-3.5" />
-                        KUMUHA NG LARAWAN (CAMERA)
+                        {t("takePhotoCameraBtn") || "KUMUHA NG LARAWAN (CAMERA)"}
                       </button>
                     </div>
 
@@ -1536,7 +1536,7 @@ export default function AICSServiceWizard({
                       )}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Allowed file types: JPG, JPEG, PNG, WEBP
+                      {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)"}
                     </p>
 
                     <input
@@ -1554,7 +1554,7 @@ export default function AICSServiceWizard({
                         className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[#3b82f6] text-white text-xs font-semibold cursor-pointer hover:opacity-90 transition-opacity shadow-xs select-none"
                       >
                         <Upload className="h-3.5 w-3.5" />
-                        UPLOAD PHOTO
+                        {t("uploadPhotoBtn") || "UPLOAD PHOTO"}
                       </label>
                       <button
                         type="button"
@@ -1565,7 +1565,7 @@ export default function AICSServiceWizard({
                         className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
                       >
                         <Camera className="h-3.5 w-3.5" />
-                        KUMUHA NG LARAWAN (CAMERA)
+                        {t("takePhotoCameraBtn") || "KUMUHA NG LARAWAN (CAMERA)"}
                       </button>
                     </div>
 
@@ -1622,7 +1622,7 @@ export default function AICSServiceWizard({
                       )}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Allowed file types: JPG, JPEG, PNG, WEBP
+                      {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)"}
                     </p>
 
                     <input
@@ -1640,7 +1640,7 @@ export default function AICSServiceWizard({
                         className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[#3b82f6] text-white text-xs font-semibold cursor-pointer hover:opacity-90 transition-opacity shadow-xs select-none"
                       >
                         <Upload className="h-3.5 w-3.5" />
-                        UPLOAD PHOTO
+                        {t("uploadPhotoBtn") || "UPLOAD PHOTO"}
                       </label>
                       <button
                         type="button"
@@ -1651,7 +1651,7 @@ export default function AICSServiceWizard({
                         className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
                       >
                         <Camera className="h-3.5 w-3.5" />
-                        KUMUHA NG LARAWAN (CAMERA)
+                        {t("takePhotoCameraBtn") || "KUMUHA NG LARAWAN (CAMERA)"}
                       </button>
                     </div>
 

@@ -1534,6 +1534,46 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)",
     bis: "Gitugotan nga mga file: JPG, JPEG, PNG, WEBP (o pagkuha gamit ang Camera)",
   },
+  allowedFileTypesCameraPdfNote: {
+    en: "Allowed file types: JPG, JPEG, PNG, WEBP, PDF (or capture using Camera)",
+    tl: "Allowed file types: JPG, JPEG, PNG, WEBP, PDF (o kumuha gamit ang Camera)",
+    bis: "Gitugotan nga mga file: JPG, JPEG, PNG, WEBP, PDF (o pagkuha gamit ang Camera)",
+  },
+  cameraModalTitle: {
+    en: "Take Photo (Camera)",
+    tl: "Kumuha ng Larawan (Camera)",
+    bis: "Kuha og Litrato (Camera)",
+  },
+  openingCamera: {
+    en: "Opening camera...",
+    tl: "Binubuksan ang camera...",
+    bis: "Giablihan ang camera...",
+  },
+  switchCamera: {
+    en: "Switch Camera",
+    tl: "Palitan ang Camera",
+    bis: "Ilisi ang Camera",
+  },
+  retakePhoto: {
+    en: "Retake Photo",
+    tl: "Ulitin (Retake)",
+    bis: "Usba ang Pagkuha",
+  },
+  usePhoto: {
+    en: "Use Photo",
+    tl: "Gamitin ang Larawan",
+    bis: "Gamita ang Litrato",
+  },
+  cancelModalBtn: {
+    en: "Cancel",
+    tl: "Kanselahin",
+    bis: "Kanselahon",
+  },
+  takePhotoAction: {
+    en: "Take Photo",
+    tl: "Kumuha ng Larawan",
+    bis: "Kuha og Litrato",
+  },
   docSeniorOscaIdTitle: {
     en: "SENIOR CITIZEN ID / OSCA ID",
     tl: "SENIOR CITIZEN ID / OSCA ID",

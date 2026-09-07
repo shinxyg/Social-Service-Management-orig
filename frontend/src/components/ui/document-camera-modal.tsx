@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Camera, X, RefreshCw, Check, AlertCircle } from "lucide-react"
+import { useLanguage } from "./language-context"
 
 interface DocumentCameraModalProps {
   isOpen: boolean
@@ -14,6 +15,7 @@ export default function DocumentCameraModal({
   onCapture,
   docTitle = "Dokumento",
 }: DocumentCameraModalProps) {
+  const { t } = useLanguage()
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -147,7 +149,7 @@ export default function DocumentCameraModal({
           <div className="flex items-center gap-2">
             <Camera className="w-5 h-5 text-blue-600" />
             <div>
-              <h3 className="text-sm font-bold text-foreground">Kumuha ng Larawan (Camera)</h3>
+              <h3 className="text-sm font-bold text-foreground">{t("cameraModalTitle") || "Kumuha ng Larawan (Camera)"}</h3>
               <p className="text-xs text-muted-foreground truncate max-w-[280px]">
                 {docTitle}
               </p>
@@ -187,7 +189,7 @@ export default function DocumentCameraModal({
           {isLoadingCamera && (
             <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-xs gap-2">
               <RefreshCw className="w-6 h-6 animate-spin" />
-              <span>Binubuksan ang camera...</span>
+              <span>{t("openingCamera") || "Binubuksan ang camera..."}</span>
             </div>
           )}
 
@@ -205,7 +207,7 @@ export default function DocumentCameraModal({
               type="button"
               onClick={toggleFacingMode}
               className="absolute top-3 right-3 p-2.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors backdrop-blur-xs cursor-pointer"
-              title="Palitan ang Camera"
+              title={t("switchCamera") || "Palitan ang Camera"}
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -221,7 +223,7 @@ export default function DocumentCameraModal({
                 onClick={handleRetake}
                 className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-white transition-colors cursor-pointer"
               >
-                Ulitin (Retake)
+                {t("retakePhoto") || "Ulitin (Retake)"}
               </button>
               <button
                 type="button"
@@ -229,7 +231,7 @@ export default function DocumentCameraModal({
                 className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
               >
                 <Check className="w-4 h-4" />
-                Gamitin ang Larawan
+                {t("usePhoto") || "Gamitin ang Larawan"}
               </button>
             </>
           ) : (
@@ -239,7 +241,7 @@ export default function DocumentCameraModal({
                 onClick={onClose}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
-                Kanselahin
+                {t("cancelModalBtn") || "Kanselahin"}
               </button>
               <button
                 type="button"
@@ -248,7 +250,7 @@ export default function DocumentCameraModal({
                 className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-2 shadow-sm"
               >
                 <Camera className="w-4 h-4" />
-                Kumuha ng Larawan
+                {t("takePhotoAction") || "Kumuha ng Larawan"}
               </button>
             </>
           )}

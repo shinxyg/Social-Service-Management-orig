@@ -1683,7 +1683,7 @@ export default function SeniorBookletWizard({
                       <p className="text-xs text-muted-foreground">{doc.description}</p>
 
                       <p className="text-[11px] text-muted-foreground mt-2">
-                        Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
+                        {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)"}
                       </p>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2.5">

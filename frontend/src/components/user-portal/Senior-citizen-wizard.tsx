@@ -1797,7 +1797,7 @@ export default function SeniorCitizenApplicationWizard({
                         <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
 
                         <p className="text-xs text-muted-foreground mt-2">
-                          Allowed file types: JPG, JPEG, PNG, WEBP, PDF (o kumuha gamit ang Camera)
+                          {t("allowedFileTypesCameraPdfNote") || "Allowed file types: JPG, JPEG, PNG, WEBP, PDF (o kumuha gamit ang Camera)"}
                         </p>
 
                         <div className="mt-3 flex flex-wrap items-center gap-2.5">

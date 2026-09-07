@@ -1894,7 +1894,7 @@ const handleFinalSubmit = async () => {
                           )}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {t("allowedFileTypes")}: {ALLOWED_UPLOAD_FILE_TYPES}
+                          {t("allowedFileTypesCameraNote") || `Allowed file types: ${ALLOWED_UPLOAD_FILE_TYPES} (o kumuha gamit ang Camera)`}
                         </p>
 
                         <input
@@ -1916,7 +1916,7 @@ const handleFinalSubmit = async () => {
                             className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-primary text-primary-foreground text-xs font-semibold cursor-pointer hover:opacity-90 transition-opacity shadow-xs"
                           >
                             <Upload className="h-3.5 w-3.5" />
-                            UPLOAD PHOTO
+                            {t("uploadPhotoBtn") || "UPLOAD PHOTO"}
                           </label>
 
                           <button
@@ -1925,7 +1925,7 @@ const handleFinalSubmit = async () => {
                             className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
                           >
                             <Camera className="h-3.5 w-3.5" />
-                            KUMUHA NG LARAWAN (CAMERA)
+                            {t("takePhotoCameraBtn") || "KUMUHA NG LARAWAN (CAMERA)"}
                           </button>
                         </div>
 
