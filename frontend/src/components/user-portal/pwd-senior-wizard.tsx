@@ -826,21 +826,15 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       if (matchedApproved) {
         setBlockedApp(matchedApproved)
         setLatestApprovedApp(matchedApproved)
-        if (!bypassedBlock) {
-          setIsBlocked(true)
-        }
+        setIsBlocked(true)
       } else if (matchedPendingForFlow) {
         setBlockedApp(matchedPendingForFlow)
         setLatestApprovedApp(null)
-        if (!bypassedBlock) {
-          setIsBlocked(true)
-        }
+        setIsBlocked(true)
       } else {
         setBlockedApp(null)
         setLatestApprovedApp(null)
-        if (!bypassedBlock) {
-          setIsBlocked(false)
-        }
+        setIsBlocked(false)
       }
     }
 
@@ -857,13 +851,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       window.removeEventListener("applications_updated", checkActiveApp)
       window.removeEventListener("storage", checkActiveApp)
     }
-  }, [userProfile?.qcidNo, userProfile?.email, bypassedBlock, initialIdStatus])
+  }, [userProfile?.qcidNo, userProfile?.email, initialIdStatus])
 
-  // Auto-redirect to pending status screen after 3 seconds on submitted
+  // Auto-redirect to pending status screen after 1 second on submitted
   useEffect(() => {
     if (submitStatus !== "submitted") return
 
-    setRedirectCountdown(3)
+    setRedirectCountdown(1)
     const interval = setInterval(() => {
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
