@@ -422,7 +422,8 @@ export default function Appointments() {
                     [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ") ||
                     [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") ||
                     "APPLICANT"
-                  const apptId = `pwd-senior-appt-${app.id || ref}`
+                  const isPwdApp = String(app.category || app.service || app.assistanceType || "").toUpperCase().includes("PWD")
+                  const concernName = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
                   const cached = localScheduledMap[apptId]
 
                   appts.push({
