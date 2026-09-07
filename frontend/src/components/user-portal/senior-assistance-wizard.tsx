@@ -961,6 +961,25 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                     />
                   </div>
                   <div>
+                    <label className="text-xs font-semibold text-gray-700">Senior Citizen / OSCA ID Number *</label>
+                    <input
+                      type="text"
+                      value={formData.seniorIdNumber}
+                      onChange={(e) => updateField("seniorIdNumber", e.target.value)}
+                      placeholder="e.g. 137404-2026-XXXXXX"
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div>
                     <label className="text-xs font-semibold text-gray-700">{t("firstNameLabel") || "First name"} *</label>
                     <input
                       type="text"
@@ -975,9 +994,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                       }`}
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-700">{t("middleNameLabel") || "Middle name"}</label>
                     <input
@@ -1477,6 +1493,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
               {/* Section 2: Personal & Household */}
               <ReviewSection title="Personal na Impormasyon at Kalagayan ng Tahanan" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  <ReviewField label="QC ID" value={formData.qcidNumber} />
+                  <ReviewField label="Senior Citizen / OSCA ID" value={formData.seniorIdNumber} />
                   <ReviewField
                     label="Buong Pangalan"
                     value={`${formData.firstName} ${formData.middleName} ${formData.lastName} ${formData.suffix}`}
