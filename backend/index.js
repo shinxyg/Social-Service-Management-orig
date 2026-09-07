@@ -156,7 +156,7 @@ app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
       const del = await db.query(
         `DELETE FROM solo_parent_applications 
          WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
-            OR user_id LIKE $1 OR reference_number LIKE $1 OR qcid_number LIKE $1`,
+            OR user_id::text LIKE $1 OR reference_number LIKE $1 OR qcid_number LIKE $1`,
         [term]
       );
       summary.solo_parent = del.rowCount;
@@ -167,7 +167,7 @@ app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
       const del = await db.query(
         `DELETE FROM child_welfare_applications 
          WHERE LOWER(guardian_first_name || ' ' || guardian_last_name) LIKE LOWER($1)
-            OR user_id LIKE $1 OR reference_number LIKE $1 OR child_name ILIKE $1`,
+            OR user_id::text LIKE $1 OR reference_number LIKE $1 OR child_name ILIKE $1`,
         [term]
       );
       summary.child_welfare = del.rowCount;
@@ -178,7 +178,7 @@ app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
       const lhApps = await db.query(
         `SELECT id FROM livelihood_applications 
          WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
-            OR user_id LIKE $1 OR reference_number LIKE $1 OR qcid LIKE $1`,
+            OR user_id::text LIKE $1 OR reference_number LIKE $1 OR qcid LIKE $1`,
         [term]
       );
       if (lhApps.rows.length > 0) {
