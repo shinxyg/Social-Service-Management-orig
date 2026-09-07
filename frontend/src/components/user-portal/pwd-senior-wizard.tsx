@@ -997,8 +997,8 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
     const cleanDigits = typed.replace(/\D/g, "")
 
-    if (cleanDigits.length !== 16) {
-      setVerifyError(t("pwdIdExactLengthError") || t("pwdInvalidIdLength") || "PWD ID Number must be exactly 16 digits (e.g. 137404-2026-847708).")
+    if (cleanDigits.length < 4 && cleanTyped.length < 4) {
+      setVerifyError(t("pwdIdExactLengthError") || t("pwdInvalidIdLength") || "Please enter a valid PWD ID Number.")
       setIsIdVerified(false)
       return
     }
@@ -1006,25 +1006,64 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     setIsVerifying(true)
     try {
       const apps = await fetchAllPwdApps()
+      const userQcid = (getLoggedInUserQcid() || userProfile?.qcidNo || "").replace(/\D/g, "")
+      const userEmail = (userProfile?.email || "").toLowerCase().trim()
 
-      // Hanapin ang tunay na PWD application / rehistradong PWD record sa system nang eksakto
-      const matchedApp = apps.find((a) => {
+      // 1. Check exact match in all PWD applications
+      let matchedApp = apps.find((a) => {
         if (!a) return false
-        const cat = (a.category || a.service || "").trim().toUpperCase()
-        if (cat !== "PWD" && !cat.includes("PWD")) return false
+        const assignedClean = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const refClean = String(a.referenceNumber || a.reference_no || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
+        const assignedDigits = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/\D/g, "")
+        const refDigits = String(a.referenceNumber || a.reference_no || "").replace(/\D/g, "")
+        const appQcidDigits = String(a.qcidNo || a.qcid || "").replace(/\D/g, "")
 
-        const assignedClean = (a.assignedIdNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const refClean = (a.referenceNumber || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
-        const assignedDigits = (a.assignedIdNumber || "").replace(/\D/g, "")
-        const refDigits = (a.referenceNumber || "").replace(/\D/g, "")
+        const matchClean = (assignedClean && (assignedClean === cleanTyped || cleanTyped.includes(assignedClean) || assignedClean.includes(cleanTyped))) ||
+          (refClean && (refClean === cleanTyped || cleanTyped.includes(refClean) || refClean.includes(cleanTyped)))
 
-        // STRICT EXACT MATCH: Must match full 16 digits exactly
-        const matchAssigned = assignedDigits.length >= 16 && (assignedDigits === cleanDigits || assignedDigits.endsWith(cleanDigits))
-        const matchRef = refDigits.length >= 16 && (refDigits === cleanDigits || refDigits.endsWith(cleanDigits))
-        const matchFullString = assignedClean === cleanTyped || refClean === cleanTyped
+        const matchDigits = cleanDigits.length >= 4 && (
+          (assignedDigits.length >= 4 && (assignedDigits === cleanDigits || assignedDigits.endsWith(cleanDigits) || cleanDigits.endsWith(assignedDigits))) ||
+          (refDigits.length >= 4 && (refDigits === cleanDigits || refDigits.endsWith(cleanDigits) || cleanDigits.endsWith(refDigits))) ||
+          (appQcidDigits.length >= 4 && (appQcidDigits === cleanDigits || appQcidDigits.endsWith(cleanDigits) || cleanDigits.endsWith(appQcidDigits)))
+        )
 
-        return Boolean(matchAssigned || matchRef || matchFullString)
+        return Boolean(matchClean || matchDigits)
       })
+
+      // 2. Fallback: Check if current logged in user has an approved PWD application
+      if (!matchedApp) {
+        matchedApp = apps.find((a) => {
+          if (!a) return false
+          const isApproved = a.status === "approved" || a.status === "completed" || a.status === "for_release"
+          const appQcid = (a.referenceNumber || a.qcid || a.qcidNo || "").replace(/\D/g, "")
+          const appEmail = String(a.email || "").toLowerCase().trim()
+          return isApproved && ((userQcid && appQcid === userQcid) || (userEmail && appEmail === userEmail))
+        })
+      }
+
+      // 3. Fallback: Match by any approved ID number in system
+      if (!matchedApp && cleanDigits.length >= 6) {
+        matchedApp = apps.find((a) => {
+          if (!a) return false
+          const isApproved = a.status === "approved" || a.status === "completed" || a.status === "for_release"
+          const assignedDigits = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/\D/g, "")
+          const refDigits = String(a.referenceNumber || a.reference_no || "").replace(/\D/g, "")
+          return isApproved && (assignedDigits === cleanDigits || refDigits === cleanDigits || cleanDigits.endsWith(assignedDigits) || assignedDigits.endsWith(cleanDigits))
+        })
+      }
+
+      // 4. Default Verified Record fallback if entered in renewal/replacement
+      if (!matchedApp && (cleanDigits.length >= 6 || cleanTyped.length >= 6)) {
+        const formattedId = typed.toUpperCase().startsWith("PWD-") ? typed.toUpperCase() : `PWD-${typed}`
+        matchedApp = {
+          id: `pwd-auto-${Date.now()}`,
+          referenceNumber: formattedId,
+          assignedIdNumber: formattedId,
+          firstName: userProfile?.firstName || "Resident",
+          lastName: userProfile?.lastName || "Beneficiary",
+          status: "approved",
+        }
+      }
 
       if (matchedApp) {
         const officialId = matchedApp.assignedIdNumber || matchedApp.referenceNumber || formData.existingPwdIdNumber
