@@ -256,6 +256,103 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
     }
   }, [step, submitted, onStepChange])
 
+  // Real-time active application & approval state sync
+  useEffect(() => {
+    let isMounted = true
+
+    const syncRealtimeApp = async () => {
+      if (!isMounted) return
+      try {
+        let allApps: any[] = []
+        try {
+          const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
+          if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data)) allApps = data
+          }
+        } catch {}
+
+        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
+        for (const k of localKeys) {
+          try {
+            const local = JSON.parse(localStorage.getItem(k) || "[]")
+            if (Array.isArray(local)) {
+              for (const la of local) {
+                if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
+                  allApps.push(la)
+                }
+              }
+            }
+          } catch {}
+        }
+
+        const userEmail = (userProfile?.email || formData.emailAddress || "").toLowerCase().trim()
+        const currentQcid = (userProfile?.qcidNo || formData.qcidNumber || "").trim()
+        const userFirst = (formData.firstName || userProfile?.firstName || "").toLowerCase().trim()
+        const userLast = (formData.lastName || userProfile?.lastName || "").toLowerCase().trim()
+
+        const isUserMatch = (a: any) => {
+          if (!a) return false
+          const aEmail = String(a.email || "").toLowerCase().trim()
+          const aRef = String(a.referenceNumber || a.reference_number || "").trim()
+          const aQcid = String(a.qcid || a.qc_id || "").trim()
+          const aExisting = String(a.existingIdNumber || a.existing_id_number || a.seniorIdNumber || "").trim()
+          const aAssigned = String(a.assignedIdNumber || a.assigned_id_number || "").trim()
+          const aFirst = String(a.firstName || a.first_name || "").toLowerCase().trim()
+          const aLast = String(a.lastName || a.last_name || "").toLowerCase().trim()
+
+          if (userEmail && aEmail && userEmail === aEmail) return true
+          if (currentQcid && (aRef.includes(currentQcid) || aQcid === currentQcid || aAssigned === currentQcid)) return true
+          if (userFirst && userLast && aFirst === userFirst && aLast === userLast) return true
+          return false
+        }
+
+        const activeAssistanceApp = allApps.find((a) => {
+          if (!a) return false
+          const appType = String(a.type || a.service || a.extra_data?.type || "").toLowerCase()
+          const appCat = String(a.category || a.extra_data?.category || "").toLowerCase()
+          const appAssistance = String(a.assistanceType || a.extra_data?.assistanceType || "").toLowerCase()
+          const isSeniorAssistance =
+            (appType.includes("assistance") || appCat.includes("assistance") || appAssistance.includes("assistance")) &&
+            (appCat.includes("senior") || appType.includes("senior") || String(a.service || "").toLowerCase().includes("senior") || !appCat.includes("pwd"))
+
+          if (!isSeniorAssistance) return false
+          const status = String(a.status || "").toLowerCase()
+          if (status !== "pending" && status !== "under_review" && status !== "approved" && status !== "completed" && status !== "for_release") return false
+          return isUserMatch(a)
+        })
+
+        if (activeAssistanceApp) {
+          setLatestSubmittedApp(activeAssistanceApp)
+          setSubmitted(true)
+          setReferenceNumber(activeAssistanceApp.referenceNumber || activeAssistanceApp.reference_number || "")
+          const dateStr = activeAssistanceApp.submittedAt || activeAssistanceApp.created_at || activeAssistanceApp.dateSubmitted
+          if (dateStr) {
+            setSubmissionDate(new Date(dateStr).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }))
+          }
+        }
+      } catch (err) {
+        console.warn("Real-time sync error:", err)
+      }
+    }
+
+    syncRealtimeApp()
+    const interval = setInterval(syncRealtimeApp, 1500)
+
+    const handleUpdate = () => syncRealtimeApp()
+    window.addEventListener("storage", handleUpdate)
+    window.addEventListener("pwd_senior_applications_updated", handleUpdate)
+    window.addEventListener("applications_updated", handleUpdate)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      window.removeEventListener("storage", handleUpdate)
+      window.removeEventListener("pwd_senior_applications_updated", handleUpdate)
+      window.removeEventListener("applications_updated", handleUpdate)
+    }
+  }, [userProfile, formData.emailAddress, formData.qcidNumber, formData.firstName, formData.lastName])
+
   // Uploaded Files (Step 3)
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({})
   const [cameraDoc, setCameraDoc] = useState<RequiredDoc | null>(null)
