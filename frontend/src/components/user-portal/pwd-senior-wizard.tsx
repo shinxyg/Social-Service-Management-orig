@@ -590,19 +590,18 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle")
   const [referenceNumber, setReferenceNumber] = useState("")
   const [isBlocked, setIsBlocked] = useState(false)
-  const [bypassedBlock, setBypassedBlock] = useState(false)
-  const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
+  const [redirectCountdown, setRedirectCountdown] = useState<number>(1)
   const [latestApprovedApp, setLatestApprovedApp] = useState<any>(null)
   const [activeAppStatus, setActiveAppStatus] = useState<string | null>(null)
   const [blockedApp, setBlockedApp] = useState<any>(null)
 
   useEffect(() => {
-    if (((latestApprovedApp && (!initialIdStatus || initialIdStatus === "new")) || isBlocked) && !bypassedBlock) {
+    if ((latestApprovedApp && (!initialIdStatus || initialIdStatus === "new")) || isBlocked) {
       onStepChange?.(0)
     } else {
       onStepChange?.(step)
     }
-  }, [step, latestApprovedApp, isBlocked, initialIdStatus, bypassedBlock, onStepChange])
+  }, [step, latestApprovedApp, isBlocked, initialIdStatus, onStepChange])
 
   // Reset wizard to Step 1 whenever flow/type changes or an application becomes approved
   useEffect(() => {
@@ -1304,11 +1303,11 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     window.setTimeout(() => {
       setReferenceNumber(refNum)
       setSubmitStatus("submitted")
-    }, 1200)
+    }, 1000)
   }
 
   // ---- BLOCKED / APPROVED state ----
-  if ((isBlocked || latestApprovedApp) && !bypassedBlock) {
+  if (isBlocked || latestApprovedApp) {
     const targetApp = blockedApp || latestApprovedApp
     const isAppApproved =
       String(targetApp?.status || "").toLowerCase() === "approved" ||
