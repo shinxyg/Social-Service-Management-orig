@@ -1358,18 +1358,21 @@ export default function SeniorBookletWizard({
                           <div className="flex items-start gap-2 border border-red-200 bg-red-50 p-2.5 rounded-lg text-xs text-red-700 mt-2 animate-in fade-in">
                             <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                             <div>
-                              <p className="font-bold">Hindi Tugma ang Booklet Number</p>
+                              <p className="font-bold">{t("bookletMismatchErrorTitle") || "Booklet Number Mismatch"}</p>
                               <p className="mt-0.5">
                                 {expectedBookletNumber
-                                  ? `Ang inilagay na booklet number ay hindi tumutugma sa opisyal na na-generate sa inyong talaan (${expectedBookletNumber}). Pakitiyak na pareho ito bago magpatuloy.`
-                                  : `Hindi valid ang Booklet Number. Pakilagay ang tamang 16-digit Booklet Number na na-generate sa inyong booklet.`}
+                                  ? (t("bookletMismatchErrorDesc", { number: expectedBookletNumber }) ||
+                                      `The entered booklet number does not match the official booklet number on record (${expectedBookletNumber}). Please make sure they match exactly to proceed.`)
+                                  : (t("bookletInvalidErrorDesc") ||
+                                      "Invalid Booklet Number. Please enter the correct 16-digit Booklet Number generated on your booklet.")}
                               </p>
                             </div>
                           </div>
                         )}
                         {attemptedNext && !bookletNumber.trim() && (
                           <p className="text-xs text-red-600 mt-1 font-medium">
-                            {`Kailangang ilagay ang inyong existing ${isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"} Number.`}
+                            {t("bookletRequiredError", { bookletType: isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet" }) ||
+                              `Please enter your existing ${isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"} Number.`}
                           </p>
                         )}
                       </div>

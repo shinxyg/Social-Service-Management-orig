@@ -1349,6 +1349,26 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Hindi natagpuan ang PWD ID sa talaan. Pakisuri ang opisyal na ID Number na natanggap sa inyong email o na-isyung PWD ID card.",
     bis: "Wala makit-i ang PWD ID sa talaan. Palihug susiha ang opisyal nga ID Number nga nadawat sa inyong email o gi-isyu nga PWD ID card.",
   },
+  bookletMismatchErrorTitle: {
+    en: "Booklet Number Mismatch",
+    tl: "Hindi Tugma ang Booklet Number",
+    bis: "Dili Magkatukma ang Booklet Number",
+  },
+  bookletMismatchErrorDesc: {
+    en: "The entered booklet number does not match the official booklet number on record ({number}). Please make sure they match exactly to proceed.",
+    tl: "Ang inilagay na booklet number ay hindi tumutugma sa opisyal na na-generate sa inyong talaan ({number}). Pakitiyak na pareho ito bago magpatuloy.",
+    bis: "Ang gisulod nga booklet number wala magkatukma sa opisyal nga na-generate sa inyong talaan ({number}). Palihug siguroha nga pareho kini aron makapadayon.",
+  },
+  bookletInvalidErrorDesc: {
+    en: "Invalid Booklet Number. Please enter the correct 16-digit Booklet Number generated on your booklet.",
+    tl: "Hindi valid ang Booklet Number. Pakilagay ang tamang 16-digit Booklet Number na na-generate sa inyong booklet.",
+    bis: "Dili balido ang Booklet Number. Palihug isulod ang saktong 16-digit Booklet Number nga na-generate sa inyong booklet.",
+  },
+  bookletRequiredError: {
+    en: "Please enter your existing {bookletType} Number.",
+    tl: "Kailangang ilagay ang inyong existing {bookletType} Number.",
+    bis: "Kinahanglan isulod ang inyong existing {bookletType} Number.",
+  },
 }
 
 interface LanguageContextValue {
