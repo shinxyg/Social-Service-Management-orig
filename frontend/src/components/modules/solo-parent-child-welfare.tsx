@@ -665,78 +665,97 @@ function ApplicationCard({ app, onView }: CardProps) {
 }
 
 
+function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: WelfareSubmission[]): string {
+  const isRenewalOrLoss =
+    app.applicationType === "renewal" ||
+    app.applicationType === "loss" ||
+    app.applicationType === "replacement"
+
+  const randomSeq = String(Math.floor(100000 + Math.random() * 900000))
+  const year = new Date().getFullYear()
+
+  if (isRenewalOrLoss) {
+    const candidateFields = [
+      (app as any).existingIdNumber,
+      (app as any).soloParentIdNumber,
+      (app as any).existingSoloParentIdNumber,
+      app.assignedIdNumber,
+      (app as any).idNumber,
+    ]
+    for (const c of candidateFields) {
+      if (c && typeof c === "string") {
+        const s = c.trim()
+        if (s && s !== "—" && !s.startsWith("110000") && (s.startsWith("SP-") || s.length >= 6)) {
+          return s
+        }
+      }
+    }
+
+    // Check pool
+    let pool: any[] = allSubmissions || []
+    if (!pool.length) {
+      try {
+        const raw = localStorage.getItem("all_user_applications") || localStorage.getItem("applications")
+        if (raw) pool = JSON.parse(raw)
+      } catch {}
+    }
+
+    const appEmail = String(app.email || "").trim().toLowerCase()
+    const appRef = String(app.referenceNumber || "").trim().toLowerCase()
+    const appName = `${app.firstName || ""} ${app.lastName || ""}`.trim().toLowerCase()
+
+    if (Array.isArray(pool)) {
+      const match = pool.find((a) => {
+        if (!a || a.id === app.id) return false
+        const aIsSolo = isSoloParent(a)
+        if (!aIsSolo) return false
+        const isApproved = a.status === "approved" || a.status === "completed"
+        const assigned = a.assignedIdNumber || a.soloParentIdNumber
+        if (!isApproved || !assigned) return false
+
+        const aEmail = String(a.email || "").trim().toLowerCase()
+        const aRef = String(a.referenceNumber || "").trim().toLowerCase()
+        const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase()
+
+        return (
+          (appEmail && aEmail && appEmail === aEmail) ||
+          (appRef && aRef && (appRef === aRef || appRef.includes(aRef) || aRef.includes(appRef))) ||
+          (appName && aName && appName === aName)
+        )
+      })
+
+      if (match) {
+        const assigned = match.assignedIdNumber || match.soloParentIdNumber
+        if (assigned) return String(assigned).trim()
+      }
+    }
+
+    if (appRef.startsWith("sp-")) {
+      return appRef.toUpperCase()
+    }
+  }
+
+  if (app.assignedIdNumber && app.assignedIdNumber.startsWith("SP-")) {
+    return app.assignedIdNumber
+  }
+
+  return `SP-137404-${year}-${randomSeq}`
+}
+
 interface DetailedViewProps {
   app: WelfareSubmission
   onClose: () => void
   onApprove: (id: string, value: string) => void
   onReject: (id: string, reason: string) => void
+  allSubmissions?: WelfareSubmission[]
 }
 
-function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) {
-  const [approveValue, setApproveValue] = useState(() => {
-    if (isSoloParent(app)) {
-      const isRenewalOrLoss =
-        app.applicationType === "renewal" ||
-        app.applicationType === "loss" ||
-        app.applicationType === "replacement"
-
-      if (isRenewalOrLoss) {
-        const candidateFields = [
-          (app as any).existingIdNumber,
-          (app as any).soloParentIdNumber,
-          (app as any).existingSoloParentIdNumber,
-          app.assignedIdNumber,
-          (app as any).idNumber,
-        ]
-        for (const c of candidateFields) {
-          if (c && typeof c === "string") {
-            const s = c.trim()
-            if (s && s !== "—" && !s.startsWith("110000") && (s.startsWith("SP-") || s.length >= 6)) {
-              return s
-            }
-          }
-        }
-
-        // Check local storage records for matching user
-        try {
-          const raw = localStorage.getItem("all_user_applications") || localStorage.getItem("applications")
-          if (raw) {
-            const pool = JSON.parse(raw)
-            const appEmail = String(app.email || "").trim().toLowerCase()
-            const appRef = String(app.referenceNumber || "").trim().toLowerCase()
-            const appName = `${app.firstName || ""} ${app.lastName || ""}`.trim().toLowerCase()
-
-            const match = pool.find((a: any) => {
-              const aIsApproved = a.status === "approved" || a.status === "completed"
-              const assigned = a.assignedIdNumber || a.soloParentIdNumber
-              if (!aIsApproved || !assigned) return false
-
-              const aEmail = String(a.email || "").trim().toLowerCase()
-              const aRef = String(a.referenceNumber || "").trim().toLowerCase()
-              const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase()
-
-              return (
-                (appEmail && aEmail && appEmail === aEmail) ||
-                (appRef && aRef && (appRef === aRef || appRef.includes(aRef) || aRef.includes(appRef))) ||
-                (appName && aName && appName === aName)
-              )
-            })
-
-            if (match) {
-              const assigned = match.assignedIdNumber || match.soloParentIdNumber
-              if (assigned) return String(assigned).trim()
-            }
-          }
-        } catch {}
-      }
-
-      if (app.assignedIdNumber) return app.assignedIdNumber
-      const year = new Date().getFullYear()
-      const rand = Math.floor(10000 + Math.random() * 90000)
-      return `SP-${year}-${rand}`
-    }
-    return app.approvedAmount || "5000"
-  })
+function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: DetailedViewProps) {
+  const isSolo = isSoloParent(app)
+  const idNumber = isSolo
+    ? (app.status === "approved" && app.assignedIdNumber ? app.assignedIdNumber : generateOfficialSoloParentId(app, allSubmissions))
+    : ""
+  const [approveAmount, setApproveAmount] = useState(app.approvedAmount || "5000")
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
@@ -1096,36 +1115,97 @@ function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) 
               )}
 
               {actionMode === "approve" && (
-                <div className="space-y-4 rounded-lg p-4" style={{ background: "var(--forest-soft)", border: "1px solid var(--forest-line)" }}>
-                  <div>
-                    <label className="text-sm font-semibold" style={{ color: "var(--forest-ink)" }}>
-                      {isSoloParent(app) ? "Assign solo parent ID number" : "Approved support amount (₱)"}
-                    </label>
-                    <input
-                      type="text"
-                      value={approveValue}
-                      onChange={(e) => setApproveValue(e.target.value)}
-                      placeholder={isSoloParent(app) ? "SP-2026-XXXXX" : "e.g. 5,000"}
-                      className="gw-input w-full mt-2 px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <button onClick={() => setActionMode("view")} className="gw-btn-ghost flex-1 px-4 py-2">
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (approveValue.trim()) {
-                          onApprove(app.id, approveValue)
+                isSolo ? (
+                  <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                          Confirm Solo Parent Approval
+                        </label>
+                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md">
+                          Official QC ID: {idNumber}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                        {app.applicationType === "renewal" || app.applicationType === "loss" || app.applicationType === "replacement" ? (
+                          <>
+                            Existing Official ID Number <strong className="font-mono text-foreground">{idNumber}</strong> has been retained from the verified record. Approving will confirm renewal/replacement without altering the ID number.
+                          </>
+                        ) : (
+                          <>
+                            Official ID Number <strong className="font-mono text-foreground">{idNumber}</strong> has been assigned. Approving will automatically connect this application to <strong>Appointments</strong> for claiming/pickup schedule.
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setActionMode("view")}
+                        className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onApprove(app.id, idNumber)
                           onClose()
-                        }
-                      }}
-                      className="gw-btn-approve flex-1 px-4 py-2"
-                    >
-                      Confirm approval
-                    </button>
+                        }}
+                        className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
+                      >
+                        Confirm Approval &amp; Connect to Appointment
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                          Confirm Child Welfare Support Approval
+                        </label>
+                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md">
+                          Approved Amount: ₱{approveAmount || "5,000"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                        Approving will forward this child welfare grant to <strong>Financial Aid Disbursement</strong> and connect to <strong>Appointments</strong> for payout scheduling.
+                      </p>
+                      <div className="mt-3">
+                        <label className="text-xs font-semibold text-emerald-900">Approved Support Amount (₱)</label>
+                        <input
+                          type="text"
+                          value={approveAmount}
+                          onChange={(e) => setApproveAmount(e.target.value)}
+                          className="gw-input w-full mt-1 px-3 py-2 text-sm bg-white"
+                          placeholder="5000"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setActionMode("view")}
+                        className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (approveAmount.trim()) {
+                            onApprove(app.id, approveAmount)
+                            onClose()
+                          }
+                        }}
+                        className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
+                      >
+                        Confirm Approval &amp; Forward
+                      </button>
+                    </div>
+                  </div>
+                )
               )}
 
               {actionMode === "reject" && (
@@ -1421,6 +1501,7 @@ const handleReject = async (id: string, reason: string) => {
       {selectedApp && (
         <DetailedView
           app={selectedApp}
+          allSubmissions={submissions}
           onClose={() => setSelectedApp(null)}
           onApprove={handleApprove}
           onReject={handleReject}
