@@ -18,9 +18,10 @@ import {
   getSavedDisbursements,
   checkAndAutoReleaseScheduledDisbursements,
   parseAppointmentDateTime,
+  isIdOrDocumentService,
 } from "../../utils/financialAidSync"
 import { API_BASE } from "../../config/api"
-import { getLoggedInUserQcid } from "../../utils/userProfile"
+import { getLoggedInUserQcid, getCurrentUserProfile } from "../../utils/userProfile"
 import { useLanguage } from "../ui/language-context"
 
 export default function ApplyFinancialAid() {
@@ -34,40 +35,45 @@ export default function ApplyFinancialAid() {
       // Auto-release engine: check if any appointment time has arrived
       checkAndAutoReleaseScheduledDisbursements()
 
-      const localDisbursements = getSavedDisbursements()
+      const userProfile = getCurrentUserProfile()
+      const qcId = getLoggedInUserQcid() || userProfile.qcidNo
+      const userFirst = (userProfile.firstName || "").trim().toLowerCase()
+      const userLast = (userProfile.lastName || "").trim().toLowerCase()
+      const userFull = `${userFirst} ${userLast}`.trim().toLowerCase()
+
+      const userRefNumbers = new Set<string>()
+      if (qcId) userRefNumbers.add(qcId)
+
+      const isUserMatch = (applicantName?: string, appRef?: string) => {
+        if (appRef && qcId && (appRef.includes(qcId) || qcId.includes(appRef))) return true
+        if (appRef && userRefNumbers.has(appRef)) return true
+        if (!applicantName) return false
+        const name = applicantName.toLowerCase().trim()
+        if (userFull && (name.includes(userFull) || userFull.includes(name))) return true
+        if (userLast && name.includes(userLast) && userFirst && name.includes(userFirst)) return true
+        return false
+      }
+
       let remoteRecords: SyncedDisbursementRecord[] = []
+      let aicsRecords: SyncedDisbursementRecord[] = []
+      let pwdSeniorRecords: SyncedDisbursementRecord[] = []
 
       try {
-        const resDb = await fetch(`${API_BASE}/api/financial-aid`)
-        if (resDb.ok) {
-          const dataDb = await resDb.json()
-          if (dataDb.disbursements && Array.isArray(dataDb.disbursements)) {
-            const dbRecords: SyncedDisbursementRecord[] = dataDb.disbursements.map((d: any) => ({
-              id: `db-${d.id}`,
-              disbursementId: d.disbursement_id,
-              applicationRef: d.application_ref,
-              applicantName: d.applicant_name,
-              assistanceType: d.assistance_type,
-              fixedAmount: Number(d.fixed_amount),
-              dateApproved: d.date_approved,
-              status: d.status as DisbursementStage,
-              appointmentDate: d.appointment_date,
-              appointmentTime: d.appointment_time,
-              venue: d.venue,
-              releasedDate: d.released_date,
-              releasedBy: d.released_by,
-              remarks: d.remarks,
-            }))
-            remoteRecords.push(...dbRecords)
-          }
-        }
+        // 1. Fetch user's approved AICS applications
+        const resAics = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcId}`)
+        if (resAics.ok) {
+          const dataAics = await resAics.json()
+          if (dataAics.applications && Array.isArray(dataAics.applications)) {
+            dataAics.applications.forEach((app: any) => {
+              if (app.reference_number) userRefNumbers.add(app.reference_number)
+              if (app.reference_no) userRefNumbers.add(app.reference_no)
+              if (app.id) {
+                userRefNumbers.add(String(app.id))
+                userRefNumbers.add(`AICS-2026-${String(app.id).padStart(4, "0")}`)
+              }
+            })
 
-        const qcId = getLoggedInUserQcid()
-        const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${qcId}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.applications && Array.isArray(data.applications)) {
-            const approvedOnes = data.applications.filter(
+            const approvedOnes = dataAics.applications.filter(
               (app: any) =>
                 app.status === "approved" ||
                 app.status === "for_release" ||
@@ -75,17 +81,18 @@ export default function ApplyFinancialAid() {
                 app.status === "completed"
             )
 
-            const aicsRecords = approvedOnes.map((app: any) => {
+            aicsRecords = approvedOnes.map((app: any) => {
               const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
               const type = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
               const amount = FIXED_ASSISTANCE_AMOUNTS[type] || 1000
               const isReleased = app.status === "released" || app.status === "completed"
+              const ref = app.reference_number || app.reference_no || `AICS-2026-${String(app.id).padStart(4, "0")}`
 
               return {
-                id: `user-remote-${app.id || app.reference_no}`,
+                id: `user-aics-${app.id || ref}`,
                 disbursementId: `DISB-2026-${String(app.id || 1).padStart(4, "0")}`,
-                applicationRef: app.reference_number || `AICS-2026-${String(app.id).padStart(4, "0")}`,
-                applicantName: `${app.first_name || ""} ${app.middle_name || ""} ${app.last_name || ""}`.trim().toUpperCase() || "CLARISA MAE GALIAS DIMAL",
+                applicationRef: ref,
+                applicantName: `${app.first_name || userProfile.firstName} ${app.last_name || userProfile.lastName}`.trim().toUpperCase(),
                 assistanceType: type,
                 fixedAmount: amount,
                 dateApproved: new Date(app.updated_at || app.created_at || Date.now()).toLocaleDateString("en-PH", {
@@ -98,23 +105,26 @@ export default function ApplyFinancialAid() {
                 remarks: "Scheduled financial aid payout.",
               }
             })
-            // Only add aicsRecords if not already in remoteRecords (from db)
-            aicsRecords.forEach((ar) => {
-              if (!remoteRecords.some((rr) => rr.applicationRef === ar.applicationRef || rr.disbursementId === ar.disbursementId)) {
-                remoteRecords.push(ar)
-              }
-            })
           }
         }
 
-        // PWD / Senior Social Assistance for user
+        // 2. Fetch PWD / Senior Social Assistance for user
         try {
           const resPwd = await fetch(`${API_BASE}/api/pwd-senior/applications`)
           if (resPwd.ok) {
             const pwdApps = await resPwd.json()
             if (Array.isArray(pwdApps)) {
+              pwdApps.forEach((app: any) => {
+                const matchUser = (app.referenceNumber === qcId || app.reference_number === qcId || app.id === qcId || isUserMatch([app.firstName, app.lastName].join(" ")))
+                if (matchUser) {
+                  if (app.referenceNumber) userRefNumbers.add(app.referenceNumber)
+                  if (app.reference_number) userRefNumbers.add(app.reference_number)
+                  if (app.id) userRefNumbers.add(String(app.id))
+                }
+              })
+
               const myApprovedPwd = pwdApps.filter((app: any) => {
-                const matchUser = (app.referenceNumber === qcId || app.reference_number === qcId || app.id === qcId)
+                const matchUser = (app.referenceNumber === qcId || app.reference_number === qcId || app.id === qcId || isUserMatch([app.firstName, app.lastName].join(" ")))
                 const isAssistance =
                   app.type === "assistance" ||
                   app.type === "social-assistance" ||
@@ -124,32 +134,59 @@ export default function ApplyFinancialAid() {
                   String(app.disabilityClass || "").toLowerCase().includes("assistance")
                 return matchUser && isAssistance && (app.status === "approved" || app.status === "completed" || app.status === "for_release")
               })
-              myApprovedPwd.forEach((app: any) => {
+
+              pwdSeniorRecords = myApprovedPwd.map((app: any) => {
                 const isPwdApp = String(app.category || "").toUpperCase().includes("PWD")
                 const assistanceType = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
                 const ref = app.referenceNumber || app.reference_number || qcId
-                if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
-                  remoteRecords.push({
-                    id: `user-pwd-${app.id || ref}`,
-                    disbursementId: `DISB-2026-${String(app.id || ref).slice(-4).padStart(4, "0")}`,
-                    applicationRef: ref,
-                    applicantName: [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ").toUpperCase() || "BENEFICIARY",
-                    assistanceType: assistanceType,
-                    fixedAmount: 2000,
-                    dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    }),
-                    status: (app.status === "released" || app.status === "completed") ? "RELEASED" : "PENDING",
-                    venue: "Quezon City Hall",
-                    remarks: "PWD / Senior Social Assistance payout.",
-                  })
+                return {
+                  id: `user-pwd-${app.id || ref}`,
+                  disbursementId: `DISB-2026-${String(app.id || ref).slice(-4).padStart(4, "0")}`,
+                  applicationRef: ref,
+                  applicantName: [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ").toUpperCase() || userFull.toUpperCase(),
+                  assistanceType: assistanceType,
+                  fixedAmount: 2000,
+                  dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }),
+                  status: (app.status === "released" || app.status === "completed") ? "RELEASED" as DisbursementStage : "PENDING" as DisbursementStage,
+                  venue: "Quezon City Hall",
+                  remarks: "PWD / Senior Social Assistance payout.",
                 }
               })
             }
           }
         } catch {}
+
+        // 3. Fetch from backend financial-aid endpoint (filter only records that belong to current user)
+        const resDb = await fetch(`${API_BASE}/api/financial-aid`)
+        if (resDb.ok) {
+          const dataDb = await resDb.json()
+          if (dataDb.disbursements && Array.isArray(dataDb.disbursements)) {
+            const matchingDbRecords = dataDb.disbursements.filter((d: any) =>
+              !isIdOrDocumentService(d.assistance_type) && isUserMatch(d.applicant_name, d.application_ref)
+            )
+            const dbRecords: SyncedDisbursementRecord[] = matchingDbRecords.map((d: any) => ({
+              id: `db-${d.id}`,
+              disbursementId: d.disbursement_id,
+              applicationRef: d.application_ref,
+              applicantName: d.applicant_name,
+              assistanceType: d.assistance_type,
+              fixedAmount: Number(d.fixed_amount) || FIXED_ASSISTANCE_AMOUNTS[d.assistance_type] || 1500,
+              dateApproved: d.date_approved,
+              status: d.status as DisbursementStage,
+              appointmentDate: d.appointment_date,
+              appointmentTime: d.appointment_time,
+              venue: d.venue,
+              releasedDate: d.released_date,
+              releasedBy: d.released_by,
+              remarks: d.remarks,
+            }))
+            remoteRecords.push(...dbRecords)
+          }
+        }
       } catch (err) {
         console.warn("Could not fetch remote approved disbursements:", err)
       }
@@ -177,15 +214,51 @@ export default function ApplyFinancialAid() {
         if (rawSched) localScheduledMap = JSON.parse(rawSched)
       } catch {}
 
-      // Merge records: remote from db takes precedence
-      let combined = [...remoteRecords]
-      localDisbursements.forEach((l) => {
-        if (!combined.some((c) => c.applicationRef === l.applicationRef || c.disbursementId === l.disbursementId)) {
-          combined.push(l)
-        }
-      })
+      // Filter localDisbursements to only current user
+      const localDisbursements = getSavedDisbursements().filter((l) =>
+        isUserMatch(l.applicantName, l.applicationRef)
+      )
 
-      combined = combined.map((d) => {
+      // ── DEDUPLICATION & LATEST APPROVED SELECTION ──
+      // Group by applicationRef or (assistanceType + applicantName)
+      const recordMap = new Map<string, SyncedDisbursementRecord>()
+
+      const processCandidate = (r: SyncedDisbursementRecord) => {
+        if (!r || isIdOrDocumentService(r.assistanceType)) return
+        const key = (r.applicationRef || "").trim() || `${r.assistanceType.toLowerCase().trim()}_${r.applicantName.toLowerCase().trim()}`
+        if (!key) return
+
+        if (!recordMap.has(key)) {
+          recordMap.set(key, r)
+        } else {
+          const existing = recordMap.get(key)!
+          // Prefer RELEASED status over PENDING
+          const isRReleased = r.status === "RELEASED"
+          const isExReleased = existing.status === "RELEASED"
+
+          if (isRReleased && !isExReleased) {
+            recordMap.set(key, { ...existing, ...r, status: "RELEASED" })
+          } else if (r.appointmentDate && !existing.appointmentDate) {
+            recordMap.set(key, { ...existing, ...r })
+          } else {
+            // Keep the latest date
+            const timeR = new Date(r.dateApproved || r.releasedDate || 0).getTime()
+            const timeEx = new Date(existing.dateApproved || existing.releasedDate || 0).getTime()
+            if (timeR >= timeEx) {
+              recordMap.set(key, { ...existing, ...r })
+            }
+          }
+        }
+      }
+
+      // Add in order of priority: DB records, AICS records, PWD/Senior records, Local records
+      remoteRecords.forEach(processCandidate)
+      aicsRecords.forEach(processCandidate)
+      pwdSeniorRecords.forEach(processCandidate)
+      localDisbursements.forEach(processCandidate)
+
+      // Enhance with appointments schedule & auto-released status
+      let combined = Array.from(recordMap.values()).map((d) => {
         const appt = appointmentsMap[d.applicationRef] || appointmentsMap[d.applicantName?.toLowerCase()?.trim()]
         const cachedSched = localScheduledMap[d.applicationRef] || localScheduledMap[d.applicantName?.toLowerCase()?.trim()]
 
@@ -217,6 +290,13 @@ export default function ApplyFinancialAid() {
             ? d.releasedBy || "Automated Scheduled Payout System / Disbursing Officer"
             : undefined,
         }
+      })
+
+      // Sort with LATEST APPROVED record at the top!
+      combined.sort((a, b) => {
+        const timeA = new Date(a.dateApproved || a.appointmentDate || 0).getTime()
+        const timeB = new Date(b.dateApproved || b.appointmentDate || 0).getTime()
+        return timeB - timeA
       })
 
       setDisbursements(combined)

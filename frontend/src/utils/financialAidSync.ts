@@ -82,10 +82,30 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
         // Filter out dummy sample records (d1 to d8) and any pure ID services
         const realOnes = parsed.filter(
           (p) =>
+            p &&
             !["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"].includes(p.id) &&
             !isIdOrDocumentService(p.assistanceType)
         )
-        return realOnes
+
+        // Deduplicate records by applicationRef or assistanceType
+        const recordMap = new Map<string, SyncedDisbursementRecord>()
+        realOnes.forEach((r) => {
+          const key = (r.applicationRef || r.disbursementId || r.id || "").trim()
+          if (!key) return
+          if (!recordMap.has(key)) {
+            recordMap.set(key, r)
+          } else {
+            const existing = recordMap.get(key)!
+            // Prefer RELEASED over PENDING, or newer date
+            if (r.status === "RELEASED" && existing.status !== "RELEASED") {
+              recordMap.set(key, r)
+            } else if (r.appointmentDate && !existing.appointmentDate) {
+              recordMap.set(key, r)
+            }
+          }
+        })
+
+        return Array.from(recordMap.values())
       }
     }
   } catch (e) {
@@ -106,7 +126,24 @@ export function clearAllDisbursements() {
 // ── SAVE DISBURSEMENTS ──
 export function saveDisbursements(records: SyncedDisbursementRecord[]) {
   try {
-    localStorage.setItem("all_financial_disbursements", JSON.stringify(records))
+    // Deduplicate before saving
+    const recordMap = new Map<string, SyncedDisbursementRecord>()
+    records.forEach((r) => {
+      const key = (r.applicationRef || r.disbursementId || r.id || "").trim()
+      if (!key) return
+      if (!recordMap.has(key)) {
+        recordMap.set(key, r)
+      } else {
+        const existing = recordMap.get(key)!
+        if (r.status === "RELEASED" && existing.status !== "RELEASED") {
+          recordMap.set(key, r)
+        } else if (r.appointmentDate && !existing.appointmentDate) {
+          recordMap.set(key, r)
+        }
+      }
+    })
+    const cleanList = Array.from(recordMap.values())
+    localStorage.setItem("all_financial_disbursements", JSON.stringify(cleanList))
     window.dispatchEvent(new Event("financial_disbursements_updated"))
     window.dispatchEvent(new Event("storage"))
   } catch (e) {

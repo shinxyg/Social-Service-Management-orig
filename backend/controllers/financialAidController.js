@@ -187,6 +187,15 @@ exports.getDisbursements = async (req, res) => {
       `);
     } catch (_) {}
 
+    // Auto-clean any duplicate disbursements (keep newest by highest id)
+    try {
+      await db.query(`
+        DELETE FROM financial_aid_disbursements f1
+        USING financial_aid_disbursements f2
+        WHERE f1.id < f2.id AND f1.application_ref = f2.application_ref
+      `);
+    } catch (_) {}
+
     // Auto-clean any orphan disbursements that do not exist in active approved applications
     try {
       await db.query(`
