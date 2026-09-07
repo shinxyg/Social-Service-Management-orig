@@ -455,7 +455,11 @@ exports.updateApplicationData = async (req, res) => {
 exports.deleteApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
-    const result = await db.query('DELETE FROM solo_parent_applications WHERE id = $1 OR reference_number = $1 RETURNING id', [applicationId]);
+    const cleanId = String(applicationId).replace(/^SP-/, '').trim();
+    const result = await db.query(
+      'DELETE FROM solo_parent_applications WHERE id::text = $1 OR reference_number = $1 OR reference_number = $2 RETURNING id',
+      [cleanId, applicationId]
+    );
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Application not found' });
     }
@@ -475,4 +479,5 @@ exports.clearApplications = async (req, res) => {
     console.error('Error clearing solo parent applications:', error);
     res.status(500).json({ success: false, message: 'Error clearing applications', error: error.message });
   }
-};
+};
+

@@ -1697,6 +1697,7 @@ useEffect(() => {
 
     try {
       await fetch(url, { method: "DELETE", headers: authHeaders() })
+      await loadApplications(true)
     } catch (err) {
       console.warn("Delete request failed:", err)
     }
@@ -1707,6 +1708,7 @@ useEffect(() => {
     setApplications((prev) => prev.filter((a) => a.category !== "Solo Parent"))
     try {
       await fetch(`${API_BASE}/solo-parent/admin/clear-all`, { method: "DELETE", headers: authHeaders() })
+      await loadApplications(true)
     } catch (err) {
       console.warn("Clear solo parent failed:", err)
     }
@@ -1717,6 +1719,7 @@ useEffect(() => {
     setApplications((prev) => prev.filter((a) => a.category !== "Child Welfare"))
     try {
       await fetch(`${API_BASE}/child-welfare/admin/clear-all`, { method: "DELETE", headers: authHeaders() })
+      await loadApplications(true)
     } catch (err) {
       console.warn("Clear child welfare failed:", err)
     }
