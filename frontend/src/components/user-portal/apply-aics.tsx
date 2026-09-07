@@ -542,7 +542,7 @@ const canProceedPersonal = Boolean(
   return () => clearInterval(interval)
 }, [step, reference, appStatus])
 
-  // Auto-redirect to pending status screen (Pic 2) after 3 seconds on pending
+  // Auto-redirect to pending status screen after 3 seconds on pending
   useEffect(() => {
     if (step !== "pending") return
 
@@ -551,7 +551,12 @@ const canProceedPersonal = Boolean(
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
+          try {
+            localStorage.setItem("aics_application_submitted", String(Date.now()))
+          } catch {}
           window.dispatchEvent(new CustomEvent("aics_applications_updated"))
+          window.dispatchEvent(new CustomEvent("aics_application_submitted"))
+          window.location.reload()
           return 0
         }
         return prev - 1
@@ -2507,11 +2512,28 @@ const handleFinalSubmit = async () => {
             </p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
-            <span>
-              {t("autoRedirectStatusCountdown").replace("{count}", String(redirectCountdown))}
-            </span>
+          <div className="flex flex-col items-center justify-center gap-3 pt-1">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
+              <span>
+                {t("autoRedirectStatusCountdown").replace("{count}", String(redirectCountdown))}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.setItem("aics_application_submitted", String(Date.now()))
+                } catch {}
+                window.dispatchEvent(new CustomEvent("aics_applications_updated"))
+                window.dispatchEvent(new CustomEvent("aics_application_submitted"))
+                window.location.reload()
+              }}
+              className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              Tingnan ang Application Status
+            </button>
           </div>
         </div>
       </div>
