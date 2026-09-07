@@ -786,27 +786,46 @@ export default function SoloParentApplicationWizard({
   const [blockedReference, setBlockedReference] = useState("")
 
   useEffect(() => {
-    const checkEligibility = async () => {
-      setCheckingEligibility(true)
+    let isMounted = true
+
+    const checkEligibility = async (isInitial = false) => {
+      if (isInitial) setCheckingEligibility(true)
       try {
         const typeToCheck = idStatus || "new"
         const res = await fetch(
           `${API_BASE}/api/solo-parent/eligibility/${userId}?applicationType=${typeToCheck}`
         )
-        if (res.ok) {
+        if (res.ok && isMounted) {
           const data = await res.json()
-          setIsBlocked(data.blocked)
-          setBlockReason(data.reason)
+          setIsBlocked(Boolean(data.blocked))
+          setBlockReason(data.reason || null)
           setBlockedReference(data.referenceNumber || "")
           onBlockedStatusChange?.(Boolean(data.blocked))
         }
       } catch (err) {
         console.warn("Eligibility check server unreachable, skipping:", err)
       } finally {
-        setCheckingEligibility(false)
+        if (isMounted && isInitial) {
+          setCheckingEligibility(false)
+        }
       }
     }
-    checkEligibility()
+
+    checkEligibility(true)
+    const interval = setInterval(() => checkEligibility(false), 1500)
+    const handleUpdate = () => checkEligibility(false)
+
+    window.addEventListener("solo_parent_applications_updated", handleUpdate)
+    window.addEventListener("applications_updated", handleUpdate)
+    window.addEventListener("storage", handleUpdate)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      window.removeEventListener("solo_parent_applications_updated", handleUpdate)
+      window.removeEventListener("applications_updated", handleUpdate)
+      window.removeEventListener("storage", handleUpdate)
+    }
   }, [userId, idStatus])
 
   // ---- Submission & Application State ----

@@ -278,8 +278,19 @@ export default function ApplySoloParent() {
     }
 
     checkEligibility()
+    const interval = setInterval(checkEligibility, 1500)
+    const handleUpdate = () => checkEligibility()
+
+    window.addEventListener("solo_parent_applications_updated", handleUpdate)
+    window.addEventListener("applications_updated", handleUpdate)
+    window.addEventListener("storage", handleUpdate)
+
     return () => {
       active = false
+      clearInterval(interval)
+      window.removeEventListener("solo_parent_applications_updated", handleUpdate)
+      window.removeEventListener("applications_updated", handleUpdate)
+      window.removeEventListener("storage", handleUpdate)
     }
   }, [categoryParam, typeParam, programParam, isChildWelfare])
 
