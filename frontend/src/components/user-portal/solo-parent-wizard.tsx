@@ -1129,16 +1129,46 @@ export default function SoloParentApplicationWizard({
           <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
             <Check className="h-7 w-7 text-emerald-500" />
           </div>
-          <h2 className="text-lg font-bold text-foreground">Meron Ka Nang Approved na Application</h2>
+          <h2 className="text-lg font-bold text-foreground">Application Approved</h2>
           <p className="text-sm text-muted-foreground max-w-sm">
-            Hindi mo na maaaring ulitin ang application na ito.
+            Your application for Solo Parent ID has been officially approved! You already have an active Solo Parent ID. If you need to renew or replace your ID, please choose an option below.
           </p>
           {blockedReference && (
-            <div className="mt-2 bg-gray-100 rounded-xl px-4 py-3 w-full">
-              <p className="text-xs text-muted-foreground">Reference Number</p>
+            <div className="mt-2 bg-gray-100 rounded-xl px-4 py-3 w-full text-left">
+              <p className="text-xs text-muted-foreground">Application Reference Number</p>
               <p className="text-sm font-semibold text-foreground">{blockedReference}</p>
             </div>
           )}
+
+          <div className="w-full pt-2 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=renewal"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
+            >
+              Apply for Renewal (Renewal Solo Parent ID)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=loss"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Apply for Replacement / Lost ID
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/portal/applications"
+              }}
+              className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
+            >
+              View in My Applications
+            </button>
+          </div>
         </div>
       </div>
     )

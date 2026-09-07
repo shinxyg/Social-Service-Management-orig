@@ -944,7 +944,7 @@ export default function SeniorCitizenApplicationWizard({
             </h2>
             <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
               {isAppApproved
-                ? `Your application for ${serviceTitle} has been officially approved! You can check your scheduled appointment or ID release status in Financial Aid / My Applications.`
+                ? `Your application for ${serviceTitle} has been officially approved! You already have an active Senior Citizen ID. If you need to renew or replace your ID, please choose an option below.`
                 : `Your application for ${serviceTitle} has been successfully submitted and is currently pending review. Please wait for an OSCA officer's assessment before submitting a new application.`}
             </p>
           </div>
@@ -989,27 +989,49 @@ export default function SeniorCitizenApplicationWizard({
           </div>
 
           <div className="w-full pt-2 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/portal/my-applications"
-              }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              VIEW IN FINANCIAL AID / DISBURSEMENT
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsBlocked(false)
-                setLatestApprovedApp(null)
-                setBlockedApp(null)
-                setStep(1)
-              }}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-            >
-              Submit Another Application (Apply Again)
-            </button>
+            {isAppApproved ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/portal/apply-pwd-senior?category=senior&type=renewal"
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
+                >
+                  Apply for Renewal (Renewal SENIOR ID)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/portal/apply-pwd-senior?category=senior&type=loss"
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Apply for Replacement / Lost ID
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/portal/applications"
+                  }}
+                  className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
+                >
+                  View in My Applications
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/portal/applications"
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+                >
+                  VIEW IN MY APPLICATIONS
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

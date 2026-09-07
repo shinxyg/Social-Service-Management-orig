@@ -394,7 +394,9 @@ export default function ApplyPWDSenior() {
                     ? `Your application for Medicine Discount Booklet has been officially approved! Your official booklet number has been issued and sent to your registered email.`
                     : isSeniorMovie
                     ? `Your application for Free Movie Booklet has been officially approved! Your official booklet number has been issued and sent to your registered email.`
-                    : `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications.`)
+                    : isAssistance || isSeniorSocial
+                    ? `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications.`
+                    : `Your application for ${serviceCleanTitle} has been officially approved! You already have an active ID. If you need to renew or replace your ID, please choose an option below.`)
                 : `Your application for ${serviceCleanTitle} has been successfully submitted and is currently pending review. Please wait for an assessment before submitting a new application.`}
             </p>
           </div>
@@ -437,28 +439,51 @@ export default function ApplyPWDSenior() {
           </div>
 
           <div className="w-full pt-2 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = isAssistance || isSeniorSocial ? "/portal/financial-aid" : "/portal/applications"
-              }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              {isAssistance || isSeniorSocial ? "VIEW IN FINANCIAL AID / DISBURSEMENT" : "VIEW IN MY APPLICATIONS"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                bypassedBlockRef.current = true
-                setBypassedBlock(true)
-                setIsBlocked(false)
-                setBlockedApp(null)
-                setCurrentStep(1)
-              }}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-            >
-              Submit Another Application (Apply Again)
-            </button>
+            {isAppApproved && !isAssistance && !isSeniorSocial && !isSeniorMedicine && !isSeniorMovie ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = `/portal/apply-pwd-senior?category=${activeCategory}&type=renewal`
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
+                >
+                  {activeCategory === "senior"
+                    ? "Apply for Renewal (Renewal SENIOR ID)"
+                    : "Apply for Renewal (Renewal PWD ID)"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = `/portal/apply-pwd-senior?category=${activeCategory}&type=loss`
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Apply for Replacement / Lost ID
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/portal/applications"
+                  }}
+                  className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
+                >
+                  View in My Applications
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = isAssistance || isSeniorSocial ? "/portal/financial-aid" : "/portal/applications"
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+                >
+                  {isAssistance || isSeniorSocial ? "VIEW IN FINANCIAL AID / DISBURSEMENT" : "VIEW IN MY APPLICATIONS"}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
