@@ -1381,9 +1381,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
             </h2>
             <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
               {isAppApproved
-                ? (isAssistance
-                    ? `Your application for ${serviceTitle} has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications.`
-                    : `Your application for ${serviceTitle} has been officially approved! You already have an active ID. If you need to renew or replace your ID, please choose an option below.`)
+                ? `Your application for ${serviceTitle} has been officially approved! You already have an active PWD ID. If you need to renew or replace your ID, please choose an option below.`
                 : `Your application for ${serviceTitle} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.`}
             </p>
           </div>
@@ -1428,25 +1426,21 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
           </div>
 
           <div className="w-full pt-2 flex flex-col gap-2">
-            {isAppApproved && !isAssistance ? (
+            {isAppApproved ? (
               <>
                 <button
                   type="button"
                   onClick={() => {
-                    const category = initialCategory === "senior" ? "senior" : "pwd"
-                    window.location.href = `/portal/apply-pwd-senior?category=${category}&type=renewal`
+                    window.location.href = `/portal/apply-pwd-senior?category=pwd&type=renewal`
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
                 >
-                  {initialCategory === "senior"
-                    ? "Apply for Renewal (Renewal SENIOR ID)"
-                    : "Apply for Renewal (Renewal PWD ID)"}
+                  Apply for Renewal (Renewal PWD ID)
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    const category = initialCategory === "senior" ? "senior" : "pwd"
-                    window.location.href = `/portal/apply-pwd-senior?category=${category}&type=loss`
+                    window.location.href = `/portal/apply-pwd-senior?category=pwd&type=loss`
                   }}
                   className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
                 >
@@ -1467,11 +1461,11 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = isAssistance ? "/portal/financial-aid" : "/portal/applications"
+                    window.location.href = "/portal/applications"
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
                 >
-                  {isAssistance ? "VIEW IN FINANCIAL AID / DISBURSEMENT" : "VIEW IN MY APPLICATIONS"}
+                  VIEW IN MY APPLICATIONS
                 </button>
               </>
             )}

@@ -444,18 +444,20 @@ export default function ApplyPWDSenior() {
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = `/portal/apply-pwd-senior?category=${activeCategory}&type=renewal`
+                    const cat = isSenior ? "senior" : "pwd"
+                    window.location.href = `/portal/apply-pwd-senior?category=${cat}&type=renewal`
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
                 >
-                  {activeCategory === "senior"
+                  {isSenior
                     ? "Apply for Renewal (Renewal SENIOR ID)"
                     : "Apply for Renewal (Renewal PWD ID)"}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = `/portal/apply-pwd-senior?category=${activeCategory}&type=loss`
+                    const cat = isSenior ? "senior" : "pwd"
+                    window.location.href = `/portal/apply-pwd-senior?category=${cat}&type=loss`
                   }}
                   className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
                 >
