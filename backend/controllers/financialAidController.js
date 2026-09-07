@@ -514,5 +514,41 @@ exports.releaseDisbursement = async (req, res) => {
   }
 };
 
+// DELETE /api/financial-aid/:id
+exports.deleteDisbursement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cleanId = String(id || '').trim();
+    await db.query(
+      `DELETE FROM financial_aid_disbursements 
+       WHERE id::text = $1 OR disbursement_id = $1 OR application_ref = $1`,
+      [cleanId]
+    );
+    res.json({ message: 'Disbursement deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting disbursement:', err);
+    res.status(500).json({ error: 'Failed to delete disbursement.' });
+  }
+};
+
+// DELETE /api/financial-aid/cleanup-user/:nameOrRef
+exports.deleteUserDisbursements = async (req, res) => {
+  try {
+    const { nameOrRef } = req.params;
+    const term = `%${nameOrRef}%`;
+    const result = await db.query(
+      `DELETE FROM financial_aid_disbursements 
+       WHERE applicant_name ILIKE $1 
+          OR application_ref ILIKE $1 
+          OR qc_id ILIKE $1`,
+      [term]
+    );
+    res.json({ message: `Deleted ${result.rowCount} disbursements.` });
+  } catch (err) {
+    console.error('Error clearing disbursements:', err);
+    res.status(500).json({ error: 'Failed to clear disbursements.' });
+  }
+};
+
 // Periodic runner export
 exports.autoReleaseScheduledDisbursements = autoReleaseScheduledDisbursements;

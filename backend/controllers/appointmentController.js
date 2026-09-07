@@ -339,3 +339,35 @@ exports.completeAppointment = async (req, res) => {
     res.status(500).json({ error: 'Failed to complete appointment.' });
   }
 };
+
+// DELETE /api/appointments/:id
+exports.deleteAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cleanId = String(id || '').trim();
+    await db.query(`DELETE FROM appointments WHERE id::text = $1 OR reference_no = $1`, [cleanId]);
+    res.json({ message: 'Appointment deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting appointment:', err);
+    res.status(500).json({ error: 'Failed to delete appointment.' });
+  }
+};
+
+// DELETE /api/appointments/cleanup-user/:nameOrRef
+exports.deleteUserAppointments = async (req, res) => {
+  try {
+    const { nameOrRef } = req.params;
+    const term = `%${nameOrRef}%`;
+    const result = await db.query(
+      `DELETE FROM appointments 
+       WHERE applicant_name ILIKE $1 
+          OR reference_no ILIKE $1 
+          OR qc_id ILIKE $1`,
+      [term]
+    );
+    res.json({ message: `Deleted ${result.rowCount} appointments.` });
+  } catch (err) {
+    console.error('Error clearing appointments:', err);
+    res.status(500).json({ error: 'Failed to clear appointments.' });
+  }
+};

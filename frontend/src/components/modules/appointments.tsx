@@ -5,11 +5,13 @@ import {
   CheckCircle2,
   Search,
   MapPin,
+  Trash2,
 } from "lucide-react"
 import {
   syncAppointmentToFinancialAid,
   parseAppointmentDateTime,
   checkAndAutoReleaseScheduledDisbursements,
+  cleanupRenzTestData,
 } from "../../utils/financialAidSync"
 import { API_BASE } from "../../config/api"
 
@@ -213,10 +215,12 @@ function AppointmentCard({
   appt,
   onSchedule,
   onMarkCompleted,
+  onDelete,
 }: {
   appt: AppointmentRequest
   onSchedule: (a: AppointmentRequest) => void
   onMarkCompleted: (id: string) => void
+  onDelete: (id: string, ref: string) => void
 }) {
   const st = getAppointmentStatusTheme(appt.status)
   return (
@@ -254,15 +258,24 @@ function AppointmentCard({
         </div>
 
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${st?.chip || 'bg-slate-100 text-slate-700'}`}>
-            {st?.icon}
-            {st?.label}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${st?.chip || 'bg-slate-100 text-slate-700'}`}>
+              {st?.icon}
+              {st?.label}
+            </span>
+            <button
+              onClick={() => onDelete(appt.id, appt.referenceNo)}
+              className="p-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+              title="Burahin ang appointment request na ito"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
           {appt.status === "pending" && (
             <button
               onClick={() => onSchedule(appt)}
-              className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+              className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors cursor-pointer"
             >
               <Calendar className="h-3.5 w-3.5" />
               Set Schedule
@@ -650,8 +663,28 @@ export default function Appointments() {
 
       {/* List */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-foreground">Requests ({filtered.length})</h2>
+          <button
+            type="button"
+            onClick={async () => {
+              if (confirm("Gusto mo bang linisin ang lahat ng test records at history ni Renz Mahinay Millares para makapag-test ulit?")) {
+                await cleanupRenzTestData()
+                setAppointments((prev) =>
+                  prev.filter(
+                    (a) =>
+                      !a.applicantName.toLowerCase().includes("renz") &&
+                      !a.referenceNo.includes("110000572516915")
+                  )
+                )
+                window.location.reload()
+              }
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 border border-red-200 bg-red-50/70 hover:bg-red-100 transition-colors cursor-pointer self-start sm:self-auto flex items-center gap-1.5"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Linisin ang Test Records ni Renz</span>
+          </button>
         </div>
 
         {filtered.length === 0 ? (
@@ -667,6 +700,25 @@ export default function Appointments() {
                 appt={appt}
                 onSchedule={setSchedulingAppt}
                 onMarkCompleted={handleMarkCompleted}
+                onDelete={async (id, ref) => {
+                  if (confirm(`Burahin ang appointment request para kay ${appt.applicantName}?`)) {
+                    try {
+                      await fetch(`${API_BASE}/api/appointments/${id}`, { method: "DELETE" }).catch(() => {})
+                      await fetch(`${API_BASE}/api/appointments/${ref}`, { method: "DELETE" }).catch(() => {})
+                    } catch {}
+                    try {
+                      const raw = localStorage.getItem("all_appointments_scheduled")
+                      if (raw) {
+                        const localMap = JSON.parse(raw)
+                        delete localMap[id]
+                        delete localMap[ref]
+                        localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
+                      }
+                    } catch {}
+                    setAppointments((prev) => prev.filter((item) => item.id !== id && item.referenceNo !== ref))
+                    window.dispatchEvent(new Event("appointments_updated"))
+                  }
+                }}
               />
             ))}
           </div>

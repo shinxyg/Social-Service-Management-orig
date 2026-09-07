@@ -381,3 +381,68 @@ export function checkAndAutoReleaseScheduledDisbursements(): number {
   return releasedCount
 }
 
+// ── UTILITY: CLEANUP USER TEST DATA (RENZ) ──
+export async function cleanupRenzTestData() {
+  try {
+    // 1. Backend cleanup calls
+    await Promise.allSettled([
+      fetch(`${API_BASE}/api/financial-aid/cleanup-user/110000572516915`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/financial-aid/cleanup-user/renz`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/appointments/cleanup-user/110000572516915`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/appointments/cleanup-user/renz`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/aics/cleanup-user/110000572516915`, { method: "DELETE" }),
+      fetch(`${API_BASE}/api/aics/cleanup-user/renz`, { method: "DELETE" }),
+    ])
+  } catch {}
+
+  // 2. LocalStorage cleanup
+  const storageKeys = [
+    "all_financial_disbursements",
+    "all_appointments_scheduled",
+    "pwd_senior_applications",
+    "aics_applications",
+    "all_user_applications",
+    "active_applications",
+    "all_user_notifications",
+    "citizen_applications",
+    "user_applications",
+    "dismissed_senior_assistance_ref"
+  ]
+
+  for (const k of storageKeys) {
+    try {
+      const raw = localStorage.getItem(k)
+      if (raw) {
+        const list = JSON.parse(raw)
+        if (Array.isArray(list)) {
+          const filtered = list.filter((item: any) => {
+            const str = JSON.stringify(item).toLowerCase()
+            return !str.includes("renz") && !str.includes("110000572516915") && !str.includes("millares")
+          })
+          localStorage.setItem(k, JSON.stringify(filtered))
+        } else if (typeof list === "object" && list !== null) {
+          const newObj = { ...list }
+          Object.keys(newObj).forEach((objKey) => {
+            if (
+              objKey.toLowerCase().includes("renz") ||
+              objKey.includes("110000572516915") ||
+              objKey.toLowerCase().includes("millares")
+            ) {
+              delete newObj[objKey]
+            }
+          })
+          localStorage.setItem(k, JSON.stringify(newObj))
+        }
+      }
+    } catch {}
+  }
+
+  // 3. Dispatch events
+  window.dispatchEvent(new Event("financial_disbursements_updated"))
+  window.dispatchEvent(new Event("appointments_updated"))
+  window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+  window.dispatchEvent(new Event("aics_applications_updated"))
+  window.dispatchEvent(new Event("applications_updated"))
+  window.dispatchEvent(new Event("storage"))
+}
+

@@ -21,6 +21,7 @@ import {
   getSavedDisbursements,
   checkAndAutoReleaseScheduledDisbursements,
   parseAppointmentDateTime,
+  cleanupRenzTestData,
 } from "../../utils/financialAidSync"
 
 export { FIXED_ASSISTANCE_AMOUNTS, type DisbursementStage, type SyncedDisbursementRecord }
@@ -570,21 +571,44 @@ export default function FinancialAidDisbursement() {
             </div>
           </div>
 
-          {/* Status Filter Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-            {["ALL", "PENDING", "RELEASED"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setSelectedStatusTab(tab)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase whitespace-nowrap transition-colors cursor-pointer ${
-                  selectedStatusTab === tab
-                    ? "bg-[#3b82f6] text-white shadow-xs"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-                }`}
-              >
-                {tab} {tab === "PENDING" ? `(${pendingCount})` : tab === "RELEASED" ? `(${releasedCount})` : `(${disbursements.length})`}
-              </button>
-            ))}
+          {/* Status Filter Tabs & Cleanup Buttons */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+              {["ALL", "PENDING", "RELEASED"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setSelectedStatusTab(tab)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase whitespace-nowrap transition-colors cursor-pointer ${
+                    selectedStatusTab === tab
+                      ? "bg-[#3b82f6] text-white shadow-xs"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+                  }`}
+                >
+                  {tab} {tab === "PENDING" ? `(${pendingCount})` : tab === "RELEASED" ? `(${releasedCount})` : `(${disbursements.length})`}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                if (confirm("Gusto mo bang linisin ang lahat ng test records at history ni Renz Mahinay Millares para makapag-test ulit?")) {
+                  await cleanupRenzTestData()
+                  setDisbursements((prev) =>
+                    prev.filter(
+                      (d) =>
+                        !d.applicantName.toLowerCase().includes("renz") &&
+                        !d.applicationRef.includes("110000572516915")
+                    )
+                  )
+                  window.location.reload()
+                }
+              }}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 border border-red-200 bg-red-50/70 hover:bg-red-100 transition-colors cursor-pointer self-start sm:self-auto flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Linisin ang Test History ni Renz</span>
+            </button>
           </div>
         </div>
 
@@ -630,7 +654,7 @@ export default function FinancialAidDisbursement() {
                       </td>
                       <td className="px-4 py-3.5 text-gray-800 font-medium">
                         {d.appointmentDate ? (
-                          <div className="space-y-0.5">
+                           <div className="space-y-0.5">
                             <span className="block text-gray-900 font-semibold">{d.appointmentDate}</span>
                             <span className="text-[11px] text-blue-700 font-bold">{d.appointmentTime || "10:00 AM"}</span>
                           </div>
@@ -660,15 +684,40 @@ export default function FinancialAidDisbursement() {
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-right">
-                        <div className="inline-flex items-center justify-end">
+                        <div className="inline-flex items-center justify-end gap-1.5">
                           <button
                             type="button"
                             onClick={() => setSelectedDetailsRecord(d)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
                             title="Tingnan ang buong detalye ng ayuda"
                           >
                             <Eye className="w-3.5 h-3.5 text-blue-600" />
-                            <span>View Details</span>
+                            <span>View</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (confirm(`Burahin ang disbursement record para kay ${d.applicantName}?`)) {
+                                try {
+                                  await fetch(`${API_BASE}/api/financial-aid/${d.id}`, { method: "DELETE" }).catch(() => {})
+                                  await fetch(`${API_BASE}/api/financial-aid/${d.disbursementId}`, { method: "DELETE" }).catch(() => {})
+                                } catch {}
+                                const raw = localStorage.getItem("all_financial_disbursements")
+                                if (raw) {
+                                  const list = JSON.parse(raw)
+                                  if (Array.isArray(list)) {
+                                    const next = list.filter((item: any) => item.id !== d.id && item.disbursementId !== d.disbursementId)
+                                    localStorage.setItem("all_financial_disbursements", JSON.stringify(next))
+                                  }
+                                }
+                                setDisbursements((prev) => prev.filter((item) => item.id !== d.id && item.disbursementId !== d.disbursementId))
+                                window.dispatchEvent(new Event("financial_disbursements_updated"))
+                              }
+                            }}
+                            className="inline-flex items-center justify-center p-1.5 rounded-xl border border-red-200 bg-red-50/70 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
+                            title="Burahin ang rekord na ito"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
