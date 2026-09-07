@@ -39,140 +39,119 @@ const SOLO_PARENT_CATEGORIES: SoloParentCategory[] = [
     id: 1,
     title: "Solo parent with child/children as a consequence of rape",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Complaint affidavit",
-      "Medical record on the incident of rape",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Support)",
+      "PSA Birth Certificate of the Child/Children",
+      "Complaint Affidavit / Police or Medical Record",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 2,
     title: "Death of the spouse",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Marriage certificate",
-      "Death certificate of the spouse",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Non-Cohabitation)",
+      "PSA Birth Certificate of the Child/Children",
+      "Death Certificate of the Spouse",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 3,
     title: "Detention or criminal conviction of the spouse",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Marriage certificate",
-      "Certificate of detention or court commitment order of the spouse (at least 3 months sentence)",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Non-Cohabitation)",
+      "PSA Birth Certificate of the Child/Children",
+      "Certificate of Detention / Commitment Order",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 4,
     title: "Physical or mental incapacity of the spouse",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Marriage certificate or affidavit of cohabitation",
-      "Medical abstract / certificate of physical or mental incapacity of the spouse, or PWD ID",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Non-Cohabitation)",
+      "PSA Birth Certificate of the Child/Children",
+      "Medical Certificate / PWD ID of Spouse",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 5,
     title: "Legal or de facto separation of spouse",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Marriage certificate",
-      "Judicial decree of legal separation, or affidavit of two (2) disinterested persons for de facto separation",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Non-Cohabitation)",
+      "PSA Birth Certificate of the Child/Children",
+      "Judicial Decree / Affidavit of Separation",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 6,
     title: "Declaration of nullity or annulment of marriage",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Marriage Certificate with annotation of nullity / annulment / divorce",
-      "Judicial decree of nullity or annulment of marriage or divorce",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Non-Cohabitation)",
+      "PSA Birth Certificate of the Child/Children",
+      "Court Order / Annotated Nullity of Marriage",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 7,
     title: "Abandonment by the spouse",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Marriage certificate",
-      "Affidavit of 2 disinterested persons or police/barangay record of abandonment",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Non-Cohabitation)",
+      "PSA Birth Certificate of the Child/Children",
+      "Police / Barangay Blotter of Abandonment",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 8,
     title: "Spouse is an OFW / migrant worker (RA 11861)",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Marriage certificate",
-      "Valid OFW contract, OEC, or certification showing continuous absence for at least 12 months",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Non-Cohabitation)",
+      "PSA Birth Certificate of the Child/Children",
+      "Valid OFW Contract / POEA Record",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 9,
     title: "Unmarried father or mother who keeps and rears the child/children",
     requirements: [
-      "Birth certificate/s of the child/children",
+      "PSA Birth Certificate of the Child/Children",
       "Certificate of No Marriage (CENOMAR)",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Non-Cohabitation)",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 10,
     title: "Legal guardian, adoptive or foster parent",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Proof of guardianship (Court decision, Adoption decree, or Foster Parent license)",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Non-Cohabitation)",
+      "PSA Birth Certificate of the Child/Children",
+      "Proof of Guardianship / Adoption Decree",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 11,
     title: "Relative within the 4th civil degree who assumes parental care & support",
     requirements: [
-      "Birth certificate/s of the child/children",
-      "Death certificate, incapacity certificate, or police/barangay record of absence of parents for at least 6 months",
-      "Proof of relationship of relative to the parents / legal guardian",
-      "Sworn Affidavit of Solo Parent (Sole Parental Care & Support)",
+      "PSA Birth Certificate of the Child/Children",
+      "Proof of Relationship & Absence of Parents",
       "Barangay Certificate of Residency & Parental Care",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
   {
     id: 12,
     title: "Pregnant woman",
     requirements: [
-      "Medical record of pregnancy",
-      "Sworn Affidavit of Solo Parent (Non-Cohabitation / Sole Support)",
+      "Medical Certificate / Ultrasound (Pregnancy)",
       "Barangay Certificate of Residency",
-      "Solo Parent Orientation Seminar Certificate of Attendance",
+      "Sworn Affidavit of Solo Parent",
     ],
   },
 ]
@@ -187,30 +166,34 @@ interface SampleDocument {
 }
 
 const RENEWAL_DOCUMENTS: SampleDocument[] = [
-  { id: "oldId", 
-    label: "OLD ID", 
+  {
+    id: "oldId",
+    label: "OLD ID",
     description: "Ang iyong dating Solo Parent card.",
     images: ["/samples/OLD SOLO ID.jpg"],
-    downloadUrl: "/samples/OLD SOLO ID.jpg"
-},
-  { id: "idPicture", 
-    label: "RECENT 2X2 ID PICTURE", 
-    description: "Recent color photo, light background, clear face.", 
+    downloadUrl: "/samples/OLD SOLO ID.jpg",
+  },
+  {
+    id: "idPicture",
+    label: "RECENT 2X2 ID PICTURE",
+    description: "Recent color photo, light background, clear face.",
     images: ["/samples/ID PICTURE (2X2).webp"],
-    downloadUrl: "/samples/ID PICTURE (2X2).webp"
-},
-  { id: "barangayCertificate", 
-    label: "BARANGAY CERTIFICATE (KUNG NAGBAGO ANG ADDRESS)", 
+    downloadUrl: "/samples/ID PICTURE (2X2).webp",
+  },
+  {
+    id: "barangayCertificate",
+    label: "BARANGAY CERTIFICATE (KUNG NAGBAGO ANG ADDRESS)",
     description: "Kailangan lamang kung nagbago ang tirahan mula noong huling application.",
     images: ["/samples/BARANGAY CERTIFICATE.webp"],
-    downloadUrl: "/samples/BARANGAY CERTIFICATE.webp"
-},
-  { id: "endorsement", 
-    label: "ENDORSEMENT FROM SOLO PARENT PRESIDENT", 
+    downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
+  },
+  {
+    id: "endorsement",
+    label: "ENDORSEMENT FROM SOLO PARENT PRESIDENT",
     description: "Endorsement mula sa Solo Parent President ng iyong barangay.",
     images: ["/samples/ENDORSEMENT FROM SOLO PARENT.webp"],
-    downloadUrl: "/samples/ENDORSEMENT FROM SOLO PARENT.webp"
-},
+    downloadUrl: "/samples/ENDORSEMENT FROM SOLO PARENT.webp",
+  },
 ]
 
 const LOSS_ID_DOCUMENTS: SampleDocument[] = [
@@ -252,7 +235,8 @@ function requirementToDocument(requirement: string, index: number): SampleDocume
   if (/birth certificate/i.test(requirement)) {
     return {
       id,
-      label: requirement,
+      label: requirement.toUpperCase(),
+      description: "PSA Birth certificate of the child/children.",
       images: ["/samples/BIRTH CERTIFICATE OF MINOR.jpg"],
       downloadUrl: "/samples/BIRTH CERTIFICATE OF MINOR.jpg",
     }
@@ -260,12 +244,28 @@ function requirementToDocument(requirement: string, index: number): SampleDocume
   if (/barangay/i.test(requirement)) {
     return {
       id,
-      label: requirement,
+      label: requirement.toUpperCase(),
+      description: "Original Barangay Certificate of Residency & Parental Care.",
       images: ["/samples/BARANGAY CERTIFICATE.webp"],
       downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
     }
   }
-  return { id, label: requirement }
+  if (/death/i.test(requirement)) {
+    return {
+      id,
+      label: requirement.toUpperCase(),
+      description: "PSA / Certified copy of Death Certificate of the spouse.",
+      images: ["/samples/sample_death_certificate.png"],
+      downloadUrl: "/samples/sample_death_certificate.png",
+    }
+  }
+  return {
+    id,
+    label: requirement.toUpperCase(),
+    description: "Clear copy or photo of the supporting document.",
+    images: ["/samples/PROOF OF CIRCUMSTANCE (ANY ONE).webp"],
+    downloadUrl: "/samples/PROOF OF CIRCUMSTANCE (ANY ONE).webp",
+  }
 }
 
 // Ang 2x2 ID picture ay palaging kailangan para sa ID card mismo,

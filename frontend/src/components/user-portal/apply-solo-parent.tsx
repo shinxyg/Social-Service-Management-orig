@@ -153,95 +153,71 @@ function getLocalizedSoloParentRequirements(
   if (language === "en") {
     return [
       {
-        title: "Proof of Residence",
-        desc: "Valid Government ID with Quezon City address or Original Barangay Certificate of Residency.",
-      },
-      {
-        title: "ID Picture (2×2)",
-        desc: "Recent 2×2 ID Picture with clean white background.",
-      },
-      {
-        title: "Signature Specimen",
-        desc: "Clear signature specimen or electronic signature of the parent.",
+        title: "1 PC 2×2 ID Picture",
+        desc: "Recent 2×2 color photo with clean white background.",
       },
       {
         title: "PSA Birth Certificate/s of Children",
-        desc: "Birth Certificate/s of child/children (below 18 years old or dependent with disability).",
+        desc: "Birth certificate/s of dependent child/children.",
+      },
+      {
+        title: "Barangay Certificate of Residency & Parental Care",
+        desc: "Proof of legitimate residency and parental care in Quezon City.",
+      },
+      {
+        title: "Proof of Circumstance (Category Document)",
+        desc: "Death Certificate, Medical/Detention Record, Court Order, OFW Contract, or CENOMAR based on category.",
       },
       {
         title: "Sworn Affidavit of Solo Parent",
         desc: "Certifying sole parental care and support, and non-cohabitation.",
-      },
-      {
-        title: "Proof of Circumstance (Category Document)",
-        desc: "Death Certificate, Medical/Detention Record, Court Decision, OFW Contract, or CENOMAR according to category.",
-      },
-      {
-        title: "Certificate of Attendance (Seminar)",
-        desc: "Proof of attendance at the Solo Parent Orientation Seminar from QC SSDD.",
       },
     ]
   }
   if (language === "bis") {
     return [
       {
-        title: "Pruweba sa Pinuy-anan",
-        desc: "Balido nga Government ID nga adunay adres sa Quezon City o Orihinal nga Barangay Certificate of Residency.",
-      },
-      {
-        title: "ID Picture (2×2)",
+        title: "1 PC 2×2 ID Picture",
         desc: "Bag-ong 2×2 ID Picture nga adunay limpyo nga puti nga background.",
       },
       {
-        title: "Pirma sa Ginikanan",
-        desc: "Tin-aw nga pirma o electronic signature sa ginikanan.",
-      },
-      {
         title: "PSA Birth Certificate sa mga Anak",
-        desc: "Birth Certificate sa anak o mga anak (ubos sa 18 anyos o dependent nga adunay kakulian).",
+        desc: "Birth Certificate sa anak o mga anak.",
       },
       {
-        title: "Sworn Affidavit of Solo Parent",
-        desc: "Nagpamatuod nga ikaw bugtong nag-atiman sa bata ug walay kapuyo o bag-ong kapikas.",
+        title: "Barangay Certificate of Residency & Parental Care",
+        desc: "Pruweba sa lehitimong pagpuyo ug pag-atiman sa Quezon City.",
       },
       {
         title: "Pruweba sa Sitwasyon (Kategorya)",
         desc: "Death Certificate, Medical/Detention Record, Court Order, OFW Contract, o CENOMAR base sa kategorya.",
       },
       {
-        title: "Certificate of Attendance (Seminar)",
-        desc: "Pruweba sa pagtambong sa Solo Parent Orientation Seminar sa QC SSDD.",
+        title: "Sworn Affidavit of Solo Parent",
+        desc: "Nagpamatuod nga ikaw bugtong nag-atiman sa bata ug walay kapuyo.",
       },
     ]
   }
   return [
     {
-      title: "Proof of Residence",
-      desc: "Valid Government ID na may tirahan sa Quezon City o Orihinal na Barangay Certificate of Residency.",
-    },
-    {
-      title: "ID Picture (2×2)",
+      title: "1 PC 2×2 ID Picture",
       desc: "Kasalukuyang 2×2 ID Picture na may malinis na puting background.",
     },
     {
-      title: "Signature / Lagda",
-      desc: "Malinaw na ispesimen ng pirma o electronic signature ng magulang.",
+      title: "PSA Birth Certificate ng mga Anak",
+      desc: "Birth Certificate ng anak o mga anak.",
     },
     {
-      title: "PSA Birth Certificate ng mga Anak",
-      desc: "Birth Certificate ng anak o mga anak (wala pang 18 taong gulang o dependent na may kapansanan).",
+      title: "Barangay Certificate of Residency & Parental Care",
+      desc: "Patunay ng lehitimong paninirahan at pangangalaga sa Lungsod Quezon.",
+    },
+    {
+      title: "Katibayan ng Sitwasyon (Category Document)",
+      desc: "Death Certificate ng asawa, Medical/Detention Record, Court Order, OFW Contract, o CENOMAR base sa kategorya.",
     },
     {
       title: "Sworn Affidavit of Solo Parent",
-      desc: "Nagsasaad na ikaw ay solong nagtataguyod sa bata at walang kinakasama o bagong asawa.",
-    },
-    {
-      title: "Katibayan ng Sitwasyon (Category Proof)",
-      desc: "Death Certificate ng asawa, Medical/Detention Record, Court Order ng Nullity, OFW Contract, o CENOMAR.",
-    },
-    {
-      title: "Certificate of Attendance (Seminar)",
-      desc: "Katibayan ng pagdalo sa Solo Parent Orientation Seminar ng QC SSDD.",
+      desc: "Pinanumpaang salaysay na nagpapatunay ng solong pagtataguyod sa anak at walang kinakasama.",
     },
   ]
 }
