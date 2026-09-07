@@ -1389,6 +1389,126 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Hal. MB-2026-XXXXXX",
     bis: "Pananglitan: MB-2026-XXXXXX",
   },
+  seniorHouseholdSituationTitle: {
+    en: "Household and Economic Situation",
+    tl: "Kalagayan ng Sambahayan at Kabuhayan",
+    bis: "Kahimtang sa Panimalay ug Panginabuhian",
+  },
+  seniorLivingArrangementLabel: {
+    en: "Living Arrangement",
+    tl: "Kaayusan sa Tirahan (Living Arrangement)",
+    bis: "Kahikayan sa Puy-anan (Living Arrangement)",
+  },
+  seniorLivingAloneTitle: {
+    en: "Alone",
+    tl: "Alone (Mag-isa)",
+    bis: "Alone (Nag-inusara)",
+  },
+  seniorLivingAloneDesc: {
+    en: "Living alone in the household",
+    tl: "Nakatira nang mag-isa sa tahanan",
+    bis: "Nagpuyo nga nag-inusara sa panimalay",
+  },
+  seniorLivingFamilyTitle: {
+    en: "With Family",
+    tl: "With Family (Kasama ang Pamilya)",
+    bis: "With Family (Uban ang Pamilya)",
+  },
+  seniorLivingFamilyDesc: {
+    en: "Living with children, grandchildren, or spouse",
+    tl: "Kasama ang mga anak, apo, o asawa",
+    bis: "Kauban ang mga anak, apo, o kapikas",
+  },
+  seniorLivingCaregiverTitle: {
+    en: "With Caregiver",
+    tl: "With Caregiver (Kasama ang Tagapag-alaga)",
+    bis: "With Caregiver (Uban ang Tig-atiman)",
+  },
+  seniorLivingCaregiverDesc: {
+    en: "Has a caregiver taking care of daily needs",
+    tl: "May tagapag-alaga na nag-aasikaso",
+    bis: "Adunay tig-atiman nga nag-atiman",
+  },
+  seniorFamilyMembersCountLabel: {
+    en: "Number of Household Members",
+    tl: "Bilang ng Kasapi sa Bahay",
+    bis: "Gidaghanon sa Miyembro sa Panimalay",
+  },
+  seniorMonthlyFamilyIncomeLabel: {
+    en: "Monthly Family Income",
+    tl: "Buwanang Kita ng Pamilya",
+    bis: "Bulanang Kita sa Pamilya",
+  },
+  seniorIncomeNoIncome: {
+    en: "No Regular Income",
+    tl: "Walang Regular na Kita / No Income",
+    bis: "Walay Regular nga Kita / No Income",
+  },
+  seniorIncomeBelow5k: {
+    en: "Below ₱5,000",
+    tl: "Below ₱5,000",
+    bis: "Ubos sa ₱5,000",
+  },
+  seniorIncomeAbove25k: {
+    en: "Above ₱25,000",
+    tl: "Higit sa ₱25,000",
+    bis: "Sobra sa ₱25,000",
+  },
+  seniorEmploymentPensionStatusLabel: {
+    en: "Employment / Pension Status",
+    tl: "Katayuan sa Trabaho / Pensyon",
+    bis: "Kahimtang sa Trabaho / Pensyon",
+  },
+  seniorEmpRetired: {
+    en: "Retired / Pensioner",
+    tl: "Retired / Pensyonado",
+    bis: "Retirado / Pensyonado",
+  },
+  seniorEmpUnemployed: {
+    en: "Unemployed",
+    tl: "Unemployed (Walang Trabaho)",
+    bis: "Walay Trabaho (Unemployed)",
+  },
+  seniorEmpSelfEmployed: {
+    en: "Self-employed / Small Business",
+    tl: "Self-employed / Maliit na Negosyo",
+    bis: "Self-employed / Gamay nga Negosyo",
+  },
+  seniorEmpPartTime: {
+    en: "Part-time Worker",
+    tl: "Part-time Worker",
+    bis: "Part-time nga Trabahante",
+  },
+  seniorEmpEmployed: {
+    en: "Employed",
+    tl: "Employed (May Trabaho)",
+    bis: "Adunay Trabaho (Employed)",
+  },
+  seniorSourceOfIncomeLabel: {
+    en: "Source of Income / Pension",
+    tl: "Pinagkukunan ng Kita / Pensyon",
+    bis: "Gikuhanan sa Kita / Pensyon",
+  },
+  seniorSourceOfIncomePlaceholder: {
+    en: "e.g. Small pension and assistance from relatives",
+    tl: "Maliit na pensyon at tulong mula sa mga kamag-anak",
+    bis: "Gamay nga pensyon ug tabang gikan sa mga paryente",
+  },
+  seniorPurposeOfAssistanceLabel: {
+    en: "Reason and Purpose of Request",
+    tl: "Dahilan at Layunin ng Kahilingan",
+    bis: "Rason ug Katuyoan sa Hangyo",
+  },
+  seniorPurposeOfAssistancePlaceholder: {
+    en: "e.g. Purchase of maintenance medicine for hypertension and diabetes, and daily living needs.",
+    tl: "Pambili ng maintenance medicine para sa hypertension at diabetes, at pambayad sa pang-araw-araw na pangangailangan.",
+    bis: "Ipalit og maintenance nga tambal para sa hypertension ug diabetes, ug inadlaw-adlaw nga panginahanglan.",
+  },
+  seniorFillAllRequiredFieldsError: {
+    en: "Please fill in all required fields marked with a red asterisk (*).",
+    tl: "Mangyaring punan ang lahat ng kinakailangang fields na may pulang asterisko (*).",
+    bis: "Palihug pun-i ang tanang gikinahanglan nga fields nga adunay pulang asterisk (*).",
+  },
 }
 
 interface LanguageContextValue {

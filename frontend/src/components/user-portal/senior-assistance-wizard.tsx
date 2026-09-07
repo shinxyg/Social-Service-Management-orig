@@ -260,8 +260,18 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   }, [submitted, referenceNumber, userProfile])
 
   // Reload / Navigation warning protection
+  const isFormDirty =
+    !submitted &&
+    (step > 1 ||
+      isResident ||
+      isSenior ||
+      hasSeniorId ||
+      isIndigentOrInNeed ||
+      Boolean(formData.seniorIdNumber?.trim()) ||
+      Boolean(formData.purposeOfAssistance?.trim()))
+
   useEffect(() => {
-    if (step > 1 && !submitted) {
+    if (isFormDirty) {
       ;(window as any).__isFormDirty = true
     } else {
       ;(window as any).__isFormDirty = false
@@ -269,18 +279,18 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
     return () => {
       ;(window as any).__isFormDirty = false
     }
-  }, [step, submitted])
+  }, [isFormDirty])
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (step > 1 && !submitted) {
+      if (isFormDirty) {
         e.preventDefault()
         e.returnValue = ""
       }
     }
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [step, submitted])
+  }, [isFormDirty])
 
   // Checklist State (Step 1)
   const [isResident, setIsResident] = useState(false)
@@ -1252,16 +1262,32 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
               <div className="border-t border-border pt-4 space-y-4">
                 <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                   <Home className="h-4 w-4 text-blue-600" />
-                  <span>Kalagayan ng Sambahayan at Kabuhayan</span>
+                  <span>{t("seniorHouseholdSituationTitle") || "Kalagayan ng Sambahayan at Kabuhayan"}</span>
                 </h4>
 
                 {/* Living Arrangement */}
                 <div>
                   <label className="text-xs font-bold text-foreground uppercase tracking-wide block mb-2">
-                    Kaayusan sa Tirahan (Living Arrangement) <span className="text-red-500">*</span>
+                    {t("seniorLivingArrangementLabel") || "Kaayusan sa Tirahan (Living Arrangement)"} <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {LIVING_ARRANGEMENTS.map((opt) => {
+                    {[
+                      {
+                        id: "Alone",
+                        label: t("seniorLivingAloneTitle") || "Alone (Mag-isa)",
+                        desc: t("seniorLivingAloneDesc") || "Nakatira nang mag-isa sa tahanan",
+                      },
+                      {
+                        id: "With Family",
+                        label: t("seniorLivingFamilyTitle") || "With Family (Kasama ang Pamilya)",
+                        desc: t("seniorLivingFamilyDesc") || "Kasama ang mga anak, apo, o asawa",
+                      },
+                      {
+                        id: "With Caregiver",
+                        label: t("seniorLivingCaregiverTitle") || "With Caregiver (Kasama ang Tagapag-alaga)",
+                        desc: t("seniorLivingCaregiverDesc") || "May tagapag-alaga na nag-aasikaso",
+                      },
+                    ].map((opt) => {
                       const isSelected = formData.livingArrangement === opt.id
                       return (
                         <div
@@ -1293,7 +1319,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-bold text-foreground uppercase tracking-wide block mb-1">
-                      Bilang ng Kasapi sa Bahay <span className="text-red-500">*</span>
+                      {t("seniorFamilyMembersCountLabel") || "Bilang ng Kasapi sa Bahay"} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -1307,30 +1333,43 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
                   <div>
                     <label className="text-xs font-bold text-foreground uppercase tracking-wide block mb-1">
-                      Buwanang Kita ng Pamilya <span className="text-red-500">*</span>
+                      {t("seniorMonthlyFamilyIncomeLabel") || "Buwanang Kita ng Pamilya"} <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={formData.monthlyIncome}
                       onChange={(e) => updateField("monthlyIncome", e.target.value)}
                       className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
-                      {MONTHLY_INCOME_RANGES.map((inc) => (
-                        <option key={inc} value={inc}>{inc}</option>
+                      {[
+                        { value: "Walang Regular na Kita / No Income", label: t("seniorIncomeNoIncome") || "Walang Regular na Kita / No Income" },
+                        { value: "Below ₱5,000", label: t("seniorIncomeBelow5k") || "Below ₱5,000" },
+                        { value: "₱5,000 - ₱10,000", label: "₱5,000 - ₱10,000" },
+                        { value: "₱10,001 - ₱15,000", label: "₱10,001 - ₱15,000" },
+                        { value: "₱15,001 - ₱25,000", label: "₱15,001 - ₱25,000" },
+                        { value: "Higit sa ₱25,000", label: t("seniorIncomeAbove25k") || "Higit sa ₱25,000" },
+                      ].map((inc) => (
+                        <option key={inc.value} value={inc.value}>{inc.label}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
                     <label className="text-xs font-bold text-foreground uppercase tracking-wide block mb-1">
-                      Katayuan sa Trabaho / Pensyon <span className="text-red-500">*</span>
+                      {t("seniorEmploymentPensionStatusLabel") || "Katayuan sa Trabaho / Pensyon"} <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={formData.employmentStatus}
                       onChange={(e) => updateField("employmentStatus", e.target.value)}
                       className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
-                      {EMPLOYMENT_STATUSES.map((emp) => (
-                        <option key={emp} value={emp}>{emp}</option>
+                      {[
+                        { value: "Retired / Pensyonado", label: t("seniorEmpRetired") || "Retired / Pensyonado" },
+                        { value: "Unemployed (Walang Trabaho)", label: t("seniorEmpUnemployed") || "Unemployed (Walang Trabaho)" },
+                        { value: "Self-employed / Maliit na Negosyo", label: t("seniorEmpSelfEmployed") || "Self-employed / Maliit na Negosyo" },
+                        { value: "Part-time Worker", label: t("seniorEmpPartTime") || "Part-time Worker" },
+                        { value: "Employed (May Trabaho)", label: t("seniorEmpEmployed") || "Employed (May Trabaho)" },
+                      ].map((emp) => (
+                        <option key={emp.value} value={emp.value}>{emp.label}</option>
                       ))}
                     </select>
                   </div>
@@ -1338,13 +1377,13 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
                 <div>
                   <label className={`text-xs font-bold uppercase tracking-wide block mb-1 ${attemptedNext && !formData.sourceOfIncome.trim() ? "text-red-600 font-semibold" : "text-foreground"}`}>
-                    Pinagkukunan ng Kita / Pensyon <span className="text-red-500">*</span>
+                    {t("seniorSourceOfIncomeLabel") || "Pinagkukunan ng Kita / Pensyon"} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.sourceOfIncome}
                     onChange={(e) => updateField("sourceOfIncome", e.target.value)}
-                    placeholder="Maliit na pensyon at tulong mula sa mga kamag-anak"
+                    placeholder={t("seniorSourceOfIncomePlaceholder") || "Maliit na pensyon at tulong mula sa mga kamag-anak"}
                     className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
                       attemptedNext && !formData.sourceOfIncome.trim()
                         ? "border-red-400 focus:ring-red-300 bg-red-50"
@@ -1355,13 +1394,13 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
                 <div>
                   <label className={`text-xs font-bold uppercase tracking-wide block mb-1 ${attemptedNext && !formData.purposeOfAssistance.trim() ? "text-red-600 font-semibold" : "text-foreground"}`}>
-                    Dahilan at Layunin ng Kahilingan <span className="text-red-500">*</span>
+                    {t("seniorPurposeOfAssistanceLabel") || "Dahilan at Layunin ng Kahilingan"} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={3}
                     value={formData.purposeOfAssistance}
                     onChange={(e) => updateField("purposeOfAssistance", e.target.value)}
-                    placeholder="Pambili ng maintenance medicine para sa hypertension at diabetes, at pambayad sa pang-araw-araw na pangangailangan."
+                    placeholder={t("seniorPurposeOfAssistancePlaceholder") || "Pambili ng maintenance medicine para sa hypertension at diabetes, at pambayad sa pang-araw-araw na pangangailangan."}
                     className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
                       attemptedNext && !formData.purposeOfAssistance.trim()
                         ? "border-red-400 focus:ring-red-300 bg-red-50"
@@ -1374,7 +1413,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
               {attemptedNext && !isStep2Valid && (
                 <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700">
                   <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>Pakikumpleto ang lahat ng kinakailangang impormasyon sa Step 2 bago magpatuloy sa susunod na hakbang.</span>
+                  <span>{t("seniorFillAllRequiredFieldsError") || "Mangyaring punan ang lahat ng kinakailangang fields na may pulang asterisko (*)."}</span>
                 </div>
               )}
             </div>
