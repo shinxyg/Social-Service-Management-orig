@@ -281,6 +281,16 @@ function AppointmentCard({
               Set Schedule
             </button>
           )}
+
+          {appt.status === "scheduled" && (
+            <button
+              onClick={() => onMarkCompleted(appt.id)}
+              className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors cursor-pointer"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Mark Completed
+            </button>
+          )}
         </div>
       </div>
     </div>
