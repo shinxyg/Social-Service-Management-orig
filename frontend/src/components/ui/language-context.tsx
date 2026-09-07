@@ -1509,6 +1509,16 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Mangyaring punan ang lahat ng kinakailangang fields na may pulang asterisko (*).",
     bis: "Palihug pun-i ang tanang gikinahanglan nga fields nga adunay pulang asterisk (*).",
   },
+  switchServiceConfirmWarning: {
+    en: "Are you sure you want to switch services? Any unsaved information you entered will be lost.",
+    tl: "Sigurado ka bang nais mong lumipat ng serbisyo? Mawawala ang kasalukuyang impormasyon na iyong sinasagutan.",
+    bis: "Sigurado ka ba nga gusto nimong mobalhin og serbisyo? Mawala ang kasamtangang impormasyon nga imong gipangbutang.",
+  },
+  leavePageConfirmWarning: {
+    en: "Are you sure you want to go back? Any unsaved information you entered will be lost.",
+    tl: "Sigurado ka bang nais mong bumalik? Mawawala ang kasalukuyang impormasyon na iyong sinasagutan.",
+    bis: "Sigurado ka ba nga gusto nimong mobalik? Mawala ang kasamtangang impormasyon nga imong gipangbutang.",
+  },
 }
 
 interface LanguageContextValue {

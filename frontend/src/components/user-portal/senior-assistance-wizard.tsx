@@ -224,16 +224,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
     districtOffice: "main",
   })
 
-  // Reload / Navigation warning protection
-  const isFormDirty =
-    !submitted &&
-    (step > 1 ||
-      isResident ||
-      isSenior ||
-      hasSeniorId ||
-      isIndigentOrInNeed ||
-      Boolean(formData.seniorIdNumber?.trim()) ||
-      Boolean(formData.purposeOfAssistance?.trim()))
+  // Reload / Navigation warning protection — only active starting Step 2
+  const isFormDirty = !submitted && step >= 2
 
   useEffect(() => {
     if (isFormDirty) {

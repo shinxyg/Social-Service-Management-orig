@@ -280,7 +280,10 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
   const handleNavClick = (e: React.MouseEvent, targetPath: string) => {
     if (currentFullUrl === targetPath) return
     if ((window as any).__isFormDirty) {
-      const confirmLeave = window.confirm("Sigurado ka bang nais mong lumipat ng serbisyo? Mawawala ang kasalukuyang impormasyon na iyong sinasagutan.")
+      const confirmLeave = window.confirm(
+        t("switchServiceConfirmWarning") ||
+        "Are you sure you want to switch services? Any unsaved information you entered will be lost."
+      )
       if (!confirmLeave) {
         e.preventDefault()
         e.stopPropagation()
@@ -977,6 +980,7 @@ function ResidentHeader({
 }
 
 export default function UserLayout() {
+  const { t } = useLanguage()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [dark, setDark] = useState(false)
@@ -988,7 +992,10 @@ export default function UserLayout() {
   useEffect(() => {
     const handlePopState = () => {
       if ((window as any).__isFormDirty) {
-        const confirmLeave = window.confirm("Sigurado ka bang nais mong bumalik? Mawawala ang kasalukuyang impormasyon na iyong sinasagutan.")
+        const confirmLeave = window.confirm(
+          t("leavePageConfirmWarning") ||
+          "Are you sure you want to go back? Any unsaved information you entered will be lost."
+        )
         if (!confirmLeave) {
           window.history.pushState(null, "", window.location.href)
         } else {
@@ -998,7 +1005,7 @@ export default function UserLayout() {
     }
     window.addEventListener("popstate", handlePopState)
     return () => window.removeEventListener("popstate", handlePopState)
-  }, [])
+  }, [t])
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
