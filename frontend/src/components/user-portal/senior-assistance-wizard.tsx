@@ -508,7 +508,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
   const isStep3Valid = requiredDocuments.every((doc) => !doc.required || !!uploadedFiles[doc.id])
 
-  const isStep4Valid = formData.signatureName.trim() !== "" && formData.agreedToCertification
+  const isStep4Valid = true
 
   const canGoNext =
     step === 1
@@ -1549,34 +1549,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                   })}
                 </div>
               </ReviewSection>
-
-              {/* Declaration & Signature */}
-              <div className="border border-border rounded-xl p-5 bg-gray-50/50 space-y-4">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.agreedToCertification}
-                    onChange={(e) => updateField("agreedToCertification", e.target.checked)}
-                    className="mt-0.5 h-4 w-4 text-blue-600 rounded"
-                  />
-                  <span className="text-xs text-foreground leading-relaxed">
-                    Pinatutunayan ko sa ilalim ng kaparusahan ng batas na ang lahat ng impormasyong ibinigay sa aplikasyong ito para sa Tulong Panlipunan ay totoo at tapat sa abot ng aking kaalaman.
-                  </span>
-                </label>
-
-                <div>
-                  <label className="text-xs font-bold text-foreground uppercase tracking-wide block mb-1">
-                    Lagda ng Aplikante (Electronic Signature / Buong Pangalan) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.signatureName}
-                    onChange={(e) => updateField("signatureName", e.target.value)}
-                    placeholder="I-type ang inyong buong pangalan"
-                    className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 font-serif italic text-base text-blue-900"
-                  />
-                </div>
-              </div>
             </div>
           )}
         </div>
