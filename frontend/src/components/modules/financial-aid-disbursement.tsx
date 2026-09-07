@@ -87,7 +87,7 @@ export default function FinancialAidDisbursement() {
               const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
               const type = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
               const amount = FIXED_ASSISTANCE_AMOUNTS[type] || 1000
-              const isReleased = app.status === "released" || app.status === "completed"
+              const isReleased = String(app.status || "").toLowerCase() === "released"
 
               return {
                 id: `remote-${app.id || app.qc_id || app.reference_no}`,
@@ -163,7 +163,7 @@ export default function FinancialAidDisbursement() {
               "APPLICANT"
             const isPwdApp = String(app.category || "").toUpperCase().includes("PWD")
             const assistanceType = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
-            const isReleased = app.status === "released" || app.status === "completed"
+            const isReleased = String(app.status || "").toLowerCase() === "released"
             const ref = app.referenceNumber || app.reference_number || "PWD-QC-2026"
 
             return {
@@ -262,23 +262,39 @@ export default function FinancialAidDisbursement() {
 
       // Attach schedule from appointments/cache and check real-time auto-release
       merged = merged.map((d) => {
-        const appt = appointmentsMap[d.applicationRef] || appointmentsMap[d.applicantName?.toLowerCase()?.trim()]
-        const cachedSched = localScheduledMap[d.applicationRef] || localScheduledMap[d.applicantName?.toLowerCase()?.trim()]
+        const appt = appointmentsMap[d.applicationRef]
+        const cachedSched =
+          localScheduledMap[d.id] ||
+          localScheduledMap[`${d.applicationRef}_${d.assistanceType}`] ||
+          (appointmentsMap[d.applicationRef] ? localScheduledMap[d.applicationRef] : null)
 
-        const finalApptDate = d.appointmentDate || appt?.scheduled_date || cachedSched?.scheduledDate || null
-        const finalApptTime = d.appointmentTime || appt?.scheduled_time || cachedSched?.scheduledTime || null
-        const finalVenue = d.venue || appt?.office_location || cachedSched?.officeLocation || "Quezon City Hall"
-        const isApptCompleted = appt?.status === "completed" || cachedSched?.status === "completed"
+        const hasValidAppt = Boolean(appt?.scheduled_date && appt?.status !== "pending")
+        const hasValidCached = Boolean(cachedSched?.scheduledDate && cachedSched?.status !== "pending")
+
+        const finalApptDate = hasValidAppt
+          ? appt.scheduled_date
+          : hasValidCached
+          ? cachedSched.scheduledDate
+          : d.appointmentDate || null
+
+        const finalApptTime = hasValidAppt
+          ? appt.scheduled_time
+          : hasValidCached
+          ? cachedSched.scheduledTime
+          : d.appointmentTime || null
+
+        const finalVenue = appt?.office_location || cachedSched?.officeLocation || d.venue || "Quezon City Hall"
 
         let isTimeReached = false
-        if (finalApptDate) {
+        if (finalApptDate && finalApptTime) {
           const dt = parseAppointmentDateTime(finalApptDate, finalApptTime)
           if (dt && now.getTime() >= dt.getTime()) {
             isTimeReached = true
           }
         }
 
-        const isReleased = d.status === "RELEASED" || isApptCompleted || (Boolean(finalApptDate) && isTimeReached)
+        const isApptDone = Boolean(finalApptDate) && (appt?.status === "completed" || cachedSched?.status === "completed")
+        const isReleased = d.status === "RELEASED" || isApptDone || (Boolean(finalApptDate) && isTimeReached)
 
         return {
           ...d,
