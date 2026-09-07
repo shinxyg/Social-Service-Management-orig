@@ -18,7 +18,7 @@ import {
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
-import { getLoggedInUserQcid } from "../../utils/userProfile"
+
 
 export interface UserProfile {
   userId?: string
@@ -302,7 +302,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
           const aLast = String(a.lastName || a.last_name || "").toLowerCase().trim()
 
           if (userEmail && aEmail && userEmail === aEmail) return true
-          if (currentQcid && (aRef.includes(currentQcid) || aQcid === currentQcid || aAssigned === currentQcid)) return true
+          if (currentQcid && (aRef.includes(currentQcid) || aQcid === currentQcid || aAssigned === currentQcid || aExisting === currentQcid)) return true
           if (userFirst && userLast && aFirst === userFirst && aLast === userLast) return true
           return false
         }
