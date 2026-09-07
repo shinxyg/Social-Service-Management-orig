@@ -15,6 +15,7 @@ import {
   ChevronsRight,
   ChevronDown,
   X,
+  Trash2,
   FileText,
   Wallet,
   BookOpen,
@@ -178,7 +179,15 @@ function dismissNotif(id: string) {
   const dismissedIds = getDismissedNotifIds()
   if (!dismissedIds.includes(id)) {
     localStorage.setItem("aics_dismissed_notifs", JSON.stringify([...dismissedIds, id]))
+    window.dispatchEvent(new Event("user_notifications_updated"))
   }
+}
+
+function dismissAllNotifs(ids: string[]) {
+  const dismissedIds = getDismissedNotifIds()
+  const set = new Set([...dismissedIds, ...ids])
+  localStorage.setItem("aics_dismissed_notifs", JSON.stringify(Array.from(set)))
+  window.dispatchEvent(new Event("user_notifications_updated"))
 }
 
 function Avatar({ size = 36 }: { size?: number }) {
@@ -798,6 +807,13 @@ function ResidentHeader({
     setNotifications((prev) => prev.filter((n) => n.id !== id))
   }
 
+  const handleDismissAll = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const allIds = notifications.map((n) => n.id)
+    dismissAllNotifs(allIds)
+    setNotifications([])
+  }
+
   const timeString = now.toLocaleTimeString("en-PH", {
     hour: "2-digit",
     minute: "2-digit",
@@ -832,7 +848,7 @@ function ResidentHeader({
             {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
         </Tooltip>
-                <div className="relative" ref={notifRef}>
+        <div className="relative" ref={notifRef}>
           <Tooltip label={t("notifications")}>
             <button
               aria-label={t("notifications")}
@@ -849,46 +865,67 @@ function ResidentHeader({
           </Tooltip>
 
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-card border border-border rounded-xl shadow-medium z-50 overflow-hidden">
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <span className="text-sm font-semibold text-foreground">{t("notifications")}</span>
-                {unreadNotifCount > 0 && (
-                  <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                    {t("newBadge", { count: String(unreadNotifCount) })}
-                  </span>
+            <div className="absolute right-0 mt-2 w-84 sm:w-96 bg-card border border-border rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-foreground">{t("notifications")}</span>
+                  {unreadNotifCount > 0 && (
+                    <span className="text-[11px] font-bold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-full">
+                      {t("newBadge", { count: String(unreadNotifCount) })}
+                    </span>
+                  )}
+                </div>
+                {notifications.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleDismissAll}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-500/10 transition-colors cursor-pointer"
+                    title="Burahin lahat ng notifications"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>{language === "bis" ? "Papasa Tanan" : language === "tl" ? "Burahin Lahat" : "Clear All"}</span>
+                  </button>
                 )}
               </div>
-              <div className="max-h-80 overflow-y-auto">
+
+              <div className="max-h-96 overflow-y-auto divide-y divide-border/60">
                 {notifications.length > 0 ? (
                   notifications.map((n) => (
                     <div
                       key={n.id}
                       onClick={() => handleNotifClick(n.id)}
-                      className="w-full text-left px-4 py-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors flex items-start gap-2.5 cursor-pointer group"
+                      className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex items-start gap-3 cursor-pointer group"
                     >
                       <span
-                        className={`mt-1.5 h-1.5 w-1.5 rounded-full shrink-0 ${
-                          n.unread ? "bg-primary" : "bg-transparent"
+                        className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${
+                          n.unread ? "bg-blue-600 ring-2 ring-blue-400/30" : "bg-transparent"
                         }`}
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground">{n.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{n.desc}</p>
-                        <p className="text-[11px] text-muted-foreground mt-1">{n.time}</p>
+                        <p className="text-sm font-bold text-foreground leading-snug">{n.title}</p>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{n.desc}</p>
+                        <p className="text-[10px] font-medium text-muted-foreground/80 mt-1.5">{n.time}</p>
                       </div>
                       <button
+                        type="button"
                         onClick={(e) => handleDismissNotif(e, n.id)}
-                        aria-label="Alisin ang notification"
-                        className="shrink-0 h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
+                        aria-label="Burahin ang notification"
+                        title={language === "bis" ? "Papasa" : language === "tl" ? "Burahin" : "Delete"}
+                        className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-all cursor-pointer opacity-70 group-hover:opacity-100"
                       >
-                        <X className="h-3.5 w-3.5" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   ))
                 ) : (
-                  <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                    {t("noNewNotifications")}
-                  </p>
+                  <div className="px-4 py-8 text-center space-y-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      {t("noNewNotifications")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {language === "bis" ? "Walay pending o bag-ong mga pahibalo." : language === "tl" ? "Walang mga bagong abiso sa kasalukuyan." : "All caught up! No notifications right now."}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
