@@ -960,13 +960,15 @@ export default function PWDSocialAssistanceWizard({
 
   const handleFinalSubmit = () => {
     setSubmissionStage("matching")
-    const ref = getLoggedInUserQcid() || formData?.pwdIdNumber || `PWD-AST-${Date.now()}`
+    const ref = `110000${Date.now().toString().slice(-9)}`
     setReference(ref)
 
     const newApp = {
       id: `APP-AST-${Date.now()}`,
       submittedAt: new Date().toISOString(),
       referenceNumber: ref,
+      qcid: getLoggedInUserQcid() || "110000116932100",
+      pwdIdNumber: formData?.pwdIdNumber || "",
       category: "PWD",
       type: "assistance",
       firstName: formData.firstName || userProfile?.firstName || "Ricardo",

@@ -178,11 +178,14 @@ export function syncAppointmentToFinancialAid(params: {
   const updatedDisbursements = currentDisbursements.map((d) => {
     if (
       d.applicationRef === params.referenceNo ||
-      d.applicantName.toLowerCase().trim() === params.applicantName.toLowerCase().trim()
+      (d.applicantName.toLowerCase().trim() === params.applicantName.toLowerCase().trim() &&
+        d.status === "PENDING" &&
+        d.assistanceType.toLowerCase().includes(rawConcern.toLowerCase()))
     ) {
       found = true
       return {
         ...d,
+        applicationRef: params.referenceNo,
         appointmentDate: formattedDate,
         appointmentTime: params.time,
         venue: params.location || "Quezon City Hall",

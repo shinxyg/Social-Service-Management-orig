@@ -113,9 +113,6 @@ export default function FinancialAidDisbursement() {
                 remoteRecords.push(ar)
               }
             })
-
-            // Purge rejected or pending-review applications
-            remoteRecords = remoteRecords.filter((rr) => !rejectedRefs.has(rr.applicationRef))
           }
         }
 
@@ -128,17 +125,22 @@ export default function FinancialAidDisbursement() {
           }
         } catch {}
 
-        if (!Array.isArray(pwdSeniorApps) || pwdSeniorApps.length === 0) {
-          try {
-            const local = localStorage.getItem("pwd_senior_applications")
-            if (local) pwdSeniorApps = JSON.parse(local)
-          } catch {}
-        }
+        try {
+          const local = localStorage.getItem("pwd_senior_applications")
+          if (local) {
+            const parsed = JSON.parse(local)
+            if (Array.isArray(parsed)) {
+              parsed.forEach((la: any) => {
+                if (!pwdSeniorApps.some((a) => a.id === la.id || (a.referenceNumber && la.referenceNumber && a.referenceNumber === la.referenceNumber && a.type === la.type))) {
+                  pwdSeniorApps.push(la)
+                }
+              })
+            }
+          }
+        } catch {}
 
         if (Array.isArray(pwdSeniorApps) && pwdSeniorApps.length > 0) {
-          const rejectedPwdRefs = new Set<string>()
           const approvedPwdApps = pwdSeniorApps.filter((app: any) => {
-            const ref = app.referenceNumber || app.reference_number || app.id
             const isAssistance =
               app.type === "assistance" ||
               app.type === "social-assistance" ||
@@ -147,10 +149,6 @@ export default function FinancialAidDisbursement() {
               String(app.assistanceType || "").toLowerCase().includes("assistance")
 
             if (isAssistance) {
-              if (app.status === "rejected" || app.status === "pending") {
-                rejectedPwdRefs.add(ref)
-                return false
-              }
               return app.status === "approved" || app.status === "completed" || app.status === "for_release"
             }
             return false
@@ -189,8 +187,6 @@ export default function FinancialAidDisbursement() {
               remoteRecords.push(pr)
             }
           })
-
-          remoteRecords = remoteRecords.filter((rr) => !rejectedPwdRefs.has(rr.applicationRef))
         }
 
         // 4. Fetch from /api/livelihood/applications (Approved Only)

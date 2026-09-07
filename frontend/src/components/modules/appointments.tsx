@@ -333,12 +333,9 @@ export default function Appointments() {
         if (resAics.ok) {
           const dataAics = await resAics.json()
           if (dataAics.applications && Array.isArray(dataAics.applications)) {
-            const unapprovedRefs = new Set<string>()
             dataAics.applications.forEach((app: any) => {
               const ref = app.qc_id || app.reference_no || app.reference_number || "110000116932100"
-              if (app.status === "rejected" || app.status === "pending") {
-                unapprovedRefs.add(ref)
-              } else if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
+              if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
                 const apptId = `aics-appt-${app.id}`
                 if (!appts.some((ap) => ap.id === apptId)) {
                   const fullName = [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") || "APPLICANT"
@@ -361,9 +358,6 @@ export default function Appointments() {
                 }
               }
             })
-
-            // Strict Filter: Only approved applications are allowed in Appointments
-            appts = appts.filter((a) => !unapprovedRefs.has(a.referenceNo))
           }
         }
 
@@ -376,15 +370,21 @@ export default function Appointments() {
           }
         } catch {}
 
-        if (!Array.isArray(pwdSeniorApps) || pwdSeniorApps.length === 0) {
-          try {
-            const local = localStorage.getItem("pwd_senior_applications")
-            if (local) pwdSeniorApps = JSON.parse(local)
-          } catch {}
-        }
+        try {
+          const local = localStorage.getItem("pwd_senior_applications")
+          if (local) {
+            const parsed = JSON.parse(local)
+            if (Array.isArray(parsed)) {
+              parsed.forEach((la: any) => {
+                if (!pwdSeniorApps.some((a) => a.id === la.id || (a.referenceNumber && la.referenceNumber && a.referenceNumber === la.referenceNumber && a.type === la.type))) {
+                  pwdSeniorApps.push(la)
+                }
+              })
+            }
+          }
+        } catch {}
 
         if (Array.isArray(pwdSeniorApps) && pwdSeniorApps.length > 0) {
-          const unapprovedPwdRefs = new Set<string>()
           pwdSeniorApps.forEach((app: any) => {
             const ref = app.referenceNumber || app.reference_number || app.id
             const isAssistance =
@@ -396,9 +396,7 @@ export default function Appointments() {
               String(app.disabilityClass || "").toLowerCase().includes("assistance")
 
             if (isAssistance) {
-              if (app.status === "rejected" || app.status === "pending") {
-                unapprovedPwdRefs.add(ref)
-              } else if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
+              if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
                 const apptId = `pwd-senior-appt-${app.id || ref}`
                 if (!appts.some((ap) => ap.id === apptId)) {
                   const fullName =
@@ -426,8 +424,6 @@ export default function Appointments() {
               }
             }
           })
-
-          appts = appts.filter((a) => !unapprovedPwdRefs.has(a.referenceNo))
         }
 
         // Final safety check: remove any ID card issuance from appts

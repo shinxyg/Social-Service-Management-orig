@@ -649,8 +649,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
 
   const handleFinalSubmit = () => {
     setIsSubmitting(true)
-    const qcid = userProfile?.qcidNo || "110000116932100"
-    setReferenceNumber(qcid)
+    const generatedRef = `110000${Date.now().toString().slice(-9)}`
+    setReferenceNumber(generatedRef)
     setSubmissionDate(
       new Date().toLocaleDateString("en-PH", {
         year: "numeric",
@@ -662,7 +662,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
     const newApp = {
       id: `APP-SNR-AST-${Date.now()}`,
       submittedAt: new Date().toISOString(),
-      referenceNumber: qcid,
+      referenceNumber: generatedRef,
+      qcid: userProfile?.qcidNo || "110000116932100",
       seniorIdNumber: formData.seniorIdNumber,
       oscaId: formData.seniorIdNumber,
       category: "Senior Citizen",
