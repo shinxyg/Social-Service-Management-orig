@@ -312,7 +312,7 @@ export default function Appointments() {
                 const cached = localScheduledMap[apptId]
                 return {
                   id: apptId,
-                  referenceNo: a.reference_no,
+                  referenceNo: a.qc_id || a.qcid || a.reference_no || a.reference_number,
                   module: (a.module || "AICS") as ModuleKey,
                   applicantName: a.applicant_name,
                   submittedAt: a.created_at || new Date().toISOString(),
@@ -334,7 +334,7 @@ export default function Appointments() {
           const dataAics = await resAics.json()
           if (dataAics.applications && Array.isArray(dataAics.applications)) {
             dataAics.applications.forEach((app: any) => {
-              const ref = app.qc_id || app.reference_no || app.reference_number || "110000116932100"
+              const ref = app.qc_id || app.qcid || app.reference_no || app.reference_number || "110000116932100"
               if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
                 const apptId = `aics-appt-${app.id}`
                 if (!appts.some((ap) => ap.id === apptId)) {
@@ -386,7 +386,7 @@ export default function Appointments() {
 
         if (Array.isArray(pwdSeniorApps) && pwdSeniorApps.length > 0) {
           pwdSeniorApps.forEach((app: any) => {
-            const ref = app.referenceNumber || app.reference_number || app.id
+            const ref = app.qcid || app.qc_id || app.referenceNumber || app.reference_number || app.id
             const isAssistance =
               app.type === "assistance" ||
               app.type === "social-assistance" ||
