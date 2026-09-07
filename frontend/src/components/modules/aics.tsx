@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { API_BASE as APP_API_BASE } from '../../config/api'
 import { getSavedProfilePhoto } from '../../utils/profilePhoto'
+import { FIXED_ASSISTANCE_AMOUNTS } from '../../utils/financialAidSync'
 
 const API_BASE = `${APP_API_BASE}/api/aics`
 
@@ -192,6 +193,45 @@ export default function AICS() {
         body: JSON.stringify({ status }),
       })
       if (!res.ok) throw new Error('Failed to update status')
+
+      if (status === 'approved') {
+        try {
+          const rawConcern = (reviewingApp.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim()
+          const formattedConcern = rawConcern.charAt(0).toUpperCase() + rawConcern.slice(1) + ' Assistance'
+          const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[formattedConcern] || FIXED_ASSISTANCE_AMOUNTS[reviewingApp.assistance_type] || 5000
+          const qcid = reviewingApp.qc_id || reviewingApp.reference_no || '110000116932100'
+          const appName = fullName(reviewingApp).toUpperCase()
+
+          // Add to all_financial_disbursements
+          const rawDisb = localStorage.getItem('all_financial_disbursements')
+          const currentDisb = rawDisb ? JSON.parse(rawDisb) : []
+          const appDisbId = `aics-disb-${reviewingApp.id}`
+
+          if (!currentDisb.some((d: any) => d.id === appDisbId)) {
+            currentDisb.unshift({
+              id: appDisbId,
+              disbursementId: `DISB-2026-${String(reviewingApp.id).padStart(4, '0')}`,
+              applicationRef: qcid,
+              applicantName: appName,
+              assistanceType: formattedConcern,
+              fixedAmount: fixedAmt,
+              dateApproved: new Date().toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }),
+              status: 'PENDING',
+              venue: 'Quezon City Hall',
+              remarks: 'Awtomatikong pumasok mula sa naaprubahang AICS aplikasyon.',
+            })
+            localStorage.setItem('all_financial_disbursements', JSON.stringify(currentDisb))
+          }
+        } catch (e) {
+          console.warn('Could not auto-register AICS disbursement:', e)
+        }
+      }
+
+      window.dispatchEvent(new Event('aics_applications_updated'))
+      window.dispatchEvent(new Event('applications_updated'))
+      window.dispatchEvent(new Event('appointments_updated'))
+      window.dispatchEvent(new Event('financial_disbursements_updated'))
+      window.dispatchEvent(new Event('storage'))
 
       alert(
         status === 'approved'
