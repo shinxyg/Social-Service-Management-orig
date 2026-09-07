@@ -4,6 +4,7 @@ const {
   sendPwdApprovalEmail,
   sendSeniorCitizenApprovalEmail,
   sendSeniorBookletApprovalEmail,
+  sendSoloParentApprovalEmail,
 } = require('../services/emailService');
 
 // POST /api/email/send-pwd-id
@@ -78,6 +79,44 @@ router.post('/send-senior-id', async (req, res) => {
     return res.status(200).json(result);
   } catch (err) {
     console.error('Error in send-senior-id endpoint:', err);
+    return res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
+
+// POST /api/email/send-solo-parent-id
+router.post('/send-solo-parent-id', async (req, res) => {
+  try {
+    const {
+      recipientEmail,
+      recipientName,
+      soloParentIdNumber,
+      referenceNumber,
+      classification,
+      applicationType,
+      approvedDate,
+      contactNumber,
+      address,
+    } = req.body;
+
+    if (!recipientEmail) {
+      return res.status(400).json({ error: 'Recipient email is required' });
+    }
+
+    const result = await sendSoloParentApprovalEmail({
+      recipientEmail,
+      recipientName,
+      soloParentIdNumber,
+      referenceNumber,
+      classification,
+      applicationType,
+      approvedDate,
+      contactNumber,
+      address,
+    });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('Error in send-solo-parent-id endpoint:', err);
     return res.status(500).json({ error: 'Internal Server Error', details: err.message });
   }
 });

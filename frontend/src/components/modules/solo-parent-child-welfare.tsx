@@ -1625,6 +1625,29 @@ const [searchTerm, setSearchTerm] = useState("")
   if (!app) return
   try {
     await approveSubmission(app, value)
+
+    if (isSoloParent(app) && app.email) {
+      try {
+        fetch(`${API_BASE}/email/send-solo-parent-id`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            recipientEmail: app.email,
+            recipientName: displayName(app),
+            soloParentIdNumber: value,
+            referenceNumber: app.referenceNumber,
+            classification: app.classification,
+            applicationType: app.applicationType,
+            approvedDate: new Date().toISOString(),
+            contactNumber: app.contactNo,
+            address: [app.addressHouseNo, app.addressStreet, app.addressBarangay, app.addressCityMunicipality].filter(Boolean).join(", "),
+          }),
+        }).catch((e) => console.warn("[Solo Parent Email Error]:", e))
+      } catch (mailErr) {
+        console.warn("[Solo Parent Email Dispatch Failed]:", mailErr)
+      }
+    }
+
     await loadApplications()
   } catch (err) {
     console.error(err)
