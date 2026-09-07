@@ -341,7 +341,7 @@ export default function Appointments() {
           }
         }
 
-        // 2. Fetch from /api/aics/applications (Approved Only)
+        // 2. Fetch from /api/aics/applications (Approved Only) as fallback sync
         const resAics = await fetch(`${API_BASE}/api/aics/applications`)
         if (resAics.ok) {
           const dataAics = await resAics.json()
@@ -350,10 +350,17 @@ export default function Appointments() {
               const ref = app.qc_id || app.qcid || app.reference_no || app.reference_number || "110000116932100"
               if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
                 const apptId = `aics-appt-${app.id}`
-                if (!appts.some((ap) => ap.id === apptId)) {
-                  const fullName = [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") || "APPLICANT"
-                  const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
-                  const cleanType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
+                const fullName = [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") || "APPLICANT"
+                const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
+                const cleanType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
+
+                const alreadyExists = appts.some((ap) => 
+                  ap.id === apptId || 
+                  (ap.referenceNo === ref && (ap.module === "AICS" || ap.concern.toLowerCase() === cleanType.toLowerCase())) ||
+                  (ap.applicantName.toLowerCase() === fullName.toLowerCase() && ap.concern.toLowerCase() === cleanType.toLowerCase())
+                )
+
+                if (!alreadyExists) {
                   const cached = localScheduledMap[apptId]
                   appts.push({
                     id: apptId,
@@ -374,7 +381,7 @@ export default function Appointments() {
           }
         }
 
-        // 3. Fetch from /api/pwd-senior/applications (Approved Social Assistance Only)
+        // 3. Fetch from /api/pwd-senior/applications (Approved Social Assistance Only) as fallback sync
         let pwdSeniorApps: any[] = []
         try {
           const resPwd = await fetch(`${API_BASE}/api/pwd-senior/applications`)
@@ -411,15 +418,21 @@ export default function Appointments() {
             if (isAssistance) {
               if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
                 const apptId = `pwd-senior-appt-${app.id || ref}`
-                if (!appts.some((ap) => ap.id === apptId)) {
-                  const fullName =
-                    [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ") ||
-                    [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") ||
-                    "APPLICANT"
-                  const isPwdApp = String(app.category || app.service || app.assistanceType || "").toUpperCase().includes("PWD")
-                  const concernName = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
-                  const cached = localScheduledMap[apptId]
+                const fullName =
+                  [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ") ||
+                  [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") ||
+                  "APPLICANT"
+                const isPwdApp = String(app.category || app.service || app.assistanceType || "").toUpperCase().includes("PWD")
+                const concernName = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
 
+                const alreadyExists = appts.some((ap) => 
+                  ap.id === apptId || 
+                  (ap.referenceNo === ref && (ap.module === "PWD" || ap.module === "Senior Citizen")) ||
+                  (ap.applicantName.toLowerCase() === fullName.toLowerCase() && ap.concern.toLowerCase() === concernName.toLowerCase())
+                )
+
+                if (!alreadyExists) {
+                  const cached = localScheduledMap[apptId]
                   appts.push({
                     id: apptId,
                     referenceNo: ref,
@@ -439,13 +452,28 @@ export default function Appointments() {
           })
         }
 
-        // Final safety check: remove any ID card issuance from appts
-        appts = appts.filter((a) => {
+        // Final safety deduplication: Ensure single unique appointment card per application reference and concern
+        const dedupedMap = new Map<string, AppointmentRequest>()
+        appts.forEach((a) => {
           const c = (a.concern || '').toLowerCase()
-          return !c.includes('id card') && !c.includes('issuance') && !c.includes('replacement') && !c.includes('renewal')
+          if (c.includes('id card') || c.includes('issuance') || c.includes('replacement') || c.includes('renewal')) {
+            return
+          }
+          const key = `${a.referenceNo || ''}_${a.module || ''}_${a.concern || ''}`.toLowerCase().trim()
+          if (!dedupedMap.has(key)) {
+            dedupedMap.set(key, a)
+          } else {
+            const existing = dedupedMap.get(key)!
+            // Keep scheduled/completed status if one is scheduled, or prefer official db-appt
+            if (existing.status === 'pending' && a.status !== 'pending') {
+              dedupedMap.set(key, a)
+            } else if (!existing.id.startsWith('db-appt-') && a.id.startsWith('db-appt-')) {
+              dedupedMap.set(key, a)
+            }
+          }
         })
 
-        setAppointments(appts)
+        setAppointments(Array.from(dedupedMap.values()))
       } catch (err) {
         console.warn("Could not fetch appointments from backend:", err)
       }

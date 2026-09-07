@@ -346,31 +346,43 @@ exports.updateApplicationStatus = async (req, res) => {
       const fixedAmount = FIXED_AMOUNTS[cleanType] || FIXED_AMOUNTS[app.assistance_type] || 1000;
       const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      // 1. Insert into financial_aid_disbursements
-      await db.query(
-        `INSERT INTO financial_aid_disbursements
-          (disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-           date_approved, status, venue, remarks)
-         VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'Quezon City Hall', 'Awtomatikong pumasok sa Financial Aid Disbursement mula sa na-aprubahang aplikasyon.')
-         ON CONFLICT (disbursement_id) DO NOTHING`,
-        [
-          disbId,
-          app.reference_no,
-          fullName.toUpperCase(),
-          cleanType,
-          fixedAmount,
-          new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-        ]
+      // 1. Insert into financial_aid_disbursements if not exists
+      const disbCheck = await db.query(
+        'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1 AND assistance_type = $2',
+        [app.reference_no, cleanType]
       );
+      if (disbCheck.rows.length === 0) {
+        await db.query(
+          `INSERT INTO financial_aid_disbursements
+            (disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+             date_approved, status, venue, remarks)
+           VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'Quezon City Hall', 'Awtomatikong pumasok sa Financial Aid Disbursement mula sa na-aprubahang aplikasyon.')
+           ON CONFLICT (disbursement_id) DO NOTHING`,
+          [
+            disbId,
+            app.reference_no,
+            fullName.toUpperCase(),
+            cleanType,
+            fixedAmount,
+            new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+          ]
+        );
+      }
 
-      // 2. Insert into appointments queue
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, office_location, notes)
-         VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang aplikasyon para sa scheduling.')
-         ON CONFLICT DO NOTHING`,
-        [app.reference_no, fullName.toUpperCase(), cleanType]
+      // 2. Insert into appointments queue if not exists
+      const apptCheck = await db.query(
+        'SELECT id FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3',
+        [app.reference_no, 'AICS', cleanType]
       );
+      if (apptCheck.rows.length === 0) {
+        await db.query(
+          `INSERT INTO appointments
+            (reference_no, module, applicant_name, concern, status, office_location, notes)
+           VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang aplikasyon para sa scheduling.')
+           ON CONFLICT DO NOTHING`,
+          [app.reference_no, fullName.toUpperCase(), cleanType]
+        );
+      }
     } else if (status === 'rejected') {
       await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [app.reference_no]);
       await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref = $1`, [app.reference_no]);
