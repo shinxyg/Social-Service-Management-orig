@@ -17,6 +17,8 @@ import {
   Home,
   ClipboardList,
   Landmark,
+  IdCard,
+  Printer,
 } from "lucide-react"
 import { API_BASE as APP_API_BASE } from "../../config/api"
 import { getSavedProfilePhoto } from "../../utils/profilePhoto"
@@ -615,11 +617,12 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 interface CardProps {
   app: WelfareSubmission
   onView: (app: WelfareSubmission) => void
+  onShowCard?: (app: WelfareSubmission) => void
 }
 
-function ApplicationCard({ app, onView }: CardProps) {
+function ApplicationCard({ app, onView, onShowCard }: CardProps) {
   const subLabel = isSoloParent(app)
-    ? app.applicationType === "new" ? "New application" : app.applicationType === "renewal" ? "Renewal" : "Lost ID replacement"
+    ? (app as any).applicationType === "new" ? "New application" : (app as any).applicationType === "renewal" ? "Renewal" : "Lost ID replacement"
     : app.supportCategory.replace(/^\d+\.\s*/, "")
 
   return (
@@ -628,9 +631,9 @@ function ApplicationCard({ app, onView }: CardProps) {
       className={`gw-card ${isSoloParent(app) ? "gw-card--solo" : "gw-card--child"} p-4 transition-shadow hover:shadow-sm cursor-pointer`}
     >
       <div className="flex items-start gap-4">
-          <div className="hidden sm:flex">
-            <AvatarCircle app={app} sizeClass="h-11 w-11 flex items-center justify-center" />
-          </div>
+        <div className="hidden sm:flex">
+          <AvatarCircle app={app} sizeClass="h-11 w-11 flex items-center justify-center" />
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <p className="gw-serif text-base font-semibold" style={{ color: "var(--ink)" }}>{displayName(app)}</p>
@@ -648,17 +651,30 @@ function ApplicationCard({ app, onView }: CardProps) {
               {app.documents.length} documents
             </span>
             {isSoloParent(app)
-              ? app.status === "approved" && app.assignedIdNumber && (
-                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>ID {app.assignedIdNumber}</span>
+              ? app.status === "approved" && (app as any).assignedIdNumber && (
+                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>ID {(app as any).assignedIdNumber}</span>
                 )
-              : app.status === "approved" && app.approvedAmount && (
-                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>₱{app.approvedAmount} approved</span>
+              : app.status === "approved" && (app as any).approvedAmount && (
+                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>₱{(app as any).approvedAmount} approved</span>
                 )}
           </div>
         </div>
-          <div className="flex flex-col items-end gap-3 shrink-0">
-            <StatusBadge status={app.status} />
-          </div>
+        <div className="flex flex-col items-end gap-2.5 shrink-0">
+          <StatusBadge status={app.status} />
+          {onShowCard && app.status === "approved" && isSoloParent(app) && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onShowCard(app)
+              }}
+              className="gw-btn-ghost px-2.5 py-1.5 text-xs text-blue-700 hover:text-blue-800 border-blue-200 bg-blue-50/60 inline-flex items-center gap-1 cursor-pointer"
+            >
+              <IdCard className="h-3.5 w-3.5 text-blue-600" />
+              View ID
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -743,15 +759,275 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
   return `SP-137404-${year}-${randomSeq}`
 }
 
+function OfficialSoloParentIdCardModal({
+  app,
+  onClose,
+  allSubmissions,
+}: {
+  app: WelfareSubmission | null
+  onClose: () => void
+  allSubmissions?: WelfareSubmission[]
+}) {
+  if (!app || !isSoloParent(app)) return null
+  const idNumber = app.status === "approved" && (app as any).assignedIdNumber ? (app as any).assignedIdNumber : generateOfficialSoloParentId(app, allSubmissions)
+  const issueDateObj = new Date((app as any).approvedDate || app.submittedAt || Date.now())
+  const validIssueDate = isNaN(issueDateObj.getTime()) ? new Date() : issueDateObj
+  const appDate = validIssueDate.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+  const expiryDateObj = new Date(validIssueDate)
+  expiryDateObj.setFullYear(expiryDateObj.getFullYear() + 1)
+  const expiryDateStr = expiryDateObj.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+
+  const [activeSide, setActiveSide] = useState<"front" | "back">("front")
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  const photoDoc = (app.documents || []).find(
+    (d) =>
+      (d.name || "").toLowerCase().includes("2x2") ||
+      (d.name || "").toLowerCase().includes("picture") ||
+      (d.filename || "").toLowerCase().includes("2x2") ||
+      (d.filename || "").toLowerCase().includes("picture")
+  )
+  const photoUrl = photoDoc?.fileUrl || "/samples/ID PICTURE (2X2).webp"
+
+  const emergencyPerson = app.emergencyName || (app as any).emergencyContactPerson || "—"
+  const emergencyPhone = app.emergencyContactNo || (app as any).emergencyPhone || app.contactNo || "—"
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
+      <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        {/* Modal Header */}
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50">
+          <div className="flex items-center gap-2">
+            <IdCard className="w-5 h-5 text-blue-600" />
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 leading-none">
+                Official Quezon City Solo Parent ID Card
+              </h3>
+              <p className="text-[11px] text-gray-500 mt-1">
+                Card ID: <span className="font-mono font-bold text-blue-700">{idNumber}</span>
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl font-light leading-none p-1 cursor-pointer">×</button>
+        </div>
+
+        {/* Side Selector */}
+        <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-3">
+          <button
+            onClick={() => setActiveSide("front")}
+            className={`pb-2 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+              activeSide === "front" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            FRONT OF ID CARD
+          </button>
+          <button
+            onClick={() => setActiveSide("back")}
+            className={`pb-2 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+              activeSide === "back" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            BACK OF ID CARD (BENEFICIARIES &amp; PRIVILEGES)
+          </button>
+        </div>
+
+        {/* Card Body */}
+        <div className="p-6 bg-slate-100/80 flex flex-col items-center justify-center overflow-y-auto">
+          {activeSide === "front" ? (
+            /* FRONT CARD */
+            <div
+              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none"
+              style={{
+                aspectRatio: "1.586 / 1",
+                background: "linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #eff6ff 100%)",
+              }}
+            >
+              {/* Header */}
+              <div className="px-4 py-2.5 flex items-center justify-between text-white bg-[#0284c7]">
+                <div>
+                  <p className="text-[8px] font-bold tracking-widest uppercase opacity-90 leading-tight">Republic of the Philippines</p>
+                  <p className="text-xs font-black tracking-wide leading-tight uppercase">Quezon City Government</p>
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+                  SOLO PARENT ID
+                </span>
+              </div>
+
+              {/* Sub-header */}
+              <div className="py-1 text-center text-[10px] font-black uppercase tracking-widest bg-amber-400 text-slate-900">
+                Social Services Development Department — Solo Parent Welfare
+              </div>
+
+              {/* Details */}
+              <div className="p-3 flex gap-3 items-start">
+                <div className="w-22 h-26 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative">
+                  {photoUrl ? (
+                    <img src={photoUrl} alt="Cardholder" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                      <User className="w-8 h-8 text-slate-300 mb-1" />
+                      <span className="text-[7px] font-bold uppercase tracking-wider">2x2 Photo</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 inset-x-0 bg-slate-900/80 text-white text-[6.5px] text-center py-0.5 font-bold uppercase">
+                    QC SSDD
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div>
+                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC Solo Parent ID</span>
+                    <p className="text-sm font-black text-blue-900 font-mono tracking-wide leading-none">{idNumber}</p>
+                  </div>
+
+                  <div className="pt-0.5">
+                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Cardholder Full Name</span>
+                    <p className="text-xs font-black text-slate-900 leading-tight uppercase truncate">{displayName(app)}</p>
+                  </div>
+
+                  <div className="pt-0.5">
+                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Classification</span>
+                    <p className="text-[9.5px] font-bold text-emerald-800 leading-tight truncate">{app.selectedCategory || "Solo Parent Beneficiary"}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1 pt-0.5 text-[8.5px] text-slate-700">
+                    <div>
+                      <span className="text-[7px] font-semibold text-slate-400 uppercase">Birthdate:</span> {app.dobYear ? `${app.dobYear}-${app.dobMonth || "01"}-${app.dobDay || "01"}` : "—"}
+                    </div>
+                    <div>
+                      <span className="text-[7px] font-semibold text-slate-400 uppercase">Children:</span> {app.familyMembers?.length || 1} Dependent(s)
+                    </div>
+                  </div>
+
+                  <div className="text-[8.5px] text-slate-700 truncate pt-0.5">
+                    <span className="text-[7px] font-semibold text-slate-400 uppercase">Address:</span> {getAddress(app)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Signatures & Barcode */}
+              <div className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]">
+                <div>
+                  <p className="font-mono font-bold text-slate-700 tracking-widest text-[8.5px]">|||| | || |||| | | ||| ||||</p>
+                  <div className="flex items-center gap-1.5 text-[6.5px] uppercase tracking-wider font-semibold">
+                    <span className="text-slate-400">Issued: {appDate}</span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-amber-800 font-bold">Expires: {expiryDateStr}</span>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="w-18 border-b border-slate-400 mx-auto mb-0.5" />
+                  <p className="font-bold text-slate-800 text-[7.5px] leading-tight uppercase">MA. JOSEFINA G. BELMONTE</p>
+                  <p className="text-[6.5px] text-slate-500 uppercase leading-none">City Mayor</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* BACK CARD */
+            <div
+              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none p-4 flex flex-col justify-between"
+              style={{
+                aspectRatio: "1.586 / 1",
+                background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+              }}
+            >
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                  <p className="text-[9px] font-bold text-slate-900 uppercase tracking-wide">
+                    Republic Act 11861 Expanded Solo Parents Welfare Act
+                  </p>
+                  <span className="text-[7px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                    QC-SSDD
+                  </span>
+                </div>
+
+                <div className="mt-2 space-y-1 text-[8px] text-slate-600 leading-tight">
+                  <p>• Entitled to 10% discount and VAT exemption on baby's milk, food, medicine, and diapers.</p>
+                  <p>• Prioritization in housing, educational grants, and livelihood assistance programs.</p>
+                  <p>• Card is non-transferable and must be presented upon claiming municipal benefits.</p>
+                </div>
+
+                {/* Children / Dependents List */}
+                <div className="mt-2 border-t border-slate-200 pt-1.5">
+                  <p className="text-[8px] font-bold text-slate-800 uppercase mb-1">Registered Children / Dependents:</p>
+                  <div className="grid grid-cols-2 gap-1 text-[7.5px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200 max-h-12 overflow-y-auto">
+                    {(app.familyMembers && app.familyMembers.length > 0) ? (
+                      app.familyMembers.map((m, i) => (
+                        <div key={i} className="truncate">
+                          <span className="font-bold">• {m.fullName || `${m.relationship}: child`}</span> ({m.age || "—"} yo)
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-2 text-slate-400">1 Child / Dependent on file</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 pt-1.5 space-y-1">
+                <p className="text-[8px] font-bold text-slate-800 uppercase">In case of emergency, please notify:</p>
+                <div className="grid grid-cols-2 gap-2 text-[7.5px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200">
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase">Contact Person</span>
+                    <span className="font-bold text-slate-900 truncate block">{emergencyPerson}</span>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase">Contact Number</span>
+                    <span className="font-mono font-bold text-blue-700 block">{emergencyPhone}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between gap-3">
+          <span className="text-xs text-slate-500">
+            Compliant with RA 11861 &amp; Quezon City Solo Parent Welfare ID guidelines.
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              Print Card
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface DetailedViewProps {
   app: WelfareSubmission
   onClose: () => void
   onApprove: (id: string, value: string) => void
   onReject: (id: string, reason: string) => void
+  onShowCard?: (app: WelfareSubmission) => void
   allSubmissions?: WelfareSubmission[]
 }
 
-function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: DetailedViewProps) {
+function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmissions }: DetailedViewProps) {
   const isSolo = isSoloParent(app)
   const idNumber = isSolo
     ? (app.status === "approved" && (app as any).assignedIdNumber ? (app as any).assignedIdNumber : generateOfficialSoloParentId(app, allSubmissions))
@@ -1277,7 +1553,19 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex justify-end gap-3 shrink-0" style={{ borderTop: "1px solid var(--line)", background: "var(--surface)" }}>
+        <div className="px-6 py-4 flex items-center justify-between gap-3 shrink-0" style={{ borderTop: "1px solid var(--line)", background: "var(--surface)" }}>
+          <div>
+            {onShowCard && app.status === "approved" && isSolo && (
+              <button
+                type="button"
+                onClick={() => onShowCard(app)}
+                className="px-4 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl inline-flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+              >
+                <IdCard className="h-4 w-4 text-blue-600" />
+                View ID Card
+              </button>
+            )}
+          </div>
           <button onClick={onClose} className="gw-btn-ghost px-6 py-2">
             Close
           </button>
@@ -1476,25 +1764,30 @@ const handleReject = async (id: string, reason: string) => {
             <span className="gw-mono text-sm" style={{ color: "var(--ink-faint)" }}>({filteredApps.length})</span>
           </div>
 
-                {isLoading ? (
-              <div className="text-center py-16 gw-card">
-                <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Naglo-load ng mga application...</p>
-              </div>
-            ) : loadError ? (
-              <div className="text-center py-16 gw-card">
-                <p className="text-sm" style={{ color: "var(--redwood-ink)" }}>{loadError}</p>
-                <button onClick={() => loadApplications(false)} className="gw-btn-ghost px-4 py-2 mt-3">Subukan Ulit</button>
-              </div>
-            ) : filteredApps.length === 0 ? (
-              <div className="text-center py-16 gw-card">
-                <FileText className="h-10 w-10 mx-auto mb-3" style={{ color: "var(--ink-faint)" }} />
-                <p className="gw-serif text-base font-semibold" style={{ color: "var(--ink)" }}>No applications found</p>
-                <p className="text-sm mt-1" style={{ color: "var(--ink-soft)" }}>Try a different search term or filter.</p>
-              </div>
-            ) : (
+          {isLoading ? (
+            <div className="text-center py-16 gw-card">
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Naglo-load ng mga application...</p>
+            </div>
+          ) : loadError ? (
+            <div className="text-center py-16 gw-card">
+              <p className="text-sm" style={{ color: "var(--redwood-ink)" }}>{loadError}</p>
+              <button onClick={() => loadApplications(false)} className="gw-btn-ghost px-4 py-2 mt-3">Subukan Ulit</button>
+            </div>
+          ) : filteredApps.length === 0 ? (
+            <div className="text-center py-16 gw-card">
+              <FileText className="h-10 w-10 mx-auto mb-3" style={{ color: "var(--ink-faint)" }} />
+              <p className="gw-serif text-base font-semibold" style={{ color: "var(--ink)" }}>No applications found</p>
+              <p className="text-sm mt-1" style={{ color: "var(--ink-soft)" }}>Try a different search term or filter.</p>
+            </div>
+          ) : (
             <div className="space-y-3">
               {filteredApps.map((app) => (
-                <ApplicationCard key={app.id} app={app} onView={() => setSelectedApp(app)} />
+                <ApplicationCard
+                  key={app.id}
+                  app={app}
+                  onView={() => setSelectedApp(app)}
+                  onShowCard={(app) => setCardApp(app)}
+                />
               ))}
             </div>
           )}
@@ -1508,6 +1801,15 @@ const handleReject = async (id: string, reason: string) => {
           onClose={() => setSelectedApp(null)}
           onApprove={handleApprove}
           onReject={handleReject}
+          onShowCard={(app) => setCardApp(app)}
+        />
+      )}
+
+      {cardApp && (
+        <OfficialSoloParentIdCardModal
+          app={cardApp}
+          onClose={() => setCardApp(null)}
+          allSubmissions={applications}
         />
       )}
     </div>
