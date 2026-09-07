@@ -699,7 +699,7 @@ export default function SoloParentApplicationWizard({
   onBlockedStatusChange,
   onStepChange,
 }: SoloParentApplicationWizardProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [idStatus, setIdStatus] = useState<IdStatus>(initialType)
 
   useEffect(() => {
@@ -712,10 +712,10 @@ export default function SoloParentApplicationWizard({
   }, [initialType])
 
   const STEPS = [
-    { id: 1, label: "COMPLETE CHECKLIST" },
-    { id: 2, label: "PERSONAL INFORMATION" },
-    { id: 3, label: "SAMPLE DOCUMENTS" },
-    { id: 4, label: "REVIEW & SUBMIT" },
+    { id: 1, label: language === "en" ? "COMPLETE CHECKLIST" : language === "bis" ? "KOMPLETOHA ANG CHECKLIST" : "KUMPLETOHING CHECKLIST" },
+    { id: 2, label: language === "en" ? "PERSONAL INFORMATION" : language === "bis" ? "PERSONAL NGA IMPORMASYON" : "IMPORMASYONG PERSONAL" },
+    { id: 3, label: language === "en" ? "SAMPLE DOCUMENTS" : language === "bis" ? "MGA SAMPOL NGA DOKUMENTO" : "MGA SAMPOL NA DOKUMENTO" },
+    { id: 4, label: language === "en" ? "REVIEW & SUBMIT" : language === "bis" ? "REBYU UG ISUMITE" : "REBYUHIN AT ISUMITE" },
   ]
 
   const [step, setStep] = useState(1)
@@ -754,7 +754,13 @@ export default function SoloParentApplicationWizard({
 
   const handleVerifyId = () => {
     if (!(existingIdNumber || "").trim()) {
-      setVerifyError("Kailangang ilagay ang inyong Solo Parent ID Number.")
+      setVerifyError(
+        language === "en"
+          ? "Please enter your Solo Parent ID Number."
+          : language === "bis"
+          ? "Palihug ibutang ang imong Solo Parent ID Number."
+          : "Kailangang ilagay ang inyong Solo Parent ID Number."
+      )
       return
     }
     setVerifyError("")
@@ -1240,7 +1246,11 @@ export default function SoloParentApplicationWizard({
             <div className="space-y-6">
               <div>
                 <h3 className="text-base font-bold text-foreground uppercase tracking-wide">
-                  SERVICE AND PRIMARY REQUIREMENTS
+                  {language === "en"
+                    ? "SERVICE AND PRIMARY REQUIREMENTS"
+                    : language === "bis"
+                    ? "SERBISYO UG PANGUNANG KINAHANGLANON"
+                    : "SERBISYO AT PANGUNAHING KINAKAILANGAN"}
                 </h3>
               </div>
 
@@ -1254,11 +1264,21 @@ export default function SoloParentApplicationWizard({
                     className="mt-0.5 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                   />
                   <span className={`text-sm ${attemptedNext && !isResident ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    Are you a legitimate resident of Quezon City? <span className="text-red-500">*</span>
+                    {language === "en"
+                      ? "Are you a legitimate resident of Quezon City?"
+                      : language === "bis"
+                      ? "Ikaw ba usa ka lehitimong residente sa Quezon City?"
+                      : "Ikaw ba ay lehitimong residente ng Quezon City?"} <span className="text-red-500">*</span>
                   </span>
                 </label>
                 {attemptedNext && !isResident && (
-                  <p className="text-xs text-red-500 ml-6">Kinakailangang residente ng Quezon City upang makapag-apply.</p>
+                  <p className="text-xs text-red-500 ml-6">
+                    {language === "en"
+                      ? "Must be a legitimate resident of Quezon City to apply."
+                      : language === "bis"
+                      ? "Kinahanglang residente sa Quezon City aron maka-apply."
+                      : "Kinakailangang residente ng Quezon City upang makapag-apply."}
+                  </p>
                 )}
 
                 {idStatus === "new" ? (
@@ -1271,11 +1291,21 @@ export default function SoloParentApplicationWizard({
                         className="mt-0.5 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                       />
                       <span className={`text-sm ${attemptedNext && !hasSoleParentalCare ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                        Are you a solo parent with sole parental care and custody over your child/children? <span className="text-red-500">*</span>
+                        {language === "en"
+                          ? "Are you a solo parent with sole parental care and custody over your child/children?"
+                          : language === "bis"
+                          ? "Ikaw ba usa ka solo parent nga adunay bugtong pag-atiman ug kustodiya sa imong anak/mga anak?"
+                          : "Ikaw ba ay isang solo parent na may solong pag-aalaga at kustodiya sa iyong anak/mga anak?"} <span className="text-red-500">*</span>
                       </span>
                     </label>
                     {attemptedNext && !hasSoleParentalCare && (
-                      <p className="text-xs text-red-500 ml-6">Kinakailangang may solong responsibilidad sa pag-aalaga ng anak.</p>
+                      <p className="text-xs text-red-500 ml-6">
+                        {language === "en"
+                          ? "Must have sole parental care and custody over your child/children."
+                          : language === "bis"
+                          ? "Kinahanglang adunay bugtong pag-atiman sa anak."
+                          : "Kinakailangang may solong responsibilidad sa pag-aalaga ng anak."}
+                      </p>
                     )}
                   </>
                 ) : (
@@ -1288,8 +1318,16 @@ export default function SoloParentApplicationWizard({
                     />
                     <span className={`text-sm ${attemptedNext && !hasSoleParentalCare ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                       {idStatus === "renewal"
-                        ? "Do you have an existing or expired Solo Parent ID for renewal? *"
-                        : "Was your Solo Parent ID lost or damaged, and in need of replacement? *"}
+                        ? language === "en"
+                          ? "Do you have an existing or expired Solo Parent ID for renewal? *"
+                          : language === "bis"
+                          ? "Aduna ka bay kasamtangan o na-expire nga Solo Parent ID para sa renewal? *"
+                          : "Mayroon ka bang kasalukuyan o expired na Solo Parent ID para sa renewal? *"
+                        : language === "en"
+                        ? "Was your Solo Parent ID lost or damaged, and in need of replacement? *"
+                        : language === "bis"
+                        ? "Nawala o nadaot ba ang imong Solo Parent ID, ug kinahanglan nga ilisan? *"
+                        : "Nawala o nasira ba ang inyong Solo Parent ID, at kailangang palitan? *"}
                     </span>
                   </label>
                 )}
@@ -1301,17 +1339,41 @@ export default function SoloParentApplicationWizard({
                 <div>
                   <p className="text-sm font-semibold text-blue-900">
                     {idStatus === "renewal"
-                      ? "PAG-RENEW NG SOLO PARENT ID"
+                      ? language === "en"
+                        ? "RENEWAL OF SOLO PARENT ID"
+                        : language === "bis"
+                        ? "PAG-RENEW SA SOLO PARENT ID"
+                        : "PAG-RENEW NG SOLO PARENT ID"
                       : idStatus === "loss"
-                      ? "PAGPAPALIT NG NAWALA O NASIRANG SOLO PARENT ID"
+                      ? language === "en"
+                        ? "REPLACEMENT OF LOST OR DAMAGED SOLO PARENT ID"
+                        : language === "bis"
+                        ? "PAG-ILIS SA NAWALA O NADAOT NGA SOLO PARENT ID"
+                        : "PAGPAPALIT NG NAWALA O NASIRANG SOLO PARENT ID"
+                      : language === "en"
+                      ? "NEW APPLICATION FOR SOLO PARENT ID"
+                      : language === "bis"
+                      ? "BAG-ONG APLIKASYON PARA SA SOLO PARENT ID"
                       : "BAGONG APLIKASYON PARA SA SOLO PARENT ID"}
                   </p>
                   <p className="text-xs text-blue-700 mt-0.5">
                     {idStatus === "renewal"
-                      ? "RENEWAL: I-update ang inyong kasalukuyang Solo Parent ID. Ihanda ang ID number at mga kaukulang dokumento."
+                      ? language === "en"
+                        ? "RENEWAL: Update your existing Solo Parent ID. Prepare your ID number and required documents."
+                        : language === "bis"
+                        ? "RENEWAL: I-update ang imong kasamtangang Solo Parent ID. Ihanda ang ID number ug mga gikinahanglang dokumento."
+                        : "RENEWAL: I-update ang inyong kasalukuyang Solo Parent ID. Ihanda ang ID number at mga kaukulang dokumento."
                       : idStatus === "loss"
-                      ? "REPLACEMENT: Aplikasyon para sa nawala o nasirang Solo Parent ID. Ihanda ang Affidavit of Loss o sirang ID."
-                      : "NEW APPLICATION: First-time Solo Parent ID application. Complete all requirements."}
+                      ? language === "en"
+                        ? "REPLACEMENT: Application for lost or damaged Solo Parent ID. Prepare Affidavit of Loss or damaged ID."
+                        : language === "bis"
+                        ? "REPLACEMENT: Aplikasyon para sa nawala o nadaot nga Solo Parent ID. Ihanda ang Affidavit of Loss o nadaot nga ID."
+                        : "REPLACEMENT: Aplikasyon para sa nawala o nasirang Solo Parent ID. Ihanda ang Affidavit of Loss o sirang ID."
+                      : language === "en"
+                      ? "NEW APPLICATION: First-time Solo Parent ID application. Complete all requirements."
+                      : language === "bis"
+                      ? "BAG-ONG APLIKASYON: Unang higayon nga pag-apply og Solo Parent ID. Kompletoha ang tanang kinahanglanon."
+                      : "BAGONG APLIKASYON: Unang beses na aplikasyon para sa Solo Parent ID. Kumpletuhin ang lahat ng kailangan."}
                   </p>
                 </div>
               </div>
@@ -1320,9 +1382,19 @@ export default function SoloParentApplicationWizard({
               {idStatus === "new" && (
                 <div className="space-y-2 pt-2">
                   <label className="text-xs font-bold text-foreground uppercase tracking-wide block">
-                    CLICK THE TYPE OF ASSISTANCE / CATEGORY
+                    {language === "en"
+                      ? "CLICK THE TYPE OF ASSISTANCE / CATEGORY"
+                      : language === "bis"
+                      ? "PILIA ANG MATANG SA TABANG / KATEGORYA"
+                      : "PILIIN ANG URI NG TULONG / KATEGORYA"}
                   </label>
-                  <p className="text-xs text-blue-700 mb-1 font-medium">Choose the category / circumstance **</p>
+                  <p className="text-xs text-blue-700 mb-1 font-medium">
+                    {language === "en"
+                      ? "Choose the category / circumstance *"
+                      : language === "bis"
+                      ? "Pilia ang kategorya / sitwasyon *"
+                      : "Piliin ang kategorya / sitwasyon *"}
+                  </p>
                   <select
                     value={selectedCategoryId ?? ""}
                     onChange={(e) => {
@@ -1335,7 +1407,13 @@ export default function SoloParentApplicationWizard({
                         : "border-border focus:ring-blue-400"
                     }`}
                   >
-                    <option value="">-- Pumili ng Kategorya / Circumstance --</option>
+                    <option value="">
+                      {language === "en"
+                        ? "-- Select Category / Circumstance --"
+                        : language === "bis"
+                        ? "-- Pilia ang Kategorya / Sitwasyon --"
+                        : "-- Pumili ng Kategorya / Circumstance --"}
+                    </option>
                     {SOLO_PARENT_CATEGORIES.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.title}
@@ -1343,7 +1421,13 @@ export default function SoloParentApplicationWizard({
                     ))}
                   </select>
                   {attemptedNext && selectedCategoryId === null && (
-                    <p className="text-xs text-red-500 mt-1">Pumili ng kategorya upang makapagpatuloy.</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      {language === "en"
+                        ? "Please select a category to continue."
+                        : language === "bis"
+                        ? "Palihug pagpili og kategorya aron makapadayon."
+                        : "Pumili ng kategorya upang makapagpatuloy."}
+                    </p>
                   )}
                 </div>
               )}
@@ -1353,13 +1437,21 @@ export default function SoloParentApplicationWizard({
                 <div className="space-y-5 pt-2">
                   <div className="border-b border-gray-200 pb-2">
                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
-                      Existing Solo Parent ID
+                      {language === "en"
+                        ? "Existing Solo Parent ID"
+                        : language === "bis"
+                        ? "Kasamtangang Solo Parent ID"
+                        : "Kasalukuyang Solo Parent ID"}
                     </h3>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold uppercase tracking-wide block text-gray-700">
-                      Existing Solo Parent ID Number <span className="text-red-500">*</span>
+                      {language === "en"
+                        ? "Existing Solo Parent ID Number"
+                        : language === "bis"
+                        ? "Kasamtangang Solo Parent ID Number"
+                        : "Kasalukuyang Solo Parent ID Number"} <span className="text-red-500">*</span>
                     </label>
                     <div className="flex flex-col sm:flex-row gap-2 max-w-md">
                       <div className="flex-1">
@@ -1370,7 +1462,13 @@ export default function SoloParentApplicationWizard({
                             setIsIdVerified(false)
                             setVerifyError("")
                           }}
-                          placeholder="Enter Solo Parent ID Number"
+                          placeholder={
+                            language === "en"
+                              ? "Enter Solo Parent ID Number"
+                              : language === "bis"
+                              ? "Ibutang ang Solo Parent ID Number"
+                              : "Ilagay ang Solo Parent ID Number"
+                          }
                           invalid={attemptedNext && (!(existingIdNumber || "").trim() || !isIdVerified)}
                         />
                       </div>
@@ -1383,12 +1481,24 @@ export default function SoloParentApplicationWizard({
                         {isVerifying ? (
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Verifying...</span>
+                            <span>
+                              {language === "en"
+                                ? "Verifying..."
+                                : language === "bis"
+                                ? "Gisusi..."
+                                : "Sinusuri..."}
+                            </span>
                           </>
                         ) : (
                           <>
                             <Check className="w-3.5 h-3.5" />
-                            <span>VERIFY ID</span>
+                            <span>
+                              {language === "en"
+                                ? "VERIFY ID"
+                                : language === "bis"
+                                ? "I-VERIFY ANG ID"
+                                : "I-VERIFY ANG ID"}
+                            </span>
                           </>
                         )}
                       </button>
@@ -1396,7 +1506,11 @@ export default function SoloParentApplicationWizard({
                     {verifyError && <p className="text-xs text-red-500 mt-1">{verifyError}</p>}
                     {attemptedNext && !isIdVerified && (
                       <p className="text-xs text-red-500 mt-1">
-                        Pindutin ang VERIFY ID at tiyaking verified ang record bago magpatuloy.
+                        {language === "en"
+                          ? "Please click VERIFY ID and ensure your record is verified before proceeding."
+                          : language === "bis"
+                          ? "Palihug pindota ang VERIFY ID ug siguroha nga napamatud-an ang record sa dili pa mopadayon."
+                          : "Pindutin ang VERIFY ID at tiyaking verified ang record bago magpatuloy."}
                       </p>
                     )}
                   </div>
@@ -1409,10 +1523,21 @@ export default function SoloParentApplicationWizard({
                         </div>
                         <div className="space-y-1">
                           <p className="text-xs font-bold text-emerald-900 uppercase tracking-wide">
-                            ✓ Solo Parent ID Verified
+                            {language === "en"
+                              ? "✓ Solo Parent ID Verified"
+                              : language === "bis"
+                              ? "✓ Napamatud-ang Solo Parent ID"
+                              : "✓ Solo Parent ID Verified"}
                           </p>
                           <p className="text-xs text-emerald-800">
-                            <span className="font-semibold">Existing Solo Parent record found:</span> {verifiedRecord?.name || `${userProfile.firstName} ${userProfile.lastName}`}
+                            <span className="font-semibold">
+                              {language === "en"
+                                ? "Existing Solo Parent record found:"
+                                : language === "bis"
+                                ? "Nakit-an nga Solo Parent record:"
+                                : "Nakitang rekord ng Solo Parent:"}
+                            </span>{" "}
+                            {verifiedRecord?.name || `${userProfile.firstName} ${userProfile.lastName}`}
                           </p>
                           <p className="text-xs text-emerald-800">
                             <span className="font-semibold">ID Status:</span> Active / Expired
@@ -1422,7 +1547,11 @@ export default function SoloParentApplicationWizard({
 
                       <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase tracking-wide block text-gray-700">
-                          Reason for Renewal <span className="text-red-500">*</span>
+                          {language === "en"
+                            ? "Reason for Renewal"
+                            : language === "bis"
+                            ? "Hinungdan sa Pag-renew"
+                            : "Dahilan ng Pag-renew"} <span className="text-red-500">*</span>
                         </label>
                         <div className="flex flex-wrap items-center gap-6 pt-1">
                           {[
@@ -1444,7 +1573,13 @@ export default function SoloParentApplicationWizard({
                           ))}
                         </div>
                         {attemptedNext && !renewalReason && (
-                          <p className="text-xs text-red-500 mt-1">Pumili ng dahilan ng renewal.</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            {language === "en"
+                              ? "Please select a reason for renewal."
+                              : language === "bis"
+                              ? "Palihug pagpili og hinungdan sa renewal."
+                              : "Pumili ng dahilan ng renewal."}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -1457,13 +1592,21 @@ export default function SoloParentApplicationWizard({
                 <div className="space-y-5 pt-2">
                   <div className="border-b border-gray-200 pb-2">
                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
-                      Existing Solo Parent ID
+                      {language === "en"
+                        ? "Existing Solo Parent ID"
+                        : language === "bis"
+                        ? "Kasamtangang Solo Parent ID"
+                        : "Kasalukuyang Solo Parent ID"}
                     </h3>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold uppercase tracking-wide block text-gray-700">
-                      Existing Solo Parent ID Number <span className="text-red-500">*</span>
+                      {language === "en"
+                        ? "Existing Solo Parent ID Number"
+                        : language === "bis"
+                        ? "Kasamtangang Solo Parent ID Number"
+                        : "Kasalukuyang Solo Parent ID Number"} <span className="text-red-500">*</span>
                     </label>
                     <div className="flex flex-col sm:flex-row gap-2 max-w-md">
                       <div className="flex-1">
@@ -1474,7 +1617,13 @@ export default function SoloParentApplicationWizard({
                             setIsIdVerified(false)
                             setVerifyError("")
                           }}
-                          placeholder="Enter Solo Parent ID Number"
+                          placeholder={
+                            language === "en"
+                              ? "Enter Solo Parent ID Number"
+                              : language === "bis"
+                              ? "Ibutang ang Solo Parent ID Number"
+                              : "Ilagay ang Solo Parent ID Number"
+                          }
                           invalid={attemptedNext && (!(existingIdNumber || "").trim() || !isIdVerified)}
                         />
                       </div>
@@ -1487,12 +1636,24 @@ export default function SoloParentApplicationWizard({
                         {isVerifying ? (
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Verifying...</span>
+                            <span>
+                              {language === "en"
+                                ? "Verifying..."
+                                : language === "bis"
+                                ? "Gisusi..."
+                                : "Sinusuri..."}
+                            </span>
                           </>
                         ) : (
                           <>
                             <Check className="w-3.5 h-3.5" />
-                            <span>VERIFY ID</span>
+                            <span>
+                              {language === "en"
+                                ? "VERIFY ID"
+                                : language === "bis"
+                                ? "I-VERIFY ANG ID"
+                                : "I-VERIFY ANG ID"}
+                            </span>
                           </>
                         )}
                       </button>
@@ -1500,7 +1661,11 @@ export default function SoloParentApplicationWizard({
                     {verifyError && <p className="text-xs text-red-500 mt-1">{verifyError}</p>}
                     {attemptedNext && !isIdVerified && (
                       <p className="text-xs text-red-500 mt-1">
-                        Pindutin ang VERIFY ID at tiyaking verified ang record bago magpatuloy.
+                        {language === "en"
+                          ? "Please click VERIFY ID and ensure your record is verified before proceeding."
+                          : language === "bis"
+                          ? "Palihug pindota ang VERIFY ID ug siguroha nga napamatud-an ang record sa dili pa mopadayon."
+                          : "Pindutin ang VERIFY ID at tiyaking verified ang record bago magpatuloy."}
                       </p>
                     )}
                   </div>
@@ -1513,10 +1678,21 @@ export default function SoloParentApplicationWizard({
                         </div>
                         <div className="space-y-1">
                           <p className="text-xs font-bold text-emerald-900 uppercase tracking-wide">
-                            ✓ Solo Parent ID Verified
+                            {language === "en"
+                              ? "✓ Solo Parent ID Verified"
+                              : language === "bis"
+                              ? "✓ Napamatud-ang Solo Parent ID"
+                              : "✓ Solo Parent ID Verified"}
                           </p>
                           <p className="text-xs text-emerald-800">
-                            <span className="font-semibold">Existing Solo Parent record found:</span> {verifiedRecord?.name || `${userProfile.firstName} ${userProfile.lastName}`}
+                            <span className="font-semibold">
+                              {language === "en"
+                                ? "Existing Solo Parent record found:"
+                                : language === "bis"
+                                ? "Nakit-an nga Solo Parent record:"
+                                : "Nakitang rekord ng Solo Parent:"}
+                            </span>{" "}
+                            {verifiedRecord?.name || `${userProfile.firstName} ${userProfile.lastName}`}
                           </p>
                           <p className="text-xs text-emerald-800">
                             <span className="font-semibold">ID Status:</span> Active / Expired
@@ -1526,7 +1702,11 @@ export default function SoloParentApplicationWizard({
 
                       <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase tracking-wide block text-gray-700">
-                          Reason for Replacement <span className="text-red-500">*</span>
+                          {language === "en"
+                            ? "Reason for Replacement"
+                            : language === "bis"
+                            ? "Hinungdan sa Pag-ilis"
+                            : "Dahilan ng Pagpapalit"} <span className="text-red-500">*</span>
                         </label>
                         <div className="flex flex-wrap items-center gap-6 pt-1">
                           {[
@@ -1547,7 +1727,13 @@ export default function SoloParentApplicationWizard({
                           ))}
                         </div>
                         {attemptedNext && !replacementReason && (
-                          <p className="text-xs text-red-500 mt-1">Pumili ng dahilan ng pagpapalit.</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            {language === "en"
+                              ? "Please select a reason for replacement."
+                              : language === "bis"
+                              ? "Palihug pagpili og hinungdan sa pag-ilis."
+                              : "Pumili ng dahilan ng pagpapalit."}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -2170,12 +2356,20 @@ export default function SoloParentApplicationWizard({
                     className="mt-0.5 accent-blue-600 h-4 w-4 shrink-0"
                   />
                   <span className="text-xs text-foreground font-medium leading-relaxed select-none">
-                    Pinatutunayan ko na ang lahat ng impormasyong aking ibinigay ay totoo, wasto, at kumpleto ayon sa aking pinakamahusay na kaalaman. Nauunawaan ko na ang anumang maling pahayag ay maaaring maging sanhi ng pagkakansela ng aking aplikasyon. <span className="text-red-500">*</span>
+                    {language === "en"
+                      ? "I hereby certify that all information provided is true, correct, and complete to the best of my knowledge. I understand that any false statement may be grounds for cancellation of my application."
+                      : language === "bis"
+                      ? "Gipamatud-an nako nga ang tanang impormasyon nga akong gihatag tinuod, husto, ug kompleto sumala sa akong labing maayong kahibalo. Nasabtan nako nga ang bisan unsang bakak nga pamahayag mahimong hinungdan sa pagkansela sa akong aplikasyon."
+                      : "Pinatutunayan ko na ang lahat ng impormasyong aking ibinigay ay totoo, wasto, at kumpleto ayon sa aking pinakamahusay na kaalaman. Nauunawaan ko na ang anumang maling pahayag ay maaaring maging sanhi ng pagkakansela ng aking aplikasyon."} <span className="text-red-500">*</span>
                   </span>
                 </label>
                 {attemptedNext && !agreedCertification && (
                   <p className="text-xs text-red-500 ml-6 font-semibold">
-                    Kailangang lagyan ng tsek ang certification checkbox bago mag-submit.
+                    {language === "en"
+                      ? "You must check the certification checkbox before submitting."
+                      : language === "bis"
+                      ? "Kinahanglang markahan ang certification checkbox sa dili pa mag-submit."
+                      : "Kailangang lagyan ng tsek ang certification checkbox bago mag-submit."}
                   </p>
                 )}
               </div>
@@ -2187,8 +2381,8 @@ export default function SoloParentApplicationWizard({
           {step === 1 ? (
             <div />
           ) : (
-            <button onClick={goBack} className="text-sm font-semibold text-muted-foreground hover:text-foreground">
-              {t("spBackButton")}
+            <button onClick={goBack} className="text-sm font-semibold text-muted-foreground hover:text-foreground cursor-pointer">
+              {language === "en" ? "BACK" : language === "bis" ? "BALIK" : "BUMALIK"}
             </button>
           )}
 
@@ -2200,7 +2394,7 @@ export default function SoloParentApplicationWizard({
                 canGoNext ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs" : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
             >
-              {t("spNextButton") || "NEXT"} <ChevronRight className="h-4 w-4" />
+              {language === "en" ? "NEXT" : language === "bis" ? "PADAYON" : "SUSUNOD"} <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
             <button
@@ -2216,7 +2410,7 @@ export default function SoloParentApplicationWizard({
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
             >
-              SUBMIT APPLICATION
+              {language === "en" ? "SUBMIT APPLICATION" : language === "bis" ? "ISUMITE ANG APLIKASYON" : "ISUMITE ANG APLIKASYON"}
             </button>
           )}
         </div>
@@ -2232,9 +2426,19 @@ export default function SoloParentApplicationWizard({
             {/* Modal Header */}
             <div className="p-6 pb-5 flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-base font-bold text-foreground">Review Before Submission</h3>
+                <h3 className="text-base font-bold text-foreground">
+                  {language === "en"
+                    ? "Review Before Submission"
+                    : language === "bis"
+                    ? "Susiha sa Dili Pa Isumite"
+                    : "Suriin Bago Isumite"}
+                </h3>
                 <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                  Please make sure that all information and uploaded documents are correct. You can still go back and make changes before submitting.
+                  {language === "en"
+                    ? "Please make sure that all information and uploaded documents are correct. You can still go back and make changes before submitting."
+                    : language === "bis"
+                    ? "Palihug siguroha nga husto ang tanang impormasyon ug gi-upload nga mga dokumento. Mahimo pa nimong balikon ug usbon sa dili pa isumite."
+                    : "Pakisigurong tama ang lahat ng impormasyon at mga nai-upload na dokumento. Maaari ka pang bumalik at magbago bago tuluyang isumite."}
                 </p>
               </div>
               <button
@@ -2257,7 +2461,7 @@ export default function SoloParentApplicationWizard({
                 }}
                 className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-white transition-colors cursor-pointer"
               >
-                ← GO BACK &amp; EDIT
+                {language === "en" ? "← GO BACK & EDIT" : language === "bis" ? "← BALIK UG BAG-OHA" : "← BUMALIK AT I-EDIT"}
               </button>
 
               <button
@@ -2268,7 +2472,13 @@ export default function SoloParentApplicationWizard({
                 }}
                 className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2"
               >
-                <span>YES, SUBMIT APPLICATION</span>
+                <span>
+                  {language === "en"
+                    ? "YES, SUBMIT APPLICATION"
+                    : language === "bis"
+                    ? "OO, ISUMITE ANG APLIKASYON"
+                    : "OO, ISUMITE ANG APLIKASYON"}
+                </span>
               </button>
             </div>
           </div>
