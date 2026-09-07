@@ -862,13 +862,24 @@ export default function SeniorCitizenApplicationWizard({
       ? "Renewal Application"
       : "Replacement / Lost ID"
 
+  // Auto-redirect submitted state to blocked/active status card
+  useEffect(() => {
+    if (!isSubmitted) return
+    const timer = setTimeout(() => {
+      setIsSubmitted(false)
+      setIsBlocked(true)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [isSubmitted])
+
   // ---- BLOCKED / APPROVED state ----
-  if ((isBlocked || (latestApprovedApp && appFlow === "new")) && !isSubmitted) {
-    const targetApp = blockedApp || latestApprovedApp
-    const isAppApproved =
-      String(targetApp?.status || "").toLowerCase() === "approved" ||
-      String(targetApp?.status || "").toLowerCase() === "completed" ||
-      String(targetApp?.status || "").toLowerCase() === "for_release"
+  const targetApp = blockedApp || latestApprovedApp
+  const isAppApproved =
+    String(targetApp?.status || "").toLowerCase() === "approved" ||
+    String(targetApp?.status || "").toLowerCase() === "completed" ||
+    String(targetApp?.status || "").toLowerCase() === "for_release"
+
+  if (isBlocked || isAppApproved || (latestApprovedApp && appFlow === "new")) {
 
     const serviceTitle =
       appFlow === "renewal"

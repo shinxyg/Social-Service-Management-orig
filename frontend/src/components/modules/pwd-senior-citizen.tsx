@@ -1777,11 +1777,13 @@ export default function PWDSeniorCitizen() {
 
   const handleApprove = async (targetApp: ApplicationSubmission, idNumber: string) => {
     const id = targetApp.id
+    const refNo = targetApp.referenceNumber || (targetApp as any).reference_no || ""
+    const targetIdentifier = refNo || id
     const approvedDate = new Date().toISOString()
 
     updateApplications((prev) =>
       prev.map((app) =>
-        app.id === id
+        app.id === id || (refNo && (app.referenceNumber === refNo || (app as any).reference_no === refNo))
           ? {
               ...app,
               status: "approved" as const,
@@ -1795,7 +1797,7 @@ export default function PWDSeniorCitizen() {
 
     // Sync status to backend database
     try {
-      await fetch(`${API_BASE}/api/pwd-senior/applications/${id}/status`, {
+      await fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(targetIdentifier)}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1803,6 +1805,7 @@ export default function PWDSeniorCitizen() {
           assignedIdNumber: idNumber,
           approvedBy: "Social Worker Admin",
           approvedDate,
+          referenceNumber: refNo,
         }),
       })
     } catch (err) {

@@ -374,13 +374,14 @@ exports.createApplication = async (req, res) => {
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    let { status, assignedIdNumber, approvedBy, approvedDate, rejectionReason } = req.body;
+    let { status, assignedIdNumber, approvedBy, approvedDate, rejectionReason, referenceNumber } = req.body;
+    const lookupRef = referenceNumber || id;
 
     let targetApp = null;
     try {
       const q = await db.query(
-        `SELECT * FROM pwd_senior_applications WHERE reference_number = $1 OR id::text = $1`,
-        [id]
+        `SELECT * FROM pwd_senior_applications WHERE reference_number = $1 OR reference_number = $2 OR id::text = $1 OR id::text = $2`,
+        [id, lookupRef]
       );
       if (q.rows.length > 0) {
         targetApp = q.rows[0];
@@ -388,10 +389,10 @@ exports.updateApplicationStatus = async (req, res) => {
     } catch (_) {}
 
     if (!targetApp) {
-      targetApp = memoryApplications.find((a) => a.id === id || a.referenceNumber === id || a.reference_number === id);
+      targetApp = memoryApplications.find((a) => a.id === id || a.referenceNumber === id || a.reference_number === id || a.referenceNumber === lookupRef || a.reference_number === lookupRef);
     }
 
-    const refNo = targetApp?.reference_number || targetApp?.referenceNumber || id;
+    const refNo = targetApp?.reference_number || targetApp?.referenceNumber || lookupRef || id;
     const fullName = targetApp ? [
       targetApp.first_name || targetApp.firstName,
       targetApp.middle_name || targetApp.middleName,
@@ -425,9 +426,9 @@ exports.updateApplicationStatus = async (req, res) => {
       const q = await db.query(
         `UPDATE pwd_senior_applications
          SET status = $1, assigned_id_number = $2, approved_by = $3, approved_date = $4, rejection_reason = $5
-         WHERE reference_number = $6 OR id::text = $6
+         WHERE reference_number = $6 OR reference_number = $7 OR id::text = $6 OR id::text = $7
          RETURNING *`,
-        [status, assignedIdNumber || null, approvedBy || null, approvedDate || null, rejectionReason || null, id]
+        [status, assignedIdNumber || null, approvedBy || null, approvedDate || null, rejectionReason || null, id, refNo]
       );
       if (q.rows.length > 0) {
         targetApp = q.rows[0];
@@ -435,7 +436,7 @@ exports.updateApplicationStatus = async (req, res) => {
     } catch (dbErr) {
       console.warn('[DB Error] Updating DB failed, updating in memory fallback:', dbErr.message);
       memoryApplications = memoryApplications.map((app) => {
-        if (app.id === id || app.referenceNumber === id || app.reference_number === id) {
+        if (app.id === id || app.referenceNumber === id || app.reference_number === id || app.referenceNumber === refNo || app.reference_number === refNo) {
           const updated = {
             ...app,
             status,
