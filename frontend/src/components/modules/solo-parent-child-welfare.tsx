@@ -666,10 +666,11 @@ function ApplicationCard({ app, onView }: CardProps) {
 
 
 function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: WelfareSubmission[]): string {
+  const rawType = String((app as any).applicationType || (app as any).type || "").toLowerCase()
   const isRenewalOrLoss =
-    app.applicationType === "renewal" ||
-    app.applicationType === "loss" ||
-    app.applicationType === "replacement"
+    rawType.includes("renewal") ||
+    rawType.includes("loss") ||
+    rawType.includes("replacement")
 
   const randomSeq = String(Math.floor(100000 + Math.random() * 900000))
   const year = new Date().getFullYear()
@@ -679,7 +680,7 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
       (app as any).existingIdNumber,
       (app as any).soloParentIdNumber,
       (app as any).existingSoloParentIdNumber,
-      app.assignedIdNumber,
+      (app as any).assignedIdNumber,
       (app as any).idNumber,
     ]
     for (const c of candidateFields) {
@@ -700,22 +701,22 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
       } catch {}
     }
 
-    const appEmail = String(app.email || "").trim().toLowerCase()
-    const appRef = String(app.referenceNumber || "").trim().toLowerCase()
-    const appName = `${app.firstName || ""} ${app.lastName || ""}`.trim().toLowerCase()
+    const appEmail = String((app as any).email || (app as any).guardianEmail || "").trim().toLowerCase()
+    const appRef = String(app.referenceNumber || (app as any).reference_no || "").trim().toLowerCase()
+    const appName = `${(app as any).firstName || (app as any).guardianFirstName || ""} ${(app as any).lastName || (app as any).guardianLastName || ""}`.trim().toLowerCase()
 
     if (Array.isArray(pool)) {
       const match = pool.find((a) => {
         if (!a || a.id === app.id) return false
         const aIsSolo = isSoloParent(a)
         if (!aIsSolo) return false
-        const isApproved = a.status === "approved" || a.status === "completed"
-        const assigned = a.assignedIdNumber || a.soloParentIdNumber
+        const isApproved = a.status === "approved" || String(a.status) === "completed"
+        const assigned = (a as any).assignedIdNumber || (a as any).soloParentIdNumber
         if (!isApproved || !assigned) return false
 
-        const aEmail = String(a.email || "").trim().toLowerCase()
-        const aRef = String(a.referenceNumber || "").trim().toLowerCase()
-        const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase()
+        const aEmail = String((a as any).email || (a as any).guardianEmail || "").trim().toLowerCase()
+        const aRef = String(a.referenceNumber || (a as any).reference_no || "").trim().toLowerCase()
+        const aName = `${(a as any).firstName || (a as any).guardianFirstName || ""} ${(a as any).lastName || (a as any).guardianLastName || ""}`.trim().toLowerCase()
 
         return (
           (appEmail && aEmail && appEmail === aEmail) ||
@@ -725,7 +726,7 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
       })
 
       if (match) {
-        const assigned = match.assignedIdNumber || match.soloParentIdNumber
+        const assigned = (match as any).assignedIdNumber || (match as any).soloParentIdNumber
         if (assigned) return String(assigned).trim()
       }
     }
@@ -735,8 +736,8 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
     }
   }
 
-  if (app.assignedIdNumber && app.assignedIdNumber.startsWith("SP-")) {
-    return app.assignedIdNumber
+  if ((app as any).assignedIdNumber && String((app as any).assignedIdNumber).startsWith("SP-")) {
+    return String((app as any).assignedIdNumber)
   }
 
   return `SP-137404-${year}-${randomSeq}`
@@ -753,18 +754,18 @@ interface DetailedViewProps {
 function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: DetailedViewProps) {
   const isSolo = isSoloParent(app)
   const idNumber = isSolo
-    ? (app.status === "approved" && app.assignedIdNumber ? app.assignedIdNumber : generateOfficialSoloParentId(app, allSubmissions))
+    ? (app.status === "approved" && (app as any).assignedIdNumber ? (app as any).assignedIdNumber : generateOfficialSoloParentId(app, allSubmissions))
     : ""
-  const [approveAmount, setApproveAmount] = useState(app.approvedAmount || "5000")
+  const [approveAmount, setApproveAmount] = useState((app as any).approvedAmount || "5000")
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
 
   const address = getAddress(app)
   const subLabel = isSoloParent(app)
-    ? app.applicationType === "new"
+    ? (app as any).applicationType === "new"
       ? "New application"
-      : app.applicationType === "renewal"
+      : (app as any).applicationType === "renewal"
       ? "Renewal"
       : "Lost ID replacement"
     : app.supportCategory
@@ -1127,7 +1128,9 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                        {app.applicationType === "renewal" || app.applicationType === "loss" || app.applicationType === "replacement" ? (
+                        {String((app as any).applicationType || (app as any).type || "").toLowerCase().includes("renewal") ||
+                        String((app as any).applicationType || (app as any).type || "").toLowerCase().includes("loss") ||
+                        String((app as any).applicationType || (app as any).type || "").toLowerCase().includes("replacement") ? (
                           <>
                             Existing Official ID Number <strong className="font-mono text-foreground">{idNumber}</strong> has been retained from the verified record. Approving will confirm renewal/replacement without altering the ID number.
                           </>
@@ -1501,7 +1504,7 @@ const handleReject = async (id: string, reason: string) => {
       {selectedApp && (
         <DetailedView
           app={selectedApp}
-          allSubmissions={submissions}
+          allSubmissions={applications}
           onClose={() => setSelectedApp(null)}
           onApprove={handleApprove}
           onReject={handleReject}
