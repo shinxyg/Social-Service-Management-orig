@@ -461,10 +461,6 @@ export default function SeniorBookletWizard({
           if (!submitted && !isBlocked && !bypassedBlockRef.current) {
             setIsBlocked(true)
           }
-          const num = targetBookletApp.assignedIdNumber || targetBookletApp.assigned_id_number || targetBookletApp.bookletNumber || targetBookletApp.existingBookletNumber
-          if (num && !bookletNumber) {
-            setBookletNumber(num)
-          }
         } else {
           if (isBlocked && !submitted && !bypassedBlockRef.current) {
             setIsBlocked(false)
