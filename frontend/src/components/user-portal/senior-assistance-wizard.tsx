@@ -1242,12 +1242,16 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                       {t("seniorFamilyMembersCountLabel") || "Bilang ng Kasapi sa Bahay"} <span className="text-red-500">*</span>
                     </label>
                     <input
-                      type="number"
-                      min="1"
+                      type="text"
+                      inputMode="numeric"
                       value={formData.familyMembersCount}
-                      onChange={(e) => updateField("familyMembersCount", e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 2)
+                        updateField("familyMembersCount", val)
+                      }}
                       placeholder="1"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      maxLength={2}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 font-mono"
                     />
                   </div>
 
