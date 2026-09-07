@@ -325,12 +325,10 @@ export default function Appointments() {
                 return true
               })
               .map((a: any) => {
-                const cached =
-                  localScheduledMap[`db-appt-${a.id}`] ||
-                  localScheduledMap[String(a.id)] ||
-                  localScheduledMap[`${a.reference_no}_${a.concern}`]
+                const apptId = `db-appt-${a.id}`
+                const cached = localScheduledMap[apptId]
                 return {
-                  id: `db-appt-${a.id}`,
+                  id: apptId,
                   referenceNo: a.reference_no,
                   module: (a.module || "AICS") as ModuleKey,
                   applicantName: a.applicant_name,
@@ -358,12 +356,12 @@ export default function Appointments() {
               if (app.status === "rejected" || app.status === "pending") {
                 unapprovedRefs.add(ref)
               } else if (app.status === "approved" || app.status === "completed" || app.status === "for_release") {
-                if (!appts.some((ap) => ap.referenceNo === ref && ap.id === `aics-appt-${app.id}`)) {
+                const apptId = `aics-appt-${app.id}`
+                if (!appts.some((ap) => ap.id === apptId)) {
                   const fullName = [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") || "APPLICANT"
                   const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                   const cleanType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
-                  const apptId = `aics-appt-${app.id}`
-                  const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${cleanType}`]
+                  const cached = localScheduledMap[apptId]
                   appts.push({
                     id: apptId,
                     referenceNo: ref,
@@ -424,9 +422,8 @@ export default function Appointments() {
                     [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ") ||
                     [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") ||
                     "APPLICANT"
-                  const isPwdApp = String(app.category || "").toUpperCase().includes("PWD")
-                  const concernName = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
-                  const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${concernName}`]
+                  const apptId = `pwd-senior-appt-${app.id || ref}`
+                  const cached = localScheduledMap[apptId]
 
                   appts.push({
                     id: apptId,
@@ -463,22 +460,10 @@ export default function Appointments() {
 
     fetchAppointments()
 
-    // Real-time live checker: auto-completes appointments and auto-releases aid when time arrives
+    // Auto-release disbursements checker (does not force appointment auto-completion)
     const liveTimer = setInterval(() => {
       checkAndAutoReleaseScheduledDisbursements()
-      const now = new Date()
-      setAppointments((prev) =>
-        prev.map((a) => {
-          if (a.status === "scheduled" && a.scheduledDate) {
-            const dt = parseAppointmentDateTime(a.scheduledDate, a.scheduledTime)
-            if (dt && now.getTime() >= dt.getTime()) {
-              return { ...a, status: "completed" as const }
-            }
-          }
-          return a
-        })
-      )
-    }, 2000)
+    }, 5000)
 
     const handleStorageChange = () => fetchAppointments()
     window.addEventListener("appointments_updated", handleStorageChange)
