@@ -268,15 +268,6 @@ function AppointmentCard({
               Set Schedule
             </button>
           )}
-          {appt.status === "scheduled" && (
-            <button
-              onClick={() => onMarkCompleted(appt.id)}
-              className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors"
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Mark Completed
-            </button>
-          )}
         </div>
       </div>
     </div>
@@ -453,9 +444,29 @@ export default function Appointments() {
 
     fetchAppointments()
 
-    // Auto-release disbursements checker (does not force appointment auto-completion)
+    // Auto-complete appointments and auto-release disbursements when exact scheduled date/time arrives
     const liveTimer = setInterval(() => {
       checkAndAutoReleaseScheduledDisbursements()
+      const now = new Date()
+      setAppointments((prev) =>
+        prev.map((a) => {
+          if (a.status === "scheduled" && a.scheduledDate) {
+            const dt = parseAppointmentDateTime(a.scheduledDate, a.scheduledTime)
+            if (dt && now.getTime() >= dt.getTime()) {
+              try {
+                const raw = localStorage.getItem("all_appointments_scheduled")
+                const localMap = raw ? JSON.parse(raw) : {}
+                localMap[a.id] = { status: "completed" }
+                localMap[a.referenceNo] = { status: "completed" }
+                localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
+              } catch {}
+              fetch(`${API_BASE}/api/appointments/${encodeURIComponent(a.referenceNo)}/complete`, { method: "PUT" }).catch(() => {})
+              return { ...a, status: "completed" as const }
+            }
+          }
+          return a
+        })
+      )
     }, 5000)
 
     const handleStorageChange = () => fetchAppointments()
