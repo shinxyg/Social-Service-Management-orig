@@ -1386,15 +1386,8 @@ export default function SoloParentApplicationWizard({
                       ? "CLICK THE TYPE OF ASSISTANCE / CATEGORY"
                       : language === "bis"
                       ? "PILIA ANG MATANG SA TABANG / KATEGORYA"
-                      : "PILIIN ANG URI NG TULONG / KATEGORYA"}
+                      : "PILIIN ANG URI NG TULONG / KATEGORYA"} <span className="text-red-500">*</span>
                   </label>
-                  <p className="text-xs text-blue-700 mb-1 font-medium">
-                    {language === "en"
-                      ? "Choose the category *"
-                      : language === "bis"
-                      ? "Pilia ang kategorya *"
-                      : "Piliin ang kategorya *"}
-                  </p>
                   <select
                     value={selectedCategoryId ?? ""}
                     onChange={(e) => {
