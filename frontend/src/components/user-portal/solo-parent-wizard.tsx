@@ -1390,10 +1390,10 @@ export default function SoloParentApplicationWizard({
                   </label>
                   <p className="text-xs text-blue-700 mb-1 font-medium">
                     {language === "en"
-                      ? "Choose the category / circumstance *"
+                      ? "Choose the category *"
                       : language === "bis"
-                      ? "Pilia ang kategorya / sitwasyon *"
-                      : "Piliin ang kategorya / sitwasyon *"}
+                      ? "Pilia ang kategorya *"
+                      : "Piliin ang kategorya *"}
                   </p>
                   <select
                     value={selectedCategoryId ?? ""}
@@ -1409,10 +1409,10 @@ export default function SoloParentApplicationWizard({
                   >
                     <option value="">
                       {language === "en"
-                        ? "-- Select Category / Circumstance --"
+                        ? "Select Category"
                         : language === "bis"
-                        ? "-- Pilia ang Kategorya / Sitwasyon --"
-                        : "-- Pumili ng Kategorya / Circumstance --"}
+                        ? "Pilia ang Kategorya"
+                        : "Pumili ng Kategorya"}
                     </option>
                     {SOLO_PARENT_CATEGORIES.map((cat) => (
                       <option key={cat.id} value={cat.id}>
