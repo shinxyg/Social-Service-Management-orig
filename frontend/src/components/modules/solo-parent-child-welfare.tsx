@@ -924,7 +924,7 @@ function OfficialSoloParentIdCardModal({
 
                   <div className="pt-0.5">
                     <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Classification</span>
-                    <p className="text-[9.5px] font-bold text-emerald-800 leading-tight truncate">{app.selectedCategory || "Solo Parent Beneficiary"}</p>
+                    <p className="text-[9.5px] font-bold text-emerald-800 leading-tight truncate">{app.classification || (app as any).selectedCategory || "Solo Parent Beneficiary"}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-1 pt-0.5 text-[8.5px] text-slate-700">
@@ -991,7 +991,7 @@ function OfficialSoloParentIdCardModal({
                     {(app.familyMembers && app.familyMembers.length > 0) ? (
                       app.familyMembers.map((m, i) => (
                         <div key={i} className="truncate">
-                          <span className="font-bold">• {m.fullName || `${m.relationship}: child`}</span> ({m.age || "—"} yo)
+                          <span className="font-bold">• {m.name || (m as any).fullName || `${m.relationship}: child`}</span> ({m.age || "—"} yo)
                         </div>
                       ))
                     ) : (
