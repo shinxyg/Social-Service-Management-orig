@@ -673,9 +673,28 @@ interface DetailedViewProps {
 }
 
 function DetailedView({ app, onClose, onApprove, onReject }: DetailedViewProps) {
-  const [approveValue, setApproveValue] = useState(
-    isSoloParent(app) ? app.assignedIdNumber || "" : app.approvedAmount || ""
-  )
+  const [approveValue, setApproveValue] = useState(() => {
+    if (isSoloParent(app)) {
+      const existingId =
+        (app as any).existingIdNumber ||
+        (app as any).soloParentIdNumber ||
+        (app as any).existingSoloParentIdNumber ||
+        app.assignedIdNumber ||
+        (app as any).idNumber
+      const isRenewalOrLoss =
+        app.applicationType === "renewal" ||
+        app.applicationType === "loss" ||
+        app.applicationType === "replacement"
+      if (isRenewalOrLoss && existingId && String(existingId).trim() && String(existingId).trim() !== "—") {
+        return String(existingId).trim()
+      }
+      if (app.assignedIdNumber) return app.assignedIdNumber
+      const year = new Date().getFullYear()
+      const rand = Math.floor(10000 + Math.random() * 90000)
+      return `SP-${year}-${rand}`
+    }
+    return app.approvedAmount || "5000"
+  })
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)

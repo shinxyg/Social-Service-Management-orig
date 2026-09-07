@@ -211,17 +211,29 @@ function generateOfficialIdNumber(app: ApplicationSubmission): string {
   const randomSeq = String(Math.floor(100000 + Math.random() * 900000))
   const year = new Date().getFullYear()
 
-  // 1. Movie Booklet: always generate freshly randomized 137404-YYYY-XXXXXX
+  const isRenewalOrLoss =
+    rawType.includes("renewal") ||
+    rawType.includes("loss") ||
+    rawType.includes("replacement") ||
+    rawType === "renewal" ||
+    rawType === "loss" ||
+    rawType === "replacement"
+
+  // 1. Movie Booklet
   if (
     rawType === "movie-booklet" ||
     rawType.includes("movie") ||
     rawCat.includes("movie") ||
     rawService.includes("movie")
   ) {
+    const existingBooklet = (app as any).existingBookletNumber || (app as any).bookletNumber || (app as any).extra_data?.existingBookletNumber
+    if (isRenewalOrLoss && existingBooklet && String(existingBooklet).trim()) {
+      return String(existingBooklet).trim()
+    }
     return `137404-${year}-${randomSeq}`
   }
 
-  // 2. Medicine Booklet: always generate freshly randomized 137404-YYYY-XXXXXX
+  // 2. Medicine Booklet
   if (
     rawType === "medicine-booklet" ||
     rawType.includes("medicine") ||
@@ -230,7 +242,29 @@ function generateOfficialIdNumber(app: ApplicationSubmission): string {
     rawCat.includes("booklet") ||
     rawType.includes("booklet")
   ) {
+    const existingBooklet = (app as any).existingBookletNumber || (app as any).bookletNumber || (app as any).extra_data?.existingBookletNumber
+    if (isRenewalOrLoss && existingBooklet && String(existingBooklet).trim()) {
+      return String(existingBooklet).trim()
+    }
     return `137404-${year}-${randomSeq}`
+  }
+
+  // Check existing ID number across all possible fields for Renewal / Loss
+  const existingId =
+    (app as any).existingIdNumber ||
+    (app as any).existing_id_number ||
+    (app as any).seniorIdNumber ||
+    (app as any).existingPwdIdNumber ||
+    (app as any).pwdIdNumber ||
+    (app as any).oldPwdId ||
+    (app as any).oldSeniorId ||
+    (app as any).oscaId ||
+    app.assignedIdNumber ||
+    (app as any).assigned_id_number ||
+    (app as any).idNumber
+
+  if (isRenewalOrLoss && existingId && String(existingId).trim() && String(existingId).trim() !== "—") {
+    return String(existingId).trim()
   }
 
   // 3. PWD ID
