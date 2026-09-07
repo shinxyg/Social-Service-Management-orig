@@ -1369,6 +1369,26 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Kailangang ilagay ang inyong existing {bookletType} Number.",
     bis: "Kinahanglan isulod ang inyong existing {bookletType} Number.",
   },
+  seniorVerifyIdFirstForBooklet: {
+    en: "Please verify your Senior Citizen / OSCA ID above first to check your official booklet record.",
+    tl: "Pakiverify muna ang Senior Citizen / OSCA ID sa itaas upang masuri ang inyong opisyal na booklet record.",
+    bis: "Palihug i-verify una ang Senior Citizen / OSCA ID sa ibabaw aron masusi ang inyong opisyal nga booklet record.",
+  },
+  seniorIdNumberPlaceholder: {
+    en: "e.g. 137404-2026-XXXXXX",
+    tl: "Hal. 137404-2026-XXXXXX",
+    bis: "Pananglitan: 137404-2026-XXXXXX",
+  },
+  seniorMovieBookletPlaceholder: {
+    en: "e.g. MV-2026-XXXXXX",
+    tl: "Hal. MV-2026-XXXXXX",
+    bis: "Pananglitan: MV-2026-XXXXXX",
+  },
+  seniorMedicineBookletPlaceholder: {
+    en: "e.g. MB-2026-XXXXXX",
+    tl: "Hal. MB-2026-XXXXXX",
+    bis: "Pananglitan: MB-2026-XXXXXX",
+  },
 }
 
 interface LanguageContextValue {

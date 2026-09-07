@@ -1270,7 +1270,7 @@ export default function SeniorBookletWizard({
                           setIsIdVerified(false)
                           setVerifyError(null)
                         }}
-                        placeholder="137404-2026-516915"
+                        placeholder={t("seniorIdNumberPlaceholder") || "e.g. 137404-2026-XXXXXX"}
                         maxLength={18}
                         className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none font-mono transition-all ${
                           isIdVerified
@@ -1351,9 +1351,9 @@ export default function SeniorBookletWizard({
                           onChange={(e) => {
                             setBookletNumber(e.target.value.toUpperCase())
                           }}
-                          placeholder={isMedicine ? "MB-2026-XXXXXX o 137404-2026-XXXXXX" : "MV-2026-XXXXXX o 137404-2026-XXXXXX"}
+                          placeholder={isMedicine ? (t("seniorMedicineBookletPlaceholder") || "e.g. MB-2026-XXXXXX") : (t("seniorMovieBookletPlaceholder") || "e.g. MV-2026-XXXXXX")}
                           maxLength={24}
-                          className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 font-mono outline-none transition-all ${
+                          className={`w-full h-11 rounded-lg border px-3 text-sm text-gray-900 placeholder:text-gray-400 font-mono outline-none transition-all ${
                             !isIdVerified || (bookletNumber.trim() && !isBookletNumberMatch)
                               ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
                               : isIdVerified && bookletNumber.trim() && isBookletNumberMatch
@@ -1364,7 +1364,7 @@ export default function SeniorBookletWizard({
                         {!isIdVerified && (
                           <div className="flex items-start gap-1.5 text-xs text-amber-700 mt-1.5 font-medium animate-in fade-in">
                             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-                            <span>Pakiverify muna ang Senior Citizen / OSCA ID sa itaas upang masuri ang inyong opisyal na booklet record.</span>
+                            <span>{t("seniorVerifyIdFirstForBooklet") || "Pakiverify muna ang Senior Citizen / OSCA ID sa itaas upang masuri ang inyong opisyal na booklet record."}</span>
                           </div>
                         )}
                         {isIdVerified && bookletNumber.trim() !== "" && !isBookletNumberMatch && (
