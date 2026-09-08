@@ -381,25 +381,26 @@ const EMPTY_FORM_DATA: FormData = {
   middleName: "",
   lastName: "",
   suffix: "",
-  dobMonth: "10",
-  dobDay: "29",
-  dobYear: "2004",
-  age: "21",
-  sex: "Female",
-  civilStatus: "Single",
+  citizenship: "",
+  dobMonth: "",
+  dobDay: "",
+  dobYear: "",
+  age: "",
+  sex: "",
+  civilStatus: "",
   contactNo: "",
   addressHouseNo: "",
   addressStreet: "",
   addressBarangay: "",
   addressCityMunicipality: "QUEZON CITY",
-  qcidNumber: "110000116932100",
+  qcidNumber: "",
   email: "",
-  bloodType: "O+",
-  emergencyFirstName: "JUAN",
-  emergencyLastName: "DIMAL",
-  emergencyContactNo: "09123456789",
-  emergencyRelationship: "Child",
-  emergencyAddress: "Quezon City",
+  bloodType: "",
+  emergencyFirstName: "",
+  emergencyLastName: "",
+  emergencyContactNo: "",
+  emergencyRelationship: "",
+  emergencyAddress: "",
 }
 
 function TextInput({
@@ -708,8 +709,40 @@ export default function SoloParentApplicationWizard({
       setIsIdVerified(false)
       setExistingIdNumber("")
       setVerifyError("")
+      if (initialType === "new") {
+        setFormData({ ...EMPTY_FORM_DATA })
+      } else if (initialType === "renewal" || initialType === "loss") {
+        const prof = getCurrentUserProfile()
+        setFormData({
+          ...EMPTY_FORM_DATA,
+          firstName: prof.firstName || userProfile?.firstName || "",
+          middleName: prof.middleName || userProfile?.middleName || "",
+          lastName: prof.lastName || userProfile?.lastName || "",
+          suffix: prof.suffix || userProfile?.suffix || "",
+          citizenship: prof.nationality || userProfile?.nationality || "FILIPINO",
+          dobMonth: prof.dobMonth || userProfile?.dobMonth || "",
+          dobDay: prof.dobDay || userProfile?.dobDay || "",
+          dobYear: prof.dobYear || userProfile?.dobYear || "",
+          age: prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : "",
+          sex: prof.sex || userProfile?.sex || "",
+          civilStatus: prof.civilStatus || userProfile?.civilStatus || "",
+          contactNo: prof.contactNo || userProfile?.contactNo || "",
+          addressHouseNo: prof.addressHouseNo || userProfile?.addressHouseNo || "",
+          addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
+          addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
+          addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
+          qcidNumber: prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || userProfile?.qcidNumber || "",
+          email: prof.email || userProfile?.email || "",
+          bloodType: prof.bloodType || userProfile?.bloodType || "O+",
+          emergencyFirstName: prof.emergencyFirstName || userProfile?.emergencyFirstName || "",
+          emergencyLastName: prof.emergencyLastName || userProfile?.emergencyLastName || "",
+          emergencyContactNo: prof.emergencyContactNo || userProfile?.emergencyContactNo || "",
+          emergencyRelationship: prof.emergencyRelationship || userProfile?.emergencyRelationship || "",
+          emergencyAddress: prof.emergencyAddress || userProfile?.emergencyAddress || "",
+        })
+      }
     }
-  }, [initialType])
+  }, [initialType, userProfile])
 
   const STEPS = [
     { id: 1, label: language === "en" ? "COMPLETE CHECKLIST" : language === "bis" ? "KOMPLETOHA ANG CHECKLIST" : "KUMPLETOHING CHECKLIST" },
@@ -927,7 +960,7 @@ export default function SoloParentApplicationWizard({
       if (matchedApp) {
         setIsIdVerified(true)
         setVerifyError("")
-        const applicantName = `${matchedApp.first_name || matchedApp.firstName || userProfile.firstName} ${matchedApp.last_name || matchedApp.lastName || userProfile.lastName}`.trim()
+        const applicantName = `${matchedApp.first_name || matchedApp.firstName || userProfile?.firstName || ""}`.trim()
         const rawOfficialId =
           matchedApp.assigned_id_number ||
           matchedApp.assignedIdNumber ||
@@ -940,9 +973,37 @@ export default function SoloParentApplicationWizard({
         setVerifiedRecord({
           name: applicantName,
           idNumber: officialId,
-          barangay: matchedApp.address_barangay || matchedApp.addressBarangay || userProfile.addressBarangay || "SAUYO",
+          barangay: matchedApp.address_barangay || matchedApp.addressBarangay || userProfile?.addressBarangay || "SAUYO",
           status: idStatus === "renewal" ? "Active / Expired" : "Replacement / Lost ID",
         })
+
+        setFormData((prev) => ({
+          ...prev,
+          firstName: matchedApp.first_name || matchedApp.firstName || userProfile?.firstName || prev.firstName,
+          middleName: matchedApp.middle_name || matchedApp.middleName || userProfile?.middleName || prev.middleName,
+          lastName: matchedApp.last_name || matchedApp.lastName || userProfile?.lastName || prev.lastName,
+          suffix: matchedApp.suffix || userProfile?.suffix || prev.suffix,
+          citizenship: matchedApp.citizenship || matchedApp.nationality || userProfile?.nationality || prev.citizenship || "FILIPINO",
+          dobMonth: matchedApp.dob_month || matchedApp.dobMonth || userProfile?.dobMonth || prev.dobMonth,
+          dobDay: matchedApp.dob_day || matchedApp.dobDay || userProfile?.dobDay || prev.dobDay,
+          dobYear: matchedApp.dob_year || matchedApp.dobYear || userProfile?.dobYear || prev.dobYear,
+          age: String(matchedApp.age || userProfile?.age || prev.age),
+          sex: matchedApp.sex || matchedApp.gender || userProfile?.sex || prev.sex,
+          civilStatus: matchedApp.civil_status || matchedApp.civilStatus || userProfile?.civilStatus || prev.civilStatus,
+          contactNo: matchedApp.contact_no || matchedApp.contactNo || matchedApp.phone_number || matchedApp.phoneNumber || userProfile?.contactNo || prev.contactNo,
+          addressHouseNo: matchedApp.address_house_no || matchedApp.addressHouseNo || userProfile?.addressHouseNo || prev.addressHouseNo,
+          addressStreet: matchedApp.address_street || matchedApp.addressStreet || userProfile?.addressStreet || prev.addressStreet,
+          addressBarangay: matchedApp.address_barangay || matchedApp.addressBarangay || userProfile?.addressBarangay || prev.addressBarangay,
+          addressCityMunicipality: matchedApp.address_city_municipality || matchedApp.addressCityMunicipality || userProfile?.addressCityMunicipality || prev.addressCityMunicipality || "QUEZON CITY",
+          qcidNumber: matchedApp.qcid_number || matchedApp.qcidNumber || userProfile?.qcidNo || userProfile?.qcidNumber || prev.qcidNumber,
+          email: matchedApp.email || userProfile?.email || prev.email,
+          bloodType: matchedApp.blood_type || matchedApp.bloodType || userProfile?.bloodType || prev.bloodType || "O+",
+          emergencyFirstName: matchedApp.emergency_first_name || matchedApp.emergencyFirstName || userProfile?.emergencyFirstName || prev.emergencyFirstName,
+          emergencyLastName: matchedApp.emergency_last_name || matchedApp.emergencyLastName || userProfile?.emergencyLastName || prev.emergencyLastName,
+          emergencyContactNo: matchedApp.emergency_contact_no || matchedApp.emergencyContactNo || userProfile?.emergencyContactNo || prev.emergencyContactNo,
+          emergencyRelationship: matchedApp.emergency_relationship || matchedApp.emergencyRelationship || userProfile?.emergencyRelationship || prev.emergencyRelationship,
+          emergencyAddress: matchedApp.emergency_address || matchedApp.emergencyAddress || userProfile?.emergencyAddress || prev.emergencyAddress,
+        }))
       } else {
         setIsIdVerified(false)
         setVerifyError(
@@ -1131,32 +1192,39 @@ export default function SoloParentApplicationWizard({
   const familyMembers: FamilyMember[] = []
 
   // ---- Step 2: Personal Information ----
-  const [formData, setFormData] = useState<FormData>(() => ({
-    ...EMPTY_FORM_DATA,
-    firstName: userProfile.firstName || "",
-    middleName: userProfile.middleName || "",
-    lastName: userProfile.lastName || "",
-    suffix: userProfile.suffix || "",
-    dobMonth: userProfile.dobMonth || "",
-    dobDay: userProfile.dobDay || "",
-    dobYear: userProfile.dobYear || "",
-    age: userProfile.age || "",
-    sex: userProfile.sex || "",
-    civilStatus: userProfile.civilStatus || "",
-    contactNo: userProfile.contactNo || "",
-    addressHouseNo: userProfile.addressHouseNo || "",
-    addressStreet: userProfile.addressStreet || "",
-    addressBarangay: userProfile.addressBarangay || "",
-    addressCityMunicipality: userProfile.addressCityMunicipality || "Quezon City",
-    qcidNumber: userProfile.qcidNo || "110000116932100",
-    email: userProfile.email || "",
-    bloodType: userProfile.bloodType || "O+",
-    emergencyFirstName: userProfile.emergencyFirstName || "JUAN",
-    emergencyLastName: userProfile.emergencyLastName || "DIMAL",
-    emergencyContactNo: userProfile.emergencyContactNo || "09123456789",
-    emergencyRelationship: userProfile.emergencyRelationship || "Child",
-    emergencyAddress: userProfile.emergencyAddress || (userProfile.addressHouseNo ? `${userProfile.addressHouseNo} ${userProfile.addressStreet}, ${userProfile.addressBarangay}, ${userProfile.addressCityMunicipality}` : "Quezon City"),
-  }))
+  const [formData, setFormData] = useState<FormData>(() => {
+    if (initialType === "renewal" || initialType === "loss") {
+      const prof = getCurrentUserProfile()
+      return {
+        ...EMPTY_FORM_DATA,
+        firstName: prof.firstName || userProfile?.firstName || "",
+        middleName: prof.middleName || userProfile?.middleName || "",
+        lastName: prof.lastName || userProfile?.lastName || "",
+        suffix: prof.suffix || userProfile?.suffix || "",
+        citizenship: prof.nationality || userProfile?.nationality || "FILIPINO",
+        dobMonth: prof.dobMonth || userProfile?.dobMonth || "",
+        dobDay: prof.dobDay || userProfile?.dobDay || "",
+        dobYear: prof.dobYear || userProfile?.dobYear || "",
+        age: prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : "",
+        sex: prof.sex || userProfile?.sex || "",
+        civilStatus: prof.civilStatus || userProfile?.civilStatus || "",
+        contactNo: prof.contactNo || userProfile?.contactNo || "",
+        addressHouseNo: prof.addressHouseNo || userProfile?.addressHouseNo || "",
+        addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
+        addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
+        addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
+        qcidNumber: prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || userProfile?.qcidNumber || "",
+        email: prof.email || userProfile?.email || "",
+        bloodType: prof.bloodType || userProfile?.bloodType || "O+",
+        emergencyFirstName: prof.emergencyFirstName || userProfile?.emergencyFirstName || "",
+        emergencyLastName: prof.emergencyLastName || userProfile?.emergencyLastName || "",
+        emergencyContactNo: prof.emergencyContactNo || userProfile?.emergencyContactNo || "",
+        emergencyRelationship: prof.emergencyRelationship || userProfile?.emergencyRelationship || "",
+        emergencyAddress: prof.emergencyAddress || userProfile?.emergencyAddress || (prof.addressHouseNo ? `${prof.addressHouseNo} ${prof.addressStreet}, ${prof.addressBarangay}, ${prof.addressCityMunicipality}` : ""),
+      }
+    }
+    return { ...EMPTY_FORM_DATA }
+  })
   const updateField = (key: keyof FormData, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }))
 
@@ -1301,6 +1369,12 @@ export default function SoloParentApplicationWizard({
       : isIdVerified && (existingIdNumber || "").trim() !== "" && hasSoleParentalCare && replacementReason !== "")
 
   const step2Valid =
+    (idStatus === "new"
+      ? (formData.firstName || "").trim() !== "" &&
+        (formData.lastName || "").trim() !== "" &&
+        (formData.contactNo || "").trim().length >= 10 &&
+        (formData.addressBarangay || "").trim() !== ""
+      : true) &&
     (formData.emergencyFirstName || "").trim() !== "" &&
     (formData.emergencyLastName || "").trim() !== "" &&
     (formData.emergencyContactNo || "").trim().length === 11 &&
@@ -2115,16 +2189,18 @@ export default function SoloParentApplicationWizard({
                     {t("reviewSeniorDesc") || "Please review your personal information from your QCID profile. Fill in the additional details below."}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingInfo((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 transition-colors cursor-pointer"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    {isEditingInfo ? "LOCK INFORMATION" : "EDIT INFORMATION"}
-                  </button>
-                </div>
+                {idStatus !== "new" && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingInfo((v) => !v)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 transition-colors cursor-pointer"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      {isEditingInfo ? "LOCK INFORMATION" : "EDIT INFORMATION"}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* IMPORTANT REMINDER BOX */}
@@ -2145,12 +2221,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("qcIdLabel") || "QC ID"} *</label>
                     <input
                       type="text"
-                      value={formData.qcidNumber || userProfile?.qcidNo || "110000116932100"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, qcidNumber: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.qcidNumber}
+                      onChange={(e) => updateField("qcidNumber", e.target.value)}
+                      placeholder="110000116932100"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2160,12 +2237,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("firstNameLabel") || "First name"} *</label>
                     <input
                       type="text"
-                      value={formData.firstName || userProfile?.firstName || "CLARISA MAE"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, firstName: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.firstName}
+                      onChange={(e) => updateField("firstName", e.target.value)}
+                      placeholder={t("firstNameLabel") || "First name"}
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2178,12 +2256,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("middleNameLabel") || "Middle name"}</label>
                     <input
                       type="text"
-                      value={formData.middleName !== undefined && formData.middleName !== "" ? formData.middleName : (userProfile?.middleName || "GALIAS")}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, middleName: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.middleName}
+                      onChange={(e) => updateField("middleName", e.target.value)}
+                      placeholder={t("middleNameLabel") || "Middle name"}
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2193,12 +2272,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("lastNameLabel") || "Last name"} *</label>
                     <input
                       type="text"
-                      value={formData.lastName || userProfile?.lastName || "DIMAL"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, lastName: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.lastName}
+                      onChange={(e) => updateField("lastName", e.target.value)}
+                      placeholder={t("lastNameLabel") || "Last name"}
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2208,13 +2288,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("suffixLabel") || "Suffix (Jr., Sr., III, etc.)"}</label>
                     <input
                       type="text"
-                      value={formData.suffix || userProfile?.suffix || ""}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, suffix: e.target.value }))}
+                      value={formData.suffix}
+                      onChange={(e) => updateField("suffix", e.target.value)}
                       placeholder={t("suffixLabel") || "Suffix (Jr., Sr., III, etc.)"}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2227,12 +2307,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("nationalityLabel") || "Nationality"} *</label>
                     <input
                       type="text"
-                      value={formData.citizenship || userProfile?.nationality || "FILIPINO"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, citizenship: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.citizenship}
+                      onChange={(e) => updateField("citizenship", e.target.value)}
+                      placeholder="FILIPINO"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2245,14 +2326,24 @@ export default function SoloParentApplicationWizard({
                       value={
                         formData.dobMonth && formData.dobDay && formData.dobYear
                           ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
-                          : (userProfile?.dobMonth && userProfile?.dobDay && userProfile?.dobYear
-                            ? `${userProfile.dobMonth}/${userProfile.dobDay}/${userProfile.dobYear}`
-                            : "10/29/1960")
+                          : (formData.dobMonth || "")
                       }
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        const parts = val.split("/")
+                        if (parts.length === 3) {
+                          updateField("dobMonth", parts[0])
+                          updateField("dobDay", parts[1])
+                          updateField("dobYear", parts[2])
+                        } else {
+                          updateField("dobMonth", val)
+                        }
+                      }}
+                      placeholder="MM/DD/YYYY"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2262,12 +2353,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("ageLabel") || "Age"} *</label>
                     <input
                       type="text"
-                      value={formData.age || userProfile?.age || "65"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, age: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.age}
+                      onChange={(e) => updateField("age", e.target.value.replace(/\D/g, ""))}
+                      placeholder="e.g. 28"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2280,12 +2372,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("genderLabel") || "Gender"} *</label>
                     <input
                       type="text"
-                      value={formData.sex || userProfile?.sex || "Female"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, sex: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.sex}
+                      onChange={(e) => updateField("sex", e.target.value)}
+                      placeholder="Male / Female"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2295,12 +2388,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("civilStatusLabel") || "Civil status"} *</label>
                     <input
                       type="text"
-                      value={formData.civilStatus || userProfile?.civilStatus || "Single"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, civilStatus: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.civilStatus}
+                      onChange={(e) => updateField("civilStatus", e.target.value)}
+                      placeholder="Single / Widowed / Separated"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2330,12 +2424,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("houseNumberLabel") || "House/Building number"} *</label>
                     <input
                       type="text"
-                      value={formData.addressHouseNo || userProfile?.addressHouseNo || "11"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, addressHouseNo: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.addressHouseNo}
+                      onChange={(e) => updateField("addressHouseNo", e.target.value)}
+                      placeholder="e.g. 123"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2345,12 +2440,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("streetNameLabel") || "Street name"} *</label>
                     <input
                       type="text"
-                      value={formData.addressStreet || userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, addressStreet: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.addressStreet}
+                      onChange={(e) => updateField("addressStreet", e.target.value)}
+                      placeholder="e.g. Main St."
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2360,12 +2456,13 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("barangayLabel") || "Barangay"} *</label>
                     <input
                       type="text"
-                      value={formData.addressBarangay || userProfile?.addressBarangay || "Sauyo"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, addressBarangay: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.addressBarangay}
+                      onChange={(e) => updateField("addressBarangay", e.target.value)}
+                      placeholder="e.g. Sauyo"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2378,12 +2475,14 @@ export default function SoloParentApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("phoneNumberLabel") || "Phone number"} *</label>
                     <input
                       type="text"
-                      value={formData.contactNo || userProfile?.contactNo || "09000000000"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, contactNo: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      value={formData.contactNo}
+                      onChange={(e) => updateField("contactNo", e.target.value.replace(/\D/g, ""))}
+                      placeholder="09XXXXXXXXX"
+                      maxLength={11}
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2392,13 +2491,14 @@ export default function SoloParentApplicationWizard({
                   <div>
                     <label className="text-xs font-semibold text-gray-700">{t("emailLabel") || "Email"} *</label>
                     <input
-                      type="text"
-                      value={formData.email || userProfile?.email || "dimalmae@gmail.com"}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => updateField("email", e.target.value)}
+                      placeholder="name@example.com"
+                      readOnly={idStatus !== "new" && !isEditingInfo}
+                      disabled={idStatus !== "new" && !isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
+                        idStatus !== "new" && !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
