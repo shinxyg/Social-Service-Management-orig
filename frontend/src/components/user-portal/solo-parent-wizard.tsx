@@ -873,13 +873,20 @@ export default function SoloParentApplicationWizard({
         const isSolo =
           cat.includes("solo") ||
           cat.includes("parent") ||
-          a.solo_parent_id_number ||
-          a.soloParentIdNumber ||
-          a.children ||
-          a.family_members ||
-          a.familyMembers
+          Boolean(a.solo_parent_id_number) ||
+          Boolean(a.soloParentIdNumber) ||
+          Boolean(a.children) ||
+          Boolean(a.family_members) ||
+          Boolean(a.familyMembers)
 
-        return isApproved && Boolean(isSolo)
+        const status = String(a.application_status || a.status || "").toLowerCase()
+        const isApproved =
+          status === "approved" ||
+          status === "completed" ||
+          status === "for_release" ||
+          status === "active"
+
+        return isApproved && isSolo
       })
 
       // Strict match: Must match an approved record belonging to this user or matching the ID
