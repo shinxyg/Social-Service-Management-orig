@@ -1166,82 +1166,54 @@ export default function CaseManagement() {
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div
-          onClick={() => setSelectedStatusTab("ALL")}
-          className={`p-4 md:p-5 rounded-2xl border transition-all cursor-pointer ${
-            selectedStatusTab === "ALL"
-              ? "bg-blue-600 text-white border-blue-700 shadow-md"
-              : "bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-2xs"
-          }`}
-        >
+        <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${selectedStatusTab === "ALL" ? "text-blue-100" : "text-slate-500"}`}>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Total Approved Cases
             </span>
-            <FolderKanban className={`h-4 w-4 ${selectedStatusTab === "ALL" ? "text-white" : "text-blue-600"}`} />
+            <FolderKanban className="h-4 w-4 text-blue-600" />
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold mt-2">{stats.total}</p>
-          <span className={`text-[11px] font-medium mt-1 block ${selectedStatusTab === "ALL" ? "text-blue-100" : "text-slate-400"}`}>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-900">{stats.total}</p>
+          <span className="text-[11px] font-medium mt-1 block text-slate-400">
             Live synchronized across modules
           </span>
         </div>
 
-        <div
-          onClick={() => setSelectedStatusTab("OPEN")}
-          className={`p-4 md:p-5 rounded-2xl border transition-all cursor-pointer ${
-            selectedStatusTab === "OPEN"
-              ? "bg-blue-600 text-white border-blue-700 shadow-md"
-              : "bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-2xs"
-          }`}
-        >
+        <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${selectedStatusTab === "OPEN" ? "text-blue-100" : "text-slate-500"}`}>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Open Cases
             </span>
-            <Clock className={`h-4 w-4 ${selectedStatusTab === "OPEN" ? "text-white" : "text-blue-600"}`} />
+            <Clock className="h-4 w-4 text-blue-600" />
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold mt-2">{stats.open}</p>
-          <span className={`text-[11px] font-medium mt-1 block ${selectedStatusTab === "OPEN" ? "text-blue-100" : "text-slate-400"}`}>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-900">{stats.open}</p>
+          <span className="text-[11px] font-medium mt-1 block text-slate-400">
             Awaiting payout / claiming
           </span>
         </div>
 
-        <div
-          onClick={() => setSelectedStatusTab("MONITORING_REFERRED")}
-          className={`p-4 md:p-5 rounded-2xl border transition-all cursor-pointer ${
-            selectedStatusTab === "MONITORING_REFERRED"
-              ? "bg-blue-600 text-white border-blue-700 shadow-md"
-              : "bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-2xs"
-          }`}
-        >
+        <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${selectedStatusTab === "MONITORING_REFERRED" ? "text-blue-100" : "text-slate-500"}`}>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Monitoring &amp; Referred
             </span>
-            <Activity className={`h-4 w-4 ${selectedStatusTab === "MONITORING_REFERRED" ? "text-white" : "text-amber-500"}`} />
+            <Activity className="h-4 w-4 text-amber-500" />
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold mt-2">{stats.monitoringOrReferred}</p>
-          <span className={`text-[11px] font-medium mt-1 block ${selectedStatusTab === "MONITORING_REFERRED" ? "text-blue-100" : "text-slate-400"}`}>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-900">{stats.monitoringOrReferred}</p>
+          <span className="text-[11px] font-medium mt-1 block text-slate-400">
             Active aftercare &amp; coordination
           </span>
         </div>
 
-        <div
-          onClick={() => setSelectedStatusTab("CLOSED")}
-          className={`p-4 md:p-5 rounded-2xl border transition-all cursor-pointer ${
-            selectedStatusTab === "CLOSED"
-              ? "bg-blue-600 text-white border-blue-700 shadow-md"
-              : "bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-2xs"
-          }`}
-        >
+        <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${selectedStatusTab === "CLOSED" ? "text-blue-100" : "text-slate-500"}`}>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Closed Cases
             </span>
-            <CheckCircle2 className={`h-4 w-4 ${selectedStatusTab === "CLOSED" ? "text-white" : "text-emerald-600"}`} />
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold mt-2">{stats.closed}</p>
-          <span className={`text-[11px] font-medium mt-1 block ${selectedStatusTab === "CLOSED" ? "text-blue-100" : "text-slate-400"}`}>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-900">{stats.closed}</p>
+          <span className="text-[11px] font-medium mt-1 block text-slate-400">
             Completed &amp; resolved cases
           </span>
         </div>
