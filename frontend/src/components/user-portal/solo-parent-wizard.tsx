@@ -1806,9 +1806,7 @@ export default function SoloParentApplicationWizard({
                         <div className="flex flex-wrap items-center gap-6 pt-1">
                           {[
                             { label: "Expired ID", value: "Expired ID" },
-                            { label: "Updating Personal Information", value: "Updating Personal Information" },
-                            { label: "Updating Family Information", value: "Updating Family Information" },
-                            { label: "Damaged ID", value: "Damaged ID" },
+                            { label: "Updating Information", value: "Updating Information" },
                           ].map((opt) => (
                             <label key={opt.value} className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer select-none">
                               <input
