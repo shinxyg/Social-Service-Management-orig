@@ -1132,6 +1132,25 @@ export default function SoloParentApplicationWizard({
   const [blockReason, setBlockReason] = useState<"draft" | "pending" | "approved" | null>(null)
   const [blockedReference, setBlockedReference] = useState("")
   const [blockedApp, setBlockedApp] = useState<any>(null)
+  const [isReapplying, setIsReapplying] = useState(false)
+
+  const handleStartReapply = (targetType: "renewal" | "loss") => {
+    ;(window as any).__isFormDirty = false
+    setIsReapplying(true)
+    setIdStatus(targetType)
+    setIsBlocked(false)
+    setBlockReason(null)
+    setStep(1)
+    setAttemptedNext(false)
+    setIsIdVerified(false)
+    setExistingIdNumber("")
+    setIsResident(false)
+    setHasSoleParentalCare(false)
+    try {
+      const newUrl = `/portal/apply-solo-parent?category=solo-parent&type=${targetType}&reapply=true`
+      window.history.replaceState(null, "", newUrl)
+    } catch {}
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -1152,7 +1171,7 @@ export default function SoloParentApplicationWizard({
         let refFound = ""
         let appFound: any = null
 
-        const isReapply = typeof window !== "undefined" && window.location.search.includes("reapply=true")
+        const isReapply = isReapplying || (typeof window !== "undefined" && window.location.search.includes("reapply=true"))
 
         // 1. Backend Eligibility API
         try {
@@ -1707,20 +1726,14 @@ export default function SoloParentApplicationWizard({
               <>
                 <button
                   type="button"
-                  onClick={() => {
-                    ;(window as any).__isFormDirty = false
-                    window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=renewal&reapply=true"
-                  }}
+                  onClick={() => handleStartReapply("renewal")}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
                 >
                   Apply for Renewal (Renewal Solo Parent ID)
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    ;(window as any).__isFormDirty = false
-                    window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=loss&reapply=true"
-                  }}
+                  onClick={() => handleStartReapply("loss")}
                   className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Apply for Replacement / Lost ID
