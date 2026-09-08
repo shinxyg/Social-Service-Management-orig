@@ -14,25 +14,61 @@ exports.createApplication = async (req, res) => {
     const { userId, applicationData, requiredDocumentIds } = req.body;
     const { isResident, selectedCategoryId, selectedCategory, formData = {} } = applicationData || {};
 
-    // Existing draft/pending check
-    const existing = await db.query(
-      `SELECT * FROM child_welfare_applications
-       WHERE user_id = $1 AND application_status IN ('draft', 'pending')
-       ORDER BY created_at DESC LIMIT 1`,
-      [userId]
-    );
-
-    if (existing.rows.length > 0) {
-      const app = existing.rows[0];
-      return res.status(200).json({
-        success: true,
-        message: 'Resuming existing draft application',
-        referenceNumber: app.reference_number,
-        applicationId: app.id,
-      });
-    }
-
     const referenceNumber = req.body.referenceNumber || req.body.reference_number || (formData && (formData.qcidNumber || formData.qcidNo || formData.qcId)) || generateReference();
+
+    const guardianFirstName = formData.guardianFirstName || formData.parentFullName || '';
+    const guardianMiddleName = formData.guardianMiddleName || '';
+    const guardianLastName = formData.guardianLastName || '';
+    const guardianSex = formData.guardianSex || '';
+    const guardianDateOfBirth = formData.guardianDateOfBirth || '';
+    const guardianAge = formData.guardianAge ? parseInt(formData.guardianAge, 10) : null;
+    const guardianCivilStatus = formData.guardianCivilStatus || '';
+    const guardianRelationship = formData.guardianRelationshipToChild || formData.parentRelationship || '';
+    const guardianContactNo = formData.guardianContactNo || formData.parentContactNo || formData.contactNo || '';
+    const guardianEmail = formData.guardianEmail || formData.email || '';
+    const guardianValidId = formData.guardianValidId || '';
+
+    const addressHouseNo = formData.addressHouseNo || formData.houseNo || '';
+    const addressStreet = formData.addressStreet || formData.street || '';
+    const addressBarangay = formData.addressBarangay || formData.barangay || '';
+    const addressCity = formData.addressCityMunicipality || formData.city || 'Quezon City';
+
+    const childName = formData.childName || [formData.firstName, formData.middleName, formData.lastName, formData.suffix].filter(Boolean).join(' ');
+    const childSex = formData.childSex || formData.sex || '';
+    const childBirthday = formData.childBirthday || (formData.dobMonth && formData.dobDay && formData.dobYear ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}` : '');
+    const childAge = formData.childAge || formData.age ? parseInt(formData.childAge || formData.age, 10) : null;
+    const childSchoolDaycare = formData.childSchoolDaycare || '';
+    const childBirthCertificate = formData.childBirthCertificate || '';
+    const childGradeLevel = formData.childGradeLevel || '';
+    const childSchoolAddress = formData.childSchoolAddress || '';
+    const childEnrollmentStatus = formData.childEnrollmentStatus || '';
+    const childSpecialNeeds = formData.childSpecialNeeds || '';
+    const childSpecialNeedsSpecify = formData.childSpecialNeedsSpecify || '';
+
+    const householdMembers = formData.householdMembers || '';
+    const childrenStudying = formData.childrenStudying || '';
+    const monthlyHouseholdIncome = formData.monthlyHouseholdIncome || '';
+    const mainSourceIncome = formData.mainSourceIncome || '';
+    const employmentStatus = formData.employmentStatus || '';
+    const otherFinancialSupport = formData.otherFinancialSupport || '';
+
+    const supportTypes = formData.supportTypes || (applicationData?.selectedAssistanceType ? [applicationData.selectedAssistanceType] : []);
+    const supportOther = formData.supportOther || '';
+
+    const primaryReason = formData.primaryReasonForAssistance || formData.reasonForRequest || formData.emergencyType || '';
+    const specificNeeds = formData.specificNeeds || formData.briefDescription || '';
+    const estimatedAmountNeeded = formData.estimatedAmountNeeded || '';
+    const urgency = formData.urgency || (formData.reportEmergencyPriority ? 'HIGH PRIORITY' : 'Normal');
+
+    const childLivingArrangement = formData.childLivingArrangement || formData.currentLivingSituation || '';
+    const otherChildrenNeedingAssistance = formData.otherChildrenNeedingAssistance || '';
+    const otherChildrenCount = formData.otherChildrenCount || '';
+    const otherGovtAssistanceReceived = formData.otherGovtAssistanceReceived || (formData.receivedPrior === 'yes' ? 'Yes' : 'No');
+    const otherGovtProgram = formData.otherGovtProgram || '';
+    const additionalInfo = formData.additionalInfo || '';
+
+    const categoryTitle = selectedCategory?.title || applicationData?.programTitle || 'Child Welfare Assistance';
+    const categoryId = selectedCategoryId || (selectedCategory?.id ? String(selectedCategory.id) : null);
 
     const result = await db.query(
       `INSERT INTO child_welfare_applications (
@@ -65,19 +101,19 @@ exports.createApplication = async (req, res) => {
         $47, $48, $49
       ) RETURNING id, reference_number`,
       [
-        referenceNumber, userId, selectedCategoryId, selectedCategory?.title || null, JSON.stringify(requiredDocumentIds || []),
-        formData.guardianFirstName || null, formData.guardianMiddleName || null, formData.guardianLastName || null, formData.guardianSex || null, formData.guardianDateOfBirth || null,
-        formData.guardianAge || null, formData.guardianCivilStatus || null, formData.guardianRelationshipToChild || null, formData.guardianContactNo || null,
-        formData.guardianEmail || null, formData.guardianValidId || null,
-        formData.addressHouseNo || null, formData.addressStreet || null, formData.addressBarangay || null, formData.addressCityMunicipality || null,
-        formData.childName || null, formData.childSex || null, formData.childBirthday || null, formData.childAge || null, formData.childSchoolDaycare || null, formData.childBirthCertificate || null,
-        formData.childGradeLevel || null, formData.childSchoolAddress || null, formData.childEnrollmentStatus || null, formData.childSpecialNeeds || null, formData.childSpecialNeedsSpecify || null,
-        formData.householdMembers || null, formData.childrenStudying || null, formData.monthlyHouseholdIncome || null, formData.mainSourceIncome || null,
-        formData.employmentStatus || null, formData.otherFinancialSupport || null,
-        JSON.stringify(formData.supportTypes || []), formData.supportOther || null,
-        formData.primaryReasonForAssistance || null, formData.specificNeeds || null, formData.estimatedAmountNeeded || null, formData.urgency || null,
-        formData.childLivingArrangement || null, formData.otherChildrenNeedingAssistance || null, formData.otherChildrenCount || null,
-        formData.otherGovtAssistanceReceived || null, formData.otherGovtProgram || null, formData.additionalInfo || null,
+        referenceNumber, String(userId || '0'), categoryId, categoryTitle, JSON.stringify(requiredDocumentIds || []),
+        guardianFirstName || null, guardianMiddleName || null, guardianLastName || null, guardianSex || null, guardianDateOfBirth || null,
+        guardianAge || null, guardianCivilStatus || null, guardianRelationship || null, guardianContactNo || null,
+        guardianEmail || null, guardianValidId || null,
+        addressHouseNo || null, addressStreet || null, addressBarangay || null, addressCity || null,
+        childName || null, childSex || null, childBirthday || null, childAge || null, childSchoolDaycare || null, childBirthCertificate || null,
+        childGradeLevel || null, childSchoolAddress || null, childEnrollmentStatus || null, childSpecialNeeds || null, childSpecialNeedsSpecify || null,
+        householdMembers || null, childrenStudying || null, monthlyHouseholdIncome || null, mainSourceIncome || null,
+        employmentStatus || null, otherFinancialSupport || null,
+        JSON.stringify(supportTypes || []), supportOther || null,
+        primaryReason || null, specificNeeds || null, estimatedAmountNeeded || null, urgency || null,
+        childLivingArrangement || null, otherChildrenNeedingAssistance || null, otherChildrenCount || null,
+        otherGovtAssistanceReceived || null, otherGovtProgram || null, additionalInfo || null,
       ]
     );
 

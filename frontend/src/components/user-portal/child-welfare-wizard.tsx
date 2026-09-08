@@ -20,6 +20,7 @@ import {
 import { useLanguage } from "../ui/language-context"
 import { getCurrentUserProfile } from "../../utils/userProfile"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { API_BASE } from "../../config/api"
 import DocumentCameraModal from "../ui/document-camera-modal"
 
 function generateReference(qcid?: string) {
@@ -1049,7 +1050,7 @@ export default function ChildWelfareApplicationWizard({
   const step3Valid = requiredDocItems.every((d) => (uploadedFiles[d.id] || []).length > 0)
 
   const canGoNext =
-    step === 1 ? step1Valid : step === 2 ? step2Valid : step === 3 ? step3Valid : formData.certifiedCorrect
+    step === 1 ? step1Valid : step === 2 ? step2Valid : step === 3 ? step3Valid : true
 
   const handleNext = () => {
     if (!canGoNext) {
@@ -1074,18 +1075,78 @@ export default function ChildWelfareApplicationWizard({
     setStep((s) => Math.max(s - 1, 1))
   }
 
-  const handleSubmit = () => {
-    if (!formData.certifiedCorrect) {
-      setAttemptedNext(true)
-      return
-    }
-    const ref = generateReference(userProfile?.qcidNo)
+  const handleSubmit = async () => {
+    const ref = generateReference(userProfile?.qcidNo || formData.qcidNumber)
     setReference(ref)
     setShowConfirmModal(false)
     setSubmissionStage("matching")
 
-    // Dispatch real-time event
-    notifyApplicationChange("APPLICATION_SUBMITTED", "child_welfare", ref)
+    const userId = (userProfile as any)?.id || (userProfile as any)?.userId || "0"
+    const payload = {
+      userId: String(userId),
+      referenceNumber: ref,
+      applicationData: {
+        programKey: selectedProgram.key,
+        programTitle: selectedProgram.title,
+        selectedCategoryId: String(selectedProgram.id),
+        selectedCategory: { id: selectedProgram.id, title: selectedProgram.title, key: selectedProgram.key },
+        selectedAssistanceType,
+        formData: {
+          ...formData,
+          childName: [formData.firstName, formData.middleName, formData.lastName, formData.suffix].filter(Boolean).join(" "),
+          parentFullName: formData.parentFullName,
+          parentRelationship: formData.parentRelationship,
+          parentContactNo: formData.parentContactNo,
+          supportTypes: [selectedAssistanceType],
+        },
+      },
+      requiredDocumentIds: selectedProgram.documents.map((d) => d.id),
+    }
+
+    try {
+      const createRes = await fetch(`${API_BASE}/api/child-welfare/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (createRes.ok) {
+        const data = await createRes.json()
+        const appId = data.applicationId
+        if (data.referenceNumber) {
+          setReference(data.referenceNumber)
+        }
+
+        // Upload all attached documents
+        for (const doc of selectedProgram.documents) {
+          const files = uploadedFiles[doc.id] || []
+          if (files.length > 0 && appId) {
+            const uploadData = new FormData()
+            files.forEach((f) => uploadData.append("documents", f))
+            uploadData.append("documentId", doc.id)
+            uploadData.append("documentLabel", doc.label)
+            await fetch(`${API_BASE}/api/child-welfare/${appId}/upload-documents`, {
+              method: "POST",
+              body: uploadData,
+            }).catch(() => {})
+          }
+        }
+
+        // Submit application
+        if (appId) {
+          await fetch(`${API_BASE}/api/child-welfare/${appId}/submit`, {
+            method: "POST",
+          }).catch(() => {})
+        }
+
+        notifyApplicationChange("APPLICATION_SUBMITTED", "child_welfare", data.referenceNumber || ref)
+      } else {
+        notifyApplicationChange("APPLICATION_SUBMITTED", "child_welfare", ref)
+      }
+    } catch (err) {
+      console.warn("Child welfare submission error fallback:", err)
+      notifyApplicationChange("APPLICATION_SUBMITTED", "child_welfare", ref)
+    }
 
     setTimeout(() => {
       setSubmissionStage("pending")
@@ -1942,20 +2003,20 @@ export default function ChildWelfareApplicationWizard({
                           )}
                         </p>
                         {uploaded ? (
-                          <div className="mt-2 flex flex-wrap gap-2">
+                          <div className="mt-2 space-y-2">
                             {files.map((file, i) => (
                               <button
                                 key={`${file.name}-${i}`}
                                 type="button"
                                 onClick={() => setPreviewDocModal({ title: doc.label, file })}
-                                className="border border-gray-200 hover:border-blue-400 rounded-lg p-2 flex items-center gap-2 bg-white cursor-pointer transition-colors shadow-2xs"
+                                className="w-full max-w-md border border-gray-200 hover:border-blue-400 rounded-xl overflow-hidden text-left bg-white cursor-pointer transition-colors shadow-xs block"
                               >
-                                <div className="h-8 w-8 rounded bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                                  <FileThumbnail file={file} className="h-full w-full object-cover" />
+                                <div className="h-28 w-full bg-gray-50 flex items-center justify-center overflow-hidden p-2">
+                                  <FileThumbnail file={file} className="max-h-full max-w-full object-contain" />
                                 </div>
-                                <div className="text-left">
-                                  <p className="text-xs font-medium text-gray-800 max-w-[150px] truncate">{file.name}</p>
-                                  <p className="text-[10px] text-gray-400">{formatFileSize(file.size)}</p>
+                                <div className="px-3 py-2 text-center bg-white border-t border-gray-100">
+                                  <p className="text-xs font-semibold text-gray-800 truncate">{file.name}</p>
+                                  <p className="text-[10px] text-gray-500 mt-0.5">{formatFileSize(file.size)}</p>
                                 </div>
                               </button>
                             ))}
@@ -1969,23 +2030,16 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </ReviewSection>
 
-              {/* Certification Checkbox */}
-              <div className="pt-2">
-                <label className="flex items-start gap-3 p-4 rounded-xl border border-blue-200 bg-blue-50/50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.certifiedCorrect}
-                    onChange={(e) => updateField("certifiedCorrect", e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
-                  />
-                  <span className="text-xs font-semibold text-blue-950 leading-relaxed">
-                    {language === "tl"
-                      ? "Pinatutunayan ko na ang lahat ng impormasyong ibinigay ay totoo at tama. Nauunawaan ko na ang anumang maling pahayag ay maaaring maging dahilan ng hindi pag-apruba sa aking aplikasyon. *"
-                      : language === "bis"
-                      ? "Gipamatud-an nako nga ang tanang impormasyon nga gihatag tinuod ug husto. *"
-                      : "I certify that all information provided is true and correct. I understand that any false declaration may result in the disapproval of my Child Welfare Support application. *"}
-                  </span>
-                </label>
+              {/* Disclaimer Note (Pic 2 style) */}
+              <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-xs sm:text-sm text-blue-700 leading-relaxed">
+                  {language === "tl"
+                    ? "Sa pag-click ng \"Isumite\", kinukumpirma mo na ang lahat ng impormasyong ibinigay ay totoo at kumpleto. Susuriin ang iyong aplikasyon ng isang evaluator, at makakatanggap ka ng abiso tungkol sa katayuan nito."
+                    : language === "bis"
+                    ? "Sa pag-click sa \"Isumite\", gipamatud-an nimo nga ang tanang impormasyon nga gihatag tinuod ug kompleto. Susihon ang imong aplikasyon sa evaluator."
+                    : "By clicking \"Submit\", you confirm that all information provided is true and complete. Your application will be reviewed by an evaluator, and you will receive a notification to your email about the status of your application."}
+                </p>
               </div>
             </div>
           )}
@@ -2030,12 +2084,7 @@ export default function ChildWelfareApplicationWizard({
             <button
               type="button"
               onClick={() => setShowConfirmModal(true)}
-              disabled={!formData.certifiedCorrect}
-              className={`px-8 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
-                formData.certifiedCorrect
-                  ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
+              className="px-8 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs"
             >
               <span>{selectedProgram.submitButtonText || t("submitApplicationUpper") || "SUBMIT APPLICATION"}</span>
             </button>
