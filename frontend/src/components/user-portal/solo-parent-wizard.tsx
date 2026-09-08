@@ -1152,10 +1152,12 @@ export default function SoloParentApplicationWizard({
         let refFound = ""
         let appFound: any = null
 
+        const isReapply = typeof window !== "undefined" && window.location.search.includes("reapply=true")
+
         // 1. Backend Eligibility API
         try {
           const res = await fetch(
-            `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}`
+            `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}&reapply=${isReapply ? "true" : "false"}`
           )
           if (res.ok) {
             const data = await res.json()
@@ -1207,16 +1209,24 @@ export default function SoloParentApplicationWizard({
         })
 
         if (!isBlockedFound) {
-          if (typeToCheck === "new" && approvedApp) {
-            isBlockedFound = true
-            reasonFound = "approved"
-            refFound = approvedApp.reference_number || approvedApp.referenceNumber || ""
-            appFound = approvedApp
-          } else if (pendingApp) {
+          if (pendingApp) {
             isBlockedFound = true
             reasonFound = "pending"
             refFound = pendingApp.reference_number || pendingApp.referenceNumber || ""
             appFound = pendingApp
+          } else if (!isReapply && approvedApp) {
+            const appType = String(approvedApp.application_type || approvedApp.applicationType || "new").toLowerCase()
+            const isMatchApprovedType =
+              typeToCheck === "new" ||
+              (typeToCheck === "renewal" && appType === "renewal") ||
+              (typeToCheck === "loss" && (appType === "loss" || appType === "replacement"))
+
+            if (isMatchApprovedType) {
+              isBlockedFound = true
+              reasonFound = "approved"
+              refFound = approvedApp.reference_number || approvedApp.referenceNumber || ""
+              appFound = approvedApp
+            }
           }
         }
 
@@ -1699,7 +1709,7 @@ export default function SoloParentApplicationWizard({
                   type="button"
                   onClick={() => {
                     ;(window as any).__isFormDirty = false
-                    window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=renewal"
+                    window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=renewal&reapply=true"
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
                 >
@@ -1709,7 +1719,7 @@ export default function SoloParentApplicationWizard({
                   type="button"
                   onClick={() => {
                     ;(window as any).__isFormDirty = false
-                    window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=loss"
+                    window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=loss&reapply=true"
                   }}
                   className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
                 >

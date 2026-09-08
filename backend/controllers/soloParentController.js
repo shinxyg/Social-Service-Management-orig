@@ -515,32 +515,7 @@ exports.checkEligibility = async (req, res) => {
       orClauses.push(`(LOWER(first_name) = $${fnIdx} AND LOWER(last_name) = $${lnIdx})`);
     }
 
-    // Check if user has ANY approved Solo Parent application
-    const approvedQuery = `
-      SELECT * FROM solo_parent_applications
-      WHERE (${orClauses.join(' OR ')})
-      AND application_status IN ('approved', 'completed', 'for_release', 'active')
-      ORDER BY created_at DESC LIMIT 1
-    `;
-    const approvedResult = await db.query(approvedQuery, params);
-
-    if (approvedResult.rows.length > 0) {
-      const app = approvedResult.rows[0];
-      // If applying for 'new', block and show approved card
-      if (applicationType === 'new') {
-        return res.status(200).json({
-          success: true,
-          blocked: true,
-          reason: 'approved',
-          applicationId: app.id,
-          referenceNumber: app.reference_number,
-          assignedIdNumber: app.assigned_id_number || app.solo_parent_id_number,
-          application: app,
-        });
-      }
-    }
-
-    // Check if user has a pending application for this specific type
+    // 1. Check if user has a pending application for this specific type
     params.push(applicationType);
     const typeParamIdx = params.length;
 
@@ -569,6 +544,35 @@ exports.checkEligibility = async (req, res) => {
         assignedIdNumber: app.assigned_id_number || app.solo_parent_id_number,
         application: app,
       });
+    }
+
+    // 2. Check if user has an approved Solo Parent application for this type
+    if (req.query.reapply !== 'true') {
+      const approvedQuery = `
+        SELECT * FROM solo_parent_applications
+        WHERE (${orClauses.join(' OR ')})
+        AND application_status IN ('approved', 'completed', 'for_release', 'active')
+        AND (
+          $${typeParamIdx} = 'new'
+          OR ($${typeParamIdx} = 'renewal' AND application_type = 'renewal')
+          OR ($${typeParamIdx} = 'loss' AND (application_type = 'loss' OR application_type = 'replacement'))
+        )
+        ORDER BY created_at DESC LIMIT 1
+      `;
+      const approvedResult = await db.query(approvedQuery, params);
+
+      if (approvedResult.rows.length > 0) {
+        const app = approvedResult.rows[0];
+        return res.status(200).json({
+          success: true,
+          blocked: true,
+          reason: 'approved',
+          applicationId: app.id,
+          referenceNumber: app.reference_number,
+          assignedIdNumber: app.assigned_id_number || app.solo_parent_id_number,
+          application: app,
+        });
+      }
     }
 
     return res.status(200).json({ success: true, blocked: false, reason: null });
