@@ -709,38 +709,36 @@ export default function SoloParentApplicationWizard({
       setIsIdVerified(false)
       setExistingIdNumber("")
       setVerifyError("")
-      if (initialType === "new") {
-        setFormData({ ...EMPTY_FORM_DATA })
-      } else if (initialType === "renewal" || initialType === "loss") {
-        const prof = getCurrentUserProfile()
-        setFormData({
-          ...EMPTY_FORM_DATA,
-          firstName: prof.firstName || userProfile?.firstName || "",
-          middleName: prof.middleName || userProfile?.middleName || "",
-          lastName: prof.lastName || userProfile?.lastName || "",
-          suffix: prof.suffix || userProfile?.suffix || "",
-          citizenship: prof.nationality || userProfile?.nationality || "FILIPINO",
-          dobMonth: prof.dobMonth || userProfile?.dobMonth || "",
-          dobDay: prof.dobDay || userProfile?.dobDay || "",
-          dobYear: prof.dobYear || userProfile?.dobYear || "",
-          age: prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : "",
-          sex: prof.sex || userProfile?.sex || "",
-          civilStatus: prof.civilStatus || userProfile?.civilStatus || "",
-          contactNo: prof.contactNo || userProfile?.contactNo || "",
-          addressHouseNo: prof.addressHouseNo || userProfile?.addressHouseNo || "",
-          addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
-          addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
-          addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
-          qcidNumber: prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
-          email: prof.email || userProfile?.email || "",
-          bloodType: (prof as any).bloodType || userProfile?.bloodType || "O+",
-          emergencyFirstName: prof.emergencyFirstName || userProfile?.emergencyFirstName || "",
-          emergencyLastName: prof.emergencyLastName || userProfile?.emergencyLastName || "",
-          emergencyContactNo: prof.emergencyContactNo || userProfile?.emergencyContactNo || "",
-          emergencyRelationship: prof.emergencyRelationship || userProfile?.emergencyRelationship || "",
-          emergencyAddress: (prof as any).emergencyAddress || userProfile?.emergencyAddress || "",
-        })
-      }
+      const prof = getCurrentUserProfile()
+      const isNew = initialType === "new"
+      setFormData({
+        ...EMPTY_FORM_DATA,
+        firstName: prof.firstName || userProfile?.firstName || "",
+        middleName: prof.middleName || userProfile?.middleName || "",
+        lastName: prof.lastName || userProfile?.lastName || "",
+        suffix: prof.suffix || userProfile?.suffix || "",
+        citizenship: prof.nationality || userProfile?.nationality || "FILIPINO",
+        dobMonth: prof.dobMonth || userProfile?.dobMonth || "",
+        dobDay: prof.dobDay || userProfile?.dobDay || "",
+        dobYear: prof.dobYear || userProfile?.dobYear || "",
+        age: prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : "",
+        sex: prof.sex || userProfile?.sex || "",
+        civilStatus: prof.civilStatus || userProfile?.civilStatus || "",
+        contactNo: prof.contactNo || userProfile?.contactNo || "",
+        addressHouseNo: prof.addressHouseNo || userProfile?.addressHouseNo || "",
+        addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
+        addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
+        addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
+        qcidNumber: prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
+        email: prof.email || userProfile?.email || "",
+        bloodType: (prof as any).bloodType || userProfile?.bloodType || "O+",
+        // Emergency contact: BLANK on new application; only auto-filled on renewal/loss
+        emergencyFirstName: isNew ? "" : (prof.emergencyFirstName || userProfile?.emergencyFirstName || ""),
+        emergencyLastName: isNew ? "" : (prof.emergencyLastName || userProfile?.emergencyLastName || ""),
+        emergencyContactNo: isNew ? "" : (prof.emergencyContactNo || userProfile?.emergencyContactNo || ""),
+        emergencyRelationship: isNew ? "" : (prof.emergencyRelationship || userProfile?.emergencyRelationship || ""),
+        emergencyAddress: isNew ? "" : ((prof as any).emergencyAddress || userProfile?.emergencyAddress || ""),
+      })
     }
   }, [initialType, userProfile])
 
@@ -1193,37 +1191,36 @@ export default function SoloParentApplicationWizard({
 
   // ---- Step 2: Personal Information ----
   const [formData, setFormData] = useState<FormData>(() => {
-    if (initialType === "renewal" || initialType === "loss") {
-      const prof = getCurrentUserProfile()
-      return {
-        ...EMPTY_FORM_DATA,
-        firstName: prof.firstName || userProfile?.firstName || "",
-        middleName: prof.middleName || userProfile?.middleName || "",
-        lastName: prof.lastName || userProfile?.lastName || "",
-        suffix: prof.suffix || userProfile?.suffix || "",
-        citizenship: prof.nationality || userProfile?.nationality || "FILIPINO",
-        dobMonth: prof.dobMonth || userProfile?.dobMonth || "",
-        dobDay: prof.dobDay || userProfile?.dobDay || "",
-        dobYear: prof.dobYear || userProfile?.dobYear || "",
-        age: prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : "",
-        sex: prof.sex || userProfile?.sex || "",
-        civilStatus: prof.civilStatus || userProfile?.civilStatus || "",
-        contactNo: prof.contactNo || userProfile?.contactNo || "",
-        addressHouseNo: prof.addressHouseNo || userProfile?.addressHouseNo || "",
-        addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
-        addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
-        addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
-        qcidNumber: prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
-        email: prof.email || userProfile?.email || "",
-        bloodType: (prof as any).bloodType || userProfile?.bloodType || "O+",
-        emergencyFirstName: prof.emergencyFirstName || userProfile?.emergencyFirstName || "",
-        emergencyLastName: prof.emergencyLastName || userProfile?.emergencyLastName || "",
-        emergencyContactNo: prof.emergencyContactNo || userProfile?.emergencyContactNo || "",
-        emergencyRelationship: prof.emergencyRelationship || userProfile?.emergencyRelationship || "",
-        emergencyAddress: (prof as any).emergencyAddress || userProfile?.emergencyAddress || (prof.addressHouseNo ? `${prof.addressHouseNo} ${prof.addressStreet}, ${prof.addressBarangay}, ${prof.addressCityMunicipality}` : ""),
-      }
+    const prof = getCurrentUserProfile()
+    const isNew = initialType === "new"
+    return {
+      ...EMPTY_FORM_DATA,
+      firstName: prof.firstName || userProfile?.firstName || "",
+      middleName: prof.middleName || userProfile?.middleName || "",
+      lastName: prof.lastName || userProfile?.lastName || "",
+      suffix: prof.suffix || userProfile?.suffix || "",
+      citizenship: prof.nationality || userProfile?.nationality || "FILIPINO",
+      dobMonth: prof.dobMonth || userProfile?.dobMonth || "",
+      dobDay: prof.dobDay || userProfile?.dobDay || "",
+      dobYear: prof.dobYear || userProfile?.dobYear || "",
+      age: prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : "",
+      sex: prof.sex || userProfile?.sex || "",
+      civilStatus: prof.civilStatus || userProfile?.civilStatus || "",
+      contactNo: prof.contactNo || userProfile?.contactNo || "",
+      addressHouseNo: prof.addressHouseNo || userProfile?.addressHouseNo || "",
+      addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
+      addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
+      addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
+      qcidNumber: prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
+      email: prof.email || userProfile?.email || "",
+      bloodType: (prof as any).bloodType || userProfile?.bloodType || "O+",
+      // Emergency contact: BLANK on new application; only auto-filled on renewal/loss
+      emergencyFirstName: isNew ? "" : (prof.emergencyFirstName || userProfile?.emergencyFirstName || ""),
+      emergencyLastName: isNew ? "" : (prof.emergencyLastName || userProfile?.emergencyLastName || ""),
+      emergencyContactNo: isNew ? "" : (prof.emergencyContactNo || userProfile?.emergencyContactNo || ""),
+      emergencyRelationship: isNew ? "" : (prof.emergencyRelationship || userProfile?.emergencyRelationship || ""),
+      emergencyAddress: isNew ? "" : ((prof as any).emergencyAddress || userProfile?.emergencyAddress || (prof.addressHouseNo ? `${prof.addressHouseNo} ${prof.addressStreet}, ${prof.addressBarangay}, ${prof.addressCityMunicipality}` : "")),
     }
-    return { ...EMPTY_FORM_DATA }
   })
   const updateField = (key: keyof FormData, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }))
@@ -2189,18 +2186,16 @@ export default function SoloParentApplicationWizard({
                     {t("reviewSeniorDesc") || "Please review your personal information from your QCID profile. Fill in the additional details below."}
                   </p>
                 </div>
-                {idStatus !== "new" && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingInfo((v) => !v)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 transition-colors cursor-pointer"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      {isEditingInfo ? "LOCK INFORMATION" : "EDIT INFORMATION"}
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingInfo((v) => !v)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    {isEditingInfo ? "LOCK INFORMATION" : "EDIT INFORMATION"}
+                  </button>
+                </div>
               </div>
 
               {/* IMPORTANT REMINDER BOX */}
@@ -2224,10 +2219,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.qcidNumber}
                       onChange={(e) => updateField("qcidNumber", e.target.value)}
                       placeholder="110000116932100"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2240,10 +2235,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.firstName}
                       onChange={(e) => updateField("firstName", e.target.value)}
                       placeholder={t("firstNameLabel") || "First name"}
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2259,10 +2254,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.middleName}
                       onChange={(e) => updateField("middleName", e.target.value)}
                       placeholder={t("middleNameLabel") || "Middle name"}
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2275,10 +2270,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.lastName}
                       onChange={(e) => updateField("lastName", e.target.value)}
                       placeholder={t("lastNameLabel") || "Last name"}
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2291,10 +2286,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.suffix}
                       onChange={(e) => updateField("suffix", e.target.value)}
                       placeholder={t("suffixLabel") || "Suffix (Jr., Sr., III, etc.)"}
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2310,10 +2305,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.citizenship}
                       onChange={(e) => updateField("citizenship", e.target.value)}
                       placeholder="FILIPINO"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2340,10 +2335,10 @@ export default function SoloParentApplicationWizard({
                         }
                       }}
                       placeholder="MM/DD/YYYY"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2356,10 +2351,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.age}
                       onChange={(e) => updateField("age", e.target.value.replace(/\D/g, ""))}
                       placeholder="e.g. 28"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2375,10 +2370,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.sex}
                       onChange={(e) => updateField("sex", e.target.value)}
                       placeholder="Male / Female"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2391,10 +2386,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.civilStatus}
                       onChange={(e) => updateField("civilStatus", e.target.value)}
                       placeholder="Single / Widowed / Separated"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2405,9 +2400,9 @@ export default function SoloParentApplicationWizard({
                     <select
                       value={formData.bloodType || "O+"}
                       onChange={(e) => updateField("bloodType", e.target.value)}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2427,10 +2422,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.addressHouseNo}
                       onChange={(e) => updateField("addressHouseNo", e.target.value)}
                       placeholder="e.g. 123"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2443,10 +2438,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.addressStreet}
                       onChange={(e) => updateField("addressStreet", e.target.value)}
                       placeholder="e.g. Main St."
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2459,10 +2454,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.addressBarangay}
                       onChange={(e) => updateField("addressBarangay", e.target.value)}
                       placeholder="e.g. Sauyo"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2479,10 +2474,10 @@ export default function SoloParentApplicationWizard({
                       onChange={(e) => updateField("contactNo", e.target.value.replace(/\D/g, ""))}
                       placeholder="09XXXXXXXXX"
                       maxLength={11}
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
@@ -2495,10 +2490,10 @@ export default function SoloParentApplicationWizard({
                       value={formData.email}
                       onChange={(e) => updateField("email", e.target.value)}
                       placeholder="name@example.com"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
+                        !isEditingInfo
                           ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
                           : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
                       }`}
