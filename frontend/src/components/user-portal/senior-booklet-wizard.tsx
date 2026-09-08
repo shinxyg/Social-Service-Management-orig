@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom"
 import {
   Check,
   CheckCircle2,
-  ChevronRight,
   Upload,
   Camera,
   FileText,
@@ -1964,7 +1963,6 @@ export default function SeniorBookletWizard({
               }`}
             >
               <span>NEXT</span>
-              <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
             <button
