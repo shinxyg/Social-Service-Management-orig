@@ -50,9 +50,9 @@ exports.createApplication = async (req, res) => {
     const emergencyFirstName = formData.emergencyFirstName || (formData.emergencyName ? formData.emergencyName.split(' ')[0] : null) || null;
     const emergencyLastName = formData.emergencyLastName || (formData.emergencyName && formData.emergencyName.split(' ').length > 1 ? formData.emergencyName.split(' ').slice(1).join(' ') : null) || null;
     const emergencyName = [emergencyFirstName, emergencyLastName].filter(Boolean).join(' ') || formData.emergencyName || formData.emergencyContactPerson || formData.emergencyPerson || null;
-    const emergencyPhone = formData.emergencyContactNo || formData.emergencyPhone || formData.contactNo || null;
+    const emergencyPhone = formData.emergencyContactNo || formData.emergencyPhone || null;
     const emergencyRel = formData.emergencyRelationship || formData.relationshipToApplicant || formData.relationship || null;
-    const emergencyAddr = formData.emergencyAddress || (formData.addressHouseNo ? `${formData.addressHouseNo} ${formData.addressStreet || ''}, ${formData.addressBarangay || ''}, ${formData.addressCityMunicipality || 'Quezon City'}`.trim() : null);
+    const emergencyAddr = formData.emergencyAddress || null;
     const bloodType = formData.bloodType || 'O+';
 
     const result = await db.query(

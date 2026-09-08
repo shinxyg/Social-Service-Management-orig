@@ -236,8 +236,8 @@ function mapSoloParentRow(row: any): SoloParentSubmission {
   const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
 
   let emergencyName =
-    row.emergency_name ||
     emCombined ||
+    row.emergency_name ||
     formData.emergencyName ||
     formData.emergencyContactPerson ||
     formData.emergencyPerson ||
@@ -248,11 +248,10 @@ function mapSoloParentRow(row: any): SoloParentSubmission {
 
   let emergencyContactNo =
     row.emergency_contact_no ||
-    row.emergency_phone ||
     formData.emergencyContactNo ||
-    formData.emergencyPhone ||
     extraData.emergencyContactNo ||
-    row.contact_no ||
+    row.emergency_phone ||
+    formData.emergencyPhone ||
     ""
 
   let emergencyRelationship =
@@ -269,7 +268,7 @@ function mapSoloParentRow(row: any): SoloParentSubmission {
     row.emergencyResidentialAddress ||
     ""
 
-  let bloodType = row.blood_type || formData.bloodType || extraData.bloodType || ""
+  let bloodType = row.blood_type || formData.bloodType || extraData.bloodType || "O+"
 
   return {
     id: `SP-${row.id}`,
@@ -1390,83 +1389,53 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
 
               {/* Section 03: Emergency Contact */}
               {(() => {
-                let emPerson =
+                const fd = (app as any).formData || (app as any).form_data || (app as any).extra_data?.formData || {}
+                const ed = (app as any).extraData || (app as any).extra_data || {}
+
+                const emFirst = app.emergencyFirstName || fd.emergencyFirstName || ed.emergencyFirstName || (app as any).emergency_first_name || ""
+                const emLast = app.emergencyLastName || fd.emergencyLastName || ed.emergencyLastName || (app as any).emergency_last_name || ""
+                const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
+
+                const emPerson =
+                  emCombined ||
                   app.emergencyName ||
-                  [app.emergencyFirstName, app.emergencyLastName].filter(Boolean).join(" ") ||
+                  (app as any).emergency_name ||
+                  fd.emergencyName ||
+                  fd.emergencyContactPerson ||
+                  ed.emergencyName ||
                   (app as any).emergencyContactPerson ||
-                  (app as any).form_data?.emergencyName ||
-                  [(app as any).form_data?.emergencyFirstName, (app as any).form_data?.emergencyLastName].filter(Boolean).join(" ") ||
-                  (app as any).extra_data?.emergencyName ||
-                  [(app as any).extra_data?.emergencyFirstName, (app as any).extra_data?.emergencyLastName].filter(Boolean).join(" ") ||
                   ""
 
-                let emPhone =
+                const emPhone =
                   app.emergencyContactNo ||
+                  (app as any).emergency_contact_no ||
+                  fd.emergencyContactNo ||
+                  fd.emergencyPhone ||
                   (app as any).emergencyPhone ||
-                  (app as any).form_data?.emergencyContactNo ||
-                  (app as any).form_data?.emergencyPhone ||
-                  (app as any).extra_data?.emergencyContactNo ||
+                  ed.emergencyContactNo ||
                   ""
 
-                let emRel =
+                const emRel =
                   app.emergencyRelationship ||
-                  (app as any).form_data?.emergencyRelationship ||
-                  (app as any).extra_data?.emergencyRelationship ||
+                  (app as any).emergency_relationship ||
+                  fd.emergencyRelationship ||
+                  ed.emergencyRelationship ||
                   (app as any).relationshipToApplicant ||
                   ""
 
-                let emAddr =
+                const emAddr =
                   app.emergencyAddress ||
-                  (app as any).form_data?.emergencyAddress ||
-                  (app as any).extra_data?.emergencyAddress ||
+                  (app as any).emergency_address ||
+                  fd.emergencyAddress ||
+                  ed.emergencyAddress ||
                   ""
 
-                let bType =
+                const bType =
                   app.bloodType ||
-                  (app as any).form_data?.bloodType ||
-                  (app as any).extra_data?.bloodType ||
-                  ""
-
-                if (!emPerson || !emPhone) {
-                  try {
-                    const raw = localStorage.getItem("currentUser") || localStorage.getItem("userProfile") || localStorage.getItem("user")
-                    if (raw) {
-                      const u = JSON.parse(raw)
-                      const uQcid = u.qcidNumber || u.qcid_number || u.qcidNo || u.qcid || u.reference_number
-                      if (
-                        (uQcid && (uQcid === app.referenceNumber || uQcid === app.qcidNumber)) ||
-                        (u.email && app.email && u.email.toLowerCase() === app.email.toLowerCase()) ||
-                        (u.lastName && app.lastName && u.lastName.toLowerCase() === app.lastName.toLowerCase())
-                      ) {
-                        if (!emPerson) {
-                          emPerson = [u.emergencyFirstName, u.emergencyLastName].filter(Boolean).join(" ") || u.emergencyName || ""
-                        }
-                        if (!emPhone) {
-                          emPhone = u.emergencyContactNo || u.emergencyPhone || ""
-                        }
-                        if (!emRel) {
-                          emRel = u.emergencyRelationship || ""
-                        }
-                        if (!emAddr) {
-                          emAddr = u.emergencyAddress || ""
-                        }
-                        if (!bType) {
-                          bType = u.bloodType || ""
-                        }
-                      }
-                    }
-                  } catch {}
-                }
-
-                if (!emPerson) {
-                  if (app.familyMembers && app.familyMembers.length > 0 && app.familyMembers[0].name) {
-                    emPerson = app.familyMembers[0].name
-                    if (!emRel) emRel = app.familyMembers[0].relationship || "Child"
-                  } else {
-                    emPerson = "Immediate Family"
-                    if (!emRel) emRel = "Immediate Family"
-                  }
-                }
+                  (app as any).blood_type ||
+                  fd.bloodType ||
+                  ed.bloodType ||
+                  "O+"
 
                 return (
                   <div>
@@ -1474,14 +1443,14 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                       Emergency Contact
                     </SectionHeading>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                      <Field label="Contact Person" value={emPerson || "Immediate Family"} />
-                      <Field label="Relationship" value={emRel || "Immediate Family"} />
+                      <Field label="Contact Person" value={emPerson || "—"} />
+                      <Field label="Relationship" value={emRel || "—"} />
                       <Field
                         label="Phone Number"
                         value={
                           <span className="inline-flex items-center gap-1.5">
                             <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                            {emPhone || app.contactNo || "—"}
+                            {emPhone || "—"}
                           </span>
                         }
                       />
@@ -1492,7 +1461,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                           value={
                             <span className="inline-flex items-start gap-1.5">
                               <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
-                              {emAddr || address || "Quezon City"}
+                              {emAddr || "—"}
                             </span>
                           }
                         />
