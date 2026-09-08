@@ -201,16 +201,20 @@ exports.getDisbursements = async (req, res) => {
       await db.query(`
         DELETE FROM financial_aid_disbursements
         WHERE (
-          application_ref NOT LIKE 'LP-%' 
-          AND application_ref NOT IN (
+          application_ref NOT IN (
             SELECT reference_number FROM pwd_senior_applications WHERE status IN ('approved', 'completed', 'for_release')
           )
           AND application_ref NOT IN (
             SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
           )
-        ) OR (
-          application_ref LIKE 'LP-%' AND application_ref NOT IN (
-            SELECT reference_number FROM livelihood_applications WHERE application_status = 'approved'
+          AND application_ref NOT IN (
+            SELECT reference_number FROM livelihood_applications WHERE application_status = 'approved' OR status = 'approved'
+          )
+          AND application_ref NOT IN (
+            SELECT reference_number FROM solo_parent_applications WHERE application_status = 'approved'
+          )
+          AND application_ref NOT IN (
+            SELECT reference_number FROM child_welfare_applications WHERE application_status = 'approved'
           )
         )
       `);
