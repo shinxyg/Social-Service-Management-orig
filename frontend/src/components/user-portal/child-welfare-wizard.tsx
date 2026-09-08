@@ -803,7 +803,7 @@ export default function ChildWelfareApplicationWizard({
   const [check1, setCheck1] = useState(false)
   const [check2, setCheck2] = useState(false)
   const [check3, setCheck3] = useState(false)
-  const [receivedPrior, setReceivedPrior] = useState<"yes" | "no">("no")
+  const [receivedPrior, setReceivedPrior] = useState<"yes" | "no" | "">("")
   const [selectedAssistanceType, setSelectedAssistanceType] = useState<string>("")
 
   // Sync assistance type when program changes only if not matching
@@ -1026,7 +1026,12 @@ export default function ChildWelfareApplicationWizard({
   }, [submissionStage])
 
   // Validations
-  const step1Valid = check1 && check2 && check3 && selectedAssistanceType !== ""
+  const step1Valid =
+    check1 &&
+    check2 &&
+    (!selectedProgram.checklists[2] || check3) &&
+    receivedPrior !== "" &&
+    selectedAssistanceType !== ""
 
   const step2Valid =
     formData.firstName.trim() !== "" &&
