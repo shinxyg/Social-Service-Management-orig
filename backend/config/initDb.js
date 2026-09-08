@@ -214,6 +214,55 @@ async function initDb() {
         reason TEXT,
         archived_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- Case Management Integration Tables
+      CREATE TABLE IF NOT EXISTS case_records (
+        id SERIAL PRIMARY KEY,
+        case_number VARCHAR(100) UNIQUE NOT NULL,
+        application_ref VARCHAR(100) NOT NULL,
+        program VARCHAR(100) NOT NULL,
+        beneficiary_qcid VARCHAR(100),
+        beneficiary_name VARCHAR(255),
+        case_type VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'open',
+        priority VARCHAR(50) DEFAULT 'medium',
+        assigned_social_worker VARCHAR(150) DEFAULT 'Admin Social Worker',
+        date_opened TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        notes TEXT,
+        closed_at TIMESTAMP WITH TIME ZONE,
+        closed_reason TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS case_referrals (
+        id SERIAL PRIMARY KEY,
+        case_number VARCHAR(100) NOT NULL,
+        application_ref VARCHAR(100) NOT NULL,
+        referred_to VARCHAR(255) NOT NULL,
+        service_reason TEXT NOT NULL,
+        referred_by VARCHAR(150) DEFAULT 'Admin Social Worker',
+        referral_date VARCHAR(100) NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending',
+        remarks TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS case_monitoring (
+        id SERIAL PRIMARY KEY,
+        case_number VARCHAR(100) NOT NULL,
+        application_ref VARCHAR(100) NOT NULL,
+        officer_name VARCHAR(150) DEFAULT 'Admin Social Worker',
+        monitoring_date VARCHAR(100) NOT NULL,
+        notes TEXT NOT NULL,
+        progress_status VARCHAR(100) DEFAULT 'In Progress',
+        next_action TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_case_records_ref ON case_records(application_ref);
+      CREATE INDEX IF NOT EXISTS idx_case_referrals_case ON case_referrals(case_number);
+      CREATE INDEX IF NOT EXISTS idx_case_monitoring_case ON case_monitoring(case_number);
     `);
 
     console.log('✅ PostgreSQL database tables, indexes, and default admin accounts verified/initialized successfully.');

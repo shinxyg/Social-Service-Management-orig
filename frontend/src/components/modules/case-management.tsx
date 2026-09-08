@@ -1,6 +1,9 @@
-import { useState, type ReactElement } from "react"
+import { useState, useMemo, useEffect, type ReactElement } from "react"
 import {
+  FolderKanban,
   ClipboardList,
+  Calendar,
+  Wallet,
   Send,
   HeartHandshake,
   History,
@@ -10,24 +13,41 @@ import {
   AlertCircle,
   MapPin,
   Phone,
+  Mail,
   User,
   Plus,
   ChevronRight,
+  X,
+  Building,
+  FileCheck,
+  Activity,
+  ArrowRight,
+  ShieldAlert,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
+import { API_BASE } from "../../config/api"
+import { subscribeToRealtimeChanges, notifyApplicationChange } from "../../utils/realtimeSync"
 
-type ModuleKey =
+// =====================================================================================
+// Types
+// =====================================================================================
+
+export type ModuleKey =
   | "AICS"
   | "PWD"
   | "Senior Citizen"
   | "Solo Parent"
   | "Child Welfare"
   | "Livelihood"
+  | "Training Program"
 
-type CaseStatus = "open" | "monitoring" | "referred" | "closed"
-type CasePriority = "high" | "medium" | "low"
-type ReferralStatus = "pending" | "accepted" | "completed" | "declined"
+export type CaseStatus = "open" | "monitoring" | "referred" | "closed"
+export type CasePriority = "high" | "medium" | "low"
+export type ReferralStatus = "pending" | "accepted" | "completed" | "declined"
 
-interface Referral {
+export interface Referral {
   id: string
   date: string
   referredTo: string
@@ -37,861 +57,999 @@ interface Referral {
   remarks?: string
 }
 
-interface AssistanceRecord {
+export interface MonitoringLog {
   id: string
   date: string
-  type: string
-  amount?: string
-  description: string
-  providedBy: string
+  officer: string
+  notes: string
+  progressStatus: string
+  nextAction?: string
 }
 
-interface StatusEvent {
+export interface LinkedAppointment {
   id: string
   date: string
-  status: CaseStatus
-  note: string
-  by: string
+  time: string
+  location: string
+  status: string
 }
 
-interface CaseRecord {
+export interface LinkedFinancialAid {
+  id: string
+  disbursementId: string
+  assistanceType: string
+  fixedAmount: number
+  payoutSchedule: string
+  payoutLocation: string
+  status: "PENDING" | "RELEASED" | string
+}
+
+export interface TimelineEvent {
+  id: string
+  title: string
+  detail: string
+  date: string
+  type: "submission" | "approval" | "appointment" | "financial" | "referral" | "monitoring" | "closure"
+}
+
+export interface CaseRecord {
   id: string
   caseNumber: string
-  clientName: string
+  applicationId: string
+  beneficiaryId: string
+  beneficiaryName: string
   age: string
   sex: string
-  address: string
+  civilStatus: string
   contactNo: string
+  email: string
+  address: string
   linkedProgram: ModuleKey
-  linkedReferenceNo: string
   caseType: string
+  priority: CasePriority
   dateOpened: string
   assignedSocialWorker: string
   status: CaseStatus
-  priority: CasePriority
   summary: string
+  linkedAppointment: LinkedAppointment | null
+  linkedFinancialAid: LinkedFinancialAid | null
   referrals: Referral[]
-  assistance: AssistanceRecord[]
-  statusHistory: StatusEvent[]
+  monitoringLogs: MonitoringLog[]
+  timeline: TimelineEvent[]
 }
 
 // =====================================================================================
-// Mock data — cases follow up on applicants already seen in the other modules
-// (AICS, PWD & Senior Citizen, Solo Parent & Child Welfare, Livelihood & Training)
+// Helpers & Tokens
 // =====================================================================================
-
-const MOCK_CASES: CaseRecord[] = [
-  {
-    id: "CASE-001",
-    caseNumber: "CM-2026-0001",
-    clientName: "Clarisa Mae Dimal",
-    age: "21",
-    sex: "Female",
-    address: "11 Sampaloc Street, Brgy. Sauyo, Quezon City",
-    contactNo: "0917 555 1234",
-    linkedProgram: "AICS",
-    linkedReferenceNo: "110000116932100",
-    caseType: "Medical Assistance Follow-up",
-    dateOpened: "2026-08-21",
-    assignedSocialWorker: "Admin User",
-    status: "monitoring",
-    priority: "high",
-    summary:
-      "Client's child (Josh Dimal, 4 y/o) requires continued asthma maintenance medication. Medical assistance was released; monitoring ongoing kasabay ng Child Welfare case CW-2026-3312.",
-    referrals: [
-      {
-        id: "REF-001",
-        date: "2026-08-21",
-        referredTo: "Quezon City General Hospital — Pediatrics",
-        reason: "Follow-up check-up para sa asthma management ng anak.",
-        referredBy: "Admin User",
-        status: "accepted",
-        remarks: "Naka-schedule na ng follow-up consult.",
-      },
-    ],
-    assistance: [
-      {
-        id: "AST-001",
-        date: "2026-08-21",
-        type: "Medical Assistance",
-        amount: "8,500",
-        description: "Gamot at ospital na gastusin para sa medical assistance application.",
-        providedBy: "AICS Program",
-      },
-    ],
-    statusHistory: [
-      { id: "SH-001", date: "2026-08-19", status: "open", note: "Case opened matapos ma-approve ang AICS application.", by: "Admin User" },
-      { id: "SH-002", date: "2026-08-21", status: "monitoring", note: "Nilipat sa monitoring habang tinutugunan ang pangangailangan sa Child Welfare.", by: "Admin User" },
-    ],
-  },
-  {
-    id: "CASE-002",
-    caseNumber: "CM-2026-0002",
-    clientName: "Rosalinda Torres",
-    age: "71",
-    sex: "Female",
-    address: "Purok 5, Barangay Malaya, Quezon City",
-    contactNo: "0917 555 2233",
-    linkedProgram: "Senior Citizen",
-    linkedReferenceNo: "SC-2026-4521",
-    caseType: "Aftercare — OSCA ID Released",
-    dateOpened: "2026-08-14",
-    assignedSocialWorker: "Admin User",
-    status: "closed",
-    priority: "low",
-    summary: "New OSCA ID application approved and released. Walang karagdagang pangangailangan na naitala.",
-    referrals: [],
-    assistance: [
-      {
-        id: "AST-002",
-        date: "2026-08-25",
-        type: "OSCA ID Release",
-        description: "Naibigay ang Senior Citizen ID matapos ang verification appointment.",
-        providedBy: "OSCA Office, QC Hall",
-      },
-    ],
-    statusHistory: [
-      { id: "SH-003", date: "2026-08-14", status: "open", note: "Case opened kasabay ng application.", by: "Admin User" },
-      { id: "SH-004", date: "2026-08-25", status: "closed", note: "Naibigay na ang ID; walang follow-up na kinakailangan.", by: "Admin User" },
-    ],
-  },
-  {
-    id: "CASE-003",
-    caseNumber: "CM-2026-0003",
-    clientName: "Julius Cabrera",
-    age: "36",
-    sex: "Male",
-    address: "Zone 1, Barangay San Roque, Quezon City",
-    contactNo: "0928 774 4410",
-    linkedProgram: "PWD",
-    linkedReferenceNo: "PWD-2026-3421",
-    caseType: "Continued Benefits Monitoring",
-    dateOpened: "2026-08-13",
-    assignedSocialWorker: "Jonalyn P.",
-    status: "monitoring",
-    priority: "medium",
-    summary: "Renewal ng PWD ID approved. Monitoring ng access sa discount privileges at posibleng livelihood referral.",
-    referrals: [
-      {
-        id: "REF-002",
-        date: "2026-08-16",
-        referredTo: "PDAO Office, QC Hall",
-        reason: "Assessment para sa karagdagang assistive device support.",
-        referredBy: "Jonalyn P.",
-        status: "pending",
-      },
-    ],
-    assistance: [],
-    statusHistory: [
-      { id: "SH-005", date: "2026-08-13", status: "open", note: "Case opened matapos ang renewal approval.", by: "Jonalyn P." },
-      { id: "SH-006", date: "2026-08-16", status: "monitoring", note: "Naghintay ng referral outcome sa PDAO.", by: "Jonalyn P." },
-    ],
-  },
-  {
-    id: "CASE-004",
-    caseNumber: "CM-2026-0004",
-    clientName: "Emilyn Salazar",
-    age: "34",
-    sex: "Female",
-    address: "Purok 2, Barangay Sto. Niño, Quezon City",
-    contactNo: "0917 332 8891",
-    linkedProgram: "Solo Parent",
-    linkedReferenceNo: "SP-2026-4821",
-    caseType: "Crisis Intervention — Death of Spouse",
-    dateOpened: "2026-08-17",
-    assignedSocialWorker: "Admin User",
-    status: "open",
-    priority: "high",
-    summary:
-      "Solo parent application pending; kasalukuyang nangangailangan ng agarang tulong pagkain at livelihood support habang naghihintay ng ID.",
-    referrals: [
-      {
-        id: "REF-003",
-        date: "2026-08-18",
-        referredTo: "Livelihood & Training Program",
-        reason: "Pagsasanay o starter kit para sa panibagong pinagkukunan ng kita.",
-        referredBy: "Admin User",
-        status: "pending",
-      },
-    ],
-    assistance: [
-      {
-        id: "AST-003",
-        date: "2026-08-18",
-        type: "Food Pack",
-        description: "Isang linggong food pack habang naghihintay ng Solo Parent ID.",
-        providedBy: "Admin User",
-      },
-    ],
-    statusHistory: [
-      { id: "SH-007", date: "2026-08-17", status: "open", note: "Case opened; agad na kinilala bilang high priority.", by: "Admin User" },
-    ],
-  },
-  {
-    id: "CASE-005",
-    caseNumber: "CM-2026-0005",
-    clientName: "Ferdinand Villanueva",
-    age: "54",
-    sex: "Male",
-    address: "23 Masagana St., Brgy. Payatas, Quezon City",
-    contactNo: "0915 887 2210",
-    linkedProgram: "Livelihood",
-    linkedReferenceNo: "TRNG-2026-2201",
-    caseType: "Referral Coordination — Skills Training",
-    dateOpened: "2026-08-16",
-    assignedSocialWorker: "Jonalyn P.",
-    status: "referred",
-    priority: "medium",
-    summary: "Naka-schedule na ng Motorcycle/Small Engine Servicing Training. Ni-refer din para sa PWD assessment.",
-    referrals: [
-      {
-        id: "REF-004",
-        date: "2026-08-16",
-        referredTo: "SSDD Training Center",
-        reason: "Motorcycle/Small Engine Servicing Training enrollment.",
-        referredBy: "Jonalyn P.",
-        status: "accepted",
-        remarks: "Naka-schedule Aug 27, 2026, 9:00 AM.",
-      },
-    ],
-    assistance: [],
-    statusHistory: [
-      { id: "SH-008", date: "2026-08-16", status: "open", note: "Case opened matapos mag-apply sa livelihood training.", by: "Jonalyn P." },
-      { id: "SH-009", date: "2026-08-16", status: "referred", note: "Ni-refer sa SSDD Training Center.", by: "Jonalyn P." },
-    ],
-  },
-  {
-    id: "CASE-006",
-    caseNumber: "CM-2026-0006",
-    clientName: "Bryan Aguilar",
-    age: "41",
-    sex: "Male",
-    address: "Zone 4, Barangay Bagumbayan, Quezon City",
-    contactNo: "0928 110 4477",
-    linkedProgram: "Solo Parent",
-    linkedReferenceNo: "SP-2026-4790",
-    caseType: "Document Completion Support",
-    dateOpened: "2026-08-17",
-    assignedSocialWorker: "Admin User",
-    status: "open",
-    priority: "medium",
-    summary: "Nabigo ang renewal dahil sa hindi kumpletong requirements. Kailangan ng tulong para makuha ang kulang na dokumento mula sa barangay.",
-    referrals: [
-      {
-        id: "REF-005",
-        date: "2026-08-17",
-        referredTo: "Barangay Bagumbayan Office",
-        reason: "Pagkuha ng endorsement mula sa Solo Parent President.",
-        referredBy: "Admin User",
-        status: "pending",
-      },
-    ],
-    assistance: [],
-    statusHistory: [
-      { id: "SH-010", date: "2026-08-17", status: "open", note: "Case opened matapos ma-reject ang renewal dahil sa kulang na dokumento.", by: "Admin User" },
-    ],
-  },
-]
 
 const programColors: Record<ModuleKey, string> = {
   AICS: "bg-blue-50 text-blue-700 border-blue-200",
   PWD: "bg-purple-50 text-purple-700 border-purple-200",
   "Senior Citizen": "bg-amber-50 text-amber-700 border-amber-200",
-  "Solo Parent": "bg-violet-50 text-violet-700 border-violet-200",
-  "Child Welfare": "bg-rose-50 text-rose-700 border-rose-200",
-  Livelihood: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "Solo Parent": "bg-rose-50 text-rose-700 border-rose-200",
+  "Child Welfare": "bg-emerald-50 text-emerald-700 border-emerald-200",
+  Livelihood: "bg-teal-50 text-teal-700 border-teal-200",
+  "Training Program": "bg-indigo-50 text-indigo-700 border-indigo-200",
 }
 
-const PROGRAM_OPTIONS: ModuleKey[] = ["AICS", "PWD", "Senior Citizen", "Solo Parent", "Child Welfare", "Livelihood"]
-
-const statusTheme: Record<CaseStatus, { chip: string; card: string; icon: ReactElement; label: string }> = {
+const statusMeta: Record<CaseStatus, { label: string; chip: string; dot: string; icon: ReactElement }> = {
   open: {
-    chip: "bg-sky-100 text-sky-700",
-    card: "bg-sky-50/60 border-sky-200",
-    icon: <AlertCircle className="h-3.5 w-3.5" />,
-    label: "Open",
+    label: "OPEN",
+    chip: "bg-blue-50 text-blue-700 border-blue-200",
+    dot: "bg-blue-500",
+    icon: <Clock className="h-3.5 w-3.5" />,
   },
   monitoring: {
-    chip: "bg-blue-100 text-blue-700",
-    card: "bg-blue-50/60 border-blue-200",
-    icon: <Clock className="h-3.5 w-3.5" />,
-    label: "Under Monitoring",
+    label: "UNDER MONITORING",
+    chip: "bg-amber-50 text-amber-700 border-amber-200",
+    dot: "bg-amber-500",
+    icon: <Activity className="h-3.5 w-3.5" />,
   },
   referred: {
-    chip: "bg-indigo-100 text-indigo-700",
-    card: "bg-indigo-50/60 border-indigo-200",
+    label: "REFERRED",
+    chip: "bg-purple-50 text-purple-700 border-purple-200",
+    dot: "bg-purple-500",
     icon: <Send className="h-3.5 w-3.5" />,
-    label: "Referred",
   },
   closed: {
-    chip: "bg-emerald-100 text-emerald-700",
-    card: "bg-emerald-50/60 border-emerald-200",
+    label: "CLOSED",
+    chip: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    dot: "bg-emerald-500",
     icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-    label: "Closed",
   },
 }
 
-const priorityTheme: Record<CasePriority, string> = {
-  high: "bg-red-100 text-red-700",
-  medium: "bg-amber-100 text-amber-700",
-  low: "bg-slate-100 text-slate-700",
+const priorityMeta: Record<CasePriority, { label: string; chip: string }> = {
+  high: { label: "HIGH", chip: "bg-red-100 text-red-700 border-red-200" },
+  medium: { label: "MEDIUM", chip: "bg-amber-100 text-amber-700 border-amber-200" },
+  low: { label: "LOW", chip: "bg-slate-100 text-slate-700 border-slate-200" },
 }
 
-const referralStatusTheme: Record<ReferralStatus, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  accepted: "bg-blue-100 text-blue-700",
-  completed: "bg-emerald-100 text-emerald-700",
-  declined: "bg-rose-100 text-rose-700",
-}
-
-const DEFAULT_STATUS_THEME = {
-  chip: "bg-sky-100 text-sky-700",
-  card: "bg-sky-50/60 border-sky-200",
-  icon: <AlertCircle className="h-3.5 w-3.5" />,
-  label: "Open",
-}
-
-function getCaseStatusTheme(status?: string) {
-  if (!status) return DEFAULT_STATUS_THEME
-  const s = String(status).toLowerCase() as CaseStatus
-  if (statusTheme[s]) return statusTheme[s]
-  if (s.includes("monitor")) return statusTheme.monitoring
-  if (s.includes("refer")) return statusTheme.referred
-  if (s.includes("close")) return statusTheme.closed
-  return {
-    chip: "bg-slate-100 text-slate-700",
-    card: "bg-slate-50/60 border-slate-200",
-    icon: <AlertCircle className="h-3.5 w-3.5" />,
-    label: status.charAt(0).toUpperCase() + status.slice(1),
+function formatDate(dateStr?: string) {
+  if (!dateStr) return "—"
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  } catch {
+    return dateStr
   }
 }
 
-function getProgramColor(prog?: string) {
-  if (prog && programColors[prog as ModuleKey]) return programColors[prog as ModuleKey]
-  return "bg-slate-50 text-slate-700 border-slate-200"
-}
-
-function getPriorityColor(priority?: string) {
-  if (priority && priorityTheme[priority as CasePriority]) return priorityTheme[priority as CasePriority]
-  return "bg-slate-100 text-slate-700"
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
-}
-
-function initials(name: string) {
-  const parts = name.trim().split(" ")
-  return `${parts[0]?.charAt(0) ?? ""}${parts[parts.length - 1]?.charAt(0) ?? ""}`.toUpperCase()
+function authHeaders(): Record<string, string> {
+  const token = localStorage.getItem("token")
+  return token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" }
 }
 
 // =====================================================================================
-// Small shared bits
+// Visual Workflow Banner Component
 // =====================================================================================
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+function WorkflowBanner() {
+  const [isExpanded, setIsExpanded] = useState(false)
+
   return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-foreground font-medium mt-0.5">{value || "—"}</p>
-    </div>
-  )
-}
-
-function SectionHeading({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-2 mb-3">
-      <span className="text-muted-foreground">{icon}</span>
-      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{children}</h3>
-    </div>
-  )
-}
-
-// =====================================================================================
-// Case Records — list card
-// =====================================================================================
-
-function CaseCard({ c, onOpen }: { c: CaseRecord; onOpen: (id: string) => void }) {
-  const st = getCaseStatusTheme(c.status)
-  return (
-    <div className={`border rounded-xl p-4 transition-shadow hover:shadow-sm ${st.card}`}>
-      <div className="flex items-start gap-4">
-        <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-semibold">
-          {initials(c.clientName)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <p className="text-sm font-semibold text-foreground">{c.clientName}</p>
-            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getProgramColor(c.linkedProgram)}`}>
-              {c.linkedProgram}
-            </span>
-            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getPriorityColor(c.priority)}`}>
-              {c.priority} priority
-            </span>
+    <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-2xs">
+      <div className="flex items-center justify-between cursor-pointer select-none" onClick={() => setIsExpanded((prev) => !prev)}>
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0">
+            <FolderKanban className="h-5 w-5" />
           </div>
-          <p className="text-xs text-muted-foreground mb-1 font-mono">Case No. {c.caseNumber} · Ref: {c.linkedReferenceNo}</p>
-          <p className="text-sm text-foreground mb-2">{c.caseType}</p>
-          <div className="flex items-center gap-4 flex-wrap text-xs text-muted-foreground">
-            <span>Opened {formatDate(c.dateOpened)}</span>
-            <span>Worker: {c.assignedSocialWorker}</span>
-            <span>{c.referrals.length} referral{c.referrals.length !== 1 ? "s" : ""}</span>
-            <span>{c.assistance.length} assistance record{c.assistance.length !== 1 ? "s" : ""}</span>
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              Integrated Case Management Architecture
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                Approved Records Only
+              </span>
+            </h2>
+            <p className="text-xs text-slate-500">
+              Applications enter Case Management automatically upon Admin Approval • Linked to Appointments, Financial Aid, Referrals &amp; Monitoring
+            </p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${st?.chip || 'bg-sky-100 text-sky-700'}`}>
-            {st?.icon}
-            {st?.label}
-          </span>
-          <button
-            onClick={() => onOpen(c.id)}
-            className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
-          >
-            Open Case
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
-        </div>
+        <button
+          type="button"
+          className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+          aria-label="Toggle diagram"
+        >
+          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
       </div>
+
+      {isExpanded && (
+        <div className="mt-4 pt-4 border-t border-slate-100">
+          <div className="bg-slate-900 text-slate-100 p-4 md:p-6 rounded-xl font-mono text-xs md:text-sm overflow-x-auto leading-relaxed shadow-inner">
+            <pre className="text-emerald-400 font-bold mb-1">
+              {`                    APPLICATION
+                         │
+                  Admin Review
+                         │
+             ┌───────────┴───────────┐
+          PENDING                  REJECTED
+             │                        │
+       NO CASE YET                NO CASE
+             │
+          APPROVED
+             ↓
+       CASE MANAGEMENT
+             │
+             ├── APPOINTMENT
+             │      └── Existing appointment (Date, Time, Venue)
+             │
+             ├── FINANCIAL AID
+             │      ├── PENDING   (Queued for release)
+             │      └── RELEASED  (Disbursed to beneficiary)
+             │
+             ├── REFERRAL
+             │      └── External/Inter-agency assistance
+             │
+             └── MONITORING
+                    ↓
+                 CLOSED (Case finalized & resolved)`}
+            </pre>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 // =====================================================================================
-// Case Profile modal
+// Case Details Modal Component
 // =====================================================================================
 
-type ProfileTab = "overview" | "referrals" | "assistance" | "timeline"
-
-function CaseProfileModal({
-  c,
-  onClose,
-  onAddReferral,
-  onAddAssistance,
-  onUpdateStatus,
-}: {
+interface CaseDetailsModalProps {
   c: CaseRecord
   onClose: () => void
-  onAddReferral: (caseId: string, referral: Omit<Referral, "id">) => void
-  onAddAssistance: (caseId: string, record: Omit<AssistanceRecord, "id">) => void
-  onUpdateStatus: (caseId: string, status: CaseStatus, note: string) => void
-}) {
-  const [tab, setTab] = useState<ProfileTab>("overview")
+  onUpdateStatus: (caseNumber: string, newStatus: CaseStatus, priority?: CasePriority, worker?: string, notes?: string) => Promise<void>
+  onAddReferral: (caseNumber: string, referral: Partial<Referral>) => Promise<void>
+  onAddMonitoring: (caseNumber: string, log: Partial<MonitoringLog>) => Promise<void>
+}
+
+function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMonitoring }: CaseDetailsModalProps) {
+  const [activeTab, setActiveTab] = useState<"overview" | "appointment" | "financial" | "referrals" | "monitoring" | "timeline" | "status">("overview")
+
+  // Referral form state
   const [showReferralForm, setShowReferralForm] = useState(false)
-  const [showAssistanceForm, setShowAssistanceForm] = useState(false)
-  const [showStatusForm, setShowStatusForm] = useState(false)
-
-  const [refTo, setRefTo] = useState("")
+  const [refAgency, setRefAgency] = useState("")
   const [refReason, setRefReason] = useState("")
-  const [refBy, setRefBy] = useState("Admin User")
+  const [refRemarks, setRefRemarks] = useState("")
+  const [refDate, setRefDate] = useState(new Date().toISOString().split("T")[0])
+  const [isSubmittingReferral, setIsSubmittingReferral] = useState(false)
 
-  const [astType, setAstType] = useState("")
-  const [astAmount, setAstAmount] = useState("")
-  const [astDesc, setAstDesc] = useState("")
-  const [astBy, setAstBy] = useState("Admin User")
+  // Monitoring form state
+  const [showMonitoringForm, setShowMonitoringForm] = useState(false)
+  const [monOfficer, setMonOfficer] = useState("Admin Social Worker")
+  const [monDate, setMonDate] = useState(new Date().toISOString().split("T")[0])
+  const [monStatus, setMonStatus] = useState("In Progress")
+  const [monNotes, setMonNotes] = useState("")
+  const [monNextAction, setMonNextAction] = useState("")
+  const [isSubmittingMonitoring, setIsSubmittingMonitoring] = useState(false)
 
-  const [newStatus, setNewStatus] = useState<CaseStatus>(c.status)
-  const [statusNote, setStatusNote] = useState("")
-  const st = getCaseStatusTheme(c.status)
+  // Status update state
+  const [selectedStatus, setSelectedStatus] = useState<CaseStatus>(c.status)
+  const [selectedPriority, setSelectedPriority] = useState<CasePriority>(c.priority)
+  const [assignedWorker, setAssignedWorker] = useState(c.assignedSocialWorker || "Admin Social Worker")
+  const [statusNotes, setStatusNotes] = useState("")
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
-  const tabs: { key: ProfileTab; label: string; icon: ReactElement }[] = [
-    { key: "overview", label: "Overview", icon: <User className="h-3.5 w-3.5" /> },
-    { key: "referrals", label: "Referrals", icon: <Send className="h-3.5 w-3.5" /> },
-    { key: "assistance", label: "Assistance", icon: <HeartHandshake className="h-3.5 w-3.5" /> },
-    { key: "timeline", label: "Monitoring", icon: <History className="h-3.5 w-3.5" /> },
-  ]
+  const handleSaveStatus = async () => {
+    setIsUpdatingStatus(true)
+    try {
+      await onUpdateStatus(c.caseNumber, selectedStatus, selectedPriority, assignedWorker, statusNotes)
+      alert(`Case ${c.caseNumber} status successfully updated to ${selectedStatus.toUpperCase()}.`)
+    } catch (err) {
+      console.error(err)
+      alert("Failed to update case status.")
+    } finally {
+      setIsUpdatingStatus(false)
+    }
+  }
+
+  const handleCreateReferral = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!refAgency || !refReason) {
+      alert("Please enter the agency/facility and referral reason.")
+      return
+    }
+    setIsSubmittingReferral(true)
+    try {
+      await onAddReferral(c.caseNumber, {
+        referredTo: refAgency,
+        reason: refReason,
+        remarks: refRemarks,
+        date: refDate,
+        referredBy: assignedWorker,
+        status: "pending",
+      })
+      setRefAgency("")
+      setRefReason("")
+      setRefRemarks("")
+      setShowReferralForm(false)
+      setSelectedStatus("referred")
+    } catch (err) {
+      console.error(err)
+      alert("Failed to add referral.")
+    } finally {
+      setIsSubmittingReferral(false)
+    }
+  }
+
+  const handleCreateMonitoring = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!monNotes) {
+      alert("Please enter monitoring observation notes.")
+      return
+    }
+    setIsSubmittingMonitoring(true)
+    try {
+      await onAddMonitoring(c.caseNumber, {
+        officer: monOfficer,
+        date: monDate,
+        progressStatus: monStatus,
+        notes: monNotes,
+        nextAction: monNextAction,
+      })
+      setMonNotes("")
+      setMonNextAction("")
+      setShowMonitoringForm(false)
+      setSelectedStatus("monitoring")
+    } catch (err) {
+      console.error(err)
+      alert("Failed to add monitoring log.")
+    } finally {
+      setIsSubmittingMonitoring(false)
+    }
+  }
+
+  const sm = statusMeta[c.status] || statusMeta.open
+  const pm = priorityMeta[c.priority] || priorityMeta.medium
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8 flex flex-col max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="px-6 pt-5 pb-4 border-b border-border">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white text-base font-semibold">
-                {initials(c.clientName)}
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-lg font-bold text-foreground truncate">{c.clientName}</h2>
-                <p className="text-sm text-muted-foreground mt-0.5 font-mono">
-                  Case No. {c.caseNumber} · Ref: {c.linkedReferenceNo}
-                </p>
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getProgramColor(c.linkedProgram)}`}>
-                    {c.linkedProgram}
-                  </span>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${st?.chip || 'bg-sky-100 text-sky-700'}`}>
-                    {st?.icon}
-                    {st?.label}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getPriorityColor(c.priority)}`}>
-                    {c.priority} priority
-                  </span>
-                </div>
-              </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden">
+        {/* Modal Header */}
+        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/80 flex items-start justify-between gap-4 shrink-0">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white">
+                {c.caseNumber}
+              </span>
+              <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${programColors[c.linkedProgram]}`}>
+                {c.linkedProgram}
+              </span>
+              <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${sm.chip}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${sm.dot}`} />
+                {sm.label}
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${pm.chip}`}>
+                PRIORITY: {pm.label}
+              </span>
             </div>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="text-muted-foreground hover:text-foreground hover:bg-gray-100 rounded-full h-8 w-8 flex items-center justify-center shrink-0 transition-colors text-xl font-light"
-            >
-              ×
-            </button>
+            <h2 className="text-lg md:text-xl font-bold text-slate-900 truncate">{c.beneficiaryName}</h2>
+            <p className="text-xs text-slate-500 font-mono mt-0.5">
+              BENEFICIARY ID: <strong className="text-slate-700">{c.beneficiaryId}</strong> • APPLICATION REF: <strong className="text-slate-700">{c.applicationId}</strong>
+            </p>
           </div>
-
-          {/* Inner tabs */}
-          <div className="flex items-center gap-1 mt-4 bg-muted rounded-lg p-1 w-fit">
-            {tabs.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  tab === t.key ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.icon}
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="px-6 py-6 overflow-y-auto space-y-6">
-          {tab === "overview" && (
-            <>
-              <div>
-                <SectionHeading icon={<User className="h-4 w-4" />}>Client Information</SectionHeading>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm bg-slate-50 border border-slate-100 rounded-xl p-4">
-                  <Field label="Age / Sex" value={`${c.age} / ${c.sex}`} />
-                  <Field
-                    label="Contact Number"
-                    value={
-                      <span className="inline-flex items-center gap-1.5">
-                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                        {c.contactNo}
-                      </span>
-                    }
-                  />
-                  <div className="col-span-2">
-                    <Field
-                      label="Address"
-                      value={
-                        <span className="inline-flex items-start gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                          {c.address}
-                        </span>
-                      }
-                    />
-                  </div>
-                  <Field label="Date Opened" value={formatDate(c.dateOpened)} />
-                  <Field label="Assigned Social Worker" value={c.assignedSocialWorker} />
-                </div>
-              </div>
-
-              <div>
-                <SectionHeading icon={<ClipboardList className="h-4 w-4" />}>Case Summary</SectionHeading>
-                <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm text-foreground leading-relaxed">
-                  {c.summary}
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-5">
-                {!showStatusForm ? (
-                  <button
-                    onClick={() => setShowStatusForm(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-gray-50 transition-colors"
-                  >
-                    <Clock className="h-4 w-4" />
-                    Update Case Status
-                  </button>
-                ) : (
-                  <div className="space-y-3 bg-slate-50 border border-slate-100 rounded-xl p-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-semibold text-muted-foreground">New Status</label>
-                        <select
-                          value={newStatus}
-                          onChange={(e) => setNewStatus(e.target.value as CaseStatus)}
-                          className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        >
-                          <option value="open">Open</option>
-                          <option value="monitoring">Under Monitoring</option>
-                          <option value="referred">Referred</option>
-                          <option value="closed">Closed</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground">Note</label>
-                      <textarea
-                        value={statusNote}
-                        onChange={(e) => setStatusNote(e.target.value)}
-                        rows={2}
-                        placeholder="Ilarawan ang update sa kaso..."
-                        className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => setShowStatusForm(false)}
-                        className="px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-gray-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (!statusNote.trim()) return
-                          onUpdateStatus(c.id, newStatus, statusNote)
-                          setStatusNote("")
-                          setShowStatusForm(false)
-                        }}
-                        className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
-                      >
-                        Save Update
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {tab === "referrals" && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <SectionHeading icon={<Send className="h-4 w-4" />}>Referral History ({c.referrals.length})</SectionHeading>
-                <button
-                  onClick={() => setShowReferralForm((v) => !v)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  New Referral
-                </button>
-              </div>
-
-              {showReferralForm && (
-                <div className="space-y-3 bg-slate-50 border border-slate-100 rounded-xl p-4">
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground">Referred To *</label>
-                    <input
-                      value={refTo}
-                      onChange={(e) => setRefTo(e.target.value)}
-                      placeholder="e.g. QC General Hospital — Medical Social Service"
-                      className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground">Reason *</label>
-                    <textarea
-                      value={refReason}
-                      onChange={(e) => setRefReason(e.target.value)}
-                      rows={2}
-                      className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground">Referred By</label>
-                    <input
-                      value={refBy}
-                      onChange={(e) => setRefBy(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => setShowReferralForm(false)}
-                      className="px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (!refTo.trim() || !refReason.trim()) return
-                        onAddReferral(c.id, {
-                          date: new Date().toISOString().split("T")[0],
-                          referredTo: refTo,
-                          reason: refReason,
-                          referredBy: refBy || "Admin User",
-                          status: "pending",
-                        })
-                        setRefTo("")
-                        setRefReason("")
-                        setShowReferralForm(false)
-                      }}
-                      className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      Save Referral
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {c.referrals.length === 0 && !showReferralForm ? (
-                <p className="text-sm text-muted-foreground py-6 text-center">Wala pang naitalang referral para sa kasong ito.</p>
-              ) : (
-                <div className="space-y-2">
-                  {c.referrals.map((r) => (
-                    <div key={r.id} className="border border-border rounded-lg p-3 bg-white">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <p className="text-sm font-semibold text-foreground">{r.referredTo}</p>
-                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${referralStatusTheme[r.status]}`}>
-                          {r.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-foreground mb-1">{r.reason}</p>
-                      {r.remarks && <p className="text-xs text-muted-foreground mb-1">Remarks: {r.remarks}</p>}
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(r.date)} · Referred by {r.referredBy}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === "assistance" && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <SectionHeading icon={<HeartHandshake className="h-4 w-4" />}>Assistance Given ({c.assistance.length})</SectionHeading>
-                <button
-                  onClick={() => setShowAssistanceForm((v) => !v)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Log Assistance
-                </button>
-              </div>
-
-              {showAssistanceForm && (
-                <div className="space-y-3 bg-slate-50 border border-slate-100 rounded-xl p-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground">Type *</label>
-                      <input
-                        value={astType}
-                        onChange={(e) => setAstType(e.target.value)}
-                        placeholder="e.g. Food Pack, Cash Assistance"
-                        className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground">Amount (₱, optional)</label>
-                      <input
-                        value={astAmount}
-                        onChange={(e) => setAstAmount(e.target.value)}
-                        placeholder="e.g. 3,000"
-                        className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground">Description *</label>
-                    <textarea
-                      value={astDesc}
-                      onChange={(e) => setAstDesc(e.target.value)}
-                      rows={2}
-                      className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground">Provided By</label>
-                    <input
-                      value={astBy}
-                      onChange={(e) => setAstBy(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => setShowAssistanceForm(false)}
-                      className="px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (!astType.trim() || !astDesc.trim()) return
-                        onAddAssistance(c.id, {
-                          date: new Date().toISOString().split("T")[0],
-                          type: astType,
-                          amount: astAmount || undefined,
-                          description: astDesc,
-                          providedBy: astBy || "Admin User",
-                        })
-                        setAstType("")
-                        setAstAmount("")
-                        setAstDesc("")
-                        setShowAssistanceForm(false)
-                      }}
-                      className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      Save Record
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {c.assistance.length === 0 && !showAssistanceForm ? (
-                <p className="text-sm text-muted-foreground py-6 text-center">Wala pang naitalang tulong para sa kasong ito.</p>
-              ) : (
-                <div className="space-y-2">
-                  {c.assistance.map((a) => (
-                    <div key={a.id} className="border border-border rounded-lg p-3 bg-white">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <p className="text-sm font-semibold text-foreground">{a.type}</p>
-                        {a.amount && <p className="text-sm font-bold text-foreground">₱{a.amount}</p>}
-                      </div>
-                      <p className="text-sm text-foreground mb-1">{a.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(a.date)} · Provided by {a.providedBy}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === "timeline" && (
-            <div>
-              <SectionHeading icon={<History className="h-4 w-4" />}>Status / Monitoring Timeline</SectionHeading>
-              <div className="space-y-0">
-                {c.statusHistory
-                  .slice()
-                  .reverse()
-                  .map((ev, idx) => {
-                    const evTheme = getCaseStatusTheme(ev.status)
-                    return (
-                      <div key={ev.id} className="flex gap-3 pb-4 last:pb-0">
-                        <div className="flex flex-col items-center shrink-0">
-                          <div className={`h-7 w-7 rounded-full flex items-center justify-center ${evTheme?.chip || 'bg-slate-100 text-slate-700'}`}>
-                            {evTheme?.icon}
-                          </div>
-                          {idx !== c.statusHistory.length - 1 && <div className="flex-1 w-px bg-border mt-1" />}
-                        </div>
-                        <div className="flex-1 min-w-0 pb-1">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${evTheme?.chip || 'bg-slate-100 text-slate-700'}`}>
-                              {evTheme?.label}
-                            </span>
-                            <span className="text-xs text-muted-foreground">{formatDate(ev.date)} · {ev.by}</span>
-                          </div>
-                          <p className="text-sm text-foreground">{ev.note}</p>
-                        </div>
-                      </div>
-                    )
-                  })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-white shrink-0">
           <button
             onClick={onClose}
-            className="px-6 py-2 rounded-lg border border-border text-foreground font-medium hover:bg-gray-50 transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition-colors shrink-0"
+            aria-label="Close modal"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-1 px-6 py-2 border-b border-slate-100 bg-white overflow-x-auto shrink-0 scrollbar-none text-xs">
+          {[
+            { key: "overview", label: "Overview & Beneficiary", icon: <User className="h-3.5 w-3.5" /> },
+            { key: "appointment", label: `Appointment ${c.linkedAppointment ? "✓" : ""}`, icon: <Calendar className="h-3.5 w-3.5" /> },
+            { key: "financial", label: `Financial Aid ${c.linkedFinancialAid ? `(₱${c.linkedFinancialAid.fixedAmount.toLocaleString()})` : ""}`, icon: <Wallet className="h-3.5 w-3.5" /> },
+            { key: "referrals", label: `Referrals (${c.referrals.length})`, icon: <Send className="h-3.5 w-3.5" /> },
+            { key: "monitoring", label: `Monitoring (${c.monitoringLogs.length})`, icon: <Activity className="h-3.5 w-3.5" /> },
+            { key: "timeline", label: `Case Timeline (${c.timeline.length})`, icon: <History className="h-3.5 w-3.5" /> },
+            { key: "status", label: "Manage Status", icon: <ClipboardList className="h-3.5 w-3.5" /> },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === tab.key
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Body */}
+        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+          {/* TAB 1: Overview & Beneficiary */}
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              {/* Beneficiary Information */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 md:p-5">
+                <div className="flex items-center justify-between mb-3 border-b border-slate-200/60 pb-2">
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <User className="h-4 w-4 text-blue-600" />
+                    Beneficiary Information
+                  </h3>
+                  <span className="text-xs font-mono text-slate-500">QCID: {c.beneficiaryId}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3 text-xs">
+                  <div>
+                    <span className="text-slate-500">Full Name</span>
+                    <p className="font-semibold text-slate-900 mt-0.5">{c.beneficiaryName}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Age &amp; Sex</span>
+                    <p className="font-semibold text-slate-900 mt-0.5">{c.age} y/o • {c.sex}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Civil Status</span>
+                    <p className="font-semibold text-slate-900 mt-0.5">{c.civilStatus}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Contact Number</span>
+                    <p className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
+                      <Phone className="h-3 w-3 text-slate-400" />
+                      {c.contactNo}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Email Address</span>
+                    <p className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
+                      <Mail className="h-3 w-3 text-slate-400" />
+                      {c.email || "—"}
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <span className="text-slate-500">Complete Address</span>
+                    <p className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      {c.address}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Application Details */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 md:p-5">
+                <div className="flex items-center justify-between mb-3 border-b border-slate-200/60 pb-2">
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileCheck className="h-4 w-4 text-emerald-600" />
+                    Application Information
+                  </h3>
+                  <span className="text-xs font-mono text-slate-500">REF: {c.applicationId}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3 text-xs">
+                  <div>
+                    <span className="text-slate-500">Enrolled Program</span>
+                    <p className="font-semibold text-slate-900 mt-0.5">{c.linkedProgram}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Case Type / Concern</span>
+                    <p className="font-semibold text-slate-900 mt-0.5">{c.caseType}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Date Opened / Approved</span>
+                    <p className="font-semibold text-slate-900 mt-0.5">{formatDate(c.dateOpened)}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Assigned Social Worker</span>
+                    <p className="font-semibold text-slate-900 mt-0.5">{c.assignedSocialWorker}</p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <span className="text-slate-500">Summary / Notes</span>
+                    <p className="font-medium text-slate-800 mt-0.5 leading-relaxed">{c.summary}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: Connected Appointment */}
+          {activeTab === "appointment" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Connected Appointment</h3>
+                  <p className="text-xs text-slate-500">
+                    Directly linked from the Appointments scheduling module for verification, claiming, or interview.
+                  </p>
+                </div>
+              </div>
+
+              {c.linkedAppointment ? (
+                <div className="bg-blue-50/50 border border-blue-200 rounded-xl p-5 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-xs font-bold text-blue-900 uppercase tracking-wider">
+                      Appointment ID: {c.linkedAppointment.id}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                      STATUS: {c.linkedAppointment.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="bg-white p-3 rounded-lg border border-blue-100">
+                      <span className="text-slate-500">Scheduled Date &amp; Time</span>
+                      <p className="font-bold text-slate-900 text-sm mt-1">
+                        {formatDate(c.linkedAppointment.date)} at {c.linkedAppointment.time || "09:00 AM"}
+                      </p>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg border border-blue-100">
+                      <span className="text-slate-500">Venue / Location</span>
+                      <p className="font-semibold text-slate-900 mt-1 leading-snug">
+                        {c.linkedAppointment.location}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-blue-100/60 rounded-lg text-xs text-blue-900 flex items-start gap-2">
+                    <Info className="h-4 w-4 text-blue-700 shrink-0 mt-0.5" />
+                    <span>
+                      This appointment record is managed in the <strong>Appointments</strong> module. Any rescheduling or completion updates in that module are live-synced here.
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-10 border border-dashed border-slate-200 rounded-xl bg-slate-50">
+                  <Calendar className="h-10 w-10 text-slate-400 mx-auto mb-2 opacity-60" />
+                  <p className="text-xs font-medium text-slate-600">No active appointment required or scheduled for this case.</p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    If this case requires in-person claiming or social worker consult, schedule it via the Appointments module.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: Connected Financial Aid */}
+          {activeTab === "financial" && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Connected Financial Aid / Disbursement</h3>
+                <p className="text-xs text-slate-500">
+                  Live synchronized with the Financial Aid Disbursement module. Shows grant amount and release status.
+                </p>
+              </div>
+
+              {c.linkedFinancialAid ? (
+                <div className="bg-emerald-50/50 border border-emerald-200 rounded-xl p-5 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-xs font-mono font-bold text-emerald-900">
+                      DISBURSEMENT ID: {c.linkedFinancialAid.disbursementId}
+                    </span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        c.linkedFinancialAid.status === "RELEASED"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-amber-100 text-amber-800 border border-amber-300"
+                      }`}
+                    >
+                      {c.linkedFinancialAid.status === "RELEASED" ? "✓ RELEASED" : "⏳ PENDING DISBURSEMENT"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                    <div className="bg-white p-3.5 rounded-lg border border-emerald-100">
+                      <span className="text-slate-500">Assistance Amount</span>
+                      <p className="font-extrabold text-emerald-700 text-lg mt-1">
+                        ₱{c.linkedFinancialAid.fixedAmount.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="bg-white p-3.5 rounded-lg border border-emerald-100">
+                      <span className="text-slate-500">Assistance Category</span>
+                      <p className="font-semibold text-slate-900 mt-1">{c.linkedFinancialAid.assistanceType}</p>
+                    </div>
+                    <div className="bg-white p-3.5 rounded-lg border border-emerald-100">
+                      <span className="text-slate-500">Payout Schedule</span>
+                      <p className="font-semibold text-slate-900 mt-1">{c.linkedFinancialAid.payoutSchedule || "TBA"}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-3.5 rounded-lg border border-emerald-100 text-xs">
+                    <span className="text-slate-500">Designated Payout Location</span>
+                    <p className="font-semibold text-slate-900 mt-0.5">{c.linkedFinancialAid.payoutLocation}</p>
+                  </div>
+
+                  <div className="p-3 bg-emerald-100/60 rounded-lg text-xs text-emerald-900 flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-700 shrink-0 mt-0.5" />
+                    <span>
+                      {c.linkedFinancialAid.status === "RELEASED"
+                        ? "Assistance grant has been disbursed and verified. The financial component of this case is complete."
+                        : "Assistance is queued in Financial Aid Disbursement. Upon payout release in that module, this status updates automatically to RELEASED."}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-10 border border-dashed border-slate-200 rounded-xl bg-slate-50">
+                  <Wallet className="h-10 w-10 text-slate-400 mx-auto mb-2 opacity-60" />
+                  <p className="text-xs font-medium text-slate-600">No direct cash grant or financial aid disbursement attached to this case.</p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    (Applicable primarily to ID issuance, certification, and training programs).
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: Referrals */}
+          {activeTab === "referrals" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">External &amp; Inter-Agency Referrals</h3>
+                  <p className="text-xs text-slate-500">
+                    Connect beneficiary with healthcare facilities, TESDA, livelihood programs, or legal aid.
+                  </p>
+                </div>
+                {!showReferralForm && (
+                  <button
+                    type="button"
+                    onClick={() => setShowReferralForm(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-2xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Referral
+                  </button>
+                )}
+              </div>
+
+              {/* Add Referral Form */}
+              {showReferralForm && (
+                <form onSubmit={handleCreateReferral} className="bg-purple-50/60 border border-purple-200 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-purple-200/60 pb-2">
+                    <span className="text-xs font-bold text-purple-900 uppercase tracking-wider">New Inter-Agency Referral</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowReferralForm(false)}
+                      className="text-slate-400 hover:text-slate-700 text-xs font-semibold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="font-semibold text-slate-700">Referred To (Agency / Facility) *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Quezon City General Hospital - Pediatrics"
+                        value={refAgency}
+                        onChange={(e) => setRefAgency(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-semibold text-slate-700">Referral Date</label>
+                      <input
+                        type="date"
+                        value={refDate}
+                        onChange={(e) => setRefDate(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="font-semibold text-slate-700">Reason / Service Required *</label>
+                      <textarea
+                        required
+                        rows={2}
+                        placeholder="Detail the specialized assistance, medical check-up, or training requested..."
+                        value={refReason}
+                        onChange={(e) => setRefReason(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="font-semibold text-slate-700">Special Remarks / Referral Slip Notes</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Endorsement letter provided to client"
+                        value={refRemarks}
+                        onChange={(e) => setRefRemarks(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowReferralForm(false)}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingReferral}
+                      className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {isSubmittingReferral ? "Saving..." : "Save Referral"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Referrals List */}
+              {c.referrals.length === 0 ? (
+                <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-500">
+                  No referrals created for this case yet. Click &quot;Add Referral&quot; to refer client to external partner agencies.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {c.referrals.map((ref) => (
+                    <div key={ref.id} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2 shadow-2xs">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <Building className="h-4 w-4 text-purple-600" />
+                          <h4 className="text-xs font-bold text-slate-900">{ref.referredTo}</h4>
+                        </div>
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800">
+                          {ref.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 leading-relaxed">{ref.reason}</p>
+                      {ref.remarks && (
+                        <p className="text-[11px] text-slate-500 italic">Remarks: {ref.remarks}</p>
+                      )}
+                      <div className="text-[11px] text-slate-400 pt-1 border-t border-slate-100 flex items-center justify-between">
+                        <span>Referred by: {ref.referredBy}</span>
+                        <span>Date: {formatDate(ref.date)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 5: Monitoring Logs */}
+          {activeTab === "monitoring" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Case Monitoring &amp; Progress Logs</h3>
+                  <p className="text-xs text-slate-500">
+                    Track home visits, welfare check-ins, livelihood sustainability, and aftercare progress.
+                  </p>
+                </div>
+                {!showMonitoringForm && (
+                  <button
+                    type="button"
+                    onClick={() => setShowMonitoringForm(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-2xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Record Check-in
+                  </button>
+                )}
+              </div>
+
+              {/* Add Monitoring Form */}
+              {showMonitoringForm && (
+                <form onSubmit={handleCreateMonitoring} className="bg-amber-50/60 border border-amber-200 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-amber-200/60 pb-2">
+                    <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">New Monitoring Entry</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowMonitoringForm(false)}
+                      className="text-slate-400 hover:text-slate-700 text-xs font-semibold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <label className="font-semibold text-slate-700">Check-in Date</label>
+                      <input
+                        type="date"
+                        value={monDate}
+                        onChange={(e) => setMonDate(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-semibold text-slate-700">Officer / Social Worker</label>
+                      <input
+                        type="text"
+                        value={monOfficer}
+                        onChange={(e) => setMonOfficer(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-semibold text-slate-700">Progress Status</label>
+                      <select
+                        value={monStatus}
+                        onChange={(e) => setMonStatus(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="In Progress">In Progress</option>
+                        <option value="Satisfactory">Satisfactory</option>
+                        <option value="Needs Follow-up">Needs Follow-up</option>
+                        <option value="Goal Achieved">Goal Achieved</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="font-semibold text-slate-700">Observations &amp; Assessment Notes *</label>
+                      <textarea
+                        required
+                        rows={2}
+                        placeholder="Document beneficiary current situation, recovery status, child attendance, or enterprise revenue..."
+                        value={monNotes}
+                        onChange={(e) => setMonNotes(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="font-semibold text-slate-700">Next Action Plan</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Schedule final evaluation on next month"
+                        value={monNextAction}
+                        onChange={(e) => setMonNextAction(e.target.value)}
+                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMonitoringForm(false)}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingMonitoring}
+                      className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {isSubmittingMonitoring ? "Saving..." : "Record Check-in"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Monitoring List */}
+              {c.monitoringLogs.length === 0 ? (
+                <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-500">
+                  No monitoring logs recorded yet. Add check-in logs to track beneficiary progress over time.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {c.monitoringLogs.map((log) => (
+                    <div key={log.id} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2 shadow-2xs">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                          <Activity className="h-4 w-4 text-amber-600" />
+                          Progress Status: <span className="text-amber-800">{log.progressStatus}</span>
+                        </span>
+                        <span className="text-xs text-slate-500 font-mono">{formatDate(log.date)}</span>
+                      </div>
+                      <p className="text-xs text-slate-700 leading-relaxed">{log.notes}</p>
+                      {log.nextAction && (
+                        <div className="text-[11px] text-blue-800 bg-blue-50 p-2 rounded-lg flex items-center gap-1.5">
+                          <ArrowRight className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <span><strong>Next Action:</strong> {log.nextAction}</span>
+                        </div>
+                      )}
+                      <div className="text-[11px] text-slate-400 pt-1 border-t border-slate-100">
+                        Officer: {log.officer}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 6: Chronological Case Timeline */}
+          {activeTab === "timeline" && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Chronological Case Timeline</h3>
+                <p className="text-xs text-slate-500">
+                  Automated chronological trail generated strictly from authentic system milestones (Submission → Approval → Appointment → Financial Aid → Referrals → Monitoring).
+                </p>
+              </div>
+
+              <div className="relative pl-6 border-l-2 border-slate-200 space-y-6 my-4">
+                {c.timeline.map((ev, idx) => {
+                  const getIcon = () => {
+                    switch (ev.type) {
+                      case "submission": return <ClipboardList className="h-3.5 w-3.5 text-blue-600" />
+                      case "approval": return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      case "appointment": return <Calendar className="h-3.5 w-3.5 text-indigo-600" />
+                      case "financial": return <Wallet className="h-3.5 w-3.5 text-emerald-600" />
+                      case "referral": return <Send className="h-3.5 w-3.5 text-purple-600" />
+                      case "monitoring": return <Activity className="h-3.5 w-3.5 text-amber-600" />
+                      case "closure": return <CheckCircle2 className="h-3.5 w-3.5 text-slate-700" />
+                      default: return <Clock className="h-3.5 w-3.5 text-slate-600" />
+                    }
+                  }
+
+                  return (
+                    <div key={ev.id || idx} className="relative group">
+                      {/* Node Bullet */}
+                      <div className="absolute -left-9 top-0.5 h-6 w-6 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center shadow-xs">
+                        {getIcon()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-xs font-bold text-slate-900">{ev.title}</h4>
+                          <span className="text-[11px] font-mono text-slate-400">{formatDate(ev.date)}</span>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1 leading-relaxed">{ev.detail}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: Manage Status & Closure */}
+          {activeTab === "status" && (
+            <div className="space-y-5 bg-slate-50 border border-slate-200 rounded-xl p-5">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Manage Case Status &amp; Assignments</h3>
+                <p className="text-xs text-slate-500">
+                  Update overall case progress. Marking as CLOSED finalizes the case intervention.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="font-bold text-slate-800">Overall Case Status</label>
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value as CaseStatus)}
+                    className="w-full mt-1.5 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white font-bold text-slate-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="open">OPEN — Active Case</option>
+                    <option value="monitoring">UNDER MONITORING — Follow-up Active</option>
+                    <option value="referred">REFERRED — External Agency Coordination</option>
+                    <option value="closed">CLOSED — Resolved &amp; Completed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-800">Case Priority</label>
+                  <select
+                    value={selectedPriority}
+                    onChange={(e) => setSelectedPriority(e.target.value as CasePriority)}
+                    className="w-full mt-1.5 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white font-bold text-slate-900 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="high">HIGH — Urgent Action Required</option>
+                    <option value="medium">MEDIUM — Standard Processing</option>
+                    <option value="low">LOW — Maintenance / Minor</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="font-bold text-slate-800">Assigned Social Worker / Case Officer</label>
+                  <input
+                    type="text"
+                    value={assignedWorker}
+                    onChange={(e) => setAssignedWorker(e.target.value)}
+                    className="w-full mt-1.5 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="font-bold text-slate-800">
+                    {selectedStatus === "closed" ? "Case Closure Summary & Evaluation *" : "Case Notes / Action Summary"}
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder={
+                      selectedStatus === "closed"
+                        ? "Document final case outcome, verification of benefits received, and reason for case closure..."
+                        : "Enter internal case remarks or next intervention steps..."
+                    }
+                    value={statusNotes}
+                    onChange={(e) => setStatusNotes(e.target.value)}
+                    className="w-full mt-1.5 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isUpdatingStatus}
+                  onClick={handleSaveStatus}
+                  className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                >
+                  {isUpdatingStatus ? "Saving Changes..." : "Save Case Changes"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">
+              Current Case Status: <strong className="text-slate-800 uppercase">{c.status}</strong>
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
           >
             Close
           </button>
@@ -902,314 +1060,481 @@ function CaseProfileModal({
 }
 
 // =====================================================================================
-// Main Component
+// Main Admin Case Management Component
 // =====================================================================================
 
-type MainTab = "records" | "referrals" | "assistance" | "monitoring"
-
 export default function CaseManagement() {
-  const [cases, setCases] = useState<CaseRecord[]>(MOCK_CASES)
-  const [tab, setTab] = useState<MainTab>("records")
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterProgram, setFilterProgram] = useState<"all" | ModuleKey>("all")
-  const [filterStatus, setFilterStatus] = useState<"all" | CaseStatus>("all")
+  const [cases, setCases] = useState<CaseRecord[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedProgram, setSelectedProgram] = useState<string>("ALL")
+  const [selectedStatusTab, setSelectedStatusTab] = useState<string>("ALL")
+  const [selectedPriority, setSelectedPriority] = useState<string>("ALL")
+  const [activeCase, setActiveCase] = useState<CaseRecord | null>(null)
 
-  const selectedCase = cases.find((c) => c.id === selectedCaseId) ?? null
-
-  const handleAddReferral = (caseId: string, referral: Omit<Referral, "id">) => {
-    setCases((prev) =>
-      prev.map((c) =>
-        c.id === caseId ? { ...c, referrals: [...c.referrals, { ...referral, id: `REF-${Date.now()}` }] } : c
-      )
-    )
+  // Fetch all real cases directly from Backend API (Approved Applications Integration)
+  const loadCases = async (silent = false) => {
+    if (!silent) setIsLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/case-management/cases`, {
+        headers: authHeaders(),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.cases && Array.isArray(data.cases)) {
+          setCases(data.cases)
+          // Update active case if open
+          if (activeCase) {
+            const updated = data.cases.find((c: CaseRecord) => c.caseNumber === activeCase.caseNumber)
+            if (updated) setActiveCase(updated)
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch case records:", err)
+    } finally {
+      if (!silent) setIsLoading(false)
+    }
   }
 
-  const handleAddAssistance = (caseId: string, record: Omit<AssistanceRecord, "id">) => {
-    setCases((prev) =>
-      prev.map((c) =>
-        c.id === caseId ? { ...c, assistance: [...c.assistance, { ...record, id: `AST-${Date.now()}` }] } : c
-      )
-    )
+  useEffect(() => {
+    loadCases(false)
+
+    // Interval polling for background changes
+    const interval = setInterval(() => loadCases(true), 2500)
+
+    // Real-time broadcast sync
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      loadCases(true)
+    })
+
+    const handleFocus = () => loadCases(true)
+    window.addEventListener("focus", handleFocus)
+    window.addEventListener("application_updated", handleFocus)
+    window.addEventListener("appointments_updated", handleFocus)
+    window.addEventListener("financial_aid_updated", handleFocus)
+
+    return () => {
+      clearInterval(interval)
+      unsubscribe()
+      window.removeEventListener("focus", handleFocus)
+      window.removeEventListener("application_updated", handleFocus)
+      window.removeEventListener("appointments_updated", handleFocus)
+      window.removeEventListener("financial_aid_updated", handleFocus)
+    }
+  }, [])
+
+  // Case Status Update Handler
+  const handleUpdateStatus = async (
+    caseNumber: string,
+    newStatus: CaseStatus,
+    priority?: CasePriority,
+    worker?: string,
+    notes?: string
+  ) => {
+    const res = await fetch(`${API_BASE}/api/case-management/case/${encodeURIComponent(caseNumber)}/status`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        status: newStatus,
+        priority,
+        assignedSocialWorker: worker,
+        notes,
+      }),
+    })
+
+    if (!res.ok) throw new Error("Failed to update case status")
+    await loadCases(true)
+    notifyApplicationChange("APPLICATION_APPROVED", "case", caseNumber)
   }
 
-  const handleUpdateStatus = (caseId: string, status: CaseStatus, note: string) => {
-    setCases((prev) =>
-      prev.map((c) =>
-        c.id === caseId
-          ? {
-              ...c,
-              status,
-              statusHistory: [
-                ...c.statusHistory,
-                { id: `SH-${Date.now()}`, date: new Date().toISOString().split("T")[0], status, note, by: "Admin User" },
-              ],
-            }
-          : c
-      )
-    )
+  // Add Referral Handler
+  const handleAddReferral = async (caseNumber: string, referral: Partial<Referral>) => {
+    const res = await fetch(`${API_BASE}/api/case-management/case/${encodeURIComponent(caseNumber)}/referral`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(referral),
+    })
+    if (!res.ok) throw new Error("Failed to add referral")
+    await loadCases(true)
+    notifyApplicationChange("APPLICATION_APPROVED", "case", caseNumber)
   }
 
-  const filteredCases = cases.filter((c) => {
-    const matchProgram = filterProgram === "all" || c.linkedProgram === filterProgram
-    const matchStatus = filterStatus === "all" || c.status === filterStatus
-    const matchSearch =
-      searchTerm === "" ||
-      c.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.caseNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.linkedReferenceNo.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchProgram && matchStatus && matchSearch
-  })
-
-  const allReferrals = cases.flatMap((c) => c.referrals.map((r) => ({ ...r, clientName: c.clientName, caseNumber: c.caseNumber, caseId: c.id })))
-  const allAssistance = cases.flatMap((c) => c.assistance.map((a) => ({ ...a, clientName: c.clientName, caseNumber: c.caseNumber, caseId: c.id })))
-  const allTimeline = cases
-    .flatMap((c) => c.statusHistory.map((h) => ({ ...h, clientName: c.clientName, caseNumber: c.caseNumber, caseId: c.id })))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-  const stats = {
-    total: cases.length,
-    open: cases.filter((c) => c.status === "open").length,
-    monitoring: cases.filter((c) => c.status === "monitoring" || c.status === "referred").length,
-    closed: cases.filter((c) => c.status === "closed").length,
+  // Add Monitoring Handler
+  const handleAddMonitoring = async (caseNumber: string, log: Partial<MonitoringLog>) => {
+    const res = await fetch(`${API_BASE}/api/case-management/case/${encodeURIComponent(caseNumber)}/monitoring`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        officerName: log.officer,
+        monitoringDate: log.date,
+        progressStatus: log.progressStatus,
+        notes: log.notes,
+        nextAction: log.nextAction,
+      }),
+    })
+    if (!res.ok) throw new Error("Failed to add monitoring log")
+    await loadCases(true)
+    notifyApplicationChange("APPLICATION_APPROVED", "case", caseNumber)
   }
 
-  const MAIN_TABS: { key: MainTab; label: string; icon: ReactElement }[] = [
-    { key: "records", label: "Case Records", icon: <ClipboardList className="h-4 w-4" /> },
-    { key: "referrals", label: "Referrals", icon: <Send className="h-4 w-4" /> },
-    { key: "assistance", label: "Assistance", icon: <HeartHandshake className="h-4 w-4" /> },
-    { key: "monitoring", label: "Monitoring", icon: <History className="h-4 w-4" /> },
-  ]
+  // Stats calculation
+  const stats = useMemo(() => {
+    const total = cases.length
+    const open = cases.filter((c) => c.status === "open").length
+    const monitoringOrReferred = cases.filter((c) => c.status === "monitoring" || c.status === "referred").length
+    const closed = cases.filter((c) => c.status === "closed").length
+    return { total, open, monitoringOrReferred, closed }
+  }, [cases])
+
+  // Filtered cases
+  const filteredCases = useMemo(() => {
+    return cases.filter((c) => {
+      // 1. Program Filter
+      if (selectedProgram !== "ALL" && c.linkedProgram !== selectedProgram) return false
+
+      // 2. Status Filter
+      if (selectedStatusTab !== "ALL") {
+        if (selectedStatusTab === "MONITORING_REFERRED") {
+          if (c.status !== "monitoring" && c.status !== "referred") return false
+        } else if (c.status !== selectedStatusTab.toLowerCase()) {
+          return false
+        }
+      }
+
+      // 3. Priority Filter
+      if (selectedPriority !== "ALL" && c.priority !== selectedPriority.toLowerCase()) return false
+
+      // 4. Search Query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim()
+        const matchName = c.beneficiaryName.toLowerCase().includes(q)
+        const matchCase = c.caseNumber.toLowerCase().includes(q)
+        const matchApp = c.applicationId.toLowerCase().includes(q)
+        const matchQc = c.beneficiaryId.toLowerCase().includes(q)
+        const matchWorker = c.assignedSocialWorker.toLowerCase().includes(q)
+        if (!matchName && !matchCase && !matchApp && !matchQc && !matchWorker) return false
+      }
+
+      return true
+    })
+  }, [cases, selectedProgram, selectedStatusTab, selectedPriority, searchQuery])
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center gap-2">
-        <h1 className="text-3xl font-bold text-foreground">Case Management</h1>
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto font-sans">
+      {/* Module Title Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
+              <FolderKanban className="h-4 w-4" />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Case Management
+            </h1>
+          </div>
+          <p className="text-xs md:text-sm text-slate-500">
+            Real-time case supervision for approved applications across AICS, PWD, Senior, Solo Parent, Child Welfare &amp; Livelihood.
+          </p>
+        </div>
       </div>
 
-      {/* Stats */}
+      {/* Visual Workflow Diagram */}
+      <WorkflowBanner />
+
+      {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Cases", value: stats.total, color: "blue" },
-          { label: "Open", value: stats.open, color: "sky" },
-          { label: "Monitoring / Referred", value: stats.monitoring, color: "indigo" },
-          { label: "Closed", value: stats.closed, color: "green" },
-        ].map((stat) => (
-          <div key={stat.label} className={`rounded-lg p-4 bg-${stat.color}-50 border border-${stat.color}-200`}>
-            <p className={`text-xs font-semibold text-${stat.color}-700 uppercase`}>{stat.label}</p>
-            <p className={`text-3xl font-bold text-${stat.color}-700 mt-2`}>{stat.value}</p>
+        <div
+          onClick={() => setSelectedStatusTab("ALL")}
+          className={`p-4 md:p-5 rounded-2xl border transition-all cursor-pointer ${
+            selectedStatusTab === "ALL"
+              ? "bg-blue-600 text-white border-blue-700 shadow-md"
+              : "bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-2xs"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-bold uppercase tracking-wider ${selectedStatusTab === "ALL" ? "text-blue-100" : "text-slate-500"}`}>
+              Total Approved Cases
+            </span>
+            <FolderKanban className={`h-4 w-4 ${selectedStatusTab === "ALL" ? "text-white" : "text-blue-600"}`} />
           </div>
-        ))}
+          <p className="text-2xl md:text-3xl font-extrabold mt-2">{stats.total}</p>
+          <span className={`text-[11px] font-medium mt-1 block ${selectedStatusTab === "ALL" ? "text-blue-100" : "text-slate-400"}`}>
+            Live synchronized across modules
+          </span>
+        </div>
+
+        <div
+          onClick={() => setSelectedStatusTab("OPEN")}
+          className={`p-4 md:p-5 rounded-2xl border transition-all cursor-pointer ${
+            selectedStatusTab === "OPEN"
+              ? "bg-blue-600 text-white border-blue-700 shadow-md"
+              : "bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-2xs"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-bold uppercase tracking-wider ${selectedStatusTab === "OPEN" ? "text-blue-100" : "text-slate-500"}`}>
+              Open Cases
+            </span>
+            <Clock className={`h-4 w-4 ${selectedStatusTab === "OPEN" ? "text-white" : "text-blue-600"}`} />
+          </div>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2">{stats.open}</p>
+          <span className={`text-[11px] font-medium mt-1 block ${selectedStatusTab === "OPEN" ? "text-blue-100" : "text-slate-400"}`}>
+            Awaiting payout / claiming
+          </span>
+        </div>
+
+        <div
+          onClick={() => setSelectedStatusTab("MONITORING_REFERRED")}
+          className={`p-4 md:p-5 rounded-2xl border transition-all cursor-pointer ${
+            selectedStatusTab === "MONITORING_REFERRED"
+              ? "bg-blue-600 text-white border-blue-700 shadow-md"
+              : "bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-2xs"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-bold uppercase tracking-wider ${selectedStatusTab === "MONITORING_REFERRED" ? "text-blue-100" : "text-slate-500"}`}>
+              Monitoring &amp; Referred
+            </span>
+            <Activity className={`h-4 w-4 ${selectedStatusTab === "MONITORING_REFERRED" ? "text-white" : "text-amber-500"}`} />
+          </div>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2">{stats.monitoringOrReferred}</p>
+          <span className={`text-[11px] font-medium mt-1 block ${selectedStatusTab === "MONITORING_REFERRED" ? "text-blue-100" : "text-slate-400"}`}>
+            Active aftercare &amp; coordination
+          </span>
+        </div>
+
+        <div
+          onClick={() => setSelectedStatusTab("CLOSED")}
+          className={`p-4 md:p-5 rounded-2xl border transition-all cursor-pointer ${
+            selectedStatusTab === "CLOSED"
+              ? "bg-blue-600 text-white border-blue-700 shadow-md"
+              : "bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-2xs"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-bold uppercase tracking-wider ${selectedStatusTab === "CLOSED" ? "text-blue-100" : "text-slate-500"}`}>
+              Closed Cases
+            </span>
+            <CheckCircle2 className={`h-4 w-4 ${selectedStatusTab === "CLOSED" ? "text-white" : "text-emerald-600"}`} />
+          </div>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2">{stats.closed}</p>
+          <span className={`text-[11px] font-medium mt-1 block ${selectedStatusTab === "CLOSED" ? "text-blue-100" : "text-slate-400"}`}>
+            Completed &amp; resolved cases
+          </span>
+        </div>
       </div>
 
-      {/* Main tabs */}
-      <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit flex-wrap">
-        {MAIN_TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-sm font-medium transition-colors ${
-              tab === t.key ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t.icon}
-            {t.label}
-          </button>
-        ))}
+      {/* Search & Filter Bar */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-2xs space-y-4">
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all">
+          <Search className="h-4 w-4 text-slate-400 shrink-0" />
+          <input
+            type="text"
+            placeholder="Search by client name, case number (CM-...), QCID, or reference number..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full text-xs md:text-sm bg-transparent border-none outline-none text-slate-900 placeholder:text-slate-400"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="text-xs text-slate-400 hover:text-slate-700 font-bold px-1"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap text-xs">
+          {/* Program Filter */}
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-600">Program:</span>
+            <select
+              value={selectedProgram}
+              onChange={(e) => setSelectedProgram(e.target.value)}
+              className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="ALL">All Programs</option>
+              <option value="AICS">AICS</option>
+              <option value="PWD">PWD Services</option>
+              <option value="Senior Citizen">Senior Citizen</option>
+              <option value="Solo Parent">Solo Parent</option>
+              <option value="Child Welfare">Child Welfare</option>
+              <option value="Livelihood">Livelihood</option>
+              <option value="Training Program">Training Program</option>
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-600">Status:</span>
+            <select
+              value={selectedStatusTab}
+              onChange={(e) => setSelectedStatusTab(e.target.value)}
+              className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="OPEN">Open</option>
+              <option value="MONITORING">Under Monitoring</option>
+              <option value="REFERRED">Referred</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+          </div>
+
+          {/* Priority Filter */}
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-600">Priority:</span>
+            <select
+              value={selectedPriority}
+              onChange={(e) => setSelectedPriority(e.target.value)}
+              className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="ALL">All Priorities</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
+          </div>
+
+          <div className="ml-auto text-slate-400 text-xs font-mono">
+            Showing <strong className="text-slate-700">{filteredCases.length}</strong> of {cases.length} approved cases
+          </div>
+        </div>
       </div>
 
-      {/* Case Records */}
-      {tab === "records" && (
-        <div className="space-y-4">
-          <div className="bg-card border border-border rounded-lg p-4 space-y-4">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search by client name, case no., or reference no..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">Linked Program</label>
-                <select
-                  value={filterProgram}
-                  onChange={(e) => setFilterProgram(e.target.value as any)}
-                  className="mt-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 block"
-                >
-                  <option value="all">All Programs</option>
-                  {PROGRAM_OPTIONS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">Status</label>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as any)}
-                  className="mt-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 block"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="open">Open</option>
-                  <option value="monitoring">Under Monitoring</option>
-                  <option value="referred">Referred</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </div>
-            </div>
+      {/* Cases List / Cards */}
+      <div className="space-y-3">
+        {isLoading ? (
+          <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl">
+            <Clock className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-2" />
+            <p className="text-xs text-slate-500 font-medium">Synchronizing approved case records across modules...</p>
           </div>
+        ) : filteredCases.length === 0 ? (
+          <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl shadow-2xs">
+            <FolderKanban className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-slate-800">No Case Records Found</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+              Case records only appear when an application in AICS, PWD, Senior, Solo Parent, Child Welfare, or Livelihood is <strong>APPROVED</strong>.
+            </p>
+          </div>
+        ) : (
+          filteredCases.map((c) => {
+            const sm = statusMeta[c.status] || statusMeta.open
+            const pm = priorityMeta[c.priority] || priorityMeta.medium
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">Cases ({filteredCases.length})</h2>
-            {filteredCases.length === 0 ? (
-              <div className="text-center py-12">
-                <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground">Walang nahanap na kaso.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredCases.map((c) => (
-                  <CaseCard key={c.id} c={c} onOpen={setSelectedCaseId} />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Referrals ledger */}
-      {tab === "referrals" && (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-soft">
-          <div className="px-4 py-3 border-b border-border">
-            <h2 className="text-sm font-semibold text-foreground">All referrals ({allReferrals.length})</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                  <th className="px-4 py-2 font-medium">Client</th>
-                  <th className="px-4 py-2 font-medium">Case No.</th>
-                  <th className="px-4 py-2 font-medium">Referred To</th>
-                  <th className="px-4 py-2 font-medium">Reason</th>
-                  <th className="px-4 py-2 font-medium">Date</th>
-                  <th className="px-4 py-2 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allReferrals.map((r) => (
-                  <tr
-                    key={r.id}
-                    onClick={() => setSelectedCaseId(r.caseId)}
-                    className="border-b border-border last:border-0 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <td className="px-4 py-3 text-foreground font-medium">{r.clientName}</td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{r.caseNumber}</td>
-                    <td className="px-4 py-3 text-foreground">{r.referredTo}</td>
-                    <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{r.reason}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{formatDate(r.date)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${referralStatusTheme[r.status]}`}>
-                        {r.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Assistance ledger */}
-      {tab === "assistance" && (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-soft">
-          <div className="px-4 py-3 border-b border-border">
-            <h2 className="text-sm font-semibold text-foreground">All assistance records ({allAssistance.length})</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                  <th className="px-4 py-2 font-medium">Client</th>
-                  <th className="px-4 py-2 font-medium">Case No.</th>
-                  <th className="px-4 py-2 font-medium">Type</th>
-                  <th className="px-4 py-2 font-medium">Description</th>
-                  <th className="px-4 py-2 font-medium">Amount</th>
-                  <th className="px-4 py-2 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allAssistance.map((a) => (
-                  <tr
-                    key={a.id}
-                    onClick={() => setSelectedCaseId(a.caseId)}
-                    className="border-b border-border last:border-0 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <td className="px-4 py-3 text-foreground font-medium">{a.clientName}</td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{a.caseNumber}</td>
-                    <td className="px-4 py-3 text-foreground">{a.type}</td>
-                    <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{a.description}</td>
-                    <td className="px-4 py-3 text-foreground">{a.amount ? `₱${a.amount}` : "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{formatDate(a.date)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Monitoring timeline */}
-      {tab === "monitoring" && (
-        <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <h2 className="text-sm font-semibold text-foreground">Status updates across all cases ({allTimeline.length})</h2>
-          </div>
-          <div>
-            {allTimeline.map((ev) => {
-              const evTheme = getCaseStatusTheme(ev.status)
-              return (
-                <div
-                  key={ev.id}
-                  onClick={() => setSelectedCaseId(ev.caseId)}
-                  className="flex gap-4 px-4 py-4 border-b border-border last:border-0 hover:bg-gray-50 cursor-pointer"
-                >
-                  <div className="flex flex-col items-center shrink-0">
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center ${evTheme?.chip || 'bg-slate-100 text-slate-700'}`}>
-                      {evTheme?.icon}
+            return (
+              <div
+                key={c.caseNumber}
+                onClick={() => setActiveCase(c)}
+                className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 transition-all hover:shadow-md hover:border-blue-200 cursor-pointer group"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  {/* Left Column: Beneficiary & Case Info */}
+                  <div className="flex items-start gap-3.5 min-w-0">
+                    <div className="h-11 w-11 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0 uppercase shadow-xs group-hover:bg-blue-600 transition-colors">
+                      {c.beneficiaryName.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                          {c.caseNumber}
+                        </span>
+                        <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${programColors[c.linkedProgram]}`}>
+                          {c.linkedProgram}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${pm.chip}`}>
+                          {pm.label}
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                        {c.beneficiaryName}
+                      </h3>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">
+                        QCID: {c.beneficiaryId} • REF: {c.applicationId} • {c.age !== "—" ? `${c.age} y/o` : ""} {c.sex !== "—" ? `• ${c.sex}` : ""}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0 pb-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-sm font-semibold text-foreground">{ev.clientName}</span>
-                      <span className="text-[11px] text-muted-foreground font-mono">{ev.caseNumber}</span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${evTheme?.chip || 'bg-slate-100 text-slate-700'}`}>
-                        {evTheme?.label}
+
+                  {/* Middle Column: Connected Module Statuses */}
+                  <div className="flex items-center gap-2.5 flex-wrap text-xs">
+                    {/* Appointment badge */}
+                    {c.linkedAppointment ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium">
+                        <Calendar className="h-3.5 w-3.5 text-indigo-500" />
+                        Appt: {c.linkedAppointment.status.toUpperCase()}
                       </span>
-                    </div>
-                    <p className="text-sm text-foreground">{ev.note}</p>
-                    <p className="text-[11px] text-muted-foreground mt-1.5">{formatDate(ev.date)} · {ev.by}</p>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-[11px]">
+                        No Appt
+                      </span>
+                    )}
+
+                    {/* Financial Aid badge */}
+                    {c.linkedFinancialAid ? (
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold border ${
+                          c.linkedFinancialAid.status === "RELEASED"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        }`}
+                      >
+                        <Wallet className="h-3.5 w-3.5" />
+                        ₱{c.linkedFinancialAid.fixedAmount.toLocaleString()} ({c.linkedFinancialAid.status})
+                      </span>
+                    ) : null}
+
+                    {/* Referral count badge */}
+                    {c.referrals.length > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 text-xs font-semibold">
+                        <Send className="h-3 w-3" />
+                        {c.referrals.length} Ref
+                      </span>
+                    )}
+
+                    {/* Monitoring count badge */}
+                    {c.monitoringLogs.length > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold">
+                        <Activity className="h-3 w-3" />
+                        {c.monitoringLogs.length} Mon
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Right Column: Case Status & Open Case Button */}
+                  <div className="flex items-center gap-3 shrink-0 self-end lg:self-center">
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border ${sm.chip}`}>
+                      <span className={`h-2 w-2 rounded-full ${sm.dot}`} />
+                      {sm.label}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setActiveCase(c)
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                    >
+                      Open Case
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+              </div>
+            )
+          })
+        )}
+      </div>
 
-      {selectedCase && (
-        <CaseProfileModal
-          c={selectedCase}
-          onClose={() => setSelectedCaseId(null)}
-          onAddReferral={handleAddReferral}
-          onAddAssistance={handleAddAssistance}
+      {/* Case Details Modal */}
+      {activeCase && (
+        <CaseDetailsModal
+          c={activeCase}
+          onClose={() => setActiveCase(null)}
           onUpdateStatus={handleUpdateStatus}
+          onAddReferral={handleAddReferral}
+          onAddMonitoring={handleAddMonitoring}
         />
       )}
     </div>
