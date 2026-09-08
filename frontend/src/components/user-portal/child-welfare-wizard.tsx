@@ -1849,14 +1849,13 @@ export default function ChildWelfareApplicationWizard({
               type="button"
               onClick={handleNext}
               disabled={!canGoNext}
-              className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
+              className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center ${
                 canGoNext
                   ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
             >
               <span>{t("nextButton") || "NEXT"}</span>
-              <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
             <button

@@ -1147,14 +1147,13 @@ export default function AICSServiceWizard({
                         setCurrentStep(2)
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    className={`flex items-center justify-center px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
                       canProceedStep1()
                         ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
                         : "bg-gray-200 text-gray-400 cursor-not-allowed"
                     }`}
                   >
                     <span>NEXT</span>
-                    <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
               </>
