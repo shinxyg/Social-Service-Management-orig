@@ -505,8 +505,8 @@ const Tokens = React.memo(function Tokens() {
 
       .gw-card{ background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow-soft); transition:box-shadow .15s ease, transform .15s ease; }
       .gw-card:hover{ box-shadow:var(--shadow-medium); transform:translateY(-1px); }
-      .gw-card--solo{ border-left:4px solid var(--plum); }
-      .gw-card--child{ border-left:4px solid var(--brick); }
+      .gw-card--solo{ }
+      .gw-card--child{ }
 
       .gw-avatar{ display:flex; align-items:center; justify-content:center; border-radius:12px; color:#fff; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; }
       .gw-avatar--solo{ background:linear-gradient(135deg, var(--plum), var(--plum-ink)); }
