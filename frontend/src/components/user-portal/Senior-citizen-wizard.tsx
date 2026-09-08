@@ -867,6 +867,13 @@ export default function SeniorCitizenApplicationWizard({
     return () => clearTimeout(timer)
   }, [isSubmitted])
 
+  // ---- BLOCKED / APPROVED state ----
+  const targetApp = blockedApp || latestApprovedApp
+  const isAppApproved =
+    String(targetApp?.status || "").toLowerCase() === "approved" ||
+    String(targetApp?.status || "").toLowerCase() === "completed" ||
+    String(targetApp?.status || "").toLowerCase() === "for_release"
+
   // ---- PENDING STATE (Identical to Solo Parent) ----
   if (isBlocked && !isAppApproved) {
     const serviceTitle =

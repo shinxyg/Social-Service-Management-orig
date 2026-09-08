@@ -653,58 +653,28 @@ export default function AICSServiceWizard({
     "REVIEW & SUBMIT",
   ]
 
-  // If blocked
+  // If blocked (Existing Pending Application)
   if (isBlocked) {
-    const displayRef = blockedApp?.reference_no || blockedApp?.qc_id || referenceNo || qcIdNumber || "110008572516915"
-    const displayDate = blockedApp?.created_at
-      ? new Date(blockedApp.created_at).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
-      : new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
-
     return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-8 w-8 text-amber-500" />
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            ← Back
+          </button>
+        )}
+        <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <Info className="h-7 w-7 text-amber-500" />
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">
-              {t("hasPendingAppTitle")}
-            </h2>
-            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
-              {t("hasPendingAppDesc").replace("{type}", serviceTitle)}
-            </p>
-          </div>
-
-          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
-            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">{t("appRefNoLabel")}</span>
-              <span className="font-mono font-bold text-blue-600">{displayRef}</span>
-            </div>
-            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">{t("appStatusLabel")}</span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                {t("statusPendingBadge")}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">{t("dateFiledLabel")}</span>
-              <span className="font-semibold text-gray-700">
-                {displayDate}
-              </span>
-            </div>
-          </div>
-
-          <div className="w-full pt-2 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/portal/financial-aid"
-              }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              VIEW IN FINANCIAL AID / MY APPLICATIONS
-            </button>
-          </div>
+          <h2 className="text-lg font-bold text-gray-900">
+            You Have an Existing Pending Application
+          </h2>
+          <p className="text-sm text-gray-500 max-w-sm">
+            You already have a pending application for {serviceTitle}. Please wait for the evaluation before submitting a new application.
+          </p>
         </div>
       </div>
     )

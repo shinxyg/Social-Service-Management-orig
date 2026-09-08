@@ -931,6 +931,11 @@ export default function SeniorBookletWizard({
   }
 
   // ---- PENDING STATE (Identical to Solo Parent) ----
+  const isAppApproved =
+    String(blockedApp?.status || "").toLowerCase() === "approved" ||
+    String(blockedApp?.status || "").toLowerCase() === "completed" ||
+    String(blockedApp?.status || "").toLowerCase() === "for_release"
+
   if (isBlocked && !isAppApproved && !bypassedBlock) {
     const serviceTitle = isMedicine ? "Medicine Discount Booklet" : "Free Movie Booklet"
 
