@@ -14,7 +14,6 @@ import {
   Users,
   HeartHandshake,
   Baby,
-  Home,
   ClipboardList,
   IdCard,
   Printer,

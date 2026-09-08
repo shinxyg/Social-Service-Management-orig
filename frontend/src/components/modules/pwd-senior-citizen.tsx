@@ -10,7 +10,6 @@ import {
   MapPin,
   Calendar,
   Paperclip,
-  Users,
   Image as ImageIcon,
   HeartHandshake,
   IdCard,
