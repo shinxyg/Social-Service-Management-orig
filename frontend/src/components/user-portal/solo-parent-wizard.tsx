@@ -2,7 +2,6 @@ import { useState, useEffect, type ReactNode } from "react"
 import {
   Check,
   CheckCircle2,
-  ChevronRight,
   ChevronUp,
   AlertCircle,
   FileText,

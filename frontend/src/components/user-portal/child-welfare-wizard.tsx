@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import {
   Check,
-  ChevronRight,
   FileText,
   Upload,
   X,

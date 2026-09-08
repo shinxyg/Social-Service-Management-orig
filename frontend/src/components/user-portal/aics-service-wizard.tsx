@@ -10,7 +10,6 @@ import {
   Pencil,
   ChevronUp,
   Sparkles,
-  ChevronRight,
   AlertCircle,
 } from "lucide-react"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
