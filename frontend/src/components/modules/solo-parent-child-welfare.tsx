@@ -22,7 +22,6 @@ import {
   Trash2,
 } from "lucide-react"
 import { API_BASE as APP_API_BASE } from "../../config/api"
-import { getSavedProfilePhoto } from "../../utils/profilePhoto"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { useLanguage } from "../ui/language-context"
 
