@@ -32,7 +32,15 @@ initSoloParentColumns();
 exports.createApplication = async (req, res) => {
   try {
     const { userId, applicationData, requiredDocumentIds } = req.body;
-    const { isResident, idStatus, selectedCategoryId, selectedCategory, existingIdNumber, isIdVerified, formData = {}, familyMembers = [] } = applicationData || {};
+    const appData = applicationData || req.body || {};
+    const fd = appData.formData || req.body.formData || {};
+    const familyMembers = appData.familyMembers || req.body.familyMembers || [];
+    const isResident = appData.isResident ?? req.body.isResident;
+    const idStatus = appData.idStatus || req.body.idStatus;
+    const selectedCategoryId = appData.selectedCategoryId || req.body.selectedCategoryId;
+    const selectedCategory = appData.selectedCategory || req.body.selectedCategory;
+    const existingIdNumber = appData.existingIdNumber || req.body.existingIdNumber;
+    const isIdVerified = appData.isIdVerified ?? req.body.isIdVerified;
 
     // Clean up any unsubmitted draft records so they never block new attempts
     await db.query(
@@ -41,19 +49,32 @@ exports.createApplication = async (req, res) => {
       [userId]
     );
 
-    const referenceNumber = req.body.referenceNumber || req.body.reference_number || (formData && (formData.qcidNumber || formData.qcidNo || formData.qcId)) || generateReference();
+    const referenceNumber = req.body.referenceNumber || req.body.reference_number || (fd && (fd.qcidNumber || fd.qcidNo || fd.qcId)) || generateReference();
 
-    const parsedAge = formData.age ? parseInt(formData.age, 10) : null;
+    const parsedAge = fd.age ? parseInt(fd.age, 10) : null;
     const safeAge = isNaN(parsedAge) ? null : parsedAge;
-    const soloParentIdNum = existingIdNumber || formData.soloParentIdNumber || null;
+    const soloParentIdNum = existingIdNumber || fd.soloParentIdNumber || null;
 
-    const emergencyFirstName = formData.emergencyFirstName || (formData.emergencyName ? formData.emergencyName.split(' ')[0] : null) || null;
-    const emergencyLastName = formData.emergencyLastName || (formData.emergencyName && formData.emergencyName.split(' ').length > 1 ? formData.emergencyName.split(' ').slice(1).join(' ') : null) || null;
-    const emergencyName = [emergencyFirstName, emergencyLastName].filter(Boolean).join(' ') || formData.emergencyName || formData.emergencyContactPerson || formData.emergencyPerson || null;
-    const emergencyPhone = formData.emergencyContactNo || formData.emergencyPhone || null;
-    const emergencyRel = formData.emergencyRelationship || formData.relationshipToApplicant || formData.relationship || null;
-    const emergencyAddr = formData.emergencyAddress || null;
-    const bloodType = formData.bloodType || 'O+';
+    const emergencyFirstName = fd.emergencyFirstName || appData.emergencyFirstName || (fd.emergencyName ? fd.emergencyName.split(' ')[0] : null) || null;
+    const emergencyLastName = fd.emergencyLastName || appData.emergencyLastName || (fd.emergencyName && fd.emergencyName.split(' ').length > 1 ? fd.emergencyName.split(' ').slice(1).join(' ') : null) || null;
+    const emergencyName = [emergencyFirstName, emergencyLastName].filter(Boolean).join(' ') || fd.emergencyName || fd.emergencyContactPerson || appData.emergencyName || null;
+    const emergencyPhone = fd.emergencyContactNo || fd.emergencyPhone || appData.emergencyContactNo || appData.emergencyPhone || null;
+    const emergencyRel = fd.emergencyRelationship || fd.relationshipToApplicant || fd.relationship || appData.emergencyRelationship || null;
+    const emergencyAddr = fd.emergencyAddress || appData.emergencyAddress || null;
+    const bloodType = fd.bloodType || appData.bloodType || 'O+';
+
+    const mergedFormData = {
+      ...fd,
+      emergencyFirstName,
+      emergencyLastName,
+      emergencyName,
+      emergencyContactPerson: emergencyName,
+      emergencyContactNo: emergencyPhone,
+      emergencyPhone,
+      emergencyRelationship: emergencyRel,
+      emergencyAddress: emergencyAddr,
+      bloodType,
+    };
 
     const result = await db.query(
       `INSERT INTO solo_parent_applications (
@@ -83,13 +104,13 @@ exports.createApplication = async (req, res) => {
         referenceNumber, userId, idStatus,
         isResident, selectedCategoryId, selectedCategory?.title || null, JSON.stringify(requiredDocumentIds || []),
         soloParentIdNum, Boolean(isIdVerified),
-        formData.firstName || null, formData.middleName || null, formData.lastName || null, formData.suffix || null, safeAge, formData.sex || null,
-        formData.dobMonth || null, formData.dobDay || null, formData.dobYear || null, formData.civilStatus || null, formData.contactNo || null,
-        formData.addressHouseNo || null, formData.addressStreet || null, formData.addressBarangay || null, formData.addressCityMunicipality || null,
-        formData.qcidNumber || null, formData.email || null,
-        formData.emergencyFirstName || null, formData.emergencyLastName || null, emergencyName,
+        fd.firstName || null, fd.middleName || null, fd.lastName || null, fd.suffix || null, safeAge, fd.sex || null,
+        fd.dobMonth || null, fd.dobDay || null, fd.dobYear || null, fd.civilStatus || null, fd.contactNo || null,
+        fd.addressHouseNo || null, fd.addressStreet || null, fd.addressBarangay || null, fd.addressCityMunicipality || null,
+        fd.qcidNumber || null, fd.email || null,
+        emergencyFirstName, emergencyLastName, emergencyName,
         emergencyPhone, emergencyRel, emergencyAddr,
-        bloodType, JSON.stringify(formData || {}), JSON.stringify(familyMembers || []), JSON.stringify({ formData, familyMembers })
+        bloodType, JSON.stringify(mergedFormData || {}), JSON.stringify(familyMembers || []), JSON.stringify({ formData: mergedFormData, familyMembers })
       ]
     );
 
@@ -552,6 +573,29 @@ exports.updateApplicationData = async (req, res) => {
 
     const soloParentIdNum = formData.soloParentIdNumber || formData.existingIdNumber || null;
 
+    const emergencyFirstName = formData.emergencyFirstName || (formData.emergencyName ? formData.emergencyName.split(' ')[0] : null) || null;
+    const emergencyLastName = formData.emergencyLastName || (formData.emergencyName && formData.emergencyName.split(' ').length > 1 ? formData.emergencyName.split(' ').slice(1).join(' ') : null) || null;
+    const emergencyName = [emergencyFirstName, emergencyLastName].filter(Boolean).join(' ') || formData.emergencyName || formData.emergencyContactPerson || null;
+    const emergencyPhone = formData.emergencyContactNo || formData.emergencyPhone || null;
+    const emergencyRel = formData.emergencyRelationship || formData.relationshipToApplicant || formData.relationship || null;
+    const emergencyAddr = formData.emergencyAddress || null;
+    const bloodType = formData.bloodType || 'O+';
+
+    const mergedFormData = {
+      ...formData,
+      emergencyFirstName,
+      emergencyLastName,
+      emergencyName,
+      emergencyContactPerson: emergencyName,
+      emergencyContactNo: emergencyPhone,
+      emergencyPhone,
+      emergencyRelationship: emergencyRel,
+      emergencyAddress: emergencyAddr,
+      bloodType,
+    };
+
+    const cleanId = String(applicationId).replace(/^SP-/, '').trim();
+
     const result = await db.query(
       `UPDATE solo_parent_applications SET
         first_name = $1, middle_name = $2, last_name = $3, suffix = $4, age = $5, sex = $6,
@@ -559,15 +603,21 @@ exports.updateApplicationData = async (req, res) => {
         address_house_no = $12, address_street = $13, address_barangay = $14, address_city_municipality = $15,
         qcid_number = $16, email = $17,
         solo_parent_id_number = COALESCE($18, solo_parent_id_number),
+        emergency_first_name = $19, emergency_last_name = $20, emergency_name = $21,
+        emergency_contact_no = $22, emergency_relationship = $23, emergency_address = $24,
+        blood_type = $25, form_data = $26, family_members = $27, extra_data = $28,
         updated_at = NOW()
-      WHERE id = $19 RETURNING id`,
+      WHERE id::text = $29 OR reference_number = $29 RETURNING id`,
       [
         formData.firstName || null, formData.middleName || null, formData.lastName || null, formData.suffix || null, safeAge, formData.sex || null,
         formData.dobMonth || null, formData.dobDay || null, formData.dobYear || null, formData.civilStatus || null, formData.contactNo || null,
         formData.addressHouseNo || null, formData.addressStreet || null, formData.addressBarangay || null, formData.addressCityMunicipality || null,
         formData.qcidNumber || null, formData.email || null,
         soloParentIdNum,
-        applicationId,
+        emergencyFirstName, emergencyLastName, emergencyName,
+        emergencyPhone, emergencyRel, emergencyAddr,
+        bloodType, JSON.stringify(mergedFormData), JSON.stringify(familyMembers || []), JSON.stringify({ formData: mergedFormData, familyMembers }),
+        cleanId,
       ]
     );
     if (result.rows.length === 0) {

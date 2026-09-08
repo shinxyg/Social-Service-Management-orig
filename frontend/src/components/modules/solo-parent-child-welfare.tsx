@@ -1371,9 +1371,11 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
 
               {/* Section 03: Emergency Contact */}
               {(() => {
-                const fd = (app as any).formData || (app as any).form_data || {}
-                const fdForm = typeof fd.formData === "object" ? fd.formData : fd
-                const ed = (app as any).extraData || (app as any).extra_data || {}
+                const rawFd = (app as any).formData || (app as any).form_data || {}
+                const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+                const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+                const rawEd = (app as any).extraData || (app as any).extra_data || {}
+                const ed = typeof rawEd === "string" ? parseJsonSafe(rawEd, {}) : (rawEd || {})
 
                 const emFirst = app.emergencyFirstName || fdForm.emergencyFirstName || fd.emergencyFirstName || ed.emergencyFirstName || (app as any).emergency_first_name || ""
                 const emLast = app.emergencyLastName || fdForm.emergencyLastName || fd.emergencyLastName || ed.emergencyLastName || (app as any).emergency_last_name || ""

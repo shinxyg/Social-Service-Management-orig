@@ -799,45 +799,47 @@ export default function SoloParentApplicationWizard({
 }: SoloParentApplicationWizardProps) {
   const { t, language } = useLanguage()
   const [idStatus, setIdStatus] = useState<IdStatus>(initialType)
+  const lastInitialTypeRef = React.useRef<string | null>(null)
 
   useEffect(() => {
-    if (initialType) {
+    if (initialType && lastInitialTypeRef.current !== initialType) {
+      lastInitialTypeRef.current = initialType
       setIdStatus(initialType)
       setIsIdVerified(false)
       setExistingIdNumber("")
       setVerifyError("")
       const prof = getCurrentUserProfile()
       const isNew = initialType === "new"
-      setFormData({
+      setFormData((prev) => ({
         ...EMPTY_FORM_DATA,
-        firstName: prof.firstName || userProfile?.firstName || "",
-        middleName: prof.middleName || userProfile?.middleName || "",
-        lastName: prof.lastName || userProfile?.lastName || "",
-        suffix: prof.suffix || userProfile?.suffix || "",
-        citizenship: prof.nationality || userProfile?.nationality || "FILIPINO",
-        dobMonth: prof.dobMonth || userProfile?.dobMonth || "",
-        dobDay: prof.dobDay || userProfile?.dobDay || "",
-        dobYear: prof.dobYear || userProfile?.dobYear || "",
-        age: prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : "",
-        sex: prof.sex || userProfile?.sex || "",
-        civilStatus: prof.civilStatus || userProfile?.civilStatus || "",
-        contactNo: prof.contactNo || userProfile?.contactNo || "",
-        addressHouseNo: prof.addressHouseNo || userProfile?.addressHouseNo || "",
-        addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
-        addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
-        addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
-        qcidNumber: prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
-        email: prof.email || userProfile?.email || "",
-        bloodType: (prof as any).bloodType || userProfile?.bloodType || "O+",
-        // Emergency contact: BLANK on new application; only auto-filled on renewal/loss
-        emergencyFirstName: isNew ? "" : (prof.emergencyFirstName || userProfile?.emergencyFirstName || ""),
-        emergencyLastName: isNew ? "" : (prof.emergencyLastName || userProfile?.emergencyLastName || ""),
-        emergencyContactNo: isNew ? "" : (prof.emergencyContactNo || userProfile?.emergencyContactNo || ""),
-        emergencyRelationship: isNew ? "" : (prof.emergencyRelationship || userProfile?.emergencyRelationship || ""),
-        emergencyAddress: isNew ? "" : ((prof as any).emergencyAddress || userProfile?.emergencyAddress || ""),
-      })
+        firstName: prev.firstName || prof.firstName || userProfile?.firstName || "",
+        middleName: prev.middleName || prof.middleName || userProfile?.middleName || "",
+        lastName: prev.lastName || prof.lastName || userProfile?.lastName || "",
+        suffix: prev.suffix || prof.suffix || userProfile?.suffix || "",
+        citizenship: prev.citizenship || prof.nationality || userProfile?.nationality || "FILIPINO",
+        dobMonth: prev.dobMonth || prof.dobMonth || userProfile?.dobMonth || "",
+        dobDay: prev.dobDay || prof.dobDay || userProfile?.dobDay || "",
+        dobYear: prev.dobYear || prof.dobYear || userProfile?.dobYear || "",
+        age: prev.age || (prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : ""),
+        sex: prev.sex || prof.sex || userProfile?.sex || "",
+        civilStatus: prev.civilStatus || prof.civilStatus || userProfile?.civilStatus || "",
+        contactNo: prev.contactNo || prof.contactNo || userProfile?.contactNo || "",
+        addressHouseNo: prev.addressHouseNo || prof.addressHouseNo || userProfile?.addressHouseNo || "",
+        addressStreet: prev.addressStreet || prof.addressStreet || userProfile?.addressStreet || "",
+        addressBarangay: prev.addressBarangay || prof.addressBarangay || userProfile?.addressBarangay || "",
+        addressCityMunicipality: prev.addressCityMunicipality || prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
+        qcidNumber: prev.qcidNumber || prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
+        email: prev.email || prof.email || userProfile?.email || "",
+        bloodType: prev.bloodType || (prof as any).bloodType || userProfile?.bloodType || "O+",
+        // Emergency contact: BLANK on new application unless already entered; only auto-filled on renewal/loss
+        emergencyFirstName: prev.emergencyFirstName || (isNew ? "" : (prof.emergencyFirstName || userProfile?.emergencyFirstName || "")),
+        emergencyLastName: prev.emergencyLastName || (isNew ? "" : (prof.emergencyLastName || userProfile?.emergencyLastName || "")),
+        emergencyContactNo: prev.emergencyContactNo || (isNew ? "" : (prof.emergencyContactNo || userProfile?.emergencyContactNo || "")),
+        emergencyRelationship: prev.emergencyRelationship || (isNew ? "" : (prof.emergencyRelationship || userProfile?.emergencyRelationship || "")),
+        emergencyAddress: prev.emergencyAddress || (isNew ? "" : ((prof as any).emergencyAddress || userProfile?.emergencyAddress || "")),
+      }))
     }
-  }, [initialType, userProfile])
+  }, [initialType])
 
   const STEPS = [
     { id: 1, label: language === "en" ? "COMPLETE CHECKLIST" : language === "bis" ? "KOMPLETOHA ANG CHECKLIST" : "KUMPLETOHING CHECKLIST" },
@@ -1418,6 +1420,23 @@ export default function SoloParentApplicationWizard({
     const fallbackRef = reference || generateReference(idStatus, userProfile?.qcidNo || formData?.qcidNumber)
     setReference(fallbackRef)
 
+    const emFirst = (formData.emergencyFirstName || "").trim()
+    const emLast = (formData.emergencyLastName || "").trim()
+    const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
+
+    const finalFormData = {
+      ...formData,
+      emergencyFirstName: emFirst,
+      emergencyLastName: emLast,
+      emergencyName: emCombined || formData.emergencyName || "",
+      emergencyContactPerson: emCombined || formData.emergencyContactPerson || "",
+      emergencyContactNo: (formData.emergencyContactNo || "").trim(),
+      emergencyPhone: (formData.emergencyContactNo || "").trim(),
+      emergencyRelationship: (formData.emergencyRelationship || "").trim(),
+      emergencyAddress: (formData.emergencyAddress || "").trim(),
+      bloodType: formData.bloodType || "O+",
+    }
+
     try {
       // 1. Create application record sa backend
       const res = await fetch(`${API_BASE}/api/solo-parent/create`, {
@@ -1425,6 +1444,7 @@ export default function SoloParentApplicationWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId,
+          referenceNumber: fallbackRef,
           applicationData: {
             isResident,
             idStatus,
@@ -1432,8 +1452,17 @@ export default function SoloParentApplicationWizard({
             selectedCategory,
             existingIdNumber,
             isIdVerified,
-            formData,
+            formData: finalFormData,
             familyMembers,
+            emergencyFirstName: emFirst,
+            emergencyLastName: emLast,
+            emergencyName: emCombined,
+            emergencyContactPerson: emCombined,
+            emergencyContactNo: (formData.emergencyContactNo || "").trim(),
+            emergencyPhone: (formData.emergencyContactNo || "").trim(),
+            emergencyRelationship: (formData.emergencyRelationship || "").trim(),
+            emergencyAddress: (formData.emergencyAddress || "").trim(),
+            bloodType: formData.bloodType || "O+",
           },
           requiredDocumentIds: requiredDocs.map((d) => d.id),
         }),
