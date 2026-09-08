@@ -20,13 +20,13 @@ const CHALLENGES: PhotoChallenge[] = [
     prompt: 'traffic lights',
     keyword: 'traffic light',
     imageSrc: '/captcha/challenge_traffic_light.jpg',
-    matchingTiles: [0, 1, 4, 5],
+    matchingTiles: [1, 4],
   },
   {
     prompt: 'fire hydrants',
     keyword: 'fire hydrant',
     imageSrc: '/captcha/challenge_fire_hydrant.jpg',
-    matchingTiles: [3, 4, 6, 7],
+    matchingTiles: [4, 7],
   },
   {
     prompt: 'bicycles',
@@ -45,6 +45,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
   const [selectedTiles, setSelectedTiles] = useState<number[]>([]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [shake, setShake] = useState(false);
 
   if (!isOpen) return null;
 
@@ -67,7 +68,9 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
 
   const handleVerify = () => {
     if (selectedTiles.length === 0) {
-      setErrorMessage('Please select all matching squares before verifying.');
+      setErrorMessage('Please select all squares containing the object before clicking verify.');
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
       return;
     }
 
@@ -76,14 +79,36 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
 
     setTimeout(() => {
       setIsVerifying(false);
-      onVerifySuccess();
-      onClose();
+
+      const targetMatches = currentChallenge.matchingTiles;
+
+      // 1. Check if user selected any wrong tiles that definitely do not have the target object
+      const hasWrongTile = selectedTiles.some((tileIdx) => !targetMatches.includes(tileIdx));
+
+      // 2. Check if user selected at least all required matching tiles
+      const matchedCount = selectedTiles.filter((tileIdx) => targetMatches.includes(tileIdx)).length;
+      const requiredCount = targetMatches.length;
+
+      const isCorrect = !hasWrongTile && matchedCount === requiredCount;
+
+      if (isCorrect) {
+        onVerifySuccess();
+        onClose();
+      } else {
+        // Show error message and shake modal
+        setErrorMessage('Incorrect. Please try again with the new image.');
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+        setSelectedTiles([]);
+        // Advance to next challenge photo
+        setChallengeIdx((prev) => prev + 1);
+      }
     }, 600);
   };
 
   return (
     <div className="fixed inset-0 z-120 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
-      <div className="bg-white rounded-lg shadow-2xl border border-slate-300 w-full max-w-[360px] overflow-hidden select-none animate-scale-up text-left">
+      <div className={`bg-white rounded-lg shadow-2xl border border-slate-300 w-full max-w-[360px] overflow-hidden select-none animate-scale-up text-left transition-transform ${shake ? 'animate-bounce' : ''}`}>
         
         {/* Challenge Header (Authentic reCAPTCHA style) */}
         <div className="bg-[#1A73E8] p-4 text-white">
@@ -94,7 +119,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
             {currentChallenge.prompt}
           </h4>
           <p className="text-[11px] opacity-85 mt-1 leading-snug">
-            If there are none, click skip or select all matching parts.
+            Click all matching parts, then click VERIFY.
           </p>
         </div>
 
@@ -139,8 +164,8 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
         </div>
 
         {errorMessage && (
-          <div className="px-3 py-1.5 bg-red-50 border-t border-red-100 text-[11px] text-red-600 font-semibold text-center">
-            {errorMessage}
+          <div className="px-3 py-2 bg-red-50 border-t border-b border-red-200 text-[11px] text-red-600 font-bold text-center animate-fade-in">
+            ⚠️ {errorMessage}
           </div>
         )}
 
