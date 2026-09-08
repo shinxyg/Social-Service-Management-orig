@@ -162,16 +162,15 @@ export default function ApplyPWDSenior() {
             }
           }
 
-          const appRef = String(a.referenceNumber || a.reference_number || a.id || a.qc_id || a.qcid || "").trim()
+          const appRef = String(a.referenceNumber || a.reference_number || a.qc_id || a.qcid || "").trim()
           const appEmail = String(a.email || "").toLowerCase().trim()
           const appLastName = String(a.lastName || a.last_name || "").toLowerCase().trim()
           const appFirstName = String(a.firstName || a.first_name || "").toLowerCase().trim()
 
           const matchUser =
-            (currentQcid && (appRef === currentQcid || appRef.includes(currentQcid) || currentQcid.includes(appRef) || a.qcid === currentQcid || a.qc_id === currentQcid)) ||
+            (currentQcid && (appRef === currentQcid || (appRef.length >= 8 && appRef.includes(currentQcid)) || a.qcid === currentQcid || a.qc_id === currentQcid)) ||
             (currentEmail && appEmail && currentEmail === appEmail) ||
-            (currentLastName && appLastName && currentFirstName && appFirstName && currentLastName === appLastName && currentFirstName === appFirstName) ||
-            (currentLastName && appLastName && (currentLastName === appLastName || appLastName.includes(currentLastName)))
+            (currentLastName && appLastName && currentFirstName && appFirstName && currentLastName === appLastName && currentFirstName === appFirstName)
 
           return Boolean(matchUser)
         }

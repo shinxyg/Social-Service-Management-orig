@@ -619,12 +619,12 @@ export default function PWDSocialAssistanceWizard({
         if (res.ok) {
           const data = await res.json()
           if (Array.isArray(data) && isMounted) {
-            const currentQcid = getLoggedInUserQcid() || (userProfile as any)?.qcidNumber || userProfile?.qcidNo || "110000572516915"
+            const currentQcid = (getLoggedInUserQcid() || (userProfile as any)?.qcidNumber || userProfile?.qcidNo || "").trim()
             const matched = data.find((a: any) => {
-              const appRef = String(a.referenceNumber || a.reference_number || a.id || "").trim()
+              const appRef = String(a.referenceNumber || a.reference_number || a.qc_id || a.qcid || "").trim()
               return (
-                (reference && (appRef === reference || appRef.includes(reference))) ||
-                (currentQcid && (appRef === currentQcid || appRef.includes(currentQcid)))
+                (reference && (appRef === reference || (appRef.length >= 8 && appRef.includes(reference)))) ||
+                (currentQcid && (appRef === currentQcid || (appRef.length >= 8 && appRef.includes(currentQcid))))
               )
             })
             if (matched) {
