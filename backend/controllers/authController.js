@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { sendOtpEmail } = require('../services/emailService');
+const { sendOtpEmail, sendPasswordResetEmail } = require('../services/emailService');
 
 // In-memory fallback stores
 let memoryOtps = new Map(); // email -> { otpCode, expiresAt, isUsed }
@@ -638,3 +638,181 @@ exports.updateProfile = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error updating profile', error: err.message });
   }
 };
+
+/**
+ * POST /api/auth/forgot-password
+ * Sends password reset instructions with a 6-digit OTP code and direct reset link to user's Gmail
+ */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check if user exists in DB or memory store
+    let recipientName = 'Resident';
+    try {
+      const userRes = await db.query('SELECT first_name, last_name, email FROM users WHERE LOWER(email) = $1', [cleanEmail]);
+      if (userRes.rows.length > 0) {
+        const u = userRes.rows[0];
+        recipientName = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Resident';
+      }
+    } catch (dbErr) {
+      console.warn('[DB Warning in forgotPassword]:', dbErr.message);
+    }
+
+    // Generate random 6-digit numeric OTP and token
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+    // Save to Database
+    try {
+      await db.query(
+        `INSERT INTO email_otps (email, otp_code, expires_at, is_used, created_at)
+         VALUES ($1, $2, $3, false, NOW())`,
+        [cleanEmail, otpCode, expiresAt]
+      );
+    } catch (dbErr) {
+      console.warn('[DB Error] Saving Reset OTP to DB failed, using memory store:', dbErr.message);
+    }
+
+    // Always keep in memory store as fallback
+    memoryOtps.set(cleanEmail, {
+      otpCode,
+      resetToken,
+      expiresAt: expiresAt.getTime(),
+      isUsed: false,
+    });
+
+    const frontendBase = (process.env.FRONTEND_URL || 'https://frontend-production-1c51.up.railway.app').replace(/\/+$/, '');
+    const resetUrl = `${frontendBase}/reset-password?email=${encodeURIComponent(cleanEmail)}&otp=${otpCode}&token=${resetToken}`;
+
+    console.log(`[Password Reset] Generated OTP ${otpCode} for ${cleanEmail}. Dispatching email...`);
+
+    const emailResult = await sendPasswordResetEmail({
+      recipientEmail: cleanEmail,
+      otpCode,
+      resetUrl,
+      recipientName,
+    });
+
+    if (emailResult.success) {
+      return res.status(200).json({
+        success: true,
+        message: `Password reset instructions and verification code have been sent to ${cleanEmail}.`,
+        provider: emailResult.provider,
+        email: cleanEmail,
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        message: `Password reset code generated for ${cleanEmail}. Check your inbox or proceed to reset.`,
+        email: cleanEmail,
+      });
+    }
+  } catch (err) {
+    console.error('Error in forgotPassword controller:', err);
+    return res.status(500).json({ success: false, message: 'Server error while processing password reset', error: err.message });
+  }
+};
+
+/**
+ * POST /api/auth/reset-password
+ * Verifies OTP code and sets the new password for the account
+ */
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otpCode, newPassword } = req.body;
+
+    if (!email || !otpCode || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Email, verification code (OTP), and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanOtp = otpCode.trim();
+
+    let isValid = false;
+
+    // 1. Verify in DB
+    try {
+      const dbRes = await db.query(
+        `SELECT * FROM email_otps 
+         WHERE LOWER(email) = $1 AND otp_code = $2 AND is_used = false AND expires_at > NOW()
+         ORDER BY id DESC LIMIT 1`,
+        [cleanEmail, cleanOtp]
+      );
+
+      if (dbRes.rows.length > 0) {
+        isValid = true;
+        await db.query(`UPDATE email_otps SET is_used = true WHERE id = $1`, [dbRes.rows[0].id]);
+      }
+    } catch (dbErr) {
+      console.warn('[DB Error] Verifying Reset OTP in DB failed, checking memory:', dbErr.message);
+    }
+
+    // 2. Fallback verify in memory
+    if (!isValid) {
+      const memRecord = memoryOtps.get(cleanEmail);
+      if (memRecord && !memRecord.isUsed && memRecord.otpCode === cleanOtp && memRecord.expiresAt > Date.now()) {
+        isValid = true;
+        memRecord.isUsed = true;
+      }
+    }
+
+    if (!isValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification code (OTP). Please request a new password reset.',
+      });
+    }
+
+    // Update user's password in Database
+    try {
+      const updateRes = await db.query(
+        `UPDATE users SET password = $1, updated_at = NOW() WHERE LOWER(email) = $2 RETURNING id, email, first_name, last_name, role`,
+        [newPassword, cleanEmail]
+      );
+
+      // If user wasn't found in DB, check memoryUsers or insert
+      if (updateRes.rows.length === 0) {
+        const memIdx = memoryUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
+        if (memIdx !== -1) {
+          memoryUsers[memIdx].password = newPassword;
+        } else {
+          await db.query(
+            `INSERT INTO users (email, password, first_name, role, is_email_verified, created_at, updated_at)
+             VALUES ($1, $2, 'Resident', 'user', true, NOW(), NOW())
+             ON CONFLICT (email) DO UPDATE SET password = $2, updated_at = NOW()`,
+            [cleanEmail, newPassword]
+          );
+        }
+      }
+    } catch (dbErr) {
+      console.warn('[DB Error] Updating password failed:', dbErr.message);
+      const memIdx = memoryUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
+      if (memIdx !== -1) {
+        memoryUsers[memIdx].password = newPassword;
+      }
+    }
+
+    memoryOtps.delete(cleanEmail);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password has been successfully updated! You can now sign in with your new password.',
+    });
+  } catch (err) {
+    console.error('Error in resetPassword controller:', err);
+    return res.status(500).json({ success: false, message: 'Server error while updating password', error: err.message });
+  }
+};
+

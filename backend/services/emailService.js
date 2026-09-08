@@ -1147,12 +1147,174 @@ async function sendSoloParentApprovalEmail({
   };
 }
 
+/**
+ * Sends a Password Reset email with OTP and direct reset link to the recipient.
+ */
+async function sendPasswordResetEmail({
+  recipientEmail,
+  otpCode,
+  resetUrl,
+  recipientName = 'Resident',
+}) {
+  if (!recipientEmail || !recipientEmail.includes('@')) {
+    console.warn(`[Mailer] Invalid recipient email for Password Reset: "${recipientEmail}". Skipped.`);
+    return { success: false, message: 'Invalid recipient email' };
+  }
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>GovServe - Password Reset Request</title>
+      <style>
+        body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .container { max-width: 580px; margin: 30px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 30px 24px; text-align: center; color: #ffffff; }
+        .header h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+        .header p { margin: 6px 0 0; font-size: 13px; opacity: 0.9; }
+        .content { padding: 32px 24px; color: #1e293b; text-align: center; }
+        .badge { display: inline-block; background-color: #fef2f2; color: #dc2626; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 9999px; border: 1px solid #fecaca; margin-bottom: 20px; }
+        .otp-box { background: #f8fafc; border: 2px dashed #dc2626; border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center; }
+        .otp-code { font-size: 36px; font-weight: 800; font-family: 'Courier New', monospace; letter-spacing: 8px; color: #991b1b; margin: 8px 0; }
+        .otp-note { font-size: 12px; color: #64748b; margin-top: 6px; }
+        .btn-reset { display: inline-block; background-color: #dc2626; color: #ffffff !important; font-weight: 700; font-size: 14px; padding: 12px 28px; text-decoration: none; border-radius: 8px; margin: 16px 0; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3); }
+        .warning-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #92400e; line-height: 1.5; text-align: left; margin-top: 20px; }
+        .footer { background: #f8fafc; padding: 20px 24px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="Government Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
+          <h1>GovServe</h1>
+          <p>Social Services Management System</p>
+        </div>
+
+        <div class="content">
+          <div>
+            <span class="badge">PASSWORD RESET REQUEST</span>
+          </div>
+
+          <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Hello, ${recipientName}!</h2>
+          <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
+            Nakatanggap kami ng kahilingan na i-reset ang password ng iyong GovServe Resident Account.
+          </p>
+
+          <div class="otp-box">
+            <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 1px;">YOUR 6-DIGIT RESET CODE</div>
+            <div class="otp-code">${otpCode}</div>
+            <div class="otp-note">Valid for <strong>15 minutes</strong>.</div>
+          </div>
+
+          ${resetUrl ? `
+          <div style="margin: 20px 0;">
+            <p style="font-size: 13px; color: #475569; margin-bottom: 10px;">O kaya ay direktang i-click ang button sa ibaba:</p>
+            <a href="${resetUrl}" class="btn-reset" target="_blank">Reset Password Now</a>
+            <p style="font-size: 11px; color: #94a3b8; word-break: break-all; margin-top: 8px;">Direct Link: <a href="${resetUrl}" style="color: #2563eb;">${resetUrl}</a></p>
+          </div>
+          ` : ''}
+
+          <div class="warning-box">
+            <strong>Paunawa sa Seguridad:</strong> Kung hindi mo hiniling ang password reset na ito, mangyaring balewalain lamang ang email na ito. Mananatiling ligtas at hindi magagalaw ang iyong account.
+          </div>
+        </div>
+
+        <div class="footer">
+          <p style="margin: 0 0 4px;">Ito ay opisyal na automated security notification mula sa GovServe Portal.</p>
+          <p style="margin: 0;">GovServe Social Services Management Portal | Lungsod Quezon</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // 1. PRIMARY: Direct Gmail SMTP
+  const transporter = createTransporter();
+  const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
+  const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
+  const attachments = getLogoAttachments();
+
+  const mailOptions = {
+    from: `"GovServe Security" <${senderEmail}>`,
+    to: recipientEmail.trim(),
+    subject: `[GovServe] Password Reset Request - Verification Code: ${otpCode}`,
+    text: `Greetings ${recipientName}! Your password reset verification code is: ${otpCode}. Valid for 15 minutes. Reset link: ${resetUrl || 'Visit GovServe login page'}`,
+    html: htmlContent,
+    attachments,
+  };
+
+  if (transporter) {
+    try {
+      console.log(`[Gmail SMTP 465] Dispatching Password Reset to: ${recipientEmail}...`);
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`[Gmail SMTP 465] Password Reset delivered to ${recipientEmail}. MessageId: ${info.messageId}`);
+      return { success: true, messageId: info.messageId, delivered: true, recipient: recipientEmail, provider: 'gmail-smtp-465' };
+    } catch (primaryErr) {
+      console.warn(`[Gmail SMTP 465 Failed for Password Reset] ${primaryErr.message}, trying port 587...`);
+      try {
+        const fallbackTransporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: { user: senderEmail, pass: emailPass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        });
+        const info = await fallbackTransporter.sendMail(mailOptions);
+        console.log(`[Gmail SMTP 587] Password Reset delivered to ${recipientEmail}. MessageId: ${info.messageId}`);
+        return { success: true, messageId: info.messageId, delivered: true, recipient: recipientEmail, provider: 'gmail-smtp-587' };
+      } catch (fallbackErr) {
+        console.warn(`[Gmail SMTP 587 Failed for Password Reset] ${fallbackErr.message}, attempting Brevo fallback...`);
+      }
+    }
+  }
+
+  // 2. FALLBACK: Brevo API
+  const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
+  if (brevoApiKey) {
+    try {
+      console.log(`[Brevo API Fallback] Sending Password Reset to: ${recipientEmail}...`);
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': brevoApiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: 'GovServe Security', email: senderEmail },
+          to: [{ email: recipientEmail.trim(), name: recipientName }],
+          subject: `[GovServe] Password Reset Request - Verification Code: ${otpCode}`,
+          htmlContent: htmlContent,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.messageId) {
+        console.log(`[Brevo API] Password Reset delivered to ${recipientEmail}. MessageId: ${data.messageId}`);
+        return { success: true, messageId: data.messageId, delivered: true, recipient: recipientEmail, provider: 'brevo' };
+      }
+    } catch (err) {
+      console.warn(`[Brevo Password Reset Exception] ${err.message}`);
+    }
+  }
+
+  return {
+    success: false,
+    message: `Failed to deliver Password Reset email to ${recipientEmail}.`,
+  };
+}
+
 module.exports = {
   sendPwdApprovalEmail,
   sendSeniorCitizenApprovalEmail,
   sendSeniorBookletApprovalEmail,
   sendSoloParentApprovalEmail,
   sendOtpEmail,
+  sendPasswordResetEmail,
 };
 
 

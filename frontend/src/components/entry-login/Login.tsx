@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, X, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, X, Eye, EyeOff, ExternalLink, KeyRound, CheckCircle2 } from 'lucide-react';
 import { API_BASE } from '../../config/api';
+import { RecaptchaModal } from '../ui/recaptcha-modal';
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ export const Login = () => {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isNotRobot, setIsNotRobot] = useState(false);
-  const [isVerifyingRobot, setIsVerifyingRobot] = useState(false);   
+  const [isRecaptchaChallengeOpen, setIsRecaptchaChallengeOpen] = useState(false);
   const [resetError, setResetError] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -166,15 +167,30 @@ export const Login = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmReset = () => {
+  const handleConfirmReset = async () => {
     setIsConfirmModalOpen(false);
     setIsResetLoading(true);
+    setResetError('');
 
-    // Simulate sending reset email
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail.trim().toLowerCase() }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setResetSuccess(true);
+      } else {
+        setResetError(data.message || 'Failed to send password reset email. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error in forgotPassword:', err);
+      setResetError('Network error connecting to backend. Please check your connection.');
+    } finally {
       setIsResetLoading(false);
-      setResetSuccess(true);
-    }, 1500);
+    }
   };
 
   const closeForgotPasswordModal = () => {
@@ -344,19 +360,46 @@ export const Login = () => {
             </button>
 
             {resetSuccess ? (
-              <div className="text-center py-2">
+              <div className="text-center py-2 animate-scale-up">
+                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
                 <h3 className="text-xl sm:text-2xl font-extrabold text-[#0F3D5C] mb-2" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                   Check your email
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-500 mb-6">
-                  We've sent a password reset link to <span className="font-semibold text-slate-700">{resetEmail}</span>.
+                <p className="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed">
+                  We've dispatched a password reset link and 6-digit verification code to <span className="font-semibold text-slate-700">{resetEmail}</span>.
                 </p>
-                <button
-                  onClick={closeForgotPasswordModal}
-                  className="w-full py-2.5 bg-[#0F172A] hover:bg-slate-800 text-white font-medium text-xs sm:text-sm rounded-lg transition-colors cursor-pointer"
-                >
-                  Back to Sign In
-                </button>
+
+                <div className="space-y-2.5">
+                  <a
+                    href="https://mail.google.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2.5 px-4 bg-[#1A73E8] hover:bg-[#1557B0] text-white font-semibold text-xs sm:text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Mail className="w-4 h-4" /> Open Gmail Inbox <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeForgotPasswordModal();
+                      navigate(`/reset-password?email=${encodeURIComponent(resetEmail)}`);
+                    }}
+                    className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <KeyRound className="w-4 h-4" /> Enter Code / Set New Password
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={closeForgotPasswordModal}
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs sm:text-sm rounded-lg transition-colors cursor-pointer"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
               </div>
             ) : (
               <>
@@ -390,49 +433,37 @@ export const Login = () => {
                       required
                     />
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isNotRobot || isVerifyingRobot) {
-                              setIsNotRobot(false);
-                              return;
-                            }
-                            setIsVerifyingRobot(true);
-                            setTimeout(() => {
-                              setIsVerifyingRobot(false);
-                              setIsNotRobot(true);
-                            }, 1000);
-                          }}
-                          disabled={isVerifyingRobot}
-                          className="w-full flex items-center justify-between gap-3 border border-slate-300 rounded-lg bg-slate-50 px-4 py-3 cursor-pointer hover:bg-slate-100 transition-colors disabled:opacity-70 disabled:cursor-wait"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isNotRobot) {
+                          setIsNotRobot(false);
+                          return;
+                        }
+                        setIsRecaptchaChallengeOpen(true);
+                      }}
+                      className="w-full flex items-center justify-between gap-3 border border-slate-300 rounded-lg bg-slate-50 px-4 py-3 cursor-pointer hover:bg-slate-100 transition-colors"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <span
+                          className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                            isNotRobot ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-400'
+                          }`}
                         >
-                          <span className="flex items-center gap-2.5">
-                            <span
-                              className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                                isNotRobot ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-400'
-                              }`}
-                            >
-                              {isVerifyingRobot ? (
-                                <svg className="w-3 h-3 animate-spin text-slate-400" viewBox="0 0 24 24" fill="none">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
-                                </svg>
-                              ) : (
-                                isNotRobot && (
-                                  <svg viewBox="0 0 20 20" fill="white" className="w-3.5 h-3.5">
-                                    <path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.4 7.4a1 1 0 0 1-1.4 0L3.3 9.5a1 1 0 1 1 1.4-1.4L8.6 12l6.7-6.7a1 1 0 0 1 1.4 0z" />
-                                  </svg>
-                                )
-                              )}
-                            </span>
-                            <span className="text-xs sm:text-sm text-slate-700">
-                              {isVerifyingRobot ? 'Verifying...' : "I'm not a robot"}
-                            </span>
-                          </span>
-                          <span className="text-[9px] text-slate-400 font-medium leading-tight text-right">
-                            reCAPTCHA
-                          </span>
-                        </button>
+                          {isNotRobot && (
+                            <svg viewBox="0 0 20 20" fill="white" className="w-3.5 h-3.5">
+                              <path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.4 7.4a1 1 0 0 1-1.4 0L3.3 9.5a1 1 0 1 1 1.4-1.4L8.6 12l6.7-6.7a1 1 0 0 1 1.4 0z" />
+                            </svg>
+                          )}
+                        </span>
+                        <span className="text-xs sm:text-sm text-slate-700 font-medium">
+                          {isNotRobot ? 'Verified: I am not a robot' : "I'm not a robot"}
+                        </span>
+                      </span>
+                      <span className="text-[9px] text-slate-400 font-medium leading-tight text-right">
+                        reCAPTCHA
+                      </span>
+                    </button>
 
                     <button
                       type="submit"
@@ -527,8 +558,15 @@ export const Login = () => {
         </div>
       )}
 
-     
-
+      {/* Interactive reCAPTCHA Modal Challenge */}
+      <RecaptchaModal
+        isOpen={isRecaptchaChallengeOpen}
+        onClose={() => setIsRecaptchaChallengeOpen(false)}
+        onVerifySuccess={() => {
+          setIsNotRobot(true);
+          setResetError('');
+        }}
+      />
     </div>
   );
 };

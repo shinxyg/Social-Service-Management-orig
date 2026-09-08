@@ -14,6 +14,12 @@ router.post('/register', authController.register);
 // POST /api/auth/login
 router.post('/login', authController.login);
 
+// POST /api/auth/forgot-password
+router.post('/forgot-password', authController.forgotPassword);
+
+// POST /api/auth/reset-password
+router.post('/reset-password', authController.resetPassword);
+
 // GET /api/auth/profile & GET /api/users/profile
 router.get('/profile', authController.getProfile);
 

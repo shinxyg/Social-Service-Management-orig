@@ -7,6 +7,7 @@ import SocialServicesLayout from "./components/layout/layout"
 import { moduleRoutes, defaultModulePath } from "./components/layout/routes"
 import { Login } from "./components/entry-login/Login"
 import { Register } from "./components/entry-login/Register"
+import { ResetPassword } from "./components/entry-login/ResetPassword"
 import LandingPage from "./pages/landing"
 
 import CitizenGuideHub from "./components/user-portal/citizen-guide-hub"
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to={homePath} replace />} />
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to={homePath} replace />} />
           <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to={homePath} replace />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Super Admin Routes */}
           <Route path="/super-admin/login" element={!isAuthenticated ? <SuperAdminLogin /> : <Navigate to={homePath} replace />} />
