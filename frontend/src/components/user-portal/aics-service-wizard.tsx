@@ -181,7 +181,7 @@ const editableInputCls =
 
 export default function AICSServiceWizard({
   serviceType,
-  onBack: _onBack,
+  onBack,
 }: AICSServiceWizardProps) {
   const { t } = useLanguage()
 
@@ -206,7 +206,7 @@ export default function AICSServiceWizard({
 
   // Eligibility check state
   const [isBlocked, setIsBlocked] = useState(false)
-  const [blockedApp, setBlockedApp] = useState<any>(null)
+  const [_blockedApp, setBlockedApp] = useState<any>(null)
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false)
