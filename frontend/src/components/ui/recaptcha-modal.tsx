@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, Headphones, Info, Check, ShieldCheck } from 'lucide-react';
+import { RefreshCw, Headphones, Info, Check } from 'lucide-react';
 
 interface RecaptchaModalProps {
   isOpen: boolean;
