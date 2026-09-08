@@ -879,14 +879,7 @@ export default function SoloParentApplicationWizard({
           a.family_members ||
           a.familyMembers
 
-        const status = String(a.application_status || a.status || "").toLowerCase()
-        const isApproved =
-          status === "approved" ||
-          status === "completed" ||
-          status === "for_release" ||
-          status === "active"
-
-        return isApproved
+        return isApproved && Boolean(isSolo)
       })
 
       // Strict match: Must match an approved record belonging to this user or matching the ID
