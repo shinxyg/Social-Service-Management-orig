@@ -286,6 +286,24 @@ function AppointmentCard({
   )
 }
 
+// Helper: Robust single-key deduplicator for appointments
+function getAppointmentDeduplicationKey(a: { referenceNo?: string; applicantName?: string; concern?: string; module?: string }): string {
+  const cleanRef = String(a.referenceNo || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim()
+  if (cleanRef) {
+    return `ref_${cleanRef}`
+  }
+  const cleanName = String(a.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
+  const cleanConcern = String(a.concern || "")
+    .toLowerCase()
+    .replace(/assistance/g, "")
+    .replace(/social/g, "")
+    .replace(/program/g, "")
+    .replace(/capital/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim()
+  return `name_${cleanName}_${cleanConcern}`
+}
+
 // ---- Main Component ----
 export default function Appointments() {
   const [appointments, setAppointments] = useState<AppointmentRequest[]>(MOCK_APPOINTMENTS)
@@ -321,10 +339,11 @@ export default function Appointments() {
               })
               .map((a: any) => {
                 const apptId = `db-appt-${a.id}`
-                const cached = localScheduledMap[apptId]
+                const ref = a.qc_id || a.qcid || a.reference_no || a.reference_number || ""
+                const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${a.concern}`]
                 return {
                   id: apptId,
-                  referenceNo: a.qc_id || a.qcid || a.reference_no || a.reference_number,
+                  referenceNo: ref,
                   module: (a.module || "AICS") as ModuleKey,
                   applicantName: a.applicant_name,
                   submittedAt: a.created_at || new Date().toISOString(),
@@ -353,28 +372,20 @@ export default function Appointments() {
                 const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                 const cleanType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
 
-                const alreadyExists = appts.some((ap) => 
-                  ap.id === apptId || 
-                  (ap.referenceNo === ref && (ap.module === "AICS" || ap.concern.toLowerCase() === cleanType.toLowerCase())) ||
-                  (ap.applicantName.toLowerCase() === fullName.toLowerCase() && ap.concern.toLowerCase() === cleanType.toLowerCase())
-                )
-
-                if (!alreadyExists) {
-                  const cached = localScheduledMap[apptId]
-                  appts.push({
-                    id: apptId,
-                    referenceNo: ref,
-                    module: "AICS",
-                    applicantName: fullName,
-                    submittedAt: app.created_at || new Date().toISOString(),
-                    concern: cleanType,
-                    status: (cached?.status || "pending") as AppointmentStatus,
-                    scheduledDate: cached?.scheduledDate,
-                    scheduledTime: cached?.scheduledTime,
-                    officeLocation: cached?.officeLocation,
-                    notes: cached?.notes,
-                  })
-                }
+                const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${cleanType}`]
+                appts.push({
+                  id: apptId,
+                  referenceNo: ref,
+                  module: "AICS",
+                  applicantName: fullName,
+                  submittedAt: app.created_at || new Date().toISOString(),
+                  concern: cleanType,
+                  status: (cached?.status || "pending") as AppointmentStatus,
+                  scheduledDate: cached?.scheduledDate,
+                  scheduledTime: cached?.scheduledTime,
+                  officeLocation: cached?.officeLocation,
+                  notes: cached?.notes,
+                })
               }
             })
           }
@@ -424,51 +435,59 @@ export default function Appointments() {
                 const isPwdApp = String(app.category || app.service || app.assistanceType || "").toUpperCase().includes("PWD")
                 const concernName = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
 
-                const alreadyExists = appts.some((ap) => 
-                  ap.id === apptId || 
-                  (ap.referenceNo === ref && (ap.module === "PWD" || ap.module === "Senior Citizen")) ||
-                  (ap.applicantName.toLowerCase() === fullName.toLowerCase() && ap.concern.toLowerCase() === concernName.toLowerCase())
-                )
-
-                if (!alreadyExists) {
-                  const cached = localScheduledMap[apptId]
-                  appts.push({
-                    id: apptId,
-                    referenceNo: ref,
-                    module: isPwdApp ? "PWD" : "Senior Citizen",
-                    applicantName: fullName,
-                    submittedAt: app.submittedAt || app.created_at || new Date().toISOString(),
-                    concern: concernName,
-                    status: (cached?.status || "pending") as AppointmentStatus,
-                    scheduledDate: cached?.scheduledDate,
-                    scheduledTime: cached?.scheduledTime,
-                    officeLocation: cached?.officeLocation,
-                    notes: cached?.notes,
-                  })
-                }
+                const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concernName}`]
+                appts.push({
+                  id: apptId,
+                  referenceNo: ref,
+                  module: isPwdApp ? "PWD" : "Senior Citizen",
+                  applicantName: fullName,
+                  submittedAt: app.submittedAt || app.created_at || new Date().toISOString(),
+                  concern: concernName,
+                  status: (cached?.status || "pending") as AppointmentStatus,
+                  scheduledDate: cached?.scheduledDate,
+                  scheduledTime: cached?.scheduledTime,
+                  officeLocation: cached?.officeLocation,
+                  notes: cached?.notes,
+                })
               }
             }
           })
         }
 
-        // Final safety deduplication: Ensure single unique appointment card per application reference and concern
+        // Strict single-appointment deduplication by normalized reference / applicant
         const dedupedMap = new Map<string, AppointmentRequest>()
+        const statusPriority: Record<AppointmentStatus, number> = { completed: 3, scheduled: 2, pending: 1 }
+
         appts.forEach((a) => {
           const c = (a.concern || '').toLowerCase()
           if (c.includes('id card') || c.includes('issuance') || c.includes('replacement') || c.includes('renewal')) {
             return
           }
-          const key = `${a.referenceNo || ''}_${a.module || ''}_${a.concern || ''}`.toLowerCase().trim()
+          const key = getAppointmentDeduplicationKey(a)
           if (!dedupedMap.has(key)) {
             dedupedMap.set(key, a)
           } else {
             const existing = dedupedMap.get(key)!
-            // Keep scheduled/completed status if one is scheduled, or prefer official db-appt
-            if (existing.status === 'pending' && a.status !== 'pending') {
-              dedupedMap.set(key, a)
-            } else if (!existing.id.startsWith('db-appt-') && a.id.startsWith('db-appt-')) {
-              dedupedMap.set(key, a)
+            const curPrio = statusPriority[a.status] || 1
+            const exPrio = statusPriority[existing.status] || 1
+
+            const merged: AppointmentRequest = { ...existing }
+            if (curPrio > exPrio) {
+              merged.status = a.status
             }
+            if (a.scheduledDate && (!merged.scheduledDate || curPrio >= exPrio)) {
+              merged.scheduledDate = a.scheduledDate
+              merged.scheduledTime = a.scheduledTime
+              merged.officeLocation = a.officeLocation
+              merged.notes = a.notes || merged.notes
+            }
+            if (a.id.startsWith('db-appt-')) {
+              merged.id = a.id
+            }
+            if (a.concern && a.concern.length > (merged.concern || '').length) {
+              merged.concern = a.concern
+            }
+            dedupedMap.set(key, merged)
           }
         })
 
@@ -484,16 +503,19 @@ export default function Appointments() {
     const liveTimer = setInterval(() => {
       checkAndAutoReleaseScheduledDisbursements()
       const now = new Date()
-      setAppointments((prev) =>
-        prev.map((a) => {
+      setAppointments((prev) => {
+        let hasChanges = false
+        const updated = prev.map((a) => {
           if (a.status === "scheduled" && a.scheduledDate) {
             const dt = parseAppointmentDateTime(a.scheduledDate, a.scheduledTime)
             if (dt && now.getTime() >= dt.getTime()) {
+              hasChanges = true
               try {
                 const raw = localStorage.getItem("all_appointments_scheduled")
                 const localMap = raw ? JSON.parse(raw) : {}
-                localMap[a.id] = { status: "completed" }
-                localMap[a.referenceNo] = { status: "completed" }
+                localMap[a.id] = { status: "completed", scheduledDate: a.scheduledDate, scheduledTime: a.scheduledTime }
+                localMap[a.referenceNo] = { status: "completed", scheduledDate: a.scheduledDate, scheduledTime: a.scheduledTime }
+                localMap[`${a.referenceNo}_${a.concern}`] = { status: "completed", scheduledDate: a.scheduledDate, scheduledTime: a.scheduledTime }
                 localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
               } catch {}
               fetch(`${API_BASE}/api/appointments/${encodeURIComponent(a.referenceNo)}/complete`, { method: "PUT" }).catch(() => {})
@@ -502,8 +524,9 @@ export default function Appointments() {
           }
           return a
         })
-      )
-    }, 5000)
+        return hasChanges ? updated : prev
+      })
+    }, 3000)
 
     const handleStorageChange = () => fetchAppointments()
     window.addEventListener("appointments_updated", handleStorageChange)

@@ -162,6 +162,17 @@ export function pushUserNotification(notif: {
   try {
     const raw = localStorage.getItem("all_user_notifications")
     const existing: UserNotificationItem[] = raw ? JSON.parse(raw) : []
+
+    // Strict deduplication check: avoid duplicate notifications for same application and title
+    if (notif.applicationRef) {
+      const isDuplicate = existing.some(
+        (e) =>
+          String(e.applicationRef || "").trim() === String(notif.applicationRef || "").trim() &&
+          e.title === notif.title
+      )
+      if (isDuplicate) return
+    }
+
     const newNotif: UserNotificationItem = {
       id: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       title: notif.title,
