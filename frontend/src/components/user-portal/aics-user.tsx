@@ -123,7 +123,7 @@ export default function AICSUser() {
         getLoggedInUserQcid() ||
         prof?.qcidNo ||
         prof?.qcidNumber ||
-        "110000572516915"
+        ""
       )
         .toLowerCase()
         .trim()
@@ -135,7 +135,6 @@ export default function AICSUser() {
         app.reference_no ||
           app.referenceNumber ||
           app.reference_number ||
-          app.applicationRef ||
           app.qc_id ||
           app.qcId ||
           app.qcid ||
@@ -155,39 +154,30 @@ export default function AICSUser() {
         .toLowerCase()
         .trim()
 
-      const matchQcid =
-        (currentQcid &&
-          (appRef === currentQcid ||
-            appRef.includes(currentQcid) ||
-            currentQcid.includes(appRef))) ||
-        appRef.includes("110000116932100") ||
-        appRef.includes("110000572516915")
+      const matchQcid = currentQcid && (appRef === currentQcid || appRef.includes(currentQcid) || currentQcid.includes(appRef))
       const matchEmail = Boolean(currentEmail && appEmail && currentEmail === appEmail)
       const matchName = Boolean(
-        (currentLastName &&
+        currentLastName &&
           currentFirstName &&
           appName.includes(currentLastName) &&
-          appName.includes(currentFirstName)) ||
-          appName.includes("clarisa") ||
-          appName.includes("dimal") ||
-          appName.includes("renz") ||
-          appName.includes("millares")
+          appName.includes(currentFirstName)
       )
 
-      return Boolean(matchQcid || matchEmail || matchName || app.isCurrentUser)
+      return Boolean(matchQcid || matchEmail || matchName)
     }
 
     const checkActiveApp = async () => {
       if (bypassedBlockRef.current) return
       try {
         let allApps: any[] = []
-        const currentQcid = getLoggedInUserQcid() || "110000572516915"
+        const currentQcid = getLoggedInUserQcid()
 
-        // 1. Fetch user-specific AICS applications
+        // 1. Fetch user-specific AICS applications from backend
         try {
-          const res = await fetch(
-            `${API_BASE}/api/aics/applications?qcId=${encodeURIComponent(currentQcid)}`
-          )
+          const url = currentQcid
+            ? `${API_BASE}/api/aics/applications?qcId=${encodeURIComponent(currentQcid)}`
+            : `${API_BASE}/api/aics/applications`
+          const res = await fetch(url)
           if (res.ok) {
             const data = await res.json()
             if (data.applications && Array.isArray(data.applications)) {
@@ -198,64 +188,24 @@ export default function AICSUser() {
           }
         } catch {}
 
-        // 2. Global applications fallback
+        // 2. LocalStorage items fallback (only active aics_applications)
         try {
-          const resGlobal = await fetch(`${API_BASE}/api/aics/applications`)
-          if (resGlobal.ok) {
-            const dataGlobal = await resGlobal.json()
-            const list = Array.isArray(dataGlobal)
-              ? dataGlobal
-              : dataGlobal.applications || []
-            for (const item of list) {
+          const local = JSON.parse(localStorage.getItem("aics_applications") || "[]")
+          if (Array.isArray(local)) {
+            for (const la of local) {
               if (
-                item &&
+                la &&
                 !allApps.some(
                   (a) =>
-                    (a.id && a.id === item.id) ||
-                    (a.reference_no && a.reference_no === item.reference_no)
+                    (a.id && a.id === la.id) ||
+                    (a.reference_no && a.reference_no === (la.reference_no || la.referenceNumber))
                 )
               ) {
-                allApps.push(item)
+                allApps.push(la)
               }
             }
           }
         } catch {}
-
-        // 3. LocalStorage items fallback
-        const localKeys = [
-          "aics_applications",
-          "all_financial_disbursements",
-          "applications",
-          "all_user_applications",
-          "active_applications",
-          "citizen_applications",
-          "user_applications",
-        ]
-        for (const k of localKeys) {
-          try {
-            const local = JSON.parse(localStorage.getItem(k) || "[]")
-            if (Array.isArray(local)) {
-              for (const la of local) {
-                if (
-                  la &&
-                  !allApps.some(
-                    (a) =>
-                      (a.id && a.id === la.id) ||
-                      (a.reference_no && a.reference_no === (la.reference_no || la.applicationRef))
-                  )
-                ) {
-                  allApps.push({
-                    ...la,
-                    reference_no: la.reference_no || la.applicationRef || la.disbursementId || la.id,
-                    assistance_type: la.assistance_type || la.assistanceType || la.type || la.service,
-                    created_at: la.created_at || la.dateApproved || la.submittedAt,
-                    isCurrentUser: true,
-                  })
-                }
-              }
-            }
-          } catch {}
-        }
 
         const userMatchingApps = allApps
           .filter((a) => isMatchForService(a, typeParam))
