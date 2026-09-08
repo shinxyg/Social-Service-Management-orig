@@ -576,10 +576,6 @@ export default function SeniorCitizenApplicationWizard({
     let isMounted = true
 
     const checkActiveApp = async () => {
-      let matchedApproved: any = null
-      let matchedPendingForFlow: any = null
-      let matchedPendingAny: any = null
-
       const expectedType =
         appFlow === "renewal"
           ? "renewal"
@@ -612,55 +608,15 @@ export default function SeniorCitizenApplicationWizard({
         return Boolean(isQcidMatch || isEmailMatch || isNameMatch)
       }
 
+      let allUserSeniorApps: any[] = []
+
       // 1. Fetch from backend API
       try {
         const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
         if (res.ok && isMounted) {
           const apps = await res.json()
           if (Array.isArray(apps)) {
-            const userApps = apps.filter(checkUserMatches)
-            const approvedFlow = userApps.find((a) => {
-              if (a.status !== "approved" && a.status !== "completed" && a.status !== "for_release") return false
-              if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
-              if (expectedType === "renewal") return a.type === "renewal"
-              return a.type === "new" || !a.type
-            })
-            const pendingFlow = userApps.find((a) => {
-              if (a.status !== "pending" && a.status !== "under_review") return false
-              if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
-              if (expectedType === "renewal") return a.type === "renewal"
-              return a.type === "new" || !a.type
-            })
-            const approvedAny = userApps.find((a) => a.status === "approved" || a.status === "completed" || a.status === "for_release")
-            const pendingAny = userApps.find((a) => a.status === "pending" || a.status === "under_review")
-
-            if (approvedFlow) matchedApproved = approvedFlow
-            else if (expectedType === "new" && approvedAny) matchedApproved = approvedAny
-
-            if (pendingFlow && !matchedApproved) matchedPendingForFlow = pendingFlow
-            if (pendingAny && !matchedApproved) matchedPendingAny = pendingAny
-
-            // Sync with local storage
-            try {
-              const raw = localStorage.getItem("pwd_senior_applications")
-              if (raw) {
-                let localApps = JSON.parse(raw)
-                if (Array.isArray(localApps)) {
-                  let updated = false
-                  localApps = localApps.map((la: any) => {
-                    const match = apps.find((ba: any) => ba.id === la.id || (ba.referenceNumber && ba.referenceNumber === la.referenceNumber))
-                    if (match && la.status !== match.status) {
-                      updated = true
-                      return { ...la, status: match.status, assignedIdNumber: match.assignedIdNumber || la.assignedIdNumber }
-                    }
-                    return la
-                  })
-                  if (updated) {
-                    localStorage.setItem("pwd_senior_applications", JSON.stringify(localApps))
-                  }
-                }
-              }
-            } catch {}
+            allUserSeniorApps = apps.filter(checkUserMatches)
           }
         }
       } catch {}
@@ -675,26 +631,18 @@ export default function SeniorCitizenApplicationWizard({
               const apps = JSON.parse(saved)
               if (Array.isArray(apps)) {
                 const userApps = apps.filter(checkUserMatches)
-                const approvedFlow = userApps.find((a) => {
-                  if (a.status !== "approved" && a.status !== "completed" && a.status !== "for_release") return false
-                  if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
-                  if (expectedType === "renewal") return a.type === "renewal"
-                  return a.type === "new" || !a.type
-                })
-                const pendingFlow = userApps.find((a) => {
-                  if (a.status !== "pending" && a.status !== "under_review") return false
-                  if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
-                  if (expectedType === "renewal") return a.type === "renewal"
-                  return a.type === "new" || !a.type
-                })
-                const approvedAny = userApps.find((a) => a.status === "approved" || a.status === "completed" || a.status === "for_release")
-                const pendingAny = userApps.find((a) => a.status === "pending" || a.status === "under_review")
-
-                if (!matchedApproved && approvedFlow) matchedApproved = approvedFlow
-                else if (!matchedApproved && expectedType === "new" && approvedAny) matchedApproved = approvedAny
-
-                if (!matchedApproved && !matchedPendingForFlow && pendingFlow) matchedPendingForFlow = pendingFlow
-                if (!matchedApproved && !matchedPendingAny && pendingAny) matchedPendingAny = pendingAny
+                for (const ua of userApps) {
+                  if (
+                    ua &&
+                    !allUserSeniorApps.some(
+                      (ba) =>
+                        (ba.id && ba.id === ua.id) ||
+                        (ba.referenceNumber && ba.referenceNumber === ua.referenceNumber)
+                    )
+                  ) {
+                    allUserSeniorApps.push(ua)
+                  }
+                }
               }
             }
           } catch {}
@@ -703,15 +651,56 @@ export default function SeniorCitizenApplicationWizard({
 
       if (!isMounted) return
 
-      if (matchedApproved) {
-        setBlockedApp(matchedApproved)
-        setLatestApprovedApp(matchedApproved)
-        setIsBlocked(true)
-      } else if (matchedPendingForFlow) {
-        setBlockedApp(matchedPendingForFlow)
+      // Prioritized Match Resolvers
+      const pendingFlow = allUserSeniorApps.find((a) => {
+        if (a.status !== "pending" && a.status !== "under_review") return false
+        if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
+        if (expectedType === "renewal") return a.type === "renewal"
+        return a.type === "new" || !a.type
+      })
+
+      const pendingAny = allUserSeniorApps.find(
+        (a) => a.status === "pending" || a.status === "under_review"
+      )
+
+      const approvedFlow = allUserSeniorApps.find((a) => {
+        if (a.status !== "approved" && a.status !== "completed" && a.status !== "for_release")
+          return false
+        if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
+        if (expectedType === "renewal") return a.type === "renewal"
+        return a.type === "new" || !a.type
+      })
+
+      const approvedAny = allUserSeniorApps.find(
+        (a) => a.status === "approved" || a.status === "completed" || a.status === "for_release"
+      )
+
+      // PRIORITY 1: Pending application for this specific flow (e.g. renewal under review)
+      if (pendingFlow) {
+        setBlockedApp(pendingFlow)
         setLatestApprovedApp(null)
         setIsBlocked(true)
-      } else {
+      }
+      // PRIORITY 2: Any other pending Senior Citizen application under review
+      else if (pendingAny) {
+        setBlockedApp(pendingAny)
+        setLatestApprovedApp(null)
+        setIsBlocked(true)
+      }
+      // PRIORITY 3: Approved application for this specific flow
+      else if (approvedFlow) {
+        setBlockedApp(approvedFlow)
+        setLatestApprovedApp(approvedFlow)
+        setIsBlocked(true)
+      }
+      // PRIORITY 4: If flow is "new" and already has an approved Senior ID, block "new"
+      else if (expectedType === "new" && approvedAny) {
+        setBlockedApp(approvedAny)
+        setLatestApprovedApp(approvedAny)
+        setIsBlocked(true)
+      }
+      // OTHERWISE: Allow user to fill out Renewal, Replacement, or Booklet form
+      else {
         setBlockedApp(null)
         setLatestApprovedApp(null)
         setIsBlocked(false)
