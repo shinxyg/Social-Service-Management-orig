@@ -8,7 +8,6 @@ const db = require('./config/db');
 const initDb = require('./config/initDb');
 
 const aicsRoutes = require('./routes/aics');
-const chatRoutes = require('./routes/chat');
 const activityLogRoutes = require('./routes/activityLog');
 const soloParentRoutes = require('./routes/soloParentRoutes');
 const childWelfareRoutes = require('./routes/childWelfareRoutes');
@@ -78,7 +77,6 @@ app.get('/api/test-db', async (req, res) => {
 
 // API Routes
 app.use('/api/aics', aicsRoutes);
-app.use('/api/chat', chatRoutes);
 app.use('/api/activity-log', activityLogRoutes);
 app.use('/api/solo-parent', soloParentRoutes);
 app.use('/api/child-welfare', childWelfareRoutes);

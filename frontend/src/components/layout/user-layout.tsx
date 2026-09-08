@@ -21,7 +21,6 @@ import {
   BookOpen,
 } from "lucide-react"
 import { Tooltip } from "../ui/tooltip"
-import { AIChatWidget } from "../ui/ai-chat-widget"
 import { ProfileModal } from "../ui/profile-modal"
 import { useLanguage } from "../ui/language-context"
 import { getSavedProfilePhoto } from "../../utils/profilePhoto"
@@ -1060,7 +1059,6 @@ export default function UserLayout() {
           <Outlet />
         </main>
       </div>
-      <AIChatWidget />
     </div>
   )
 }
