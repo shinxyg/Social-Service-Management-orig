@@ -2727,12 +2727,9 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     invalid={attemptedNext && !(formData.causeOfDisability || DISABILITY_TYPE_MAPPING[disabilityType]?.defaultCause)}
                     invalidNote="Required"
                   >
-                    <SelectInput
+                    <LockedField
                       value={formData.causeOfDisability || DISABILITY_TYPE_MAPPING[disabilityType]?.defaultCause || ""}
-                      onChange={(v) => updateField("causeOfDisability", v)}
-                      options={CAUSE_OF_DISABILITY}
-                      disabled={true}
-                      invalid={attemptedNext && !(formData.causeOfDisability || DISABILITY_TYPE_MAPPING[disabilityType]?.defaultCause)}
+                      placeholder="Cause of Disability"
                     />
                   </Field>
                   <Field label={t("pwdSpecificDisabilityLabel")}>
