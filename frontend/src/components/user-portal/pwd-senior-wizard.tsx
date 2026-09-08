@@ -2736,14 +2736,15 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                   <Field
                     label={t("pwdCauseOfDisabilityLabel")}
                     required
-                    invalid={attemptedNext && (formData.causeOfDisability || "").trim() === ""}
+                    invalid={attemptedNext && !(formData.causeOfDisability || DISABILITY_TYPE_MAPPING[disabilityType]?.defaultCause)}
                     invalidNote="Required"
                   >
                     <SelectInput
-                      value={formData.causeOfDisability}
+                      value={formData.causeOfDisability || DISABILITY_TYPE_MAPPING[disabilityType]?.defaultCause || ""}
                       onChange={(v) => updateField("causeOfDisability", v)}
                       options={CAUSE_OF_DISABILITY}
-                      invalid={attemptedNext && (formData.causeOfDisability || "").trim() === ""}
+                      disabled={true}
+                      invalid={attemptedNext && !(formData.causeOfDisability || DISABILITY_TYPE_MAPPING[disabilityType]?.defaultCause)}
                     />
                   </Field>
                   <Field label={t("pwdSpecificDisabilityLabel")}>
