@@ -1389,8 +1389,42 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     }, 1000)
   }
 
-  // ---- BLOCKED / APPROVED state ----
-  if (isBlocked || latestApprovedApp) {
+  // ---- PENDING STATE (Identical to Solo Parent) ----
+  if (isBlocked && !latestApprovedApp) {
+    const serviceTitle =
+      initialIdStatus === "renewal"
+        ? "PWD ID Renewal"
+        : initialIdStatus === "loss"
+        ? "PWD ID Replacement"
+        : "PWD ID"
+
+    return (
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            ← Back
+          </button>
+        )}
+        <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <Info className="h-7 w-7 text-amber-500" />
+          </div>
+          <h2 className="text-lg font-bold text-gray-900">
+            You Have an Existing Pending Application
+          </h2>
+          <p className="text-sm text-gray-500 max-w-sm">
+            You already have a pending application for {serviceTitle}. Please wait for the evaluation before submitting a new application.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // ---- APPROVED state ----
+  if (latestApprovedApp) {
     const targetApp = blockedApp || latestApprovedApp
     const isAppApproved =
       String(targetApp?.status || "").toLowerCase() === "approved" ||
