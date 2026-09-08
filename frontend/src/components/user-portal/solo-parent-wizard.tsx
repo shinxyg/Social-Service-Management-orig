@@ -731,14 +731,14 @@ export default function SoloParentApplicationWizard({
           addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
           addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
           addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
-          qcidNumber: prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || userProfile?.qcidNumber || "",
+          qcidNumber: prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
           email: prof.email || userProfile?.email || "",
-          bloodType: prof.bloodType || userProfile?.bloodType || "O+",
+          bloodType: (prof as any).bloodType || userProfile?.bloodType || "O+",
           emergencyFirstName: prof.emergencyFirstName || userProfile?.emergencyFirstName || "",
           emergencyLastName: prof.emergencyLastName || userProfile?.emergencyLastName || "",
           emergencyContactNo: prof.emergencyContactNo || userProfile?.emergencyContactNo || "",
           emergencyRelationship: prof.emergencyRelationship || userProfile?.emergencyRelationship || "",
-          emergencyAddress: prof.emergencyAddress || userProfile?.emergencyAddress || "",
+          emergencyAddress: (prof as any).emergencyAddress || userProfile?.emergencyAddress || "",
         })
       }
     }
@@ -995,7 +995,7 @@ export default function SoloParentApplicationWizard({
           addressStreet: matchedApp.address_street || matchedApp.addressStreet || userProfile?.addressStreet || prev.addressStreet,
           addressBarangay: matchedApp.address_barangay || matchedApp.addressBarangay || userProfile?.addressBarangay || prev.addressBarangay,
           addressCityMunicipality: matchedApp.address_city_municipality || matchedApp.addressCityMunicipality || userProfile?.addressCityMunicipality || prev.addressCityMunicipality || "QUEZON CITY",
-          qcidNumber: matchedApp.qcid_number || matchedApp.qcidNumber || userProfile?.qcidNo || userProfile?.qcidNumber || prev.qcidNumber,
+          qcidNumber: matchedApp.qcid_number || matchedApp.qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || prev.qcidNumber,
           email: matchedApp.email || userProfile?.email || prev.email,
           bloodType: matchedApp.blood_type || matchedApp.bloodType || userProfile?.bloodType || prev.bloodType || "O+",
           emergencyFirstName: matchedApp.emergency_first_name || matchedApp.emergencyFirstName || userProfile?.emergencyFirstName || prev.emergencyFirstName,
@@ -1213,14 +1213,14 @@ export default function SoloParentApplicationWizard({
         addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
         addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
         addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
-        qcidNumber: prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || userProfile?.qcidNumber || "",
+        qcidNumber: prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
         email: prof.email || userProfile?.email || "",
-        bloodType: prof.bloodType || userProfile?.bloodType || "O+",
+        bloodType: (prof as any).bloodType || userProfile?.bloodType || "O+",
         emergencyFirstName: prof.emergencyFirstName || userProfile?.emergencyFirstName || "",
         emergencyLastName: prof.emergencyLastName || userProfile?.emergencyLastName || "",
         emergencyContactNo: prof.emergencyContactNo || userProfile?.emergencyContactNo || "",
         emergencyRelationship: prof.emergencyRelationship || userProfile?.emergencyRelationship || "",
-        emergencyAddress: prof.emergencyAddress || userProfile?.emergencyAddress || (prof.addressHouseNo ? `${prof.addressHouseNo} ${prof.addressStreet}, ${prof.addressBarangay}, ${prof.addressCityMunicipality}` : ""),
+        emergencyAddress: (prof as any).emergencyAddress || userProfile?.emergencyAddress || (prof.addressHouseNo ? `${prof.addressHouseNo} ${prof.addressStreet}, ${prof.addressBarangay}, ${prof.addressCityMunicipality}` : ""),
       }
     }
     return { ...EMPTY_FORM_DATA }
