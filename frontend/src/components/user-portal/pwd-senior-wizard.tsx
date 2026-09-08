@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, type ReactNode } from "react"
-import { Check, CheckCircle2, Upload, Camera, ChevronRight, ChevronDown, Pencil, FileText, AlertCircle, Info, X, Sparkles, Loader2 } from "lucide-react"
+import { Check, CheckCircle2, Upload, Camera, ChevronDown, Pencil, FileText, AlertCircle, Info, X, Sparkles, Loader2 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
@@ -3023,7 +3023,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
             >
-              {t("nextButton").toUpperCase()} <ChevronRight className="h-4 w-4" />
+              <span>{t("nextButton").toUpperCase()}</span>
             </button>
           ) : (
             <button
