@@ -8,6 +8,21 @@ function generateReference(qcid) {
   return '110000116932100';
 }
 
+async function getUniqueReferenceNumber(baseRef, appType) {
+  let clean = String(baseRef || '').trim() || generateReference();
+  let candidate = clean;
+  let attempt = 0;
+  while (true) {
+    const existing = await db.query('SELECT id FROM solo_parent_applications WHERE reference_number = $1', [candidate]);
+    if (existing.rows.length === 0) {
+      return candidate;
+    }
+    attempt++;
+    const suffix = appType === 'renewal' ? `-RNW${attempt}` : appType === 'loss' ? `-REP${attempt}` : `-${attempt}`;
+    candidate = `${clean}${suffix}`;
+  }
+}
+
 async function initSoloParentColumns() {
   try {
     await db.query(`
@@ -36,7 +51,7 @@ exports.createApplication = async (req, res) => {
     const fd = appData.formData || req.body.formData || {};
     const familyMembers = appData.familyMembers || req.body.familyMembers || [];
     const isResident = appData.isResident ?? req.body.isResident;
-    const idStatus = appData.idStatus || req.body.idStatus;
+    const idStatus = appData.idStatus || req.body.idStatus || 'new';
     const selectedCategoryId = appData.selectedCategoryId || req.body.selectedCategoryId;
     const selectedCategory = appData.selectedCategory || req.body.selectedCategory;
     const existingIdNumber = appData.existingIdNumber || req.body.existingIdNumber;
@@ -49,7 +64,8 @@ exports.createApplication = async (req, res) => {
       [userId]
     );
 
-    const referenceNumber = req.body.referenceNumber || req.body.reference_number || (fd && (fd.qcidNumber || fd.qcidNo || fd.qcId)) || generateReference();
+    const baseRef = req.body.referenceNumber || req.body.reference_number || (fd && (fd.qcidNumber || fd.qcidNo || fd.qcId)) || generateReference();
+    const referenceNumber = await getUniqueReferenceNumber(baseRef, idStatus);
 
     const parsedAge = fd.age ? parseInt(fd.age, 10) : null;
     const safeAge = isNaN(parsedAge) ? null : parsedAge;
