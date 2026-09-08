@@ -1122,7 +1122,7 @@ export default function ChildWelfareApplicationWizard({
     const ref = generateReference(userProfile?.qcidNo || formData.qcidNumber)
     setReference(ref)
     setShowConfirmModal(false)
-    setSubmissionStage("matching")
+    setSubmissionStage("pending")
 
     const userId = (userProfile as any)?.id || (userProfile as any)?.userId || "0"
     const payload = {
@@ -1191,20 +1191,7 @@ export default function ChildWelfareApplicationWizard({
       notifyApplicationChange("APPLICATION_SUBMITTED", "child_welfare", ref)
     }
 
-    setTimeout(() => {
-      setSubmissionStage("pending")
-    }, 1500)
-  }
-
-  // Pending Success Screen
-  if (submissionStage === "matching") {
-    return (
-      <div className="max-w-xl mx-auto p-8 my-12 bg-white border border-border rounded-2xl text-center space-y-4 shadow-sm">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
-        <h3 className="text-base font-bold text-gray-900">{t("appProcessingTitle") || "Pinoproseso ang inyong Aplikasyon..."}</h3>
-        <p className="text-xs text-gray-500">{t("appProcessingDesc") || "Ipinapasa ang mga detalye sa Child Welfare Support Division."}</p>
-      </div>
-    )
+    setSubmissionStage("pending")
   }
 
   if (submissionStage === "pending") {
