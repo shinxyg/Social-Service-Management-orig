@@ -1218,35 +1218,11 @@ export default function SoloParentApplicationWizard({
           }
         }
 
-        // Auto-fill existing application details and Emergency Contact on Renewal / Loss
+        // Pre-fill formData behind the scenes on Renewal / Loss without modifying Step 1 checkboxes or verification
         if (approvedApp && (typeToCheck === "renewal" || typeToCheck === "loss") && !isBlockedFound) {
-          const rawOfficialId =
-            approvedApp.assigned_id_number ||
-            approvedApp.assignedIdNumber ||
-            approvedApp.solo_parent_id_number ||
-            approvedApp.soloParentIdNumber ||
-            approvedApp.reference_number ||
-            approvedApp.referenceNumber ||
-            ""
-          const officialId = formatSoloParentIdInput(rawOfficialId)
           const emergencyData = extractEmergencyContact(approvedApp, prof)
 
           if (isMounted) {
-            setExistingIdNumber((prev) => prev || officialId)
-            setIsIdVerified(true)
-            setIsResident(true)
-            setHasSoleParentalCare(true)
-            if (typeToCheck === "renewal") {
-              setRenewalReason((prev) => prev || "Renewal of Expired Solo Parent ID")
-            } else {
-              setReplacementReason((prev) => prev || "Lost")
-            }
-            setVerifiedRecord((prev) => prev || {
-              name: `${approvedApp.first_name || approvedApp.firstName || prof.firstName || ""} ${approvedApp.last_name || approvedApp.lastName || prof.lastName || ""}`.trim(),
-              idNumber: officialId,
-              barangay: approvedApp.address_barangay || approvedApp.addressBarangay || prof.addressBarangay || "SAUYO",
-              status: typeToCheck === "renewal" ? "Active / Expired" : "Replacement / Lost ID",
-            })
             setFormData((prev) => ({
               ...prev,
               firstName: approvedApp.first_name || approvedApp.firstName || prof.firstName || prev.firstName,
