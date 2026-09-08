@@ -330,6 +330,7 @@ exports.updateApplicationStatus = async (req, res) => {
            rejection_reason = $3,
            approved_by = $4,
            solo_parent_id_number = COALESCE($5, solo_parent_id_number),
+           assigned_id_number = COALESCE($5, assigned_id_number),
            updated_at = NOW()
        WHERE id::text = $6 OR reference_number = $6 RETURNING *`,
       [

@@ -16,12 +16,14 @@ async function initDb() {
     // Migration patches for solo_parent_applications (New, Renewal, Lost ID)
     await db.query(`
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS solo_parent_id_number VARCHAR(100);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS assigned_id_number VARCHAR(100);
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS is_id_verified BOOLEAN DEFAULT false;
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS civil_status VARCHAR(100);
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS qcid_number VARCHAR(100);
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS email VARCHAR(150);
       CREATE INDEX IF NOT EXISTS idx_solo_parent_type ON solo_parent_applications(application_type);
       CREATE INDEX IF NOT EXISTS idx_solo_parent_id_num ON solo_parent_applications(solo_parent_id_number);
+      CREATE INDEX IF NOT EXISTS idx_solo_parent_assigned_id ON solo_parent_applications(assigned_id_number);
 
       -- Clean up legacy columns not used by New, Renewal, and Lost ID
       ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS place_of_birth;

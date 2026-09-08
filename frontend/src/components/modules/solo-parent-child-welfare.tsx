@@ -249,8 +249,8 @@ function mapSoloParentRow(row: any): SoloParentSubmission {
     familyResources: row.family_resources,
     documents: mapUploadedDocuments(row),
     status: row.application_status,
-    soloParentIdNumber: row.solo_parent_id_number || undefined,
-    assignedIdNumber: row.assigned_id_number || undefined,
+    soloParentIdNumber: row.solo_parent_id_number || row.assigned_id_number || undefined,
+    assignedIdNumber: row.assigned_id_number || row.solo_parent_id_number || undefined,
     rejectionReason: row.rejection_reason || undefined,
     approvedBy: row.approved_by ? String(row.approved_by) : undefined,
     approvedDate: row.updated_at,
@@ -809,7 +809,7 @@ function OfficialSoloParentIdCardModal({
   allSubmissions?: WelfareSubmission[]
 }) {
   if (!app || !isSoloParent(app)) return null
-  const idNumber = app.status === "approved" && (app as any).assignedIdNumber ? (app as any).assignedIdNumber : generateOfficialSoloParentId(app, allSubmissions)
+  const idNumber = (app as any).assignedIdNumber || (app as any).soloParentIdNumber || generateOfficialSoloParentId(app, allSubmissions)
   const issueDateObj = new Date((app as any).approvedDate || app.submittedAt || Date.now())
   const validIssueDate = isNaN(issueDateObj.getTime()) ? new Date() : issueDateObj
   const appDate = validIssueDate.toLocaleDateString("en-PH", {
@@ -1070,7 +1070,7 @@ interface DetailedViewProps {
 function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmissions }: DetailedViewProps) {
   const isSolo = isSoloParent(app)
   const idNumber = isSolo
-    ? (app.status === "approved" && (app as any).assignedIdNumber ? (app as any).assignedIdNumber : generateOfficialSoloParentId(app, allSubmissions))
+    ? ((app as any).assignedIdNumber || (app as any).soloParentIdNumber || generateOfficialSoloParentId(app, allSubmissions))
     : ""
   const [approveAmount, setApproveAmount] = useState((app as any).approvedAmount || "5000")
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")

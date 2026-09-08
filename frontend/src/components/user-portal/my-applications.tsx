@@ -529,7 +529,7 @@ export default function MyApplications() {
                 )
               })
               .map((app: any) => ({
-                applicationNo: app.qcid_number || app.qc_id || app.reference_number || qcId,
+                applicationNo: app.assigned_id_number || app.solo_parent_id_number || app.qcid_number || app.qc_id || app.reference_number || qcId,
                 assistance: `Solo Parent ID (${app.application_type || "New"})`,
                 assistanceCategory: "Solo Parent",
                 dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
@@ -555,7 +555,7 @@ export default function MyApplications() {
                 contactNumber: app.contact_number || userProfile.mobileNumber,
                 email: app.email || userProfile.email,
                 remarks:
-                  app.admin_notes || (app.application_status === "approved" ? "Application approved" : "Under review"),
+                  app.admin_notes || (app.application_status === "approved" ? (app.assigned_id_number || app.solo_parent_id_number ? `Approved. Official ID: ${app.assigned_id_number || app.solo_parent_id_number}` : "Application approved") : "Under review"),
               }))
             allFoundApps.push(...mappedSp)
           }
