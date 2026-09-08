@@ -100,8 +100,6 @@ function getModuleColors(key?: string) {
   return DEFAULT_MODULE_COLOR
 }
 
-const DISBURSEMENT_COLOR = "#2563eb"
-
 function peso(n: number) {
   return `₱${n.toLocaleString()}`
 }

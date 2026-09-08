@@ -17,6 +17,7 @@ import {
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 export interface UserProfile {
   qcidNo?: string
@@ -909,8 +910,12 @@ export default function SeniorBookletWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newApp),
       })
+
+      // Dispatch real-time event
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     } catch (err) {
       console.warn("Failed saving application to backend API:", err)
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     }
 
     // Trigger storage and update events

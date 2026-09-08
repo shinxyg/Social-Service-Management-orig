@@ -23,6 +23,7 @@ type Step = "requirements" | "checklist" | "personal" | "documents" | "review" |
 
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, toISODateString } from "../../utils/userProfile"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 export default function ApplyAICS({ initialType, initialTypeKey, onBack }: ApplyAICSProps) {
   const { t } = useLanguage()
@@ -736,17 +737,21 @@ const handleFinalSubmit = async () => {
 
       if (response.ok) {
         const data = await response.json()
-        setReference(data.application?.reference_no || qcId || "110000116932100")
+        const assignedRef = data.application?.reference_no || qcId || "110000116932100"
+        setReference(assignedRef)
         try {
           localStorage.setItem('aics_application_submitted', String(Date.now()))
           window.dispatchEvent(new CustomEvent('aics_application_submitted'))
         } catch {}
+        notifyApplicationChange("APPLICATION_SUBMITTED", "aics", assignedRef)
       } else {
         setReference(qcId || "110000116932100")
+        notifyApplicationChange("APPLICATION_SUBMITTED", "aics", qcId || "110000116932100")
       }
     } catch (err) {
       console.warn("Backend unavailable, generating reference:", err)
       setReference(qcId || "110000116932100")
+      notifyApplicationChange("APPLICATION_SUBMITTED", "aics", qcId || "110000116932100")
     }
 
     setTimeout(() => {

@@ -14,6 +14,8 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
+import { API_BASE } from "../../config/api"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 export interface UserProfile {
   userId?: string
@@ -45,7 +47,6 @@ export interface UserProfile {
 }
 
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
-import { API_BASE } from "../../config/api"
 
 const ASSISTANCE_TYPES = [
   "Financial Assistance / Cash Aid",
@@ -1021,7 +1022,12 @@ export default function PWDSocialAssistanceWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newApp),
       }).catch(() => {})
-    } catch {}
+
+      // Dispatch real-time event to Admin dashboard
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNo)
+    } catch {
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNo)
+    }
 
     setTimeout(() => {
       setSubmissionStage("pending")

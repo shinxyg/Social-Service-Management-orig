@@ -18,6 +18,7 @@ import {
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 
 export interface UserProfile {
@@ -727,7 +728,12 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newApp),
       }).catch(() => {})
-    } catch {}
+
+      // Dispatch real-time event to Admin dashboard
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
+    } catch {
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
+    }
 
     bypassedActiveAppRef.current = false
     dismissedAppRefCurrent.current = null

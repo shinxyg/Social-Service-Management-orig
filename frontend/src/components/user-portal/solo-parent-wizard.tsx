@@ -19,6 +19,7 @@ import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 function generateReference(_status?: string | null, qcid?: string) {
   if (qcid && (qcid || "").trim() && qcid !== "110000116932100") return (qcid || "").trim()
@@ -1001,9 +1002,15 @@ export default function SoloParentApplicationWizard({
             method: "POST",
           }).catch(() => {})
         }
+
+        // 4. Dispatch real-time event to Admin dashboard
+        notifyApplicationChange("APPLICATION_SUBMITTED", "solo_parent", data.referenceNumber || fallbackRef)
+      } else {
+        notifyApplicationChange("APPLICATION_SUBMITTED", "solo_parent", fallbackRef)
       }
     } catch (err) {
       console.warn("Final submit error / offline fallback:", err)
+      notifyApplicationChange("APPLICATION_SUBMITTED", "solo_parent", fallbackRef)
     }
 
     setTimeout(() => {

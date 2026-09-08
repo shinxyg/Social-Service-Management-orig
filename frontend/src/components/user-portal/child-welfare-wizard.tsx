@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import { getCurrentUserProfile } from "../../utils/userProfile"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 function generateReference(qcid?: string) {
   if (qcid && qcid.trim()) return qcid.trim()
@@ -729,6 +730,10 @@ export default function ChildWelfareApplicationWizard({
     setReference(ref)
     setShowConfirmModal(false)
     setSubmissionStage("matching")
+
+    // Dispatch real-time event
+    notifyApplicationChange("APPLICATION_SUBMITTED", "child_welfare", ref)
+
     setTimeout(() => {
       setSubmissionStage("pending")
     }, 1500)

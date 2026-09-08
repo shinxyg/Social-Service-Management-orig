@@ -24,6 +24,7 @@ import {
   saveDisbursements,
   type SyncedDisbursementRecord,
 } from "../../utils/financialAidSync"
+import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 
 // ---- Types for collected form data from user submissions ----
 interface ApplicationDocument {
@@ -1883,15 +1884,15 @@ export default function PWDSeniorCitizen() {
     }
 
     fetchApps()
-    const interval = setInterval(fetchApps, 2500)
-    window.addEventListener("pwd_senior_applications_updated", fetchApps)
-    window.addEventListener("storage", fetchApps)
+    const interval = setInterval(fetchApps, 1500)
+    const unsubscribe = subscribeToRealtimeChanges(fetchApps)
+    window.addEventListener("focus", fetchApps)
 
     return () => {
       isMounted = false
       clearInterval(interval)
-      window.removeEventListener("pwd_senior_applications_updated", fetchApps)
-      window.removeEventListener("storage", fetchApps)
+      unsubscribe()
+      window.removeEventListener("focus", fetchApps)
     }
   }, [])
 
@@ -1901,8 +1902,7 @@ export default function PWDSeniorCitizen() {
       const next = updater(prev)
       try {
         localStorage.setItem("pwd_senior_applications", JSON.stringify(next))
-        window.dispatchEvent(new Event("pwd_senior_applications_updated"))
-        window.dispatchEvent(new Event("storage"))
+        notifyApplicationChange("STATUS_CHANGED", "pwd_senior")
       } catch {}
       return next
     })
@@ -2167,8 +2167,7 @@ export default function PWDSeniorCitizen() {
       console.warn("Failed deleting backend application:", err)
     }
 
-    window.dispatchEvent(new Event("pwd_senior_applications_updated"))
-    window.dispatchEvent(new Event("storage"))
+    notifyApplicationChange("APPLICATION_DELETED", "pwd_senior", targetApp.referenceNumber)
   }
 
   // Clear all senior applications
@@ -2198,8 +2197,7 @@ export default function PWDSeniorCitizen() {
       console.warn("Failed clearing senior applications:", err)
     }
 
-    window.dispatchEvent(new Event("pwd_senior_applications_updated"))
-    window.dispatchEvent(new Event("storage"))
+    notifyApplicationChange("APPLICATION_DELETED", "pwd_senior")
   }
 
 

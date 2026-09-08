@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 function formatFileSize(bytes?: number) {
   if (!bytes) return "0.0 KB"
@@ -439,6 +440,8 @@ export default function LivelihoodApplicationWizard({
           localStorage.setItem("livelihood_applications", JSON.stringify(updatedList))
           localStorage.setItem("active_livelihood_ref", data.application.reference_number)
         } catch (_) {}
+
+        notifyApplicationChange("APPLICATION_SUBMITTED", "livelihood", data.application.reference_number)
 
         if (onSuccessSubmit) {
           onSuccessSubmit(data.application)

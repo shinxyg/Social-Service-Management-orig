@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { API_BASE as APP_API_BASE } from "../../config/api"
 import { getSavedProfilePhoto } from "../../utils/profilePhoto"
+import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 
 interface ApplicationDocument {
   name: string
@@ -1642,15 +1643,18 @@ useEffect(() => {
 
   const interval = setInterval(() => {
     loadApplications(true)
-  }, 2500)
+  }, 1500)
+
+  const unsubscribe = subscribeToRealtimeChanges(() => {
+    loadApplications(true)
+  })
 
   const handleSync = () => loadApplications(true)
-  window.addEventListener("storage", handleSync)
   window.addEventListener("focus", handleSync)
 
   return () => {
     clearInterval(interval)
-    window.removeEventListener("storage", handleSync)
+    unsubscribe()
     window.removeEventListener("focus", handleSync)
   }
 }, [])
@@ -1689,6 +1693,7 @@ useEffect(() => {
       }
 
       await loadApplications()
+      notifyApplicationChange("APPLICATION_APPROVED", isSoloParent(app) ? "solo_parent" : "child_welfare", app.referenceNumber)
     } catch (err) {
       console.error(err)
       alert("Hindi na-approve ang application. Subukan ulit.")
@@ -1701,6 +1706,7 @@ useEffect(() => {
     try {
       await rejectSubmission(app, reason)
       await loadApplications()
+      notifyApplicationChange("APPLICATION_REJECTED", isSoloParent(app) ? "solo_parent" : "child_welfare", app.referenceNumber)
     } catch (err) {
       console.error(err)
       alert("Hindi na-reject ang application. Subukan ulit.")
@@ -1720,6 +1726,7 @@ useEffect(() => {
     try {
       await fetch(url, { method: "DELETE", headers: authHeaders() })
       await loadApplications(true)
+      notifyApplicationChange("APPLICATION_DELETED", isSolo ? "solo_parent" : "child_welfare", targetApp.referenceNumber)
     } catch (err) {
       console.warn("Delete request failed:", err)
     }
@@ -1731,6 +1738,7 @@ useEffect(() => {
     try {
       await fetch(`${API_BASE}/solo-parent/admin/clear-all`, { method: "DELETE", headers: authHeaders() })
       await loadApplications(true)
+      notifyApplicationChange("APPLICATION_DELETED", "solo_parent")
     } catch (err) {
       console.warn("Clear solo parent failed:", err)
     }
@@ -1742,6 +1750,7 @@ useEffect(() => {
     try {
       await fetch(`${API_BASE}/child-welfare/admin/clear-all`, { method: "DELETE", headers: authHeaders() })
       await loadApplications(true)
+      notifyApplicationChange("APPLICATION_DELETED", "child_welfare")
     } catch (err) {
       console.warn("Clear child welfare failed:", err)
     }

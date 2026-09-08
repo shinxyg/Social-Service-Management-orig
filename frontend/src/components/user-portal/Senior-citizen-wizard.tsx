@@ -17,6 +17,7 @@ import {
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
 import { useLanguage } from "../ui/language-context"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 interface DocumentItem {
   id: string
@@ -832,8 +833,12 @@ export default function SeniorCitizenApplicationWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newApp),
       }).catch((err) => console.warn("Backend sync failed, saved locally:", err))
+
+      // Dispatch real-time event to Admin dashboard
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     } catch (e) {
       console.error("Failed saving senior application to localStorage:", e)
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     }
 
     setTimeout(() => {

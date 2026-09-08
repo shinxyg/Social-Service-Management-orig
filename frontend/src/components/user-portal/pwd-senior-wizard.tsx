@@ -3,6 +3,7 @@ import { Check, CheckCircle2, Upload, Camera, ChevronRight, ChevronDown, Pencil,
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 type DisabilityClass = "apparent" | "non-apparent" | null
 type IdStatus = "new" | "renewal" | "loss" | null
@@ -1347,8 +1348,12 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newApp),
       }).catch((err) => console.warn("Backend sync failed, saved locally:", err))
+
+      // Dispatch real-time event to Admin dashboard
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     } catch (e) {
       console.error("Failed saving application to localStorage:", e)
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     }
 
     window.setTimeout(() => {
