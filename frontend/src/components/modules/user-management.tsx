@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type ReactElement } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
   Users,
   Search,
@@ -12,14 +12,12 @@ import {
   Calendar,
   FileText,
   CalendarCheck,
-  FolderKanban,
   Edit,
   Power,
   RotateCcw,
   Loader2,
   AlertCircle,
   MapPin,
-  Briefcase,
   UserCheck,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
