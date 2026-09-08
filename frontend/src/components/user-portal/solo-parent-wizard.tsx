@@ -751,30 +751,221 @@ export default function SoloParentApplicationWizard({
   } | null>(null)
   const selectedCategory = SOLO_PARENT_CATEGORIES.find((c) => c.id === selectedCategoryId) || null
 
-  const handleVerifyId = () => {
-    if (!(existingIdNumber || "").trim()) {
+  const [samplePlaceholder] = useState(() => {
+    const rand = Math.floor(100000 + Math.random() * 900000)
+    return `137404-2026-${rand}`
+  })
+
+  const formatSoloParentIdInput = (val: string): string => {
+    const digits = val.replace(/\D/g, "").slice(0, 16)
+    if (digits.length <= 6) return digits
+    if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
+    return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10)}`
+  }
+
+  const fetchAllSoloParentApps = async () => {
+    const allApps: any[] = []
+    const seenIds = new Set<string>()
+
+    // 1. Fetch user applications from backend
+    try {
+      const prof = getCurrentUserProfile()
+      const uid = userId || prof.id || ""
+      const qcid = (prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || "").trim()
+      const email = (prof.email || userProfile?.email || "").trim()
+
+      const res = await fetch(
+        `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
+      )
+      if (res.ok) {
+        const data = await res.json()
+        const backendApps = data.applications || data || []
+        if (Array.isArray(backendApps)) {
+          backendApps.forEach((a: any) => {
+            const key = a.id || a.reference_number || a.referenceNumber
+            if (key && !seenIds.has(String(key))) {
+              seenIds.add(String(key))
+              allApps.push(a)
+            }
+          })
+        }
+      }
+    } catch {}
+
+    // 2. Fetch admin all applications as fallback
+    try {
+      const resAdmin = await fetch(`${API_BASE}/api/solo-parent/admin/all?limit=200`)
+      if (resAdmin.ok) {
+        const dataAdmin = await resAdmin.json()
+        const backendApps = dataAdmin.applications || []
+        if (Array.isArray(backendApps)) {
+          backendApps.forEach((a: any) => {
+            const key = a.id || a.reference_number || a.referenceNumber
+            if (key && !seenIds.has(String(key))) {
+              seenIds.add(String(key))
+              allApps.push(a)
+            }
+          })
+        }
+      }
+    } catch {}
+
+    // 3. Check localStorage keys
+    const storageKeys = [
+      "solo_parent_applications",
+      "welfare_applications",
+      "all_applications_history",
+      "applications",
+      "user_applications",
+    ]
+    for (const key of storageKeys) {
+      try {
+        const raw = localStorage.getItem(key)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          const list = Array.isArray(parsed) ? parsed : Object.values(parsed)
+          for (const item of list) {
+            if (item && typeof item === "object") {
+              const k = item.id || item.referenceNumber || item.reference_number
+              if (k && !seenIds.has(String(k))) {
+                seenIds.add(String(k))
+                allApps.push(item)
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
+    return allApps
+  }
+
+  const handleVerifyId = async () => {
+    setVerifyError("")
+    const typed = (existingIdNumber || "").trim()
+    const cleanDigits = typed.replace(/\D/g, "")
+
+    if (cleanDigits.length < 6) {
       setVerifyError(
         language === "en"
-          ? "Please enter your Solo Parent ID Number."
+          ? "Please enter a valid Solo Parent ID Number (e.g. 137404-2026-XXXXXX)."
           : language === "bis"
-          ? "Palihug ibutang ang imong Solo Parent ID Number."
-          : "Kailangang ilagay ang inyong Solo Parent ID Number."
+          ? "Palihug ibutang ang balido nga Solo Parent ID Number (e.g. 137404-2026-XXXXXX)."
+          : "Kailangang ilagay ang tamang Solo Parent ID Number (e.g. 137404-2026-XXXXXX)."
       )
+      setIsIdVerified(false)
       return
     }
-    setVerifyError("")
+
     setIsVerifying(true)
-    setTimeout(() => {
-      setIsVerifying(false)
-      setIsIdVerified(true)
-      const fullName = `${userProfile.firstName} ${userProfile.middleName || ""} ${userProfile.lastName}`.trim()
-      setVerifiedRecord({
-        name: fullName,
-        idNumber: (existingIdNumber || "").trim(),
-        barangay: userProfile.addressBarangay || "SAUYO",
-        status: idStatus === "renewal" ? "Active / Expired" : "Replacement / Lost ID",
+    try {
+      const apps = await fetchAllSoloParentApps()
+      const prof = getCurrentUserProfile()
+      const userQcidDigits = (prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || "").replace(/\D/g, "")
+      const userEmail = (prof.email || userProfile?.email || "").trim().toLowerCase()
+      const userFirstName = (prof.firstName || userProfile?.firstName || "").trim().toLowerCase()
+      const userLastName = (prof.lastName || userProfile?.lastName || "").trim().toLowerCase()
+
+      // Find approved Solo Parent applications
+      const approvedApps = apps.filter((a) => {
+        if (!a) return false
+        const cat = String(a.classification_title || a.category || a.service || a.application_type || "").toLowerCase()
+        const isSolo =
+          cat.includes("solo") ||
+          cat.includes("parent") ||
+          a.solo_parent_id_number ||
+          a.soloParentIdNumber ||
+          a.children ||
+          a.family_members ||
+          a.familyMembers
+
+        const status = String(a.application_status || a.status || "").toLowerCase()
+        const isApproved =
+          status === "approved" ||
+          status === "completed" ||
+          status === "for_release" ||
+          status === "active"
+
+        return isApproved
       })
-    }, 600)
+
+      // Strict match: Must match an approved record belonging to this user or matching the ID
+      const matchedApp = approvedApps.find((a) => {
+        const aAssignedDigits = String(a.assigned_id_number || a.assignedIdNumber || "").replace(/\D/g, "")
+        const aSoloIdDigits = String(a.solo_parent_id_number || a.soloParentIdNumber || "").replace(/\D/g, "")
+        const aRefDigits = String(a.reference_number || a.referenceNumber || "").replace(/\D/g, "")
+        const aQcidDigits = String(a.qcid_number || a.qcidNumber || a.qcid || "").replace(/\D/g, "")
+
+        const aEmail = String(a.email || "").trim().toLowerCase()
+        const aFirstName = String(a.first_name || a.firstName || "").trim().toLowerCase()
+        const aLastName = String(a.last_name || a.lastName || "").trim().toLowerCase()
+
+        const isUserMatch =
+          (userQcidDigits && aQcidDigits && userQcidDigits === aQcidDigits) ||
+          (userEmail && aEmail && userEmail === aEmail) ||
+          (userLastName && aLastName && userLastName === aLastName && userFirstName === aFirstName)
+
+        // Strict matching against digits
+        const matchExactDigits =
+          (aAssignedDigits && (aAssignedDigits === cleanDigits || (cleanDigits.length >= 10 && aAssignedDigits.includes(cleanDigits)) || (aAssignedDigits.length >= 10 && cleanDigits.includes(aAssignedDigits)))) ||
+          (aSoloIdDigits && (aSoloIdDigits === cleanDigits || (cleanDigits.length >= 10 && aSoloIdDigits.includes(cleanDigits)) || (aSoloIdDigits.length >= 10 && cleanDigits.includes(aSoloIdDigits)))) ||
+          (aRefDigits && (aRefDigits === cleanDigits || (cleanDigits.length >= 10 && aRefDigits.includes(cleanDigits)) || (aRefDigits.length >= 10 && cleanDigits.includes(aRefDigits))))
+
+        // If user matched, allow exact digits matching
+        if (isUserMatch && matchExactDigits) {
+          return true
+        }
+
+        // Or if exact ID digits match in system
+        if (cleanDigits.length >= 10 && matchExactDigits) {
+          return true
+        }
+
+        return false
+      })
+
+      if (matchedApp) {
+        setIsIdVerified(true)
+        setVerifyError("")
+        const applicantName = `${matchedApp.first_name || matchedApp.firstName || userProfile.firstName} ${matchedApp.last_name || matchedApp.lastName || userProfile.lastName}`.trim()
+        const rawOfficialId =
+          matchedApp.assigned_id_number ||
+          matchedApp.assignedIdNumber ||
+          matchedApp.solo_parent_id_number ||
+          matchedApp.soloParentIdNumber ||
+          typed
+
+        const officialId = formatSoloParentIdInput(rawOfficialId)
+        setExistingIdNumber(officialId)
+        setVerifiedRecord({
+          name: applicantName,
+          idNumber: officialId,
+          barangay: matchedApp.address_barangay || matchedApp.addressBarangay || userProfile.addressBarangay || "SAUYO",
+          status: idStatus === "renewal" ? "Active / Expired" : "Replacement / Lost ID",
+        })
+      } else {
+        setIsIdVerified(false)
+        setVerifyError(
+          language === "en"
+            ? "No approved Solo Parent ID record found matching this ID number. Please enter your valid approved Solo Parent ID."
+            : language === "bis"
+            ? "Walay nakit-an nga naaprobahan nga rekord sa Solo Parent ID. Palihug ibutang ang imong balido nga approved ID number."
+            : "Walang nahanap na aprubadong rekord ng Solo Parent ID para sa numerong ito. Tiyaking tama ang inyong aprubadong Solo Parent ID number."
+        )
+      }
+    } catch (err) {
+      console.error("Verification error:", err)
+      setIsIdVerified(false)
+      setVerifyError(
+        language === "en"
+          ? "Unable to verify ID at this time. Please try again."
+          : language === "bis"
+          ? "Dili masusi ang ID karong panahona. Palihug sulayi pag-usab."
+          : "Hindi masuri ang ID sa ngayon. Pakisubukang muli."
+      )
+    } finally {
+      setIsVerifying(false)
+    }
   }
   
   // ---- Eligibility check (bago pumasok sa wizard) ----
@@ -1522,17 +1713,12 @@ export default function SoloParentApplicationWizard({
                         <TextInput
                           value={existingIdNumber}
                           onChange={(v) => {
-                            setExistingIdNumber(v)
+                            const formatted = formatSoloParentIdInput(v)
+                            setExistingIdNumber(formatted)
                             setIsIdVerified(false)
                             setVerifyError("")
                           }}
-                          placeholder={
-                            language === "en"
-                              ? "Enter Solo Parent ID Number"
-                              : language === "bis"
-                              ? "Ibutang ang Solo Parent ID Number"
-                              : "Ilagay ang Solo Parent ID Number"
-                          }
+                          placeholder={samplePlaceholder}
                           invalid={attemptedNext && (!(existingIdNumber || "").trim() || !isIdVerified)}
                         />
                       </div>
@@ -1677,17 +1863,12 @@ export default function SoloParentApplicationWizard({
                         <TextInput
                           value={existingIdNumber}
                           onChange={(v) => {
-                            setExistingIdNumber(v)
+                            const formatted = formatSoloParentIdInput(v)
+                            setExistingIdNumber(formatted)
                             setIsIdVerified(false)
                             setVerifyError("")
                           }}
-                          placeholder={
-                            language === "en"
-                              ? "Enter Solo Parent ID Number"
-                              : language === "bis"
-                              ? "Ibutang ang Solo Parent ID Number"
-                              : "Ilagay ang Solo Parent ID Number"
-                          }
+                          placeholder={samplePlaceholder}
                           invalid={attemptedNext && (!(existingIdNumber || "").trim() || !isIdVerified)}
                         />
                       </div>
