@@ -227,48 +227,66 @@ function parseJsonSafe(val: any, fallback: any = {}) {
 function mapSoloParentRow(row: any): SoloParentSubmission {
   const formData = parseJsonSafe(row.form_data, {})
   const extraData = parseJsonSafe(row.extra_data, {})
-  const familyMembers = Array.isArray(row.family_members)
-    ? row.family_members
-    : parseJsonSafe(row.family_members, parseJsonSafe(formData.familyMembers, []))
+  const fdFormData = typeof formData.formData === "object" ? formData.formData : formData
 
-  const emFirst = row.emergency_first_name || formData.emergencyFirstName || extraData.emergencyFirstName || ""
-  const emLast = row.emergency_last_name || formData.emergencyLastName || extraData.emergencyLastName || ""
+  const emFirst =
+    fdFormData.emergencyFirstName ||
+    formData.emergencyFirstName ||
+    extraData.emergencyFirstName ||
+    row.emergency_first_name ||
+    ""
+
+  const emLast =
+    fdFormData.emergencyLastName ||
+    formData.emergencyLastName ||
+    extraData.emergencyLastName ||
+    row.emergency_last_name ||
+    ""
+
   const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
 
   let emergencyName =
     emCombined ||
-    row.emergency_name ||
+    fdFormData.emergencyName ||
+    fdFormData.emergencyContactPerson ||
     formData.emergencyName ||
     formData.emergencyContactPerson ||
-    formData.emergencyPerson ||
     extraData.emergencyName ||
-    extraData.emergencyContactPerson ||
-    row.emergencyContactPerson ||
+    row.emergency_name ||
     ""
 
   let emergencyContactNo =
-    row.emergency_contact_no ||
+    fdFormData.emergencyContactNo ||
+    fdFormData.emergencyPhone ||
     formData.emergencyContactNo ||
-    extraData.emergencyContactNo ||
-    row.emergency_phone ||
     formData.emergencyPhone ||
+    extraData.emergencyContactNo ||
+    row.emergency_contact_no ||
+    row.emergency_phone ||
     ""
 
   let emergencyRelationship =
-    row.emergency_relationship ||
+    fdFormData.emergencyRelationship ||
     formData.emergencyRelationship ||
     extraData.emergencyRelationship ||
+    row.emergency_relationship ||
     row.relationshipToApplicant ||
     ""
 
   let emergencyAddress =
-    row.emergency_address ||
+    fdFormData.emergencyAddress ||
     formData.emergencyAddress ||
     extraData.emergencyAddress ||
+    row.emergency_address ||
     row.emergencyResidentialAddress ||
     ""
 
-  let bloodType = row.blood_type || formData.bloodType || extraData.bloodType || "O+"
+  let bloodType =
+    fdFormData.bloodType ||
+    formData.bloodType ||
+    extraData.bloodType ||
+    row.blood_type ||
+    "O+"
 
   return {
     id: `SP-${row.id}`,
@@ -1350,48 +1368,56 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
 
               {/* Section 03: Emergency Contact */}
               {(() => {
-                const fd = (app as any).formData || (app as any).form_data || (app as any).extra_data?.formData || {}
+                const fd = (app as any).formData || (app as any).form_data || {}
+                const fdForm = typeof fd.formData === "object" ? fd.formData : fd
                 const ed = (app as any).extraData || (app as any).extra_data || {}
 
-                const emFirst = app.emergencyFirstName || fd.emergencyFirstName || ed.emergencyFirstName || (app as any).emergency_first_name || ""
-                const emLast = app.emergencyLastName || fd.emergencyLastName || ed.emergencyLastName || (app as any).emergency_last_name || ""
+                const emFirst = app.emergencyFirstName || fdForm.emergencyFirstName || fd.emergencyFirstName || ed.emergencyFirstName || (app as any).emergency_first_name || ""
+                const emLast = app.emergencyLastName || fdForm.emergencyLastName || fd.emergencyLastName || ed.emergencyLastName || (app as any).emergency_last_name || ""
                 const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
 
                 const emPerson =
                   emCombined ||
+                  fdForm.emergencyName ||
+                  fdForm.emergencyContactPerson ||
                   app.emergencyName ||
                   (app as any).emergency_name ||
                   fd.emergencyName ||
                   fd.emergencyContactPerson ||
                   ed.emergencyName ||
                   (app as any).emergencyContactPerson ||
-                  ""
+                  "—"
 
                 const emPhone =
+                  fdForm.emergencyContactNo ||
+                  fdForm.emergencyPhone ||
                   app.emergencyContactNo ||
                   (app as any).emergency_contact_no ||
                   fd.emergencyContactNo ||
                   fd.emergencyPhone ||
                   (app as any).emergencyPhone ||
                   ed.emergencyContactNo ||
-                  ""
+                  "—"
 
                 const emRel =
+                  fdForm.emergencyRelationship ||
                   app.emergencyRelationship ||
                   (app as any).emergency_relationship ||
                   fd.emergencyRelationship ||
                   ed.emergencyRelationship ||
                   (app as any).relationshipToApplicant ||
-                  ""
+                  "—"
 
                 const emAddr =
+                  fdForm.emergencyAddress ||
                   app.emergencyAddress ||
                   (app as any).emergency_address ||
                   fd.emergencyAddress ||
                   ed.emergencyAddress ||
-                  ""
+                  "—"
 
                 const bType =
+                  fdForm.bloodType ||
                   app.bloodType ||
                   (app as any).blood_type ||
                   fd.bloodType ||
@@ -1404,25 +1430,25 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                       Emergency Contact
                     </SectionHeading>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                      <Field label="Contact Person" value={emPerson || "—"} />
-                      <Field label="Relationship" value={emRel || "—"} />
+                      <Field label="Contact Person" value={emPerson} />
+                      <Field label="Relationship" value={emRel} />
                       <Field
                         label="Phone Number"
                         value={
                           <span className="inline-flex items-center gap-1.5">
                             <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                            {emPhone || "—"}
+                            {emPhone}
                           </span>
                         }
                       />
-                      <Field label="Blood Type" value={bType || "O+"} />
+                      <Field label="Blood Type" value={bType} />
                       <div className="col-span-2">
                         <Field
                           label="Emergency Address"
                           value={
                             <span className="inline-flex items-start gap-1.5">
                               <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
-                              {emAddr || "—"}
+                              {emAddr}
                             </span>
                           }
                         />
