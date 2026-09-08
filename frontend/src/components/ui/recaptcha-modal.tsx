@@ -34,6 +34,18 @@ const CHALLENGES: PhotoChallenge[] = [
     imageSrc: '/captcha/challenge_bicycle.jpg',
     matchingTiles: [3, 4, 5, 6, 7, 8],
   },
+  {
+    prompt: 'crosswalks',
+    keyword: 'crosswalk',
+    imageSrc: '/captcha/challenge_crosswalk.jpg',
+    matchingTiles: [4, 5, 7, 8],
+  },
+  {
+    prompt: 'buses',
+    keyword: 'bus',
+    imageSrc: '/captcha/challenge_bus.jpg',
+    matchingTiles: [3, 4, 6, 7],
+  },
 ];
 
 export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
@@ -85,7 +97,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
       // 1. Check if user selected any wrong tiles that definitely do not have the target object
       const hasWrongTile = selectedTiles.some((tileIdx) => !targetMatches.includes(tileIdx));
 
-      // 2. Check if user selected at least all required matching tiles
+      // 2. Check if user selected all required matching tiles
       const matchedCount = selectedTiles.filter((tileIdx) => targetMatches.includes(tileIdx)).length;
       const requiredCount = targetMatches.length;
 
@@ -95,10 +107,12 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
         onVerifySuccess();
         onClose();
       } else {
-        // Show error message and shake modal WITHOUT reloading the image
-        setErrorMessage('Incorrect. Please select the correct squares and try again.');
+        // When incorrect, show error and automatically switch both the prompt and the picture to the next challenge
+        setErrorMessage('Incorrect. Please try again with the new image below.');
         setShake(true);
         setTimeout(() => setShake(false), 500);
+        setSelectedTiles([]);
+        setChallengeIdx((prev) => prev + 1);
       }
     }, 600);
   };
@@ -107,7 +121,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
     <div className="fixed inset-0 z-120 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
       <div className={`bg-white rounded-lg shadow-2xl border border-slate-300 w-full max-w-[360px] overflow-hidden select-none animate-scale-up text-left transition-transform ${shake ? 'animate-bounce' : ''}`}>
         
-        {/* Challenge Header (Authentic reCAPTCHA style) */}
+        {/* Challenge Header (Switches dynamically with prompt) */}
         <div className="bg-[#1A73E8] p-4 text-white">
           <p className="text-[12px] font-medium leading-tight opacity-95">
             Select all squares with
