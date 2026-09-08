@@ -9,7 +9,6 @@ import {
   Loader2,
   HeartHandshake,
   ShieldAlert,
-  Home,
   Users,
   Baby,
   Activity,
@@ -1896,7 +1895,7 @@ export default function ChildWelfareApplicationWizard({
               <ReviewSection title={language === "tl" ? "Impormasyon ng Aplikante / Bata" : language === "bis" ? "Impormasyon sa Aplikante / Bata" : "Applicant / Child Information"} onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField label="QC ID Number" value={formData.qcidNumber} />
-                  <ReviewField label={language === "tl" ? "Buong Pangalan" : language === "bis" ? "Tibuok Ngalan" : "Full Name"} value={fullApplicantName} />
+                  <ReviewField label={language === "tl" ? "Buong Pangalan" : language === "bis" ? "Tibuok Ngalan" : "Full Name"} value={[formData.firstName, formData.middleName, formData.lastName, formData.suffix].filter(Boolean).join(" ")} />
                   <ReviewField
                     label={language === "tl" ? "Petsa ng Kapanganakan / Edad" : language === "bis" ? "Petsa sa Pagkatawo / Edad" : "Date of Birth / Age"}
                     value={`${[formData.dobMonth, formData.dobDay, formData.dobYear].filter(Boolean).join("/")} (${formData.age} y/o)`}
@@ -2058,6 +2057,46 @@ export default function ChildWelfareApplicationWizard({
           file={previewDocModal.file}
           onClose={() => setPreviewDocModal(null)}
         />
+      )}
+
+      {/* 📄 SAMPLE DOCUMENT MODAL */}
+      {showSampleModal && selectedSampleDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide truncate pr-2">
+                {selectedSampleDoc.label}
+              </h4>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSampleModal(false)
+                  setSelectedSampleDoc(null)
+                }}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="p-6 max-h-[65vh] overflow-y-auto bg-gray-50 flex items-center justify-center">
+              {selectedSampleDoc.sampleImage ? (
+                <img
+                  src={selectedSampleDoc.sampleImage}
+                  alt={selectedSampleDoc.label}
+                  className="max-w-full max-h-[55vh] rounded-lg border border-gray-200 object-contain shadow-xs"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2 py-10 text-gray-500">
+                  <FileText className="h-12 w-12 text-blue-500" />
+                  <p className="text-sm font-medium">{selectedSampleDoc.label}</p>
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-3 border-t border-gray-200 text-xs text-gray-500 bg-white">
+              {selectedSampleDoc.description || "Official Sample Document Reference"}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Confirmation Modal */}
