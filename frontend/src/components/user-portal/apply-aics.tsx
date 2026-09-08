@@ -2419,6 +2419,16 @@ const handleFinalSubmit = async () => {
               <p className="text-xs text-muted-foreground">{t("referenceNumber")}</p>
               <p className="text-sm font-semibold text-foreground">{reference}</p>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                ;(window as any).__isFormDirty = false
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              VIEW IN APPLICATION HISTORY
+            </button>
           </div>
 
           {onBack && (
@@ -2452,6 +2462,16 @@ const handleFinalSubmit = async () => {
               <p className="text-xs text-muted-foreground">{t("referenceNumber")}</p>
               <p className="text-sm font-semibold text-foreground">{reference}</p>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                ;(window as any).__isFormDirty = false
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              VIEW IN APPLICATION HISTORY
+            </button>
           </div>
 
           {onBack && (
@@ -2526,6 +2546,16 @@ const handleFinalSubmit = async () => {
             <button
               type="button"
               onClick={() => {
+                ;(window as any).__isFormDirty = false
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              VIEW IN APPLICATION HISTORY
+            </button>
+            <button
+              type="button"
+              onClick={() => {
                 try {
                   localStorage.setItem("aics_application_submitted", String(Date.now()))
                 } catch {}
@@ -2533,7 +2563,7 @@ const handleFinalSubmit = async () => {
                 window.dispatchEvent(new CustomEvent("aics_application_submitted"))
                 window.location.reload()
               }}
-              className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              className="w-full max-w-md py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
             >
               Tingnan ang Application Status
             </button>

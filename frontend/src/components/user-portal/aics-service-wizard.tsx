@@ -674,6 +674,16 @@ export default function AICSServiceWizard({
           <p className="text-sm text-gray-500 max-w-sm">
             You already have a pending application for {serviceTitle}. Please wait for the evaluation before submitting a new application.
           </p>
+          <button
+            type="button"
+            onClick={() => {
+              ;(window as any).__isFormDirty = false
+              window.location.href = "/portal/my-applications"
+            }}
+            className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide mt-2"
+          >
+            VIEW IN APPLICATION HISTORY
+          </button>
         </div>
       </div>
     )
@@ -746,11 +756,24 @@ export default function AICSServiceWizard({
             </p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
-            <span>
-              {t("autoRedirectStatusCountdown").replace("{count}", String(redirectCountdown))}
-            </span>
+          <div className="flex flex-col items-center justify-center gap-3 pt-1">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
+              <span>
+                {t("autoRedirectStatusCountdown").replace("{count}", String(redirectCountdown))}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                ;(window as any).__isFormDirty = false
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              VIEW IN APPLICATION HISTORY
+            </button>
           </div>
 
         </div>

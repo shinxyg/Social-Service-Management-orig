@@ -793,9 +793,21 @@ export default function ChildWelfareApplicationWizard({
           <span>{t("trackPortalNotifDesc") || "Maaari ninyong i-track ang status sa inyong Portal Notifications at Activity History."}</span>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          {t("autoRedirectCountdown", { seconds: String(redirectCountdown) }) || `Babalik sa aplikasyon sa loob ng ${redirectCountdown} segundo...`}
-        </p>
+        <div className="flex flex-col items-center justify-center gap-3 pt-1">
+          <p className="text-xs text-muted-foreground">
+            {t("autoRedirectCountdown", { seconds: String(redirectCountdown) }) || `Babalik sa aplikasyon sa loob ng ${redirectCountdown} segundo...`}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              ;(window as any).__isFormDirty = false
+              window.location.href = "/portal/my-applications"
+            }}
+            className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+          >
+            VIEW IN APPLICATION HISTORY
+          </button>
+        </div>
       </div>
     )
   }
