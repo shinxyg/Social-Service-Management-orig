@@ -672,9 +672,14 @@ export default function UserManagement() {
     if (!silent) setIsLoading(true)
     setErrorMessage(null)
     try {
-      const res = await fetch(`${API_BASE}/api/users`, {
+      let res = await fetch(`${API_BASE}/api/users`, {
         headers: authHeaders(),
       })
+      if (!res.ok) {
+        res = await fetch(`${API_BASE}/api/auth/users`, {
+          headers: authHeaders(),
+        })
+      }
       if (res.ok) {
         const data = await res.json()
         if (data.users && Array.isArray(data.users)) {

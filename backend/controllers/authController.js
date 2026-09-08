@@ -859,7 +859,21 @@ exports.resetPassword = async (req, res) => {
  */
 exports.getAllUsers = async (req, res) => {
   try {
-    // 1. Auto-sync existing module applicants and seed default admin to ensure DB completeness
+    // 1. Ensure required columns exist without breaking if previously missing
+    try {
+      await db.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS qcid_number VARCHAR(100);
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(50);
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS occupation VARCHAR(150);
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT;
+      `);
+    } catch (colErr) {
+      // Non-fatal
+    }
+
+    // 2. Auto-sync existing module applicants and ensure default admin account exists
     try {
       await db.query(`
         -- Ensure default administrator account exists
@@ -913,15 +927,8 @@ exports.getAllUsers = async (req, res) => {
 
     let dbUsers = [];
     try {
-      const result = await db.query(`
-        SELECT 
-          id, email, first_name, last_name, middle_name, suffix,
-          mobile_number, qcid_number, role, COALESCE(status, 'active') as status,
-          created_at, updated_at, last_login, city, barangay, street, house_no, occupation
-        FROM users
-        ORDER BY created_at DESC
-      `);
-      dbUsers = result.rows;
+      const result = await db.query(`SELECT * FROM users ORDER BY id ASC`);
+      dbUsers = result.rows || [];
     } catch (dbErr) {
       console.warn('[DB Warning] Fetching users from DB failed, falling back to memory store:', dbErr.message);
     }
@@ -957,7 +964,7 @@ exports.getAllUsers = async (req, res) => {
     // Build user representations with connected applications counts
     const users = await Promise.all(
       dbUsers.map(async (u) => {
-        const userQcid = u.qcid_number || '';
+        const userQcid = u.qcid_number || u.qcid || `110000${String(u.id).padStart(9, '0')}`;
         const userEmail = (u.email || '').toLowerCase();
         const userIdStr = String(u.id);
 
@@ -1005,7 +1012,7 @@ exports.getAllUsers = async (req, res) => {
         const fullName = [u.first_name, u.middle_name, u.last_name, u.suffix]
           .filter(Boolean)
           .join(' ')
-          .trim() || (u.role === 'admin' ? 'System Administrator' : 'Registered Resident');
+          .trim() || (String(u.role || '').toLowerCase() === 'admin' || u.email === 'admin' ? 'System Administrator' : 'Registered Resident');
 
         const isAdmin = ['admin', 'administrator', 'super_admin'].includes(String(u.role || '').toLowerCase()) || u.email === 'admin' || u.email === 'admin@quezoncity.gov.ph';
         const displayRole = isAdmin ? 'ADMINISTRATOR' : 'USER / BENEFICIARY';
@@ -1024,27 +1031,27 @@ exports.getAllUsers = async (req, res) => {
         return {
           id: formattedId,
           numericId: u.id,
-          qcidNumber: u.qcid_number || `110000${String(u.id).padStart(9, '0')}`,
+          qcidNumber: userQcid,
           name: fullName,
           firstName: u.first_name || '',
           lastName: u.last_name || '',
           middleName: u.middle_name || '',
           suffix: u.suffix || '',
           email: cleanDisplayEmail,
-          contactNumber: u.mobile_number || '—',
+          contactNumber: u.mobile_number || u.phone || u.contact_no || '—',
           role: displayRole,
           status: displayStatus,
-          dateRegistered: u.created_at || new Date().toISOString(),
-          lastLogin: u.last_login || u.updated_at || u.created_at || new Date().toISOString(),
+          dateRegistered: u.created_at || u.createdat || new Date().toISOString(),
+          lastLogin: u.last_login || u.lastlogin || u.updated_at || u.created_at || new Date().toISOString(),
           applicationsCount: totalApps,
           appointmentsCount: appointmentCount,
-          address: [u.house_no, u.street, u.barangay, u.city].filter(Boolean).join(', ') || 'Quezon City',
+          address: [u.house_no, u.street, u.barangay, u.city].filter(Boolean).join(', ') || u.address || 'Quezon City',
           occupation: u.occupation || '—',
         };
       })
     );
 
-    // Filter duplicate admin display if both 'admin' and 'admin@quezoncity.gov.ph' were in DB
+    // Ensure all unique accounts are present
     const uniqueMap = new Map();
     for (const userItem of users) {
       const key = (userItem.email || '').toLowerCase();

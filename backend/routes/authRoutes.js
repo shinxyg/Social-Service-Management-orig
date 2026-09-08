@@ -29,6 +29,7 @@ router.put('/profile', authController.updateProfile);
 // Admin User Management routes (/api/users and /api/auth/users)
 router.get('/', authController.getAllUsers);
 router.get('/all', authController.getAllUsers);
+router.get('/users', authController.getAllUsers);
 router.get('/:id', authController.getUserById);
 router.put('/:id', authController.updateUser);
 router.patch('/:id/status', authController.toggleUserStatus);
