@@ -19,6 +19,7 @@ import {
   FileText,
   Wallet,
   BookOpen,
+  Globe,
 } from "lucide-react"
 import { Tooltip } from "../ui/tooltip"
 import { ProfileModal } from "../ui/profile-modal"
@@ -487,7 +488,7 @@ function ResidentHeader({
   dark: boolean
   onToggleDark: () => void
 }) {
-  const { t, language } = useLanguage()
+  const { t, language, setLanguage } = useLanguage()
   const residentNav = getResidentNav(t)
   const location = useLocation()
   const currentFullUrl = location.pathname + location.search
@@ -840,6 +841,21 @@ function ResidentHeader({
         <div className="hidden sm:flex flex-col items-end leading-tight mr-1 select-none">
           <span className="text-sm font-semibold text-foreground tabular-nums">{timeString}</span>
           <span className="text-[10px] text-muted-foreground">{dateString}</span>
+        </div>
+
+        {/* Language Selector Select */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-border/70 bg-muted/40 hover:bg-muted text-foreground transition-colors">
+          <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as any)}
+            className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer pr-1"
+            aria-label="Select Language"
+          >
+            <option value="en" className="bg-card text-foreground">English</option>
+            <option value="tl" className="bg-card text-foreground">Tagalog</option>
+            <option value="bis" className="bg-card text-foreground">Bisaya</option>
+          </select>
         </div>
 
         <Tooltip label={dark ? "Switch to light mode" : "Switch to dark mode"}>
