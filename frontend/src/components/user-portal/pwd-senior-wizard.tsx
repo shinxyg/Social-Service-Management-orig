@@ -2748,48 +2748,13 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     />
                   </Field>
                   <Field label={t("pwdSpecificDisabilityLabel")}>
-                    <div className="relative">
-                      <TextInput
-                        list="pwd-specific-disabilities-list"
-                        value={formData.specificDisability}
-                        onChange={(v) => updateField("specificDisability", v)}
-                        placeholder={
-                          DISABILITY_TYPE_MAPPING[disabilityType]?.examples?.[0]
-                            ? `e.g. ${DISABILITY_TYPE_MAPPING[disabilityType].examples[0]} (optional)`
-                            : "Optional"
-                        }
-                      />
-                      {DISABILITY_TYPE_MAPPING[disabilityType]?.examples && (
-                        <datalist id="pwd-specific-disabilities-list">
-                          {DISABILITY_TYPE_MAPPING[disabilityType].examples.map((ex) => (
-                            <option key={ex} value={ex} />
-                          ))}
-                        </datalist>
-                      )}
-                    </div>
+                    <TextInput
+                      value={formData.specificDisability}
+                      onChange={(v) => updateField("specificDisability", v)}
+                      placeholder="Optional"
+                    />
                   </Field>
                 </div>
-
-                {/* Helpful interactive suggestions for Specific Disability */}
-                {disabilityType && DISABILITY_TYPE_MAPPING[disabilityType]?.examples && (
-                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                    <span className="text-[11px] text-muted-foreground font-medium">Mga Mungkahi / Halimbawa:</span>
-                    {DISABILITY_TYPE_MAPPING[disabilityType].examples.slice(0, 5).map((ex) => (
-                      <button
-                        key={ex}
-                        type="button"
-                        onClick={() => updateField("specificDisability", ex)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
-                          formData.specificDisability === ex
-                            ? "bg-blue-600 text-white border-blue-600 shadow-xs font-semibold"
-                            : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
-                        }`}
-                      >
-                        {ex}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Error Banner when Next is attempted with incomplete fields */}
