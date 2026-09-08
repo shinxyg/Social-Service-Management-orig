@@ -196,7 +196,7 @@ export const Login = () => {
       >
         {/* Centered Government Seal Watermark - Large and Prominent */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          <div className="w-112.5 h-112.5 md:w-162.5 md:h-162.5 opacity-[0.12] md:opacity-[0.15]">
+          <div className="w-[450px] h-[450px] sm:w-[540px] sm:h-[540px] lg:w-[620px] lg:h-[620px] opacity-[0.12] md:opacity-[0.15]">
             <img
               src={governmentSealImage}
               alt="Government Seal"
