@@ -726,10 +726,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     let isMounted = true
 
     const checkActiveApp = async () => {
-      let matchedApproved: any = null
-      let matchedPendingForFlow: any = null
-      let matchedPendingAny: any = null
-
       const expectedType =
         initialIdStatus === "renewal"
           ? "renewal"
