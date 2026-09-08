@@ -10,7 +10,7 @@ import {
   MapPin,
   Calendar,
   Paperclip,
-  Landmark,
+  Users,
   Image as ImageIcon,
   HeartHandshake,
   IdCard,
@@ -2258,10 +2258,6 @@ export default function PWDSeniorCitizen() {
       <div className="p-4 md:p-8 space-y-7 max-w-6xl mx-auto">
         {/* Header */}
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Landmark className="h-3.5 w-3.5" style={{ color: "var(--plum)" }} />
-            <span className="gw-eyebrow">Case registry · social welfare intake</span>
-          </div>
           <h1 className="gw-serif text-[2.1rem] font-semibold leading-tight" style={{ color: "var(--ink)" }}>
             PWD &amp; Senior Citizen Services
           </h1>

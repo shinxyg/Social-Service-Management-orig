@@ -16,7 +16,6 @@ import {
   Baby,
   Home,
   ClipboardList,
-  Landmark,
   IdCard,
   Printer,
   Trash2,
@@ -2037,10 +2036,6 @@ useEffect(() => {
       <div className="p-4 md:p-8 space-y-7 max-w-6xl mx-auto">
         {/* Header */}
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Landmark className="h-3.5 w-3.5" style={{ color: "var(--plum)" }} />
-            <span className="gw-eyebrow">Case registry · social welfare intake</span>
-          </div>
           <h1 className="gw-serif text-[2.1rem] font-semibold leading-tight" style={{ color: "var(--ink)" }}>
             Solo Parent &amp; Child Welfare
           </h1>
