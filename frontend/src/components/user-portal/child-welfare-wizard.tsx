@@ -790,12 +790,34 @@ export default function ChildWelfareApplicationWizard({
     let day = prof?.dobDay || prof?.birthDay || ""
     let year = prof?.dobYear || prof?.birthYear || ""
 
-    if (prof?.birthDateIso && prof.birthDateIso.includes("-")) {
-      const parts = prof.birthDateIso.split("-")
-      if (parts.length === 3) {
-        year = parts[0]
-        month = parts[1]
-        day = parts[2]
+    const rawDob = prof?.birthDateIso || prof?.birthDate || prof?.dateOfBirth || prof?.dob || ""
+    if (typeof rawDob === "string" && rawDob.trim()) {
+      if (rawDob.includes("-")) {
+        const parts = rawDob.split("-")
+        if (parts.length === 3) {
+          if (parts[0].length === 4) {
+            year = parts[0]
+            month = parts[1]
+            day = parts[2]
+          } else {
+            month = parts[0]
+            day = parts[1]
+            year = parts[2]
+          }
+        }
+      } else if (rawDob.includes("/")) {
+        const parts = rawDob.split("/")
+        if (parts.length === 3) {
+          if (parts[2].length === 4) {
+            month = parts[0]
+            day = parts[1]
+            year = parts[2]
+          } else if (parts[0].length === 4) {
+            year = parts[0]
+            month = parts[1]
+            day = parts[2]
+          }
+        }
       }
     } else if (prof?.birthMonth) {
       const mStr = String(prof.birthMonth).toUpperCase()
@@ -1281,29 +1303,88 @@ export default function ChildWelfareApplicationWizard({
                   {language === "tl" ? "I. IMPORMASYON NG APLIKANTE / BATA" : language === "bis" ? "I. IMPORMASYON SA APLIKANTE / BATA" : "I. APPLICANT / CHILD INFORMATION"}
                 </h4>
 
+                {/* Row 1: QC ID & First Name */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "QC ID (Kung mayroon)" : language === "bis" ? "QC ID (Kung anaa)" : "QC ID (Optional / If available)"}</label>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "QC ID (Opsyonal / Kung mayroon)" : language === "bis" ? "QC ID (Opsyonal / Kung anaa)" : "QC ID (Optional / If available)"}</label>
                     <input type="text" disabled value={formData.qcidNumber} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Pangalan (First name) *" : language === "bis" ? "Unang Ngalan (First name) *" : "First Name *"}</label>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Pangalan (First Name) *" : language === "bis" ? "Unang Ngalan (First Name) *" : "First Name *"}</label>
                     <input type="text" disabled value={formData.firstName} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                 </div>
 
+                {/* Row 2: Middle Name, Last Name, Suffix */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Gitnang Pangalan (Middle name)" : language === "bis" ? "Tunga nga Ngalan (Middle name)" : "Middle Name"}</label>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Gitnang Pangalan (Middle Name)" : language === "bis" ? "Tunga nga Ngalan (Middle Name)" : "Middle Name"}</label>
                     <input type="text" disabled value={formData.middleName} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Apelyido (Last name) *" : language === "bis" ? "Apelyido (Last name) *" : "Last Name *"}</label>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Apelyido (Last Name) *" : language === "bis" ? "Apelyido (Last Name) *" : "Last Name *"}</label>
                     <input type="text" disabled value={formData.lastName} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Suffix (Jr., Sr., III, atbp.)" : language === "bis" ? "Suffix (Jr., Sr., III, ug uban pa)" : "Suffix (Jr., Sr., III, etc.)"}</label>
                     <input type="text" disabled value={formData.suffix} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
+                  </div>
+                </div>
+
+                {/* Row 3: Nationality, Date of Birth, Age */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Nasyonalidad *" : language === "bis" ? "Nasyonalidad *" : "Nationality *"}</label>
+                    <input type="text" disabled value={formData.nationality || "FILIPINO"} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Petsa ng Kapanganakan (MM/DD/YYYY)" : language === "bis" ? "Petsa sa Pagkatawo (MM/DD/YYYY)" : "Date of Birth (MM/DD/YYYY)"}</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={
+                        formData.dobMonth && formData.dobDay && formData.dobYear
+                          ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
+                          : [formData.dobMonth, formData.dobDay, formData.dobYear].filter(Boolean).join("/")
+                      }
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Edad *" : language === "bis" ? "Edad *" : "Age *"}</label>
+                    <input type="text" disabled value={formData.age} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
+                  </div>
+                </div>
+
+                {/* Row 4: Gender / Sex, Civil Status, Contact Number */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Kasarian *" : language === "bis" ? "Kasarian *" : "Gender / Sex *"}</label>
+                    <input type="text" disabled value={formData.sex} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Katayuang Sibil" : language === "bis" ? "Sibil nga Kahimtang" : "Civil Status"}</label>
+                    <input type="text" disabled value={formData.civilStatus} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Numero ng Telepono" : language === "bis" ? "Numero sa Telepono" : "Contact Number"}</label>
+                    <input type="text" disabled value={formData.contactNo} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
+                  </div>
+                </div>
+
+                {/* Row 5: House / Building Number, Street, Barangay */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Numero ng Bahay / Gusali" : language === "bis" ? "Numero sa Balay / Edipisyo" : "House / Building Number"}</label>
+                    <input type="text" disabled value={formData.addressHouseNo} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Kalye (Street)" : language === "bis" ? "Dalan (Street)" : "Street"}</label>
+                    <input type="text" disabled value={formData.addressStreet} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Barangay" : language === "bis" ? "Barangay" : "Barangay"}</label>
+                    <input type="text" disabled value={formData.barangay} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                 </div>
               </div>
