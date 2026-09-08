@@ -2716,22 +2716,10 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     invalid={attemptedNext && disabilityType === ""}
                     invalidNote={t("pwdDisabilityTypeRequiredNote") || "Required"}
                   >
-                    <select
+                    <LockedField
                       value={disabilityType}
-                      onChange={(e) => handleDisabilityTypeChange(e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                        attemptedNext && disabilityType === ""
-                          ? "border-red-400 focus:ring-red-300 bg-red-50"
-                          : "border-border focus:ring-blue-400 bg-white"
-                      }`}
-                    >
-                      <option value="">{t("pwdSelectDisabilityType") || "Pumili ng Uri ng Kapansanan"}</option>
-                      {DISABILITY_TYPES.map((ty) => (
-                        <option key={ty} value={ty}>
-                          {ty}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder={t("pwdChooseDisabilityType")}
+                    />
                   </Field>
                   <Field
                     label={t("pwdCauseOfDisabilityLabel")}
