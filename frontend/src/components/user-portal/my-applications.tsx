@@ -108,7 +108,7 @@ export default function MyApplications() {
           contactNumber: appToDelete.contactNumber,
           status: appToDelete.status,
           dateApplied: appToDelete.dateApplied,
-          reason: "Deleted by user from History Application",
+          reason: "Deleted by user from Application History",
           payload: deletedRecord,
         }),
       })
@@ -1162,7 +1162,7 @@ export default function MyApplications() {
               className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>{t("backToMyApplications") || "Back to History Application"}</span>
+              <span>{t("backToMyApplications") || "Back to Application History"}</span>
             </button>
 
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200 flex items-center gap-1.5">
@@ -1204,7 +1204,7 @@ export default function MyApplications() {
               User Application Portal
             </span>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              {t("myApplicationsTitle") || "History Application"}
+              {t("myApplicationsTitle") || "Application History"}
             </h1>
             <p className="text-sm text-gray-500">
               {t("myApplicationsSubtitle") || "Track the status, schedule, and details of all your submitted social service requests."}
