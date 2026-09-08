@@ -54,8 +54,12 @@ exports.getAllCases = async (req, res) => {
       db.query(`SELECT * FROM pwd_senior_applications WHERE LOWER(status) IN ('approved', 'completed', 'for_release', 'released', 'verified') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM solo_parent_applications WHERE LOWER(application_status) = 'approved' AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM child_welfare_applications WHERE LOWER(application_status) = 'approved' AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM livelihood_applications WHERE LOWER(status) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM training_applications WHERE LOWER(status) IN ('approved', 'completed', 'enrolled', 'graduated') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
+      db.query(`SELECT * FROM livelihood_applications WHERE LOWER(application_status) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(async () => {
+        return db.query(`SELECT * FROM livelihood_applications WHERE LOWER(status) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] }));
+      }),
+      db.query(`SELECT * FROM training_applications WHERE LOWER(status) IN ('approved', 'completed', 'enrolled', 'graduated') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(async () => {
+        return db.query(`SELECT * FROM training_applications WHERE LOWER(status) IN ('approved', 'completed', 'enrolled', 'graduated') ORDER BY created_at DESC`).catch(() => ({ rows: [] }));
+      }),
       db.query(`SELECT * FROM appointments ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM financial_aid_disbursements ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM case_records`).catch(() => ({ rows: [] })),

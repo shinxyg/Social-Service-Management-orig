@@ -181,78 +181,7 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" }
 }
 
-// =====================================================================================
-// Visual Workflow Banner Component
-// =====================================================================================
 
-function WorkflowBanner() {
-  const [isExpanded, setIsExpanded] = useState(false)
-
-  return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-2xs">
-      <div className="flex items-center justify-between cursor-pointer select-none" onClick={() => setIsExpanded((prev) => !prev)}>
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0">
-            <FolderKanban className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              Integrated Case Management Architecture
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                Approved Records Only
-              </span>
-            </h2>
-            <p className="text-xs text-slate-500">
-              Applications enter Case Management automatically upon Admin Approval • Linked to Appointments, Financial Aid, Referrals &amp; Monitoring
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-          aria-label="Toggle diagram"
-        >
-          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
-      </div>
-
-      {isExpanded && (
-        <div className="mt-4 pt-4 border-t border-slate-100">
-          <div className="bg-slate-900 text-slate-100 p-4 md:p-6 rounded-xl font-mono text-xs md:text-sm overflow-x-auto leading-relaxed shadow-inner">
-            <pre className="text-emerald-400 font-bold mb-1">
-              {`                    APPLICATION
-                         │
-                  Admin Review
-                         │
-             ┌───────────┴───────────┐
-          PENDING                  REJECTED
-             │                        │
-       NO CASE YET                NO CASE
-             │
-          APPROVED
-             ↓
-       CASE MANAGEMENT
-             │
-             ├── APPOINTMENT
-             │      └── Existing appointment (Date, Time, Venue)
-             │
-             ├── FINANCIAL AID
-             │      ├── PENDING   (Queued for release)
-             │      └── RELEASED  (Disbursed to beneficiary)
-             │
-             ├── REFERRAL
-             │      └── External/Inter-agency assistance
-             │
-             └── MONITORING
-                    ↓
-                 CLOSED (Case finalized & resolved)`}
-            </pre>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
 
 // =====================================================================================
 // Case Details Modal Component
@@ -1239,8 +1168,6 @@ export default function CaseManagement() {
         </div>
       </div>
 
-      {/* Visual Workflow Diagram */}
-      <WorkflowBanner />
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
