@@ -5,12 +5,10 @@ import {
   Calendar,
   Wallet,
   Send,
-  HeartHandshake,
   History,
   Search,
   Clock,
   CheckCircle2,
-  AlertCircle,
   MapPin,
   Phone,
   Mail,
@@ -22,10 +20,7 @@ import {
   FileCheck,
   Activity,
   ArrowRight,
-  ShieldAlert,
   Info,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { subscribeToRealtimeChanges, notifyApplicationChange } from "../../utils/realtimeSync"
