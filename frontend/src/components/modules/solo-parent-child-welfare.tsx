@@ -228,6 +228,9 @@ function mapSoloParentRow(row: any): SoloParentSubmission {
   const formData = parseJsonSafe(row.form_data, {})
   const extraData = parseJsonSafe(row.extra_data, {})
   const fdFormData = typeof formData.formData === "object" ? formData.formData : formData
+  const familyMembers = Array.isArray(row.family_members)
+    ? row.family_members
+    : parseJsonSafe(row.family_members, parseJsonSafe(fdFormData.familyMembers || formData.familyMembers, []))
 
   const emFirst =
     fdFormData.emergencyFirstName ||
