@@ -25,6 +25,76 @@ const DISABILITY_TYPES = [
   "Developmental / Neurological Disability",
 ]
 
+export const DISABILITY_TYPE_MAPPING: Record<
+  string,
+  {
+    defaultCause: string
+    relatedCauses: string[]
+    examples: string[]
+  }
+> = {
+  "Intellectual Disability": {
+    defaultCause: "Congenital / Inborn",
+    relatedCauses: ["Congenital / Inborn", "Illness / Disease", "Acquired"],
+    examples: ["Down Syndrome", "Fragile X Syndrome", "Autism Spectrum Disorder", "Microcephaly", "Hydrocephalus", "Global Developmental Delay"],
+  },
+  "Learning Disability": {
+    defaultCause: "Congenital / Inborn",
+    relatedCauses: ["Congenital / Inborn", "Acquired", "Illness / Disease"],
+    examples: ["Dyslexia", "Dyscalculia", "Dysgraphia", "Auditory Processing Disorder"],
+  },
+  "Developmental / Neurological Disability": {
+    defaultCause: "Congenital / Inborn",
+    relatedCauses: ["Congenital / Inborn", "Illness / Disease", "Acquired"],
+    examples: ["Cerebral Palsy", "Autism Spectrum Disorder", "Epilepsy", "ADHD", "Tourette Syndrome"],
+  },
+  "Physical Disability": {
+    defaultCause: "Acquired",
+    relatedCauses: ["Acquired", "Injury / Accident", "Illness / Disease", "Congenital / Inborn"],
+    examples: ["Amputation", "Paralysis / Quadriplegia / Paraplegia", "Polio / Post-Polio Syndrome", "Spinal Cord Injury", "Stroke Complication"],
+  },
+  "Orthopedic Disability": {
+    defaultCause: "Acquired",
+    relatedCauses: ["Acquired", "Injury / Accident", "Illness / Disease", "Congenital / Inborn"],
+    examples: ["Clubfoot", "Scoliosis", "Fracture / Bone Deformity", "Joint Impairment", "Musculoskeletal Disorder"],
+  },
+  "Visual Disability": {
+    defaultCause: "Acquired",
+    relatedCauses: ["Acquired", "Illness / Disease", "Congenital / Inborn", "Injury / Accident"],
+    examples: ["Total Blindness", "Low Vision", "Glaucoma", "Cataract", "Retinopathy", "Macular Degeneration"],
+  },
+  "Deaf / Hard of Hearing": {
+    defaultCause: "Congenital / Inborn",
+    relatedCauses: ["Congenital / Inborn", "Acquired", "Illness / Disease", "Injury / Accident"],
+    examples: ["Congenital Deafness", "Sensorineural Hearing Loss", "Conductive Hearing Loss", "Presbycusis"],
+  },
+  "Speech and Language Impairment": {
+    defaultCause: "Congenital / Inborn",
+    relatedCauses: ["Congenital / Inborn", "Acquired", "Illness / Disease", "Injury / Accident"],
+    examples: ["Stuttering / Stammering", "Aphasia", "Dysarthria", "Cleft Lip / Palate", "Apraxia of Speech"],
+  },
+  "Mental Disability": {
+    defaultCause: "Acquired",
+    relatedCauses: ["Acquired", "Illness / Disease", "Congenital / Inborn"],
+    examples: ["Schizophrenia", "Bipolar Disorder", "Major Depressive Disorder", "Severe Anxiety Disorder"],
+  },
+  "Psychosocial Disability": {
+    defaultCause: "Acquired",
+    relatedCauses: ["Acquired", "Illness / Disease", "Congenital / Inborn"],
+    examples: ["Bipolar Disorder", "Schizoaffective Disorder", "PTSD", "Chronic Clinical Depression", "Obsessive-Compulsive Disorder"],
+  },
+  "Chronic Illness with Disability": {
+    defaultCause: "Illness / Disease",
+    relatedCauses: ["Illness / Disease", "Acquired"],
+    examples: ["Chronic Kidney Disease (Dialysis)", "Cancer", "Diabetes with Complications", "Cardiovascular Disease", "Severe COPD"],
+  },
+  "Multiple Disabilities": {
+    defaultCause: "Acquired",
+    relatedCauses: ["Acquired", "Congenital / Inborn", "Illness / Disease", "Injury / Accident"],
+    examples: ["Deaf-Blindness", "Cerebral Palsy with Intellectual Disability", "Physical and Visual Disability"],
+  },
+}
+
 const APPARENT_DOCS = [
   { title: "Whole Body Picture", desc: "Clear photo showing the disability" },
   { title: "Certificate of Disability from Specialist", desc: "Annex 4, NCDA Administrative Order 001 S. 2021" },
@@ -299,6 +369,7 @@ function TextInput({
   maxLength,
   prefix,
   isPwdIdMask = false,
+  list,
 }: {
   value: string
   onChange: (v: string) => void
@@ -311,6 +382,7 @@ function TextInput({
   maxLength?: number
   prefix?: string
   isPwdIdMask?: boolean
+  list?: string
 }) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let raw = e.target.value
@@ -362,6 +434,7 @@ function TextInput({
           placeholder={placeholder}
           onChange={handleChange}
           disabled={disabled}
+          list={list}
           maxLength={isPwdIdMask ? 18 : maxLength}
           className="w-full px-3 py-2 text-sm bg-transparent focus:outline-none font-mono placeholder:font-sans text-foreground"
         />
@@ -377,6 +450,7 @@ function TextInput({
       placeholder={placeholder}
       onChange={handleChange}
       disabled={disabled}
+      list={list}
       maxLength={isPwdIdMask ? 18 : maxLength}
       className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-all ${
         disabled
@@ -901,6 +975,16 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       setApprovedPwdRecord(null)
     }
     setFormData((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleDisabilityTypeChange = (val: string) => {
+    setDisabilityType(val)
+    const isApparent = val === "Physical Disability" || val === "Orthopedic Disability"
+    setDisabilityClass(isApparent ? "apparent" : "non-apparent")
+    const mapping = DISABILITY_TYPE_MAPPING[val]
+    if (mapping?.defaultCause) {
+      updateField("causeOfDisability", mapping.defaultCause)
+    }
   }
 
   // handles the actual <input type="file"> change event
@@ -2317,12 +2401,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                   <div className="relative">
                     <select
                       value={disabilityType}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        setDisabilityType(val)
-                        const isApparent = val === "Physical Disability" || val === "Orthopedic Disability"
-                        setDisabilityClass(isApparent ? "apparent" : "non-apparent")
-                      }}
+                      onChange={(e) => handleDisabilityTypeChange(e.target.value)}
                       className={`w-full appearance-none border bg-white rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 ${
                         attemptedNext && disabilityType === ""
                           ? "border-red-400 focus:ring-red-300 bg-red-50"
@@ -2637,12 +2716,22 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     invalid={attemptedNext && disabilityType === ""}
                     invalidNote={t("pwdDisabilityTypeRequiredNote") || "Required"}
                   >
-                    <TextInput
+                    <select
                       value={disabilityType}
-                      onChange={() => {}}
-                      disabled={true}
-                      placeholder={t("pwdChooseDisabilityType")}
-                    />
+                      onChange={(e) => handleDisabilityTypeChange(e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                        attemptedNext && disabilityType === ""
+                          ? "border-red-400 focus:ring-red-300 bg-red-50"
+                          : "border-border focus:ring-blue-400 bg-white"
+                      }`}
+                    >
+                      <option value="">{t("pwdSelectDisabilityType") || "Pumili ng Uri ng Kapansanan"}</option>
+                      {DISABILITY_TYPES.map((ty) => (
+                        <option key={ty} value={ty}>
+                          {ty}
+                        </option>
+                      ))}
+                    </select>
                   </Field>
                   <Field
                     label={t("pwdCauseOfDisabilityLabel")}
@@ -2658,13 +2747,48 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                     />
                   </Field>
                   <Field label={t("pwdSpecificDisabilityLabel")}>
-                    <TextInput
-                      value={formData.specificDisability}
-                      onChange={(v) => updateField("specificDisability", v)}
-                      placeholder="Optional"
-                    />
+                    <div className="relative">
+                      <TextInput
+                        list="pwd-specific-disabilities-list"
+                        value={formData.specificDisability}
+                        onChange={(v) => updateField("specificDisability", v)}
+                        placeholder={
+                          DISABILITY_TYPE_MAPPING[disabilityType]?.examples?.[0]
+                            ? `e.g. ${DISABILITY_TYPE_MAPPING[disabilityType].examples[0]} (optional)`
+                            : "Optional"
+                        }
+                      />
+                      {DISABILITY_TYPE_MAPPING[disabilityType]?.examples && (
+                        <datalist id="pwd-specific-disabilities-list">
+                          {DISABILITY_TYPE_MAPPING[disabilityType].examples.map((ex) => (
+                            <option key={ex} value={ex} />
+                          ))}
+                        </datalist>
+                      )}
+                    </div>
                   </Field>
                 </div>
+
+                {/* Helpful interactive suggestions for Specific Disability */}
+                {disabilityType && DISABILITY_TYPE_MAPPING[disabilityType]?.examples && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <span className="text-[11px] text-muted-foreground font-medium">Mga Mungkahi / Halimbawa:</span>
+                    {DISABILITY_TYPE_MAPPING[disabilityType].examples.slice(0, 5).map((ex) => (
+                      <button
+                        key={ex}
+                        type="button"
+                        onClick={() => updateField("specificDisability", ex)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
+                          formData.specificDisability === ex
+                            ? "bg-blue-600 text-white border-blue-600 shadow-xs font-semibold"
+                            : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
+                        }`}
+                      >
+                        {ex}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Error Banner when Next is attempted with incomplete fields */}
