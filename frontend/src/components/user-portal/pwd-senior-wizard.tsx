@@ -648,6 +648,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
     setIsResident(false)
     setHasDisability(false)
     setIdStatus(initialIdStatus ?? null)
+    setFormData((prev) => ({ ...prev, existingPwdIdNumber: "" }))
   }, [initialIdStatus])
 
   useEffect(() => {
@@ -824,17 +825,6 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       const approvedAny = allUserPwdApps.find(
         (a) => a.status === "approved" || a.status === "completed" || a.status === "for_release"
       )
-
-      // Auto-populate existing PWD ID number if approved record exists in system
-      if (approvedAny) {
-        const appAssignedId = approvedAny.assignedIdNumber || approvedAny.referenceNumber
-        if (appAssignedId) {
-          setFormData((prev) => ({
-            ...prev,
-            existingPwdIdNumber: prev.existingPwdIdNumber || appAssignedId,
-          }))
-        }
-      }
 
       // PRIORITY 1: Pending Application for THIS current flow (e.g. Renewal under review)
       if (pendingFlow) {
