@@ -263,12 +263,6 @@ const EMPTY_FORM_DATA: FormData = {
   familyCauseOfDisability: "",
 }
 
-const CAUSE_OF_DISABILITY = [
-  "Congenital / Inborn",
-  "Acquired",
-  "Illness / Disease",
-  "Injury / Accident",
-]
 
 interface UserProfile {
   qcidNo: string
@@ -465,43 +459,6 @@ function TextInput({
   )
 }
 
-function SelectInput({
-  value,
-  onChange,
-  options,
-  disabled = false,
-  invalid = false,
-  placeholder = "Select",
-}: {
-  value: string
-  onChange: (v: string) => void
-  options: string[]
-  disabled?: boolean
-  invalid?: boolean
-  placeholder?: string
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-        disabled
-          ? "border-border bg-gray-100 text-muted-foreground cursor-not-allowed"
-          : invalid
-          ? "border-red-400 focus:ring-red-300 bg-red-50"
-          : "border-border focus:ring-blue-400"
-      }`}
-    >
-      <option value="">{placeholder}</option>
-      {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </select>
-  )
-}
 
 function LockedField({ value, placeholder }: { value: string; placeholder?: string }) {
   return (
