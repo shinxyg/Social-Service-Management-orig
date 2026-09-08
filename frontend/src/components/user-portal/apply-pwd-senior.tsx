@@ -116,29 +116,33 @@ export default function ApplyPWDSenior() {
           const appCategory = String(a.category || "").toLowerCase()
           const appType = String(a.type || a.assistanceType || a.service || "").toLowerCase()
           const appService = String(a.service || "").toLowerCase()
+          const isSeniorCat = appCategory.includes("senior") || appService.includes("senior")
+          const isPwdCat = appCategory.includes("pwd") || appCategory.includes("disability") || appService.includes("pwd") || (!isSeniorCat && (appCategory === "pwd" || appCategory === "disability"))
 
           if (isAssistance) {
             // PWD Social Assistance
+            if (isSeniorCat) return false
             const isAssistanceType =
               appType === "assistance" ||
               appType === "social-assistance" ||
               appCategory.includes("assistance") ||
               appService.includes("assistance") ||
-              (appCategory === "pwd" && (appType === "assistance" || appType === "social-assistance")) ||
+              (isPwdCat && (appType === "assistance" || appType === "social-assistance")) ||
               (a.documents || []).some((d: any) => String(d.name || "").toLowerCase().includes("indigency") || String(d.name || "").toLowerCase().includes("pwdqcid"))
             if (!isAssistanceType) return false
           } else if (isSeniorSocial) {
             // Senior Social Assistance
+            if (!isSeniorCat) return false
             const isSeniorSocialType =
-              (appCategory === "senior" && (appType === "social-assistance" || appType === "assistance")) ||
+              (isSeniorCat && (appType === "social-assistance" || appType === "assistance")) ||
               appService.includes("senior social")
             if (!isSeniorSocialType) return false
           } else if (isSeniorMedicine) {
-            if (!(appCategory === "senior" && (appType === "medicine-booklet" || appType.includes("medicine")))) return false
+            if (!isSeniorCat || !(appType === "medicine-booklet" || appType.includes("medicine"))) return false
           } else if (isSeniorMovie) {
-            if (!(appCategory === "senior" && (appType === "movie-booklet" || appType.includes("movie")))) return false
+            if (!isSeniorCat || !(appType === "movie-booklet" || appType.includes("movie"))) return false
           } else if (isSeniorId) {
-            if (appCategory !== "senior" || appType.includes("assistance") || appType.includes("booklet") || appService.includes("assistance")) return false
+            if (!isSeniorCat || appType.includes("assistance") || appType.includes("booklet") || appType.includes("medicine") || appType.includes("movie") || appService.includes("assistance")) return false
             if (urlType === "loss") {
               if (appType !== "loss" && appType !== "replacement") return false
             } else if (urlType === "renewal") {
@@ -148,7 +152,7 @@ export default function ApplyPWDSenior() {
             }
           } else {
             // PWD ID
-            if (appCategory === "senior" || appType.includes("assistance") || appCategory.includes("assistance") || appService.includes("assistance")) return false
+            if (isSeniorCat || !isPwdCat || appType.includes("assistance") || appCategory.includes("assistance") || appService.includes("assistance") || appType.includes("booklet") || appType.includes("medicine") || appType.includes("movie")) return false
             if (urlType === "loss") {
               if (appType !== "loss" && appType !== "replacement") return false
             } else if (urlType === "renewal") {
@@ -181,10 +185,13 @@ export default function ApplyPWDSenior() {
 
           if (appStatus !== "approved" && appStatus !== "completed" && appStatus !== "for_release") return false
 
+          const isSeniorCat = appCategory.includes("senior") || appService.includes("senior")
+          const isPwdCat = appCategory.includes("pwd") || appCategory.includes("disability") || appService.includes("pwd")
+
           if (isSenior) {
-            if (appCategory !== "senior" && !appCategory.includes("senior")) return false
+            if (!isSeniorCat) return false
           } else {
-            if (appCategory === "senior" || appType.includes("assistance") || appService.includes("assistance")) return false
+            if (isSeniorCat || !isPwdCat || appType.includes("assistance") || appService.includes("assistance")) return false
           }
 
           const appRef = String(a.referenceNumber || a.reference_number || a.id || a.qc_id || a.qcid || "").trim().toLowerCase()
