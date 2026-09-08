@@ -457,7 +457,7 @@ const Tokens = React.memo(function Tokens() {
       .gw-section-num { font-family: 'Inter', sans-serif; font-weight: 700; font-size: .68rem; color: var(--plum-ink); background: var(--plum-soft); padding: .2rem .5rem; border-radius: 6px; }
       .gw-section-rule { height: 1px; background: var(--line); flex: 1; }
 
-      .gw-stat { background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--stat-color, var(--ink)); border-radius: 16px; box-shadow: var(--shadow-soft); }
+      .gw-stat { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-soft); }
     `}</style>
   )
 })
@@ -2265,9 +2265,6 @@ export default function PWDSeniorCitizen() {
           <h1 className="gw-serif text-[2.1rem] font-semibold leading-tight" style={{ color: "var(--ink)" }}>
             PWD &amp; Senior Citizen Services
           </h1>
-          <p className="text-sm mt-1.5" style={{ color: "var(--ink-soft)" }}>
-            Review submitted applications, verify documents, and record a decision on each case.
-          </p>
         </div>
 
         {/* Stats */}
@@ -2278,7 +2275,7 @@ export default function PWDSeniorCitizen() {
             { label: "Approved", value: stats.approved, color: "var(--forest)" },
             { label: "Rejected", value: stats.rejected, color: "var(--redwood)" },
           ].map((stat) => (
-            <div key={stat.label} className="gw-stat p-4" style={{ "--stat-color": stat.color } as React.CSSProperties}>
+            <div key={stat.label} className="gw-stat p-4">
               <p className="gw-eyebrow" style={{ color: "var(--ink-faint)" }}>{stat.label}</p>
               <p className="gw-serif text-3xl font-semibold mt-2" style={{ color: "var(--ink)" }}>{stat.value}</p>
             </div>

@@ -2044,9 +2044,6 @@ useEffect(() => {
           <h1 className="gw-serif text-[2.1rem] font-semibold leading-tight" style={{ color: "var(--ink)" }}>
             Solo Parent &amp; Child Welfare
           </h1>
-          <p className="text-sm mt-1.5" style={{ color: "var(--ink-soft)" }}>
-            Review submitted applications, verify documents, and record a decision on each case.
-          </p>
         </div>
 
         {/* Stats */}
