@@ -1740,16 +1740,13 @@ export default function SoloParentApplicationWizard({
                             </span>
                           </>
                         ) : (
-                          <>
-                            <Check className="w-3.5 h-3.5" />
-                            <span>
-                              {language === "en"
-                                ? "VERIFY ID"
-                                : language === "bis"
-                                ? "I-VERIFY ANG ID"
-                                : "I-VERIFY ANG ID"}
-                            </span>
-                          </>
+                          <span>
+                            {language === "en"
+                              ? "VERIFY ID"
+                              : language === "bis"
+                              ? "I-VERIFY ANG ID"
+                              : "I-VERIFY ANG ID"}
+                          </span>
                         )}
                       </button>
                     </div>
@@ -1888,16 +1885,13 @@ export default function SoloParentApplicationWizard({
                             </span>
                           </>
                         ) : (
-                          <>
-                            <Check className="w-3.5 h-3.5" />
-                            <span>
-                              {language === "en"
-                                ? "VERIFY ID"
-                                : language === "bis"
-                                ? "I-VERIFY ANG ID"
-                                : "I-VERIFY ANG ID"}
-                            </span>
-                          </>
+                          <span>
+                            {language === "en"
+                              ? "VERIFY ID"
+                              : language === "bis"
+                              ? "I-VERIFY ANG ID"
+                              : "I-VERIFY ANG ID"}
+                          </span>
                         )}
                       </button>
                     </div>
