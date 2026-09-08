@@ -1014,7 +1014,6 @@ export default function ChildWelfareApplicationWizard({
       try {
         const prof = getCurrentUserProfile()
         const uid = prof.id || (userProfile as any)?.id || (userProfile as any)?.userId || ""
-        const qcid = (prof.qcidNo || prof.qcidNumber || "").trim()
         const token = localStorage.getItem("token")
         const headers: Record<string, string> = {}
         if (token) headers["Authorization"] = `Bearer ${token}`
