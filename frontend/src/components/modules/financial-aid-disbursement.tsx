@@ -21,7 +21,6 @@ import {
   getSavedDisbursements,
   checkAndAutoReleaseScheduledDisbursements,
   parseAppointmentDateTime,
-  cleanupRenzTestData,
 } from "../../utils/financialAidSync"
 
 export { FIXED_ASSISTANCE_AMOUNTS, type DisbursementStage, type SyncedDisbursementRecord }

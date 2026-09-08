@@ -2170,35 +2170,7 @@ export default function PWDSeniorCitizen() {
     notifyApplicationChange("APPLICATION_DELETED", "pwd_senior", targetApp.referenceNumber)
   }
 
-  // Clear all senior applications
-  const handleClearSeniorApplications = async () => {
-    if (!window.confirm("Are you sure you want to clear all Senior Citizen applications to test fresh?")) return
 
-    setApplications((prev) => prev.filter((a) => a.category && !String(a.category).toLowerCase().includes("senior")))
-
-    // Remove from localStorage
-    try {
-      const raw = localStorage.getItem("pwd_senior_applications")
-      if (raw) {
-        const list = JSON.parse(raw)
-        if (Array.isArray(list)) {
-          const filtered = list.filter((a) => !a.category || !String(a.category).toLowerCase().includes("senior"))
-          localStorage.setItem("pwd_senior_applications", JSON.stringify(filtered))
-        }
-      }
-    } catch {}
-
-    // Call backend endpoint
-    try {
-      await fetch(`${API_BASE}/api/pwd-senior/applications/clear-senior`, {
-        method: "DELETE",
-      })
-    } catch (err) {
-      console.warn("Failed clearing senior applications:", err)
-    }
-
-    notifyApplicationChange("APPLICATION_DELETED", "pwd_senior")
-  }
 
 
   // Filter applications

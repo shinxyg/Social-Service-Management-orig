@@ -11,7 +11,6 @@ import {
   syncAppointmentToFinancialAid,
   parseAppointmentDateTime,
   checkAndAutoReleaseScheduledDisbursements,
-  cleanupRenzTestData,
 } from "../../utils/financialAidSync"
 import { API_BASE } from "../../config/api"
 
