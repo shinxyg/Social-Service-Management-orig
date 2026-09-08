@@ -24,6 +24,7 @@ import {
 import { API_BASE as APP_API_BASE } from "../../config/api"
 import { getSavedProfilePhoto } from "../../utils/profilePhoto"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
+import { useLanguage } from "../ui/language-context"
 
 interface ApplicationDocument {
   name: string
@@ -1068,6 +1069,7 @@ interface DetailedViewProps {
 }
 
 function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmissions }: DetailedViewProps) {
+  const { t } = useLanguage()
   const isSolo = isSoloParent(app)
   const idNumber = isSolo
     ? ((app as any).assignedIdNumber || (app as any).soloParentIdNumber || generateOfficialSoloParentId(app, allSubmissions))
@@ -1193,30 +1195,30 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
               {/* Section 02: Application Details & Basis */}
               <div>
                 <SectionHeading number={nextNum()} icon={<ClipboardList className="h-4 w-4" />}>
-                  {app.applicationType === "new" ? "Application details & basis" : "Record verification details"}
+                  {app.applicationType === "new" ? (t("spAppDetailsTitle") || "Application details & basis") : (t("spRecordVerificationTitle") || "Record verification details")}
                 </SectionHeading>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
                   <Field
-                    label="Application type"
+                    label={t("spLabelAppType") || "Application type"}
                     value={
                       app.applicationType === "new"
-                        ? "New Solo Parent ID"
+                        ? (t("spAppTypeNew") || "New Solo Parent ID")
                         : app.applicationType === "renewal"
-                        ? "Renewal Solo Parent ID"
-                        : "Replacement / Lost Solo Parent ID"
+                        ? (t("spAppTypeRenewal") || "Renewal Solo Parent ID")
+                        : (t("spAppTypeLoss") || "Replacement / Lost Solo Parent ID")
                     }
                   />
                   <Field
-                    label={app.applicationType === "new" ? "Solo parent ID status" : "Solo parent ID / QCID number"}
+                    label={app.applicationType === "new" ? (t("spLabelIdStatus") || "Solo parent ID status") : (t("spLabelIdNumber") || "Solo parent ID / QCID number")}
                     value={
                       app.applicationType === "new"
-                        ? "Wala pa (Bagong aplikasyon)"
-                        : app.soloParentIdNumber || app.assignedIdNumber || app.qcidNumber || "Existing Record Verified"
+                        ? (t("spStatusNoneNew") || "None yet (New application)")
+                        : app.soloParentIdNumber || app.assignedIdNumber || app.qcidNumber || (t("spLabelExistingVerified") || "Existing record verified")
                     }
                   />
                   {app.classification && (
                     <div className="col-span-2">
-                      <Field label="Solo parent category / reason" value={app.classification} />
+                      <Field label={t("spLabelCategoryReason") || "Solo parent category / reason"} value={app.classification} />
                     </div>
                   )}
                 </div>
