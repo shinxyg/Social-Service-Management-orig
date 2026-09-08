@@ -8,7 +8,6 @@ import {
   AlertCircle,
   X,
   Loader2,
-  ChevronRight,
   ChevronUp,
   Pencil,
   Info,
@@ -1735,7 +1734,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
               }`}
             >
               <span>{t("nextButton").toUpperCase()}</span>
-              <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
             <button
