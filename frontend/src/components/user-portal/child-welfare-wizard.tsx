@@ -562,9 +562,9 @@ export default function ChildWelfareApplicationWizard({
       email: userEmail,
 
       // II. Parent / Guardian / Reporting Person
-      parentFullName: pFullName,
-      parentRelationship: "Mother",
-      parentContactNo: cNo,
+      parentFullName: "",
+      parentRelationship: "",
+      parentContactNo: "",
 
       // Specific concern / details
       reasonForRequest: "",
@@ -625,8 +625,6 @@ export default function ChildWelfareApplicationWizard({
       city: userCity,
       contactNo: cNo,
       email: userEmail,
-      parentFullName: pFullName,
-      parentContactNo: cNo,
     }))
   }, [userProfile])
 
@@ -684,6 +682,7 @@ export default function ChildWelfareApplicationWizard({
     formData.firstName.trim() !== "" &&
     formData.lastName.trim() !== "" &&
     formData.parentFullName.trim() !== "" &&
+    formData.parentRelationship.trim() !== "" &&
     formData.parentContactNo.trim().length >= 11 &&
     (!selectedProgram.hasProtectionConcern || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== "")) &&
     (!selectedProgram.hasEmergencyInfo || (formData.emergencyType.trim() !== "" && formData.emergencyDateTime.trim() !== "" && formData.briefDescription.trim() !== "")) &&
@@ -1253,14 +1252,17 @@ export default function ChildWelfareApplicationWizard({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.parentRelationship ? "text-red-600" : "text-gray-700"}`}>
                       {language === "tl" ? "Relasyon sa Bata *" : language === "bis" ? "Relasyon sa Bata *" : "Relationship to Child *"}
                     </label>
                     <select
                       value={formData.parentRelationship}
                       onChange={(e) => updateField("parentRelationship", e.target.value)}
-                      className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className={`w-full h-10 border rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        attemptedNext && !formData.parentRelationship ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
+                      <option value="">{language === "tl" ? "-- Piliin ang Relasyon --" : language === "bis" ? "-- Pilia ang Relasyon --" : "-- Select Relationship --"}</option>
                       {[
                         { val: "Mother", label: language === "tl" ? "Ina (Mother)" : language === "bis" ? "Inahan (Mother)" : "Mother" },
                         { val: "Father", label: language === "tl" ? "Ama (Father)" : language === "bis" ? "Amahan (Father)" : "Father" },
