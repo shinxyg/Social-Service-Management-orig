@@ -213,12 +213,12 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
 function AppointmentCard({
   appt,
   onSchedule,
-  onMarkCompleted,
+  onMarkCompleted: _onMarkCompleted,
   onDelete,
 }: {
   appt: AppointmentRequest
   onSchedule: (a: AppointmentRequest) => void
-  onMarkCompleted: (id: string) => void
+  onMarkCompleted?: (id: string) => void
   onDelete: (id: string, ref: string) => void
 }) {
   const st = getAppointmentStatusTheme(appt.status)
@@ -278,16 +278,6 @@ function AppointmentCard({
             >
               <Calendar className="h-3.5 w-3.5" />
               Set Schedule
-            </button>
-          )}
-
-          {appt.status === "scheduled" && (
-            <button
-              onClick={() => onMarkCompleted(appt.id)}
-              className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors cursor-pointer"
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Mark Completed
             </button>
           )}
         </div>
