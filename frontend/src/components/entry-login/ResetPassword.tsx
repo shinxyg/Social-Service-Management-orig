@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Lock, Mail, KeyRound, Eye, EyeOff, CheckCircle2, ArrowLeft, Check, X, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, KeyRound, Eye, EyeOff, CheckCircle2, ArrowLeft, Check, X } from 'lucide-react';
 import { API_BASE } from '../../config/api';
 
 export const ResetPassword = () => {
@@ -186,16 +186,9 @@ export const ResetPassword = () => {
               <form onSubmit={handleSubmit} className="space-y-4 text-left">
                 {/* Email Address */}
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-slate-700">
-                      Registered Email Address
-                    </label>
-                    {isEmailFromUrl && (
-                      <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3" /> Verified Target Account
-                      </span>
-                    )}
-                  </div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Registered Email Address
+                  </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                       <Mail className="w-4 h-4" />
