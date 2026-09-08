@@ -1023,13 +1023,20 @@ export default function ChildWelfareApplicationWizard({
           const res = await fetch(`${API_BASE}/api/child-welfare/user/${uid}`, { headers })
           if (res.ok) {
             const data = await res.json()
-            if (active && data.applications && data.applications.length > 0) {
-              const matched = data.applications.find(
-                (a: any) =>
-                  a.category_id === String(selectedProgram.id) ||
-                  a.category_title === selectedProgram.title ||
-                  (a.reference_number && qcid && a.reference_number === qcid)
-              ) || data.applications[0]
+            if (active) {
+              const applications = data.applications || []
+              const matched = applications.find((a: any) => {
+                if (!a) return false
+                const aCatId = String(a.category_id || "")
+                const aTitle = String(a.category_title || "").toLowerCase().trim()
+                const progId = String(selectedProgram.id)
+                const progTitle = selectedProgram.title.toLowerCase().trim()
+                const progKey = selectedProgram.key.toLowerCase().trim()
+
+                const idMatch = aCatId === progId
+                const titleMatch = aTitle.includes(progTitle) || progTitle.includes(aTitle) || aTitle === progKey
+                return idMatch || titleMatch
+              })
 
               if (matched && ["pending", "approved", "rejected"].includes(matched.application_status)) {
                 setSubmissionStage("pending")
@@ -1040,6 +1047,8 @@ export default function ChildWelfareApplicationWizard({
                   setSelectedAssistanceType(st)
                 }
                 return
+              } else {
+                setSubmissionStage("form")
               }
             }
           }
