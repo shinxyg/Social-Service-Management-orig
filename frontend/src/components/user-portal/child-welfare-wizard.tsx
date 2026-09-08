@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, type ReactNode } from "react"
 import {
   Check,
   FileText,
@@ -15,10 +15,13 @@ import {
   Activity,
   AlertCircle,
   User,
+  Camera,
+  ChevronUp,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import { getCurrentUserProfile } from "../../utils/userProfile"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
+import DocumentCameraModal from "../ui/document-camera-modal"
 
 function generateReference(qcid?: string) {
   if (qcid && qcid.trim()) return qcid.trim()
@@ -593,6 +596,119 @@ export interface UserProfile {
   email?: string
 }
 
+function FileThumbnail({ file, className }: { file: File; className?: string }) {
+  const [src, setSrc] = useState<string>("")
+  const isImg = file.type.startsWith("image/") || /\.(jpe?g|png|webp|jfif|bmp|gif)$/i.test(file.name)
+
+  useEffect(() => {
+    if (!isImg) return
+    const url = URL.createObjectURL(file)
+    setSrc(url)
+    return () => {
+      URL.revokeObjectURL(url)
+    }
+  }, [file, isImg])
+
+  if (isImg && src) {
+    return <img src={src} alt={file.name} className={className || "h-full w-full object-cover"} />
+  }
+  return <FileText className="h-8 w-8 text-gray-400" />
+}
+
+function UploadedDocPreviewModal({
+  title,
+  file,
+  onClose,
+}: {
+  title: string
+  file: File | null
+  onClose: () => void
+}) {
+  if (!file) return null
+  const isImage = file.type.startsWith("image/") || /\.(jpe?g|png|webp|jfif|bmp|gif)$/i.test(file.name)
+  const [previewUrl, setPreviewUrl] = useState<string>("")
+
+  useEffect(() => {
+    if (!isImage) return
+    const url = URL.createObjectURL(file)
+    setPreviewUrl(url)
+    return () => {
+      URL.revokeObjectURL(url)
+    }
+  }, [file, isImage])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide truncate pr-2">{title}</h4>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer shrink-0">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="p-6 max-h-[65vh] overflow-y-auto bg-gray-50 flex items-center justify-center">
+          {isImage && previewUrl ? (
+            <img src={previewUrl} alt={title} className="max-w-full max-h-[55vh] rounded-lg border border-gray-200 object-contain shadow-xs" />
+          ) : (
+            <div className="flex flex-col items-center gap-2 py-10 text-gray-500">
+              <FileText className="h-12 w-12 text-blue-500" />
+              <p className="text-sm font-medium">{file.name}</p>
+            </div>
+          )}
+        </div>
+        <div className="px-6 py-3 border-t border-gray-200 text-xs text-gray-500 truncate bg-white">
+          {file.name}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReviewField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
+      <p className="text-sm font-semibold text-gray-900 mt-0.5 break-words">{value || "—"}</p>
+    </div>
+  )
+}
+
+function ReviewSection({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string
+  onEdit: () => void
+  children: ReactNode
+}) {
+  const { t } = useLanguage()
+  const [open, setOpen] = useState(true)
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xs">
+      <div className="flex items-center justify-between bg-gray-50 px-4 py-3 border-b border-gray-100">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer"
+        >
+          <ChevronUp className={`h-4 w-4 text-gray-500 transition-transform ${open ? "" : "rotate-180"}`} />
+          {title}
+        </button>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
+        >
+          <Pencil className="w-3 h-3" />
+          <span>{t("editButton")?.toUpperCase() || "I-EDIT"}</span>
+        </button>
+      </div>
+      {open && children}
+    </div>
+  )
+}
+
 interface ChildWelfareWizardProps {
   onBack?: () => void
   userProfile?: UserProfile
@@ -629,6 +745,8 @@ export default function ChildWelfareApplicationWizard({
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [showSampleModal, setShowSampleModal] = useState(false)
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<{ id: string; label: string; sampleImage?: string; description?: string } | null>(null)
+  const [cameraDoc, setCameraDoc] = useState<{ id: string; label: string } | null>(null)
+  const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   const currentPrograms = getLocalizedChildWelfarePrograms(language)
@@ -1037,86 +1155,86 @@ export default function ChildWelfareApplicationWizard({
 
         {/* Card Content */}
         <div className="p-6 sm:p-8 space-y-7">
-          {/* ──────────────── STEP 1: COMPLETE CHECKLIST ──────────────── */}
+          {/* ──────────────── STEP 1: PROGRAM & CHECKLIST ──────────────── */}
           {step === 1 && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
-                  {t("serviceAndPrimaryRequirements") || "SERVICE AND PRIMARY REQUIREMENTS"}
-                </h2>
+              <div className="border-b border-gray-200 pb-3">
+                <h3 className="text-base font-bold text-gray-900 uppercase">
+                  {selectedProgram.title} — {t("cwStepChecklist") || (language === "tl" ? "KUMPLETUHIN ANG CHECKLIST" : language === "bis" ? "KUMPLETOHA ANG CHECKLIST" : "COMPLETE CHECKLIST")}
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {language === "tl"
+                    ? "Pakisagot ang mga tanong sa ibaba bago magpatuloy sa aplikasyon."
+                    : language === "bis"
+                    ? "Palihug tubaga ang mga pangutana sa ubos sa dili pa mopadayon sa aplikasyon."
+                    : "Please answer the verification questions below before continuing your application."}
+                </p>
               </div>
 
-              {/* 3 Primary Checklist Questions */}
-              <div className="space-y-4">
-                <label className="flex items-start gap-3 cursor-pointer select-none">
+              {attemptedNext && !step1Valid && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-red-700">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>
+                    {language === "tl"
+                      ? "Mangyaring lagyan ng check ang lahat ng aytem sa checklist at pumili ng uri ng tulong."
+                      : language === "bis"
+                      ? "Palihug markahi ang tanang aytem sa checklist ug pagpili og matang sa tabang."
+                      : "Please check all items in the checklist and select the type of assistance."}
+                  </span>
+                </div>
+              )}
+
+              {/* Checklist Questions */}
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200 hover:bg-gray-50/70 transition-colors cursor-pointer">
                   <input
                     type="checkbox"
                     checked={check1}
                     onChange={(e) => setCheck1(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
+                    className="mt-0.5 h-4 w-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
                   />
-                  <span className={`text-sm ${attemptedNext && !check1 ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    {selectedProgram.checklists[0]} *
+                  <span className="text-xs font-medium text-gray-800 leading-relaxed">
+                    {selectedProgram.checklists[0]}
                   </span>
                 </label>
 
-                <label className="flex items-start gap-3 cursor-pointer select-none">
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200 hover:bg-gray-50/70 transition-colors cursor-pointer">
                   <input
                     type="checkbox"
                     checked={check2}
                     onChange={(e) => setCheck2(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
+                    className="mt-0.5 h-4 w-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
                   />
-                  <span className={`text-sm ${attemptedNext && !check2 ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    {selectedProgram.checklists[1]} *
+                  <span className="text-xs font-medium text-gray-800 leading-relaxed">
+                    {selectedProgram.checklists[1]}
                   </span>
                 </label>
 
-                <label className="flex items-start gap-3 cursor-pointer select-none">
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200 hover:bg-gray-50/70 transition-colors cursor-pointer">
                   <input
                     type="checkbox"
                     checked={check3}
                     onChange={(e) => setCheck3(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
+                    className="mt-0.5 h-4 w-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
                   />
-                  <span className={`text-sm ${attemptedNext && !check3 ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    {selectedProgram.checklists[2]} *
+                  <span className="text-xs font-medium text-gray-800 leading-relaxed">
+                    {selectedProgram.checklists[2]}
                   </span>
                 </label>
-
-                {attemptedNext && (!check1 || !check2 || !check3) && (
-                  <p className="text-xs text-red-500">Kailangang lagyan ng check ang lahat ng eligibility requirements bago magpatuloy.</p>
-                )}
               </div>
 
-              {/* Blue Info Alert Banner */}
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-semibold text-blue-900">
-                    BAGONG APLIKASYON PARA SA CHILD WELFARE SERVICES
-                  </p>
-                  <p className="text-xs text-blue-700 mt-0.5">
-                    NEW APPLICATION: First-time Child Welfare assistance. Complete all requirements.
-                  </p>
-                </div>
-              </div>
-
-              {/* Select Category / Type of Assistance */}
-              <div className="space-y-2 pt-2">
-                <h3 className="text-sm font-bold text-gray-900 tracking-wide uppercase">
-                  SELECT CATEGORY / TYPE OF ASSISTANCE
-                </h3>
-                <p className={`text-xs font-semibold ${attemptedNext && !selectedAssistanceType ? "text-red-600" : "text-blue-700"}`}>
-                  Choose the type of assistance / category *
-                </p>
+              {/* Assistance Category / Type Selection */}
+              <div className="pt-2 border-t border-gray-100">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  {selectedProgram.assistanceTypeLabel}
+                </label>
                 <div className="relative">
                   <select
                     value={selectedAssistanceType}
                     onChange={(e) => setSelectedAssistanceType(e.target.value)}
-                    className={`w-full h-11 rounded-lg border bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 cursor-pointer ${
+                    className={`w-full h-11 border rounded-xl px-3.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium ${
                       attemptedNext && !selectedAssistanceType
-                        ? "border-red-500 ring-2 ring-red-100"
+                        ? "border-red-500 bg-red-50/30"
                         : "border-gray-300"
                     }`}
                   >
@@ -1130,11 +1248,6 @@ export default function ChildWelfareApplicationWizard({
                     ))}
                   </select>
                 </div>
-                {attemptedNext && !selectedAssistanceType && (
-                  <p className="text-xs text-red-600 mt-1">
-                    Please select an assistance type or category before proceeding.
-                  </p>
-                )}
               </div>
             </div>
           )}
@@ -1146,13 +1259,6 @@ export default function ChildWelfareApplicationWizard({
                 <h3 className="text-base font-bold text-gray-900 uppercase">
                   {selectedProgram.title} — {language === "tl" ? "PERSONAL NA IMPORMASYON" : language === "bis" ? "PERSONAL NGA IMPORMASYON" : "PERSONAL INFORMATION"}
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {language === "tl"
-                    ? "Mangyaring ilagay ang mga kinakailangang impormasyon ng bata o aplikante sa ibaba."
-                    : language === "bis"
-                    ? "Palihug ibutang ang gikinahanglan nga impormasyon sa bata o aplikante sa ubos."
-                    : "Please provide the required personal information of the child or applicant below."}
-                </p>
               </div>
 
               {attemptedNext && !step2Valid && (
@@ -1168,7 +1274,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               )}
 
-              {/* I. IMPORMASYON NG BATA / APLIKANTE */}
+              {/* I. IMPORMASYON NG BATA / APLIKANTE (DISABLED & PRE-FILLED FROM USER PROFILE) */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
                   <User className="w-4 h-4 text-blue-600" />
@@ -1177,227 +1283,38 @@ export default function ChildWelfareApplicationWizard({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "QC ID (Kung mayroon)" : language === "bis" ? "QC ID (Kung anaa)" : "QC ID (Optional / If available)"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.qcidNumber}
-                      onChange={(e) => updateField("qcidNumber", e.target.value)}
-                      placeholder="Hal. 110000184613308"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "QC ID (Kung mayroon)" : language === "bis" ? "QC ID (Kung anaa)" : "QC ID (Optional / If available)"}</label>
+                    <input type="text" disabled value={formData.qcidNumber} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Pangalan (First name) *" : language === "bis" ? "Unang Ngalan (First name) *" : "First Name *"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.firstName}
-                      onChange={(e) => updateField("firstName", e.target.value.toUpperCase())}
-                      placeholder="Hal. JUAN"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Pangalan (First name) *" : language === "bis" ? "Unang Ngalan (First name) *" : "First Name *"}</label>
+                    <input type="text" disabled value={formData.firstName} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Gitnang Pangalan (Middle name)" : language === "bis" ? "Tunga nga Ngalan (Middle name)" : "Middle Name"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.middleName}
-                      onChange={(e) => updateField("middleName", e.target.value.toUpperCase())}
-                      placeholder="Hal. SANTOS"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Gitnang Pangalan (Middle name)" : language === "bis" ? "Tunga nga Ngalan (Middle name)" : "Middle Name"}</label>
+                    <input type="text" disabled value={formData.middleName} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Apelyido (Last name) *" : language === "bis" ? "Apelyido (Last name) *" : "Last Name *"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.lastName}
-                      onChange={(e) => updateField("lastName", e.target.value.toUpperCase())}
-                      placeholder="Hal. DELA CRUZ"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Apelyido (Last name) *" : language === "bis" ? "Apelyido (Last name) *" : "Last Name *"}</label>
+                    <input type="text" disabled value={formData.lastName} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Suffix (Jr., Sr., III, atbp.)" : language === "bis" ? "Suffix (Jr., Sr., III, ug uban pa)" : "Suffix (Jr., Sr., III, etc.)"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.suffix}
-                      onChange={(e) => updateField("suffix", e.target.value)}
-                      placeholder="Jr., Sr., III"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Nasyonalidad *" : language === "bis" ? "Nasyonalidad *" : "Nationality *"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.nationality}
-                      onChange={(e) => updateField("nationality", e.target.value.toUpperCase())}
-                      placeholder="FILIPINO"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Araw ng Kapanganakan (MM/DD/YYYY)" : language === "bis" ? "Adlaw sa Pagkatawo (MM/DD/YYYY)" : "Date of Birth (MM/DD/YYYY)"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.dobMonth && formData.dobDay && formData.dobYear ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}` : (formData.dobMonth || formData.dobDay || formData.dobYear ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}` : "")}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        const parts = val.split("/")
-                        if (parts.length === 3) {
-                          updateField("dobMonth", parts[0])
-                          updateField("dobDay", parts[1])
-                          updateField("dobYear", parts[2])
-                        } else {
-                          updateField("dobMonth", val)
-                        }
-                      }}
-                      placeholder="MM/DD/YYYY"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Edad *" : language === "bis" ? "Edad *" : "Age *"}
-                    </label>
-                    <input
-                      type="number"
-                      disabled
-                      min="0"
-                      max="120"
-                      value={formData.age}
-                      onChange={(e) => updateField("age", e.target.value)}
-                      placeholder="Hal. 5"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Kasarian *" : language === "bis" ? "Kasarian *" : "Gender / Sex *"}
-                    </label>
-                    <select
-                      disabled
-                      value={formData.sex}
-                      onChange={(e) => updateField("sex", e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    >
-                      <option value="">{language === "tl" ? "Piliin ang Kasarian" : language === "bis" ? "Pilia ang Kasarian" : "Select Gender"}</option>
-                      <option value="Male">{language === "tl" ? "Lalaki (Male)" : language === "bis" ? "Lalaki (Male)" : "Male"}</option>
-                      <option value="Female">{language === "tl" ? "Babae (Female)" : language === "bis" ? "Babaye (Female)" : "Female"}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Katayuang Sibil" : language === "bis" ? "Kahimtang Sibil" : "Civil Status"}
-                    </label>
-                    <select
-                      disabled
-                      value={formData.civilStatus}
-                      onChange={(e) => updateField("civilStatus", e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    >
-                      <option value="Single">{language === "tl" ? "Walang Asawa (Single)" : language === "bis" ? "Walay Asawa (Single)" : "Single"}</option>
-                      <option value="Married">{language === "tl" ? "May Asawa (Married)" : language === "bis" ? "Minyo (Married)" : "Married"}</option>
-                      <option value="Widowed">{language === "tl" ? "Balo (Widowed)" : language === "bis" ? "Balo (Widowed)" : "Widowed"}</option>
-                      <option value="Separated">{language === "tl" ? "Hiwalay (Separated)" : language === "bis" ? "Bulag (Separated)" : "Separated"}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Numero ng Telepono" : language === "bis" ? "Numero sa Telepono" : "Contact Number"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      maxLength={11}
-                      value={formData.contactNo}
-                      onChange={(e) => updateField("contactNo", e.target.value.replace(/\D/g, ""))}
-                      placeholder="09XXXXXXXXX"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Numero ng Bahay / Gusali" : language === "bis" ? "Numero sa Balay / Bilding" : "House / Building Number"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.addressHouseNo}
-                      onChange={(e) => updateField("addressHouseNo", e.target.value)}
-                      placeholder="Hal. 123"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Kalye (Street)" : language === "bis" ? "Dalan (Street)" : "Street"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.addressStreet}
-                      onChange={(e) => updateField("addressStreet", e.target.value)}
-                      placeholder="Hal. Sampaguita St."
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">
-                      {language === "tl" ? "Barangay" : language === "bis" ? "Barangay" : "Barangay"}
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.barangay}
-                      onChange={(e) => updateField("barangay", e.target.value)}
-                      placeholder="Hal. Sauyo"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
-                    />
+                    <label className="text-xs font-semibold text-gray-700">{language === "tl" ? "Suffix (Jr., Sr., III, atbp.)" : language === "bis" ? "Suffix (Jr., Sr., III, ug uban pa)" : "Suffix (Jr., Sr., III, etc.)"}</label>
+                    <input type="text" disabled value={formData.suffix} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed" />
                   </div>
                 </div>
               </div>
 
-              {/* PARENT / GUARDIAN INFORMATION */}
+              {/* II. PARENT / GUARDIAN INFORMATION */}
               <div className="space-y-4 pt-3 border-t border-gray-200">
                 <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
                   <Users className="w-4 h-4 text-blue-600" />
                   {t("parentGuardianTitle") || (language === "tl" ? "II. MAGULANG / GUARDIAN / NAG-UULAT" : language === "bis" ? "II. GINIKANAN / GUARDIAN / TIG-REPORT" : "II. PARENT / GUARDIAN / REPORTING PERSON")}
                 </h4>
-
+                
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.parentFullName.trim() ? "text-red-600" : "text-gray-700"}`}>
@@ -1452,7 +1369,6 @@ export default function ChildWelfareApplicationWizard({
               </div>
 
               {/* SPECIFIC PROGRAM DETAILS */}
-              {/* 1. Child Protection Specific */}
               {selectedProgram.hasProtectionConcern && (
                 <div className="space-y-4 pt-3 border-t border-gray-200">
                   <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
@@ -1460,206 +1376,36 @@ export default function ChildWelfareApplicationWizard({
                     CHILD PROTECTION CONCERN
                   </h4>
 
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Reason for Request *
-                      </label>
-                      <select
-                        value={formData.reasonForRequest}
-                        onChange={(e) => updateField("reasonForRequest", e.target.value)}
-                        className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      >
-                        <option value="">Pumili ng dahilan / concern...</option>
-                        <option value="Child Abuse / Maltreatment">Child Abuse / Maltreatment</option>
-                        <option value="Severe Neglect">Severe Neglect</option>
-                        <option value="Exploitation / Violence">Exploitation / Violence</option>
-                        <option value="Immediate Safety Concern">Immediate Safety Concern</option>
-                        <option value="Abandonment">Abandonment</option>
-                        <option value="Other Protection Concern">Other Protection Concern</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Brief Description of the Concern *
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={formData.briefDescription}
-                        onChange={(e) => updateField("briefDescription", e.target.value)}
-                        placeholder="Please describe the child's situation or concern in detail..."
-                        className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-
-                    <label className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 rounded-xl cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.reportEmergencyPriority}
-                        onChange={(e) => updateField("reportEmergencyPriority", e.target.checked)}
-                        className="h-4 w-4 rounded text-rose-600 accent-rose-600 cursor-pointer"
-                      />
-                      <span className="text-xs font-bold text-rose-900">
-                        🚨 Report an Emergency / Immediate Safety Concern (I-prioritize para sa agarang pagtugon ng social worker)
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* 2. Emergency Assistance Specific */}
-              {selectedProgram.hasEmergencyInfo && (
-                <div className="space-y-4 pt-3 border-t border-gray-200">
-                  <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
-                    <Activity className="w-4 h-4 text-amber-600" />
-                    EMERGENCY INFORMATION
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Type of Emergency *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.emergencyType}
-                        onChange={(e) => updateField("emergencyType", e.target.value)}
-                        placeholder="Hal. Emergency Medical Assistance"
-                        className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Date & Time of Emergency *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.emergencyDateTime}
-                        onChange={(e) => updateField("emergencyDateTime", e.target.value)}
-                        placeholder="Hal. Kasalukuyan / Ngayong Araw"
-                        className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-                  </div>
-
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Brief Description of Emergency *
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={formData.briefDescription}
-                      onChange={(e) => updateField("briefDescription", e.target.value)}
-                      placeholder="Please describe the emergency situation..."
-                      className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                      Is the child currently safe? *
-                    </label>
-                    <div className="flex items-center gap-6">
-                      {["Yes", "No"].map((v) => (
-                        <label key={v} className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="childSafe"
-                            value={v}
-                            checked={formData.isChildSafe === v}
-                            onChange={() => updateField("isChildSafe", v)}
-                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                          />
-                          <span>{v}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 3. Psychosocial Support Specific */}
-              {selectedProgram.hasPsychosocialReason && (
-                <div className="space-y-4 pt-3 border-t border-gray-200">
-                  <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
-                    <HeartHandshake className="w-4 h-4 text-indigo-600" />
-                    SUPPORT INFORMATION
-                  </h4>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Reason for Request *
+                      Reason for Report / Assistance *
                     </label>
                     <select
                       value={formData.reasonForRequest}
                       onChange={(e) => updateField("reasonForRequest", e.target.value)}
                       className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
-                      <option value="">Pumili ng dahilan...</option>
-                      <option value="Emotional Distress">Emotional Distress</option>
-                      <option value="Family Problem">Family Problem</option>
-                      <option value="Grief / Loss">Grief / Loss</option>
-                      <option value="Bullying">Bullying</option>
-                      <option value="Trauma / Difficult Experience">Trauma / Difficult Experience</option>
-                      <option value="Abuse / Neglect Concern">Abuse / Neglect Concern</option>
-                      <option value="Behavioral Concern">Behavioral Concern</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Brief Description of the Concern *
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={formData.briefDescription}
-                      onChange={(e) => updateField("briefDescription", e.target.value)}
-                      placeholder="Please describe the child's concern..."
-                      className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* 4. Temporary Shelter / Care Specific */}
-              {selectedProgram.hasShelterCareInfo && (
-                <div className="space-y-4 pt-3 border-t border-gray-200">
-                  <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
-                    <Home className="w-4 h-4 text-emerald-600" />
-                    SHELTER / CARE INFORMATION
-                  </h4>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Reason for Request *
-                    </label>
-                    <select
-                      value={formData.reasonForRequest}
-                      onChange={(e) => updateField("reasonForRequest", e.target.value)}
-                      className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    >
-                      <option value="">Pumili ng dahilan...</option>
-                      <option value="No Safe Place to Stay">No Safe Place to Stay</option>
-                      <option value="Child Protection Concern">Child Protection Concern</option>
-                      <option value="Family Crisis">Family Crisis</option>
+                      <option value="">Pumili ng sitwasyon / dahilan...</option>
+                      <option value="Child Abuse / Neglect">Child Abuse / Neglect</option>
+                      <option value="Physical Abuse">Physical Abuse</option>
+                      <option value="Emotional Abuse">Emotional Abuse</option>
+                      <option value="Exploitation">Exploitation / Child Labor</option>
                       <option value="Abandonment">Abandonment</option>
-                      <option value="Emergency Situation">Emergency Situation</option>
-                      <option value="Risk of Abuse / Neglect">Risk of Abuse / Neglect</option>
-                      <option value="Other">Other</option>
+                      <option value="Threat to Safety / Urgent Protection">Threat to Safety / Urgent Protection</option>
+                      <option value="Legal / Custody Concern">Legal / Custody Concern</option>
+                      <option value="Other Protection Concern">Other Protection Concern</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Current Living Situation *
+                      Brief Description of the Concern / Incident *
                     </label>
                     <textarea
                       rows={3}
-                      value={formData.currentLivingSituation}
-                      onChange={(e) => updateField("currentLivingSituation", e.target.value)}
-                      placeholder="Please describe the child's current living situation..."
+                      value={formData.briefDescription}
+                      onChange={(e) => updateField("briefDescription", e.target.value)}
+                      placeholder="Please describe what happened or why the child needs urgent protection..."
                       className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                   </div>
@@ -1667,14 +1413,34 @@ export default function ChildWelfareApplicationWizard({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                        Is the child currently safe? *
+                        Is the child currently in immediate danger? *
                       </label>
                       <div className="flex items-center gap-6">
                         {["Yes", "No"].map((v) => (
                           <label key={v} className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer">
                             <input
                               type="radio"
-                              name="shelterChildSafe"
+                              name="childProtectionDanger"
+                              value={v}
+                              checked={formData.isImmediateDanger === v}
+                              onChange={() => updateField("isImmediateDanger", v)}
+                              className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
+                            />
+                            <span>{v}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                        Is the child currently in a safe location? *
+                      </label>
+                      <div className="flex items-center gap-6">
+                        {["Yes", "No"].map((v) => (
+                          <label key={v} className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="childProtectionSafe"
                               value={v}
                               checked={formData.isChildSafe === v}
                               onChange={() => updateField("isChildSafe", v)}
@@ -1685,41 +1451,90 @@ export default function ChildWelfareApplicationWizard({
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                        Is there a parent/guardian available? *
-                      </label>
-                      <div className="flex items-center gap-6">
-                        {["Yes", "No"].map((v) => (
-                          <label key={v} className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="shelterParentAvailable"
-                              value={v}
-                              checked={formData.isParentAvailable === v}
-                              onChange={() => updateField("isParentAvailable", v)}
-                              className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                            />
-                            <span>{v}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
 
-              {/* 5. Family / Parenting Support Specific */}
-              {selectedProgram.hasParentingReason && (
+              {/* 2. Emergency Assistance Specific */}
+              {selectedProgram.hasEmergencyInfo && (
                 <div className="space-y-4 pt-3 border-t border-gray-200">
                   <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
-                    <Users className="w-4 h-4 text-violet-600" />
-                    FAMILY / PARENTING INFORMATION
+                    <Activity className="w-4 h-4 text-amber-600" />
+                    EMERGENCY DETAILS
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Type of Emergency *
+                      </label>
+                      <select
+                        value={formData.emergencyType}
+                        onChange={(e) => updateField("emergencyType", e.target.value)}
+                        className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      >
+                        <option value="Emergency Medical Assistance">Emergency Medical Assistance</option>
+                        <option value="Emergency Food Assistance">Emergency Food Assistance</option>
+                        <option value="Emergency Transportation Assistance">Emergency Transportation Assistance</option>
+                        <option value="Emergency Shelter Assistance">Emergency Shelter Assistance</option>
+                        <option value="Emergency Protection Assistance">Emergency Protection Assistance</option>
+                        <option value="Other Crisis">Other Crisis</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Approximate Date & Time of Incident / Need *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.emergencyDateTime}
+                        onChange={(e) => updateField("emergencyDateTime", e.target.value)}
+                        placeholder="Hal. Today, 2:00 PM"
+                        className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Brief Description of the Emergency Situation *
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.briefDescription}
+                      onChange={(e) => updateField("briefDescription", e.target.value)}
+                      placeholder="Please explain the urgent assistance required..."
+                      className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+
+                  <div className="p-3.5 rounded-xl border border-red-200 bg-red-50/50">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.reportEmergencyPriority}
+                        onChange={(e) => updateField("reportEmergencyPriority", e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded text-red-600 accent-red-600 cursor-pointer"
+                      />
+                      <span className="text-xs font-semibold text-red-800">
+                        Mark this application as HIGH PRIORITY EMERGENCY for immediate SSDD action.
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Psychosocial Support Specific */}
+              {selectedProgram.hasPsychosocialReason && (
+                <div className="space-y-4 pt-3 border-t border-gray-200">
+                  <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
+                    <HeartHandshake className="w-4 h-4 text-purple-600" />
+                    PSYCHOSOCIAL SUPPORT DETAILS
                   </h4>
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Reason for Request *
+                      Reason for Seeking Counseling / Psychosocial Support *
                     </label>
                     <select
                       value={formData.reasonForRequest}
@@ -1727,40 +1542,25 @@ export default function ChildWelfareApplicationWizard({
                       className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
                       <option value="">Pumili ng dahilan...</option>
-                      <option value="Parenting Concern">Parenting Concern</option>
-                      <option value="Family Conflict">Family Conflict</option>
-                      <option value="Parent-Child Relationship Concern">Parent-Child Relationship Concern</option>
-                      <option value="Child Care Concern">Child Care Concern</option>
-                      <option value="Parenting Skills Support">Parenting Skills Support</option>
-                      <option value="Family Communication Problem">Family Communication Problem</option>
-                      <option value="Family Crisis">Family Crisis</option>
+                      <option value="Trauma / Post-Traumatic Support">Trauma / Post-Traumatic Support</option>
+                      <option value="Behavioral / Emotional Concern">Behavioral / Emotional Concern</option>
+                      <option value="Grief / Loss of Family Member">Grief / Loss of Family Member</option>
+                      <option value="Crisis / Stress Support">Crisis / Stress Support</option>
+                      <option value="Victim of Abuse Support">Victim of Abuse Support</option>
                       <option value="Other">Other</option>
                     </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Brief Description of the Concern *
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={formData.briefDescription}
-                      onChange={(e) => updateField("briefDescription", e.target.value)}
-                      placeholder="Please describe your family or parenting concern..."
-                      className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* ──────────────── STEP 3: SUBMIT DOCUMENTS ──────────────── */}
+          {/* ──────────────── STEP 3: SAMPLE DOCUMENTS & UPLOADS ──────────────── */}
           {step === 3 && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div className="border-b border-gray-200 pb-3">
                 <h3 className="text-base font-bold text-gray-900 uppercase">
-                  {t("cwStepDocuments") || (language === "tl" ? "MAGSUMITE NG DOKUMENTO" : language === "bis" ? "ISUMITE ANG MGA DOKUMENTO" : "SUBMIT DOCUMENTS")}
+                  {t("cwStepDocuments") || (language === "tl" ? "MAGSUMITE NG DOKUMENTO" : language === "bis" ? "ISUMITE ANG MGA DOKUMENTO" : "SAMPLE DOCUMENTS")}
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
                   {language === "tl"
@@ -1771,98 +1571,125 @@ export default function ChildWelfareApplicationWizard({
                 </p>
               </div>
 
+              <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3.5">
+                <AlertCircle className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-700">
+                  {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP, PDF (o kumuha gamit ang Camera). Siguraduhing malinaw ang kopya."}
+                </p>
+              </div>
+
               <div className="space-y-4">
-                {selectedProgram.documents.map((doc) => {
+                {selectedProgram.documents.map((doc, docIdx) => {
                   const files = uploadedFiles[doc.id] || []
-                  const hasUploaded = files.length > 0
+                  const uploaded = files.length > 0
+                  const isInvalid = doc.required && attemptedNext && !uploaded
+                  const inputId = `upload-cw-doc-${doc.id}-${docIdx}`
+
                   return (
-                    <div
-                      key={doc.id}
-                      className={`p-4 rounded-xl border transition-all ${
-                        hasUploaded
-                          ? "border-emerald-200 bg-emerald-50/40"
-                          : doc.required && attemptedNext
-                          ? "border-red-300 bg-red-50/30"
-                          : "border-gray-200 bg-white"
-                      }`}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                            <span>{doc.label}</span>
-                            {doc.required ? (
-                              <span className="text-red-500">*</span>
-                            ) : (
-                              <span className="text-gray-400 font-normal">
-                                ({language === "tl" ? "Opsyonal" : language === "bis" ? "Opsyonal" : "Optional"})
-                              </span>
-                            )}
-                            {hasUploaded && <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />}
-                          </p>
-                          {doc.description && (
-                            <p className="text-[11px] text-gray-500 mt-0.5">{doc.description}</p>
+                    <div key={doc.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedSampleDoc(doc)
+                          setShowSampleModal(true)
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1.5 cursor-pointer"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        {(t("sampleDocument") || (language === "tl" ? "Sample na Dokumento" : language === "bis" ? "Sample nga Dokumento" : "Sample Document")).toUpperCase()}
+                      </button>
+
+                      <div
+                        className={`border rounded-xl p-4 sm:p-5 transition-colors ${
+                          uploaded
+                            ? "border-green-300 bg-green-50/60"
+                            : isInvalid
+                            ? "border-red-400 bg-red-50"
+                            : "border-gray-200 bg-white"
+                        }`}
+                      >
+                        <p className="flex items-center gap-1.5 text-xs font-bold text-gray-900 uppercase tracking-wide">
+                          {doc.label} {doc.required ? <span className="text-red-500">*</span> : <span className="text-gray-400 text-xs font-normal">({language === "tl" ? "Opsyonal" : language === "bis" ? "Opsyonal" : "Optional"})</span>}
+                          {uploaded && (
+                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-green-500 text-white shrink-0 ml-1">
+                              <Check className="h-2.5 w-2.5 stroke-[3]" />
+                            </span>
                           )}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {doc.sampleImage && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedSampleDoc(doc)
-                                setShowSampleModal(true)
-                              }}
-                              className="px-3 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
-                            >
-                              {language === "tl" ? "Sample na Dokumento" : language === "bis" ? "Sample nga Dokumento" : "Sample Document"}
-                            </button>
-                          )}
-
-                          <label className="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer transition-colors shadow-xs">
-                            <Upload className="w-3.5 h-3.5 inline mr-1" />
-                            {language === "tl" ? "MAG-UPLOAD NG FILE" : language === "bis" ? "PAG-UPLOAD OG FILE" : "CHOOSE FILE"}
-                            <input
-                              type="file"
-                              accept="image/*,.pdf"
-                              onChange={(e) => handleFileUpload(doc.id, e.target.files)}
-                              className="sr-only"
-                            />
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* File preview list */}
-                      {hasUploaded && (
-                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200">
-                          {files.map((file, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 shadow-2xs"
-                            >
-                              <FileText className="w-3.5 h-3.5 text-blue-600" />
-                              <span className="max-w-[150px] truncate">{file.name}</span>
-                              <span className="text-[10px] text-gray-400">({formatFileSize(file.size)})</span>
-                              <button
-                                type="button"
-                                onClick={() => removeFile(doc.id, idx)}
-                                className="ml-1 text-gray-400 hover:text-red-500"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {doc.required && attemptedNext && !hasUploaded && (
-                        <p className="text-xs text-red-500 mt-2">
-                          {language === "tl"
-                            ? "Kailangang i-upload ang dokumentong ito."
-                            : language === "bis"
-                            ? "Kinahanglan i-upload kini nga dokumento."
-                            : "This document is required."}
                         </p>
-                      )}
+
+                        {doc.description && <p className="text-xs text-gray-500 mt-1">{doc.description}</p>}
+                        <p className="text-[11px] text-gray-400 mt-1">
+                          {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)"}
+                        </p>
+
+                        <input
+                          type="file"
+                          id={inputId}
+                          key={`${inputId}-${files.length}`}
+                          accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              handleFileUpload(doc.id, e.target.files)
+                            }
+                            e.target.value = ""
+                          }}
+                        />
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                          <label
+                            htmlFor={inputId}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            {t("uploadPhotoBtn") || (language === "tl" ? "MAG-UPLOAD NG LARAWAN" : language === "bis" ? "PAG-UPLOAD OG HULAGWAY" : "UPLOAD PHOTO")}
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={() => setCameraDoc(doc)}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
+                          >
+                            <Camera className="h-3.5 w-3.5" />
+                            {t("takePhotoCameraBtn") || (language === "tl" ? "KUMUHA NG LARAWAN (CAMERA)" : language === "bis" ? "PAGKUHA OG HULAGWAY (CAMERA)" : "TAKE PHOTO (CAMERA)")}
+                          </button>
+                        </div>
+
+                        {uploaded && (
+                          <div className="flex flex-wrap gap-3 pt-4">
+                            {files.map((file, i) => (
+                              <div
+                                key={`${file.name}-${i}`}
+                                className="relative w-36 sm:w-40 border border-gray-200 rounded-lg bg-white p-2.5 flex flex-col items-center text-center shadow-xs"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => removeFile(doc.id, i)}
+                                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-gray-500 hover:bg-red-600 flex items-center justify-center text-white transition-colors z-10 cursor-pointer shadow-xs"
+                                  aria-label={t("removeFile", { filename: file.name }) || "Remove file"}
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewDocModal({ title: doc.label, file })}
+                                  className="h-16 w-full rounded-md overflow-hidden border border-gray-100 mb-2 flex items-center justify-center bg-gray-50 cursor-pointer hover:opacity-90"
+                                >
+                                  <FileThumbnail file={file} className="h-full w-full object-cover" />
+                                </button>
+                                <p className="text-[11px] font-medium text-gray-800 truncate w-full">{file.name}</p>
+                                <p className="text-[10px] text-gray-400 mt-0.5">{formatFileSize(file.size)}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {isInvalid && (
+                          <p className="text-xs text-red-500 mt-2">
+                            {t("spDocRequiredNote") || (language === "tl" ? "Kailangan pang mag-upload ng dokumento para sa kinakailangang item na ito." : language === "bis" ? "Kinahanglan pang mag-upload og dokumento alang niining gikinahanglang aytem." : "A document must be uploaded for this required item.")}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )
                 })}
@@ -1872,109 +1699,135 @@ export default function ChildWelfareApplicationWizard({
 
           {/* ──────────────── STEP 4: REVIEW & SUBMIT ──────────────── */}
           {step === 4 && (
-            <div className="space-y-6">
-              <div className="border-b border-gray-200 pb-3">
+            <div className="space-y-5">
+              <div>
                 <h3 className="text-base font-bold text-gray-900 uppercase">
-                  {t("cwStepReview") || (language === "tl" ? "SURIIN AT ISUMITE" : language === "bis" ? "SUSIHA UG ISUMITE" : "REVIEW YOUR APPLICATION")}
+                  {(t("pwdReviewHeader") || (language === "tl" ? "SURIIN ANG IMPORMASYON" : language === "bis" ? "SUSIHA ANG IMPORMASYON" : "REVIEW INFORMATION")).toUpperCase()}
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {language === "tl"
-                    ? "Pakisuri ang lahat ng impormasyon bago isumite ang inyong aplikasyon."
-                    : language === "bis"
-                    ? "Palihug susiha ang tanang impormasyon sa dili pa isumite ang imong aplikasyon."
-                    : "Please review all information before submitting your application."}
+                  {t("pwdReviewDesc") || (language === "tl" ? "Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon." : language === "bis" ? "Palihug susiha og maayo ang tanang impormasyon sa dili pa isumite ang aplikasyon." : "Please review all information and uploaded documents before submitting your application.")}
                 </p>
               </div>
 
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Applicant Information */}
-                <div className="p-4 rounded-xl border border-gray-200 bg-white space-y-2 text-xs">
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                    <span className="font-bold text-gray-900 uppercase">
-                      {language === "tl" ? "IMPORMASYON NG APLIKANTE" : language === "bis" ? "IMPORMASYON SA APLIKANTE" : "APPLICANT INFORMATION"}
-                    </span>
-                    <button type="button" onClick={() => { setReturnToReview(true); setStep(2) }} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
-                      <Pencil className="w-3 h-3" /> {language === "tl" ? "I-edit" : language === "bis" ? "I-edit" : "Edit"}
-                    </button>
-                  </div>
-                  <p><span className="text-gray-500">QC ID:</span> <span className="font-semibold text-gray-900 font-mono">{formData.qcidNumber}</span></p>
-                  <p><span className="text-gray-500">{language === "tl" ? "Buong Pangalan:" : language === "bis" ? "Tibuok Ngalan:" : "Full Name:"}</span> <span className="font-semibold text-gray-900">{formData.firstName} {formData.middleName ? formData.middleName + " " : ""}{formData.lastName} {formData.suffix}</span></p>
-                  <p><span className="text-gray-500">{language === "tl" ? "Petsa ng Kapanganakan / Edad:" : language === "bis" ? "Petsa sa Pagkatawo / Edad:" : "Date of Birth / Age:"}</span> <span className="font-semibold text-gray-900">{formData.dobMonth}/{formData.dobDay}/{formData.dobYear} ({formData.age} {language === "tl" ? "taong gulang" : language === "bis" ? "ka tuig" : "y/o"})</span></p>
-                  <p><span className="text-gray-500">{language === "tl" ? "Kasarian / Katayuang Sibil:" : language === "bis" ? "Kasarian / Sibil nga Kahimtang:" : "Sex / Civil Status:"}</span> <span className="font-semibold text-gray-900">{formData.sex} / {formData.civilStatus}</span></p>
-                  <p><span className="text-gray-500">{language === "tl" ? "Tirahan:" : language === "bis" ? "Pinuy-anan:" : "Address:"}</span> <span className="font-semibold text-gray-900">{formData.addressHouseNo} {formData.addressStreet}, Brgy. {formData.barangay}, {formData.city}</span></p>
+              {/* 1. Program & Assistance Details */}
+              <ReviewSection title={language === "tl" ? "Mga Detalye ng Aplikasyon" : language === "bis" ? "Mga Detalye sa Aplikasyon" : "Application Details"} onEdit={() => { setReturnToReview(true); setStep(1) }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                  <ReviewField
+                    label={language === "tl" ? "Programa" : language === "bis" ? "Programa" : "Program"}
+                    value={selectedProgram.title}
+                  />
+                  <ReviewField
+                    label={language === "tl" ? "Uri ng Tulong" : language === "bis" ? "Matang sa Tabang" : "Type of Assistance"}
+                    value={selectedAssistanceType}
+                  />
+                  {formData.reasonForRequest && (
+                    <ReviewField
+                      label={language === "tl" ? "Dahilan" : language === "bis" ? "Rason" : "Reason for Request"}
+                      value={formData.reasonForRequest}
+                    />
+                  )}
+                  {formData.briefDescription && (
+                    <ReviewField
+                      label={language === "tl" ? "Deskripsyon" : language === "bis" ? "Deskripsyon" : "Description"}
+                      value={formData.briefDescription}
+                    />
+                  )}
+                  {selectedProgram.hasProtectionConcern && (
+                    <>
+                      <ReviewField label="Immediate Danger" value={formData.isImmediateDanger} />
+                      <ReviewField label="Child in Safe Location" value={formData.isChildSafe} />
+                    </>
+                  )}
+                  {selectedProgram.hasEmergencyInfo && (
+                    <>
+                      <ReviewField label="Emergency Type" value={formData.emergencyType} />
+                      <ReviewField label="Incident Date & Time" value={formData.emergencyDateTime} />
+                      <ReviewField label="Priority Level" value={formData.reportEmergencyPriority ? "HIGH PRIORITY EMERGENCY" : "Standard"} />
+                    </>
+                  )}
+                  {selectedProgram.hasShelterCareInfo && (
+                    <>
+                      <ReviewField label="Living Situation" value={formData.currentLivingSituation} />
+                      <ReviewField label="Child Safe" value={formData.isChildSafe} />
+                      <ReviewField label="Parent Available" value={formData.isParentAvailable} />
+                    </>
+                  )}
+                  <ReviewField label="Residency Status" value="Residente ng Lungsod Quezon (Verified)" />
                 </div>
+              </ReviewSection>
 
-                {/* Parent / Guardian Information */}
-                <div className="p-4 rounded-xl border border-gray-200 bg-white space-y-2 text-xs">
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                    <span className="font-bold text-gray-900 uppercase">
-                      {language === "tl" ? "MAGULANG / GUARDIAN" : language === "bis" ? "GINIKANAN / GUARDIAN" : "PARENT / GUARDIAN"}
-                    </span>
-                    <button type="button" onClick={() => { setReturnToReview(true); setStep(2) }} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
-                      <Pencil className="w-3 h-3" /> {language === "tl" ? "I-edit" : language === "bis" ? "I-edit" : "Edit"}
-                    </button>
-                  </div>
-                  <p><span className="text-gray-500">{language === "tl" ? "Pangalan:" : language === "bis" ? "Ngalan:" : "Name:"}</span> <span className="font-semibold text-gray-900">{formData.parentFullName}</span></p>
-                  <p><span className="text-gray-500">{language === "tl" ? "Relasyon:" : language === "bis" ? "Relasyon:" : "Relationship:"}</span> <span className="font-semibold text-gray-900">{formData.parentRelationship}</span></p>
-                  <p><span className="text-gray-500">{language === "tl" ? "Numero ng Telepono:" : language === "bis" ? "Numero sa Telepono:" : "Contact Number:"}</span> <span className="font-semibold text-gray-900 font-mono">{formData.parentContactNo}</span></p>
-                  <p><span className="text-gray-500">QC Resident:</span> <span className="font-semibold text-emerald-700">✓ Verified</span></p>
+              {/* 2. Applicant / Child Information */}
+              <ReviewSection title={language === "tl" ? "Impormasyon ng Aplikante / Bata" : language === "bis" ? "Impormasyon sa Aplikante / Bata" : "Applicant / Child Information"} onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                  <ReviewField label="QC ID Number" value={formData.qcidNumber} />
+                  <ReviewField label={language === "tl" ? "Buong Pangalan" : language === "bis" ? "Tibuok Ngalan" : "Full Name"} value={fullApplicantName} />
+                  <ReviewField
+                    label={language === "tl" ? "Petsa ng Kapanganakan / Edad" : language === "bis" ? "Petsa sa Pagkatawo / Edad" : "Date of Birth / Age"}
+                    value={`${[formData.dobMonth, formData.dobDay, formData.dobYear].filter(Boolean).join("/")} (${formData.age} y/o)`}
+                  />
+                  <ReviewField label={language === "tl" ? "Kasarian / Katayuang Sibil" : language === "bis" ? "Kasarian / Sibil nga Kahimtang" : "Sex / Civil Status"} value={`${formData.sex} / ${formData.civilStatus}`} />
+                  <ReviewField label={language === "tl" ? "Numero ng Telepono" : language === "bis" ? "Numero sa Telepono" : "Contact Number"} value={formData.contactNo} />
+                  <ReviewField
+                    label={language === "tl" ? "Kumpletong Tirahan" : language === "bis" ? "Kompletong Pinuy-anan" : "Complete Address"}
+                    value={`${formData.addressHouseNo} ${formData.addressStreet}, Brgy. ${formData.barangay}, ${formData.city}`}
+                  />
                 </div>
-              </div>
+              </ReviewSection>
 
-              {/* Program & Assistance Requested */}
-              <div className="p-4 rounded-xl border border-gray-200 bg-white space-y-2 text-xs">
-                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                  <span className="font-bold text-gray-900 uppercase">
-                    {language === "tl" ? "HINIHILING NA SERBISYO / TULONG" : language === "bis" ? "GIHANGYO NGA TABANG" : "ASSISTANCE REQUESTED"}
-                  </span>
-                  <button type="button" onClick={() => { setReturnToReview(true); setStep(1) }} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
-                    <Pencil className="w-3 h-3" /> {language === "tl" ? "I-edit" : language === "bis" ? "I-edit" : "Edit"}
-                  </button>
+              {/* 3. Parent / Guardian / Reporting Person */}
+              <ReviewSection title={language === "tl" ? "Impormasyon ng Magulang / Guardian" : language === "bis" ? "Impormasyon sa Ginikanan / Guardian" : "Parent / Guardian / Reporting Person"} onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                  <ReviewField label={language === "tl" ? "Buong Pangalan" : language === "bis" ? "Tibuok Ngalan" : "Full Name"} value={formData.parentFullName} />
+                  <ReviewField label={language === "tl" ? "Relasyon sa Bata" : language === "bis" ? "Relasyon sa Bata" : "Relationship to Child"} value={formData.parentRelationship} />
+                  <ReviewField label={language === "tl" ? "Numero ng Telepono" : language === "bis" ? "Numero sa Telepono" : "Contact Number"} value={formData.parentContactNo} />
                 </div>
-                <p><span className="text-gray-500">{language === "tl" ? "Programa:" : language === "bis" ? "Programa:" : "Program:"}</span> <span className="font-bold text-blue-700 text-sm">{selectedProgram.title}</span></p>
-                <p><span className="text-gray-500">{language === "tl" ? "Uri ng Tulong:" : language === "bis" ? "Matang sa Tabang:" : "Type of Assistance:"}</span> <span className="font-semibold text-gray-900">{selectedAssistanceType}</span></p>
-                {formData.reasonForRequest && (
-                  <p><span className="text-gray-500">{language === "tl" ? "Dahilan:" : language === "bis" ? "Rason:" : "Reason for Request:"}</span> <span className="font-semibold text-gray-900">{formData.reasonForRequest}</span></p>
-                )}
-                {formData.briefDescription && (
-                  <p><span className="text-gray-500">{language === "tl" ? "Deskripsyon:" : language === "bis" ? "Deskripsyon:" : "Description:"}</span> <span className="text-gray-800">{formData.briefDescription}</span></p>
-                )}
-              </div>
+              </ReviewSection>
 
-              {/* Uploaded Documents Summary */}
-              <div className="p-4 rounded-xl border border-gray-200 bg-white space-y-2.5 text-xs">
-                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                  <span className="font-bold text-gray-900 uppercase">
-                    {language === "tl" ? "MGA NA-UPLOAD NA DOKUMENTO" : language === "bis" ? "MGA NA-UPLOAD NGA DOKUMENTO" : "UPLOADED DOCUMENTS"}
-                  </span>
-                  <button type="button" onClick={() => { setReturnToReview(true); setStep(3) }} className="text-blue-600 hover:underline font-semibold flex items-center gap-1">
-                    <Pencil className="w-3 h-3" /> {language === "tl" ? "I-edit" : language === "bis" ? "I-edit" : "Edit"}
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {/* 4. Uploaded Documents */}
+              <ReviewSection title={language === "tl" ? "Mga Na-upload na Dokumento" : language === "bis" ? "Mga Na-upload nga Dokumento" : "Uploaded Documents"} onEdit={() => { setReturnToReview(true); setStep(3) }}>
+                <div className="p-4 space-y-4">
                   {selectedProgram.documents.map((doc) => {
                     const files = uploadedFiles[doc.id] || []
                     const uploaded = files.length > 0
                     return (
-                      <div key={doc.id} className="flex items-center gap-2">
+                      <div key={doc.id}>
+                        <p className="flex items-center gap-1.5 text-xs font-bold text-gray-900 uppercase">
+                          {doc.label} {doc.required && <span className="text-red-500">*</span>}
+                          {uploaded ? (
+                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-green-500 text-white shrink-0 ml-1">
+                              <Check className="h-2.5 w-2.5 stroke-[3]" />
+                            </span>
+                          ) : (
+                            <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0 ml-1" />
+                          )}
+                        </p>
                         {uploaded ? (
-                          <span className="h-4 w-4 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
-                          </span>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {files.map((file, i) => (
+                              <button
+                                key={`${file.name}-${i}`}
+                                type="button"
+                                onClick={() => setPreviewDocModal({ title: doc.label, file })}
+                                className="border border-gray-200 hover:border-blue-400 rounded-lg p-2 flex items-center gap-2 bg-white cursor-pointer transition-colors shadow-2xs"
+                              >
+                                <div className="h-8 w-8 rounded bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                                  <FileThumbnail file={file} className="h-full w-full object-cover" />
+                                </div>
+                                <div className="text-left">
+                                  <p className="text-xs font-medium text-gray-800 max-w-[150px] truncate">{file.name}</p>
+                                  <p className="text-[10px] text-gray-400">{formatFileSize(file.size)}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                         ) : (
-                          <span className="h-4 w-4 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center shrink-0 text-[10px]">
-                            •
-                          </span>
+                          <p className="text-xs text-red-500 mt-1">{language === "tl" ? "Walang nai-upload na dokumento" : language === "bis" ? "Walay na-upload nga dokumento" : "No document uploaded yet"}</p>
                         )}
-                        <span className={`truncate ${uploaded ? "font-semibold text-gray-900" : "text-gray-400"}`}>
-                          {doc.label} {uploaded && `(${files.length})`}
-                        </span>
                       </div>
                     )
                   })}
                 </div>
-              </div>
+              </ReviewSection>
 
               {/* Certification Checkbox */}
               <div className="pt-2">
@@ -1993,11 +1846,6 @@ export default function ChildWelfareApplicationWizard({
                       : "I certify that all information provided is true and correct. I understand that any false declaration may result in the disapproval of my Child Welfare Support application. *"}
                   </span>
                 </label>
-                {attemptedNext && !formData.certifiedCorrect && (
-                  <p className="text-xs text-red-500 mt-1 ml-1">
-                    {language === "tl" ? "Kailangang lagyan ng check ang certification bago i-submit." : language === "bis" ? "Kinahanglan markahan ang certification sa dili pa i-submit." : "Certification must be checked before submitting."}
-                  </p>
-                )}
               </div>
             </div>
           )}
@@ -2011,7 +1859,7 @@ export default function ChildWelfareApplicationWizard({
               onClick={handleBack}
               className="px-5 py-2 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-wider cursor-pointer"
             >
-              {t("backButton") || "BACK"}
+              {returnToReview ? (language === "tl" ? "BUMALIK SA REVIEW" : language === "bis" ? "BALIK SA REVIEW" : "BACK TO REVIEW") : (t("backButton") || "BACK")}
             </button>
           ) : (
             <div />
@@ -2028,7 +1876,15 @@ export default function ChildWelfareApplicationWizard({
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
             >
-              <span>{t("nextButton") || "NEXT"}</span>
+              <span>
+                {returnToReview
+                  ? language === "tl"
+                    ? "BUMALIK SA REVIEW"
+                    : language === "bis"
+                    ? "BALIK SA REVIEW"
+                    : "RETURN TO REVIEW"
+                  : t("nextButton") || "NEXT"}
+              </span>
             </button>
           ) : (
             <button
@@ -2047,44 +1903,25 @@ export default function ChildWelfareApplicationWizard({
         </div>
       </div>
 
-      {/* Sample Document Modal */}
-      {showSampleModal && selectedSampleDoc && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-gray-200">
-            <div className="flex justify-between items-center border-b pb-3">
-              <h4 className="text-sm font-bold text-gray-900">{t("sampleDocument") || "Sample"}: {selectedSampleDoc.label}</h4>
-              <button
-                type="button"
-                onClick={() => setShowSampleModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            {selectedSampleDoc.sampleImage ? (
-              <div className="h-64 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
-                <img
-                  src={selectedSampleDoc.sampleImage}
-                  alt="Sample"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            ) : (
-              <div className="p-8 text-center text-gray-400 text-xs">
-                {t("noSampleImageAvailable") || "Walang available na sample image para sa dokumentong ito."}
-              </div>
-            )}
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowSampleModal(false)}
-                className="px-5 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700"
-              >
-                {t("close") || "CLOSE"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* 📸 Document Camera Capture Modal */}
+      <DocumentCameraModal
+        isOpen={Boolean(cameraDoc)}
+        onClose={() => setCameraDoc(null)}
+        docTitle={cameraDoc?.label}
+        onCapture={(file) => {
+          if (cameraDoc) {
+            handleFileUpload(cameraDoc.id, [file] as any)
+          }
+        }}
+      />
+
+      {/* 👁️ UPLOADED DOCUMENT FULL PREVIEW MODAL */}
+      {previewDocModal && (
+        <UploadedDocPreviewModal
+          title={previewDocModal.title}
+          file={previewDocModal.file}
+          onClose={() => setPreviewDocModal(null)}
+        />
       )}
 
       {/* Confirmation Modal */}
