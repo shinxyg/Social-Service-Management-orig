@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react"
+import { useState, useEffect, useRef, type ReactNode } from "react"
 import {
   Check,
   CheckCircle2,
@@ -799,7 +799,7 @@ export default function SoloParentApplicationWizard({
 }: SoloParentApplicationWizardProps) {
   const { t, language } = useLanguage()
   const [idStatus, setIdStatus] = useState<IdStatus>(initialType)
-  const lastInitialTypeRef = React.useRef<string | null>(null)
+  const lastInitialTypeRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (initialType && lastInitialTypeRef.current !== initialType) {
@@ -1428,8 +1428,8 @@ export default function SoloParentApplicationWizard({
       ...formData,
       emergencyFirstName: emFirst,
       emergencyLastName: emLast,
-      emergencyName: emCombined || formData.emergencyName || "",
-      emergencyContactPerson: emCombined || formData.emergencyContactPerson || "",
+      emergencyName: emCombined || (formData as any).emergencyName || "",
+      emergencyContactPerson: emCombined || (formData as any).emergencyContactPerson || "",
       emergencyContactNo: (formData.emergencyContactNo || "").trim(),
       emergencyPhone: (formData.emergencyContactNo || "").trim(),
       emergencyRelationship: (formData.emergencyRelationship || "").trim(),
