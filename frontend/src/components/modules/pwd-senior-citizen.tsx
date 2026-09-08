@@ -25,6 +25,7 @@ import {
   type SyncedDisbursementRecord,
 } from "../../utils/financialAidSync"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
+import { getSavedProfilePhoto } from "../../utils/profilePhoto"
 
 // ---- Types for collected form data from user submissions ----
 interface ApplicationDocument {
@@ -473,6 +474,66 @@ function initials(app: ApplicationSubmission) {
   const f = app.firstName ? app.firstName.charAt(0) : "P"
   const l = app.lastName ? app.lastName.charAt(0) : "S"
   return `${f}${l}`.toUpperCase()
+}
+
+function getAvatarUrl(app: ApplicationSubmission): string | null {
+  if (!app.documents || !Array.isArray(app.documents)) return null
+  const idPhoto = app.documents.find((doc) => {
+    const docName = String(doc.name || doc.filename || "").toLowerCase()
+    return /id picture|2x2|1x1|photo|picture|avatar/i.test(docName)
+  })
+  if (
+    idPhoto &&
+    idPhoto.fileUrl &&
+    (idPhoto.fileUrl.startsWith("data:image") ||
+      idPhoto.fileUrl.startsWith("blob:") ||
+      idPhoto.fileUrl.startsWith("http") ||
+      idPhoto.fileUrl.startsWith("/uploads"))
+  ) {
+    return idPhoto.fileUrl
+  }
+  return null
+}
+
+function AvatarCircle({
+  app,
+  sizeClass = "h-11 w-11",
+}: {
+  app: ApplicationSubmission
+  sizeClass?: string
+}) {
+  const [imgError, setImgError] = useState(false)
+  const qcid = String(
+    app.referenceNumber ||
+      (app as any).qcid ||
+      (app as any).qc_id ||
+      (app as any).qcidNumber ||
+      (app as any).qcidNo ||
+      ""
+  ).trim()
+  const savedPhoto = qcid ? getSavedProfilePhoto(qcid) : null
+  const docPhoto = getAvatarUrl(app)
+  const photoSrc = !imgError ? savedPhoto || docPhoto : null
+
+  if (photoSrc) {
+    return (
+      <img
+        src={photoSrc}
+        alt={displayName(app)}
+        onError={() => setImgError(true)}
+        className={`${sizeClass} shrink-0 rounded-xl object-cover`}
+      />
+    )
+  }
+  return (
+    <div
+      className={`${sizeClass} shrink-0 gw-avatar ${
+        isPWD(app) ? "gw-avatar--pwd" : "gw-avatar--senior"
+      } text-sm`}
+    >
+      {initials(app)}
+    </div>
+  )
 }
 
 function subLabelForApp(app: ApplicationSubmission) {
@@ -964,9 +1025,7 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardP
     >
       <div className="flex items-start gap-4">
         <div className="hidden sm:flex">
-          <div className={`h-11 w-11 shrink-0 gw-avatar ${isPWD(app) ? "gw-avatar--pwd" : "gw-avatar--senior"} text-sm`}>
-            {initials(app)}
-          </div>
+          <AvatarCircle app={app} sizeClass="h-11 w-11" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -1156,9 +1215,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete,
         <div className="px-6 pt-5 pb-4" style={{ background: "var(--surface-sunk)", borderBottom: "1px solid var(--line)" }}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className={`h-12 w-12 shrink-0 gw-avatar ${isPWD(app) ? "gw-avatar--pwd" : "gw-avatar--senior"} text-base`}>
-                {initials(app)}
-              </div>
+              <AvatarCircle app={app} sizeClass="h-12 w-12" />
               <div className="min-w-0">
                 <h2 className="gw-serif text-xl font-semibold truncate" style={{ color: "var(--ink)" }}>
                   {displayName(app)}
