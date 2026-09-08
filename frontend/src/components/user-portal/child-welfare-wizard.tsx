@@ -1007,7 +1007,6 @@ export default function ChildWelfareApplicationWizard({
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [appStatus, setAppStatus] = useState<"pending" | "approved" | "rejected">("pending")
   const [reference, setReference] = useState("")
-  const [redirectCountdown, setRedirectCountdown] = useState(3)
 
   // Listen to active user application status in Child Welfare
   useEffect(() => {
@@ -1069,23 +1068,6 @@ export default function ChildWelfareApplicationWizard({
       window.removeEventListener("storage", handleUpdate)
     }
   }, [selectedProgram.id, selectedProgram.title, userProfile])
-
-  useEffect(() => {
-    if (submissionStage !== "pending" || appStatus !== "pending") return
-
-    setRedirectCountdown(3)
-    const interval = setInterval(() => {
-      setRedirectCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [submissionStage, appStatus])
 
   // Validations
   const step1Valid =
@@ -1371,10 +1353,7 @@ export default function ChildWelfareApplicationWizard({
           <span>{t("trackPortalNotifDesc") || "Maaari ninyong i-track ang status sa inyong Portal Notifications at Activity History."}</span>
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-3 pt-1">
-          <p className="text-xs text-muted-foreground">
-            {t("autoRedirectCountdown", { seconds: String(redirectCountdown) }) || `Babalik sa aplikasyon sa loob ng ${redirectCountdown} segundo...`}
-          </p>
+        <div className="flex flex-col items-center justify-center gap-3 pt-2">
           <button
             type="button"
             onClick={() => {
