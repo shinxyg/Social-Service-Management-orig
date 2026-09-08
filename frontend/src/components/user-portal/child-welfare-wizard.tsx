@@ -60,7 +60,7 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
     id: 1,
     key: "nutritional-assistance",
     title: "Nutritional Assistance",
-    desc: "Nagbibigay ng suporta sa mga batang nangangailangan ng masustansyang pagkain, supplementary feeding, gatas o infant nutrition, nutritional supplements, at gabay tungkol sa wastong nutrisyon upang makatulong sa kanilang kalusugan at nutritional status.",
+    desc: "Provides nutritional support for children in need of nutritious food, supplementary feeding, milk or infant nutrition, nutritional supplements, and dietary counseling to improve their health and nutritional status.",
     checklists: [
       "Are you a legitimate resident of Quezon City?",
       "Are you applying for nutritional assistance for a child?",
@@ -76,26 +76,26 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
       "Nutritional Supplements",
       "Nutrition Education / Counseling",
     ],
-    whatIsIt: "Ang Nutritional Assistance Program ay nagbibigay ng suporta sa mga batang nangangailangan ng masustansyang pagkain, supplementary feeding, gatas o infant nutrition, nutritional supplements, at gabay tungkol sa wastong nutrisyon upang makatulong sa kanilang kalusugan at nutritional status.",
+    whatIsIt: "The Nutritional Assistance Program provides support to children who need nutritious food packs, supplementary feeding, milk or infant nutrition, nutritional supplements, and proper nutrition guidance to improve their health and wellbeing.",
     whoIsEligible: [
-      "Mga batang residente ng Quezon City na nangangailangan ng nutritional assistance.",
-      "Mga batang may nutritional needs o nasa panganib ng malnutrition.",
-      "Ang aplikasyon ay maaaring isumite ng magulang o legal na guardian ng bata.",
+      "Children residing in Quezon City who are in need of nutritional assistance.",
+      "Children with specific nutritional needs or at risk of malnutrition.",
+      "Applications may be submitted by the parent or legal guardian of the child.",
     ],
     childRequirements: [
-      "PSA Birth Certificate ng Bata",
-      "Medical / Nutrition Assessment, kung mayroon o kinakailangan",
-      "Barangay Certificate / Referral, kung applicable",
+      "PSA Birth Certificate of the Child",
+      "Medical / Nutrition Assessment, if available or required",
+      "Barangay Certificate / Referral, if applicable",
     ],
     parentRequirements: [
-      "QCID o Valid ID",
+      "QCID or Valid Government ID",
       "Proof of Residency",
       "Contact Information",
     ],
     specialRequirements: [
       "Medical/Nutritionist recommendation",
-      "Feeding assessment",
-      "Iba pang supporting documents depende sa napiling assistance",
+      "Feeding assessment report",
+      "Other supporting documents depending on requested assistance",
     ],
     documents: [
       { id: "psaBirthCert", label: "PSA Birth Certificate of the Child", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
@@ -111,7 +111,7 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
     id: 2,
     key: "child-protection",
     title: "Child Protection Assistance",
-    desc: "Nagbibigay ng proteksyon, intervention, referral, at iba pang kinakailangang suporta para sa mga batang nakakaranas o nasa panganib ng abuse, neglect, exploitation, violence, o iba pang child protection concerns.",
+    desc: "Provides protection, intervention, legal and case referral, and psychosocial support for children experiencing or at risk of abuse, neglect, exploitation, violence, or other safety concerns.",
     checklists: [
       "Are you a legitimate resident of Quezon City?",
       "Are you applying for child protection assistance for a child?",
@@ -127,32 +127,32 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
       "Legal / Case Referral Assistance",
       "Psychosocial Support / Counseling Referral",
     ],
-    whatIsIt: "Ang Child Protection Assistance Program ay nagbibigay ng proteksyon, intervention, referral, at iba pang kinakailangang suporta para sa mga batang nakakaranas o nasa panganib ng abuse, neglect, exploitation, violence, o iba pang child protection concerns.",
+    whatIsIt: "The Child Protection Assistance Program provides comprehensive protection, intervention, counseling, and legal referral for children facing abuse, neglect, violence, exploitation, or urgent welfare concerns.",
     whoIsEligible: [
-      "Mga batang residente ng Quezon City na nangangailangan ng child protection services.",
-      "Mga batang nakakaranas o nasa panganib ng abuse, neglect, exploitation, violence, o iba pang safety concerns.",
-      "Maaaring magsumite ng aplikasyon o referral ang magulang, legal guardian, kamag-anak, o authorized reporting person, depende sa sitwasyon.",
+      "Children residing in Quezon City in need of child protection services.",
+      "Children experiencing or at risk of abuse, neglect, exploitation, violence, or safety issues.",
+      "Applications or reports may be filed by parents, guardians, relatives, or authorized reporting individuals.",
     ],
     childRequirements: [
-      "PSA Birth Certificate ng Bata",
+      "PSA Birth Certificate of the Child",
       "Proof of Residency",
-      "Medical Certificate / Medico-Legal Report, kung applicable",
-      "Social Case Study Report, kung available o kinakailangan",
+      "Medical Certificate / Medico-Legal Report, if applicable",
+      "Social Case Study Report, if available or required",
     ],
     parentRequirements: [
-      "QCID o Valid ID",
+      "QCID or Valid Government ID",
       "Contact Information",
-      "Barangay Certificate / Referral, kung applicable",
+      "Barangay Certificate / Referral, if applicable",
     ],
     specialRequirements: [
-      "Police Blotter / Incident Report, kung applicable",
-      "Court Documents, kung applicable",
-      "Iba pang supporting documents, kung kinakailangan",
+      "Police Blotter / Incident Report, if applicable",
+      "Court / Legal Documents, if applicable",
+      "Other supporting documents as required",
     ],
     hasProtectionConcern: true,
     documents: [
-      { id: "psaBirthCert", label: "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-      { id: "parentId", label: "Valid ID ng Parent/Guardian/Reporting Person", required: true, sampleImage: "/samples/sample_valid_id.png" },
+      { id: "psaBirthCert", label: "PSA Birth Certificate of the Child", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
+      { id: "parentId", label: "Valid ID of Parent/Guardian/Reporting Person", required: true, sampleImage: "/samples/sample_valid_id.png" },
       { id: "proofResidency", label: "Proof of Residency", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
       { id: "barangayCert", label: "Barangay Certificate / Referral", required: false, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
       { id: "caseStudy", label: "Social Case Study Report", required: false },
@@ -167,7 +167,7 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
     id: 3,
     key: "emergency-assistance",
     title: "Emergency Assistance",
-    desc: "Nagbibigay ng agarang tulong at intervention sa mga batang nakakaranas ng emergency o agarang pangangailangan, kabilang ang medical, food, transportation, shelter, at protection concerns.",
+    desc: "Provides immediate intervention and emergency aid for children facing crisis situations, including emergency food, medical aid, temporary shelter, transportation, and urgent protection.",
     checklists: [
       "Are you a legitimate resident of Quezon City?",
       "Are you requesting emergency assistance for a child?",
@@ -183,22 +183,22 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
       "Emergency Shelter Assistance",
       "Emergency Protection / Intervention",
     ],
-    whatIsIt: "Ang Emergency Assistance Program ay nagbibigay ng agarang tulong at intervention sa mga batang nakakaranas ng emergency o agarang pangangailangan, kabilang ang medical, food, transportation, shelter, at protection concerns.",
+    whatIsIt: "The Emergency Assistance Program delivers urgent intervention and rapid response relief for children caught in crisis, medical emergencies, disasters, or critical safety situations.",
     whoIsEligible: [
-      "Mga batang residente ng Quezon City na nangangailangan ng agarang assistance.",
-      "Mga batang nakakaranas ng emergency o sitwasyong maaaring makaapekto sa kanilang kaligtasan, kalusugan, o pangunahing pangangailangan.",
-      "Maaaring magsumite ng request ang magulang, legal guardian, kamag-anak, o authorized person, depende sa sitwasyon.",
+      "Children residing in Quezon City in immediate need of emergency assistance.",
+      "Children facing emergencies affecting their immediate health, safety, food security, or shelter.",
+      "Requests may be submitted by parents, guardians, relatives, or authorized first responders.",
     ],
     childRequirements: [
-      "PSA Birth Certificate ng Bata",
+      "PSA Birth Certificate of the Child",
       "Proof of Residency",
-      "Medical Certificate / Medical Record, kung medical emergency",
-      "Incident Report, kung applicable",
+      "Medical Certificate / Medical Record, if medical emergency",
+      "Incident Report, if applicable",
     ],
     parentRequirements: [
-      "QCID o Valid ID",
+      "QCID or Valid Government ID",
       "Contact Information",
-      "Barangay Certificate / Referral, kung available",
+      "Barangay Certificate / Referral, if available",
     ],
     specialRequirements: [
       "Police Blotter / Incident Report",
@@ -207,8 +207,8 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
     ],
     hasEmergencyInfo: true,
     documents: [
-      { id: "psaBirthCert", label: "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-      { id: "parentId", label: "Valid ID ng Parent/Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
+      { id: "psaBirthCert", label: "PSA Birth Certificate of the Child", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
+      { id: "parentId", label: "Valid ID of Parent/Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
       { id: "proofResidency", label: "Proof of Residency", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
       { id: "barangayCert", label: "Barangay Certificate / Referral", required: false, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
       { id: "medicalRecord", label: "Medical Certificate / Medical Record", required: false },
@@ -220,32 +220,27 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
 ]
 
 export function getLocalizedChildWelfarePrograms(language: string): ChildWelfareProgram[] {
-  if (language === "tl" || language === "bis") {
+  if (language === "tl") {
     return [
       {
         id: 1,
         key: "nutritional-assistance",
-        title: language === "bis" ? "Tabang sa Nutrisyon" : "Tulong sa Nutrisyon",
-        desc: language === "bis"
-          ? "Naghatag og tabang sa mga bata nga nagkinahanglan og masustansyang pagkaon, supplementary feeding, gatas o infant nutrition, nutritional supplements, ug giya sa nutrisyon."
-          : "Nagbibigay ng suporta sa mga batang nangangailangan ng masustansyang pagkain, supplementary feeding, gatas o infant nutrition, nutritional supplements, at gabay tungkol sa wastong nutrisyon upang makatulong sa kanilang kalusugan at nutritional status.",
+        title: "Tulong sa Nutrisyon",
+        desc: "Nagbibigay ng suporta sa mga batang nangangailangan ng masustansyang pagkain, supplementary feeding, gatas o infant nutrition, nutritional supplements, at gabay tungkol sa wastong nutrisyon upang makatulong sa kanilang kalusugan at nutritional status.",
         checklists: [
-          language === "bis" ? "Ikaw ba usa ka lehitimong residente sa Quezon City?" : "Ikaw ba ay lehitimong residente ng Quezon City?",
-          language === "bis" ? "Nag-apply ba ka og tabang sa nutrisyon para sa bata?" : "Nag-a-apply ka ba para sa tulong sa nutrisyon para sa bata?",
-          language === "bis" ? "Kasamtangan ba nga nagkinahanglan og tabang sa nutrisyon ang bata?" : "Kasalukuyan bang nangangailangan ng suporta sa nutrisyon ang bata?",
+          "Ikaw ba ay lehitimong residente ng Quezon City?",
+          "Nag-a-apply ka ba para sa tulong sa nutrisyon para sa bata?",
+          "Kasalukuyan bang nangangailangan ng suporta sa nutrisyon ang bata?",
         ],
-        receivedQuestion: language === "bis" ? "Nakadawat na ba ka og tabang sa nutrisyon gikan sa laing opisina sa Quezon City? *" : "Nakatanggap ka na ba ng tulong sa nutrisyon mula sa ibang opisina ng Quezon City? *",
-        receivedOptions: [
-          language === "bis" ? "Oo, nakadawat na ko og tabang sa nutrisyon" : "Oo, nakatanggap na ako ng tulong sa nutrisyon",
-          language === "bis" ? "Wala pa" : "Hindi pa"
-        ],
-        assistanceTypeLabel: language === "bis" ? "Pilia ang matang sa tabang *" : "Piliin ang uri ng tulong *",
+        receivedQuestion: "Nakatanggap ka na ba ng tulong sa nutrisyon mula sa ibang opisina ng Quezon City? *",
+        receivedOptions: ["Oo, nakatanggap na ako ng tulong sa nutrisyon", "Hindi pa"],
+        assistanceTypeLabel: "Piliin ang uri ng tulong *",
         assistanceTypes: [
-          language === "bis" ? "Food Pack / Masustansyang Pagkaon" : "Food Pack / Masustansyang Pagkain",
+          "Food Pack / Masustansyang Pagkain",
           "Supplementary Feeding",
-          language === "bis" ? "Gatas / Infant Nutrition" : "Gatas / Infant Nutrition",
+          "Gatas / Infant Nutrition",
           "Nutritional Supplements",
-          language === "bis" ? "Edukasyon sa Nutrisyon / Counseling" : "Edukasyon sa Nutrisyon / Counseling",
+          "Edukasyon sa Nutrisyon / Counseling",
         ],
         whatIsIt: "Ang Nutritional Assistance Program ay nagbibigay ng suporta sa mga batang nangangailangan ng masustansyang pagkain, supplementary feeding, gatas o infant nutrition, nutritional supplements, at gabay tungkol sa wastong nutrisyon upang makatulong sa kanilang kalusugan at nutritional status.",
         whoIsEligible: [
@@ -259,48 +254,43 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
           "Barangay Certificate / Referral, kung applicable",
         ],
         parentRequirements: [
-          "QCID o Valid ID",
-          "Proof of Residency",
-          "Contact Information",
+          "QCID o Valid ID ng Magulang / Guardian",
+          "Katibayan ng Paninirahan (Proof of Residency)",
+          "Impormasyon sa Pakikipag-ugnayan (Contact Information)",
         ],
         specialRequirements: [
-          "Medical/Nutritionist recommendation",
-          "Feeding assessment",
-          "Iba pang supporting documents depende sa napiling assistance",
+          "Rekomendasyon mula sa Doktor / Nutritionist",
+          "Feeding assessment report",
+          "Iba pang supporting documents depende sa napiling tulong",
         ],
         documents: [
-          { id: "psaBirthCert", label: language === "bis" ? "PSA Birth Certificate sa Bata" : "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "parentId", label: language === "bis" ? "Balido nga ID sa Ginikanan / Guardian" : "Valid ID ng Magulang / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "proofResidency", label: language === "bis" ? "Katibayan sa Pagpuyo (Proof of Residency)" : "Katibayan ng Paninirahan (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
+          { id: "psaBirthCert", label: "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
+          { id: "parentId", label: "Valid ID ng Magulang / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
+          { id: "proofResidency", label: "Katibayan ng Paninirahan (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
           { id: "barangayCert", label: "Barangay Certificate / Referral", required: false, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
           { id: "medicalAssessment", label: "Medical / Nutrition Assessment", required: false },
-          { id: "otherDocs", label: language === "bis" ? "Uban pang Gikinahanglang Dokumento" : "Iba pang Karagdagang Dokumento", required: false },
+          { id: "otherDocs", label: "Iba pang Karagdagang Dokumento", required: false },
         ],
-        submitButtonText: language === "bis" ? "ISUMITE ANG APLIKASYON" : "ISUMITE ANG APLIKASYON",
+        submitButtonText: "ISUMITE ANG APLIKASYON",
       },
       {
         id: 2,
         key: "child-protection",
-        title: language === "bis" ? "Tabang sa Proteksyon sa Bata" : "Tulong sa Proteksyon ng Bata",
-        desc: language === "bis"
-          ? "Naghatag og proteksyon, intervention, referral, ug suporta para sa mga bata nga nag-atubang o anaa sa peligro sa pang-abuso o kapabayaan."
-          : "Nagbibigay ng proteksyon, intervention, referral, at iba pang kinakailangang suporta para sa mga batang nakakaranas o nasa panganib ng abuse, neglect, exploitation, violence, o iba pang child protection concerns.",
+        title: "Tulong sa Proteksyon ng Bata",
+        desc: "Nagbibigay ng proteksyon, intervention, referral, at iba pang kinakailangang suporta para sa mga batang nakakaranas o nasa panganib ng abuse, neglect, exploitation, violence, o iba pang child protection concerns.",
         checklists: [
-          language === "bis" ? "Ikaw ba usa ka lehitimong residente sa Quezon City?" : "Ikaw ba ay lehitimong residente ng Quezon City?",
-          language === "bis" ? "Nag-apply ba ka para sa proteksyon sa bata?" : "Nag-a-apply ka ba para sa proteksyon ng bata?",
-          language === "bis" ? "Kasamtangan ba nga dunay kabalaka sa kaluwasan o proteksyon ang bata?" : "Kasalukuyan bang may banta sa kaligtasan o proteksyon ang bata?",
+          "Ikaw ba ay lehitimong residente ng Quezon City?",
+          "Nag-a-apply ka ba para sa proteksyon ng bata?",
+          "Kasalukuyan bang may banta sa kaligtasan o proteksyon ang bata?",
         ],
-        receivedQuestion: language === "bis" ? "Nakadawat na ba ka og tabang sa proteksyon gikan sa laing opisina sa Quezon City? *" : "Nakatanggap ka na ba ng tulong sa proteksyon mula sa ibang opisina ng Quezon City? *",
-        receivedOptions: [
-          language === "bis" ? "Oo, nakadawat na ko og tabang" : "Oo, nakatanggap na ako ng tulong",
-          language === "bis" ? "Wala pa" : "Hindi pa"
-        ],
-        assistanceTypeLabel: language === "bis" ? "Pilia ang matang sa tabang *" : "Piliin ang uri ng tulong *",
+        receivedQuestion: "Nakatanggap ka na ba ng tulong sa proteksyon mula sa ibang opisina ng Quezon City? *",
+        receivedOptions: ["Oo, nakatanggap na ako ng tulong", "Hindi pa"],
+        assistanceTypeLabel: "Piliin ang uri ng tulong *",
         assistanceTypes: [
-          language === "bis" ? "Tabang sa Proteksyon / Kaluwasan sa Bata" : "Tulong sa Proteksyon / Kaligtasan ng Bata",
-          language === "bis" ? "Pang-emerhensya nga Tabang sa Bata" : "Pang-emerhensiyang Tulong sa Bata",
+          "Tulong sa Proteksyon / Kaligtasan ng Bata",
+          "Pang-emerhensiyang Tulong sa Bata",
           "Temporary Shelter / Protective Custody Referral",
-          language === "bis" ? "Tabang Legal / Case Referral" : "Tulong Legal / Case Referral",
+          "Tulong Legal / Case Referral",
           "Psychosocial Support / Counseling Referral",
         ],
         whatIsIt: "Ang Child Protection Assistance Program ay nagbibigay ng proteksyon, intervention, referral, at iba pang kinakailangang suporta para sa mga batang nakakaranas o nasa panganib ng abuse, neglect, exploitation, violence, o iba pang child protection concerns.",
@@ -311,90 +301,251 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
         ],
         childRequirements: [
           "PSA Birth Certificate ng Bata",
-          "Proof of Residency",
+          "Katibayan ng Paninirahan (Proof of Residency)",
           "Medical Certificate / Medico-Legal Report, kung applicable",
           "Social Case Study Report, kung available o kinakailangan",
         ],
         parentRequirements: [
-          "QCID o Valid ID",
-          "Contact Information",
+          "QCID o Valid ID ng Magulang / Guardian / Nag-uulat",
+          "Impormasyon sa Pakikipag-ugnayan",
           "Barangay Certificate / Referral, kung applicable",
         ],
         specialRequirements: [
           "Police Blotter / Incident Report, kung applicable",
-          "Court Documents, kung applicable",
-          "Iba pang supporting documents, kung kinakailangan",
+          "Dokumento mula sa Korte, kung applicable",
+          "Iba pang karagdagang dokumento, kung kinakailangan",
         ],
         hasProtectionConcern: true,
         documents: [
-          { id: "psaBirthCert", label: language === "bis" ? "PSA Birth Certificate sa Bata" : "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "parentId", label: language === "bis" ? "Balido nga ID sa Ginikanan / Nag-report" : "Valid ID ng Magulang / Guardian / Nag-uulat", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "proofResidency", label: language === "bis" ? "Katibayan sa Pagpuyo (Proof of Residency)" : "Katibayan ng Paninirahan (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
+          { id: "psaBirthCert", label: "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
+          { id: "parentId", label: "Valid ID ng Magulang / Guardian / Nag-uulat", required: true, sampleImage: "/samples/sample_valid_id.png" },
+          { id: "proofResidency", label: "Katibayan ng Paninirahan (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
           { id: "barangayCert", label: "Barangay Certificate / Referral", required: false, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
           { id: "caseStudy", label: "Social Case Study Report", required: false },
           { id: "medicoLegal", label: "Medical Certificate / Medico-Legal Report", required: false },
           { id: "policeBlotter", label: "Police Blotter / Incident Report", required: false },
-          { id: "courtDocs", label: language === "bis" ? "Dokumento gikan sa Korte" : "Dokumento mula sa Korte", required: false },
-          { id: "otherDocs", label: language === "bis" ? "Uban pang Gikinahanglang Dokumento" : "Iba pang Karagdagang Dokumento", required: false },
+          { id: "courtDocs", label: "Dokumento mula sa Korte", required: false },
+          { id: "otherDocs", label: "Iba pang Karagdagang Dokumento", required: false },
         ],
         submitButtonText: "ISUMITE ANG APLIKASYON",
       },
       {
         id: 3,
         key: "emergency-assistance",
-        title: language === "bis" ? "Pang-emerhensya nga Tabang" : "Pang-emerhensiyang Tulong",
-        desc: language === "bis"
-          ? "Naghatag og dinalian nga tabang ug intervention sa mga bata nga nag-atubang og emerhensya o dinaliang panginahanglan."
-          : "Nagbibigay ng agarang tulong at intervention sa mga batang nakakaranas ng emergency o agarang pangangailangan, kabilang ang medical, food, transportation, shelter, at protection concerns.",
+        title: "Pang-emerhensiyang Tulong",
+        desc: "Nagbibigay ng agarang tulong at intervention sa mga batang nakakaranas ng emergency o agarang pangangailangan, kabilang ang medical, food, transportation, shelter, at protection concerns.",
         checklists: [
-          language === "bis" ? "Ikaw ba usa ka lehitimong residente sa Quezon City?" : "Ikaw ba ay lehitimong residente ng Quezon City?",
-          language === "bis" ? "Nangayo ba ka og pang-emerhensya nga tabang para sa bata?" : "Humihiling ka ba ng pang-emerhensiyang tulong para sa bata?",
-          language === "bis" ? "Kasamtangan ba nga nakasinati og emerhensya o dinaliang panginahanglan ang bata?" : "Kasalukuyan bang nakakaranas ng emergency o agarang pangangailangan ang bata?",
+          "Ikaw ba ay lehitimong residente ng Quezon City?",
+          "Humihiling ka ba ng pang-emerhensiyang tulong para sa bata?",
+          "Kasalukuyan bang nakakaranas ng emergency o agarang pangangailangan ang bata?",
         ],
-        receivedQuestion: language === "bis" ? "Kasamtangan ba nga anaa sa dinaliang peligro o nagkinahanglan og dinalian nga tabang ang bata? *" : "Kasalukuyan bang nasa agarang panganib o nangangailangan ng agarang saklolo ang bata? *",
-        receivedOptions: [
-          language === "bis" ? "Oo" : "Oo",
-          language === "bis" ? "Dili" : "Hindi"
-        ],
-        assistanceTypeLabel: language === "bis" ? "Pilia ang matang sa tabang *" : "Piliin ang uri ng tulong *",
+        receivedQuestion: "Kasalukuyan bang nasa agarang panganib o nangangailangan ng agarang saklolo ang bata? *",
+        receivedOptions: ["Oo", "Hindi"],
+        assistanceTypeLabel: "Piliin ang uri ng tulong *",
         assistanceTypes: [
-          language === "bis" ? "Pang-emerhensya nga Tabang sa Pagkaon" : "Pang-emerhensiyang Tulong sa Pagkain",
-          language === "bis" ? "Pang-emerhensya nga Tabang Medikal" : "Pang-emerhensiyang Tulong Medikal",
-          language === "bis" ? "Pang-emerhensya nga Tabang sa Transportasyon" : "Pang-emerhensiyang Tulong sa Transportasyon",
-          language === "bis" ? "Pang-emerhensya nga Kapasilongan" : "Pang-emerhensiyang Silungan",
-          language === "bis" ? "Pang-emerhensya nga Proteksyon / Intervention" : "Pang-emerhensiyang Proteksyon / Intervention",
+          "Pang-emerhensiyang Tulong sa Pagkain",
+          "Pang-emerhensiyang Tulong Medikal",
+          "Pang-emerhensiyang Tulong sa Transportasyon",
+          "Pang-emerhensiyang Silungan",
+          "Pang-emerhensiyang Proteksyon / Intervention",
         ],
         whatIsIt: "Ang Emergency Assistance Program ay nagbibigay ng agarang tulong at intervention sa mga batang nakakaranas ng emergency o agarang pangangailangan, kabilang ang medical, food, transportation, shelter, at protection concerns.",
         whoIsEligible: [
-          "Mga batang residente ng Quezon City na nangangailangan ng agarang assistance.",
+          "Mga batang residente ng Quezon City na nangangailangan ng agarang tulong o saklolo.",
           "Mga batang nakakaranas ng emergency o sitwasyong maaaring makaapekto sa kanilang kaligtasan, kalusugan, o pangunahing pangangailangan.",
-          "Maaaring magsumite ng request ang magulang, legal guardian, kamag-anak, o authorized person, depende sa sitwasyon.",
+          "Maaaring magsumite ng request ang magulang, legal guardian, kamag-anak, o authorized person.",
         ],
         childRequirements: [
           "PSA Birth Certificate ng Bata",
-          "Proof of Residency",
-          "Medical Certificate / Medical Record, kung medical emergency",
+          "Katibayan ng Paninirahan (Proof of Residency)",
+          "Medical Certificate / Rekord Medikal, kung emergency na medikal",
           "Incident Report, kung applicable",
         ],
         parentRequirements: [
-          "QCID o Valid ID",
-          "Contact Information",
-          "Barangay Certificate / Referral, kung available",
+          "QCID o Valid ID ng Magulang / Guardian",
+          "Impormasyon sa Pakikipag-ugnayan",
+          "Barangay Certificate / Referral, kung mayroon",
         ],
         specialRequirements: [
           "Police Blotter / Incident Report",
-          "Medical Documents",
-          "Other Supporting Documents",
+          "Mga Dokumentong Medikal / Ospital",
+          "Iba pang dokumentong sumusuporta sa emergency",
         ],
         hasEmergencyInfo: true,
         documents: [
-          { id: "psaBirthCert", label: language === "bis" ? "PSA Birth Certificate sa Bata" : "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "parentId", label: language === "bis" ? "Balido nga ID sa Ginikanan / Guardian" : "Valid ID ng Magulang / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "proofResidency", label: language === "bis" ? "Katibayan sa Pagpuyo (Proof of Residency)" : "Katibayan ng Paninirahan (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
+          { id: "psaBirthCert", label: "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
+          { id: "parentId", label: "Valid ID ng Magulang / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
+          { id: "proofResidency", label: "Katibayan ng Paninirahan (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
           { id: "barangayCert", label: "Barangay Certificate / Referral", required: false, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
           { id: "medicalRecord", label: "Medical Certificate / Medical Record", required: false },
           { id: "policeBlotter", label: "Police Blotter / Incident Report", required: false },
-          { id: "otherDocs", label: language === "bis" ? "Uban pang Gikinahanglang Dokumento" : "Iba pang Karagdagang Dokumento", required: false },
+          { id: "otherDocs", label: "Iba pang Karagdagang Dokumento", required: false },
+        ],
+        submitButtonText: "ISUMITE ANG APLIKASYON",
+      },
+    ]
+  }
+
+  if (language === "bis") {
+    return [
+      {
+        id: 1,
+        key: "nutritional-assistance",
+        title: "Tabang sa Nutrisyon",
+        desc: "Naghatag og tabang sa mga bata nga nagkinahanglan og masustansyang pagkaon, supplementary feeding, gatas o infant nutrition, nutritional supplements, ug giya sa nutrisyon.",
+        checklists: [
+          "Ikaw ba usa ka lehitimong residente sa Quezon City?",
+          "Nag-apply ba ka og tabang sa nutrisyon para sa bata?",
+          "Kasamtangan ba nga nagkinahanglan og tabang sa nutrisyon ang bata?",
+        ],
+        receivedQuestion: "Nakadawat na ba ka og tabang sa nutrisyon gikan sa laing opisina sa Quezon City? *",
+        receivedOptions: ["Oo, nakadawat na ko og tabang sa nutrisyon", "Wala pa"],
+        assistanceTypeLabel: "Pilia ang matang sa tabang *",
+        assistanceTypes: [
+          "Food Pack / Masustansyang Pagkaon",
+          "Supplementary Feeding",
+          "Gatas / Infant Nutrition",
+          "Nutritional Supplements",
+          "Edukasyon sa Nutrisyon / Counseling",
+        ],
+        whatIsIt: "Ang Nutritional Assistance Program naghatag og tabang sa mga bata nga nagkinahanglan og masustansyang pagkaon, supplementary feeding, gatas o infant nutrition, nutritional supplements, ug giya sa nutrisyon aron mapalambo ang ilang kahimsog.",
+        whoIsEligible: [
+          "Mga bata nga residente sa Quezon City nga nagkinahanglan og tabang sa nutrisyon.",
+          "Mga bata nga adunay partikular nga panginahanglan sa nutrisyon o anaa sa peligro sa malnutrisyon.",
+          "Ang aplikasyon mahimong isumite sa ginikanan o legal nga guardian sa bata.",
+        ],
+        childRequirements: [
+          "PSA Birth Certificate sa Bata",
+          "Medical / Nutrition Assessment, kung anaa o gikinahanglan",
+          "Barangay Certificate / Referral, kung magamit",
+        ],
+        parentRequirements: [
+          "QCID o Balido nga ID sa Ginikanan / Guardian",
+          "Katibayan sa Pagpuyo (Proof of Residency)",
+          "Impormasyon sa Pakig-kontak (Contact Information)",
+        ],
+        specialRequirements: [
+          "Rekomendasyon gikan sa Doktor / Nutritionist",
+          "Feeding assessment report",
+          "Uban pang gikinahanglang dokumento depende sa napiling tabang",
+        ],
+        documents: [
+          { id: "psaBirthCert", label: "PSA Birth Certificate sa Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
+          { id: "parentId", label: "Balido nga ID sa Ginikanan / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
+          { id: "proofResidency", label: "Katibayan sa Pagpuyo (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
+          { id: "barangayCert", label: "Barangay Certificate / Referral", required: false, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
+          { id: "medicalAssessment", label: "Medical / Nutrition Assessment", required: false },
+          { id: "otherDocs", label: "Uban pang Gikinahanglang Dokumento", required: false },
+        ],
+        submitButtonText: "ISUMITE ANG APLIKASYON",
+      },
+      {
+        id: 2,
+        key: "child-protection",
+        title: "Tabang sa Proteksyon sa Bata",
+        desc: "Naghatag og proteksyon, intervention, referral, ug suporta para sa mga bata nga nag-atubang o anaa sa peligro sa pang-abuso, kapabayaan, o kapintasan.",
+        checklists: [
+          "Ikaw ba usa ka lehitimong residente sa Quezon City?",
+          "Nag-apply ba ka para sa proteksyon sa bata?",
+          "Kasamtangan ba nga dunay kabalaka sa kaluwasan o proteksyon ang bata?",
+        ],
+        receivedQuestion: "Nakadawat na ba ka og tabang sa proteksyon gikan sa laing opisina sa Quezon City? *",
+        receivedOptions: ["Oo, nakadawat na ko og tabang", "Wala pa"],
+        assistanceTypeLabel: "Pilia ang matang sa tabang *",
+        assistanceTypes: [
+          "Tabang sa Proteksyon / Kaluwasan sa Bata",
+          "Pang-emerhensya nga Tabang sa Bata",
+          "Temporary Shelter / Protective Custody Referral",
+          "Tabang Legal / Case Referral",
+          "Psychosocial Support / Counseling Referral",
+        ],
+        whatIsIt: "Ang Child Protection Assistance Program naghatag og proteksyon, intervention, referral, ug suporta para sa mga bata nga nag-atubang o anaa sa peligro sa pang-abuso, kapabayaan, o kapintasan.",
+        whoIsEligible: [
+          "Mga bata nga residente sa Quezon City nga nagkinahanglan og proteksyon.",
+          "Mga bata nga nakasinati o anaa sa peligro sa pang-abuso, kapabayaan, o kapintasan.",
+          "Mahimong magsumite og aplikasyon ang ginikanan, legal nga guardian, paryente, o tig-report.",
+        ],
+        childRequirements: [
+          "PSA Birth Certificate sa Bata",
+          "Katibayan sa Pagpuyo (Proof of Residency)",
+          "Medical Certificate / Medico-Legal Report, kung magamit",
+          "Social Case Study Report, kung anaa o gikinahanglan",
+        ],
+        parentRequirements: [
+          "QCID o Balido nga ID sa Ginikanan / Guardian / Tig-report",
+          "Impormasyon sa Pakig-kontak",
+          "Barangay Certificate / Referral, kung magamit",
+        ],
+        specialRequirements: [
+          "Police Blotter / Incident Report, kung magamit",
+          "Dokumento gikan sa Korte, kung magamit",
+          "Uban pang gikinahanglang dokumento",
+        ],
+        hasProtectionConcern: true,
+        documents: [
+          { id: "psaBirthCert", label: "PSA Birth Certificate sa Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
+          { id: "parentId", label: "Balido nga ID sa Ginikanan / Nag-report", required: true, sampleImage: "/samples/sample_valid_id.png" },
+          { id: "proofResidency", label: "Katibayan sa Pagpuyo (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
+          { id: "barangayCert", label: "Barangay Certificate / Referral", required: false, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
+          { id: "caseStudy", label: "Social Case Study Report", required: false },
+          { id: "medicoLegal", label: "Medical Certificate / Medico-Legal Report", required: false },
+          { id: "policeBlotter", label: "Police Blotter / Incident Report", required: false },
+          { id: "courtDocs", label: "Dokumento gikan sa Korte", required: false },
+          { id: "otherDocs", label: "Uban pang Gikinahanglang Dokumento", required: false },
+        ],
+        submitButtonText: "ISUMITE ANG APLIKASYON",
+      },
+      {
+        id: 3,
+        key: "emergency-assistance",
+        title: "Pang-emerhensya nga Tabang",
+        desc: "Naghatag og dinalian nga tabang ug intervention sa mga bata nga nag-atubang og emerhensya o dinaliang panginahanglan, lakip ang medikal, pagkaon, kapasilongan, ug proteksyon.",
+        checklists: [
+          "Ikaw ba usa ka lehitimong residente sa Quezon City?",
+          "Nangayo ba ka og pang-emerhensya nga tabang para sa bata?",
+          "Kasamtangan ba nga nakasinati og emerhensya o dinaliang panginahanglan ang bata?",
+        ],
+        receivedQuestion: "Kasamtangan ba nga anaa sa dinaliang peligro o nagkinahanglan og dinalian nga tabang ang bata? *",
+        receivedOptions: ["Oo", "Dili"],
+        assistanceTypeLabel: "Pilia ang matang sa tabang *",
+        assistanceTypes: [
+          "Pang-emerhensya nga Tabang sa Pagkaon",
+          "Pang-emerhensya nga Tabang Medikal",
+          "Pang-emerhensya nga Tabang sa Transportasyon",
+          "Pang-emerhensya nga Kapasilongan",
+          "Pang-emerhensya nga Proteksyon / Intervention",
+        ],
+        whatIsIt: "Ang Emergency Assistance Program naghatag og dinalian nga tabang ug intervention sa mga bata nga nag-atubang og emerhensya o dinaliang panginahanglan, lakip ang medikal, pagkaon, kapasilongan, ug proteksyon.",
+        whoIsEligible: [
+          "Mga bata nga residente sa Quezon City nga nagkinahanglan og dinalian nga tabang o saklolo.",
+          "Mga bata nga nag-atubang og emerhensya nga makaapekto sa ilang kaluwasan, kahimsog, o pangunang panginahanglan.",
+          "Mahimong magsumite og hangyo ang ginikanan, legal nga guardian, paryente, o otorisadong tawo.",
+        ],
+        childRequirements: [
+          "PSA Birth Certificate sa Bata",
+          "Katibayan sa Pagpuyo (Proof of Residency)",
+          "Medical Certificate / Rekord Medikal, kung emerhensyang medikal",
+          "Incident Report, kung magamit",
+        ],
+        parentRequirements: [
+          "QCID o Balido nga ID sa Ginikanan / Guardian",
+          "Impormasyon sa Pakig-kontak",
+          "Barangay Certificate / Referral, kung anaa",
+        ],
+        specialRequirements: [
+          "Police Blotter / Incident Report",
+          "Mga Dokumentong Medikal / Ospital",
+          "Uban pang gikinahanglang dokumento sa emerhensya",
+        ],
+        hasEmergencyInfo: true,
+        documents: [
+          { id: "psaBirthCert", label: "PSA Birth Certificate sa Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
+          { id: "parentId", label: "Balido nga ID sa Ginikanan / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
+          { id: "proofResidency", label: "Katibayan sa Pagpuyo (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
+          { id: "barangayCert", label: "Barangay Certificate / Referral", required: false, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
+          { id: "medicalRecord", label: "Medical Certificate / Medical Record", required: false },
+          { id: "policeBlotter", label: "Police Blotter / Incident Report", required: false },
+          { id: "otherDocs", label: "Uban pang Gikinahanglang Dokumento", required: false },
         ],
         submitButtonText: "ISUMITE ANG APLIKASYON",
       },
@@ -479,7 +630,6 @@ export default function ChildWelfareApplicationWizard({
   const [showSampleModal, setShowSampleModal] = useState(false)
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<{ id: string; label: string; sampleImage?: string; description?: string } | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [isEditingInfo, setIsEditingInfo] = useState(false)
 
   const currentPrograms = getLocalizedChildWelfarePrograms(language)
 
@@ -516,115 +666,47 @@ export default function ChildWelfareApplicationWizard({
     }
   }, [selectedProgramId, language])
 
-  // Step 2: Personal Information
-  const currentUser = getCurrentUserProfile()
-  const [formData, setFormData] = useState(() => {
-    const prof = userProfile || (currentUser as any)
-    const qcid = prof?.qcidNo || prof?.qcidNumber || (prof as any)?.qcid || "110000116932100"
-    const fName = prof?.firstName || "CLARISA MAE"
-    const mName = prof?.middleName || "GALIAS"
-    const lName = prof?.lastName || "DIMAL"
-    const sfx = prof?.suffix || ""
-    const nat = prof?.nationality || "FILIPINO"
-    const dMonth = prof?.dobMonth || (prof as any)?.birthMonth || "10"
-    const dDay = prof?.dobDay || (prof as any)?.birthDay || "29"
-    const dYear = prof?.dobYear || (prof as any)?.birthYear || "1960"
-    const userAge = prof?.age ? String(prof.age) : "65"
-    const userSex = prof?.sex || "Female"
-    const civStat = prof?.civilStatus || "Single"
-    const hNo = prof?.addressHouseNo || (prof as any)?.houseNo || "11"
-    const st = prof?.addressStreet || (prof as any)?.street || "OLD CABUYAO SAMPALOK ST"
-    const brgy = prof?.addressBarangay || (prof as any)?.barangay || "Sauyo"
-    const userCity = prof?.addressCityMunicipality || (prof as any)?.city || "Quezon City"
-    const cNo = prof?.contactNo || (prof as any)?.mobileNumber || "09000000000"
-    const userEmail = prof?.email || "dimalmae@gmail.com"
+  // Step 2: Personal / Beneficiary Information
+  const [formData, setFormData] = useState({
+    // I. Applicant / Child Information
+    qcidNumber: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    suffix: "",
+    nationality: "FILIPINO",
+    dobMonth: "",
+    dobDay: "",
+    dobYear: "",
+    age: "",
+    sex: "",
+    civilStatus: "Single",
+    addressHouseNo: "",
+    addressStreet: "",
+    barangay: "",
+    city: "Quezon City",
+    contactNo: "",
+    email: "",
 
-    return {
-      // I. Applicant QCID Profile Information
-      qcidNumber: qcid,
-      firstName: fName,
-      middleName: mName,
-      lastName: lName,
-      suffix: sfx,
-      nationality: nat,
-      dobMonth: dMonth,
-      dobDay: dDay,
-      dobYear: dYear,
-      age: userAge,
-      sex: userSex,
-      civilStatus: civStat,
-      addressHouseNo: hNo,
-      addressStreet: st,
-      barangay: brgy,
-      city: userCity,
-      contactNo: cNo,
-      email: userEmail,
+    // II. Parent / Guardian / Reporting Person
+    parentFullName: "",
+    parentRelationship: "",
+    parentContactNo: "",
 
-      // II. Parent / Guardian / Reporting Person
-      parentFullName: "",
-      parentRelationship: "",
-      parentContactNo: "",
+    // Specific concern / details
+    reasonForRequest: "",
+    briefDescription: "",
+    isImmediateDanger: "No",
+    isChildSafe: "Yes",
+    isParentAvailable: "Yes",
+    emergencyType: "Emergency Medical Assistance",
+    emergencyDateTime: "",
+    reportEmergencyPriority: false,
+    currentLivingSituation: "",
 
-      // Specific concern / details
-      reasonForRequest: "",
-      briefDescription: "",
-      isImmediateDanger: "No",
-      isChildSafe: "Yes",
-      isParentAvailable: "Yes",
-      emergencyType: "Emergency Medical Assistance",
-      emergencyDateTime: "",
-      reportEmergencyPriority: false,
-      currentLivingSituation: "",
-
-      // Certification
-      certifiedCorrect: false,
-    }
+    // Certification
+    certifiedCorrect: false,
   })
-
-  // Sync profile data if userProfile changes
-  useEffect(() => {
-    if (!userProfile) return
-    const qcid = userProfile?.qcidNo || userProfile?.qcidNumber || (userProfile as any)?.qcid || "110000116932100"
-    const fName = userProfile?.firstName || "CLARISA MAE"
-    const mName = userProfile?.middleName || "GALIAS"
-    const lName = userProfile?.lastName || "DIMAL"
-    const sfx = userProfile?.suffix || ""
-    const nat = userProfile?.nationality || "FILIPINO"
-    const dMonth = userProfile?.dobMonth || (userProfile as any)?.birthMonth || "10"
-    const dDay = userProfile?.dobDay || (userProfile as any)?.birthDay || "29"
-    const dYear = userProfile?.dobYear || (userProfile as any)?.birthYear || "1960"
-    const userAge = userProfile?.age ? String(userProfile.age) : "65"
-    const userSex = userProfile?.sex || "Female"
-    const civStat = userProfile?.civilStatus || "Single"
-    const hNo = userProfile?.addressHouseNo || (userProfile as any)?.houseNo || "11"
-    const st = userProfile?.addressStreet || (userProfile as any)?.street || "OLD CABUYAO SAMPALOK ST"
-    const brgy = userProfile?.addressBarangay || (userProfile as any)?.barangay || "Sauyo"
-    const userCity = userProfile?.addressCityMunicipality || (userProfile as any)?.city || "Quezon City"
-    const cNo = userProfile?.contactNo || (userProfile as any)?.mobileNumber || "09000000000"
-    const userEmail = userProfile?.email || "dimalmae@gmail.com"
-
-    setFormData((prev) => ({
-      ...prev,
-      qcidNumber: qcid,
-      firstName: fName,
-      middleName: mName,
-      lastName: lName,
-      suffix: sfx,
-      nationality: nat,
-      dobMonth: dMonth,
-      dobDay: dDay,
-      dobYear: dYear,
-      age: userAge,
-      sex: userSex,
-      civilStatus: civStat,
-      addressHouseNo: hNo,
-      addressStreet: st,
-      barangay: brgy,
-      city: userCity,
-      contactNo: cNo,
-      email: userEmail,
-    }))
-  }, [userProfile])
 
   const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -945,84 +1027,63 @@ export default function ChildWelfareApplicationWizard({
           {/* ──────────────── STEP 2: PERSONAL INFORMATION ──────────────── */}
           {step === 2 && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-3">
-                <div>
-                  <h3 className="text-base font-bold text-gray-900 uppercase">
-                    {selectedProgram.title} — {t("cwStepPersonal") || (language === "tl" ? "PERSONAL NA IMPORMASYON" : language === "bis" ? "PERSONAL NGA IMPORMASYON" : "PERSONAL INFORMATION")}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {t("qcidProfileDesc") || "Please review your personal information from your QCID profile. Fill in the additional details below."}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
-                    <Check className="w-3.5 h-3.5" />
-                    <span>{t("autoFilledQcidBadge") || "Auto-filled from QCID Record"}</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingInfo((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition-colors cursor-pointer"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span>{isEditingInfo ? (t("lockInformation") || "Lock Information") : (t("editInformation") || "Edit Information")}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* IMPORTANT REMINDER BOX */}
-              <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold text-blue-600">{t("importantReminder") || "IMPORTANT REMINDER"}</p>
-                  <p className="text-blue-600/90 mt-0.5 text-xs">
-                    {t("qcidReminderNote") || "Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service."}
-                  </p>
-                </div>
+              <div className="border-b border-gray-200 pb-3">
+                <h3 className="text-base font-bold text-gray-900 uppercase">
+                  {selectedProgram.title} — {language === "tl" ? "PERSONAL NA IMPORMASYON" : language === "bis" ? "PERSONAL NGA IMPORMASYON" : "PERSONAL INFORMATION"}
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {language === "tl"
+                    ? "Mangyaring ilagay ang mga kinakailangang impormasyon ng bata o aplikante sa ibaba."
+                    : language === "bis"
+                    ? "Palihug ibutang ang gikinahanglan nga impormasyon sa bata o aplikante sa ubos."
+                    : "Please provide the required personal information of the child or applicant below."}
+                </p>
               </div>
 
               {attemptedNext && !step2Valid && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-red-700">
                   <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>Mangyaring punan ang lahat ng kinakailangang fields na may pulang asterisko (*).</span>
+                  <span>
+                    {language === "tl"
+                      ? "Mangyaring punan ang lahat ng kinakailangang fields na may pulang asterisko (*)."
+                      : language === "bis"
+                      ? "Palihug kompletoha ang tanang gikinahanglan nga fields nga adunay pulang asterisko (*)."
+                      : "Please fill in all required fields marked with an asterisk (*)."}
+                  </span>
                 </div>
               )}
 
-              {/* I. IMPORMASYON NG APLIKANTE (QCID PROFILE) */}
+              {/* I. IMPORMASYON NG BATA / APLIKANTE */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
                   <User className="w-4 h-4 text-blue-600" />
-                  {language === "tl" ? "I. IMPORMASYON NG APLIKANTE (QCID PROFILE)" : language === "bis" ? "I. IMPORMASYON SA APLIKANTE (QCID PROFILE)" : "I. APPLICANT INFORMATION (QCID PROFILE)"}
+                  {language === "tl" ? "I. IMPORMASYON NG APLIKANTE / BATA" : language === "bis" ? "I. IMPORMASYON SA APLIKANTE / BATA" : "I. APPLICANT / CHILD INFORMATION"}
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("qcIdLabel") || "QC ID"} *</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "QC ID (Kung mayroon)" : language === "bis" ? "QC ID (Kung anaa)" : "QC ID (Optional / If available)"}
+                    </label>
                     <input
                       type="text"
                       value={formData.qcidNumber}
                       onChange={(e) => updateField("qcidNumber", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      placeholder="Hal. 110000184613308"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("firstNameLabel") || "First name"} *</label>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.firstName.trim() ? "text-red-600" : "text-gray-700"}`}>
+                      {language === "tl" ? "Pangalan (First name) *" : language === "bis" ? "Unang Ngalan (First name) *" : "First Name *"}
+                    </label>
                     <input
                       type="text"
                       value={formData.firstName}
-                      onChange={(e) => updateField("firstName", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      onChange={(e) => updateField("firstName", e.target.value.toUpperCase())}
+                      placeholder="Hal. JUAN"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900 ${
+                        attemptedNext && !formData.firstName.trim() ? "border-red-500" : "border-gray-300"
                       }`}
                     />
                   </div>
@@ -1030,200 +1091,176 @@ export default function ChildWelfareApplicationWizard({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("middleNameLabel") || "Middle name"}</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Gitnang Pangalan (Middle name)" : language === "bis" ? "Tunga nga Ngalan (Middle name)" : "Middle Name"}
+                    </label>
                     <input
                       type="text"
                       value={formData.middleName}
-                      onChange={(e) => updateField("middleName", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      onChange={(e) => updateField("middleName", e.target.value.toUpperCase())}
+                      placeholder="Hal. SANTOS"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("lastNameLabel") || "Last name"} *</label>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.lastName.trim() ? "text-red-600" : "text-gray-700"}`}>
+                      {language === "tl" ? "Apelyido (Last name) *" : language === "bis" ? "Apelyido (Last name) *" : "Last Name *"}
+                    </label>
                     <input
                       type="text"
                       value={formData.lastName}
-                      onChange={(e) => updateField("lastName", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                      onChange={(e) => updateField("lastName", e.target.value.toUpperCase())}
+                      placeholder="Hal. DELA CRUZ"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900 ${
+                        attemptedNext && !formData.lastName.trim() ? "border-red-500" : "border-gray-300"
                       }`}
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("suffixLabel") || "Suffix (Jr., Sr., III, etc.)"}</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Suffix (Jr., Sr., III, atbp.)" : language === "bis" ? "Suffix (Jr., Sr., III, ug uban pa)" : "Suffix (Jr., Sr., III, etc.)"}
+                    </label>
                     <input
                       type="text"
                       value={formData.suffix}
                       onChange={(e) => updateField("suffix", e.target.value)}
-                      placeholder={t("suffixLabel") || "Suffix (Jr., Sr., etc.)"}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      placeholder="Jr., Sr., III"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("nationalityLabel") || "Nationality"} *</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Nasyonalidad *" : language === "bis" ? "Nasyonalidad *" : "Nationality *"}
+                    </label>
                     <input
                       type="text"
                       value={formData.nationality}
-                      onChange={(e) => updateField("nationality", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      onChange={(e) => updateField("nationality", e.target.value.toUpperCase())}
+                      placeholder="FILIPINO"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("birthDateLabel") || "Date of birth"} *</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Araw ng Kapanganakan (MM/DD/YYYY)" : language === "bis" ? "Adlaw sa Pagkatawo (MM/DD/YYYY)" : "Date of Birth (MM/DD/YYYY)"}
+                    </label>
                     <input
                       type="text"
-                      value={`${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`}
+                      value={formData.dobMonth && formData.dobDay && formData.dobYear ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}` : (formData.dobMonth || formData.dobDay || formData.dobYear ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}` : "")}
                       onChange={(e) => {
-                        const parts = e.target.value.split("/")
+                        const val = e.target.value
+                        const parts = val.split("/")
                         if (parts.length === 3) {
                           updateField("dobMonth", parts[0])
                           updateField("dobDay", parts[1])
                           updateField("dobYear", parts[2])
+                        } else {
+                          updateField("dobMonth", val)
                         }
                       }}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      placeholder="MM/DD/YYYY"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("ageLabel") || "Age"} *</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Edad *" : language === "bis" ? "Edad *" : "Age *"}
+                    </label>
                     <input
-                      type="text"
+                      type="number"
+                      min="0"
+                      max="120"
                       value={formData.age}
                       onChange={(e) => updateField("age", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      placeholder="Hal. 5"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("genderLabel") || "Gender"} *</label>
-                    <input
-                      type="text"
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Kasarian *" : language === "bis" ? "Kasarian *" : "Gender / Sex *"}
+                    </label>
+                    <select
                       value={formData.sex}
                       onChange={(e) => updateField("sex", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                    >
+                      <option value="">{language === "tl" ? "-- Piliin ang Kasarian --" : language === "bis" ? "-- Pilia ang Kasarian --" : "-- Select Gender --"}</option>
+                      <option value="Male">{language === "tl" ? "Lalaki (Male)" : language === "bis" ? "Lalaki (Male)" : "Male"}</option>
+                      <option value="Female">{language === "tl" ? "Babae (Female)" : language === "bis" ? "Babaye (Female)" : "Female"}</option>
+                    </select>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("civilStatusLabel") || "Civil status"} *</label>
-                    <input
-                      type="text"
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Katayuang Sibil" : language === "bis" ? "Kahimtang Sibil" : "Civil Status"}
+                    </label>
+                    <select
                       value={formData.civilStatus}
                       onChange={(e) => updateField("civilStatus", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                    >
+                      <option value="Single">{language === "tl" ? "Walang Asawa (Single)" : language === "bis" ? "Walay Asawa (Single)" : "Single"}</option>
+                      <option value="Married">{language === "tl" ? "May Asawa (Married)" : language === "bis" ? "Minyo (Married)" : "Married"}</option>
+                      <option value="Widowed">{language === "tl" ? "Balo (Widowed)" : language === "bis" ? "Balo (Widowed)" : "Widowed"}</option>
+                      <option value="Separated">{language === "tl" ? "Hiwalay (Separated)" : language === "bis" ? "Bulag (Separated)" : "Separated"}</option>
+                    </select>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("contactNumberLabel") || "Contact number"} *</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Numero ng Telepono" : language === "bis" ? "Numero sa Telepono" : "Contact Number"}
+                    </label>
                     <input
                       type="text"
+                      maxLength={11}
                       value={formData.contactNo}
-                      onChange={(e) => updateField("contactNo", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      onChange={(e) => updateField("contactNo", e.target.value.replace(/\D/g, ""))}
+                      placeholder="09XXXXXXXXX"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("houseNumberLabel") || "House/Building number"} *</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Numero ng Bahay / Gusali" : language === "bis" ? "Numero sa Balay / Bilding" : "House / Building Number"}
+                    </label>
                     <input
                       type="text"
                       value={formData.addressHouseNo}
                       onChange={(e) => updateField("addressHouseNo", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      placeholder="Hal. 123"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("streetLabel") || "Street"} *</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Kalye (Street)" : language === "bis" ? "Dalan (Street)" : "Street"}
+                    </label>
                     <input
                       type="text"
                       value={formData.addressStreet}
                       onChange={(e) => updateField("addressStreet", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      placeholder="Hal. Sampaguita St."
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("barangayLabel") || "Barangay"} *</label>
+                    <label className="text-xs font-semibold text-gray-700">
+                      {language === "tl" ? "Barangay" : language === "bis" ? "Barangay" : "Barangay"}
+                    </label>
                     <input
                       type="text"
                       value={formData.barangay}
                       onChange={(e) => updateField("barangay", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      placeholder="Hal. Sauyo"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     />
                   </div>
                 </div>

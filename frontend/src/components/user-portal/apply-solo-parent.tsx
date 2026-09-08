@@ -311,7 +311,11 @@ export default function ApplySoloParent() {
   const isLoss = typeParam === "loss"
 
   const modalTitle = isChildWelfare
-    ? `Requirements for Child Welfare Support — ${matchedCwProgram.title}`
+    ? language === "en"
+      ? `Requirements for Child Welfare Support — ${matchedCwProgram.title}`
+      : language === "bis"
+      ? `Mga Kinahanglanon sa Tabang sa Kaayohan sa Bata — ${matchedCwProgram.title}`
+      : `Mga Kinakailangan sa Tulong sa Kapakanan ng Bata — ${matchedCwProgram.title}`
     : language === "en"
     ? "Requirements for Application of QC Solo Parent ID"
     : language === "bis"
@@ -468,7 +472,11 @@ export default function ApplySoloParent() {
                 <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
                   <HeartHandshake className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                   <p className="text-sm font-semibold text-blue-950">
-                    CHILD & YOUTH WELFARE — Opisyal na programa para sa kapakanan, proteksyon at pag-unlad ng mga bata sa Lungsod Quezon.
+                    {language === "en"
+                      ? "CHILD & YOUTH WELFARE — Official program for the welfare, protection, and development of children in Quezon City."
+                      : language === "bis"
+                      ? "CHILD & YOUTH WELFARE — Opisyal nga programa para sa kaayohan, proteksyon ug paglambo sa mga bata sa Lungsod Quezon."
+                      : "CHILD & YOUTH WELFARE — Opisyal na programa para sa kapakanan, proteksyon at pag-unlad ng mga bata sa Lungsod Quezon."}
                   </p>
                 </div>
               ) : isRenewal ? (
@@ -511,7 +519,11 @@ export default function ApplySoloParent() {
                 <div className="space-y-5">
                   <div>
                     <h3 className="text-base font-bold text-foreground mb-2 uppercase tracking-wide">
-                      I. ANO ANG {matchedCwProgram.title.toUpperCase()} PROGRAM?
+                      {language === "en"
+                        ? `I. WHAT IS THE ${matchedCwProgram.title.toUpperCase()} PROGRAM?`
+                        : language === "bis"
+                        ? `I. UNSA ANG ${matchedCwProgram.title.toUpperCase()} PROGRAM?`
+                        : `I. ANO ANG ${matchedCwProgram.title.toUpperCase()} PROGRAM?`}
                     </h3>
                     <p className="text-sm text-foreground/80 leading-relaxed bg-gray-50 border border-border/80 rounded-xl p-3.5">
                       {matchedCwProgram.whatIsIt}
@@ -520,7 +532,11 @@ export default function ApplySoloParent() {
 
                   <div>
                     <h3 className="text-base font-bold text-foreground mb-2 uppercase tracking-wide">
-                      II. SINO ANG KWALIPIKADO SA PROGRAMA?
+                      {language === "en"
+                        ? "II. WHO IS ELIGIBLE FOR THE PROGRAM?"
+                        : language === "bis"
+                        ? "II. KINSA ANG KWALIPIKADO SA PROGRAMA?"
+                        : "II. SINO ANG KWALIPIKADO SA PROGRAMA?"}
                     </h3>
                     <ul className="space-y-2">
                       {matchedCwProgram.whoIsEligible.map((item, idx) => (
@@ -534,12 +550,18 @@ export default function ApplySoloParent() {
 
                   <div>
                     <h3 className="text-base font-bold text-foreground mb-3 uppercase tracking-wide">
-                      III. REQUIREMENTS (MGA DOKUMENTONG KAILANGAN)
+                      {language === "en"
+                        ? "III. REQUIREMENTS (REQUIRED DOCUMENTS)"
+                        : language === "bis"
+                        ? "III. MGA GIKINAHANGLANG DOKUMENTO (REQUIREMENTS)"
+                        : "III. MGA KINAKAILANGANG DOKUMENTO (REQUIREMENTS)"}
                     </h3>
 
                     {matchedCwProgram.childRequirements.length > 0 && (
                       <div className="mb-4">
-                        <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-2">Para sa Bata:</h4>
+                        <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-2">
+                          {language === "en" ? "For the Child:" : language === "bis" ? "Para sa Bata:" : "Para sa Bata:"}
+                        </h4>
                         <ul className="space-y-2">
                           {matchedCwProgram.childRequirements.map((req, idx) => (
                             <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground">
@@ -554,7 +576,11 @@ export default function ApplySoloParent() {
                     {matchedCwProgram.parentRequirements.length > 0 && (
                       <div className="mb-4">
                         <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-2">
-                          Para sa Magulang / Guardian / Reporting Person:
+                          {language === "en"
+                            ? "For Parent / Guardian / Reporting Person:"
+                            : language === "bis"
+                            ? "Para sa Ginikanan / Guardian / Tig-report:"
+                            : "Para sa Magulang / Guardian / Nag-uulat:"}
                         </h4>
                         <ul className="space-y-2">
                           {matchedCwProgram.parentRequirements.map((req, idx) => (
@@ -570,7 +596,11 @@ export default function ApplySoloParent() {
                     {matchedCwProgram.specialRequirements.length > 0 && (
                       <div className="mb-4">
                         <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-2">
-                          Para sa ilang uri ng assistance / Kung kinakailangan:
+                          {language === "en"
+                            ? "For Specific Assistance / If Applicable:"
+                            : language === "bis"
+                            ? "Para sa pipila ka matang sa tabang / Kung gikinahanglan:"
+                            : "Para sa ilang uri ng tulong / Kung kinakailangan:"}
                         </h4>
                         <ul className="space-y-2">
                           {matchedCwProgram.specialRequirements.map((req, idx) => (
