@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile } from "../../utils/userProfile"
+import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import {
   FIXED_ASSISTANCE_AMOUNTS,
   getSavedDisbursements,
@@ -737,6 +738,11 @@ export default function MyApplications() {
     fetchUserApps()
     const interval = setInterval(fetchUserApps, 2000)
     const handleUpdate = () => fetchUserApps()
+
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      fetchUserApps()
+    })
+
     window.addEventListener("storage", handleUpdate)
     window.addEventListener("pwd_senior_applications_updated", handleUpdate)
     window.addEventListener("solo_parent_applications_updated", handleUpdate)
@@ -747,6 +753,7 @@ export default function MyApplications() {
 
     return () => {
       clearInterval(interval)
+      unsubscribe()
       window.removeEventListener("storage", handleUpdate)
       window.removeEventListener("pwd_senior_applications_updated", handleUpdate)
       window.removeEventListener("solo_parent_applications_updated", handleUpdate)

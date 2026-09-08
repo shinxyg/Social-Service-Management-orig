@@ -19,7 +19,7 @@ import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
-import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 
 function generateReference(_status?: string | null, qcid?: string) {
   if (qcid && (qcid || "").trim() && qcid !== "110000116932100") return (qcid || "").trim()
@@ -779,7 +779,8 @@ export default function SoloParentApplicationWizard({
   }
   
   // ---- Eligibility check (bago pumasok sa wizard) ----
-  const userId = userProfile.userId || "1"
+  const currentProf = getCurrentUserProfile()
+  const userId = userProfile.userId || (userProfile as any).id || currentProf.id || "1"
   const [checkingEligibility, setCheckingEligibility] = useState(true)
   const [isBlocked, setIsBlocked] = useState(false)
   const [blockReason, setBlockReason] = useState<"draft" | "pending" | "approved" | null>(null)
@@ -792,8 +793,11 @@ export default function SoloParentApplicationWizard({
       if (isInitial) setCheckingEligibility(true)
       try {
         const typeToCheck = idStatus || "new"
+        const prof = getCurrentUserProfile()
+        const qcid = (prof.qcidNo || prof.qcidNumber || "").trim()
+        const email = (prof.email || "").trim()
         const res = await fetch(
-          `${API_BASE}/api/solo-parent/eligibility/${userId}?applicationType=${typeToCheck}`
+          `${API_BASE}/api/solo-parent/eligibility/${userId}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
         )
         if (res.ok && isMounted) {
           const data = await res.json()
@@ -815,6 +819,10 @@ export default function SoloParentApplicationWizard({
     const interval = setInterval(() => checkEligibility(false), 1500)
     const handleUpdate = () => checkEligibility(false)
 
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      checkEligibility(false)
+    })
+
     window.addEventListener("solo_parent_applications_updated", handleUpdate)
     window.addEventListener("applications_updated", handleUpdate)
     window.addEventListener("storage", handleUpdate)
@@ -822,6 +830,7 @@ export default function SoloParentApplicationWizard({
     return () => {
       isMounted = false
       clearInterval(interval)
+      unsubscribe()
       window.removeEventListener("solo_parent_applications_updated", handleUpdate)
       window.removeEventListener("applications_updated", handleUpdate)
       window.removeEventListener("storage", handleUpdate)

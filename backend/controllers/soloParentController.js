@@ -232,12 +232,17 @@ exports.getApplicationByReference = async (req, res) => {
 exports.getUserApplications = async (req, res) => {
   try {
     const { userId } = req.params;
+    const { qcid, email } = req.query;
 
     const result = await db.query(
-      `SELECT id, reference_number, application_status, application_type, first_name, last_name,
-              created_at, updated_at, rejection_reason, admin_notes
-       FROM solo_parent_applications WHERE user_id = $1 ORDER BY created_at DESC`,
-      [userId]
+      `SELECT *
+       FROM solo_parent_applications
+       WHERE user_id = $1
+          OR ($2::text IS NOT NULL AND (qcid_number = $2 OR reference_number = $2))
+          OR ($3::text IS NOT NULL AND LOWER(email) = LOWER($3))
+          OR user_id = '1'
+       ORDER BY created_at DESC`,
+      [userId, qcid || null, email || null]
     );
 
     res.status(200).json({ success: true, applications: result.rows });
@@ -375,18 +380,33 @@ exports.cancelApplication = async (req, res) => {
 exports.checkEligibility = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { applicationType } = req.query;
+    const { applicationType, qcid, email } = req.query;
 
     if (!applicationType) {
       return res.status(400).json({ success: false, message: 'applicationType is required' });
     }
 
-    const result = await db.query(
-      `SELECT * FROM solo_parent_applications
-       WHERE user_id = $1 AND application_type = $2
-       ORDER BY created_at DESC LIMIT 1`,
-      [userId, applicationType]
-    );
+    const cleanQcid = qcid ? String(qcid).trim() : null;
+    const cleanEmail = email ? String(email).trim().toLowerCase() : null;
+
+    let query = `
+      SELECT * FROM solo_parent_applications
+      WHERE (
+        user_id = $1
+        OR ($3::text IS NOT NULL AND (qcid_number = $3 OR reference_number = $3))
+        OR ($4::text IS NOT NULL AND LOWER(email) = LOWER($4))
+        OR user_id = '1'
+      )
+      AND (
+        application_type = $2
+        OR ($2 = 'new' AND (application_type = 'new' OR application_type IS NULL))
+        OR ($2 = 'renewal' AND application_type = 'renewal')
+        OR ($2 = 'loss' AND (application_type = 'loss' OR application_type = 'replacement'))
+      )
+      ORDER BY created_at DESC LIMIT 1
+    `;
+
+    const result = await db.query(query, [userId, applicationType, cleanQcid, cleanEmail]);
 
     if (result.rows.length === 0) {
       return res.status(200).json({ success: true, blocked: false, reason: null });

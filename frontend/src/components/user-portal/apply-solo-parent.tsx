@@ -5,6 +5,8 @@ import SoloParentApplicationWizard from "./solo-parent-wizard"
 import ChildWelfareApplicationWizard, { getLocalizedChildWelfarePrograms } from "./child-welfare-wizard"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
+import { getCurrentUserProfile } from "../../utils/userProfile"
+import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 
 interface RequirementItem {
   title: string
@@ -255,8 +257,12 @@ export default function ApplySoloParent() {
     const checkEligibility = async () => {
       try {
         const typeToCheck = typeParam === "renewal" ? "renewal" : typeParam === "loss" ? "loss" : "new"
+        const prof = getCurrentUserProfile()
+        const uid = prof.id || "1"
+        const qcid = (prof.qcidNo || prof.qcidNumber || "").trim()
+        const email = (prof.email || "").trim()
         const res = await fetch(
-          `${API_BASE}/api/solo-parent/eligibility/1?applicationType=${typeToCheck}`
+          `${API_BASE}/api/solo-parent/eligibility/${uid}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
         )
         if (res.ok) {
           const data = await res.json()
@@ -281,6 +287,10 @@ export default function ApplySoloParent() {
     const interval = setInterval(checkEligibility, 1500)
     const handleUpdate = () => checkEligibility()
 
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      checkEligibility()
+    })
+
     window.addEventListener("solo_parent_applications_updated", handleUpdate)
     window.addEventListener("applications_updated", handleUpdate)
     window.addEventListener("storage", handleUpdate)
@@ -288,6 +298,7 @@ export default function ApplySoloParent() {
     return () => {
       active = false
       clearInterval(interval)
+      unsubscribe()
       window.removeEventListener("solo_parent_applications_updated", handleUpdate)
       window.removeEventListener("applications_updated", handleUpdate)
       window.removeEventListener("storage", handleUpdate)
@@ -326,6 +337,8 @@ export default function ApplySoloParent() {
     language,
     isRenewal ? "renewal" : isLoss ? "loss" : "new"
   )
+
+  const activeProfile = getCurrentUserProfile()
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
@@ -387,6 +400,7 @@ export default function ApplySoloParent() {
       ) : (
         <SoloParentApplicationWizard
           key={`solo-parent-${typeParam}`}
+          userProfile={activeProfile as any}
           initialType={typeParam === "renewal" ? "renewal" : typeParam === "loss" ? "loss" : "new"}
           initialCategoryId={selectedCategoryId}
           isModalOpen={showRequirementsModal}
