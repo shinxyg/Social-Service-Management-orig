@@ -1199,7 +1199,7 @@ async function sendPasswordResetEmail({
 
           <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Hello, ${recipientName}!</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
-            Nakatanggap kami ng kahilingan na i-reset ang password ng iyong GovServe Resident Account.
+            We received a request to reset the password for your GovServe Account.
           </p>
 
           <div class="otp-box">
@@ -1210,20 +1210,20 @@ async function sendPasswordResetEmail({
 
           ${resetUrl ? `
           <div style="margin: 20px 0;">
-            <p style="font-size: 13px; color: #475569; margin-bottom: 10px;">O kaya ay direktang i-click ang button sa ibaba:</p>
+            <p style="font-size: 13px; color: #475569; margin-bottom: 10px;">Or click the button below to reset your password directly:</p>
             <a href="${resetUrl}" class="btn-reset" target="_blank">Reset Password Now</a>
             <p style="font-size: 11px; color: #94a3b8; word-break: break-all; margin-top: 8px;">Direct Link: <a href="${resetUrl}" style="color: #2563eb;">${resetUrl}</a></p>
           </div>
           ` : ''}
 
           <div class="warning-box">
-            <strong>Paunawa sa Seguridad:</strong> Kung hindi mo hiniling ang password reset na ito, mangyaring balewalain lamang ang email na ito. Mananatiling ligtas at hindi magagalaw ang iyong account.
+            <strong>Security Notice:</strong> If you did not request this password reset, please disregard this email. Your account remains safe and secure.
           </div>
         </div>
 
         <div class="footer">
-          <p style="margin: 0 0 4px;">Ito ay opisyal na automated security notification mula sa GovServe Portal.</p>
-          <p style="margin: 0;">GovServe Social Services Management Portal | Lungsod Quezon</p>
+          <p style="margin: 0 0 4px;">This is an official automated security notification from the GovServe Portal.</p>
+          <p style="margin: 0;">GovServe Social Services Management Portal | Quezon City</p>
         </div>
       </div>
     </body>
