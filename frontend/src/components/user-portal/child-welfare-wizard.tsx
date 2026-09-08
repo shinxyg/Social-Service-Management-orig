@@ -657,12 +657,12 @@ export default function ChildWelfareApplicationWizard({
   const [check1, setCheck1] = useState(false)
   const [check2, setCheck2] = useState(false)
   const [check3, setCheck3] = useState(false)
-  const [selectedAssistanceType, setSelectedAssistanceType] = useState<string>(selectedProgram.assistanceTypes[0])
+  const [selectedAssistanceType, setSelectedAssistanceType] = useState<string>("")
 
-  // Sync default assistance type when program changes
+  // Sync assistance type when program changes only if not matching
   useEffect(() => {
-    if (selectedProgram && !selectedProgram.assistanceTypes.includes(selectedAssistanceType)) {
-      setSelectedAssistanceType(selectedProgram.assistanceTypes[0])
+    if (selectedProgram && selectedAssistanceType && !selectedProgram.assistanceTypes.includes(selectedAssistanceType)) {
+      setSelectedAssistanceType("")
     }
   }, [selectedProgramId, language])
 
@@ -1001,18 +1001,39 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </div>
 
-              {/* Click the type of assistance */}
+              {/* Select Category / Type of Assistance */}
               <div className="space-y-2 pt-2">
                 <h3 className="text-sm font-bold text-gray-900 tracking-wide uppercase">
-                  {language === "tl" ? "PILIIN ANG URI NG TULONG" : language === "bis" ? "PILIA ANG MATANG SA TABANG" : "CLICK THE TYPE OF ASSISTANCE"}
+                  {language === "tl"
+                    ? "PILIIN ANG KATEGORYA / URI NG TULONG"
+                    : language === "bis"
+                    ? "PILIA ANG KATEGORYA / MATANG SA TABANG"
+                    : "SELECT CATEGORY / TYPE OF ASSISTANCE"}
                 </h3>
-                <p className="text-xs text-blue-700 font-medium">Choose the type of assistance **</p>
+                <p className={`text-xs font-semibold ${attemptedNext && !selectedAssistanceType ? "text-red-600" : "text-blue-700"}`}>
+                  {language === "tl"
+                    ? "Pumili ng uri ng tulong o kategorya *"
+                    : language === "bis"
+                    ? "Pilia ang matang sa tabang o kategorya *"
+                    : "Choose the type of assistance / category *"}
+                </p>
                 <div className="relative">
                   <select
                     value={selectedAssistanceType}
                     onChange={(e) => setSelectedAssistanceType(e.target.value)}
-                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500"
+                    className={`w-full h-11 rounded-lg border bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 cursor-pointer ${
+                      attemptedNext && !selectedAssistanceType
+                        ? "border-red-500 ring-2 ring-red-100"
+                        : "border-gray-300"
+                    }`}
                   >
+                    <option value="">
+                      {language === "tl"
+                        ? "-- Pumili ng Kategorya / Uri ng Tulong --"
+                        : language === "bis"
+                        ? "-- Pilia ang Kategorya / Matang sa Tabang --"
+                        : "-- Select Category / Type of Assistance --"}
+                    </option>
                     {selectedProgram.assistanceTypes.map((type) => (
                       <option key={type} value={type}>
                         {type}
@@ -1020,6 +1041,15 @@ export default function ChildWelfareApplicationWizard({
                     ))}
                   </select>
                 </div>
+                {attemptedNext && !selectedAssistanceType && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {language === "tl"
+                      ? "Mangyaring pumili ng uri ng tulong o kategorya bago magpatuloy."
+                      : language === "bis"
+                      ? "Palihug pagpili og matang sa tabang o kategorya sa dili pa mopadayon."
+                      : "Please select an assistance type or category before proceeding."}
+                  </p>
+                )}
               </div>
             </div>
           )}
