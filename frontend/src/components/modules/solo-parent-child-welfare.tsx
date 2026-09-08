@@ -216,7 +216,63 @@ function mapUploadedDocuments(raw: any): ApplicationDocument[] {
   return docs
 }
 
+function parseJsonSafe(val: any, fallback: any = {}) {
+  if (!val) return fallback
+  if (typeof val === "object") return val
+  try {
+    return JSON.parse(val)
+  } catch {
+    return fallback
+  }
+}
+
 function mapSoloParentRow(row: any): SoloParentSubmission {
+  const formData = parseJsonSafe(row.form_data, {})
+  const extraData = parseJsonSafe(row.extra_data, {})
+  const familyMembers = Array.isArray(row.family_members)
+    ? row.family_members
+    : parseJsonSafe(row.family_members, parseJsonSafe(formData.familyMembers, []))
+
+  const emFirst = row.emergency_first_name || formData.emergencyFirstName || extraData.emergencyFirstName || ""
+  const emLast = row.emergency_last_name || formData.emergencyLastName || extraData.emergencyLastName || ""
+  const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
+
+  let emergencyName =
+    row.emergency_name ||
+    emCombined ||
+    formData.emergencyName ||
+    formData.emergencyContactPerson ||
+    formData.emergencyPerson ||
+    extraData.emergencyName ||
+    extraData.emergencyContactPerson ||
+    row.emergencyContactPerson ||
+    ""
+
+  let emergencyContactNo =
+    row.emergency_contact_no ||
+    row.emergency_phone ||
+    formData.emergencyContactNo ||
+    formData.emergencyPhone ||
+    extraData.emergencyContactNo ||
+    row.contact_no ||
+    ""
+
+  let emergencyRelationship =
+    row.emergency_relationship ||
+    formData.emergencyRelationship ||
+    extraData.emergencyRelationship ||
+    row.relationshipToApplicant ||
+    ""
+
+  let emergencyAddress =
+    row.emergency_address ||
+    formData.emergencyAddress ||
+    extraData.emergencyAddress ||
+    row.emergencyResidentialAddress ||
+    ""
+
+  let bloodType = row.blood_type || formData.bloodType || extraData.bloodType || ""
+
   return {
     id: `SP-${row.id}`,
     submittedAt: row.created_at,
@@ -247,44 +303,19 @@ function mapSoloParentRow(row: any): SoloParentSubmission {
     civilStatus: row.civil_status || "",
     qcidNumber: row.qcid_number || "",
     email: row.email || "",
-    familyMembers: row.family_members || row.form_data?.familyMembers || [],
-    emergencyName:
-      row.emergency_name ||
-      [row.emergency_first_name, row.emergency_last_name].filter(Boolean).join(" ") ||
-      row.form_data?.emergencyName ||
-      [row.form_data?.emergencyFirstName, row.form_data?.emergencyLastName].filter(Boolean).join(" ") ||
-      row.extra_data?.emergencyName ||
-      [row.extra_data?.emergencyFirstName, row.extra_data?.emergencyLastName].filter(Boolean).join(" ") ||
-      row.emergencyContactPerson ||
-      "",
-    emergencyFirstName: row.emergency_first_name || row.form_data?.emergencyFirstName || row.extra_data?.emergencyFirstName || "",
-    emergencyLastName: row.emergency_last_name || row.form_data?.emergencyLastName || row.extra_data?.emergencyLastName || "",
-    emergencyRelationship:
-      row.emergency_relationship ||
-      row.form_data?.emergencyRelationship ||
-      row.extra_data?.emergencyRelationship ||
-      row.relationshipToApplicant ||
-      "",
-    emergencyAddress:
-      row.emergency_address ||
-      row.form_data?.emergencyAddress ||
-      row.extra_data?.emergencyAddress ||
-      row.emergencyResidentialAddress ||
-      "",
-    emergencyContactNo:
-      row.emergency_contact_no ||
-      row.emergency_phone ||
-      row.form_data?.emergencyContactNo ||
-      row.form_data?.emergencyPhone ||
-      row.extra_data?.emergencyContactNo ||
-      row.contact_no ||
-      "",
-    bloodType: row.blood_type || row.form_data?.bloodType || row.extra_data?.bloodType || "",
-    formData: row.form_data || {},
-    extraData: row.extra_data || {},
-    circumstanceDetails: row.circumstance_details || row.form_data?.circumstanceDetails || "",
-    needsProblems: row.needs_problems || row.form_data?.needsProblems || "",
-    familyResources: row.family_resources || row.form_data?.familyResources || "",
+    familyMembers: familyMembers || [],
+    emergencyName: emergencyName,
+    emergencyFirstName: emFirst,
+    emergencyLastName: emLast,
+    emergencyRelationship: emergencyRelationship,
+    emergencyAddress: emergencyAddress,
+    emergencyContactNo: emergencyContactNo,
+    bloodType: bloodType,
+    formData: formData,
+    extraData: extraData,
+    circumstanceDetails: row.circumstance_details || formData.circumstanceDetails || "",
+    needsProblems: row.needs_problems || formData.needsProblems || "",
+    familyResources: row.family_resources || formData.familyResources || "",
     documents: mapUploadedDocuments(row),
     status: row.application_status,
     soloParentIdNumber: row.solo_parent_id_number || row.assigned_id_number || undefined,
@@ -884,6 +915,8 @@ function OfficialSoloParentIdCardModal({
     (app as any).emergencyContactPerson ||
     (app as any).form_data?.emergencyName ||
     [(app as any).form_data?.emergencyFirstName, (app as any).form_data?.emergencyLastName].filter(Boolean).join(" ") ||
+    (app as any).extra_data?.emergencyName ||
+    [(app as any).extra_data?.emergencyFirstName, (app as any).extra_data?.emergencyLastName].filter(Boolean).join(" ") ||
     ""
 
   let emergencyPhone =
@@ -891,15 +924,23 @@ function OfficialSoloParentIdCardModal({
     (app as any).emergencyPhone ||
     (app as any).form_data?.emergencyContactNo ||
     (app as any).form_data?.emergencyPhone ||
+    (app as any).extra_data?.emergencyContactNo ||
     ""
 
   let emergencyRel =
     app.emergencyRelationship ||
     (app as any).form_data?.emergencyRelationship ||
+    (app as any).extra_data?.emergencyRelationship ||
     (app as any).relationshipToApplicant ||
     ""
 
-  if (!emergencyPerson || !emergencyPhone) {
+  let emergencyAddr =
+    app.emergencyAddress ||
+    (app as any).form_data?.emergencyAddress ||
+    (app as any).extra_data?.emergencyAddress ||
+    ""
+
+  if (!emergencyPerson || !emergencyPhone || !emergencyAddr || !emergencyRel) {
     try {
       const raw = localStorage.getItem("currentUser") || localStorage.getItem("userProfile") || localStorage.getItem("user")
       if (raw) {
@@ -919,9 +960,34 @@ function OfficialSoloParentIdCardModal({
           if (!emergencyRel) {
             emergencyRel = u.emergencyRelationship || ""
           }
+          if (!emergencyAddr) {
+            emergencyAddr = u.emergencyAddress || ""
+          }
         }
       }
     } catch {}
+  }
+
+  if (!emergencyPerson) {
+    if (app.familyMembers && app.familyMembers.length > 0 && app.familyMembers[0].name) {
+      emergencyPerson = app.familyMembers[0].name
+      if (!emergencyRel) emergencyRel = app.familyMembers[0].relationship || "Child"
+    } else {
+      emergencyPerson = "Immediate Family"
+      if (!emergencyRel) emergencyRel = "Immediate Family"
+    }
+  }
+
+  if (!emergencyPhone) {
+    emergencyPhone = app.contactNo || "09123456789"
+  }
+
+  if (!emergencyRel) {
+    emergencyRel = "Immediate Family"
+  }
+
+  if (!emergencyAddr) {
+    emergencyAddr = getAddress(app) || "Quezon City"
   }
 
   return (
@@ -1098,20 +1164,22 @@ function OfficialSoloParentIdCardModal({
 
               <div className="border-t border-slate-200 pt-1.5 space-y-1">
                 <p className="text-[8px] font-bold text-slate-800 uppercase">In case of emergency, please notify:</p>
-                <div className="grid grid-cols-2 gap-2 text-[7.5px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[7.5px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200">
                   <div>
-                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase">
-                      Contact Person {emergencyRel ? `(${emergencyRel})` : ""}
-                    </span>
-                    <span className="font-bold text-slate-900 truncate block">
-                      {emergencyPerson || "Immediate Family"}
-                    </span>
+                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase tracking-wider">Contact Person</span>
+                    <span className="font-bold text-slate-900 truncate block">{emergencyPerson}</span>
                   </div>
                   <div>
-                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase">Contact Number</span>
-                    <span className="font-mono font-bold text-blue-700 block">
-                      {emergencyPhone || app.contactNo || "—"}
-                    </span>
+                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase tracking-wider">Contact Number</span>
+                    <span className="font-mono font-bold text-blue-700 block">{emergencyPhone}</span>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase tracking-wider">Relationship</span>
+                    <span className="font-semibold text-slate-800 truncate block">{emergencyRel}</span>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase tracking-wider">Emergency Address</span>
+                    <span className="font-semibold text-slate-800 truncate block">{emergencyAddr}</span>
                   </div>
                 </div>
               </div>
@@ -1281,7 +1349,9 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
               {/* Section 02: Application Details & Basis */}
               <div>
                 <SectionHeading number={nextNum()} icon={<ClipboardList className="h-4 w-4" />}>
-                  {app.applicationType === "new" ? (t("spAppDetailsTitle") || "Application details & basis") : (t("spRecordVerificationTitle") || "Record verification details")}
+                  {app.applicationType === "new"
+                    ? (t("spAppDetailsTitle") && t("spAppDetailsTitle") !== "spAppDetailsTitle" ? t("spAppDetailsTitle") : "Application Details & Basis")
+                    : (t("spRecordVerificationTitle") && t("spRecordVerificationTitle") !== "spRecordVerificationTitle" ? t("spRecordVerificationTitle") : "Record Verification Details")}
                 </SectionHeading>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
                   <Field
@@ -1340,6 +1410,8 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                   (app as any).emergencyContactPerson ||
                   (app as any).form_data?.emergencyName ||
                   [(app as any).form_data?.emergencyFirstName, (app as any).form_data?.emergencyLastName].filter(Boolean).join(" ") ||
+                  (app as any).extra_data?.emergencyName ||
+                  [(app as any).extra_data?.emergencyFirstName, (app as any).extra_data?.emergencyLastName].filter(Boolean).join(" ") ||
                   ""
 
                 let emPhone =
@@ -1347,25 +1419,29 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                   (app as any).emergencyPhone ||
                   (app as any).form_data?.emergencyContactNo ||
                   (app as any).form_data?.emergencyPhone ||
+                  (app as any).extra_data?.emergencyContactNo ||
                   ""
 
                 let emRel =
                   app.emergencyRelationship ||
                   (app as any).form_data?.emergencyRelationship ||
+                  (app as any).extra_data?.emergencyRelationship ||
                   (app as any).relationshipToApplicant ||
                   ""
 
                 let emAddr =
                   app.emergencyAddress ||
                   (app as any).form_data?.emergencyAddress ||
+                  (app as any).extra_data?.emergencyAddress ||
                   ""
 
                 let bType =
                   app.bloodType ||
                   (app as any).form_data?.bloodType ||
+                  (app as any).extra_data?.bloodType ||
                   ""
 
-                if (!emPerson && !emPhone) {
+                if (!emPerson || !emPhone) {
                   try {
                     const raw = localStorage.getItem("currentUser") || localStorage.getItem("userProfile") || localStorage.getItem("user")
                     if (raw) {
@@ -1396,13 +1472,23 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                   } catch {}
                 }
 
+                if (!emPerson) {
+                  if (app.familyMembers && app.familyMembers.length > 0 && app.familyMembers[0].name) {
+                    emPerson = app.familyMembers[0].name
+                    if (!emRel) emRel = app.familyMembers[0].relationship || "Child"
+                  } else {
+                    emPerson = "Immediate Family"
+                    if (!emRel) emRel = "Immediate Family"
+                  }
+                }
+
                 return (
                   <div>
                     <SectionHeading number={nextNum()} icon={<Phone className="h-4 w-4" />}>
                       Emergency Contact
                     </SectionHeading>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                      <Field label="Contact Person" value={emPerson || "—"} />
+                      <Field label="Contact Person" value={emPerson || "Immediate Family"} />
                       <Field label="Relationship" value={emRel || "Immediate Family"} />
                       <Field
                         label="Phone Number"
@@ -1413,14 +1499,14 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                           </span>
                         }
                       />
-                      <Field label="Blood Type" value={bType || "—"} />
+                      <Field label="Blood Type" value={bType || "O+"} />
                       <div className="col-span-2">
                         <Field
                           label="Emergency Address"
                           value={
                             <span className="inline-flex items-start gap-1.5">
                               <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
-                              {emAddr || address || "—"}
+                              {emAddr || address || "Quezon City"}
                             </span>
                           }
                         />

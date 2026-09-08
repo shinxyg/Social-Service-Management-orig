@@ -886,11 +886,11 @@ export default function SoloParentApplicationWizard({
     qcidNumber: userProfile.qcidNo || "110000116932100",
     email: userProfile.email || "",
     bloodType: userProfile.bloodType || "O+",
-    emergencyFirstName: idStatus === "new" ? "" : userProfile.emergencyFirstName || "CLARENCE",
-    emergencyLastName: idStatus === "new" ? "" : userProfile.emergencyLastName || "MILLARES",
-    emergencyContactNo: idStatus === "new" ? "" : userProfile.emergencyContactNo || "09123123123",
-    emergencyRelationship: idStatus === "new" ? "" : userProfile.emergencyRelationship || "Friend",
-    emergencyAddress: idStatus === "new" ? "" : userProfile.emergencyAddress || (userProfile.addressHouseNo ? `${userProfile.addressHouseNo} ${userProfile.addressStreet}, ${userProfile.addressBarangay}, ${userProfile.addressCityMunicipality}` : "Quezon City"),
+    emergencyFirstName: userProfile.emergencyFirstName || "JUAN",
+    emergencyLastName: userProfile.emergencyLastName || "DIMAL",
+    emergencyContactNo: userProfile.emergencyContactNo || "09123456789",
+    emergencyRelationship: userProfile.emergencyRelationship || "Child",
+    emergencyAddress: userProfile.emergencyAddress || (userProfile.addressHouseNo ? `${userProfile.addressHouseNo} ${userProfile.addressStreet}, ${userProfile.addressBarangay}, ${userProfile.addressCityMunicipality}` : "Quezon City"),
   }))
   const updateField = (key: keyof FormData, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }))

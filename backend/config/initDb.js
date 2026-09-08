@@ -13,7 +13,7 @@ async function initDb() {
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
     await db.query(schemaSql);
 
-    // Migration patches for solo_parent_applications (New, Renewal, Lost ID)
+    // Migration patches for solo_parent_applications (New, Renewal, Lost ID & Emergency Information)
     await db.query(`
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS solo_parent_id_number VARCHAR(100);
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS assigned_id_number VARCHAR(100);
@@ -21,26 +21,23 @@ async function initDb() {
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS civil_status VARCHAR(100);
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS qcid_number VARCHAR(100);
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS email VARCHAR(150);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_first_name VARCHAR(100);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_last_name VARCHAR(100);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_name VARCHAR(200);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_contact_no VARCHAR(50);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_relationship VARCHAR(100);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_address TEXT;
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS blood_type VARCHAR(20);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS form_data JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS family_members JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
       CREATE INDEX IF NOT EXISTS idx_solo_parent_type ON solo_parent_applications(application_type);
       CREATE INDEX IF NOT EXISTS idx_solo_parent_id_num ON solo_parent_applications(solo_parent_id_number);
       CREATE INDEX IF NOT EXISTS idx_solo_parent_assigned_id ON solo_parent_applications(assigned_id_number);
+    `);
 
-      -- Clean up legacy columns not used by New, Renewal, and Lost ID
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS place_of_birth;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS educational_attainment;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS occupation;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS company_agency;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS monthly_income;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS total_family_income;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS family_members;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS emergency_name;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS emergency_address;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS emergency_contact_no;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS circumstance_details;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS needs_problems;
-      ALTER TABLE solo_parent_applications DROP COLUMN IF EXISTS family_resources;
-
-      -- Migration patches for livelihood_applications (Workflow, Revision, & Approval Columns)
+    // Migration patches for livelihood_applications (Workflow, Revision, & Approval Columns)
+    await db.query(`
       ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
       ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS revision_notes TEXT;
       ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS admin_notes TEXT;
