@@ -859,6 +859,58 @@ exports.resetPassword = async (req, res) => {
  */
 exports.getAllUsers = async (req, res) => {
   try {
+    // 1. Auto-sync existing module applicants and seed default admin to ensure DB completeness
+    try {
+      await db.query(`
+        -- Ensure default administrator account exists
+        INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
+        VALUES ('admin@quezoncity.gov.ph', 'admin123', 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
+        ON CONFLICT (email) DO UPDATE SET role = 'admin', status = 'active';
+
+        -- Sync AICS applicants into users
+        INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
+        SELECT DISTINCT ON (LOWER(email))
+          LOWER(email), 'default123', first_name, last_name, middle_name, suffix, phone, qc_id, 'user', 'active', true, created_at
+        FROM aics_applications
+        WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
+        ON CONFLICT (email) DO NOTHING;
+
+        -- Sync PWD / Senior applicants into users
+        INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
+        SELECT DISTINCT ON (LOWER(email))
+          LOWER(email), 'default123', first_name, last_name, middle_name, suffix, contact_no, COALESCE(assigned_id_number, reference_number), 'user', 'active', true, submitted_at
+        FROM pwd_senior_applications
+        WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
+        ON CONFLICT (email) DO NOTHING;
+
+        -- Sync Solo Parent applicants into users
+        INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
+        SELECT DISTINCT ON (LOWER(email))
+          LOWER(email), 'default123', first_name, last_name, middle_name, suffix, contact_no, COALESCE(solo_parent_id_number, qcid_number), 'user', 'active', true, created_at
+        FROM solo_parent_applications
+        WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
+        ON CONFLICT (email) DO NOTHING;
+
+        -- Sync Child Welfare guardians into users
+        INSERT INTO users (email, password, first_name, last_name, middle_name, mobile_number, role, status, is_email_verified, created_at)
+        SELECT DISTINCT ON (LOWER(guardian_email))
+          LOWER(guardian_email), 'default123', guardian_first_name, guardian_last_name, guardian_middle_name, guardian_contact_no, 'user', 'active', true, created_at
+        FROM child_welfare_applications
+        WHERE guardian_email IS NOT NULL AND guardian_email != '' AND LOWER(guardian_email) NOT IN (SELECT LOWER(email) FROM users)
+        ON CONFLICT (email) DO NOTHING;
+
+        -- Sync Livelihood applicants into users
+        INSERT INTO users (email, password, first_name, last_name, mobile_number, qcid_number, role, status, is_email_verified, created_at)
+        SELECT DISTINCT ON (LOWER(email))
+          LOWER(email), 'default123', first_name, last_name, contact_no, qcid_no, 'user', 'active', true, created_at
+        FROM livelihood_applications
+        WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
+        ON CONFLICT (email) DO NOTHING;
+      `);
+    } catch (syncErr) {
+      console.warn('[DB Note] Auto-syncing applicants to users table:', syncErr.message);
+    }
+
     let dbUsers = [];
     try {
       const result = await db.query(`
@@ -953,15 +1005,21 @@ exports.getAllUsers = async (req, res) => {
         const fullName = [u.first_name, u.middle_name, u.last_name, u.suffix]
           .filter(Boolean)
           .join(' ')
-          .trim() || 'Registered Resident';
+          .trim() || (u.role === 'admin' ? 'System Administrator' : 'Registered Resident');
 
-        const isAdmin = ['admin', 'administrator', 'super_admin'].includes(String(u.role || '').toLowerCase());
+        const isAdmin = ['admin', 'administrator', 'super_admin'].includes(String(u.role || '').toLowerCase()) || u.email === 'admin' || u.email === 'admin@quezoncity.gov.ph';
         const displayRole = isAdmin ? 'ADMINISTRATOR' : 'USER / BENEFICIARY';
         const isInactive = String(u.status || 'active').toLowerCase() === 'inactive' || String(u.status || 'active').toLowerCase() === 'deactivated';
         const displayStatus = isInactive ? 'INACTIVE' : 'ACTIVE';
 
         const rawId = String(u.id);
-        const formattedId = rawId.startsWith('USR-') ? rawId : `USR-${rawId.padStart(4, '0')}`;
+        const formattedId = rawId.startsWith('USR-') || rawId.startsWith('ADMIN-')
+          ? rawId
+          : isAdmin
+            ? `ADMIN-${rawId.padStart(4, '0')}`
+            : `USR-${rawId.padStart(4, '0')}`;
+
+        const cleanDisplayEmail = u.email === 'admin' ? 'admin@quezoncity.gov.ph' : u.email;
 
         return {
           id: formattedId,
@@ -972,7 +1030,7 @@ exports.getAllUsers = async (req, res) => {
           lastName: u.last_name || '',
           middleName: u.middle_name || '',
           suffix: u.suffix || '',
-          email: u.email,
+          email: cleanDisplayEmail,
           contactNumber: u.mobile_number || '—',
           role: displayRole,
           status: displayStatus,
@@ -986,8 +1044,15 @@ exports.getAllUsers = async (req, res) => {
       })
     );
 
-    // Filter out internal system-only pseudonyms if duplicate
-    const cleanUsers = users.filter(u => u.email !== 'admin' && u.email !== 'staff' && u.email !== 'superadmin');
+    // Filter duplicate admin display if both 'admin' and 'admin@quezoncity.gov.ph' were in DB
+    const uniqueMap = new Map();
+    for (const userItem of users) {
+      const key = (userItem.email || '').toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, userItem);
+      }
+    }
+    const cleanUsers = Array.from(uniqueMap.values());
 
     const stats = {
       total: cleanUsers.length,
