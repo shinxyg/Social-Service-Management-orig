@@ -512,53 +512,74 @@ export default function MyApplications() {
 
       // 3. Solo Parent Applications
       try {
-        const spRes = await fetch(`${API_BASE}/api/solo-parent/user/${userId}`)
-        if (spRes.ok) {
-          const spData = await spRes.json()
-          if (spData.applications && Array.isArray(spData.applications)) {
-            const mappedSp: ApplicationRecord[] = spData.applications
-              .filter((app: any) => {
-                if (app.is_archived === true) return false
-                const appQc = String(app.qcid_number || app.qc_id || app.reference_number || "").trim().toLowerCase()
-                const appEmail = String(app.email || "").trim().toLowerCase()
-                const uQc = qcId.toLowerCase()
-                return (
-                  (uQc !== "" && appQc === uQc) ||
-                  (userEmail !== "" && appEmail === userEmail) ||
-                  (app.user_id && String(app.user_id) === String(userId))
-                )
-              })
-              .map((app: any) => ({
-                applicationNo: app.assigned_id_number || app.solo_parent_id_number || app.qcid_number || app.qc_id || app.reference_number || qcId,
-                assistance: `Solo Parent ID (${app.application_type || "New"})`,
-                assistanceCategory: "Solo Parent",
-                dateApplied: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }),
-                status:
-                  app.application_status === "approved"
-                    ? "Approved"
-                    : app.application_status === "released"
-                    ? "Released"
-                    : app.application_status === "for_release"
-                    ? "For Release"
-                    : "Under Review",
-                applicantName:
-                  [app.first_name, app.last_name].filter(Boolean).join(" ") ||
-                  `${userProfile.firstName} ${userProfile.lastName}`,
-                dateOfBirth: userProfile.birthDateDisplay,
-                address:
-                  app.address ||
-                  `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
-                contactNumber: app.contact_number || userProfile.mobileNumber,
-                email: app.email || userProfile.email,
-                remarks:
-                  app.admin_notes || (app.application_status === "approved" ? (app.assigned_id_number || app.solo_parent_id_number ? `Approved. Official ID: ${app.assigned_id_number || app.solo_parent_id_number}` : "Application approved") : "Under review"),
-              }))
-            allFoundApps.push(...mappedSp)
+        let spApps: any[] = []
+        try {
+          const spRes = await fetch(`${API_BASE}/api/solo-parent/user/${userId || "0"}?qcid=${encodeURIComponent(qcId)}&email=${encodeURIComponent(userEmail)}`)
+          if (spRes.ok) {
+            const spData = await spRes.json()
+            spApps = spData.applications || spData || []
           }
+        } catch {}
+
+        if (!spApps || spApps.length === 0) {
+          try {
+            const local = localStorage.getItem("solo_parent_applications")
+            if (local) spApps = JSON.parse(local)
+          } catch {}
+        }
+
+        if (Array.isArray(spApps) && spApps.length > 0) {
+          const mappedSp: ApplicationRecord[] = spApps
+            .filter((app: any) => {
+              if (app.is_archived === true) return false
+              const appQc = String(app.qcid_number || app.qc_id || app.reference_number || "").trim().toLowerCase()
+              const appEmail = String(app.email || "").trim().toLowerCase()
+              const uQc = qcId.toLowerCase()
+              const appName = `${app.first_name || app.firstName || ""} ${app.last_name || app.lastName || ""}`.trim().toLowerCase()
+              const uName = `${userProfile.firstName} ${userProfile.lastName}`.trim().toLowerCase()
+              return (
+                (uQc !== "" && appQc.includes(uQc)) ||
+                (uQc !== "" && uQc.includes(appQc)) ||
+                (userEmail !== "" && appEmail === userEmail) ||
+                (uName !== "" && appName === uName) ||
+                (app.user_id && String(app.user_id) === String(userId))
+              )
+            })
+            .map((app: any) => ({
+              applicationNo: app.reference_number || app.referenceNumber || app.assigned_id_number || app.solo_parent_id_number || qcId,
+              assistance: `Solo Parent ID (${(app.application_type || app.applicationType || "New").charAt(0).toUpperCase() + (app.application_type || app.applicationType || "New").slice(1)})`,
+              assistanceCategory: "Solo Parent",
+              dateApplied: new Date(app.created_at || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+              status:
+                app.application_status === "approved" || app.status === "approved"
+                  ? "Approved"
+                  : app.application_status === "released" || app.status === "released"
+                  ? "Released"
+                  : app.application_status === "for_release" || app.status === "for_release"
+                  ? "For Release"
+                  : "Under Review",
+              applicantName:
+                [app.first_name || app.firstName, app.last_name || app.lastName].filter(Boolean).join(" ") ||
+                `${userProfile.firstName} ${userProfile.lastName}`,
+              dateOfBirth: userProfile.birthDateDisplay,
+              address:
+                app.address ||
+                `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
+              contactNumber: app.contact_no || app.contact_number || app.contactNo || userProfile.mobileNumber,
+              email: app.email || userProfile.email,
+              remarks:
+                app.admin_notes ||
+                (app.application_status === "approved" || app.status === "approved"
+                  ? app.assigned_id_number || app.solo_parent_id_number
+                    ? `Approved. Official ID: ${app.assigned_id_number || app.solo_parent_id_number}`
+                    : "Application approved"
+                  : "Under review"),
+            }))
+          allFoundApps.push(...mappedSp)
         }
       } catch (err) {
         console.warn("Could not fetch Solo Parent applications:", err)
