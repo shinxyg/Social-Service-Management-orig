@@ -1357,11 +1357,14 @@ export default function SoloParentApplicationWizard({
   const requiredDocs = getRequiredDocuments(idStatus, selectedCategoryId)
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
 
-  // Reload / Navigation warning protection — active from Step 2 onwards when modal is closed
+  // Reload / Navigation warning protection — active from Step 2 onwards when modal is closed and form is actively being filled
   const isFormDirty =
     !isModalOpen &&
+    !isBlocked &&
+    !checkingEligibility &&
     submissionStage === "form" &&
-    (step >= 2 && step <= 4)
+    step >= 2 &&
+    step <= 4
 
   useEffect(() => {
     if (isFormDirty) {
@@ -1373,6 +1376,12 @@ export default function SoloParentApplicationWizard({
       ;(window as any).__isFormDirty = false
     }
   }, [isFormDirty])
+
+  useEffect(() => {
+    if (isBlocked || submissionStage !== "form" || checkingEligibility) {
+      ;(window as any).__isFormDirty = false
+    }
+  }, [isBlocked, submissionStage, checkingEligibility])
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -1416,6 +1425,7 @@ export default function SoloParentApplicationWizard({
   }
 
   const handleFinalSubmit = async () => {
+    ;(window as any).__isFormDirty = false
     setSubmissionStage("matching")
     const fallbackRef = reference || generateReference(idStatus, userProfile?.qcidNo || formData?.qcidNumber)
     setReference(fallbackRef)
@@ -1688,6 +1698,7 @@ export default function SoloParentApplicationWizard({
                 <button
                   type="button"
                   onClick={() => {
+                    ;(window as any).__isFormDirty = false
                     window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=renewal"
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
@@ -1697,6 +1708,7 @@ export default function SoloParentApplicationWizard({
                 <button
                   type="button"
                   onClick={() => {
+                    ;(window as any).__isFormDirty = false
                     window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=loss"
                   }}
                   className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
@@ -1706,6 +1718,7 @@ export default function SoloParentApplicationWizard({
                 <button
                   type="button"
                   onClick={() => {
+                    ;(window as any).__isFormDirty = false
                     window.location.href = "/portal/applications"
                   }}
                   className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
@@ -1717,6 +1730,7 @@ export default function SoloParentApplicationWizard({
               <button
                 type="button"
                 onClick={() => {
+                  ;(window as any).__isFormDirty = false
                   window.location.href = "/portal/applications"
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
