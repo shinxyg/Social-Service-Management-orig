@@ -439,22 +439,23 @@ exports.cancelApplication = async (req, res) => {
 exports.checkEligibility = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { applicationType, qcid, email } = req.query;
+    const { applicationType, qcid, email, firstName, lastName } = req.query;
 
     if (!applicationType) {
       return res.status(400).json({ success: false, message: 'applicationType is required' });
     }
 
-    const cleanUserId = userId && userId !== 'undefined' && userId !== 'null' && userId !== '0' && userId !== '1' ? String(userId).trim() : null;
-    const cleanQcid = qcid && String(qcid).trim() && !['110000116932100', '11000015952309', '110000572516915'].includes(String(qcid).trim()) ? String(qcid).trim() : null;
-    const cleanEmail = email && String(email).trim() && String(email).trim().toLowerCase() !== 'resident@gmail.com' ? String(email).trim().toLowerCase() : null;
+    const cleanUserId = userId && userId !== 'undefined' && userId !== 'null' && userId !== '0' ? String(userId).trim() : null;
+    const cleanQcid = qcid && String(qcid).trim() ? String(qcid).trim() : null;
+    const cleanEmail = email && String(email).trim() ? String(email).trim().toLowerCase() : null;
+    const cleanFirstName = firstName && String(firstName).trim() ? String(firstName).trim().toLowerCase() : null;
+    const cleanLastName = lastName && String(lastName).trim() ? String(lastName).trim().toLowerCase() : null;
 
-    // If no valid unique user identifier is provided (e.g. brand new unregistered/unauthenticated user), never block!
-    if (!cleanUserId && !cleanQcid && !cleanEmail) {
+    if (!cleanUserId && !cleanQcid && !cleanEmail && !(cleanFirstName && cleanLastName)) {
       return res.status(200).json({ success: true, blocked: false, reason: null });
     }
 
-    const params = [applicationType];
+    const params = [];
     const orClauses = [];
 
     if (cleanUserId) {
@@ -463,49 +464,73 @@ exports.checkEligibility = async (req, res) => {
     }
     if (cleanQcid) {
       params.push(cleanQcid);
-      orClauses.push(`qcid_number = $${params.length}`);
+      orClauses.push(`qcid_number = $${params.length} OR reference_number = $${params.length} OR solo_parent_id_number ILIKE '%' || $${params.length} || '%' OR assigned_id_number ILIKE '%' || $${params.length} || '%'`);
     }
     if (cleanEmail) {
       params.push(cleanEmail);
       orClauses.push(`LOWER(email) = LOWER($${params.length})`);
     }
+    if (cleanFirstName && cleanLastName) {
+      params.push(cleanFirstName);
+      const fnIdx = params.length;
+      params.push(cleanLastName);
+      const lnIdx = params.length;
+      orClauses.push(`(LOWER(first_name) = $${fnIdx} AND LOWER(last_name) = $${lnIdx})`);
+    }
 
-    const query = `
+    // Check if user has ANY approved Solo Parent application
+    const approvedQuery = `
       SELECT * FROM solo_parent_applications
       WHERE (${orClauses.join(' OR ')})
+      AND application_status IN ('approved', 'completed', 'for_release', 'active')
+      ORDER BY created_at DESC LIMIT 1
+    `;
+    const approvedResult = await db.query(approvedQuery, params);
+
+    if (approvedResult.rows.length > 0) {
+      const app = approvedResult.rows[0];
+      // If applying for 'new', block and show approved card
+      if (applicationType === 'new') {
+        return res.status(200).json({
+          success: true,
+          blocked: true,
+          reason: 'approved',
+          applicationId: app.id,
+          referenceNumber: app.reference_number,
+          assignedIdNumber: app.assigned_id_number || app.solo_parent_id_number,
+          application: app,
+        });
+      }
+    }
+
+    // Check if user has a pending application for this specific type
+    params.push(applicationType);
+    const typeParamIdx = params.length;
+
+    const pendingQuery = `
+      SELECT * FROM solo_parent_applications
+      WHERE (${orClauses.join(' OR ')})
+      AND application_status = 'pending'
       AND (
-        application_type = $1
-        OR ($1 = 'new' AND (application_type = 'new' OR application_type IS NULL))
-        OR ($1 = 'renewal' AND application_type = 'renewal')
-        OR ($1 = 'loss' AND (application_type = 'loss' OR application_type = 'replacement'))
+        application_type = $${typeParamIdx}
+        OR ($${typeParamIdx} = 'new' AND (application_type = 'new' OR application_type IS NULL))
+        OR ($${typeParamIdx} = 'renewal' AND application_type = 'renewal')
+        OR ($${typeParamIdx} = 'loss' AND (application_type = 'loss' OR application_type = 'replacement'))
       )
       ORDER BY created_at DESC LIMIT 1
     `;
+    const pendingResult = await db.query(pendingQuery, params);
 
-    const result = await db.query(query, params);
-
-    if (result.rows.length === 0) {
-      return res.status(200).json({ success: true, blocked: false, reason: null });
-    }
-
-    const lastApp = result.rows[0];
-
-    if (lastApp.application_status === 'pending') {
+    if (pendingResult.rows.length > 0) {
+      const app = pendingResult.rows[0];
       return res.status(200).json({
         success: true,
         blocked: true,
         reason: 'pending',
-        applicationId: lastApp.id,
-        referenceNumber: lastApp.reference_number,
-      });
-    }
-
-    if (lastApp.application_status === 'approved') {
-      return res.status(200).json({
-        success: true,
-        blocked: true,
-        reason: 'approved',
-        referenceNumber: lastApp.reference_number,
+        applicationId: app.id,
+        referenceNumber: app.reference_number,
+        assignedIdNumber: app.assigned_id_number || app.solo_parent_id_number,
+        application: app,
       });
     }
 

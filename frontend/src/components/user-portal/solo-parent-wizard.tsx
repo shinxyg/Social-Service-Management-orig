@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react"
 import {
   Check,
+  CheckCircle2,
   ChevronRight,
   ChevronUp,
   AlertCircle,
@@ -975,6 +976,7 @@ export default function SoloParentApplicationWizard({
   const [isBlocked, setIsBlocked] = useState(false)
   const [blockReason, setBlockReason] = useState<"draft" | "pending" | "approved" | null>(null)
   const [blockedReference, setBlockedReference] = useState("")
+  const [blockedApp, setBlockedApp] = useState<any>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -987,18 +989,91 @@ export default function SoloParentApplicationWizard({
         const uid = userId || prof.id || ""
         const qcid = (prof.qcidNo || prof.qcidNumber || "").trim()
         const email = (prof.email || "").trim()
-        const res = await fetch(
-          `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
-        )
-        if (res.ok && isMounted) {
-          const data = await res.json()
-          setIsBlocked(Boolean(data.blocked))
-          setBlockReason(data.reason || null)
-          setBlockedReference(data.referenceNumber || "")
-          onBlockedStatusChange?.(Boolean(data.blocked))
+        const fn = (prof.firstName || "").trim()
+        const ln = (prof.lastName || "").trim()
+
+        let isBlockedFound = false
+        let reasonFound: "draft" | "pending" | "approved" | null = null
+        let refFound = ""
+        let appFound: any = null
+
+        // 1. Backend Eligibility API
+        try {
+          const res = await fetch(
+            `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}`
+          )
+          if (res.ok) {
+            const data = await res.json()
+            if (data.blocked) {
+              isBlockedFound = true
+              reasonFound = data.reason || null
+              refFound = data.referenceNumber || ""
+              appFound = data.application || null
+            }
+          }
+        } catch {}
+
+        // 2. Local fallback verification
+        if (!isBlockedFound) {
+          const allApps = await fetchAllSoloParentApps()
+          const userQcidClean = qcid.replace(/\D/g, "")
+          const userEmailClean = email.toLowerCase()
+          const userFnClean = fn.toLowerCase()
+          const userLnClean = ln.toLowerCase()
+
+          const matchedUserApps = allApps.filter((a) => {
+            if (!a) return false
+            const aQcid = String(a.qcid_number || a.qcidNumber || a.qcid || "").replace(/\D/g, "")
+            const aRef = String(a.reference_number || a.referenceNumber || "").replace(/\D/g, "")
+            const aEmail = String(a.email || "").toLowerCase().trim()
+            const aFn = String(a.first_name || a.firstName || "").toLowerCase().trim()
+            const aLn = String(a.last_name || a.lastName || "").toLowerCase().trim()
+
+            return (
+              (userQcidClean && aQcid && userQcidClean === aQcid) ||
+              (userQcidClean && aRef && (userQcidClean === aRef || (userQcidClean.length >= 8 && userQcidClean.includes(aRef)) || (aRef.length >= 8 && aRef.includes(userQcidClean)))) ||
+              (userEmailClean && aEmail && userEmailClean === aEmail) ||
+              (userLnClean && aLn && userFnClean && aFn && userLnClean === aLn && userFnClean === aFn)
+            )
+          })
+
+          const approvedApp = matchedUserApps.find((a) => {
+            const st = String(a.application_status || a.status || "").toLowerCase()
+            return st === "approved" || st === "completed" || st === "for_release" || st === "active"
+          })
+
+          const pendingApp = matchedUserApps.find((a) => {
+            const st = String(a.application_status || a.status || "").toLowerCase()
+            const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
+            const isMatchPendingType =
+              typeToCheck === "renewal" ? aType === "renewal" :
+              typeToCheck === "loss" ? (aType === "loss" || aType === "replacement") :
+              (aType === "new" || !aType)
+            return (st === "pending" || st === "draft" || st === "under_review") && isMatchPendingType
+          })
+
+          if (typeToCheck === "new" && approvedApp) {
+            isBlockedFound = true
+            reasonFound = "approved"
+            refFound = approvedApp.reference_number || approvedApp.referenceNumber || ""
+            appFound = approvedApp
+          } else if (pendingApp) {
+            isBlockedFound = true
+            reasonFound = "pending"
+            refFound = pendingApp.reference_number || pendingApp.referenceNumber || ""
+            appFound = pendingApp
+          }
+        }
+
+        if (isMounted) {
+          setIsBlocked(isBlockedFound)
+          setBlockReason(reasonFound)
+          setBlockedReference(refFound)
+          setBlockedApp(appFound)
+          onBlockedStatusChange?.(isBlockedFound)
         }
       } catch (err) {
-        console.warn("Eligibility check server unreachable, skipping:", err)
+        console.warn("Eligibility check error:", err)
       } finally {
         if (isMounted && isInitial) {
           setCheckingEligibility(false)
@@ -1007,7 +1082,7 @@ export default function SoloParentApplicationWizard({
     }
 
     checkEligibility(true)
-    const interval = setInterval(() => checkEligibility(false), 1500)
+    const interval = setInterval(() => checkEligibility(false), 2000)
     const handleUpdate = () => checkEligibility(false)
 
     const unsubscribe = subscribeToRealtimeChanges(() => {
@@ -1290,91 +1365,140 @@ export default function SoloParentApplicationWizard({
     )
   }
 
-  if (isBlocked && (blockReason === "pending" || blockReason === "draft")) {
+  if (isBlocked && (blockReason === "pending" || blockReason === "draft" || blockReason === "approved")) {
+    const isAppApproved = blockReason === "approved" || blockedApp?.application_status === "approved" || blockedApp?.status === "approved"
+    const displayRef = blockedReference || blockedApp?.reference_number || blockedApp?.referenceNumber || "REF-SP-2026-001"
+    const assignedIdNo = blockedApp?.assigned_id_number || blockedApp?.assignedIdNumber || blockedApp?.solo_parent_id_number || blockedApp?.soloParentIdNumber
+    const displayDate = blockedApp?.created_at || blockedApp?.submittedAt
+      ? new Date(blockedApp.created_at || blockedApp.submittedAt).toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : new Date().toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+
     return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150 py-8">
         {onBack && (
           <button
             onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer mb-2"
           >
             ← Back
           </button>
         )}
-        <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-7 w-7 text-amber-500" />
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div
+            className={`h-16 w-16 rounded-2xl flex items-center justify-center ${
+              isAppApproved
+                ? "bg-emerald-500/10 text-emerald-600"
+                : "bg-amber-500/10 text-amber-500"
+            }`}
+          >
+            {isAppApproved ? (
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            ) : (
+              <Info className="h-8 w-8 text-amber-500" />
+            )}
           </div>
-          <h2 className="text-lg font-bold text-gray-900">
-            {language === "en"
-              ? "You Have an Existing Pending Application"
-              : language === "bis"
-              ? "Naa kay Kasamtangang Aplikasyon"
-              : "You Have an Existing Pending Application"}
-          </h2>
-          <p className="text-sm text-gray-500 max-w-sm">
-            {language === "en"
-              ? "You already have a pending application for Solo Parent ID. Please wait for the evaluation before submitting a new application."
-              : language === "bis"
-              ? "Aduna ka pay nag-ung-ong nga aplikasyon para sa Solo Parent ID. Palihug hulata ang pagsusi sa dili pa magsumite og bag-ong aplikasyon."
-              : "You already have a pending application for Solo Parent ID. Please wait for the evaluation before submitting a new application."}
-          </p>
-        </div>
-      </div>
-    )
-  }
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              {isAppApproved
+                ? "Application Approved"
+                : "You Have an Existing Pending Application"}
+            </h2>
+            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+              {isAppApproved
+                ? "Your application for Solo Parent ID has been officially approved! You already have an active Solo Parent ID. If you need to renew or replace your ID, please choose an option below."
+                : "Your application for Solo Parent ID has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."}
+            </p>
+          </div>
 
-  if (isBlocked && blockReason === "approved") {
-    return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
-        {onBack && (
-          <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground">
-            {t("spBackToServicesButton")}
-          </button>
-        )}
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-soft flex flex-col items-center text-center gap-3">
-          <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-            <Check className="h-7 w-7 text-emerald-500" />
-          </div>
-          <h2 className="text-lg font-bold text-foreground">Application Approved</h2>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Your application for Solo Parent ID has been officially approved! You already have an active Solo Parent ID. If you need to renew or replace your ID, please choose an option below.
-          </p>
-          {blockedReference && (
-            <div className="mt-2 bg-gray-100 rounded-xl px-4 py-3 w-full text-left">
-              <p className="text-xs text-muted-foreground">Application Reference Number</p>
-              <p className="text-sm font-semibold text-foreground">{blockedReference}</p>
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">
+                Application Reference No.:
+              </span>
+              <span className="font-mono font-bold text-blue-600">
+                {displayRef}
+              </span>
             </div>
-          )}
+            {assignedIdNo && (
+              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+                <span className="text-gray-500 font-medium">
+                  Official ID Number:
+                </span>
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  {assignedIdNo}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span className="text-gray-500 font-medium">Status:</span>
+              {isAppApproved ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Approved
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Under Review (Pending)
+                </span>
+              )}
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 font-medium">Date Filed:</span>
+              <span className="font-semibold text-gray-700">{displayDate}</span>
+            </div>
+          </div>
 
           <div className="w-full pt-2 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=renewal"
-              }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
-            >
-              Apply for Renewal (Renewal Solo Parent ID)
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=loss"
-              }}
-              className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
-            >
-              Apply for Replacement / Lost ID
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = "/portal/applications"
-              }}
-              className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
-            >
-              View in My Applications
-            </button>
+            {isAppApproved ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=renewal"
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+                >
+                  Apply for Renewal (Renewal Solo Parent ID)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/portal/apply-solo-parent?category=solo-parent&type=loss"
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Apply for Replacement / Lost ID
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/portal/applications"
+                  }}
+                  className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
+                >
+                  View in My Applications
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = "/portal/applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              >
+                VIEW IN MY APPLICATIONS
+              </button>
+            )}
           </div>
         </div>
       </div>

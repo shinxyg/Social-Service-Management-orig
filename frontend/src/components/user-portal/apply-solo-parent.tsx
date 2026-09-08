@@ -261,8 +261,10 @@ export default function ApplySoloParent() {
         const uid = prof.id || ""
         const qcid = (prof.qcidNo || prof.qcidNumber || "").trim()
         const email = (prof.email || "").trim()
+        const fn = (prof.firstName || "").trim()
+        const ln = (prof.lastName || "").trim()
         const res = await fetch(
-          `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
+          `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}`
         )
         if (res.ok) {
           const data = await res.json()
