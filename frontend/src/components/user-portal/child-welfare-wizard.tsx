@@ -538,7 +538,6 @@ export default function ChildWelfareApplicationWizard({
     const userCity = prof?.addressCityMunicipality || (prof as any)?.city || "Quezon City"
     const cNo = prof?.contactNo || (prof as any)?.mobileNumber || "09000000000"
     const userEmail = prof?.email || "dimalmae@gmail.com"
-    const pFullName = `${fName} ${mName ? mName + " " : ""}${lName}`.trim()
 
     return {
       // I. Applicant QCID Profile Information
@@ -603,7 +602,6 @@ export default function ChildWelfareApplicationWizard({
     const userCity = userProfile?.addressCityMunicipality || (userProfile as any)?.city || "Quezon City"
     const cNo = userProfile?.contactNo || (userProfile as any)?.mobileNumber || "09000000000"
     const userEmail = userProfile?.email || "dimalmae@gmail.com"
-    const pFullName = `${fName} ${mName ? mName + " " : ""}${lName}`.trim()
 
     setFormData((prev) => ({
       ...prev,
