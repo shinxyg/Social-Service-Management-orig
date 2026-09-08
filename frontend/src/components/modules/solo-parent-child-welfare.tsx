@@ -533,31 +533,19 @@ function initials(app: WelfareSubmission) {
   const last = (isSoloParent(app) ? app.lastName : app.guardianLastName) || ""
   return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() || "SP"
 }
-function getAvatarUrl(app: WelfareSubmission): string | null {
-  const idPhoto = app.documents.find((doc) =>
-    /id picture|2x2/i.test(doc.name)
-  )
-  return idPhoto ? idPhoto.fileUrl : null
-}
-function AvatarCircle({ app, sizeClass }: { app: WelfareSubmission; sizeClass: string }) {
-  const [imgError, setImgError] = useState(false)
-  const qcid = isSoloParent(app) ? app.qcidNumber : undefined
-  const savedPhoto = getSavedProfilePhoto(qcid)
-  const docPhoto = getAvatarUrl(app)
-  const photoSrc = !imgError ? (savedPhoto || docPhoto) : null
-
-  if (photoSrc) {
-    return (
-      <img
-        src={photoSrc}
-        alt={displayName(app)}
-        onError={() => setImgError(true)}
-        className={`${sizeClass} shrink-0 rounded-xl object-cover`}
-      />
-    )
-  }
+function AvatarCircle({
+  app,
+  sizeClass = "h-11 w-11",
+}: {
+  app: WelfareSubmission
+  sizeClass?: string
+}) {
   return (
-    <div className={`${sizeClass} shrink-0 gw-avatar ${isSoloParent(app) ? "gw-avatar--solo" : "gw-avatar--child"} text-sm`}>
+    <div
+      className={`${sizeClass} shrink-0 gw-avatar ${
+        isSoloParent(app) ? "gw-avatar--solo" : "gw-avatar--child"
+      } text-sm font-bold flex items-center justify-center`}
+    >
       {initials(app)}
     </div>
   )
