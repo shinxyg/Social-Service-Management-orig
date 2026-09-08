@@ -1182,24 +1182,24 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.qcidNumber}
                       onChange={(e) => updateField("qcidNumber", e.target.value)}
                       placeholder="Hal. 110000184613308"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.firstName.trim() ? "text-red-600" : "text-gray-700"}`}>
+                    <label className="text-xs font-semibold text-gray-700">
                       {language === "tl" ? "Pangalan (First name) *" : language === "bis" ? "Unang Ngalan (First name) *" : "First Name *"}
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.firstName}
                       onChange={(e) => updateField("firstName", e.target.value.toUpperCase())}
                       placeholder="Hal. JUAN"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900 ${
-                        attemptedNext && !formData.firstName.trim() ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -1211,24 +1211,24 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.middleName}
                       onChange={(e) => updateField("middleName", e.target.value.toUpperCase())}
                       placeholder="Hal. SANTOS"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.lastName.trim() ? "text-red-600" : "text-gray-700"}`}>
+                    <label className="text-xs font-semibold text-gray-700">
                       {language === "tl" ? "Apelyido (Last name) *" : language === "bis" ? "Apelyido (Last name) *" : "Last Name *"}
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.lastName}
                       onChange={(e) => updateField("lastName", e.target.value.toUpperCase())}
                       placeholder="Hal. DELA CRUZ"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900 ${
-                        attemptedNext && !formData.lastName.trim() ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -1237,10 +1237,11 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.suffix}
                       onChange={(e) => updateField("suffix", e.target.value)}
                       placeholder="Jr., Sr., III"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -1252,10 +1253,11 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.nationality}
                       onChange={(e) => updateField("nationality", e.target.value.toUpperCase())}
                       placeholder="FILIPINO"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -1264,6 +1266,7 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.dobMonth && formData.dobDay && formData.dobYear ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}` : (formData.dobMonth || formData.dobDay || formData.dobYear ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}` : "")}
                       onChange={(e) => {
                         const val = e.target.value
@@ -1277,7 +1280,7 @@ export default function ChildWelfareApplicationWizard({
                         }
                       }}
                       placeholder="MM/DD/YYYY"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -1286,12 +1289,13 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="number"
+                      disabled
                       min="0"
                       max="120"
                       value={formData.age}
                       onChange={(e) => updateField("age", e.target.value)}
                       placeholder="Hal. 5"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -1302,9 +1306,10 @@ export default function ChildWelfareApplicationWizard({
                       {language === "tl" ? "Kasarian *" : language === "bis" ? "Kasarian *" : "Gender / Sex *"}
                     </label>
                     <select
+                      disabled
                       value={formData.sex}
                       onChange={(e) => updateField("sex", e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     >
                       <option value="">{language === "tl" ? "Piliin ang Kasarian" : language === "bis" ? "Pilia ang Kasarian" : "Select Gender"}</option>
                       <option value="Male">{language === "tl" ? "Lalaki (Male)" : language === "bis" ? "Lalaki (Male)" : "Male"}</option>
@@ -1316,9 +1321,10 @@ export default function ChildWelfareApplicationWizard({
                       {language === "tl" ? "Katayuang Sibil" : language === "bis" ? "Kahimtang Sibil" : "Civil Status"}
                     </label>
                     <select
+                      disabled
                       value={formData.civilStatus}
                       onChange={(e) => updateField("civilStatus", e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     >
                       <option value="Single">{language === "tl" ? "Walang Asawa (Single)" : language === "bis" ? "Walay Asawa (Single)" : "Single"}</option>
                       <option value="Married">{language === "tl" ? "May Asawa (Married)" : language === "bis" ? "Minyo (Married)" : "Married"}</option>
@@ -1332,11 +1338,12 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       maxLength={11}
                       value={formData.contactNo}
                       onChange={(e) => updateField("contactNo", e.target.value.replace(/\D/g, ""))}
                       placeholder="09XXXXXXXXX"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -1348,10 +1355,11 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.addressHouseNo}
                       onChange={(e) => updateField("addressHouseNo", e.target.value)}
                       placeholder="Hal. 123"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -1360,10 +1368,11 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.addressStreet}
                       onChange={(e) => updateField("addressStreet", e.target.value)}
                       placeholder="Hal. Sampaguita St."
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -1372,10 +1381,11 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.barangay}
                       onChange={(e) => updateField("barangay", e.target.value)}
                       placeholder="Hal. Sauyo"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 text-gray-700 cursor-not-allowed"
                     />
                   </div>
                 </div>
