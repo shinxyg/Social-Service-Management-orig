@@ -779,7 +779,7 @@ export default function SoloParentApplicationWizard({
   
   // ---- Eligibility check (bago pumasok sa wizard) ----
   const currentProf = getCurrentUserProfile()
-  const userId = userProfile.userId || (userProfile as any).id || currentProf.id || "1"
+  const userId = userProfile.userId || (userProfile as any).id || currentProf.id || ""
   const [checkingEligibility, setCheckingEligibility] = useState(true)
   const [isBlocked, setIsBlocked] = useState(false)
   const [blockReason, setBlockReason] = useState<"draft" | "pending" | "approved" | null>(null)
@@ -793,10 +793,11 @@ export default function SoloParentApplicationWizard({
       try {
         const typeToCheck = idStatus || "new"
         const prof = getCurrentUserProfile()
+        const uid = userId || prof.id || ""
         const qcid = (prof.qcidNo || prof.qcidNumber || "").trim()
         const email = (prof.email || "").trim()
         const res = await fetch(
-          `${API_BASE}/api/solo-parent/eligibility/${userId}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
+          `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
         )
         if (res.ok && isMounted) {
           const data = await res.json()

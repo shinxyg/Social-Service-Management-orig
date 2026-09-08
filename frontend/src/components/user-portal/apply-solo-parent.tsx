@@ -258,11 +258,11 @@ export default function ApplySoloParent() {
       try {
         const typeToCheck = typeParam === "renewal" ? "renewal" : typeParam === "loss" ? "loss" : "new"
         const prof = getCurrentUserProfile()
-        const uid = prof.id || "1"
+        const uid = prof.id || ""
         const qcid = (prof.qcidNo || prof.qcidNumber || "").trim()
         const email = (prof.email || "").trim()
         const res = await fetch(
-          `${API_BASE}/api/solo-parent/eligibility/${uid}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
+          `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
         )
         if (res.ok) {
           const data = await res.json()

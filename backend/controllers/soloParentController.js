@@ -234,15 +234,36 @@ exports.getUserApplications = async (req, res) => {
     const { userId } = req.params;
     const { qcid, email } = req.query;
 
+    const cleanUserId = userId && userId !== 'undefined' && userId !== 'null' && userId !== '0' && userId !== '1' ? String(userId).trim() : null;
+    const cleanQcid = qcid && String(qcid).trim() && !['110000116932100', '11000015952309', '110000572516915'].includes(String(qcid).trim()) ? String(qcid).trim() : null;
+    const cleanEmail = email && String(email).trim() && String(email).trim().toLowerCase() !== 'resident@gmail.com' ? String(email).trim().toLowerCase() : null;
+
+    if (!cleanUserId && !cleanQcid && !cleanEmail) {
+      return res.status(200).json({ success: true, applications: [] });
+    }
+
+    const params = [];
+    const orClauses = [];
+
+    if (cleanUserId) {
+      params.push(cleanUserId);
+      orClauses.push(`user_id = $${params.length}`);
+    }
+    if (cleanQcid) {
+      params.push(cleanQcid);
+      orClauses.push(`qcid_number = $${params.length}`);
+    }
+    if (cleanEmail) {
+      params.push(cleanEmail);
+      orClauses.push(`LOWER(email) = LOWER($${params.length})`);
+    }
+
     const result = await db.query(
       `SELECT *
        FROM solo_parent_applications
-       WHERE user_id = $1
-          OR ($2::text IS NOT NULL AND (qcid_number = $2 OR reference_number = $2))
-          OR ($3::text IS NOT NULL AND LOWER(email) = LOWER($3))
-          OR user_id = '1'
+       WHERE ${orClauses.join(' OR ')}
        ORDER BY created_at DESC`,
-      [userId, qcid || null, email || null]
+      params
     );
 
     res.status(200).json({ success: true, applications: result.rows });
@@ -387,27 +408,44 @@ exports.checkEligibility = async (req, res) => {
       return res.status(400).json({ success: false, message: 'applicationType is required' });
     }
 
-    const cleanQcid = qcid ? String(qcid).trim() : null;
-    const cleanEmail = email ? String(email).trim().toLowerCase() : null;
+    const cleanUserId = userId && userId !== 'undefined' && userId !== 'null' && userId !== '0' && userId !== '1' ? String(userId).trim() : null;
+    const cleanQcid = qcid && String(qcid).trim() && !['110000116932100', '11000015952309', '110000572516915'].includes(String(qcid).trim()) ? String(qcid).trim() : null;
+    const cleanEmail = email && String(email).trim() && String(email).trim().toLowerCase() !== 'resident@gmail.com' ? String(email).trim().toLowerCase() : null;
 
-    let query = `
+    // If no valid unique user identifier is provided (e.g. brand new unregistered/unauthenticated user), never block!
+    if (!cleanUserId && !cleanQcid && !cleanEmail) {
+      return res.status(200).json({ success: true, blocked: false, reason: null });
+    }
+
+    const params = [applicationType];
+    const orClauses = [];
+
+    if (cleanUserId) {
+      params.push(cleanUserId);
+      orClauses.push(`user_id = $${params.length}`);
+    }
+    if (cleanQcid) {
+      params.push(cleanQcid);
+      orClauses.push(`qcid_number = $${params.length}`);
+    }
+    if (cleanEmail) {
+      params.push(cleanEmail);
+      orClauses.push(`LOWER(email) = LOWER($${params.length})`);
+    }
+
+    const query = `
       SELECT * FROM solo_parent_applications
-      WHERE (
-        user_id = $1
-        OR ($3::text IS NOT NULL AND (qcid_number = $3 OR reference_number = $3))
-        OR ($4::text IS NOT NULL AND LOWER(email) = LOWER($4))
-        OR user_id = '1'
-      )
+      WHERE (${orClauses.join(' OR ')})
       AND (
-        application_type = $2
-        OR ($2 = 'new' AND (application_type = 'new' OR application_type IS NULL))
-        OR ($2 = 'renewal' AND application_type = 'renewal')
-        OR ($2 = 'loss' AND (application_type = 'loss' OR application_type = 'replacement'))
+        application_type = $1
+        OR ($1 = 'new' AND (application_type = 'new' OR application_type IS NULL))
+        OR ($1 = 'renewal' AND application_type = 'renewal')
+        OR ($1 = 'loss' AND (application_type = 'loss' OR application_type = 'replacement'))
       )
       ORDER BY created_at DESC LIMIT 1
     `;
 
-    const result = await db.query(query, [userId, applicationType, cleanQcid, cleanEmail]);
+    const result = await db.query(query, params);
 
     if (result.rows.length === 0) {
       return res.status(200).json({ success: true, blocked: false, reason: null });

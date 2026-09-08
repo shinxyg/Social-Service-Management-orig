@@ -158,10 +158,10 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
   const u = getCurrentUser()
 
   let qcid = u?.qcidNumber || u?.qcid_number || u?.qcidNo || u?.qcid
-  if (!qcid || qcid === "110000116932100" || qcid === "11000015952309") {
+  if (!qcid || qcid === "110000116932100" || qcid === "11000015952309" || qcid === "110000572516915") {
     // If QCID is missing or hardcoded sample, generate a unique one and persist it
-    qcid = u?.email ? generateUniqueQcid() : "110000116932100"
-    if (u && u.email) {
+    qcid = generateUniqueQcid()
+    if (u) {
       u.qcidNumber = qcid
       u.qcidNo = qcid
       localStorage.setItem("currentUser", JSON.stringify(u))
@@ -188,7 +188,7 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
   const formattedSex = rawSex.includes('FEMALE') ? 'Female' : 'Male'
 
   return {
-    id: u?.id || '1',
+    id: u?.id || u?.userId || u?._id || '',
     firstName: String(u?.firstName || u?.first_name || 'Resident').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 50).toUpperCase(),
     middleName: String(u?.middleName || u?.middle_name || '').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 30).toUpperCase(),
     lastName: String(u?.lastName || u?.last_name || '').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 50).toUpperCase(),
@@ -218,7 +218,7 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
     civilStatus: u?.civilStatus || 'Single',
     mobileNumber: u?.mobileNumber || u?.mobile_number || u?.contactNo || '09000000000',
     contactNo: u?.mobileNumber || u?.mobile_number || u?.contactNo || '09000000000',
-    email: u?.email || 'resident@gmail.com',
+    email: u?.email || '',
     qcidNo: qcid,
     qcidNumber: qcid,
     role: u?.role || 'user',
