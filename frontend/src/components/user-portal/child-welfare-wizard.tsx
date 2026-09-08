@@ -596,6 +596,35 @@ export interface UserProfile {
   email?: string
 }
 
+function CustomCheckbox({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  label: React.ReactNode
+}) {
+  return (
+    <label className="flex items-start gap-2.5 text-sm text-[#3b82f6] cursor-pointer select-none group">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="sr-only peer"
+      />
+      <span
+        className={`flex items-center justify-center h-4.5 w-4.5 mt-0.5 rounded-[3px] shrink-0 border-2 transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 ${
+          checked ? "bg-[#3b82f6] border-[#3b82f6]" : "bg-white border-gray-300 group-hover:border-blue-400"
+        }`}
+      >
+        {checked && <Check className="h-3 w-3 text-white" strokeWidth={3.5} />}
+      </span>
+      <span className="leading-snug text-blue-700 font-medium text-sm">{label}</span>
+    </label>
+  )
+}
+
 function FileThumbnail({ file, className }: { file: File; className?: string }) {
   const [src, setSrc] = useState<string>("")
   const isImg = file.type.startsWith("image/") || /\.(jpe?g|png|webp|jfif|bmp|gif)$/i.test(file.name)
@@ -775,6 +804,7 @@ export default function ChildWelfareApplicationWizard({
   const [check1, setCheck1] = useState(false)
   const [check2, setCheck2] = useState(false)
   const [check3, setCheck3] = useState(false)
+  const [receivedPrior, setReceivedPrior] = useState<"yes" | "no">("no")
   const [selectedAssistanceType, setSelectedAssistanceType] = useState<string>("")
 
   // Sync assistance type when program changes only if not matching
@@ -1180,17 +1210,28 @@ export default function ChildWelfareApplicationWizard({
           {/* ──────────────── STEP 1: PROGRAM & CHECKLIST ──────────────── */}
           {step === 1 && (
             <div className="space-y-6">
-              <div className="border-b border-gray-200 pb-3">
-                <h3 className="text-base font-bold text-gray-900 uppercase">
-                  {selectedProgram.title} — {t("cwStepChecklist") || (language === "tl" ? "KUMPLETUHIN ANG CHECKLIST" : language === "bis" ? "KUMPLETOHA ANG CHECKLIST" : "COMPLETE CHECKLIST")}
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {language === "tl"
-                    ? "Pakisagot ang mga tanong sa ibaba bago magpatuloy sa aplikasyon."
-                    : language === "bis"
-                    ? "Palihug tubaga ang mga pangutana sa ubos sa dili pa mopadayon sa aplikasyon."
-                    : "Please answer the verification questions below before continuing your application."}
-                </p>
+              {/* Blue Info Alert Banner */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900 uppercase">
+                    {selectedProgram.title.toUpperCase()} — PRIMARY REQUIREMENTS
+                  </p>
+                  <p className="text-xs text-blue-700 mt-0.5">
+                    {language === "tl"
+                      ? "Kumpletuhin ang mga pangunahing kwalipikasyon sa ibaba at ihanda ang mga kaukulang dokumento upang makapagpatuloy sa inyong aplikasyon."
+                      : language === "bis"
+                      ? "Kompletoha ang mga nag-unang kwalipikasyon sa ubos ug andama ang mga gikinahanglang dokumento aron makapadayon sa aplikasyon."
+                      : "Complete the primary qualification questions below and prepare the required documents to proceed with your application."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Section Title */}
+              <div>
+                <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
+                  SERVICE AND PRIMARY REQUIREMENTS
+                </h2>
               </div>
 
               {attemptedNext && !step1Valid && (
@@ -1207,61 +1248,75 @@ export default function ChildWelfareApplicationWizard({
               )}
 
               {/* Checklist Questions */}
-              <div className="space-y-3">
-                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200 hover:bg-gray-50/70 transition-colors cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={check1}
-                    onChange={(e) => setCheck1(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
-                  />
-                  <span className="text-xs font-medium text-gray-800 leading-relaxed">
-                    {selectedProgram.checklists[0]}
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200 hover:bg-gray-50/70 transition-colors cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={check2}
-                    onChange={(e) => setCheck2(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
-                  />
-                  <span className="text-xs font-medium text-gray-800 leading-relaxed">
-                    {selectedProgram.checklists[1]}
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200 hover:bg-gray-50/70 transition-colors cursor-pointer">
-                  <input
-                    type="checkbox"
+              <div className="space-y-4">
+                <CustomCheckbox
+                  checked={check1}
+                  onChange={setCheck1}
+                  label={`${selectedProgram.checklists[0]} *`}
+                />
+                <CustomCheckbox
+                  checked={check2}
+                  onChange={setCheck2}
+                  label={`${selectedProgram.checklists[1]} *`}
+                />
+                {selectedProgram.checklists[2] && (
+                  <CustomCheckbox
                     checked={check3}
-                    onChange={(e) => setCheck3(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
+                    onChange={setCheck3}
+                    label={`${selectedProgram.checklists[2]} *`}
                   />
-                  <span className="text-xs font-medium text-gray-800 leading-relaxed">
-                    {selectedProgram.checklists[2]}
-                  </span>
-                </label>
+                )}
+              </div>
+
+              {/* Radio Question */}
+              <div>
+                <p className="text-sm text-gray-800 mb-3 font-semibold">
+                  {selectedProgram.receivedQuestion}
+                </p>
+                <div className="flex items-center gap-8">
+                  <label className="flex items-center gap-2 text-sm text-[#3b82f6] cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name="cwPriorAid"
+                      checked={receivedPrior === "yes"}
+                      onChange={() => setReceivedPrior("yes")}
+                      className="h-4 w-4 accent-[#3b82f6]"
+                    />
+                    {selectedProgram.receivedOptions[0]}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-[#3b82f6] cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name="cwPriorAid"
+                      checked={receivedPrior === "no"}
+                      onChange={() => setReceivedPrior("no")}
+                      className="h-4 w-4 accent-[#3b82f6]"
+                    />
+                    {selectedProgram.receivedOptions[1]}
+                  </label>
+                </div>
               </div>
 
               {/* Assistance Category / Type Selection */}
-              <div className="pt-2 border-t border-gray-100">
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {selectedProgram.assistanceTypeLabel}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-2 tracking-wide uppercase">
+                  CLICK THE TYPE OF ASSISTANCE
+                </h3>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  {selectedProgram.assistanceTypeLabel || "Choose the type of assistance *"}
                 </label>
                 <div className="relative">
                   <select
                     value={selectedAssistanceType}
                     onChange={(e) => setSelectedAssistanceType(e.target.value)}
-                    className={`w-full h-11 border rounded-xl px-3.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium ${
+                    className={`w-full h-11 rounded-lg border bg-white px-3.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6] font-medium ${
                       attemptedNext && !selectedAssistanceType
                         ? "border-red-500 bg-red-50/30"
                         : "border-gray-300"
                     }`}
                   >
-                    <option value="">
-                      Select Category / Type of Assistance
+                    <option value="" disabled>
+                      {language === "tl" ? "Pumili ng Uri ng Tulong" : language === "bis" ? "Pagpili og Matang sa Tabang" : "Select Type of Assistance"}
                     </option>
                     {selectedProgram.assistanceTypes.map((type) => (
                       <option key={type} value={type}>
