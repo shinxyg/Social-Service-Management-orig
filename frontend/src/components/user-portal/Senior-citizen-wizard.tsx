@@ -1047,7 +1047,7 @@ export default function SeniorCitizenApplicationWizard({
                   }}
                   className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
                 >
-                  View in History Application
+                  View in Application History
                 </button>
               </>
             ) : (
@@ -1060,7 +1060,7 @@ export default function SeniorCitizenApplicationWizard({
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
                 >
-                  VIEW IN HISTORY APPLICATION
+                  VIEW IN APPLICATION HISTORY
                 </button>
               </>
             )}

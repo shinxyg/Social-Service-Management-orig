@@ -142,7 +142,7 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   navSoloParent: { en: "Solo Parent & Child Welfare", tl: "Solo Parent at Kapakanan ng Bata", bis: "Solo Parent ug Kaayohan sa Bata" },
   navLivelihood: { en: "Livelihood & Training Program", tl: "Programa sa Kabuhayan at Pagsasanay", bis: "Programa sa Panginabuhi ug Pagbansay" },
   navFinancialAid: { en: "Financial Aid Disbursement", tl: "Paglabas ng Tulong Pinansyal", bis: "Paghatag og Tabang Pinansyal" },
-  navMyApplicationsDuplicate: { en: "History Application", tl: "History Application", bis: "History Application" },
+  navMyApplicationsDuplicate: { en: "Application History", tl: "Application History", bis: "Application History" },
 
   // App header (staff)
   toggleSidebar: { en: "Toggle sidebar", tl: "I-toggle ang sidebar", bis: "I-toggle ang sidebar" },
