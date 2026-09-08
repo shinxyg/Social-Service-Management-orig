@@ -762,60 +762,20 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
         return Boolean(isQcidMatch || isEmailMatch || isNameMatch)
       }
 
+      let allUserPwdApps: any[] = []
+
       // Check backend API first
       try {
         const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
         if (res.ok && isMounted) {
           const apps = await res.json()
           if (Array.isArray(apps)) {
-            const userApps = apps.filter(checkUserMatches)
-            const approvedFlow = userApps.find((a) => {
-              if (a.status !== "approved" && a.status !== "completed" && a.status !== "for_release") return false
-              if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
-              if (expectedType === "renewal") return a.type === "renewal"
-              return a.type === "new" || !a.type
-            })
-            const pendingFlow = userApps.find((a) => {
-              if (a.status !== "pending" && a.status !== "under_review") return false
-              if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
-              if (expectedType === "renewal") return a.type === "renewal"
-              return a.type === "new" || !a.type
-            })
-            const approvedAny = userApps.find((a) => a.status === "approved" || a.status === "completed" || a.status === "for_release")
-            const pendingAny = userApps.find((a) => a.status === "pending" || a.status === "under_review")
-
-            if (approvedFlow) matchedApproved = approvedFlow
-            else if (expectedType === "new" && approvedAny) matchedApproved = approvedAny
-
-            if (pendingFlow && !matchedApproved) matchedPendingForFlow = pendingFlow
-            if (pendingAny && !matchedApproved) matchedPendingAny = pendingAny
-
-            // Sync with local storage
-            try {
-              const raw = localStorage.getItem("pwd_senior_applications")
-              if (raw) {
-                let localApps = JSON.parse(raw)
-                if (Array.isArray(localApps)) {
-                  let updated = false
-                  localApps = localApps.map((la: any) => {
-                    const match = apps.find((ba: any) => ba.id === la.id || (ba.referenceNumber && ba.referenceNumber === la.referenceNumber))
-                    if (match && la.status !== match.status) {
-                      updated = true
-                      return { ...la, status: match.status, assignedIdNumber: match.assignedIdNumber || la.assignedIdNumber }
-                    }
-                    return la
-                  })
-                  if (updated) {
-                    localStorage.setItem("pwd_senior_applications", JSON.stringify(localApps))
-                  }
-                }
-              }
-            } catch {}
+            allUserPwdApps = apps.filter(checkUserMatches)
           }
         }
       } catch {}
 
-      // Fallback check localStorage in real-time across keys
+      // Merge localStorage applications in real-time
       if (isMounted) {
         const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
         for (const k of localKeys) {
@@ -825,26 +785,18 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
               const apps = JSON.parse(saved)
               if (Array.isArray(apps)) {
                 const userApps = apps.filter(checkUserMatches)
-                const approvedFlow = userApps.find((a) => {
-                  if (a.status !== "approved" && a.status !== "completed" && a.status !== "for_release") return false
-                  if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
-                  if (expectedType === "renewal") return a.type === "renewal"
-                  return a.type === "new" || !a.type
-                })
-                const pendingFlow = userApps.find((a) => {
-                  if (a.status !== "pending" && a.status !== "under_review") return false
-                  if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
-                  if (expectedType === "renewal") return a.type === "renewal"
-                  return a.type === "new" || !a.type
-                })
-                const approvedAny = userApps.find((a) => a.status === "approved" || a.status === "completed" || a.status === "for_release")
-                const pendingAny = userApps.find((a) => a.status === "pending" || a.status === "under_review")
-
-                if (!matchedApproved && approvedFlow) matchedApproved = approvedFlow
-                else if (!matchedApproved && expectedType === "new" && approvedAny) matchedApproved = approvedAny
-
-                if (!matchedApproved && !matchedPendingForFlow && pendingFlow) matchedPendingForFlow = pendingFlow
-                if (!matchedApproved && !matchedPendingAny && pendingAny) matchedPendingAny = pendingAny
+                for (const ua of userApps) {
+                  if (
+                    ua &&
+                    !allUserPwdApps.some(
+                      (ba) =>
+                        (ba.id && ba.id === ua.id) ||
+                        (ba.referenceNumber && ba.referenceNumber === ua.referenceNumber)
+                    )
+                  ) {
+                    allUserPwdApps.push(ua)
+                  }
+                }
               }
             }
           } catch {}
@@ -853,27 +805,75 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
       if (!isMounted) return
 
-      setActiveAppStatus(matchedApproved ? "approved" : matchedPendingAny ? "pending" : null)
+      // Prioritized Match Resolvers
+      const pendingFlow = allUserPwdApps.find((a) => {
+        if (a.status !== "pending" && a.status !== "under_review") return false
+        if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
+        if (expectedType === "renewal") return a.type === "renewal"
+        return a.type === "new" || !a.type
+      })
 
-      if (matchedApproved) {
-        setBlockedApp(matchedApproved)
-        setLatestApprovedApp(matchedApproved)
-        setIsBlocked(true)
-        const appAssignedId = matchedApproved.assignedIdNumber || matchedApproved.referenceNumber
+      const pendingAny = allUserPwdApps.find(
+        (a) => a.status === "pending" || a.status === "under_review"
+      )
+
+      const approvedFlow = allUserPwdApps.find((a) => {
+        if (a.status !== "approved" && a.status !== "completed" && a.status !== "for_release")
+          return false
+        if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
+        if (expectedType === "renewal") return a.type === "renewal"
+        return a.type === "new" || !a.type
+      })
+
+      const approvedAny = allUserPwdApps.find(
+        (a) => a.status === "approved" || a.status === "completed" || a.status === "for_release"
+      )
+
+      // Auto-populate existing PWD ID number if approved record exists in system
+      if (approvedAny) {
+        const appAssignedId = approvedAny.assignedIdNumber || approvedAny.referenceNumber
         if (appAssignedId) {
           setFormData((prev) => ({
             ...prev,
             existingPwdIdNumber: prev.existingPwdIdNumber || appAssignedId,
           }))
         }
-      } else if (matchedPendingForFlow) {
-        setBlockedApp(matchedPendingForFlow)
+      }
+
+      // PRIORITY 1: Pending Application for THIS current flow (e.g. Renewal under review)
+      if (pendingFlow) {
+        setBlockedApp(pendingFlow)
         setLatestApprovedApp(null)
         setIsBlocked(true)
-      } else {
+        setActiveAppStatus("pending")
+      }
+      // PRIORITY 2: Any other pending PWD application under review
+      else if (pendingAny) {
+        setBlockedApp(pendingAny)
+        setLatestApprovedApp(null)
+        setIsBlocked(true)
+        setActiveAppStatus("pending")
+      }
+      // PRIORITY 3: Approved application for this specific flow
+      else if (approvedFlow) {
+        setBlockedApp(approvedFlow)
+        setLatestApprovedApp(approvedFlow)
+        setIsBlocked(true)
+        setActiveAppStatus("approved")
+      }
+      // PRIORITY 4: If flow is "new" and already has an approved PWD ID, block "new"
+      else if (expectedType === "new" && approvedAny) {
+        setBlockedApp(approvedAny)
+        setLatestApprovedApp(approvedAny)
+        setIsBlocked(true)
+        setActiveAppStatus("approved")
+      }
+      // OTHERWISE: Allow user to fill out Renewal or Replacement form!
+      else {
         setBlockedApp(null)
         setLatestApprovedApp(null)
         setIsBlocked(false)
+        setActiveAppStatus(null)
       }
     }
 
