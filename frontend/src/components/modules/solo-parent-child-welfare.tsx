@@ -894,86 +894,47 @@ function OfficialSoloParentIdCardModal({
   )
   const photoUrl = photoDoc?.fileUrl || "/samples/ID PICTURE (2X2).webp"
 
-  let emergencyPerson =
+  const fdCard = (app as any).formData || (app as any).form_data || (app as any).extra_data?.formData || {}
+  const edCard = (app as any).extraData || (app as any).extra_data || {}
+
+  const emFirstCard = app.emergencyFirstName || fdCard.emergencyFirstName || edCard.emergencyFirstName || (app as any).emergency_first_name || ""
+  const emLastCard = app.emergencyLastName || fdCard.emergencyLastName || edCard.emergencyLastName || (app as any).emergency_last_name || ""
+  const emCombinedCard = [emFirstCard, emLastCard].filter(Boolean).join(" ")
+
+  const emergencyPerson =
+    emCombinedCard ||
     app.emergencyName ||
-    [app.emergencyFirstName, app.emergencyLastName].filter(Boolean).join(" ") ||
+    (app as any).emergency_name ||
+    fdCard.emergencyName ||
+    fdCard.emergencyContactPerson ||
+    edCard.emergencyName ||
     (app as any).emergencyContactPerson ||
-    (app as any).form_data?.emergencyName ||
-    [(app as any).form_data?.emergencyFirstName, (app as any).form_data?.emergencyLastName].filter(Boolean).join(" ") ||
-    (app as any).extra_data?.emergencyName ||
-    [(app as any).extra_data?.emergencyFirstName, (app as any).extra_data?.emergencyLastName].filter(Boolean).join(" ") ||
-    ""
+    "—"
 
-  let emergencyPhone =
+  const emergencyPhone =
     app.emergencyContactNo ||
+    (app as any).emergency_contact_no ||
+    fdCard.emergencyContactNo ||
+    fdCard.emergencyPhone ||
     (app as any).emergencyPhone ||
-    (app as any).form_data?.emergencyContactNo ||
-    (app as any).form_data?.emergencyPhone ||
-    (app as any).extra_data?.emergencyContactNo ||
-    ""
+    edCard.emergencyContactNo ||
+    "—"
 
-  let emergencyRel =
+  const emergencyRel =
     app.emergencyRelationship ||
-    (app as any).form_data?.emergencyRelationship ||
-    (app as any).extra_data?.emergencyRelationship ||
+    (app as any).emergency_relationship ||
+    fdCard.emergencyRelationship ||
+    edCard.emergencyRelationship ||
     (app as any).relationshipToApplicant ||
-    ""
+    "—"
 
-  let emergencyAddr =
+  const emergencyAddr =
     app.emergencyAddress ||
-    (app as any).form_data?.emergencyAddress ||
-    (app as any).extra_data?.emergencyAddress ||
-    ""
-
-  if (!emergencyPerson || !emergencyPhone || !emergencyAddr || !emergencyRel) {
-    try {
-      const raw = localStorage.getItem("currentUser") || localStorage.getItem("userProfile") || localStorage.getItem("user")
-      if (raw) {
-        const u = JSON.parse(raw)
-        const uQcid = u.qcidNumber || u.qcid_number || u.qcidNo || u.qcid || u.reference_number
-        if (
-          (uQcid && (uQcid === app.referenceNumber || uQcid === app.qcidNumber)) ||
-          (u.email && app.email && u.email.toLowerCase() === app.email.toLowerCase()) ||
-          (u.lastName && app.lastName && u.lastName.toLowerCase() === app.lastName.toLowerCase())
-        ) {
-          if (!emergencyPerson) {
-            emergencyPerson = [u.emergencyFirstName, u.emergencyLastName].filter(Boolean).join(" ") || u.emergencyName || ""
-          }
-          if (!emergencyPhone) {
-            emergencyPhone = u.emergencyContactNo || u.emergencyPhone || ""
-          }
-          if (!emergencyRel) {
-            emergencyRel = u.emergencyRelationship || ""
-          }
-          if (!emergencyAddr) {
-            emergencyAddr = u.emergencyAddress || ""
-          }
-        }
-      }
-    } catch {}
-  }
-
-  if (!emergencyPerson) {
-    if (app.familyMembers && app.familyMembers.length > 0 && app.familyMembers[0].name) {
-      emergencyPerson = app.familyMembers[0].name
-      if (!emergencyRel) emergencyRel = app.familyMembers[0].relationship || "Child"
-    } else {
-      emergencyPerson = "Immediate Family"
-      if (!emergencyRel) emergencyRel = "Immediate Family"
-    }
-  }
-
-  if (!emergencyPhone) {
-    emergencyPhone = app.contactNo || "09123456789"
-  }
-
-  if (!emergencyRel) {
-    emergencyRel = "Immediate Family"
-  }
-
-  if (!emergencyAddr) {
-    emergencyAddr = getAddress(app) || "Quezon City"
-  }
+    (app as any).emergency_address ||
+    fdCard.emergencyAddress ||
+    edCard.emergencyAddress ||
+    getAddress(app) ||
+    "Quezon City"
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
