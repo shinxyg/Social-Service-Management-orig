@@ -403,6 +403,103 @@ const EMPTY_FORM_DATA: FormData = {
   emergencyAddress: "",
 }
 
+function extractEmergencyContact(app: any, fallbackProfile?: any) {
+  if (!app && !fallbackProfile) {
+    return {
+      emergencyFirstName: "",
+      emergencyLastName: "",
+      emergencyContactNo: "",
+      emergencyRelationship: "",
+      emergencyAddress: "",
+    }
+  }
+
+  const fd =
+    app?.form_data ||
+    app?.formData ||
+    (typeof app?.extra_data === "object" ? app?.extra_data?.formData : null) ||
+    {}
+
+  // Name extraction
+  let efName = app?.emergency_first_name || app?.emergencyFirstName || fd?.emergencyFirstName || ""
+  let elName = app?.emergency_last_name || app?.emergencyLastName || fd?.emergencyLastName || ""
+  const rawFullName =
+    app?.emergency_name ||
+    app?.emergencyName ||
+    app?.emergency_contact_person ||
+    app?.emergencyContactPerson ||
+    fd?.emergencyName ||
+    fd?.emergencyContactPerson ||
+    ""
+
+  if ((!efName || !elName) && rawFullName) {
+    const parts = rawFullName.trim().split(/\s+/)
+    if (parts.length === 1) {
+      efName = efName || parts[0]
+      elName = elName || parts[0]
+    } else if (parts.length > 1) {
+      efName = efName || parts[0]
+      elName = elName || parts.slice(1).join(" ")
+    }
+  }
+
+  if (!efName && fallbackProfile?.emergencyFirstName) {
+    efName = fallbackProfile.emergencyFirstName
+  }
+  if (!elName && fallbackProfile?.emergencyLastName) {
+    elName = fallbackProfile.emergencyLastName
+  }
+
+  // Phone
+  const ePhone =
+    app?.emergency_contact_no ||
+    app?.emergencyContactNo ||
+    app?.emergency_phone ||
+    app?.emergencyPhone ||
+    fd?.emergencyContactNo ||
+    fd?.emergencyPhone ||
+    fallbackProfile?.emergencyContactNo ||
+    app?.contact_no ||
+    app?.contactNo ||
+    fallbackProfile?.contactNo ||
+    ""
+
+  // Relationship
+  const eRel =
+    app?.emergency_relationship ||
+    app?.emergencyRelationship ||
+    app?.relationship ||
+    fd?.emergencyRelationship ||
+    fallbackProfile?.emergencyRelationship ||
+    "Immediate Family"
+
+  // Address
+  let eAddr =
+    app?.emergency_address ||
+    app?.emergencyAddress ||
+    fd?.emergencyAddress ||
+    fallbackProfile?.emergencyAddress ||
+    ""
+
+  if (!eAddr) {
+    const house = app?.address_house_no || app?.addressHouseNo || fallbackProfile?.addressHouseNo || ""
+    const street = app?.address_street || app?.addressStreet || fallbackProfile?.addressStreet || ""
+    const brgy = app?.address_barangay || app?.addressBarangay || fallbackProfile?.addressBarangay || ""
+    const city = app?.address_city_municipality || app?.addressCityMunicipality || fallbackProfile?.addressCityMunicipality || "QUEZON CITY"
+    if (house || street || brgy) {
+      eAddr = [house, street, brgy, city].filter(Boolean).join(", ")
+    }
+  }
+
+  return {
+    emergencyFirstName: efName,
+    emergencyLastName: elName,
+    emergencyContactNo: ePhone,
+    emergencyRelationship: eRel,
+    emergencyAddress: eAddr,
+  }
+}
+
 function TextInput({
   value,
   onChange,
@@ -975,6 +1072,8 @@ export default function SoloParentApplicationWizard({
           status: idStatus === "renewal" ? "Active / Expired" : "Replacement / Lost ID",
         })
 
+        const emergencyData = extractEmergencyContact(matchedApp, userProfile)
+
         setFormData((prev) => ({
           ...prev,
           firstName: matchedApp.first_name || matchedApp.firstName || userProfile?.firstName || prev.firstName,
@@ -996,11 +1095,7 @@ export default function SoloParentApplicationWizard({
           qcidNumber: matchedApp.qcid_number || matchedApp.qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || prev.qcidNumber,
           email: matchedApp.email || userProfile?.email || prev.email,
           bloodType: matchedApp.blood_type || matchedApp.bloodType || userProfile?.bloodType || prev.bloodType || "O+",
-          emergencyFirstName: matchedApp.emergency_first_name || matchedApp.emergencyFirstName || userProfile?.emergencyFirstName || prev.emergencyFirstName,
-          emergencyLastName: matchedApp.emergency_last_name || matchedApp.emergencyLastName || userProfile?.emergencyLastName || prev.emergencyLastName,
-          emergencyContactNo: matchedApp.emergency_contact_no || matchedApp.emergencyContactNo || userProfile?.emergencyContactNo || prev.emergencyContactNo,
-          emergencyRelationship: matchedApp.emergency_relationship || matchedApp.emergencyRelationship || userProfile?.emergencyRelationship || prev.emergencyRelationship,
-          emergencyAddress: matchedApp.emergency_address || matchedApp.emergencyAddress || userProfile?.emergencyAddress || prev.emergencyAddress,
+          ...emergencyData,
         }))
       } else {
         setIsIdVerified(false)
@@ -1071,45 +1166,45 @@ export default function SoloParentApplicationWizard({
           }
         } catch {}
 
-        // 2. Local fallback verification
+        // 2. Local fallback verification & auto-population
+        const allApps = await fetchAllSoloParentApps()
+        const userQcidClean = qcid.replace(/\D/g, "")
+        const userEmailClean = email.toLowerCase()
+        const userFnClean = fn.toLowerCase()
+        const userLnClean = ln.toLowerCase()
+
+        const matchedUserApps = allApps.filter((a) => {
+          if (!a) return false
+          const aQcid = String(a.qcid_number || a.qcidNumber || a.qcid || "").replace(/\D/g, "")
+          const aRef = String(a.reference_number || a.referenceNumber || "").replace(/\D/g, "")
+          const aEmail = String(a.email || "").toLowerCase().trim()
+          const aFn = String(a.first_name || a.firstName || "").toLowerCase().trim()
+          const aLn = String(a.last_name || a.lastName || "").toLowerCase().trim()
+
+          return (
+            (userQcidClean && aQcid && userQcidClean === aQcid) ||
+            (userQcidClean && aRef && (userQcidClean === aRef || (userQcidClean.length >= 8 && userQcidClean.includes(aRef)) || (aRef.length >= 8 && aRef.includes(userQcidClean)))) ||
+            (userEmailClean && aEmail && userEmailClean === aEmail) ||
+            (userLnClean && aLn && userFnClean && aFn && userLnClean === aLn && userFnClean === aFn)
+          )
+        })
+
+        const approvedApp = matchedUserApps.find((a) => {
+          const st = String(a.application_status || a.status || "").toLowerCase()
+          return st === "approved" || st === "completed" || st === "for_release" || st === "active"
+        })
+
+        const pendingApp = matchedUserApps.find((a) => {
+          const st = String(a.application_status || a.status || "").toLowerCase()
+          const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
+          const isMatchPendingType =
+            typeToCheck === "renewal" ? aType === "renewal" :
+            typeToCheck === "loss" ? (aType === "loss" || aType === "replacement") :
+            (aType === "new" || !aType)
+          return (st === "pending" || st === "draft" || st === "under_review") && isMatchPendingType
+        })
+
         if (!isBlockedFound) {
-          const allApps = await fetchAllSoloParentApps()
-          const userQcidClean = qcid.replace(/\D/g, "")
-          const userEmailClean = email.toLowerCase()
-          const userFnClean = fn.toLowerCase()
-          const userLnClean = ln.toLowerCase()
-
-          const matchedUserApps = allApps.filter((a) => {
-            if (!a) return false
-            const aQcid = String(a.qcid_number || a.qcidNumber || a.qcid || "").replace(/\D/g, "")
-            const aRef = String(a.reference_number || a.referenceNumber || "").replace(/\D/g, "")
-            const aEmail = String(a.email || "").toLowerCase().trim()
-            const aFn = String(a.first_name || a.firstName || "").toLowerCase().trim()
-            const aLn = String(a.last_name || a.lastName || "").toLowerCase().trim()
-
-            return (
-              (userQcidClean && aQcid && userQcidClean === aQcid) ||
-              (userQcidClean && aRef && (userQcidClean === aRef || (userQcidClean.length >= 8 && userQcidClean.includes(aRef)) || (aRef.length >= 8 && aRef.includes(userQcidClean)))) ||
-              (userEmailClean && aEmail && userEmailClean === aEmail) ||
-              (userLnClean && aLn && userFnClean && aFn && userLnClean === aLn && userFnClean === aFn)
-            )
-          })
-
-          const approvedApp = matchedUserApps.find((a) => {
-            const st = String(a.application_status || a.status || "").toLowerCase()
-            return st === "approved" || st === "completed" || st === "for_release" || st === "active"
-          })
-
-          const pendingApp = matchedUserApps.find((a) => {
-            const st = String(a.application_status || a.status || "").toLowerCase()
-            const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
-            const isMatchPendingType =
-              typeToCheck === "renewal" ? aType === "renewal" :
-              typeToCheck === "loss" ? (aType === "loss" || aType === "replacement") :
-              (aType === "new" || !aType)
-            return (st === "pending" || st === "draft" || st === "under_review") && isMatchPendingType
-          })
-
           if (typeToCheck === "new" && approvedApp) {
             isBlockedFound = true
             reasonFound = "approved"
@@ -1120,6 +1215,61 @@ export default function SoloParentApplicationWizard({
             reasonFound = "pending"
             refFound = pendingApp.reference_number || pendingApp.referenceNumber || ""
             appFound = pendingApp
+          }
+        }
+
+        // Auto-fill existing application details and Emergency Contact on Renewal / Loss
+        if (approvedApp && (typeToCheck === "renewal" || typeToCheck === "loss") && !isBlockedFound) {
+          const rawOfficialId =
+            approvedApp.assigned_id_number ||
+            approvedApp.assignedIdNumber ||
+            approvedApp.solo_parent_id_number ||
+            approvedApp.soloParentIdNumber ||
+            approvedApp.reference_number ||
+            approvedApp.referenceNumber ||
+            ""
+          const officialId = formatSoloParentIdInput(rawOfficialId)
+          const emergencyData = extractEmergencyContact(approvedApp, prof)
+
+          if (isMounted) {
+            setExistingIdNumber((prev) => prev || officialId)
+            setIsIdVerified(true)
+            setIsResident(true)
+            setHasSoleParentalCare(true)
+            if (typeToCheck === "renewal") {
+              setRenewalReason((prev) => prev || "Renewal of Expired Solo Parent ID")
+            } else {
+              setReplacementReason((prev) => prev || "Lost")
+            }
+            setVerifiedRecord((prev) => prev || {
+              name: `${approvedApp.first_name || approvedApp.firstName || prof.firstName || ""} ${approvedApp.last_name || approvedApp.lastName || prof.lastName || ""}`.trim(),
+              idNumber: officialId,
+              barangay: approvedApp.address_barangay || approvedApp.addressBarangay || prof.addressBarangay || "SAUYO",
+              status: typeToCheck === "renewal" ? "Active / Expired" : "Replacement / Lost ID",
+            })
+            setFormData((prev) => ({
+              ...prev,
+              firstName: approvedApp.first_name || approvedApp.firstName || prof.firstName || prev.firstName,
+              middleName: approvedApp.middle_name || approvedApp.middleName || prof.middleName || prev.middleName,
+              lastName: approvedApp.last_name || approvedApp.lastName || prof.lastName || prev.lastName,
+              suffix: approvedApp.suffix || prof.suffix || prev.suffix,
+              citizenship: approvedApp.citizenship || approvedApp.nationality || prof.nationality || prev.citizenship || "FILIPINO",
+              dobMonth: approvedApp.dob_month || approvedApp.dobMonth || prof.dobMonth || prev.dobMonth,
+              dobDay: approvedApp.dob_day || approvedApp.dobDay || prof.dobDay || prev.dobDay,
+              dobYear: approvedApp.dob_year || approvedApp.dobYear || prof.dobYear || prev.dobYear,
+              age: String(approvedApp.age || prof.age || prev.age),
+              sex: approvedApp.sex || approvedApp.gender || prof.sex || prev.sex,
+              civilStatus: approvedApp.civil_status || approvedApp.civilStatus || prof.civilStatus || prev.civilStatus,
+              contactNo: approvedApp.contact_no || approvedApp.contactNo || approvedApp.phone_number || approvedApp.phoneNumber || prof.contactNo || prev.contactNo,
+              addressHouseNo: approvedApp.address_house_no || approvedApp.addressHouseNo || prof.addressHouseNo || prev.addressHouseNo,
+              addressStreet: approvedApp.address_street || approvedApp.addressStreet || prof.addressStreet || prev.addressStreet,
+              addressBarangay: approvedApp.address_barangay || approvedApp.addressBarangay || prof.addressBarangay || prev.addressBarangay,
+              addressCityMunicipality: approvedApp.address_city_municipality || approvedApp.addressCityMunicipality || prof.addressCityMunicipality || prev.addressCityMunicipality || "QUEZON CITY",
+              qcidNumber: approvedApp.qcid_number || approvedApp.qcidNumber || prof.qcidNo || prev.qcidNumber,
+              email: approvedApp.email || prof.email || prev.email,
+              bloodType: approvedApp.blood_type || approvedApp.bloodType || (prof as any).bloodType || prev.bloodType || "O+",
+              ...emergencyData,
+            }))
           }
         }
 
@@ -2584,7 +2734,7 @@ export default function SoloParentApplicationWizard({
                       {idStatus !== "new" && !isEditingInfo ? (
                         <input
                           type="text"
-                          value={formData.emergencyRelationship || "Friend / Neighbor"}
+                          value={formData.emergencyRelationship || "Immediate Family"}
                           readOnly
                           disabled
                           className="w-full h-11 rounded-lg border border-gray-200 px-3.5 text-sm bg-gray-100 text-gray-800 cursor-not-allowed"
@@ -2602,6 +2752,8 @@ export default function SoloParentApplicationWizard({
                           }`}
                         >
                           <option value="">{t("selectRelationshipOption") || "Select Relationship"}</option>
+                          <option value="Immediate Family">Immediate Family</option>
+                          <option value="Parent">Parent</option>
                           <option value="Child">{t("relationChild") || "Child"}</option>
                           <option value="Spouse">{t("relationSpouse") || "Spouse"}</option>
                           <option value="Sibling">{t("relationSibling") || "Sibling"}</option>
