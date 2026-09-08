@@ -372,6 +372,15 @@ exports.login = async (req, res) => {
       if (userRes.rows.length > 0) {
         const dbUser = userRes.rows[0];
 
+        // Check account active/inactive status
+        const userStatus = String(dbUser.status || 'active').toLowerCase();
+        if (userStatus === 'inactive' || userStatus === 'deactivated') {
+          return res.status(403).json({
+            success: false,
+            message: 'Your account is currently inactive. Please contact the administrator to reactivate your account.',
+          });
+        }
+
         // Check password
         if (dbUser.password && dbUser.password !== cleanPassword) {
           return res.status(401).json({
@@ -379,6 +388,9 @@ exports.login = async (req, res) => {
             message: 'Incorrect password. Please verify your password and try again.',
           });
         }
+
+        // Record last login time
+        await db.query('UPDATE users SET last_login = NOW() WHERE id = $1', [dbUser.id]).catch(() => {});
 
         const userPayload = {
           id: dbUser.id,
@@ -402,6 +414,8 @@ exports.login = async (req, res) => {
           profilePhotoUrl: dbUser.profile_photo_url || null,
           qcidNumber: dbUser.qcid_number || '110000116932100',
           role: dbUser.role || 'user',
+          status: dbUser.status || 'active',
+          lastLogin: new Date().toISOString(),
         };
 
         return res.status(200).json({
@@ -417,12 +431,23 @@ exports.login = async (req, res) => {
     // 3. Check memory store fallback
     const memUser = memoryUsers.find(u => u.email.toLowerCase() === cleanEmail);
     if (memUser) {
+      const memStatus = String(memUser.status || 'active').toLowerCase();
+      if (memStatus === 'inactive' || memStatus === 'deactivated') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account is currently inactive. Please contact the administrator to reactivate your account.',
+        });
+      }
+
       if (memUser.password && memUser.password !== cleanPassword) {
         return res.status(401).json({
           success: false,
           message: 'Incorrect password. Please verify your password and try again.',
         });
       }
+
+      memUser.lastLogin = new Date().toISOString();
+
       return res.status(200).json({
         success: true,
         role: memUser.role || 'user',
@@ -827,4 +852,402 @@ exports.resetPassword = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error while updating password', error: err.message });
   }
 };
+
+/**
+ * GET /api/users or GET /api/auth/users
+ * Returns all real registered user records directly from the central database
+ */
+exports.getAllUsers = async (req, res) => {
+  try {
+    let dbUsers = [];
+    try {
+      const result = await db.query(`
+        SELECT 
+          id, email, first_name, last_name, middle_name, suffix,
+          mobile_number, qcid_number, role, COALESCE(status, 'active') as status,
+          created_at, updated_at, last_login, city, barangay, street, house_no, occupation
+        FROM users
+        ORDER BY created_at DESC
+      `);
+      dbUsers = result.rows;
+    } catch (dbErr) {
+      console.warn('[DB Warning] Fetching users from DB failed, falling back to memory store:', dbErr.message);
+    }
+
+    // Combine with memory users if any exist that are not in DB
+    const seenEmails = new Set(dbUsers.map(u => (u.email || '').toLowerCase()));
+    for (const memU of memoryUsers) {
+      if (memU && memU.email && !seenEmails.has(memU.email.toLowerCase())) {
+        seenEmails.add(memU.email.toLowerCase());
+        dbUsers.push({
+          id: memU.id || dbUsers.length + 1,
+          email: memU.email,
+          first_name: memU.firstName || memU.first_name || '',
+          last_name: memU.lastName || memU.last_name || '',
+          middle_name: memU.middleName || memU.middle_name || '',
+          suffix: memU.suffix || '',
+          mobile_number: memU.mobileNumber || memU.mobile_number || '',
+          qcid_number: memU.qcidNumber || memU.qcid_number || '',
+          role: memU.role || 'user',
+          status: memU.status || 'active',
+          created_at: memU.createdAt || memU.created_at || new Date().toISOString(),
+          updated_at: memU.updatedAt || memU.updated_at || new Date().toISOString(),
+          last_login: memU.lastLogin || memU.last_login || null,
+          city: memU.city || '',
+          barangay: memU.barangay || '',
+          street: memU.street || '',
+          house_no: memU.houseNo || memU.house_no || '',
+          occupation: memU.occupation || '',
+        });
+      }
+    }
+
+    // Build user representations with connected applications counts
+    const users = await Promise.all(
+      dbUsers.map(async (u) => {
+        const userQcid = u.qcid_number || '';
+        const userEmail = (u.email || '').toLowerCase();
+        const userIdStr = String(u.id);
+
+        let totalApps = 0;
+        let appointmentCount = 0;
+
+        try {
+          const [aicsRes, pwdRes, soloRes, childRes, liveRes, aptRes] = await Promise.all([
+            db.query(
+              `SELECT COUNT(*) FROM aics_applications WHERE (email IS NOT NULL AND LOWER(email) = $1) OR (qc_id IS NOT NULL AND qc_id = $2)`,
+              [userEmail, userQcid]
+            ).catch(() => ({ rows: [{ count: 0 }] })),
+            db.query(
+              `SELECT COUNT(*) FROM pwd_senior_applications WHERE (email IS NOT NULL AND LOWER(email) = $1) OR (reference_number IS NOT NULL AND reference_number = $2)`,
+              [userEmail, userQcid]
+            ).catch(() => ({ rows: [{ count: 0 }] })),
+            db.query(
+              `SELECT COUNT(*) FROM solo_parent_applications WHERE user_id = $1 OR (email IS NOT NULL AND LOWER(email) = $2) OR (qcid_number IS NOT NULL AND qcid_number = $3)`,
+              [userIdStr, userEmail, userQcid]
+            ).catch(() => ({ rows: [{ count: 0 }] })),
+            db.query(
+              `SELECT COUNT(*) FROM child_welfare_applications WHERE user_id = $1 OR (guardian_email IS NOT NULL AND LOWER(guardian_email) = $2) OR (email IS NOT NULL AND LOWER(email) = $2)`,
+              [userIdStr, userEmail]
+            ).catch(() => ({ rows: [{ count: 0 }] })),
+            db.query(
+              `SELECT COUNT(*) FROM livelihood_applications WHERE user_id = $1 OR (email IS NOT NULL AND LOWER(email) = $2) OR (qcid_no IS NOT NULL AND qcid_no = $3)`,
+              [userIdStr, userEmail, userQcid]
+            ).catch(() => ({ rows: [{ count: 0 }] })),
+            db.query(
+              `SELECT COUNT(*) FROM appointments WHERE (email IS NOT NULL AND LOWER(email) = $1) OR (qcid_no IS NOT NULL AND qcid_no = $2)`,
+              [userEmail, userQcid]
+            ).catch(() => ({ rows: [{ count: 0 }] })),
+          ]);
+
+          const aicsCount = parseInt(aicsRes.rows[0]?.count || 0, 10);
+          const pwdCount = parseInt(pwdRes.rows[0]?.count || 0, 10);
+          const soloCount = parseInt(soloRes.rows[0]?.count || 0, 10);
+          const childCount = parseInt(childRes.rows[0]?.count || 0, 10);
+          const liveCount = parseInt(liveRes.rows[0]?.count || 0, 10);
+          appointmentCount = parseInt(aptRes.rows[0]?.count || 0, 10);
+
+          totalApps = aicsCount + pwdCount + soloCount + childCount + liveCount;
+        } catch {}
+
+        const fullName = [u.first_name, u.middle_name, u.last_name, u.suffix]
+          .filter(Boolean)
+          .join(' ')
+          .trim() || 'Registered Resident';
+
+        const isAdmin = ['admin', 'administrator', 'super_admin'].includes(String(u.role || '').toLowerCase());
+        const displayRole = isAdmin ? 'ADMINISTRATOR' : 'USER / BENEFICIARY';
+        const isInactive = String(u.status || 'active').toLowerCase() === 'inactive' || String(u.status || 'active').toLowerCase() === 'deactivated';
+        const displayStatus = isInactive ? 'INACTIVE' : 'ACTIVE';
+
+        const rawId = String(u.id);
+        const formattedId = rawId.startsWith('USR-') ? rawId : `USR-${rawId.padStart(4, '0')}`;
+
+        return {
+          id: formattedId,
+          numericId: u.id,
+          qcidNumber: u.qcid_number || `110000${String(u.id).padStart(9, '0')}`,
+          name: fullName,
+          firstName: u.first_name || '',
+          lastName: u.last_name || '',
+          middleName: u.middle_name || '',
+          suffix: u.suffix || '',
+          email: u.email,
+          contactNumber: u.mobile_number || '—',
+          role: displayRole,
+          status: displayStatus,
+          dateRegistered: u.created_at || new Date().toISOString(),
+          lastLogin: u.last_login || u.updated_at || u.created_at || new Date().toISOString(),
+          applicationsCount: totalApps,
+          appointmentsCount: appointmentCount,
+          address: [u.house_no, u.street, u.barangay, u.city].filter(Boolean).join(', ') || 'Quezon City',
+          occupation: u.occupation || '—',
+        };
+      })
+    );
+
+    // Filter out internal system-only pseudonyms if duplicate
+    const cleanUsers = users.filter(u => u.email !== 'admin' && u.email !== 'staff' && u.email !== 'superadmin');
+
+    const stats = {
+      total: cleanUsers.length,
+      active: cleanUsers.filter(u => u.status === 'ACTIVE').length,
+      inactive: cleanUsers.filter(u => u.status === 'INACTIVE').length,
+      administrators: cleanUsers.filter(u => u.role === 'ADMINISTRATOR').length,
+    };
+
+    return res.status(200).json({
+      success: true,
+      stats,
+      users: cleanUsers,
+    });
+  } catch (err) {
+    console.error('Error in getAllUsers controller:', err);
+    return res.status(500).json({ success: false, message: 'Server error retrieving users', error: err.message });
+  }
+};
+
+/**
+ * GET /api/users/:id
+ * Returns a user with all linked application records across modules
+ */
+exports.getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cleanId = String(id).replace(/\D/g, '');
+
+    let dbUser = null;
+    try {
+      const userRes = await db.query('SELECT * FROM users WHERE id = $1 OR qcid_number = $2 OR LOWER(email) = $3', [cleanId || '0', id, String(id).toLowerCase()]);
+      if (userRes.rows.length > 0) {
+        dbUser = userRes.rows[0];
+      }
+    } catch (dbErr) {
+      console.warn('[DB Error] getUserById failed:', dbErr.message);
+    }
+
+    if (!dbUser) {
+      const memUser = memoryUsers.find(u => String(u.id) === String(id) || u.email.toLowerCase() === String(id).toLowerCase() || u.qcidNumber === id);
+      if (memUser) {
+        dbUser = {
+          id: memUser.id || 1,
+          email: memUser.email,
+          first_name: memUser.firstName || memUser.first_name || '',
+          last_name: memUser.lastName || memUser.last_name || '',
+          middle_name: memUser.middleName || memUser.middle_name || '',
+          suffix: memUser.suffix || '',
+          mobile_number: memUser.mobileNumber || memUser.mobile_number || '',
+          qcid_number: memUser.qcidNumber || memUser.qcid_number || '',
+          role: memUser.role || 'user',
+          status: memUser.status || 'active',
+          created_at: memUser.createdAt || new Date().toISOString(),
+          updated_at: memUser.updatedAt || new Date().toISOString(),
+          last_login: memUser.lastLogin || null,
+        };
+      }
+    }
+
+    if (!dbUser) {
+      return res.status(404).json({ success: false, message: 'User record not found' });
+    }
+
+    const userEmail = (dbUser.email || '').toLowerCase();
+    const userQcid = dbUser.qcid_number || '';
+    const userIdStr = String(dbUser.id);
+
+    // Fetch related records
+    const [aics, pwdSenior, soloParent, childWelfare, livelihood, appointments, cases] = await Promise.all([
+      db.query(
+        `SELECT reference_no as reference_number, category, assistance_title, status, created_at FROM aics_applications WHERE LOWER(email) = $1 OR qc_id = $2`,
+        [userEmail, userQcid]
+      ).catch(() => ({ rows: [] })),
+      db.query(
+        `SELECT reference_number, category, type, status, assigned_id_number, submitted_at as created_at FROM pwd_senior_applications WHERE LOWER(email) = $1 OR reference_number = $2`,
+        [userEmail, userQcid]
+      ).catch(() => ({ rows: [] })),
+      db.query(
+        `SELECT reference_number, 'Solo Parent' as category, application_type as type, application_status as status, solo_parent_id_number, assigned_id_number, created_at FROM solo_parent_applications WHERE user_id = $1 OR LOWER(email) = $2 OR qcid_number = $3`,
+        [userIdStr, userEmail, userQcid]
+      ).catch(() => ({ rows: [] })),
+      db.query(
+        `SELECT reference_number, 'Child Welfare' as category, program_type as type, application_status as status, created_at FROM child_welfare_applications WHERE user_id = $1 OR LOWER(guardian_email) = $2 OR LOWER(email) = $2`,
+        [userIdStr, userEmail]
+      ).catch(() => ({ rows: [] })),
+      db.query(
+        `SELECT reference_number, 'Livelihood & Training' as category, assistance_type as type, status, created_at FROM livelihood_applications WHERE user_id = $1 OR LOWER(email) = $2 OR qcid_no = $3`,
+        [userIdStr, userEmail, userQcid]
+      ).catch(() => ({ rows: [] })),
+      db.query(
+        `SELECT appointment_reference, service_type, appointment_date, appointment_time, status FROM appointments WHERE LOWER(email) = $1 OR qcid_no = $2`,
+        [userEmail, userQcid]
+      ).catch(() => ({ rows: [] })),
+      db.query(
+        `SELECT case_number, application_ref, program, case_type, status, priority, date_opened FROM case_records WHERE beneficiary_qcid = $1 OR LOWER(beneficiary_name) LIKE LOWER($2)`,
+        [userQcid, `%${dbUser.first_name || ''} ${dbUser.last_name || ''}%`]
+      ).catch(() => ({ rows: [] })),
+    ]);
+
+    const allApps = [
+      ...aics.rows.map(r => ({ ...r, module: 'AICS Assistance' })),
+      ...pwdSenior.rows.map(r => ({ ...r, module: r.category || 'PWD / Senior Citizen' })),
+      ...soloParent.rows.map(r => ({ ...r, module: 'Solo Parent Services' })),
+      ...childWelfare.rows.map(r => ({ ...r, module: 'Child Welfare Services' })),
+      ...livelihood.rows.map(r => ({ ...r, module: 'Livelihood & Training' })),
+    ];
+
+    const fullName = [dbUser.first_name, dbUser.middle_name, dbUser.last_name, dbUser.suffix]
+      .filter(Boolean)
+      .join(' ')
+      .trim() || 'Resident User';
+
+    const isAdmin = ['admin', 'administrator', 'super_admin'].includes(String(dbUser.role || '').toLowerCase());
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: `USR-${String(dbUser.id).padStart(4, '0')}`,
+        numericId: dbUser.id,
+        qcidNumber: dbUser.qcid_number || `110000${String(dbUser.id).padStart(9, '0')}`,
+        name: fullName,
+        firstName: dbUser.first_name || '',
+        lastName: dbUser.last_name || '',
+        middleName: dbUser.middle_name || '',
+        suffix: dbUser.suffix || '',
+        email: dbUser.email,
+        contactNumber: dbUser.mobile_number || '—',
+        role: isAdmin ? 'ADMINISTRATOR' : 'USER / BENEFICIARY',
+        status: String(dbUser.status || 'active').toLowerCase() === 'inactive' ? 'INACTIVE' : 'ACTIVE',
+        dateRegistered: dbUser.created_at,
+        lastLogin: dbUser.last_login || dbUser.updated_at || dbUser.created_at,
+        city: dbUser.city || 'QUEZON CITY',
+        barangay: dbUser.barangay || '',
+        street: dbUser.street || '',
+        houseNo: dbUser.house_no || '',
+        occupation: dbUser.occupation || '—',
+        sex: dbUser.sex || '—',
+        birthDate: dbUser.birth_date || '—',
+        applications: allApps,
+        appointments: appointments.rows,
+        cases: cases.rows,
+      },
+    });
+  } catch (err) {
+    console.error('Error in getUserById controller:', err);
+    return res.status(500).json({ success: false, message: 'Server error retrieving user details', error: err.message });
+  }
+};
+
+/**
+ * PATCH /api/users/:id/status or POST /api/users/:id/toggle-status
+ * Updates user account status between ACTIVE and INACTIVE
+ */
+exports.toggleUserStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body || {};
+    const cleanId = String(id).replace(/\D/g, '');
+
+    let newStatus = status;
+
+    // If no explicit status provided, toggle from current
+    if (!newStatus) {
+      const existing = await db.query('SELECT status FROM users WHERE id = $1', [cleanId]);
+      if (existing.rows.length > 0) {
+        const curr = String(existing.rows[0].status || 'active').toLowerCase();
+        newStatus = curr === 'active' ? 'inactive' : 'active';
+      } else {
+        newStatus = 'inactive';
+      }
+    }
+
+    const normStatus = newStatus.toLowerCase() === 'inactive' ? 'inactive' : 'active';
+
+    await db.query(
+      `UPDATE users SET status = $1, updated_at = NOW() WHERE id = $2 OR qcid_number = $3 OR LOWER(email) = $4`,
+      [normStatus, cleanId || '0', id, String(id).toLowerCase()]
+    );
+
+    // Also update in memory store if present
+    const memUser = memoryUsers.find(u => String(u.id) === String(id) || u.email.toLowerCase() === String(id).toLowerCase());
+    if (memUser) {
+      memUser.status = normStatus;
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Account status successfully updated to ${normStatus.toUpperCase()}`,
+      status: normStatus.toUpperCase(),
+    });
+  } catch (err) {
+    console.error('Error in toggleUserStatus controller:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update account status', error: err.message });
+  }
+};
+
+/**
+ * PUT /api/users/:id
+ * Updates editable user account fields (Name, Contact No, Role, Status)
+ */
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cleanId = String(id).replace(/\D/g, '');
+    const { firstName, lastName, middleName, suffix, mobileNumber, contactNumber, role, status } = req.body;
+
+    const contact = mobileNumber || contactNumber;
+    const normRole = (role && String(role).toLowerCase().includes('admin')) ? 'admin' : 'user';
+    const normStatus = (status && String(status).toLowerCase().includes('inactive')) ? 'inactive' : 'active';
+
+    const updateRes = await db.query(
+      `UPDATE users SET
+        first_name = COALESCE($1, first_name),
+        last_name = COALESCE($2, last_name),
+        middle_name = COALESCE($3, middle_name),
+        suffix = COALESCE($4, suffix),
+        mobile_number = COALESCE($5, mobile_number),
+        role = COALESCE($6, role),
+        status = COALESCE($7, status),
+        updated_at = NOW()
+       WHERE id = $8 OR qcid_number = $9 OR LOWER(email) = $10
+       RETURNING id, email, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, updated_at`,
+      [firstName, lastName, middleName, suffix, contact, normRole, normStatus, cleanId || '0', id, String(id).toLowerCase()]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User record not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'User account updated successfully',
+      user: updateRes.rows[0],
+    });
+  } catch (err) {
+    console.error('Error in updateUser controller:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update user account', error: err.message });
+  }
+};
+
+/**
+ * DELETE /api/users/:id
+ * Deletes user account
+ */
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cleanId = String(id).replace(/\D/g, '');
+
+    await db.query('DELETE FROM users WHERE id = $1 OR qcid_number = $2 OR LOWER(email) = $3', [cleanId || '0', id, String(id).toLowerCase()]);
+    memoryUsers = memoryUsers.filter(u => String(u.id) !== String(id) && u.email.toLowerCase() !== String(id).toLowerCase());
+
+    return res.status(200).json({
+      success: true,
+      message: 'User account deleted successfully',
+    });
+  } catch (err) {
+    console.error('Error in deleteUser controller:', err);
+    return res.status(500).json({ success: false, message: 'Failed to delete user account', error: err.message });
+  }
+};
+
 

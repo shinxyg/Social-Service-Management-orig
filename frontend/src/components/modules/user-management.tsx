@@ -1,6 +1,6 @@
-import { useState, type ReactElement } from "react"
+import { useState, useEffect, useMemo, type ReactElement } from "react"
 import {
-  UserCog,
+  Users,
   Search,
   Shield,
   CheckCircle2,
@@ -8,182 +8,235 @@ import {
   Mail,
   Clock,
   Eye,
+  Phone,
+  Calendar,
+  FileText,
+  CalendarCheck,
+  FolderKanban,
+  Edit,
+  Power,
+  RotateCcw,
+  Loader2,
+  AlertCircle,
+  MapPin,
+  Briefcase,
+  UserCheck,
 } from "lucide-react"
+import { API_BASE } from "../../config/api"
+import { subscribeToRealtimeChanges, notifyApplicationChange } from "../../utils/realtimeSync"
+
+const authHeaders = (): Record<string, string> => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
 
 // =====================================================================================
 // Types
 // =====================================================================================
 
-type UserRole = "Administrator" | "Social Worker" | "Encoder" | "Viewer"
-type UserStatus = "active" | "inactive"
+export type AccountRole = "ADMINISTRATOR" | "USER / BENEFICIARY"
+export type AccountStatus = "ACTIVE" | "INACTIVE"
 
-interface SystemUser {
+export interface ConnectedApp {
+  reference_number: string
+  category?: string
+  module?: string
+  type?: string
+  assistance_title?: string
+  status?: string
+  assigned_id_number?: string
+  solo_parent_id_number?: string
+  created_at?: string
+}
+
+export interface ConnectedAppointment {
+  appointment_reference: string
+  service_type?: string
+  appointment_date?: string
+  appointment_time?: string
+  status?: string
+}
+
+export interface ConnectedCase {
+  case_number: string
+  application_ref?: string
+  program?: string
+  case_type?: string
+  status?: string
+  priority?: string
+  date_opened?: string
+}
+
+export interface CentralUser {
   id: string
+  numericId?: number
+  qcidNumber?: string
   name: string
+  firstName?: string
+  lastName?: string
+  middleName?: string
+  suffix?: string
   email: string
-  role: UserRole
-  status: UserStatus
-  dateCreated: string
+  contactNumber: string
+  role: AccountRole
+  status: AccountStatus
+  dateRegistered: string
   lastLogin: string
-  modulesAccess: string[]
+  applicationsCount?: number
+  appointmentsCount?: number
+  address?: string
+  occupation?: string
+  sex?: string
+  birthDate?: string
+  applications?: ConnectedApp[]
+  appointments?: ConnectedAppointment[]
+  cases?: ConnectedCase[]
+}
+
+export interface UserStats {
+  total: number
+  active: number
+  inactive: number
+  administrators: number
 }
 
 // =====================================================================================
-// Mock data
+// Utility Helpers
 // =====================================================================================
 
-const MOCK_USERS: SystemUser[] = [
-  {
-    id: "USR-001",
-    name: "Admin User",
-    email: "admin.user@govserve.qc.gov.ph",
-    role: "Administrator",
-    status: "active",
-    dateCreated: "2025-11-02",
-    lastLogin: "2026-08-22T16:40:00",
-    modulesAccess: ["AICS", "PWD & Senior Citizen", "Solo Parent & Child Welfare", "Livelihood & Training", "Financial Aid", "Case Management", "Reports & Analytics"],
-  },
-  {
-    id: "USR-002",
-    name: "Jonalyn P.",
-    email: "jonalyn.p@govserve.qc.gov.ph",
-    role: "Encoder",
-    status: "active",
-    dateCreated: "2026-01-15",
-    lastLogin: "2026-08-22T09:12:00",
-    modulesAccess: ["AICS", "Livelihood & Training", "Solo Parent & Child Welfare"],
-  },
-  {
-    id: "USR-003",
-    name: "Ma. Teresa Lopez",
-    email: "teresa.lopez@govserve.qc.gov.ph",
-    role: "Social Worker",
-    status: "active",
-    dateCreated: "2026-02-20",
-    lastLogin: "2026-08-21T14:05:00",
-    modulesAccess: ["PWD & Senior Citizen", "Solo Parent & Child Welfare", "Case Management", "Appointments"],
-  },
-  {
-    id: "USR-004",
-    name: "Ronald Cruz",
-    email: "ronald.cruz@govserve.qc.gov.ph",
-    role: "Encoder",
-    status: "inactive",
-    dateCreated: "2026-03-10",
-    lastLogin: "2026-06-30T10:22:00",
-    modulesAccess: ["Financial Aid"],
-  },
-  {
-    id: "USR-005",
-    name: "Ivy Santos",
-    email: "ivy.santos@govserve.qc.gov.ph",
-    role: "Administrator",
-    status: "active",
-    dateCreated: "2025-12-05",
-    lastLogin: "2026-08-20T08:47:00",
-    modulesAccess: ["AICS", "PWD & Senior Citizen", "Solo Parent & Child Welfare", "Livelihood & Training", "Financial Aid", "Case Management", "Reports & Analytics", "Activity Log"],
-  },
-  {
-    id: "USR-006",
-    name: "Miguel Torres",
-    email: "miguel.torres@govserve.qc.gov.ph",
-    role: "Viewer",
-    status: "active",
-    dateCreated: "2026-05-18",
-    lastLogin: "2026-08-18T11:30:00",
-    modulesAccess: ["Reports & Analytics"],
-  },
-]
-
-// =====================================================================================
-// Theme
-// =====================================================================================
-
-const roleTheme: Record<UserRole, { chip: string; icon: ReactElement }> = {
-  Administrator: { chip: "bg-indigo-100 text-indigo-700", icon: <Shield className="h-3.5 w-3.5" /> },
-  "Social Worker": { chip: "bg-blue-100 text-blue-700", icon: <UserCog className="h-3.5 w-3.5" /> },
-  Encoder: { chip: "bg-amber-100 text-amber-700", icon: <UserCog className="h-3.5 w-3.5" /> },
-  Viewer: { chip: "bg-slate-100 text-slate-700", icon: <Eye className="h-3.5 w-3.5" /> },
+function formatDateTime(iso?: string) {
+  if (!iso) return "—"
+  try {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return iso
+    return `${d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+  } catch {
+    return iso
+  }
 }
 
-const DEFAULT_ROLE_THEME = {
-  chip: "bg-slate-100 text-slate-700",
-  icon: <UserCog className="h-3.5 w-3.5" />,
+function formatDateOnly(iso?: string) {
+  if (!iso) return "—"
+  try {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return iso
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+  } catch {
+    return iso
+  }
 }
 
-function getRoleTheme(role?: string) {
-  if (!role) return DEFAULT_ROLE_THEME
-  if (roleTheme[role as UserRole]) return roleTheme[role as UserRole]
-
-  const lower = role.toLowerCase()
-  if (lower.includes("admin")) return roleTheme["Administrator"]
-  if (lower.includes("worker") || lower.includes("social")) return roleTheme["Social Worker"]
-  if (lower.includes("encoder") || lower.includes("staff")) return roleTheme["Encoder"]
-  if (lower.includes("viewer") || lower.includes("user")) return roleTheme["Viewer"]
-
-  return DEFAULT_ROLE_THEME
-}
-
-const ROLE_OPTIONS: UserRole[] = ["Administrator", "Social Worker", "Encoder", "Viewer"]
-
-function formatDateTime(iso: string) {
-  const d = new Date(iso)
-  return `${d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-}
-
-function initials(name: string) {
-  const parts = name.trim().split(" ")
+function getInitials(name?: string) {
+  if (!name) return "QC"
+  const parts = name.trim().split(" ").filter(Boolean)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
   return `${parts[0]?.charAt(0) ?? ""}${parts[parts.length - 1]?.charAt(0) ?? ""}`.toUpperCase()
 }
 
 // =====================================================================================
-// User Card
+// User Card Component
 // =====================================================================================
 
-function UserCard({ u, onOpen }: { u: SystemUser; onOpen: (id: string) => void }) {
-  const rt = getRoleTheme(u.role)
+function UserCard({
+  u,
+  onManage,
+}: {
+  u: CentralUser
+  onManage: (user: CentralUser) => void
+}) {
+  const isAdmin = u.role === "ADMINISTRATOR"
+  const isActive = u.status === "ACTIVE"
+
   return (
     <div
-      className={`border rounded-xl p-4 transition-shadow hover:shadow-sm ${
-        u.status === "active" ? "bg-white border-border" : "bg-slate-50/60 border-slate-200"
+      className={`border rounded-2xl p-4 md:p-5 transition-all shadow-2xs hover:shadow-sm ${
+        isActive ? "bg-white border-slate-200" : "bg-slate-50/80 border-slate-200 opacity-90"
       }`}
     >
       <div className="flex items-start gap-4">
-        <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-semibold">
-          {initials(u.name)}
+        {/* Avatar */}
+        <div
+          className={`hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white font-bold text-sm shadow-xs ${
+            isAdmin
+              ? "bg-gradient-to-br from-indigo-600 to-indigo-800"
+              : "bg-gradient-to-br from-blue-600 to-sky-700"
+          }`}
+        >
+          {getInitials(u.name)}
         </div>
+
+        {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <p className="text-sm font-semibold text-foreground">{u.name}</p>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${rt?.chip || 'bg-slate-100 text-slate-700'}`}>
-              {rt?.icon}
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <h3 className="text-base font-bold text-slate-900 tracking-tight truncate">
+              {u.name}
+            </h3>
+
+            {/* Role Badge */}
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                isAdmin
+                  ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                  : "bg-blue-50 text-blue-700 border border-blue-200"
+              }`}
+            >
+              {isAdmin ? <Shield className="h-3 w-3" /> : <UserCheck className="h-3 w-3" />}
               {u.role}
             </span>
-          </div>
-          <p className="text-xs text-muted-foreground mb-2 inline-flex items-center gap-1.5">
-            <Mail className="h-3.5 w-3.5" />
-            {u.email}
-          </p>
-          <div className="flex items-center gap-4 flex-wrap text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5" />
-              Last login: {formatDateTime(u.lastLogin)}
+
+            {/* Status Badge */}
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                isActive
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : "bg-rose-50 text-rose-700 border border-rose-200"
+              }`}
+            >
+              {isActive ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+              {u.status}
             </span>
-            <span>{u.modulesAccess.length} module{u.modulesAccess.length !== 1 ? "s" : ""} access</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-1 gap-x-4 text-xs text-slate-600 mb-2.5">
+            <p className="flex items-center gap-1.5 truncate">
+              <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span className="truncate">{u.email}</span>
+            </p>
+            <p className="flex items-center gap-1.5 truncate">
+              <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span>{u.contactNumber || "—"}</span>
+            </p>
+            <p className="flex items-center gap-1.5 truncate">
+              <span className="font-mono font-bold text-slate-500">{u.id}</span>
+              {u.qcidNumber && <span className="text-slate-400">· {u.qcidNumber}</span>}
+            </p>
+          </div>
+
+          {/* Activity Meta */}
+          <div className="flex items-center gap-4 flex-wrap text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="h-3 w-3 text-slate-400" />
+              Registered: {formatDateOnly(u.dateRegistered)}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3 w-3 text-slate-400" />
+              Last Login: {formatDateTime(u.lastLogin)}
+            </span>
+            {u.applicationsCount !== undefined && u.applicationsCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-blue-700 font-semibold">
+                <FileText className="h-3 w-3" />
+                {u.applicationsCount} Linked Application{u.applicationsCount !== 1 ? "s" : ""}
+              </span>
+            )}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-              u.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-            }`}
-          >
-            {u.status === "active" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-            {u.status === "active" ? "Active" : "Inactive"}
-          </span>
+
+        {/* Action Button */}
+        <div className="flex flex-col items-end justify-center shrink-0 self-center">
           <button
-            onClick={() => onOpen(u.id)}
-            className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+            type="button"
+            onClick={() => onManage(u)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow-md cursor-pointer"
           >
             <Eye className="h-3.5 w-3.5" />
             Manage
@@ -195,124 +248,401 @@ function UserCard({ u, onOpen }: { u: SystemUser; onOpen: (id: string) => void }
 }
 
 // =====================================================================================
-// User Profile Modal
+// Manage User Modal Component
 // =====================================================================================
 
-function UserProfileModal({
-  u,
+function ManageUserModal({
+  user,
   onClose,
-  onUpdateRole,
-  onToggleStatus,
+  onStatusToggle,
+  onUpdateUser,
 }: {
-  u: SystemUser
+  user: CentralUser
   onClose: () => void
-  onUpdateRole: (id: string, role: UserRole) => void
-  onToggleStatus: (id: string) => void
+  onStatusToggle: (id: string, currentStatus: AccountStatus) => Promise<void>
+  onUpdateUser: (id: string, data: Partial<CentralUser>) => Promise<void>
 }) {
-  const [role, setRole] = useState<UserRole>(u.role)
-  const rt = getRoleTheme(u.role)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editFirstName, setEditFirstName] = useState(user.firstName || "")
+  const [editLastName, setEditLastName] = useState(user.lastName || "")
+  const [editContact, setEditContact] = useState(user.contactNumber || "")
+  const [editRole, setEditRole] = useState<AccountRole>(user.role)
+
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+  const [detailedUser, setDetailedUser] = useState<CentralUser>(user)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false)
+
+  // Fetch full details with linked applications & appointments
+  useEffect(() => {
+    let isMounted = true
+    const fetchFullDetails = async () => {
+      setIsLoadingDetails(true)
+      try {
+        const res = await fetch(`${API_BASE}/api/users/${user.numericId || user.id}`, {
+          headers: authHeaders(),
+        })
+        if (res.ok && isMounted) {
+          const data = await res.json()
+          if (data.user) {
+            setDetailedUser(data.user)
+            setEditFirstName(data.user.firstName || "")
+            setEditLastName(data.user.lastName || "")
+            setEditContact(data.user.contactNumber || "")
+            setEditRole(data.user.role || user.role)
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch detailed user profile:", err)
+      } finally {
+        if (isMounted) setIsLoadingDetails(false)
+      }
+    }
+
+    fetchFullDetails()
+    return () => {
+      isMounted = false
+    }
+  }, [user.id, user.numericId])
+
+  const handleSaveEdit = async () => {
+    setIsSaving(true)
+    try {
+      await onUpdateUser(user.numericId ? String(user.numericId) : user.id, {
+        firstName: editFirstName,
+        lastName: editLastName,
+        contactNumber: editContact,
+        role: editRole,
+      })
+      setDetailedUser((prev) => ({
+        ...prev,
+        firstName: editFirstName,
+        lastName: editLastName,
+        name: `${editFirstName} ${editLastName}`.trim(),
+        contactNumber: editContact,
+        role: editRole,
+      }))
+      setIsEditing(false)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleToggle = async () => {
+    setIsTogglingStatus(true)
+    try {
+      const nextStatus = detailedUser.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+      await onStatusToggle(user.numericId ? String(user.numericId) : user.id, detailedUser.status)
+      setDetailedUser((prev) => ({ ...prev, status: nextStatus }))
+    } finally {
+      setIsTogglingStatus(false)
+    }
+  }
+
+  const isActive = detailedUser.status === "ACTIVE"
+  const isAdmin = detailedUser.role === "ADMINISTRATOR"
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl my-8">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl my-8 overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-6 pt-5 pb-4 border-b border-border flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white text-base font-semibold">
-              {initials(u.name)}
+        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-start justify-between gap-4 shrink-0">
+          <div className="flex items-center gap-4">
+            <div
+              className={`h-14 w-14 shrink-0 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-sm ${
+                isAdmin
+                  ? "bg-gradient-to-br from-indigo-600 to-indigo-800"
+                  : "bg-gradient-to-br from-blue-600 to-sky-700"
+              }`}
+            >
+              {getInitials(detailedUser.name)}
             </div>
-            <div className="min-w-0">
-              <h2 className="text-lg font-bold text-foreground truncate">{u.name}</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">{u.email}</p>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${rt?.chip || 'bg-slate-100 text-slate-700'}`}>
-                  {rt?.icon}
-                  {u.role}
-                </span>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-lg md:text-xl font-extrabold text-slate-900">
+                  {detailedUser.name}
+                </h2>
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                    u.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                    isAdmin
+                      ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                      : "bg-blue-50 text-blue-700 border border-blue-200"
                   }`}
                 >
-                  {u.status === "active" ? "Active" : "Inactive"}
+                  {isAdmin ? <Shield className="h-3 w-3" /> : <UserCheck className="h-3 w-3" />}
+                  {detailedUser.role}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                    isActive
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-rose-50 text-rose-700 border border-rose-200"
+                  }`}
+                >
+                  {isActive ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                  {detailedUser.status}
                 </span>
               </div>
+              <p className="text-xs text-slate-500 mt-1 font-mono">
+                User ID: <span className="font-bold text-slate-800">{detailedUser.id}</span>
+                {detailedUser.qcidNumber && <span> · QCID: {detailedUser.qcidNumber}</span>}
+              </p>
             </div>
           </div>
+
           <button
             onClick={onClose}
-            aria-label="Close"
-            className="text-muted-foreground hover:text-foreground hover:bg-gray-100 rounded-full h-8 w-8 flex items-center justify-center shrink-0 transition-colors text-xl font-light"
+            className="text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-full h-8 w-8 flex items-center justify-center transition-colors text-2xl font-light cursor-pointer"
           >
             ×
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 border border-slate-100 rounded-xl p-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Date Created</p>
-              <p className="text-foreground font-medium mt-0.5">{u.dateCreated}</p>
+        {/* Modal Scrollable Body */}
+        <div className="p-6 space-y-6 overflow-y-auto flex-1 text-slate-800">
+          {/* USER INFORMATION */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-blue-600" />
+                User Information
+              </h3>
+              {!isEditing ? (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
+                >
+                  <Edit className="h-3 w-3" />
+                  Edit User
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={handleSaveEdit}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save Changes"}
+                  </button>
+                </div>
+              )}
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Last Login</p>
-              <p className="text-foreground font-medium mt-0.5">{formatDateTime(u.lastLogin)}</p>
-            </div>
-          </div>
 
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full mt-2 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-            {role !== u.role && (
-              <button
-                onClick={() => onUpdateRole(u.id, role)}
-                className="mt-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
-              >
-                Save Role Change
-              </button>
+            {isEditing ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 uppercase block mb-1">First Name</label>
+                  <input
+                    type="text"
+                    value={editFirstName}
+                    onChange={(e) => setEditFirstName(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 uppercase block mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    value={editLastName}
+                    onChange={(e) => setEditLastName(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 uppercase block mb-1">Contact Number</label>
+                  <input
+                    type="text"
+                    value={editContact}
+                    onChange={(e) => setEditContact(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 uppercase block mb-1">Account Role</label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as AccountRole)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <option value="USER / BENEFICIARY">USER / BENEFICIARY</option>
+                    <option value="ADMINISTRATOR">ADMINISTRATOR</option>
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+                <div>
+                  <p className="text-slate-400 font-semibold uppercase">Full Name</p>
+                  <p className="font-bold text-slate-900 mt-0.5">{detailedUser.name}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-semibold uppercase">Email Address</p>
+                  <p className="font-bold text-slate-900 mt-0.5">{detailedUser.email}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-semibold uppercase">Contact Number</p>
+                  <p className="font-bold text-slate-900 mt-0.5">{detailedUser.contactNumber || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-semibold uppercase">User ID</p>
+                  <p className="font-mono font-bold text-slate-900 mt-0.5">{detailedUser.id}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-semibold uppercase">Account Role</p>
+                  <p className="font-bold text-slate-900 mt-0.5">{detailedUser.role}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-semibold uppercase">Account Status</p>
+                  <p className={`font-bold mt-0.5 ${isActive ? "text-emerald-700" : "text-rose-700"}`}>
+                    {detailedUser.status}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-semibold uppercase">Date Registered</p>
+                  <p className="font-bold text-slate-900 mt-0.5">{formatDateTime(detailedUser.dateRegistered)}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-semibold uppercase">Last Login</p>
+                  <p className="font-bold text-slate-900 mt-0.5">{formatDateTime(detailedUser.lastLogin)}</p>
+                </div>
+                {detailedUser.address && (
+                  <div className="sm:col-span-2 md:col-span-3">
+                    <p className="text-slate-400 font-semibold uppercase">Registered Address</p>
+                    <p className="font-medium text-slate-900 mt-0.5 flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      {detailedUser.address}
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 block">
-              Modules Access ({u.modulesAccess.length})
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {u.modulesAccess.map((m) => (
-                <span key={m} className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                  {m}
-                </span>
-              ))}
-            </div>
+          {/* CONNECTED APPLICATION RECORDS */}
+          <div className="space-y-3 pt-2">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-blue-600" />
+              Connected Application Records ({detailedUser.applications?.length || 0})
+            </h3>
+
+            {isLoadingDetails ? (
+              <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-slate-200">
+                <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2 text-blue-600" />
+                Loading connected applications...
+              </div>
+            ) : detailedUser.applications && detailedUser.applications.length > 0 ? (
+              <div className="space-y-2">
+                {detailedUser.applications.map((app, idx) => (
+                  <div
+                    key={app.reference_number || idx}
+                    className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs gap-3"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono font-bold text-blue-800">
+                          REF {app.reference_number}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">
+                          {app.module || app.category || "Social Service"}
+                        </span>
+                        {app.type && (
+                          <span className="text-slate-500 font-medium">({app.type})</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Submitted: {formatDateOnly(app.created_at)}
+                        {(app.assigned_id_number || app.solo_parent_id_number) && (
+                          <span className="font-mono font-bold text-emerald-700 ml-2">
+                            · ID: {app.assigned_id_number || app.solo_parent_id_number}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                        app.status === "approved" || app.status === "completed"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : app.status === "rejected"
+                          ? "bg-rose-100 text-rose-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {app.status || "Pending"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-400">
+                No submitted applications found for this user account yet.
+              </div>
+            )}
           </div>
+
+          {/* CONNECTED APPOINTMENTS */}
+          {detailedUser.appointments && detailedUser.appointments.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <CalendarCheck className="h-3.5 w-3.5 text-blue-600" />
+                Connected Appointments ({detailedUser.appointments.length})
+              </h3>
+              <div className="space-y-2">
+                {detailedUser.appointments.map((apt, idx) => (
+                  <div
+                    key={apt.appointment_reference || idx}
+                    className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <p className="font-mono font-bold text-slate-800">{apt.appointment_reference}</p>
+                      <p className="text-slate-500 text-[11px]">
+                        {apt.service_type} · {apt.appointment_date} {apt.appointment_time}
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-slate-200 text-slate-800 font-bold text-[10px] uppercase">
+                      {apt.status || "Booked"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border flex justify-between gap-3">
+        {/* Modal Footer: Account Actions */}
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
+          <div>
+            <button
+              type="button"
+              disabled={isTogglingStatus}
+              onClick={handleToggle}
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 ${
+                isActive
+                  ? "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              }`}
+            >
+              <Power className="h-3.5 w-3.5" />
+              {isTogglingStatus
+                ? "Updating..."
+                : isActive
+                ? "Deactivate Account"
+                : "Activate Account"}
+            </button>
+          </div>
+
           <button
-            onClick={() => onToggleStatus(u.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              u.status === "active"
-                ? "bg-red-50 text-red-700 hover:bg-red-100"
-                : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-            }`}
-          >
-            {u.status === "active" ? "Deactivate Account" : "Activate Account"}
-          </button>
-          <button
+            type="button"
             onClick={onClose}
-            className="px-6 py-2 rounded-lg border border-border text-foreground font-medium hover:bg-gray-50 transition-colors"
+            className="px-5 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors cursor-pointer"
           >
             Close
           </button>
@@ -323,132 +653,337 @@ function UserProfileModal({
 }
 
 // =====================================================================================
-// Main Component
+// Main Admin User Management Component
 // =====================================================================================
 
 export default function UserManagement() {
-  const [users, setUsers] = useState<SystemUser[]>(MOCK_USERS)
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [users, setUsers] = useState<CentralUser[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [selectedUser, setSelectedUser] = useState<CentralUser | null>(null)
+
+  // Filters
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterRole, setFilterRole] = useState<"all" | UserRole>("all")
-  const [filterStatus, setFilterStatus] = useState<"all" | UserStatus>("all")
+  const [filterRole, setFilterRole] = useState<"ALL" | AccountRole>("ALL")
+  const [filterStatus, setFilterStatus] = useState<"ALL" | AccountStatus>("ALL")
 
-  const selectedUser = users.find((u) => u.id === selectedUserId) ?? null
-
-  const handleUpdateRole = (id: string, role: UserRole) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)))
+  // Fetch real central users directly from Backend API
+  const loadUsers = async (silent = false) => {
+    if (!silent) setIsLoading(true)
+    setErrorMessage(null)
+    try {
+      const res = await fetch(`${API_BASE}/api/users`, {
+        headers: authHeaders(),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.users && Array.isArray(data.users)) {
+          setUsers(data.users)
+        }
+      } else {
+        if (!silent) setErrorMessage("Failed to load user accounts from database.")
+      }
+    } catch (err) {
+      console.warn("Could not fetch user records:", err)
+      if (!silent) setErrorMessage("Could not connect to database server.")
+    } finally {
+      if (!silent) setIsLoading(false)
+    }
   }
 
-  const handleToggleStatus = (id: string) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, status: u.status === "active" ? "inactive" : "active" } : u))
-    )
+  useEffect(() => {
+    loadUsers(false)
+
+    const interval = setInterval(() => loadUsers(true), 3500)
+    const handleSync = () => loadUsers(true)
+
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      loadUsers(true)
+    })
+
+    window.addEventListener("focus", handleSync)
+    window.addEventListener("application_updated", handleSync)
+    window.addEventListener("applications_updated", handleSync)
+    window.addEventListener("user_updated", handleSync)
+
+    return () => {
+      clearInterval(interval)
+      unsubscribe()
+      window.removeEventListener("focus", handleSync)
+      window.removeEventListener("application_updated", handleSync)
+      window.removeEventListener("applications_updated", handleSync)
+      window.removeEventListener("user_updated", handleSync)
+    }
+  }, [])
+
+  // Toggle Account Status Action
+  const handleToggleStatus = async (id: string, currentStatus: AccountStatus) => {
+    const nextStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          ...authHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: nextStatus }),
+      })
+      if (res.ok) {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === id || String(u.numericId) === id ? { ...u, status: nextStatus } : u
+          )
+        )
+        notifyApplicationChange("APPLICATION_APPROVED", "all", id)
+      }
+    } catch (err) {
+      console.error("Failed to toggle status:", err)
+    }
   }
 
-  const filtered = users.filter((u) => {
-    const matchRole = filterRole === "all" || u.role === filterRole
-    const matchStatus = filterStatus === "all" || u.status === filterStatus
-    const matchSearch =
-      searchTerm === "" ||
-      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchRole && matchStatus && matchSearch
-  })
-
-  const stats = {
-    total: users.length,
-    active: users.filter((u) => u.status === "active").length,
-    admins: users.filter((u) => u.role === "Administrator").length,
-    encoders: users.filter((u) => u.role === "Encoder").length,
+  // Edit User Details Action
+  const handleUpdateUser = async (id: string, data: Partial<CentralUser>) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${id}`, {
+        method: "PUT",
+        headers: {
+          ...authHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+      if (res.ok) {
+        await loadUsers(true)
+        notifyApplicationChange("APPLICATION_APPROVED", "all", id)
+      }
+    } catch (err) {
+      console.error("Failed to update user:", err)
+    }
   }
+
+  // Filter users
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchRole = filterRole === "ALL" || u.role === filterRole
+      const matchStatus = filterStatus === "ALL" || u.status === filterStatus
+
+      if (searchTerm.trim() === "") return matchRole && matchStatus
+
+      const term = searchTerm.toLowerCase().trim()
+      const matchName = u.name.toLowerCase().includes(term)
+      const matchEmail = u.email.toLowerCase().includes(term)
+      const matchContact = (u.contactNumber || "").toLowerCase().includes(term)
+      const matchId = (u.id || "").toLowerCase().includes(term)
+      const matchQcid = (u.qcidNumber || "").toLowerCase().includes(term)
+
+      return matchRole && matchStatus && (matchName || matchEmail || matchContact || matchId || matchQcid)
+    })
+  }, [users, filterRole, filterStatus, searchTerm])
+
+  // Exact Dashboard Stats as strictly required:
+  // TOTAL USERS, ACTIVE USERS, INACTIVE USERS, ADMINISTRATORS
+  const stats: UserStats = useMemo(() => {
+    return {
+      total: users.length,
+      active: users.filter((u) => u.status === "ACTIVE").length,
+      inactive: users.filter((u) => u.status === "INACTIVE").length,
+      administrators: users.filter((u) => u.role === "ADMINISTRATOR").length,
+    }
+  }, [users])
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center gap-2">
-        <h1 className="text-3xl font-bold text-foreground">User Management</h1>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Users", value: stats.total, color: "blue" },
-          { label: "Active", value: stats.active, color: "green" },
-          { label: "Administrators", value: stats.admins, color: "indigo" },
-          { label: "Encoders", value: stats.encoders, color: "amber" },
-        ].map((stat) => (
-          <div key={stat.label} className={`rounded-lg p-4 bg-${stat.color}-50 border border-${stat.color}-200`}>
-            <p className={`text-xs font-semibold text-${stat.color}-700 uppercase`}>{stat.label}</p>
-            <p className={`text-3xl font-bold text-${stat.color}-700 mt-2`}>{stat.value}</p>
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto font-sans">
+      {/* Title Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
+              <Users className="h-4 w-4" />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              User Management
+            </h1>
           </div>
-        ))}
+          <p className="text-xs md:text-sm text-slate-500">
+            Central account supervision connected to citizen registration, authentication, profiles, and application records.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => loadUsers(false)}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+        >
+          <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
+          Refresh Users
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-card border border-border rounded-lg p-4 space-y-4">
-        <div className="flex items-center gap-2">
-          <Search className="h-4 w-4 text-muted-foreground" />
+      {/* 2. DASHBOARD KPI CARDS (TOTAL USERS, ACTIVE USERS, INACTIVE USERS, ADMINISTRATORS) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* TOTAL USERS */}
+        <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Total Users
+            </span>
+            <Users className="h-4 w-4 text-blue-600" />
+          </div>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-900">{stats.total}</p>
+          <span className="text-[11px] font-medium mt-1 block text-slate-400">
+            Registered citizen accounts
+          </span>
+        </div>
+
+        {/* ACTIVE USERS */}
+        <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Active Users
+            </span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+          </div>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-900">{stats.active}</p>
+          <span className="text-[11px] font-medium mt-1 block text-slate-400">
+            Authorized to login &amp; apply
+          </span>
+        </div>
+
+        {/* INACTIVE USERS */}
+        <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Inactive Users
+            </span>
+            <XCircle className="h-4 w-4 text-rose-500" />
+          </div>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-900">{stats.inactive}</p>
+          <span className="text-[11px] font-medium mt-1 block text-slate-400">
+            Deactivated / Login restricted
+          </span>
+        </div>
+
+        {/* ADMINISTRATORS */}
+        <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Administrators
+            </span>
+            <Shield className="h-4 w-4 text-indigo-600" />
+          </div>
+          <p className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-900">{stats.administrators}</p>
+          <span className="text-[11px] font-medium mt-1 block text-slate-400">
+            System administration roles
+          </span>
+        </div>
+      </div>
+
+      {/* 3. FILTERS & SEARCH */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-2xs space-y-4">
+        {/* Search Bar */}
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all">
+          <Search className="h-4 w-4 text-slate-400 shrink-0" />
           <input
             type="text"
-            placeholder="Search by name or email..."
+            placeholder="Search by full name, email, contact number, QCID, or User ID (USR-...)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full text-xs md:text-sm bg-transparent border-none outline-none text-slate-900 placeholder:text-slate-400"
           />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="text-xs text-slate-400 hover:text-slate-700 font-bold px-1 cursor-pointer"
+            >
+              Clear
+            </button>
+          )}
         </div>
-        <div className="flex flex-wrap gap-4">
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground">Role</label>
+
+        {/* Dropdown Filters (Role & Status) */}
+        <div className="flex items-center gap-4 flex-wrap text-xs">
+          {/* Role Filter: All Roles, User / Beneficiary, Administrator */}
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-600">Account Role:</span>
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value as any)}
-              className="mt-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 block"
+              className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
             >
-              <option value="all">All Roles</option>
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
+              <option value="ALL">All Roles</option>
+              <option value="USER / BENEFICIARY">User / Beneficiary</option>
+              <option value="ADMINISTRATOR">Administrator</option>
             </select>
           </div>
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground">Status</label>
+
+          {/* Status Filter: All Statuses, Active, Inactive */}
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-600">Account Status:</span>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="mt-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 block"
+              className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
             >
-              <option value="all">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="ALL">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
             </select>
+          </div>
+
+          <div className="ml-auto text-xs text-slate-400">
+            Showing <strong className="text-slate-700">{filteredUsers.length}</strong> of {users.length} registered accounts
           </div>
         </div>
       </div>
 
-      {/* List */}
+      {/* 4. USER LIST */}
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Users ({filtered.length})</h2>
-        {filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <UserCog className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-            <p className="text-muted-foreground">No users found</p>
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-slate-900 tracking-tight">
+            Registered Accounts ({filteredUsers.length})
+          </h2>
+        </div>
+
+        {isLoading ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-400 shadow-2xs">
+            <Loader2 className="h-6 w-6 text-blue-600 animate-spin mx-auto mb-2" />
+            <p className="text-xs font-semibold text-slate-600">Loading central accounts from database...</p>
+          </div>
+        ) : errorMessage ? (
+          <div className="bg-white border border-rose-200 rounded-2xl p-8 text-center text-rose-700 shadow-2xs space-y-2">
+            <AlertCircle className="h-6 w-6 text-rose-500 mx-auto" />
+            <p className="text-xs font-bold">{errorMessage}</p>
+            <button
+              onClick={() => loadUsers(false)}
+              className="px-4 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold border border-rose-300 hover:bg-rose-100"
+            >
+              Retry
+            </button>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-400 shadow-2xs space-y-2">
+            <Users className="h-10 w-10 text-slate-300 mx-auto" />
+            <p className="text-sm font-bold text-slate-700">No user accounts found</p>
+            <p className="text-xs text-slate-500">
+              {searchTerm ? "No users match your search criteria." : "No registered citizen accounts in the system yet."}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {filtered.map((u) => (
-              <UserCard key={u.id} u={u} onOpen={setSelectedUserId} />
+            {filteredUsers.map((u) => (
+              <UserCard key={u.id} u={u} onManage={setSelectedUser} />
             ))}
           </div>
         )}
       </div>
 
+      {/* Manage User Modal */}
       {selectedUser && (
-        <UserProfileModal
-          u={selectedUser}
-          onClose={() => setSelectedUserId(null)}
-          onUpdateRole={handleUpdateRole}
-          onToggleStatus={handleToggleStatus}
+        <ManageUserModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onStatusToggle={handleToggleStatus}
+          onUpdateUser={handleUpdateUser}
         />
       )}
     </div>

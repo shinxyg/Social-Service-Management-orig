@@ -116,6 +116,8 @@ async function initDb() {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_day VARCHAR(10);
       ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_year VARCHAR(10);
       ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo_url TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
 
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
@@ -150,15 +152,12 @@ async function initDb() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
-      -- Seed default admin and staff accounts
-      INSERT INTO users (email, password, first_name, last_name, role, is_email_verified, qcid_number)
+      -- Seed default administrator account
+      INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
       VALUES 
-        ('admin@quezoncity.gov.ph', 'admin123', 'System', 'Administrator', 'staff', true, '110000116932100'),
-        ('admin', 'admin123', 'System', 'Administrator', 'staff', true, '110000116932100'),
-        ('staff@quezoncity.gov.ph', 'staff123', 'Social', 'Worker', 'staff', true, '110000116932101'),
-        ('staff', 'staff123', 'Social', 'Worker', 'staff', true, '110000116932101'),
-        ('superadmin', 'changeme', 'Super', 'Admin', 'super_admin', true, '110000116932102')
-      ON CONFLICT (email) DO NOTHING;
+        ('admin@quezoncity.gov.ph', 'admin123', 'System', 'Administrator', 'admin', 'active', true, '110000116932100'),
+        ('admin', 'admin123', 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
+      ON CONFLICT (email) DO UPDATE SET role = 'admin', status = 'active';
 
       -- Archive column support for all application categories
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
