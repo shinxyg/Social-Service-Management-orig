@@ -876,7 +876,7 @@ export default function PWDSocialAssistanceWizard({
     if (validFiles.length === 0) return
     setUploadedDocs((prev) => ({
       ...prev,
-      [docId]: [...(prev[docId] || []), ...validFiles],
+      [docId]: [validFiles[0]],
     }))
   }
 
@@ -1581,7 +1581,6 @@ export default function PWDSocialAssistanceWizard({
                             type="file"
                             id={inputId}
                             key={`${inputId}-${files.length}`}
-                            multiple
                             accept=".jpg,.jpeg,.png,.webp,image/*"
                             className="hidden"
                             onChange={(e) => {

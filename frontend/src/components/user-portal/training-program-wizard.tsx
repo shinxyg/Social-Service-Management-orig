@@ -288,7 +288,6 @@ function DocumentUploadRow({
         type="file"
         id={inputId}
         key={`${inputId}-${files.length}`}
-        multiple
         accept=".jpg,.jpeg,.png,.webp,image/*"
         className="hidden"
         onChange={(e) => {
@@ -387,7 +386,7 @@ export default function TrainingProgramWizard({ onBack }: TrainingProgramWizardP
     }
 
     if (validFiles.length === 0) return
-    setUploadedDocs((prev) => ({ ...prev, [docId]: [...(prev[docId] || []), ...validFiles] }))
+    setUploadedDocs((prev) => ({ ...prev, [docId]: [validFiles[0]] }))
   }
   const handleRemoveFile = (docId: string, fileIndex: number) => {
     setUploadedDocs((prev) => {

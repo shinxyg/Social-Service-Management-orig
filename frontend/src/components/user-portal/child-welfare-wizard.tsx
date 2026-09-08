@@ -643,7 +643,7 @@ export default function ChildWelfareApplicationWizard({
     const fileArray = Array.from(files)
     setUploadedFiles((prev) => ({
       ...prev,
-      [docId]: [...(prev[docId] || []), ...fileArray],
+      [docId]: [fileArray[0]],
     }))
   }
 
@@ -1650,7 +1650,6 @@ export default function ChildWelfareApplicationWizard({
                             {language === "tl" ? "MAG-UPLOAD NG FILE" : language === "bis" ? "PAG-UPLOAD OG FILE" : "CHOOSE FILE"}
                             <input
                               type="file"
-                              multiple
                               accept="image/*,.pdf"
                               onChange={(e) => handleFileUpload(doc.id, e.target.files)}
                               className="sr-only"

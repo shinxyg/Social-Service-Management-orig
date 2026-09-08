@@ -211,20 +211,25 @@ export default function LivelihoodApplicationWizard({
     const files = e.target.files
     if (!files || files.length === 0) return
 
-    const newDocs: UploadedDocItem[] = Array.from(files).map((file) => ({
-      id: `${type}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      type,
-      label:
-        type === "validId"
-          ? "Valid ID / QCID"
-          : type === "proofOfResidency"
-          ? "Proof of Residency"
-          : "Other Supporting Document",
-      name: file.name,
-      size: file.size,
-      previewUrl: URL.createObjectURL(file),
-      file,
-    }))
+    const file = files[0]
+    if (!file) return
+
+    const newDocs: UploadedDocItem[] = [
+      {
+        id: `${type}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        type,
+        label:
+          type === "validId"
+            ? "Valid ID / QCID"
+            : type === "proofOfResidency"
+            ? "Proof of Residency"
+            : "Other Supporting Document",
+        name: file.name,
+        size: file.size,
+        previewUrl: URL.createObjectURL(file),
+        file,
+      },
+    ]
 
     setFormData((prev) => ({
       ...prev,
@@ -1348,7 +1353,6 @@ export default function LivelihoodApplicationWizard({
                   <input
                     ref={fileInputValidIdRef}
                     type="file"
-                    multiple
                     accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
                     onChange={(e) => handleFileUpload("validId", e)}
                     className="hidden"
@@ -1464,7 +1468,6 @@ export default function LivelihoodApplicationWizard({
                   <input
                     ref={fileInputResidencyRef}
                     type="file"
-                    multiple
                     accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
                     onChange={(e) => handleFileUpload("proofOfResidency", e)}
                     className="hidden"
@@ -1578,7 +1581,6 @@ export default function LivelihoodApplicationWizard({
                   <input
                     ref={fileInputSupportingRef}
                     type="file"
-                    multiple
                     accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
                     onChange={(e) => handleFileUpload("supportingDocs", e)}
                     className="hidden"

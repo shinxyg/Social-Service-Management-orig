@@ -504,7 +504,7 @@ const canProceedPersonal = Boolean(
 
     setUploadedDocs((prev) => ({
       ...prev,
-      [docName]: [...(prev[docName] || []), ...validFiles],
+      [docName]: [validFiles[0]],
     }))
   }
 
@@ -1911,7 +1911,6 @@ const handleFinalSubmit = async () => {
                           type="file"
                           id={inputId}
                           key={`${inputId}-${files.length}`}
-                          multiple
                           accept=".jpg,.jpeg,.png,.webp,image/*"
                           className="hidden"
                           onChange={(e) => {

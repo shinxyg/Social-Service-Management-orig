@@ -581,7 +581,6 @@ function DocumentUploadRow({
           type="file"
           id={inputId}
           key={`${inputId}-${files.length}`}
-          multiple
           accept=".jpg,.jpeg,.png,.webp,image/*"
           className="hidden"
           onChange={(e) => {
@@ -945,7 +944,7 @@ export default function SoloParentApplicationWizard({
 
     setUploadedDocs((prev) => ({
       ...prev,
-      [docId]: [...(prev[docId] || []), ...validFiles],
+      [docId]: [validFiles[0]],
     }))
   }
 

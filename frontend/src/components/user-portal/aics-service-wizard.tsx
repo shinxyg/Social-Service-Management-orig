@@ -461,11 +461,11 @@ export default function AICSServiceWizard({
     if (!fileList || fileList.length === 0) return
     const filesArray = Array.from(fileList)
     if (field === "barangayCert") {
-      setBarangayCertFiles((prev) => [...prev, ...filesArray])
+      setBarangayCertFiles([filesArray[0]])
     } else if (field === "validId") {
-      setValidIdFiles((prev) => [...prev, ...filesArray])
+      setValidIdFiles([filesArray[0]])
     } else if (field === "supportingDoc") {
-      setSupportingDocFiles((prev) => [...prev, ...filesArray])
+      setSupportingDocFiles([filesArray[0]])
     }
     e.target.value = ""
   }
@@ -473,11 +473,11 @@ export default function AICSServiceWizard({
   // File capture from camera
   const handleCameraCapture = (file: File) => {
     if (cameraTargetField === "validId") {
-      setValidIdFiles((prev) => [...prev, file])
+      setValidIdFiles([file])
     } else if (cameraTargetField === "barangayCert") {
-      setBarangayCertFiles((prev) => [...prev, file])
+      setBarangayCertFiles([file])
     } else if (cameraTargetField === "supportingDoc") {
-      setSupportingDocFiles((prev) => [...prev, file])
+      setSupportingDocFiles([file])
     }
     setCameraModalOpen(false)
   }
@@ -1457,7 +1457,6 @@ export default function AICSServiceWizard({
                       type="file"
                       id="upload-barangay-cert"
                       accept=".jpg,.jpeg,.png,.webp,image/*"
-                      multiple
                       className="sr-only"
                       onChange={(e) => handleFilesSelected("barangayCert", e)}
                     />
@@ -1543,7 +1542,6 @@ export default function AICSServiceWizard({
                       type="file"
                       id="upload-valid-id"
                       accept=".jpg,.jpeg,.png,.webp,image/*"
-                      multiple
                       className="sr-only"
                       onChange={(e) => handleFilesSelected("validId", e)}
                     />
@@ -1629,7 +1627,6 @@ export default function AICSServiceWizard({
                       type="file"
                       id="upload-supporting-doc"
                       accept=".jpg,.jpeg,.png,.webp,image/*"
-                      multiple
                       className="sr-only"
                       onChange={(e) => handleFilesSelected("supportingDoc", e)}
                     />

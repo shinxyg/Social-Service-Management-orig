@@ -752,7 +752,7 @@ export default function SeniorCitizenApplicationWizard({
     if (!files || files.length === 0) return
     setUploadedFiles((prev) => ({
       ...prev,
-      [docId]: [...(prev[docId] || []), ...files],
+      [docId]: [files[0]],
     }))
   }
 
@@ -1866,7 +1866,6 @@ export default function SeniorCitizenApplicationWizard({
                             type="file"
                             id={inputId}
                             key={`${inputId}-${files.length}`}
-                            multiple
                             accept=".jpg,.jpeg,.png,.webp,.pdf"
                             className="hidden"
                             onChange={(e) => {
