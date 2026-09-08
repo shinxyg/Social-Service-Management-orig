@@ -95,13 +95,10 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
         onVerifySuccess();
         onClose();
       } else {
-        // Show error message and shake modal
-        setErrorMessage('Incorrect. Please try again with the new image.');
+        // Show error message and shake modal WITHOUT reloading the image
+        setErrorMessage('Incorrect. Please select the correct squares and try again.');
         setShake(true);
         setTimeout(() => setShake(false), 500);
-        setSelectedTiles([]);
-        // Advance to next challenge photo
-        setChallengeIdx((prev) => prev + 1);
       }
     }, 600);
   };
