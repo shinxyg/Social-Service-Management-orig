@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 
 function WheelchairIcon({ className, ...props }: React.ComponentProps<"svg">) {
   return (
@@ -56,24 +57,65 @@ export default function CitizenGuideHub() {
 
   const profile = getCurrentUserProfile()
   const qcid = getLoggedInUserQcid() || profile?.qcidNo || profile?.qcidNumber || ""
+  const userId = profile?.id || localStorage.getItem("userId") || "1"
   const userName = profile?.firstName ? `${profile.firstName} ${profile.lastName || ""}` : "Resident"
 
-  // Fetch active / recent applications for user context bar
+  // Fetch active / recent applications for user context bar with live real-time sync & delete protection
   useEffect(() => {
     let isMounted = true
+
     const fetchUserStatus = async () => {
       try {
         const found: any[] = []
         const currentQcid = (qcid || "").toLowerCase().trim()
         const userEmail = (profile?.email || "").toLowerCase().trim()
         const userLastName = (profile?.lastName || "").toLowerCase().trim()
+        const userFirstName = (profile?.firstName || "").toLowerCase().trim()
+
+        // 0. Build set of deleted / archived application references
+        const deletedSet = new Set<string>()
+        try {
+          const localDel = JSON.parse(localStorage.getItem("deleted_user_applications") || "[]")
+          if (Array.isArray(localDel)) {
+            localDel.forEach((d: any) => {
+              if (d.applicationNo) deletedSet.add(String(d.applicationNo).toLowerCase().trim())
+              if (d.referenceNo) deletedSet.add(String(d.referenceNo).toLowerCase().trim())
+              if (d.id) deletedSet.add(String(d.id).toLowerCase().trim())
+            })
+          }
+        } catch {}
+
+        try {
+          const delRes = await fetch(
+            `${API_BASE}/api/user-applications/deleted?email=${encodeURIComponent(userEmail)}&qcid=${encodeURIComponent(
+              qcid
+            )}&name=${encodeURIComponent(userFirstName + " " + userLastName)}`
+          )
+          if (delRes.ok) {
+            const delData = await delRes.json()
+            if (delData.applications && Array.isArray(delData.applications)) {
+              delData.applications.forEach((d: any) => {
+                if (d.referenceNo) deletedSet.add(String(d.referenceNo).toLowerCase().trim())
+                if (d.applicationId) deletedSet.add(String(d.applicationId).toLowerCase().trim())
+                if (d.id) deletedSet.add(String(d.id).toLowerCase().trim())
+              })
+            }
+          }
+        } catch {}
 
         const isUserMatch = (a: any) => {
           if (!a) return false
-          const aRef = String(a.reference_no || a.referenceNumber || a.reference_number || a.qcid || a.id || "").toLowerCase().trim()
+          if (a.is_archived === true) return false
+          const aRef = String(a.reference_no || a.referenceNumber || a.reference_number || a.qc_id || a.qcid || a.applicationNo || a.id || "").toLowerCase().trim()
           const aEmail = String(a.email || "").toLowerCase().trim()
           const aName = String(a.full_name || a.applicantName || a.lastName || "").toLowerCase().trim()
-          return (
+
+          // Check if deleted
+          if (deletedSet.has(aRef) || (a.id && deletedSet.has(String(a.id).toLowerCase().trim()))) {
+            return false
+          }
+
+          return Boolean(
             (currentQcid && (aRef === currentQcid || aRef.includes(currentQcid) || currentQcid.includes(aRef))) ||
             (userEmail && aEmail && userEmail === aEmail) ||
             (userLastName && aName.includes(userLastName))
@@ -82,18 +124,23 @@ export default function CitizenGuideHub() {
 
         // 1. AICS Apps
         try {
-          const res = await fetch(`${API_BASE}/api/aics/applications`)
+          const res = await fetch(`${API_BASE}/api/aics/applications?qcId=${encodeURIComponent(qcid)}`)
           if (res.ok) {
             const data = await res.json()
             const list = Array.isArray(data) ? data : data.applications || []
-            const matched = list.filter(isUserMatch).map((a: any) => ({
-              id: a.id || a.reference_no,
-              program: a.assistance_type || a.assistanceType || a.type || "AICS Assistance",
-              category: "AICS",
-              status: a.status || "pending",
-              date: a.created_at || a.dateSubmitted || new Date().toISOString(),
-              ref: a.reference_no || a.referenceNumber || a.id
-            }))
+            const matched = list.filter(isUserMatch).map((a: any) => {
+              const rawType = (a.assistance_type || a.assistanceType || a.type || "AICS").replace(/\s*assistance/gi, "").trim()
+              const cleanType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
+              const refNum = a.qc_id || a.reference_no || a.reference_number || a.referenceNumber || a.id
+              return {
+                id: a.id || refNum,
+                program: cleanType,
+                category: "AICS",
+                status: a.status || "pending",
+                date: a.created_at || a.dateSubmitted || new Date().toISOString(),
+                ref: refNum
+              }
+            })
             found.push(...matched)
           }
         } catch {}
@@ -104,43 +151,94 @@ export default function CitizenGuideHub() {
           if (res2.ok) {
             const list2 = await res2.json()
             if (Array.isArray(list2)) {
-              const matched2 = list2.filter(isUserMatch).map((a: any) => ({
-                id: a.id || a.referenceNumber,
-                program: `${a.category || "Social Service"} - ${a.type ? a.type.toUpperCase() : "Application"}`,
-                category: a.category || "PWD / Senior",
-                status: a.status || "pending",
-                date: a.created_at || a.dateSubmitted || new Date().toISOString(),
-                ref: a.referenceNumber || a.reference_no || a.id
-              }))
+              const matched2 = list2.filter(isUserMatch).map((a: any) => {
+                const refNum = a.assignedIdNumber || a.referenceNumber || a.reference_no || a.id
+                return {
+                  id: a.id || refNum,
+                  program: `${a.category || "Social Service"} - ${a.type ? String(a.type).toUpperCase() : "Application"}`,
+                  category: a.category || "PWD / Senior",
+                  status: a.status || "pending",
+                  date: a.created_at || a.dateSubmitted || new Date().toISOString(),
+                  ref: refNum
+                }
+              })
               found.push(...matched2)
             }
           }
         } catch {}
 
-        // 3. LocalStorage fallback
+        // 3. Solo Parent Apps
+        try {
+          const res3 = await fetch(`${API_BASE}/api/solo-parent/user/${userId}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(userEmail)}`)
+          if (res3.ok) {
+            const data3 = await res3.json()
+            const list3 = data3.applications || (Array.isArray(data3) ? data3 : [])
+            const matched3 = list3.filter(isUserMatch).map((a: any) => {
+              const refNum = a.assigned_id_number || a.solo_parent_id_number || a.reference_number || a.referenceNumber || a.id
+              return {
+                id: a.id || refNum,
+                program: "Solo Parent ID",
+                category: "Solo Parent",
+                status: a.application_status || a.status || "pending",
+                date: a.created_at || a.submitted_at || new Date().toISOString(),
+                ref: refNum
+              }
+            })
+            found.push(...matched3)
+          }
+        } catch {}
+
+        // 4. Child Welfare Apps
+        try {
+          const res4 = await fetch(`${API_BASE}/api/child-welfare/user/${userId}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(userEmail)}`)
+          if (res4.ok) {
+            const data4 = await res4.json()
+            const list4 = data4.applications || (Array.isArray(data4) ? data4 : [])
+            const matched4 = list4.filter(isUserMatch).map((a: any) => {
+              const refNum = a.reference_number || a.referenceNumber || a.id
+              return {
+                id: a.id || refNum,
+                program: "Child Welfare",
+                category: "Child Welfare",
+                status: a.application_status || a.status || "pending",
+                date: a.created_at || new Date().toISOString(),
+                ref: refNum
+              }
+            })
+            found.push(...matched4)
+          }
+        } catch {}
+
+        // 5. Clean up stale localStorage caches for deleted items
         const localKeys = ["pwd_senior_applications", "aics_applications", "all_user_applications", "applications"]
         for (const k of localKeys) {
           try {
             const local = JSON.parse(localStorage.getItem(k) || "[]")
             if (Array.isArray(local)) {
-              for (const item of local) {
-                if (isUserMatch(item) && !found.some(f => f.ref === (item.referenceNumber || item.reference_no || item.id))) {
-                  found.push({
-                    id: item.id || item.referenceNumber || item.reference_no,
-                    program: item.assistance_type || item.program || item.service || "Social Service",
-                    category: item.category || "General",
-                    status: item.status || "pending",
-                    date: item.created_at || item.submittedAt || new Date().toISOString(),
-                    ref: item.referenceNumber || item.reference_no || item.id
-                  })
-                }
+              const cleaned = local.filter((item: any) => {
+                const itemRef = String(item.referenceNumber || item.reference_no || item.applicationNo || item.id || "").toLowerCase().trim()
+                return !deletedSet.has(itemRef)
+              })
+              if (cleaned.length !== local.length) {
+                localStorage.setItem(k, JSON.stringify(cleaned))
               }
             }
           } catch {}
         }
 
+        // Deduplicate found items by ref
+        const uniqueFound: any[] = []
+        const seenRefs = new Set<string>()
+        for (const item of found) {
+          const r = String(item.ref || item.id || "").toLowerCase().trim()
+          if (!seenRefs.has(r)) {
+            seenRefs.add(r)
+            uniqueFound.push(item)
+          }
+        }
+
         if (isMounted) {
-          setRecentApps(found)
+          setRecentApps(uniqueFound)
         }
       } catch {
         // ignore fetch error
@@ -148,7 +246,37 @@ export default function CitizenGuideHub() {
     }
 
     fetchUserStatus()
-  }, [qcid, profile?.email, profile?.lastName])
+
+    // Real-time synchronization
+    const handleUpdate = () => {
+      fetchUserStatus()
+    }
+
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      fetchUserStatus()
+    })
+
+    window.addEventListener("applications_updated", handleUpdate)
+    window.addEventListener("solo_parent_applications_updated", handleUpdate)
+    window.addEventListener("pwd_senior_applications_updated", handleUpdate)
+    window.addEventListener("child_welfare_applications_updated", handleUpdate)
+    window.addEventListener("financial_disbursements_updated", handleUpdate)
+    window.addEventListener("storage", handleUpdate)
+
+    const interval = setInterval(fetchUserStatus, 3500)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      unsubscribe()
+      window.removeEventListener("applications_updated", handleUpdate)
+      window.removeEventListener("solo_parent_applications_updated", handleUpdate)
+      window.removeEventListener("pwd_senior_applications_updated", handleUpdate)
+      window.removeEventListener("child_welfare_applications_updated", handleUpdate)
+      window.removeEventListener("financial_disbursements_updated", handleUpdate)
+      window.removeEventListener("storage", handleUpdate)
+    }
+  }, [qcid, profile?.email, profile?.lastName, profile?.firstName, userId])
 
   const aicsServices = [
     {

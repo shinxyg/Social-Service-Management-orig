@@ -22,6 +22,7 @@ import {
   checkAndAutoReleaseScheduledDisbursements,
   parseAppointmentDateTime,
 } from "../../utils/financialAidSync"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 export { FIXED_ASSISTANCE_AMOUNTS, type DisbursementStage, type SyncedDisbursementRecord }
 
@@ -698,6 +699,7 @@ export default function FinancialAidDisbursement() {
                                 }
                                 setDisbursements((prev) => prev.filter((item) => item.id !== d.id && item.disbursementId !== d.disbursementId && item.applicationRef !== d.applicationRef))
                                 window.dispatchEvent(new Event("financial_disbursements_updated"))
+                                notifyApplicationChange("APPLICATION_DELETED", "all", d.applicationRef)
                               }
                             }}
                             className="inline-flex items-center justify-center p-1.5 rounded-xl border border-red-200 bg-red-50/70 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
@@ -842,6 +844,7 @@ export default function FinancialAidDisbursement() {
                         })
                       } catch {}
                       setDisbursements((prev) => prev.filter((d) => d.disbursementId !== selectedDetailsRecord.disbursementId))
+                      notifyApplicationChange("APPLICATION_DELETED", "all", selectedDetailsRecord.applicationRef || selectedDetailsRecord.disbursementId)
                       setSelectedDetailsRecord(null)
                       window.location.reload()
                     }
