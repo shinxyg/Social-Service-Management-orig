@@ -733,8 +733,20 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email, verification code (OTP), and new password are required.' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long.' });
+    }
+
+    if (!/\d/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must include at least one number (0-9).' });
+    }
+
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must include at least one special character (e.g. !@#$%^&*).' });
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must include at least one uppercase letter (A-Z).' });
     }
 
     const cleanEmail = email.trim().toLowerCase();
