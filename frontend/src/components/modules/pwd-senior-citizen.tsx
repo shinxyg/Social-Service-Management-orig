@@ -25,7 +25,6 @@ import {
   type SyncedDisbursementRecord,
 } from "../../utils/financialAidSync"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
-import { getSavedProfilePhoto } from "../../utils/profilePhoto"
 
 // ---- Types for collected form data from user submissions ----
 interface ApplicationDocument {
@@ -476,24 +475,6 @@ function initials(app: ApplicationSubmission) {
   return `${f}${l}`.toUpperCase()
 }
 
-function getAvatarUrl(app: ApplicationSubmission): string | null {
-  if (!app.documents || !Array.isArray(app.documents)) return null
-  const idPhoto = app.documents.find((doc) => {
-    const docName = String(doc.name || doc.filename || "").toLowerCase()
-    return /id picture|2x2|1x1|photo|picture|avatar/i.test(docName)
-  })
-  if (
-    idPhoto &&
-    idPhoto.fileUrl &&
-    (idPhoto.fileUrl.startsWith("data:image") ||
-      idPhoto.fileUrl.startsWith("blob:") ||
-      idPhoto.fileUrl.startsWith("http") ||
-      idPhoto.fileUrl.startsWith("/uploads"))
-  ) {
-    return idPhoto.fileUrl
-  }
-  return null
-}
 
 function AvatarCircle({
   app,
@@ -502,34 +483,11 @@ function AvatarCircle({
   app: ApplicationSubmission
   sizeClass?: string
 }) {
-  const [imgError, setImgError] = useState(false)
-  const qcid = String(
-    app.referenceNumber ||
-      (app as any).qcid ||
-      (app as any).qc_id ||
-      (app as any).qcidNumber ||
-      (app as any).qcidNo ||
-      ""
-  ).trim()
-  const savedPhoto = qcid ? getSavedProfilePhoto(qcid) : null
-  const docPhoto = getAvatarUrl(app)
-  const photoSrc = !imgError ? savedPhoto || docPhoto : null
-
-  if (photoSrc) {
-    return (
-      <img
-        src={photoSrc}
-        alt={displayName(app)}
-        onError={() => setImgError(true)}
-        className={`${sizeClass} shrink-0 rounded-xl object-cover`}
-      />
-    )
-  }
   return (
     <div
       className={`${sizeClass} shrink-0 gw-avatar ${
         isPWD(app) ? "gw-avatar--pwd" : "gw-avatar--senior"
-      } text-sm`}
+      } text-sm font-bold flex items-center justify-center`}
     >
       {initials(app)}
     </div>
