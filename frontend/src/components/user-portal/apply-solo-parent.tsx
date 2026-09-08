@@ -399,6 +399,7 @@ export default function ApplySoloParent() {
       {isChildWelfare ? (
         <ChildWelfareApplicationWizard
           key={`child-welfare-${matchedCwProgram.key}`}
+          userProfile={activeProfile as any}
           initialProgramId={matchedCwProgram.id}
           initialProgramKey={matchedCwProgram.key}
           onStepChange={setCurrentStep}

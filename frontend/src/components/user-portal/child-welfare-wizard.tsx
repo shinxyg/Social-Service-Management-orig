@@ -667,25 +667,98 @@ export default function ChildWelfareApplicationWizard({
   }, [selectedProgramId, language])
 
   // Step 2: Personal / Beneficiary Information
+  const parseProfileDob = (prof: any) => {
+    let month = prof?.dobMonth || ""
+    let day = prof?.dobDay || prof?.birthDay || ""
+    let year = prof?.dobYear || prof?.birthYear || ""
+
+    if (prof?.birthDateIso && prof.birthDateIso.includes("-")) {
+      const parts = prof.birthDateIso.split("-")
+      if (parts.length === 3) {
+        year = parts[0]
+        month = parts[1]
+        day = parts[2]
+      }
+    } else if (prof?.birthMonth) {
+      const mStr = String(prof.birthMonth).toUpperCase()
+      const MONTHS_MAP: Record<string, string> = {
+        JANUARY: "01", JAN: "01", ENERO: "01",
+        FEBRUARY: "02", FEB: "02", PEBRERO: "02",
+        MARCH: "03", MAR: "03", MARSO: "03",
+        APRIL: "04", APR: "04", ABRIL: "04",
+        MAY: "05", MAYO: "05",
+        JUNE: "06", JUN: "06", HUNYO: "06",
+        JULY: "07", JUL: "07", HULYO: "07",
+        AUGUST: "08", AUG: "08", AGOSTO: "08",
+        SEPTEMBER: "09", SEP: "09", SETYEMBRE: "09",
+        OCTOBER: "10", OCT: "10", OKTUBRE: "10",
+        NOVEMBER: "11", NOV: "11", NOBYEMBRE: "11",
+        DECEMBER: "12", DEC: "12", DISYEMBRE: "12",
+      }
+      month = MONTHS_MAP[mStr] || (mStr.match(/^\d+$/) ? mStr.padStart(2, "0") : "01")
+    }
+
+    return {
+      month: month ? String(month).padStart(2, "0") : "",
+      day: day ? String(day).padStart(2, "0") : "",
+      year: year ? String(year) : "",
+    }
+  }
+
+  const formatSex = (prof: any) => {
+    const rawSex = String(prof?.sex || prof?.gender || "").toUpperCase()
+    if (rawSex.includes("FEMALE") || rawSex.includes("BABAE")) return "Female"
+    if (rawSex.includes("MALE") || rawSex.includes("LALAKI")) return "Male"
+    return ""
+  }
+
+  const getProfileData = (prof: any) => {
+    const p = prof || {}
+    const dob = parseProfileDob(p)
+    return {
+      qcidNumber: p.qcidNo || p.qcidNumber || p.qcid || "",
+      firstName: p.firstName || "",
+      middleName: p.middleName || "",
+      lastName: p.lastName || "",
+      suffix: p.suffix || "",
+      nationality: p.nationality || "FILIPINO",
+      dobMonth: dob.month,
+      dobDay: dob.day,
+      dobYear: dob.year,
+      age: p.age !== undefined && p.age !== null && p.age !== "" ? String(p.age) : "",
+      sex: formatSex(p),
+      civilStatus: p.civilStatus || "Single",
+      addressHouseNo: p.addressHouseNo || p.houseNo || "",
+      addressStreet: p.addressStreet || p.street || "",
+      barangay: p.addressBarangay || p.barangay || "Sauyo",
+      city: p.addressCityMunicipality || p.city || "Quezon City",
+      contactNo: p.contactNo || p.mobileNumber || "",
+      email: "", // User explicitly requested not to include email/gmail in applicant info
+    }
+  }
+
+  const initialProfile = userProfile || getCurrentUserProfile() || ({} as any)
+  const initialData = getProfileData(initialProfile)
+
   const [formData, setFormData] = useState({
-    // I. Applicant / Child Information
-    qcidNumber: "",
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    suffix: "",
-    nationality: "FILIPINO",
-    dobMonth: "",
-    dobDay: "",
-    dobYear: "",
-    age: "",
-    sex: "",
-    civilStatus: "Single",
-    addressHouseNo: "",
-    addressStreet: "",
-    barangay: "",
-    city: "Quezon City",
-    contactNo: "",
+    // I. Applicant / Child Information (pre-filled from profile)
+    qcidNumber: initialData.qcidNumber,
+    firstName: initialData.firstName,
+    middleName: initialData.middleName,
+    lastName: initialData.lastName,
+    suffix: initialData.suffix,
+    nationality: initialData.nationality,
+    dobMonth: initialData.dobMonth,
+    dobDay: initialData.dobDay,
+    dobYear: initialData.dobYear,
+    age: initialData.age,
+    sex: initialData.sex,
+    civilStatus: initialData.civilStatus,
+    addressHouseNo: initialData.addressHouseNo,
+    addressStreet: initialData.addressStreet,
+    barangay: initialData.barangay,
+    city: initialData.city,
+    contactNo: initialData.contactNo,
     email: "",
 
     // II. Parent / Guardian / Reporting Person
@@ -707,6 +780,34 @@ export default function ChildWelfareApplicationWizard({
     // Certification
     certifiedCorrect: false,
   })
+
+  // Sync profile when userProfile changes or loads
+  useEffect(() => {
+    const prof: any = userProfile || getCurrentUserProfile()
+    if (prof) {
+      const data = getProfileData(prof)
+      setFormData((prev) => ({
+        ...prev,
+        qcidNumber: prev.qcidNumber || data.qcidNumber,
+        firstName: prev.firstName || data.firstName,
+        middleName: prev.middleName || data.middleName,
+        lastName: prev.lastName || data.lastName,
+        suffix: prev.suffix || data.suffix,
+        nationality: prev.nationality || data.nationality,
+        dobMonth: prev.dobMonth || data.dobMonth,
+        dobDay: prev.dobDay || data.dobDay,
+        dobYear: prev.dobYear || data.dobYear,
+        age: prev.age || data.age,
+        sex: prev.sex || data.sex,
+        civilStatus: prev.civilStatus || data.civilStatus,
+        addressHouseNo: prev.addressHouseNo || data.addressHouseNo,
+        addressStreet: prev.addressStreet || data.addressStreet,
+        barangay: prev.barangay || data.barangay,
+        city: prev.city || data.city,
+        contactNo: prev.contactNo || data.contactNo,
+      }))
+    }
+  }, [userProfile])
 
   const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
