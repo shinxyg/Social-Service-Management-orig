@@ -1742,11 +1742,11 @@ export default function SoloParentApplicationWizard({
                   type="button"
                   onClick={() => {
                     ;(window as any).__isFormDirty = false
-                    window.location.href = "/portal/applications"
+                    window.location.href = "/portal/my-applications"
                   }}
                   className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
                 >
-                  View in My Applications
+                  View in History Application
                 </button>
               </>
             ) : (
@@ -1754,11 +1754,11 @@ export default function SoloParentApplicationWizard({
                 type="button"
                 onClick={() => {
                   ;(window as any).__isFormDirty = false
-                  window.location.href = "/portal/applications"
+                  window.location.href = "/portal/my-applications"
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
               >
-                VIEW IN MY APPLICATIONS
+                VIEW IN HISTORY APPLICATION
               </button>
             )}
           </div>
