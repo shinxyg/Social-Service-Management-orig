@@ -202,9 +202,13 @@ function Avatar({ size = 36 }: { size?: number }) {
     }
     readPhoto()
 
-    // Basahin ulit kapag na-update ang photo (hal. galing sa ibang tab/window)
+    // Basahin ulit kapag na-update ang photo (hal. galing sa profile modal o ibang tab)
     window.addEventListener("storage", readPhoto)
-    return () => window.removeEventListener("storage", readPhoto)
+    window.addEventListener("user_profile_updated", readPhoto)
+    return () => {
+      window.removeEventListener("storage", readPhoto)
+      window.removeEventListener("user_profile_updated", readPhoto)
+    }
   }, [])
 
   if (photoUrl && !imgFailed) {

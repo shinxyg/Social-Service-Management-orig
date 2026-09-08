@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react"
-import { X, User, AlertTriangle, IdCard, Eye, EyeOff, Languages, Check, Camera } from "lucide-react"
+import { X, User, AlertTriangle, IdCard, Eye, EyeOff, Languages, Check, Camera, Trash2 } from "lucide-react"
 import { useLanguage, type Language } from "./language-context"
-import { getSavedProfilePhoto, saveProfilePhoto } from "../../utils/profilePhoto"
+import { getSavedProfilePhoto, saveProfilePhoto, removeProfilePhoto } from "../../utils/profilePhoto"
 import { API_BASE } from "../../config/api"
 
 interface ProfileModalProps {
@@ -140,6 +139,19 @@ export function ProfileModal({
     };
     reader.readAsDataURL(file);
     e.target.value = "";
+  };
+
+  const handleRemovePhoto = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!photoUrl) return;
+    if (
+      window.confirm(
+        "Gusto mo bang alisin ang iyong profile photo? / Do you want to remove your profile photo?"
+      )
+    ) {
+      setPhotoUrl(null);
+      removeProfilePhoto(resolvedQcid);
+    }
   };
 
   const handleStartEdit = () => {
@@ -353,38 +365,70 @@ export function ProfileModal({
         </div>
 
         {/* Header Banner */}
-        <div className="bg-slate-900 px-8 py-6 flex items-center gap-4">
-          <div className="relative h-14 w-14 shrink-0 group">
-            <div className="h-14 w-14 rounded-full bg-white flex items-center justify-center overflow-hidden">
-              {photoUrl ? (
-                <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" />
-              ) : (
-                <User className="h-7 w-7 text-gray-400" />
-              )}
+        <div className="bg-slate-900 px-8 py-5 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="relative h-14 w-14 shrink-0 group">
+              <div className="h-14 w-14 rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-slate-700 shadow-xs">
+                {photoUrl ? (
+                  <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-7 w-7 text-gray-400" />
+                )}
+              </div>
+              <label
+                htmlFor="profile-photo-upload"
+                className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                title={photoUrl ? "Palitan ang profile photo" : "Maglagay ng profile photo"}
+              >
+                <Camera className="h-5 w-5 text-white" />
+              </label>
+              <input
+                id="profile-photo-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
             </div>
+            <div className="min-w-0">
+              <h2 className="text-white font-bold text-lg md:text-xl truncate">{displayName}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-slate-300">{t("statusLabel")}</span>
+                <span className="inline-flex items-center text-[11px] font-semibold bg-green-500 text-white px-2.5 py-0.5 rounded-full">
+                  {t("statusActive")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
             <label
-              htmlFor="profile-photo-upload"
-              className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-              aria-label="Palitan ang profile photo"
+              htmlFor="profile-photo-upload-btn"
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Upload photo"
             >
-              <Camera className="h-5 w-5 text-white" />
+              <Camera className="h-3.5 w-3.5" />
+              <span>{photoUrl ? "Change Photo" : "Upload Photo"}</span>
             </label>
             <input
-              id="profile-photo-upload"
+              id="profile-photo-upload-btn"
               type="file"
               accept="image/*"
               className="hidden"
               onChange={handlePhotoUpload}
             />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-white font-bold text-xl truncate">{displayName}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm text-slate-300">{t("statusLabel")}</span>
-              <span className="inline-flex items-center text-xs font-semibold bg-green-500 text-white px-3 py-1 rounded-full">
-                {t("statusActive")}
-              </span>
-            </div>
+
+            {photoUrl && (
+              <button
+                type="button"
+                onClick={handleRemovePhoto}
+                className="px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 hover:text-red-300 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Remove profile photo"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Remove Photo</span>
+              </button>
+            )}
           </div>
         </div>
 
