@@ -703,26 +703,6 @@ export default function Appointments() {
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-foreground">Requests ({filtered.length})</h2>
-          <button
-            type="button"
-            onClick={async () => {
-              if (confirm("Gusto mo bang linisin ang lahat ng test records at history ni Renz Mahinay Millares para makapag-test ulit?")) {
-                await cleanupRenzTestData()
-                setAppointments((prev) =>
-                  prev.filter(
-                    (a) =>
-                      !a.applicantName.toLowerCase().includes("renz") &&
-                      !a.referenceNo.includes("110000572516915")
-                  )
-                )
-                window.location.reload()
-              }
-            }}
-            className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 border border-red-200 bg-red-50/70 hover:bg-red-100 transition-colors cursor-pointer self-start sm:self-auto flex items-center gap-1.5"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Linisin ang Test Records ni Renz</span>
-          </button>
         </div>
 
         {filtered.length === 0 ? (

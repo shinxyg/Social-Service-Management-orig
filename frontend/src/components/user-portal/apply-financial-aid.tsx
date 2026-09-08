@@ -389,18 +389,6 @@ export default function ApplyFinancialAid() {
             <Wallet className="w-5 h-5 text-blue-600" />
             {t("myDisbursementsTitle", { count: String(disbursements.length) }) || `Aking mga Ayuda at Payout Record (${disbursements.length})`}
           </h2>
-
-          <button
-            type="button"
-            onClick={() => {
-              localStorage.removeItem("all_financial_disbursements")
-              window.dispatchEvent(new Event("financial_disbursements_updated"))
-              window.location.reload()
-            }}
-            className="text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer self-start sm:self-auto"
-          >
-            I-reset / Linisin ang Test Data
-          </button>
         </div>
 
         {disbursements.length === 0 ? (

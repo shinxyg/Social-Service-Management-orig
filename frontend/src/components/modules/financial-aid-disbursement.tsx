@@ -588,27 +588,6 @@ export default function FinancialAidDisbursement() {
                 </button>
               ))}
             </div>
-
-            <button
-              type="button"
-              onClick={async () => {
-                if (confirm("Gusto mo bang linisin ang lahat ng test records at history ni Renz Mahinay Millares para makapag-test ulit?")) {
-                  await cleanupRenzTestData()
-                  setDisbursements((prev) =>
-                    prev.filter(
-                      (d) =>
-                        !d.applicantName.toLowerCase().includes("renz") &&
-                        !d.applicationRef.includes("110000572516915")
-                    )
-                  )
-                  window.location.reload()
-                }
-              }}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 border border-red-200 bg-red-50/70 hover:bg-red-100 transition-colors cursor-pointer self-start sm:self-auto flex items-center gap-1.5"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Linisin ang Test History ni Renz</span>
-            </button>
           </div>
         </div>
 

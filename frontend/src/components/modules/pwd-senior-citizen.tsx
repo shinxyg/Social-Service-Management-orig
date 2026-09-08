@@ -2371,16 +2371,7 @@ export default function PWDSeniorCitizen() {
               <h2 className="gw-serif text-lg font-semibold" style={{ color: "var(--ink)" }}>Applications</h2>
               <span className="gw-mono text-sm" style={{ color: "var(--ink-faint)" }}>({filteredApps.length})</span>
             </div>
-            {applications.some((a) => a.category && String(a.category).toLowerCase().includes("senior")) && (
-              <button
-                type="button"
-                onClick={handleClearSeniorApplications}
-                className="px-2.5 py-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md inline-flex items-center gap-1 border border-red-200 transition-colors cursor-pointer"
-              >
-                <Trash2 className="h-3 w-3" />
-                Clear Senior Records
-              </button>
-            )}
+
           </div>
 
           {filteredApps.length === 0 ? (
