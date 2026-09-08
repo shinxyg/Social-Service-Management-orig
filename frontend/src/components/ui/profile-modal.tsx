@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import { X, User, AlertTriangle, IdCard, Eye, EyeOff, Languages, Check, Camera, Trash2 } from "lucide-react"
 import { useLanguage, type Language } from "./language-context"
 import { getSavedProfilePhoto, saveProfilePhoto, removeProfilePhoto } from "../../utils/profilePhoto"
