@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import { getCurrentUserProfile } from "../../utils/userProfile"
-import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { API_BASE } from "../../config/api"
 import DocumentCameraModal from "../ui/document-camera-modal"
 
@@ -1005,18 +1005,79 @@ export default function ChildWelfareApplicationWizard({
 
   // Submission State
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
+  const [appStatus, setAppStatus] = useState<"pending" | "approved" | "rejected">("pending")
   const [reference, setReference] = useState("")
   const [redirectCountdown, setRedirectCountdown] = useState(3)
 
+  // Listen to active user application status in Child Welfare
   useEffect(() => {
-    if (submissionStage !== "pending") return
+    let active = true
+    const checkActiveApplication = async () => {
+      try {
+        const prof = getCurrentUserProfile()
+        const uid = prof.id || (userProfile as any)?.id || (userProfile as any)?.userId || ""
+        const qcid = (prof.qcidNo || prof.qcidNumber || "").trim()
+        const token = localStorage.getItem("token")
+        const headers: Record<string, string> = {}
+        if (token) headers["Authorization"] = `Bearer ${token}`
+
+        if (uid && uid !== "0") {
+          const res = await fetch(`${API_BASE}/api/child-welfare/user/${uid}`, { headers })
+          if (res.ok) {
+            const data = await res.json()
+            if (active && data.applications && data.applications.length > 0) {
+              const matched = data.applications.find(
+                (a: any) =>
+                  a.category_id === String(selectedProgram.id) ||
+                  a.category_title === selectedProgram.title ||
+                  (a.reference_number && qcid && a.reference_number === qcid)
+              ) || data.applications[0]
+
+              if (matched && ["pending", "approved", "rejected"].includes(matched.application_status)) {
+                setSubmissionStage("pending")
+                setAppStatus(matched.application_status as any)
+                if (matched.reference_number) setReference(matched.reference_number)
+                if (matched.support_types && matched.support_types.length > 0) {
+                  const st = Array.isArray(matched.support_types) ? matched.support_types[0] : matched.support_types
+                  setSelectedAssistanceType(st)
+                }
+                return
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Error checking child welfare application status:", err)
+      }
+    }
+
+    checkActiveApplication()
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      checkActiveApplication()
+    })
+
+    const handleUpdate = () => checkActiveApplication()
+    window.addEventListener("child_welfare_applications_updated", handleUpdate)
+    window.addEventListener("applications_updated", handleUpdate)
+    window.addEventListener("storage", handleUpdate)
+
+    return () => {
+      active = false
+      unsubscribe()
+      window.removeEventListener("child_welfare_applications_updated", handleUpdate)
+      window.removeEventListener("applications_updated", handleUpdate)
+      window.removeEventListener("storage", handleUpdate)
+    }
+  }, [selectedProgram.id, selectedProgram.title, userProfile])
+
+  useEffect(() => {
+    if (submissionStage !== "pending" || appStatus !== "pending") return
 
     setRedirectCountdown(3)
     const interval = setInterval(() => {
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
-          setSubmissionStage("form")
           return 0
         }
         return prev - 1
@@ -1024,7 +1085,7 @@ export default function ChildWelfareApplicationWizard({
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [submissionStage])
+  }, [submissionStage, appStatus])
 
   // Validations
   const step1Valid =
@@ -1165,9 +1226,111 @@ export default function ChildWelfareApplicationWizard({
   }
 
   if (submissionStage === "pending") {
+    // 1. REJECTED STATE (matching AICS)
+    if (appStatus === "rejected") {
+      return (
+        <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-2xl bg-red-50 flex items-center justify-center text-red-500">
+              <X className="h-7 w-7" strokeWidth={2.5} />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">
+              Hindi Na-approve ang Application
+            </h2>
+            <p className="text-xs text-gray-600 max-w-sm">
+              Paumanhin, hindi na-approve ang inyong aplikasyon para sa {selectedProgram.title}.
+              Maaari kang makipag-ugnayan sa Quezon City Social Welfare Office para sa karagdagang detalye o mag-apply muli kung may mga dokumentong kailangang ayusin.
+            </p>
+            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                <span className="text-gray-500">{t("referenceNumber") || "Reference Number"}</span>
+                <span className="font-mono font-bold text-gray-900 text-sm">{reference}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Program</span>
+                <span className="font-semibold text-gray-900">{selectedProgram.title}</span>
+              </div>
+              {selectedAssistanceType && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500">{t("typeOfAssistance") || "Uri ng Tulong"}</span>
+                  <span className="font-semibold text-gray-900">{selectedAssistanceType}</span>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                ;(window as any).__isFormDirty = false
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              VIEW IN APPLICATION HISTORY
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    // 2. APPROVED STATE (matching AICS Approved card)
+    if (appStatus === "approved") {
+      return (
+        <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 ring-8 ring-emerald-50/50">
+              <Check className="h-7 w-7" strokeWidth={3} />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">
+              Na-approve ang Application!
+            </h2>
+            <p className="text-xs text-gray-600 max-w-sm">
+              Ang inyong aplikasyon para sa {selectedProgram.title} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.
+            </p>
+            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                <span className="text-gray-500">{t("referenceNumber") || "Reference Number"}</span>
+                <span className="font-mono font-bold text-blue-700 text-sm">{reference}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Program</span>
+                <span className="font-semibold text-gray-900">{selectedProgram.title}</span>
+              </div>
+              {selectedAssistanceType && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500">{t("typeOfAssistance") || "Uri ng Tulong"}</span>
+                  <span className="font-semibold text-gray-900">{selectedAssistanceType}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">{t("applicantName") || "Pangalan ng Aplikante"}</span>
+                <span className="font-semibold text-gray-900">{formData.firstName} {formData.lastName}</span>
+              </div>
+            </div>
+
+            <div className="w-full bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 text-xs text-emerald-800 text-left flex items-start gap-2.5">
+              <Info className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>Maaari mo nang subaybayan ang release schedule, appointment, o claim instructions sa inyong Application History at Notifications.</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                ;(window as any).__isFormDirty = false
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              VIEW IN APPLICATION HISTORY
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    // 3. PENDING STATE (matching AICS Pending card)
     return (
-      <div className="max-w-2xl mx-auto p-6 md:p-8 my-6 bg-white border border-border rounded-2xl shadow-sm text-center space-y-6">
-        <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+      <div className="max-w-2xl mx-auto p-6 md:p-8 my-6 bg-white border border-border rounded-2xl shadow-sm text-center space-y-6 animate-in fade-in duration-300">
+        <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-blue-50/50">
           <Baby className="h-8 w-8" />
         </div>
         <div className="space-y-2">

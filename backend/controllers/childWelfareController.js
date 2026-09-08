@@ -274,9 +274,8 @@ exports.getUserApplications = async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await db.query(
-    `SELECT id, reference_number, application_status, category_title, child_name, created_at, updated_at
-    FROM child_welfare_applications WHERE user_id = $1 ORDER BY created_at DESC`,
-    [userId]
+      `SELECT * FROM child_welfare_applications WHERE user_id = $1 ORDER BY created_at DESC`,
+      [userId]
     );
     res.status(200).json({ success: true, applications: result.rows });
   } catch (error) {

@@ -1477,35 +1477,65 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
             </>
           ) : (
             <>
+              {/* Section 01: Application Details */}
               <div>
-                <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>Guardian information</SectionHeading>
+                <SectionHeading number={nextNum()} icon={<ClipboardList className="h-4 w-4" />}>Application details</SectionHeading>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                  <Field label="Full name" value={`${app.guardianFirstName} ${app.guardianMiddleName} ${app.guardianLastName}`} />
-                  <Field label="Relationship to child" value={app.guardianRelationshipToChild} />
-                  <Field label="Sex / civil status" value={`${app.guardianSex} / ${app.guardianCivilStatus}`} />
-                  <Field label="Date of birth / age" value={`${app.guardianDateOfBirth} / ${app.guardianAge}`} />
+                  <Field label="Program" value={app.supportCategory || "Child Welfare"} />
+                  <Field
+                    label="Type of assistance"
+                    value={app.supportTypes && app.supportTypes.length > 0 ? (Array.isArray(app.supportTypes) ? app.supportTypes.join(", ") : app.supportTypes) : "—"}
+                  />
+                  <Field label="Residency status" value="Residente ng Lungsod Quezon (Verified)" />
+                  {app.primaryReasonForAssistance && (
+                    <Field label="Reason for assistance / Concern" value={app.primaryReasonForAssistance} />
+                  )}
+                  {app.specificNeeds && (
+                    <Field label="Description / Specific needs" value={app.specificNeeds} />
+                  )}
+                  {app.urgency && (
+                    <Field label="Priority level / Urgency" value={app.urgency} />
+                  )}
+                  {app.childLivingArrangement && (
+                    <Field label="Living situation / Arrangement" value={app.childLivingArrangement} />
+                  )}
+                </div>
+              </div>
+
+              {/* Section 02: Applicant / Child Information */}
+              <div>
+                <SectionHeading number={nextNum()} icon={<Baby className="h-4 w-4" />}>Applicant / Child information</SectionHeading>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                  <Field label="QC ID number" value={app.referenceNumber || "—"} />
+                  <Field label="Full name" value={app.childName || "—"} />
+                  <Field
+                    label="Date of birth / age"
+                    value={
+                      app.childBirthday
+                        ? `${app.childBirthday}${app.childAge ? ` (${app.childAge} y/o)` : ""}`
+                        : app.childAge ? `${app.childAge} y/o` : "—"
+                    }
+                  />
+                  <Field
+                    label="Sex / civil status"
+                    value={`${app.childSex || "—"} / ${app.guardianCivilStatus || "Single"}`}
+                  />
                   <Field
                     label="Contact number"
                     value={
-                      <span className="inline-flex items-center gap-1.5">
-                        <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                        {app.guardianContactNo}
-                      </span>
+                      app.guardianContactNo ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                          {app.guardianContactNo}
+                        </span>
+                      ) : (
+                        "—"
+                      )
                     }
                   />
-                  <Field
-                    label="Email"
-                    value={
-                      <span className="inline-flex items-center gap-1.5">
-                        <Mail className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                        {app.guardianEmail}
-                      </span>
-                    }
-                  />
-                  <Field label="Valid ID" value={app.guardianValidId} />
                   <div className="col-span-2">
                     <Field
-                      label="Address"
+                      label="Complete address"
                       value={
                         <span className="inline-flex items-start gap-1.5">
                           <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
@@ -1517,69 +1547,52 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               </div>
 
+              {/* Section 03: Parent / Guardian / Reporting Person */}
               <div>
-                <SectionHeading number={nextNum()} icon={<Baby className="h-4 w-4" />}>Child information</SectionHeading>
+                <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>Parent / Guardian / Reporting person</SectionHeading>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                  <Field label="Full name" value={app.childName} />
-                  <Field label="Sex / age" value={`${app.childSex} / ${app.childAge}`} />
-                  <Field label="Date of birth" value={app.childBirthday} />
-                  <Field label="Has birth certificate" value={app.childBirthCertificate} />
-                  <Field label="School / daycare" value={app.childSchoolDaycare} />
-                  <Field label="Grade level" value={app.childGradeLevel} />
-                  <Field label="Enrollment status" value={app.childEnrollmentStatus} />
-                  <Field label="School address" value={app.childSchoolAddress} />
-                  <div className="col-span-2">
+                  <Field
+                    label="Full name"
+                    value={[app.guardianFirstName, app.guardianMiddleName, app.guardianLastName].filter(Boolean).join(" ") || "—"}
+                  />
+                  <Field label="Relationship to child" value={app.guardianRelationshipToChild || "—"} />
+                  <Field
+                    label="Contact number"
+                    value={
+                      app.guardianContactNo ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                          {app.guardianContactNo}
+                        </span>
+                      ) : (
+                        "—"
+                      )
+                    }
+                  />
+                  {app.guardianEmail && (
                     <Field
-                      label="Special needs / disability"
-                      value={app.childSpecialNeeds === "Yes" ? `Yes — ${app.childSpecialNeedsSpecify}` : app.childSpecialNeeds}
+                      label="Email"
+                      value={
+                        <span className="inline-flex items-center gap-1.5">
+                          <Mail className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                          {app.guardianEmail}
+                        </span>
+                      }
                     />
+                  )}
+                </div>
+              </div>
+
+              {/* Section 04: Additional Information (Only if provided) */}
+              {(app.additionalInfo || app.notes) && (
+                <div>
+                  <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>Additional details</SectionHeading>
+                  <div className="space-y-4 p-4 rounded-lg text-sm" style={{ background: "var(--surface-sunk)" }}>
+                    {app.additionalInfo && <Field label="Additional info" value={app.additionalInfo} />}
+                    {app.notes && <Field label="Admin notes" value={app.notes} />}
                   </div>
                 </div>
-              </div>
-
-              <div>
-                <SectionHeading number={nextNum()} icon={<Home className="h-4 w-4" />}>Household information</SectionHeading>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                  <Field label="Household members" value={app.householdMembers} />
-                  <Field label="Children studying" value={app.childrenStudying} />
-                  <Field label="Monthly household income" value={app.monthlyHouseholdIncome ? `₱${app.monthlyHouseholdIncome}` : ""} />
-                  <Field label="Main source of income" value={app.mainSourceIncome} />
-                  <Field label="Employment status" value={app.employmentStatus} />
-                  <Field label="Other financial support" value={app.otherFinancialSupport} />
-                </div>
-              </div>
-
-              <div>
-                <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>Support requested and current needs</SectionHeading>
-                <div className="space-y-4 p-4 rounded-lg text-sm" style={{ background: "var(--surface-sunk)" }}>
-                  <Field
-                    label="Support requested"
-                    value={app.supportTypes.join(", ") + (app.supportOther ? ` (${app.supportOther})` : "")}
-                  />
-                  <Field label="Primary reason for assistance" value={app.primaryReasonForAssistance} />
-                  <Field label="Specific needs" value={app.specificNeeds} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="Estimated amount needed" value={app.estimatedAmountNeeded ? `₱${app.estimatedAmountNeeded}` : ""} />
-                    <Field label="Urgency" value={app.urgency} />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <SectionHeading number={nextNum()} icon={<Users className="h-4 w-4" />}>Family / household situation</SectionHeading>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                  <Field label="Child's living arrangement" value={app.childLivingArrangement} />
-                  <Field
-                    label="Other children needing assistance"
-                    value={app.otherChildrenNeedingAssistance === "Yes" ? `Yes — ${app.otherChildrenCount}` : app.otherChildrenNeedingAssistance}
-                  />
-                  <Field
-                    label="Other govt. assistance received"
-                    value={app.otherGovtAssistanceReceived === "Yes" ? `Yes — ${app.otherGovtProgram}` : app.otherGovtAssistanceReceived}
-                  />
-                  <Field label="Additional info" value={app.additionalInfo} />
-                </div>
-              </div>
+              )}
             </>
           )}
 
