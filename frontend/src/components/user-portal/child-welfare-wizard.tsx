@@ -1004,18 +1004,10 @@ export default function ChildWelfareApplicationWizard({
               {/* Select Category / Type of Assistance */}
               <div className="space-y-2 pt-2">
                 <h3 className="text-sm font-bold text-gray-900 tracking-wide uppercase">
-                  {language === "tl"
-                    ? "PILIIN ANG KATEGORYA / URI NG TULONG"
-                    : language === "bis"
-                    ? "PILIA ANG KATEGORYA / MATANG SA TABANG"
-                    : "SELECT CATEGORY / TYPE OF ASSISTANCE"}
+                  SELECT CATEGORY / TYPE OF ASSISTANCE
                 </h3>
                 <p className={`text-xs font-semibold ${attemptedNext && !selectedAssistanceType ? "text-red-600" : "text-blue-700"}`}>
-                  {language === "tl"
-                    ? "Pumili ng uri ng tulong o kategorya *"
-                    : language === "bis"
-                    ? "Pilia ang matang sa tabang o kategorya *"
-                    : "Choose the type of assistance / category *"}
+                  Choose the type of assistance / category *
                 </p>
                 <div className="relative">
                   <select
@@ -1028,11 +1020,7 @@ export default function ChildWelfareApplicationWizard({
                     }`}
                   >
                     <option value="">
-                      {language === "tl"
-                        ? "-- Pumili ng Kategorya / Uri ng Tulong --"
-                        : language === "bis"
-                        ? "-- Pilia ang Kategorya / Matang sa Tabang --"
-                        : "-- Select Category / Type of Assistance --"}
+                      Select Category / Type of Assistance
                     </option>
                     {selectedProgram.assistanceTypes.map((type) => (
                       <option key={type} value={type}>
@@ -1043,11 +1031,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
                 {attemptedNext && !selectedAssistanceType && (
                   <p className="text-xs text-red-600 mt-1">
-                    {language === "tl"
-                      ? "Mangyaring pumili ng uri ng tulong o kategorya bago magpatuloy."
-                      : language === "bis"
-                      ? "Palihug pagpili og matang sa tabang o kategorya sa dili pa mopadayon."
-                      : "Please select an assistance type or category before proceeding."}
+                    Please select an assistance type or category before proceeding.
                   </p>
                 )}
               </div>
@@ -1221,7 +1205,7 @@ export default function ChildWelfareApplicationWizard({
                       onChange={(e) => updateField("sex", e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-900"
                     >
-                      <option value="">{language === "tl" ? "-- Piliin ang Kasarian --" : language === "bis" ? "-- Pilia ang Kasarian --" : "-- Select Gender --"}</option>
+                      <option value="">{language === "tl" ? "Piliin ang Kasarian" : language === "bis" ? "Pilia ang Kasarian" : "Select Gender"}</option>
                       <option value="Male">{language === "tl" ? "Lalaki (Male)" : language === "bis" ? "Lalaki (Male)" : "Male"}</option>
                       <option value="Female">{language === "tl" ? "Babae (Female)" : language === "bis" ? "Babaye (Female)" : "Female"}</option>
                     </select>
@@ -1327,7 +1311,7 @@ export default function ChildWelfareApplicationWizard({
                         attemptedNext && !formData.parentRelationship ? "border-red-500" : "border-gray-300"
                       }`}
                     >
-                      <option value="">{language === "tl" ? "-- Piliin ang Relasyon --" : language === "bis" ? "-- Pilia ang Relasyon --" : "-- Select Relationship --"}</option>
+                      <option value="">{language === "tl" ? "Piliin ang Relasyon" : language === "bis" ? "Pilia ang Relasyon" : "Select Relationship"}</option>
                       {[
                         { val: "Mother", label: language === "tl" ? "Ina (Mother)" : language === "bis" ? "Inahan (Mother)" : "Mother" },
                         { val: "Father", label: language === "tl" ? "Ama (Father)" : language === "bis" ? "Amahan (Father)" : "Father" },
