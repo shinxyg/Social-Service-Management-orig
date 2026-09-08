@@ -82,8 +82,14 @@ interface SoloParentSubmission {
   familyMembers: FamilyMember[]
 
   emergencyName: string
+  emergencyFirstName?: string
+  emergencyLastName?: string
+  emergencyRelationship?: string
   emergencyAddress: string
   emergencyContactNo: string
+  bloodType?: string
+  formData?: any
+  extraData?: any
 
   circumstanceDetails: string
   needsProblems: string
@@ -241,13 +247,44 @@ function mapSoloParentRow(row: any): SoloParentSubmission {
     civilStatus: row.civil_status || "",
     qcidNumber: row.qcid_number || "",
     email: row.email || "",
-    familyMembers: row.family_members || [],
-    emergencyName: row.emergency_name,
-    emergencyAddress: row.emergency_address,
-    emergencyContactNo: row.emergency_contact_no,
-    circumstanceDetails: row.circumstance_details,
-    needsProblems: row.needs_problems,
-    familyResources: row.family_resources,
+    familyMembers: row.family_members || row.form_data?.familyMembers || [],
+    emergencyName:
+      row.emergency_name ||
+      [row.emergency_first_name, row.emergency_last_name].filter(Boolean).join(" ") ||
+      row.form_data?.emergencyName ||
+      [row.form_data?.emergencyFirstName, row.form_data?.emergencyLastName].filter(Boolean).join(" ") ||
+      row.extra_data?.emergencyName ||
+      [row.extra_data?.emergencyFirstName, row.extra_data?.emergencyLastName].filter(Boolean).join(" ") ||
+      row.emergencyContactPerson ||
+      "",
+    emergencyFirstName: row.emergency_first_name || row.form_data?.emergencyFirstName || row.extra_data?.emergencyFirstName || "",
+    emergencyLastName: row.emergency_last_name || row.form_data?.emergencyLastName || row.extra_data?.emergencyLastName || "",
+    emergencyRelationship:
+      row.emergency_relationship ||
+      row.form_data?.emergencyRelationship ||
+      row.extra_data?.emergencyRelationship ||
+      row.relationshipToApplicant ||
+      "",
+    emergencyAddress:
+      row.emergency_address ||
+      row.form_data?.emergencyAddress ||
+      row.extra_data?.emergencyAddress ||
+      row.emergencyResidentialAddress ||
+      "",
+    emergencyContactNo:
+      row.emergency_contact_no ||
+      row.emergency_phone ||
+      row.form_data?.emergencyContactNo ||
+      row.form_data?.emergencyPhone ||
+      row.extra_data?.emergencyContactNo ||
+      row.contact_no ||
+      "",
+    bloodType: row.blood_type || row.form_data?.bloodType || row.extra_data?.bloodType || "",
+    formData: row.form_data || {},
+    extraData: row.extra_data || {},
+    circumstanceDetails: row.circumstance_details || row.form_data?.circumstanceDetails || "",
+    needsProblems: row.needs_problems || row.form_data?.needsProblems || "",
+    familyResources: row.family_resources || row.form_data?.familyResources || "",
     documents: mapUploadedDocuments(row),
     status: row.application_status,
     soloParentIdNumber: row.solo_parent_id_number || row.assigned_id_number || undefined,
@@ -841,8 +878,51 @@ function OfficialSoloParentIdCardModal({
   )
   const photoUrl = photoDoc?.fileUrl || "/samples/ID PICTURE (2X2).webp"
 
-  const emergencyPerson = app.emergencyName || (app as any).emergencyContactPerson || "—"
-  const emergencyPhone = app.emergencyContactNo || (app as any).emergencyPhone || app.contactNo || "—"
+  let emergencyPerson =
+    app.emergencyName ||
+    [app.emergencyFirstName, app.emergencyLastName].filter(Boolean).join(" ") ||
+    (app as any).emergencyContactPerson ||
+    (app as any).form_data?.emergencyName ||
+    [(app as any).form_data?.emergencyFirstName, (app as any).form_data?.emergencyLastName].filter(Boolean).join(" ") ||
+    ""
+
+  let emergencyPhone =
+    app.emergencyContactNo ||
+    (app as any).emergencyPhone ||
+    (app as any).form_data?.emergencyContactNo ||
+    (app as any).form_data?.emergencyPhone ||
+    ""
+
+  let emergencyRel =
+    app.emergencyRelationship ||
+    (app as any).form_data?.emergencyRelationship ||
+    (app as any).relationshipToApplicant ||
+    ""
+
+  if (!emergencyPerson || !emergencyPhone) {
+    try {
+      const raw = localStorage.getItem("currentUser") || localStorage.getItem("userProfile") || localStorage.getItem("user")
+      if (raw) {
+        const u = JSON.parse(raw)
+        const uQcid = u.qcidNumber || u.qcid_number || u.qcidNo || u.qcid || u.reference_number
+        if (
+          (uQcid && (uQcid === app.referenceNumber || uQcid === app.qcidNumber)) ||
+          (u.email && app.email && u.email.toLowerCase() === app.email.toLowerCase()) ||
+          (u.lastName && app.lastName && u.lastName.toLowerCase() === app.lastName.toLowerCase())
+        ) {
+          if (!emergencyPerson) {
+            emergencyPerson = [u.emergencyFirstName, u.emergencyLastName].filter(Boolean).join(" ") || u.emergencyName || ""
+          }
+          if (!emergencyPhone) {
+            emergencyPhone = u.emergencyContactNo || u.emergencyPhone || ""
+          }
+          if (!emergencyRel) {
+            emergencyRel = u.emergencyRelationship || ""
+          }
+        }
+      }
+    } catch {}
+  }
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
@@ -1020,12 +1100,18 @@ function OfficialSoloParentIdCardModal({
                 <p className="text-[8px] font-bold text-slate-800 uppercase">In case of emergency, please notify:</p>
                 <div className="grid grid-cols-2 gap-2 text-[7.5px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200">
                   <div>
-                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase">Contact Person</span>
-                    <span className="font-bold text-slate-900 truncate block">{emergencyPerson}</span>
+                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase">
+                      Contact Person {emergencyRel ? `(${emergencyRel})` : ""}
+                    </span>
+                    <span className="font-bold text-slate-900 truncate block">
+                      {emergencyPerson || "Immediate Family"}
+                    </span>
                   </div>
                   <div>
                     <span className="font-bold text-slate-400 block text-[6.5px] uppercase">Contact Number</span>
-                    <span className="font-mono font-bold text-blue-700 block">{emergencyPhone}</span>
+                    <span className="font-mono font-bold text-blue-700 block">
+                      {emergencyPhone || app.contactNo || "—"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1246,19 +1332,103 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               )}
 
-              {/* Only show emergency contact if it has actual data */}
-              {app.emergencyName && (
-                <div>
-                  <SectionHeading number={nextNum()} icon={<Phone className="h-4 w-4" />}>Emergency contact</SectionHeading>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                    <Field label="Name" value={app.emergencyName} />
-                    <Field label="Contact number" value={app.emergencyContactNo} />
-                    <div className="col-span-2">
-                      <Field label="Address" value={app.emergencyAddress} />
+              {/* Section 03: Emergency Contact */}
+              {(() => {
+                let emPerson =
+                  app.emergencyName ||
+                  [app.emergencyFirstName, app.emergencyLastName].filter(Boolean).join(" ") ||
+                  (app as any).emergencyContactPerson ||
+                  (app as any).form_data?.emergencyName ||
+                  [(app as any).form_data?.emergencyFirstName, (app as any).form_data?.emergencyLastName].filter(Boolean).join(" ") ||
+                  ""
+
+                let emPhone =
+                  app.emergencyContactNo ||
+                  (app as any).emergencyPhone ||
+                  (app as any).form_data?.emergencyContactNo ||
+                  (app as any).form_data?.emergencyPhone ||
+                  ""
+
+                let emRel =
+                  app.emergencyRelationship ||
+                  (app as any).form_data?.emergencyRelationship ||
+                  (app as any).relationshipToApplicant ||
+                  ""
+
+                let emAddr =
+                  app.emergencyAddress ||
+                  (app as any).form_data?.emergencyAddress ||
+                  ""
+
+                let bType =
+                  app.bloodType ||
+                  (app as any).form_data?.bloodType ||
+                  ""
+
+                if (!emPerson && !emPhone) {
+                  try {
+                    const raw = localStorage.getItem("currentUser") || localStorage.getItem("userProfile") || localStorage.getItem("user")
+                    if (raw) {
+                      const u = JSON.parse(raw)
+                      const uQcid = u.qcidNumber || u.qcid_number || u.qcidNo || u.qcid || u.reference_number
+                      if (
+                        (uQcid && (uQcid === app.referenceNumber || uQcid === app.qcidNumber)) ||
+                        (u.email && app.email && u.email.toLowerCase() === app.email.toLowerCase()) ||
+                        (u.lastName && app.lastName && u.lastName.toLowerCase() === app.lastName.toLowerCase())
+                      ) {
+                        if (!emPerson) {
+                          emPerson = [u.emergencyFirstName, u.emergencyLastName].filter(Boolean).join(" ") || u.emergencyName || ""
+                        }
+                        if (!emPhone) {
+                          emPhone = u.emergencyContactNo || u.emergencyPhone || ""
+                        }
+                        if (!emRel) {
+                          emRel = u.emergencyRelationship || ""
+                        }
+                        if (!emAddr) {
+                          emAddr = u.emergencyAddress || ""
+                        }
+                        if (!bType) {
+                          bType = u.bloodType || ""
+                        }
+                      }
+                    }
+                  } catch {}
+                }
+
+                return (
+                  <div>
+                    <SectionHeading number={nextNum()} icon={<Phone className="h-4 w-4" />}>
+                      Emergency Contact
+                    </SectionHeading>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                      <Field label="Contact Person" value={emPerson || "—"} />
+                      <Field label="Relationship" value={emRel || "Immediate Family"} />
+                      <Field
+                        label="Phone Number"
+                        value={
+                          <span className="inline-flex items-center gap-1.5">
+                            <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                            {emPhone || app.contactNo || "—"}
+                          </span>
+                        }
+                      />
+                      <Field label="Blood Type" value={bType || "—"} />
+                      <div className="col-span-2">
+                        <Field
+                          label="Emergency Address"
+                          value={
+                            <span className="inline-flex items-start gap-1.5">
+                              <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
+                              {emAddr || address || "—"}
+                            </span>
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
 
               {/* Only show circumstances if it has actual data */}
               {(app.circumstanceDetails || app.needsProblems || app.familyResources) && (

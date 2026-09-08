@@ -8,6 +8,26 @@ function generateReference(qcid) {
   return '110000116932100';
 }
 
+async function initSoloParentColumns() {
+  try {
+    await db.query(`
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_first_name VARCHAR(100);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_last_name VARCHAR(100);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_name VARCHAR(200);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_contact_no VARCHAR(50);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_relationship VARCHAR(100);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS emergency_address TEXT;
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS blood_type VARCHAR(20);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS form_data JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS family_members JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
+    `);
+  } catch (e) {
+    console.warn('[Solo Parent DB init columns]:', e.message);
+  }
+}
+initSoloParentColumns();
+
 // Create new application
 exports.createApplication = async (req, res) => {
   try {
@@ -27,6 +47,12 @@ exports.createApplication = async (req, res) => {
     const safeAge = isNaN(parsedAge) ? null : parsedAge;
     const soloParentIdNum = existingIdNumber || formData.soloParentIdNumber || null;
 
+    const emergencyName = [formData.emergencyFirstName, formData.emergencyLastName].filter(Boolean).join(' ') || formData.emergencyName || null;
+    const emergencyPhone = formData.emergencyContactNo || formData.emergencyPhone || null;
+    const emergencyRel = formData.emergencyRelationship || formData.relationshipToApplicant || null;
+    const emergencyAddr = formData.emergencyAddress || null;
+    const bloodType = formData.bloodType || null;
+
     const result = await db.query(
       `INSERT INTO solo_parent_applications (
         reference_number, user_id, application_status, application_type,
@@ -35,7 +61,10 @@ exports.createApplication = async (req, res) => {
         first_name, middle_name, last_name, suffix, age, sex,
         dob_month, dob_day, dob_year, civil_status, contact_no,
         address_house_no, address_street, address_barangay, address_city_municipality,
-        qcid_number, email
+        qcid_number, email,
+        emergency_first_name, emergency_last_name, emergency_name,
+        emergency_contact_no, emergency_relationship, emergency_address,
+        blood_type, form_data, family_members, extra_data
       ) VALUES (
         $1, $2, 'draft', $3,
         $4, $5, $6, $7,
@@ -43,7 +72,10 @@ exports.createApplication = async (req, res) => {
         $10, $11, $12, $13, $14, $15,
         $16, $17, $18, $19, $20,
         $21, $22, $23, $24,
-        $25, $26
+        $25, $26,
+        $27, $28, $29,
+        $30, $31, $32,
+        $33, $34, $35, $36
       ) RETURNING id, reference_number`,
       [
         referenceNumber, userId, idStatus,
@@ -53,6 +85,9 @@ exports.createApplication = async (req, res) => {
         formData.dobMonth || null, formData.dobDay || null, formData.dobYear || null, formData.civilStatus || null, formData.contactNo || null,
         formData.addressHouseNo || null, formData.addressStreet || null, formData.addressBarangay || null, formData.addressCityMunicipality || null,
         formData.qcidNumber || null, formData.email || null,
+        formData.emergencyFirstName || null, formData.emergencyLastName || null, emergencyName,
+        emergencyPhone, emergencyRel, emergencyAddr,
+        bloodType, JSON.stringify(formData || {}), JSON.stringify(familyMembers || []), JSON.stringify({ formData, familyMembers })
       ]
     );
 
