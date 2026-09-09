@@ -806,7 +806,6 @@ export default function ChildWelfareApplicationWizard({
   const [check1, setCheck1] = useState(false)
   const [check2, setCheck2] = useState(false)
   const [check3, setCheck3] = useState(false)
-  const [receivedPrior, setReceivedPrior] = useState<"yes" | "no" | "">("")
   const [selectedAssistanceType, setSelectedAssistanceType] = useState<string>("")
 
   // Sync assistance type when program changes only if not matching
@@ -1020,7 +1019,6 @@ export default function ChildWelfareApplicationWizard({
     setCheck1(false)
     setCheck2(false)
     setCheck3(false)
-    setReceivedPrior("")
     try {
       ;(window as any).__isFormDirty = false
     } catch {}
