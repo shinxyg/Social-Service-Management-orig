@@ -18,6 +18,7 @@ import {
   IdCard,
   Printer,
   Trash2,
+  ShieldAlert,
 } from "lucide-react"
 import { API_BASE as APP_API_BASE } from "../../config/api"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
