@@ -1094,13 +1094,6 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
                 <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={onClose}
-                    className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 cursor-pointer"
-                  >
-                    Close Modal
-                  </button>
-                  <button
-                    type="button"
                     disabled={isUpdatingStatus}
                     onClick={handleSaveStatus}
                     className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-1.5"
