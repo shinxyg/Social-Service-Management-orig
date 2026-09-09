@@ -1037,6 +1037,8 @@ export default function CaseManagement() {
     window.addEventListener("application_updated", handleFocus)
     window.addEventListener("appointments_updated", handleFocus)
     window.addEventListener("financial_aid_updated", handleFocus)
+    window.addEventListener("child_welfare_updated", handleFocus)
+    window.addEventListener("case_management_updated", handleFocus)
 
     return () => {
       clearInterval(interval)
@@ -1045,6 +1047,8 @@ export default function CaseManagement() {
       window.removeEventListener("application_updated", handleFocus)
       window.removeEventListener("appointments_updated", handleFocus)
       window.removeEventListener("financial_aid_updated", handleFocus)
+      window.removeEventListener("child_welfare_updated", handleFocus)
+      window.removeEventListener("case_management_updated", handleFocus)
     }
   }, [])
 

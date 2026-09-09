@@ -53,7 +53,7 @@ exports.getAllCases = async (req, res) => {
       db.query(`SELECT * FROM aics_applications WHERE LOWER(status) IN ('approved', 'completed', 'for_release', 'released') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM pwd_senior_applications WHERE LOWER(status) IN ('approved', 'completed', 'for_release', 'released', 'verified') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM solo_parent_applications WHERE LOWER(application_status) = 'approved' AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM child_welfare_applications WHERE LOWER(application_status) = 'approved' AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
+      db.query(`SELECT * FROM child_welfare_applications WHERE (is_archived IS NOT true) AND (LOWER(application_status) IN ('approved', 'completed', 'for_release', 'released') OR LOWER(COALESCE(category_title, '')) LIKE '%nutrition%' OR LOWER(COALESCE(primary_reason_for_assistance, '')) LIKE '%nutrition%') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM livelihood_applications WHERE LOWER(application_status) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(async () => {
         return db.query(`SELECT * FROM livelihood_applications WHERE LOWER(status) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] }));
       }),
@@ -564,17 +564,24 @@ exports.getAllCases = async (req, res) => {
       const dateApplied = row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : '2026-08-18';
       const dateApproved = row.updated_at ? new Date(row.updated_at).toISOString().split('T')[0] : dateApplied;
 
+      const catTitle = String(row.category_title || '').toLowerCase();
+      const catReason = String(row.primary_reason_for_assistance || '').toLowerCase();
+      const catSupp = String(row.support_category || '').toLowerCase();
+      const isNutrition = catTitle.includes('nutrition') || catReason.includes('nutrition') || catSupp.includes('nutrition');
+
       let resolvedStatus = override.status || 'open';
       if (!override.status) {
         if (mons.length > 0) resolvedStatus = 'monitoring';
         else if (refs.length > 0) resolvedStatus = 'referred';
       }
 
+      const caseType = isNutrition ? 'Child Nutrition & Feeding Program' : (row.category_title || 'Child Welfare & Protection Assistance');
+
       const timeline = [
         {
           id: `TL-SUB-${ref}`,
           title: 'Application Submitted',
-          detail: `Child Welfare application for ${row.child_name || 'Child'} (${row.category_title || 'Support'}).`,
+          detail: `Child Welfare application for ${row.child_name || 'Child'} (${row.category_title || (isNutrition ? 'Nutritional Assistance' : 'Support')}).`,
           date: dateApplied,
           type: 'submission',
         },
@@ -591,7 +598,7 @@ exports.getAllCases = async (req, res) => {
         timeline.push({
           id: `TL-APPT-${appt.id}`,
           title: appt.status === 'completed' ? 'Appointment Completed' : 'Appointment Scheduled',
-          detail: `Counseling / Assessment appointment scheduled at ${appt.venue || 'QC Child Welfare Center'} on ${appt.scheduled_date || 'TBA'} ${appt.scheduled_time || ''}.`,
+          detail: `Assessment & intake appointment scheduled at ${appt.venue || 'QC Child Welfare Center'} on ${appt.scheduled_date || 'TBA'} ${appt.scheduled_time || ''}.`,
           date: appt.scheduled_date || dateApproved,
           type: 'appointment',
         });
@@ -650,12 +657,12 @@ exports.getAllCases = async (req, res) => {
         email: row.guardian_email || '',
         address: [row.address_house_no, row.address_street, row.address_barangay, row.address_city_municipality].filter(Boolean).join(', ') || 'Quezon City',
         linkedProgram: 'Child Welfare',
-        caseType: row.category_title || 'Child Welfare & Protection Assistance',
-        priority: override.priority || 'high',
+        caseType: caseType,
+        priority: override.priority || (isNutrition ? 'high' : 'high'),
         dateOpened: dateApproved,
         assignedSocialWorker: override.assigned_social_worker || 'Admin Social Worker',
         status: resolvedStatus,
-        summary: `Child: ${row.child_name || 'N/A'} (${row.child_age || 'N/A'} y/o) — Primary Reason: ${row.primary_reason_for_assistance || 'Support'}`,
+        summary: `Child: ${row.child_name || 'N/A'} (${row.child_age || 'N/A'} y/o) — ${isNutrition ? 'Program: Child Nutrition & Supplementary Feeding | ' : ''}Reason: ${row.primary_reason_for_assistance || row.category_title || 'Nutritional & Child Support'}`,
         linkedAppointment: appt
           ? {
               id: String(appt.id),
@@ -669,7 +676,7 @@ exports.getAllCases = async (req, res) => {
           ? {
               id: String(fin.id),
               disbursementId: fin.disbursement_id || `FA-${ref}`,
-              assistanceType: fin.assistance_type || 'Child Welfare Support',
+              assistanceType: fin.assistance_type || (isNutrition ? 'Child Nutrition Support' : 'Child Welfare Support'),
               fixedAmount: Number(fin.fixed_amount || row.approved_amount || 5000),
               payoutSchedule: fin.payout_schedule || `${appt?.scheduled_date || 'TBA'} ${appt?.scheduled_time || ''}`.trim(),
               payoutLocation: fin.payout_location || 'QC Hall Payout Center',
