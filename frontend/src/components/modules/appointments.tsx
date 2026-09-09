@@ -324,14 +324,34 @@ export default function Appointments() {
           if (raw) localScheduledMap = JSON.parse(raw)
         } catch {}
 
+        // Read dismissed/deleted appointments list
+        let dismissedSet = new Set<string>()
+        try {
+          const dismissedRaw = localStorage.getItem("dismissed_appointments")
+          if (dismissedRaw) {
+            const parsed = JSON.parse(dismissedRaw)
+            if (Array.isArray(parsed)) {
+              parsed.forEach((d: string) => dismissedSet.add(String(d).trim().toLowerCase()))
+            }
+          }
+        } catch {}
+
         // 1. Fetch from PostgreSQL /api/appointments
         const resDb = await fetch(`${API_BASE}/api/appointments`)
         if (resDb.ok) {
           const dataDb = await resDb.json()
+          if (Array.isArray(dataDb.deletedReferences)) {
+            dataDb.deletedReferences.forEach((r: string) => dismissedSet.add(String(r).trim().toLowerCase()))
+          }
           if (dataDb.appointments && Array.isArray(dataDb.appointments)) {
             const mapped = dataDb.appointments
               .filter((a: any) => {
                 const concern = String(a.concern || '').toLowerCase()
+                const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || '').trim().toLowerCase()
+                const rawId = String(a.id || '').trim().toLowerCase()
+                if (dismissedSet.has(ref) || dismissedSet.has(rawId) || dismissedSet.has(`db-appt-${rawId}`)) {
+                  return false
+                }
                 if (concern.includes('id card') || concern.includes('issuance') || concern.includes('replacement') || concern.includes('renewal')) {
                   return false
                 }
@@ -494,6 +514,14 @@ export default function Appointments() {
             })
           }
         } catch {}
+
+        // Filter out any dismissed / deleted appointments
+        appts = appts.filter((a) => {
+          const ref = String(a.referenceNo || '').toLowerCase().trim()
+          const id = String(a.id || '').toLowerCase().trim()
+          const rawId = id.replace(/^(db-appt-|aics-appt-|pwd-senior-appt-|cw-appt-)/, '')
+          return !dismissedSet.has(ref) && !dismissedSet.has(id) && !dismissedSet.has(rawId)
+        })
 
         // Strict single-appointment deduplication by normalized reference / applicant
         const dedupedMap = new Map<string, AppointmentRequest>()
@@ -773,30 +801,55 @@ export default function Appointments() {
                 onMarkCompleted={handleMarkCompleted}
                 onDelete={async (id, ref) => {
                   if (confirm(`Burahin ang appointment request para kay ${appt.applicantName}?`)) {
-                    const rawId = id.replace(/^db-appt-/, '').replace(/^aics-appt-/, '').replace(/^pwd-senior-appt-/, '')
+                    const cleanRef = String(ref || '').trim()
+                    const cleanId = String(id || '').trim()
+                    const rawId = cleanId.replace(/^(db-appt-|aics-appt-|pwd-senior-appt-|cw-appt-)/, '').trim()
+
+                    // 1. Immediately remove from frontend state
+                    setAppointments((prev) =>
+                      prev.filter((item) => {
+                        const iRef = String(item.referenceNo || '').trim().toLowerCase()
+                        const iId = String(item.id || '').trim().toLowerCase()
+                        if (cleanId && iId === cleanId.toLowerCase()) return false
+                        if (cleanRef && iRef === cleanRef.toLowerCase()) return false
+                        if (rawId && (iId.includes(rawId.toLowerCase()) || iRef === rawId.toLowerCase())) return false
+                        return true
+                      })
+                    )
+
+                    // 2. Persist in dismissed localStorage
                     try {
-                      await Promise.allSettled([
-                        fetch(`${API_BASE}/api/appointments/${id}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/appointments/${ref}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/appointments/${rawId}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/aics/applications/${rawId}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/aics/applications/${ref}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/pwd-senior/applications/${rawId}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/pwd-senior/applications/${ref}`, { method: "DELETE" }),
-                      ])
+                      const dismissedRaw = localStorage.getItem("dismissed_appointments") || "[]"
+                      const dismissedList: string[] = JSON.parse(dismissedRaw)
+                      if (cleanRef && !dismissedList.includes(cleanRef)) dismissedList.push(cleanRef)
+                      if (cleanId && !dismissedList.includes(cleanId)) dismissedList.push(cleanId)
+                      if (rawId && !dismissedList.includes(rawId)) dismissedList.push(rawId)
+                      localStorage.setItem("dismissed_appointments", JSON.stringify(dismissedList))
                     } catch {}
+
+                    // 3. Clear from local scheduled cache
                     try {
                       const raw = localStorage.getItem("all_appointments_scheduled")
                       if (raw) {
                         const localMap = JSON.parse(raw)
-                        delete localMap[id]
-                        delete localMap[ref]
+                        delete localMap[cleanId]
+                        delete localMap[cleanRef]
                         delete localMap[rawId]
                         localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
                       }
                     } catch {}
-                    setAppointments((prev) => prev.filter((item) => item.id !== id && item.referenceNo !== ref))
+
+                    // 4. Send DELETE to backend database
+                    try {
+                      await Promise.allSettled([
+                        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(cleanId)}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(cleanRef)}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(rawId)}`, { method: "DELETE" }),
+                      ])
+                    } catch {}
+
                     window.dispatchEvent(new Event("appointments_updated"))
+                    notifyApplicationChange("APPLICATION_APPROVED", "appointment", cleanRef || cleanId)
                   }
                 }}
               />

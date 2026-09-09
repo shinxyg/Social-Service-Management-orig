@@ -15,9 +15,28 @@ const FIXED_ASSISTANCE_AMOUNTS = {
   'Livelihood Program': 15000,
 };
 
+async function initAppointmentTables() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS deleted_appointments (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(100) UNIQUE NOT NULL,
+        deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  } catch (e) {
+    console.warn('[Appointments init tables]:', e.message);
+  }
+}
+initAppointmentTables();
+
 // GET /api/appointments
 exports.getAppointments = async (req, res) => {
   try {
+    // 0. Get deleted reference numbers to exclude
+    const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
+    const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
+
     // Purge any appointments belonging to pending or rejected AICS applications
     await db.query(`
       DELETE FROM appointments
@@ -45,13 +64,15 @@ exports.getAppointments = async (req, res) => {
       `);
     } catch (_) {}
 
-    // Auto-populate appointments from approved livelihood applications if not yet present
+    // Auto-populate appointments from approved livelihood applications if not yet present and not deleted
     try {
       const approvedLivelihood = await db.query(
         `SELECT reference_number, first_name, last_name FROM livelihood_applications WHERE application_status = 'approved'`
       );
       for (const row of approvedLivelihood.rows) {
-        const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [row.reference_number]);
+        const refNo = String(row.reference_number || '').trim();
+        if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
+        const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [refNo]);
         if (checkAppt.rows.length === 0) {
           const fullName = `${row.first_name || ''} ${row.last_name || ''}`.trim().toUpperCase() || 'BENEFICIARY';
           await db.query(
@@ -59,23 +80,19 @@ exports.getAppointments = async (req, res) => {
               (reference_no, module, applicant_name, concern, status, office_location, notes)
              VALUES ($1, 'Livelihood', $2, 'Livelihood Capital Assistance', 'pending', 'Quezon City Hall - SSDD Livelihood Center', 'Awtomatikong pumasok mula sa na-aprubahang Livelihood application para sa scheduling.')
              ON CONFLICT DO NOTHING`,
+            [refNo, fullName]
+          );
+        }
+      }
+    } catch (_) {}
+             ON CONFLICT DO NOTHING`,
             [row.reference_number, fullName]
           );
         }
       }
     } catch (_) {}
 
-    // Purge any appointments belonging to ID card issuance (only social assistance goes to appointments)
-    try {
-      await db.query(`
-        DELETE FROM appointments
-        WHERE concern ILIKE '%ID Card Issuance%'
-           OR concern ILIKE '%ID Issuance%'
-           OR ((module = 'PWD' OR module = 'Senior Citizen') AND (concern NOT ILIKE '%assistance%' AND concern NOT ILIKE '%financial%'))
-      `);
-    } catch (_) {}
-
-    // Auto-populate appointments from approved PWD & Senior Citizen Social Assistance applications if not yet present
+    // Auto-populate appointments from approved PWD & Senior Citizen Social Assistance applications if not yet present and not deleted
     try {
       const approvedPwdSenior = await db.query(
         `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix 
@@ -84,11 +101,14 @@ exports.getAppointments = async (req, res) => {
            AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR service ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data ILIKE '%assist%')`
       );
       for (const row of approvedPwdSenior.rows) {
+        const refNo = String(row.reference_number || '').trim();
+        if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
+
         const isPwd = String(row.category || '').toUpperCase().includes('PWD');
         const mod = isPwd ? 'PWD' : 'Senior Citizen';
         const concern = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
 
-        const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [row.reference_number]);
+        const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [refNo]);
         if (checkAppt.rows.length === 0) {
           const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
           await db.query(
@@ -96,7 +116,7 @@ exports.getAppointments = async (req, res) => {
               (reference_no, module, applicant_name, concern, status, office_location, notes)
              VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang Social Assistance aplikasyon para sa scheduling.')
              ON CONFLICT DO NOTHING`,
-            [row.reference_number, mod, fullName, concern]
+            [refNo, mod, fullName, concern]
           );
         }
       }
@@ -104,17 +124,20 @@ exports.getAppointments = async (req, res) => {
 
     const result = await db.query(
       `SELECT a.* FROM appointments a
-       WHERE a.reference_no LIKE 'LP-%'
-          OR a.module IN ('Livelihood', 'PWD', 'Senior Citizen', 'Solo Parent', 'Child Welfare')
-          OR a.reference_no IN (
-            SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
-          )
-          OR a.reference_no IN (
-            SELECT reference_number FROM pwd_senior_applications WHERE status IN ('approved', 'completed', 'for_release')
-          )
+       WHERE (
+            a.reference_no LIKE 'LP-%'
+         OR a.module IN ('Livelihood', 'PWD', 'Senior Citizen', 'Solo Parent', 'Child Welfare')
+         OR a.reference_no IN (
+           SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
+         )
+         OR a.reference_no IN (
+           SELECT reference_number FROM pwd_senior_applications WHERE status IN ('approved', 'completed', 'for_release')
+         )
+       )
+       AND a.reference_no NOT IN (SELECT reference_no FROM deleted_appointments)
        ORDER BY a.created_at DESC`
     );
-    res.json({ appointments: result.rows });
+    res.json({ appointments: result.rows, deletedReferences: Array.from(deletedSet) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch appointments.', details: err.message });
   }
@@ -354,12 +377,41 @@ exports.completeAppointment = async (req, res) => {
 exports.deleteAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    const cleanId = String(id || '').trim();
-    await db.query(`DELETE FROM appointments WHERE id::text = $1 OR reference_no = $1`, [cleanId]);
-    res.json({ message: 'Appointment deleted successfully.' });
+    const raw = String(id || '').trim();
+    const cleanId = raw.replace(/^db-appt-/, '').replace(/^aics-appt-/, '').replace(/^pwd-senior-appt-/, '').replace(/^cw-appt-/, '').trim();
+
+    // 1. Delete from appointments table
+    await db.query(`DELETE FROM appointments WHERE id::text = $1 OR reference_no = $1 OR id::text = $2 OR reference_no = $2`, [raw, cleanId]);
+
+    // 2. Track in deleted_appointments table
+    if (cleanId) {
+      await db.query(
+        `INSERT INTO deleted_appointments (reference_no) VALUES ($1) ON CONFLICT (reference_no) DO NOTHING`,
+        [cleanId]
+      ).catch(() => {});
+    }
+    if (raw && raw !== cleanId) {
+      await db.query(
+        `INSERT INTO deleted_appointments (reference_no) VALUES ($1) ON CONFLICT (reference_no) DO NOTHING`,
+        [raw]
+      ).catch(() => {});
+    }
+
+    // 3. Log Activity
+    await logActivity({
+      actor: 'Admin / Social Worker',
+      actorRole: 'Appointment Officer',
+      action: 'DELETED',
+      module: 'Appointments',
+      referenceNo: cleanId || raw,
+      subject: 'Appointment Request',
+      detail: `Deleted appointment record (Ref/ID: ${cleanId || raw}).`,
+    }).catch(() => {});
+
+    res.json({ success: true, message: 'Appointment deleted successfully.' });
   } catch (err) {
     console.error('Error deleting appointment:', err);
-    res.status(500).json({ error: 'Failed to delete appointment.' });
+    res.status(500).json({ success: false, error: 'Failed to delete appointment.' });
   }
 };
 
