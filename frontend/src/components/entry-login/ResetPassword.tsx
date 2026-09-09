@@ -111,12 +111,14 @@ export const ResetPassword = () => {
         className="w-full md:w-1/2 text-white p-4 sm:p-6 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden text-center items-center"
         style={{ backgroundColor: '#0F172A' }}
       >
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          <div className="w-[450px] h-[450px] sm:w-[540px] sm:h-[540px] lg:w-[620px] lg:h-[620px] opacity-[0.12]">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden p-4">
+          <div className="w-full max-w-[480px] sm:max-w-[560px] lg:max-w-[640px] aspect-square flex items-center justify-center shrink-0 opacity-[0.12]">
             <img
               src={governmentSealImage}
               alt="Government Seal"
-              className="w-full h-full object-contain"
+              width={1080}
+              height={1080}
+              className="w-full h-full object-contain aspect-square shrink-0 select-none"
               style={{ filter: 'brightness(2.2) contrast(1.8) saturate(0.9)', mixBlendMode: 'overlay' }}
             />
           </div>
