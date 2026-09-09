@@ -300,6 +300,44 @@ exports.getDisbursements = async (req, res) => {
       }
     } catch (_) {}
 
+    // Auto-populate disbursements from approved Child Welfare (Nutritional, Child Protection, Emergency Assistance)
+    try {
+      const approvedChildWelfare = await db.query(
+        `SELECT reference_number, category_title, primary_reason_for_assistance, guardian_first_name, guardian_middle_name, guardian_last_name, approved_amount, updated_at, created_at
+         FROM child_welfare_applications 
+         WHERE application_status IN ('approved', 'completed', 'for_release')`
+      );
+      for (const row of approvedChildWelfare.rows) {
+        const disbCheck = await db.query(
+          'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1',
+          [row.reference_number]
+        );
+        if (disbCheck.rows.length === 0) {
+          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const fullName = [row.guardian_first_name, row.guardian_middle_name, row.guardian_last_name].filter(Boolean).join(' ').trim().toUpperCase() || 'GUARDIAN / BENEFICIARY';
+          const title = row.category_title ? `${row.category_title} (Child Welfare)` : 'Child Welfare Assistance';
+          const amount = Number(row.approved_amount) > 0 ? Number(row.approved_amount) : 5000;
+          await db.query(
+            `INSERT INTO financial_aid_disbursements (
+              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+              date_approved, status, venue, remarks
+            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
+            ON CONFLICT DO NOTHING`,
+            [
+              disbId,
+              row.reference_number,
+              fullName,
+              title,
+              amount,
+              new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+              'Quezon City Hall - SSDD Child Welfare Section',
+              'Approved Child Welfare financial grant. Ready for Appointment scheduling and payout.',
+            ]
+          );
+        }
+      }
+    } catch (_) {}
+
     const result = await db.query(
       `SELECT
          f.id,
