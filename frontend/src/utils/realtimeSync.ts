@@ -14,7 +14,7 @@ try {
 
 export interface SyncMessage {
   type: "APPLICATION_SUBMITTED" | "APPLICATION_APPROVED" | "APPLICATION_REJECTED" | "APPLICATION_DELETED" | "STATUS_CHANGED"
-  module?: "solo_parent" | "child_welfare" | "pwd_senior" | "aics" | "livelihood" | "case" | "all"
+  module?: "solo_parent" | "child_welfare" | "pwd_senior" | "aics" | "livelihood" | "case" | "appointment" | "all"
   referenceNumber?: string
   timestamp: number
 }

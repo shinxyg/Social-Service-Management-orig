@@ -85,12 +85,6 @@ exports.getAppointments = async (req, res) => {
         }
       }
     } catch (_) {}
-             ON CONFLICT DO NOTHING`,
-            [row.reference_number, fullName]
-          );
-        }
-      }
-    } catch (_) {}
 
     // Auto-populate appointments from approved PWD & Senior Citizen Social Assistance applications if not yet present and not deleted
     try {

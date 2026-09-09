@@ -12,6 +12,7 @@ import {
   parseAppointmentDateTime,
   checkAndAutoReleaseScheduledDisbursements,
 } from "../../utils/financialAidSync"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 import { API_BASE } from "../../config/api"
 
 // ---- Types ----
