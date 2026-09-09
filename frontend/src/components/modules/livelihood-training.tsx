@@ -492,11 +492,36 @@ function ReviewModal({
 
   const finalRevisionReason = selectedRevisionReason === "Other" ? customRevisionReason : selectedRevisionReason
   const finalRejectionReason = selectedRejectionReason === "Other" ? customRejectionReason : selectedRejectionReason
-  const fullName = [app.firstName, app.middleName, app.lastName].filter(Boolean).join(" ")
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-blur-xs">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl my-8 overflow-hidden flex flex-col max-h-[90vh]">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+      className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-blur-xs cursor-pointer"
+    >
+      {/* Floating Exit Button outside the box */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="fixed top-4 right-4 z-50 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-900/90 hover:bg-black text-white text-xs font-bold shadow-2xl border border-white/20 transition-all hover:scale-105 cursor-pointer backdrop-blur-md"
+        title="Exit / Close (Click outside or press Esc)"
+      >
+        <X className="h-4 w-4 text-white" />
+        <span>Exit (Esc)</span>
+      </button>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl my-8 overflow-hidden flex flex-col max-h-[90vh] cursor-default relative"
+      >
         {/* Header */}
         <div className="px-6 py-4 border-b border-border bg-muted/40 flex items-center justify-between shrink-0">
           <div>
@@ -972,11 +997,36 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
       : [{ equipment: "Operational Kit / Tools", quantity: "1 unit", description: "Standard package" }]
 
   const currentStatus = (initialAssist.assistance_status || "FOR PROCESSING").toUpperCase()
-  const fullName = [app.firstName, app.middleName, app.lastName].filter(Boolean).join(" ")
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 cursor-pointer"
+    >
+      {/* Floating Exit Button outside the box */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="fixed top-4 right-4 z-50 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-900/90 hover:bg-black text-white text-xs font-bold shadow-2xl border border-white/20 transition-all hover:scale-105 cursor-pointer backdrop-blur-md"
+        title="Exit / Close (Click outside or press Esc)"
+      >
+        <X className="h-4 w-4 text-white" />
+        <span>Exit (Esc)</span>
+      </button>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-card border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 cursor-default relative"
+      >
         {/* Header */}
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30 shrink-0">
           <div className="flex items-center gap-3">
@@ -1263,13 +1313,36 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
     setRemarks("")
   }
 
-  const handleConfirmCompletion = async () => {
-    await saveUpdate("COMPLETED")
-  }
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-blur-xs">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl my-8 overflow-hidden flex flex-col max-h-[92vh]">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+      className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-blur-xs cursor-pointer"
+    >
+      {/* Floating Exit Button outside the box */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="fixed top-4 right-4 z-50 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-900/90 hover:bg-black text-white text-xs font-bold shadow-2xl border border-white/20 transition-all hover:scale-105 cursor-pointer backdrop-blur-md"
+        title="Exit / Close (Click outside or press Esc)"
+      >
+        <X className="h-4 w-4 text-white" />
+        <span>Exit (Esc)</span>
+      </button>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl my-8 overflow-hidden flex flex-col max-h-[92vh] cursor-default relative"
+      >
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-border bg-muted/40 flex items-center justify-between shrink-0">
           <div>
