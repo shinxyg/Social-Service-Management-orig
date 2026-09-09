@@ -79,9 +79,13 @@ exports.createApplication = async (req, res) => {
     const childLivingArrangement = formData.childLivingArrangement || formData.currentLivingSituation || '';
     const otherChildrenNeedingAssistance = formData.otherChildrenNeedingAssistance || '';
     const otherChildrenCount = formData.otherChildrenCount || '';
-    const otherGovtAssistanceReceived = formData.otherGovtAssistanceReceived || (formData.receivedPrior === 'yes' ? 'Yes' : 'No');
-    const otherGovtProgram = formData.otherGovtProgram || '';
-    const additionalInfo = formData.additionalInfo || '';
+    const safetyInfo = [
+      formData.isImmediateDanger ? `Immediate Danger: ${formData.isImmediateDanger}` : '',
+      formData.isChildSafe ? `Child Currently in Safe Location: ${formData.isChildSafe}` : '',
+      formData.isReportingPersonCurrentParent ? `Reporting Person is Current Parent/Guardian: ${formData.isReportingPersonCurrentParent}${formData.isReportingPersonCurrentParent === 'No' && formData.specifiedRelationship ? ` (Specified: ${formData.specifiedRelationship})` : ''}` : ''
+    ].filter(Boolean).join(' | ');
+
+    const additionalInfo = [formData.additionalInfo, safetyInfo].filter(Boolean).join('\n');
 
     const categoryTitle = selectedCategory?.title || applicationData?.programTitle || 'Child Welfare Assistance';
     const categoryId = selectedCategoryId || (selectedCategory?.id ? String(selectedCategory.id) : null);
