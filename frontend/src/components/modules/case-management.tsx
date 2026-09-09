@@ -1325,7 +1325,7 @@ export default function CaseManagement() {
               <div
                 key={c.caseNumber}
                 onClick={() => setActiveCase(c)}
-                className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 transition-all hover:shadow-md hover:border-blue-200 cursor-pointer group"
+                className="bg-white border border-slate-200 hover:border-blue-500 hover:shadow-md hover:bg-slate-50/40 rounded-2xl p-4 md:p-5 transition-all cursor-pointer group select-none"
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   {/* Left Column: Beneficiary & Case Info */}
@@ -1399,24 +1399,19 @@ export default function CaseManagement() {
                     )}
                   </div>
 
-                  {/* Right Column: Case Status & Open Case Button */}
+                  {/* Right Column: Case Action */}
                   <div className="flex items-center gap-3 shrink-0 self-end lg:self-center">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border ${sm.chip}`}>
-                      <span className={`h-2 w-2 rounded-full ${sm.dot}`} />
-                      {sm.label}
-                    </span>
+                    {c.status !== "open" && (
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border ${sm.chip}`}>
+                        <span className={`h-2 w-2 rounded-full ${sm.dot}`} />
+                        {sm.label}
+                      </span>
+                    )}
 
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setActiveCase(c)
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-                    >
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 group-hover:bg-blue-600 text-white text-xs font-bold transition-all shadow-xs">
                       Open Case
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
+                      <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
                   </div>
                 </div>
               </div>
