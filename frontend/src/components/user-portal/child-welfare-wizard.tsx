@@ -855,6 +855,8 @@ export default function ChildWelfareApplicationWizard({
     parentFullName: "",
     parentRelationship: "",
     parentContactNo: "",
+    isReportingPersonCurrentParent: "Yes",
+    specifiedRelationship: "",
 
     // Specific concern / details
     reasonForRequest: "",
@@ -1059,6 +1061,7 @@ export default function ChildWelfareApplicationWizard({
     formData.parentFullName.trim() !== "" &&
     formData.parentRelationship.trim() !== "" &&
     formData.parentContactNo.trim().length >= 11 &&
+    (formData.isReportingPersonCurrentParent !== "No" || formData.specifiedRelationship.trim() !== "") &&
     (!selectedProgram.hasProtectionConcern || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== "")) &&
     (!selectedProgram.hasEmergencyInfo || (formData.emergencyType.trim() !== "" && formData.emergencyDateTime.trim() !== "" && formData.briefDescription.trim() !== "")) &&
     (!selectedProgram.hasPsychosocialReason || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== "")) &&
@@ -1116,6 +1119,8 @@ export default function ChildWelfareApplicationWizard({
           parentFullName: formData.parentFullName,
           parentRelationship: formData.parentRelationship,
           parentContactNo: formData.parentContactNo,
+          isReportingPersonCurrentParent: formData.isReportingPersonCurrentParent,
+          specifiedRelationship: formData.specifiedRelationship,
           supportTypes: [selectedAssistanceType],
         },
       },
@@ -1703,24 +1708,26 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </div>
 
-              {/* II. PARENT / GUARDIAN INFORMATION */}
+              {/* II. PARENT / GUARDIAN / REPORTING PERSON INFORMATION */}
               <div className="space-y-4 pt-3 border-t border-gray-200">
                 <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
                   <Users className="w-4 h-4 text-blue-600" />
-                  {t("parentGuardianTitle") || (language === "tl" ? "II. MAGULANG / GUARDIAN / NAG-UULAT" : language === "bis" ? "II. GINIKANAN / GUARDIAN / TIG-REPORT" : "II. PARENT / GUARDIAN / REPORTING PERSON")}
+                  {t("parentGuardianTitle") || (language === "tl" ? "II. IMPORMASYON NG MAGULANG / GUARDIAN / NAG-UULAT" : language === "bis" ? "II. IMPORMASYON SA GINIKANAN / GUARDIAN / TIG-REPORT" : "II. PARENT / GUARDIAN / REPORTING PERSON INFORMATION")}
                 </h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.parentFullName.trim() ? "text-red-600" : "text-gray-700"}`}>
-                      {language === "tl" ? "Buong Pangalan ng Magulang / Guardian *" : language === "bis" ? "Tibuok Ngalan sa Ginikanan / Guardian *" : "Full Name of Parent / Guardian *"}
+                      {language === "tl" ? "Buong Pangalan ng Magulang / Guardian / Nag-uulat *" : language === "bis" ? "Tibuok Ngalan sa Ginikanan / Guardian / Tig-report *" : "Full Name of Parent / Guardian / Reporting Person *"}
                     </label>
                     <input
                       type="text"
                       value={formData.parentFullName}
                       onChange={(e) => updateField("parentFullName", e.target.value.toUpperCase())}
-                      placeholder="Hal. MARIA DELA CRUZ"
-                      className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder={language === "tl" ? "Ilagay ang Buong Pangalan" : "Enter Full Name"}
+                      className={`w-full h-10 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        attemptedNext && !formData.parentFullName.trim() ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
                   </div>
                   <div>
@@ -1736,12 +1743,12 @@ export default function ChildWelfareApplicationWizard({
                     >
                       <option value="">{language === "tl" ? "Piliin ang Relasyon" : language === "bis" ? "Pilia ang Relasyon" : "Select Relationship"}</option>
                       {[
-                        { val: "Mother", label: language === "tl" ? "Ina (Mother)" : language === "bis" ? "Inahan (Mother)" : "Mother" },
-                        { val: "Father", label: language === "tl" ? "Ama (Father)" : language === "bis" ? "Amahan (Father)" : "Father" },
-                        { val: "Legal Guardian", label: language === "tl" ? "Legal na Tagapag-alaga (Guardian)" : language === "bis" ? "Legal nga Tig-atiman" : "Legal Guardian" },
-                        { val: "Relative", label: language === "tl" ? "Kamag-anak (Relative)" : language === "bis" ? "Paryente (Relative)" : "Relative" },
-                        { val: "Reporting Person", label: language === "tl" ? "Nag-uulat (Reporting Person)" : language === "bis" ? "Tig-report (Reporting Person)" : "Reporting Person" },
-                        { val: "Other", label: language === "tl" ? "Iba pa" : language === "bis" ? "Uban pa" : "Other" },
+                        { val: "Parent", label: "Parent" },
+                        { val: "Legal Guardian", label: "Legal Guardian" },
+                        { val: "Relative", label: "Relative" },
+                        { val: "Teacher", label: "Teacher" },
+                        { val: "Neighbor", label: "Neighbor" },
+                        { val: "Other", label: "Other" },
                       ].map((r) => (
                         <option key={r.val} value={r.val}>{r.label}</option>
                       ))}
@@ -1756,10 +1763,68 @@ export default function ChildWelfareApplicationWizard({
                       maxLength={11}
                       value={formData.parentContactNo}
                       onChange={(e) => updateField("parentContactNo", e.target.value.replace(/\D/g, ""))}
-                      placeholder="09XXXXXXXXX"
-                      className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder={language === "tl" ? "Ilagay ang Contact Number" : "Enter Contact Number"}
+                      className={`w-full h-10 rounded-lg border px-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        attemptedNext && formData.parentContactNo.length < 11 ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
                   </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="mt-4 pt-3 border-t border-gray-100 bg-gray-50/60 p-4 rounded-xl space-y-3">
+                  <h5 className="text-xs font-bold uppercase text-gray-700 tracking-wider">
+                    {language === "tl" ? "Karagdagang Impormasyon" : "Additional Information"}
+                  </h5>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                      {language === "tl"
+                        ? "Ang nag-uulat ba ang kasalukuyang magulang/guardian ng bata? *"
+                        : "Is the reporting person the child's current parent/guardian? *"}
+                    </label>
+                    <div className="flex items-center gap-6">
+                      <label className="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="isReportingPersonCurrentParent"
+                          value="Yes"
+                          checked={formData.isReportingPersonCurrentParent === "Yes"}
+                          onChange={() => updateField("isReportingPersonCurrentParent", "Yes")}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span>{language === "tl" ? "Oo (Yes)" : "Yes"}</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="isReportingPersonCurrentParent"
+                          value="No"
+                          checked={formData.isReportingPersonCurrentParent === "No"}
+                          onChange={() => updateField("isReportingPersonCurrentParent", "No")}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span>{language === "tl" ? "Hindi (No)" : "No"}</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {formData.isReportingPersonCurrentParent === "No" && (
+                    <div className="pt-2">
+                      <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.specifiedRelationship.trim() ? "text-red-600" : "text-gray-700"}`}>
+                        {language === "tl" ? "Kung Hindi, tukuyin ang relasyon sa bata: *" : "If No, specify relationship to the child: *"}
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.specifiedRelationship}
+                        onChange={(e) => updateField("specifiedRelationship", e.target.value)}
+                        placeholder={language === "tl" ? "Ilagay ang relasyon" : "Enter relationship"}
+                        className={`w-full max-w-md h-10 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${
+                          attemptedNext && !formData.specifiedRelationship.trim() ? "border-red-500" : "border-gray-300"
+                        }`}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2170,11 +2235,15 @@ export default function ChildWelfareApplicationWizard({
               </ReviewSection>
 
               {/* 3. Parent / Guardian / Reporting Person */}
-              <ReviewSection title={language === "tl" ? "Impormasyon ng Magulang / Guardian" : language === "bis" ? "Impormasyon sa Ginikanan / Guardian" : "Parent / Guardian / Reporting Person"} onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              <ReviewSection title={language === "tl" ? "Impormasyon ng Magulang / Guardian / Nag-uulat" : language === "bis" ? "Impormasyon sa Ginikanan / Guardian / Tig-report" : "Parent / Guardian / Reporting Person Information"} onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField label={language === "tl" ? "Buong Pangalan" : language === "bis" ? "Tibuok Ngalan" : "Full Name"} value={formData.parentFullName} />
                   <ReviewField label={language === "tl" ? "Relasyon sa Bata" : language === "bis" ? "Relasyon sa Bata" : "Relationship to Child"} value={formData.parentRelationship} />
                   <ReviewField label={language === "tl" ? "Numero ng Telepono" : language === "bis" ? "Numero sa Telepono" : "Contact Number"} value={formData.parentContactNo} />
+                  <ReviewField label={language === "tl" ? "Kasalukuyang Magulang/Guardian?" : "Is Current Parent/Guardian?"} value={formData.isReportingPersonCurrentParent} />
+                  {formData.isReportingPersonCurrentParent === "No" && (
+                    <ReviewField label={language === "tl" ? "Tinukoy na Relasyon" : "Specified Relationship"} value={formData.specifiedRelationship} />
+                  )}
                 </div>
               </ReviewSection>
 
