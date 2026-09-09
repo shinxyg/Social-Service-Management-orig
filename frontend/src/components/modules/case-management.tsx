@@ -1009,36 +1009,6 @@ export default function CaseManagement() {
     notifyApplicationChange("APPLICATION_APPROVED", "case", caseNumber)
   }
 
-  // Add Referral Handler
-  const handleAddReferral = async (caseNumber: string, referral: Partial<Referral>) => {
-    const res = await fetch(`${API_BASE}/api/case-management/case/${encodeURIComponent(caseNumber)}/referral`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify(referral),
-    })
-    if (!res.ok) throw new Error("Failed to add referral")
-    await loadCases(true)
-    notifyApplicationChange("APPLICATION_APPROVED", "case", caseNumber)
-  }
-
-  // Add Monitoring Handler
-  const handleAddMonitoring = async (caseNumber: string, log: Partial<MonitoringLog>) => {
-    const res = await fetch(`${API_BASE}/api/case-management/case/${encodeURIComponent(caseNumber)}/monitoring`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify({
-        officerName: log.officer,
-        monitoringDate: log.date,
-        progressStatus: log.progressStatus,
-        notes: log.notes,
-        nextAction: log.nextAction,
-      }),
-    })
-    if (!res.ok) throw new Error("Failed to add monitoring log")
-    await loadCases(true)
-    notifyApplicationChange("APPLICATION_APPROVED", "case", caseNumber)
-  }
-
   // Stats calculation
   const stats = useMemo(() => {
     const total = cases.length
