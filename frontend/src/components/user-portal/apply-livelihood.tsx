@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
+import { useLanguage } from "../ui/language-context"
 import { LivelihoodRequirementsModal } from "./livelihood-requirements-data"
 import LivelihoodApplicationWizard from "./livelihood-wizard"
 import LivelihoodStatusCard, { type LivelihoodApplicationRecord } from "./livelihood-status-card"
@@ -147,7 +148,41 @@ export default function ApplyLivelihood() {
 
   // Active Tab: 1. Apply, 2. Capital/Materials Assistance, 3. Monitoring
   const tabParam = (searchParams.get("tab") as LivelihoodProgramTab) || "apply"
-  const [activeTab, setActiveTab] = useState<LivelihoodProgramTab>(tabParam)
+  const { language } = useLanguage()
+  const langKey = (language === "tl" || language === "bis" ? language : "en")
+
+  const texts = {
+    en: {
+      reqTitle: "Requirements for QC Livelihood Program",
+      reqBadge: "Livelihood Assistance",
+      reqSub: "Official government service for Livelihood and Enterprise Assistance of Quezon City.",
+      viewReq: "View Requirements",
+      tab1: "1. APPLY FOR LIVELIHOOD",
+      tab2: "2. CAPITAL / MATERIALS",
+      tab3: "3. LIVELIHOOD MONITORING",
+      locked: "(LOCKED)",
+    },
+    tl: {
+      reqTitle: "Mga Kinakailangan sa QC Livelihood Program",
+      reqBadge: "Tulong sa Kabuhayan",
+      reqSub: "Opisyal na serbisyo para sa Pangkabuhayan at Negosyo Assistance ng Lungsod Quezon.",
+      viewReq: "Tingnan ang Requirements",
+      tab1: "1. MAG-APPLY SA LIVELIHOOD",
+      tab2: "2. KAPITAL / KAGAMITAN",
+      tab3: "3. PAGSUSUBAYBAY SA KABUHAYAN",
+      locked: "(NAKA-LOCK)",
+    },
+    bis: {
+      reqTitle: "Mga Kinahanglanon sa QC Livelihood Program",
+      reqBadge: "Tabang sa Panginabuhi",
+      reqSub: "Opisyal nga serbisyo alang sa Panginabuhi ug Negosyo sa Dakbayan sa Quezon.",
+      viewReq: "Tan-awa ang mga Kinahanglanon",
+      tab1: "1. MAG-APPLY SA PANGINABUHI",
+      tab2: "2. KAPITAL / KAGAMITAN",
+      tab3: "3. PAGBANTAY SA PANGINABUHI",
+      locked: "(NAKA-LOCK)",
+    },
+  }[langKey]
 
   // Requirements Modal visibility & acceptance
   const [showRequirements, setShowRequirements] = useState(false)
@@ -376,14 +411,14 @@ export default function ApplyLivelihood() {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-sm md:text-base font-bold text-foreground">
-                    Requirements for QC Livelihood Program
+                    {texts.reqTitle}
                   </h1>
                   <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
-                    Livelihood Assistance
+                    {texts.reqBadge}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Opisyal na serbisyo para sa Pangkabuhayan at Negosyo Assistance ng Lungsod Quezon.
+                  {texts.reqSub}
                 </p>
               </div>
             </div>
@@ -392,7 +427,7 @@ export default function ApplyLivelihood() {
               onClick={() => setShowRequirements(true)}
               className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
             >
-              Tingnan ang Requirements
+              {texts.viewReq}
             </button>
           </div>
         </div>
@@ -412,7 +447,7 @@ export default function ApplyLivelihood() {
             }`}
           >
             <FileText className="h-4 w-4" />
-            <span>1. APPLY FOR LIVELIHOOD</span>
+            <span>{texts.tab1}</span>
           </button>
 
           {/* Tab 2: Capital / Materials Assistance */}
@@ -428,7 +463,7 @@ export default function ApplyLivelihood() {
             }`}
           >
             {!isApproved ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <Package className="h-4 w-4" />}
-            <span>2. CAPITAL / MATERIALS {!isApproved && "(LOCKED)"}</span>
+            <span>{texts.tab2} {!isApproved && texts.locked}</span>
           </button>
 
           {/* Tab 3: Livelihood Monitoring */}
@@ -444,7 +479,7 @@ export default function ApplyLivelihood() {
             }`}
           >
             {!isAssistanceReleased ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <Activity className="h-4 w-4" />}
-            <span>3. LIVELIHOOD MONITORING {!isAssistanceReleased && "(LOCKED)"}</span>
+            <span>{texts.tab3} {!isAssistanceReleased && texts.locked}</span>
           </button>
         </div>
       </div>
