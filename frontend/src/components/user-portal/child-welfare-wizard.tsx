@@ -1833,39 +1833,51 @@ export default function ChildWelfareApplicationWizard({
                 <div className="space-y-4 pt-3 border-t border-gray-200">
                   <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
                     <ShieldAlert className="w-4 h-4 text-rose-600" />
-                    CHILD PROTECTION CONCERN
+                    {language === "tl" ? "ALALAHANIN SA PROTEKSYON NG BATA" : language === "bis" ? "KABALAKA SA PROTEKSYON SA BATA" : "CHILD PROTECTION CONCERN"}
                   </h4>
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Reason for Report / Assistance *
+                      {language === "tl" ? "Dahilan ng Ulat / Tulong *" : language === "bis" ? "Rason sa Pag-report / Tabang *" : "Reason for Report / Assistance *"}
                     </label>
                     <select
                       value={formData.reasonForRequest}
                       onChange={(e) => updateField("reasonForRequest", e.target.value)}
                       className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
-                      <option value="">Pumili ng sitwasyon / dahilan...</option>
-                      <option value="Child Abuse / Neglect">Child Abuse / Neglect</option>
-                      <option value="Physical Abuse">Physical Abuse</option>
-                      <option value="Emotional Abuse">Emotional Abuse</option>
-                      <option value="Exploitation">Exploitation / Child Labor</option>
-                      <option value="Abandonment">Abandonment</option>
-                      <option value="Threat to Safety / Urgent Protection">Threat to Safety / Urgent Protection</option>
-                      <option value="Legal / Custody Concern">Legal / Custody Concern</option>
-                      <option value="Other Protection Concern">Other Protection Concern</option>
+                      <option value="">
+                        {language === "tl" ? "Pumili ng sitwasyon / dahilan..." : language === "bis" ? "Pilia ang sitwasyon / rason..." : "Select situation / reason..."}
+                      </option>
+                      {[
+                        { val: "Child Abuse / Neglect", label: language === "tl" ? "Pang-aabuso sa Bata / Pagpapabaya (Child Abuse / Neglect)" : "Child Abuse / Neglect" },
+                        { val: "Physical Abuse", label: language === "tl" ? "Pisikal na Pang-aabuso (Physical Abuse)" : "Physical Abuse" },
+                        { val: "Emotional Abuse", label: language === "tl" ? "Emosyonal na Pang-aabuso (Emotional Abuse)" : "Emotional Abuse" },
+                        { val: "Exploitation", label: language === "tl" ? "Pagsasamantala / Child Labor (Exploitation)" : "Exploitation / Child Labor" },
+                        { val: "Abandonment", label: language === "tl" ? "Pag-abandona (Abandonment)" : "Abandonment" },
+                        { val: "Threat to Safety / Urgent Protection", label: language === "tl" ? "Banta sa Kaligtasan / Agarang Proteksyon" : "Threat to Safety / Urgent Protection" },
+                        { val: "Legal / Custody Concern", label: language === "tl" ? "Legal / Custody na Alalahanin" : "Legal / Custody Concern" },
+                        { val: "Other Protection Concern", label: language === "tl" ? "Iba pang Alalahanin sa Proteksyon" : "Other Protection Concern" },
+                      ].map((item) => (
+                        <option key={item.val} value={item.val}>{item.label}</option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Brief Description of the Concern / Incident *
+                      {language === "tl" ? "Maikling Paglalarawan ng Sitwasyon / Insidente *" : language === "bis" ? "Mubo nga Deskripsyon sa Hitabo *" : "Brief Description of the Concern / Incident *"}
                     </label>
                     <textarea
                       rows={3}
                       value={formData.briefDescription}
                       onChange={(e) => updateField("briefDescription", e.target.value)}
-                      placeholder="Please describe what happened or why the child needs urgent protection..."
+                      placeholder={
+                        language === "tl"
+                          ? "Ilarawan ang nangyari o kung bakit kailangan ng bata ng agarang proteksyon..."
+                          : language === "bis"
+                          ? "Ihulagway kung unsay nahitabo o ngano kinahanglan ug dinaliang proteksyon ang bata..."
+                          : "Please describe what happened or why the child needs urgent protection..."
+                      }
                       className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                   </div>
@@ -1873,40 +1885,54 @@ export default function ChildWelfareApplicationWizard({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                        Is the child currently in immediate danger? *
+                        {language === "tl"
+                          ? "Kasalukuyan bang nasa agarang panganib ang bata? *"
+                          : language === "bis"
+                          ? "Karon ba anaa sa dinaliang kapeligrohan ang bata? *"
+                          : "Is the child currently in immediate danger? *"}
                       </label>
                       <div className="flex items-center gap-6">
-                        {["Yes", "No"].map((v) => (
-                          <label key={v} className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer">
+                        {[
+                          { val: "Yes", label: language === "tl" ? "Oo (Yes)" : language === "bis" ? "Oo (Yes)" : "Yes" },
+                          { val: "No", label: language === "tl" ? "Hindi (No)" : language === "bis" ? "Dili (No)" : "No" },
+                        ].map((v) => (
+                          <label key={v.val} className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer">
                             <input
                               type="radio"
                               name="childProtectionDanger"
-                              value={v}
-                              checked={formData.isImmediateDanger === v}
-                              onChange={() => updateField("isImmediateDanger", v)}
+                              value={v.val}
+                              checked={formData.isImmediateDanger === v.val}
+                              onChange={() => updateField("isImmediateDanger", v.val)}
                               className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
                             />
-                            <span>{v}</span>
+                            <span>{v.label}</span>
                           </label>
                         ))}
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                        Is the child currently in a safe location? *
+                        {language === "tl"
+                          ? "Kasalukuyan bang nasa ligtas na lugar ang bata? *"
+                          : language === "bis"
+                          ? "Karon ba anaa sa luwas nga dapit ang bata? *"
+                          : "Is the child currently in a safe location? *"}
                       </label>
                       <div className="flex items-center gap-6">
-                        {["Yes", "No"].map((v) => (
-                          <label key={v} className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer">
+                        {[
+                          { val: "Yes", label: language === "tl" ? "Oo (Yes)" : language === "bis" ? "Oo (Yes)" : "Yes" },
+                          { val: "No", label: language === "tl" ? "Hindi (No)" : language === "bis" ? "Dili (No)" : "No" },
+                        ].map((v) => (
+                          <label key={v.val} className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer">
                             <input
                               type="radio"
                               name="childProtectionSafe"
-                              value={v}
-                              checked={formData.isChildSafe === v}
-                              onChange={() => updateField("isChildSafe", v)}
+                              value={v.val}
+                              checked={formData.isChildSafe === v.val}
+                              onChange={() => updateField("isChildSafe", v.val)}
                               className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
                             />
-                            <span>{v}</span>
+                            <span>{v.label}</span>
                           </label>
                         ))}
                       </div>

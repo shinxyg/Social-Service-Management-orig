@@ -166,6 +166,10 @@ interface ChildWelfareSubmission {
   otherGovtAssistanceReceived: string
   otherGovtProgram: string
   additionalInfo: string
+  isReportingPersonCurrentParent?: string
+  specifiedRelationship?: string
+  isImmediateDanger?: string
+  isChildSafe?: string
 
   documents: ApplicationDocument[]
 
@@ -540,6 +544,45 @@ function mapChildWelfareRow(row: any): ChildWelfareSubmission {
     otherGovtAssistanceReceived: row.other_govt_assistance_received,
     otherGovtProgram: row.other_govt_program,
     additionalInfo: row.additional_info,
+    isReportingPersonCurrentParent: (() => {
+      const rawFd = row.form_data || {}
+      const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+      const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+      if (fdForm.isReportingPersonCurrentParent || fd.isReportingPersonCurrentParent) return fdForm.isReportingPersonCurrentParent || fd.isReportingPersonCurrentParent
+      const addInfo = row.additional_info || ""
+      if (addInfo.includes("Reporting Person is Current Parent/Guardian: No")) return "No"
+      if (addInfo.includes("Reporting Person is Current Parent/Guardian: Yes")) return "Yes"
+      return "Yes"
+    })(),
+    specifiedRelationship: (() => {
+      const rawFd = row.form_data || {}
+      const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+      const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+      if (fdForm.specifiedRelationship || fd.specifiedRelationship) return fdForm.specifiedRelationship || fd.specifiedRelationship
+      const addInfo = row.additional_info || ""
+      const match = addInfo.match(/\(Specified:\s*([^)]+)\)/)
+      return match ? match[1] : ""
+    })(),
+    isImmediateDanger: (() => {
+      const rawFd = row.form_data || {}
+      const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+      const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+      if (fdForm.isImmediateDanger || fd.isImmediateDanger) return fdForm.isImmediateDanger || fd.isImmediateDanger
+      const addInfo = row.additional_info || ""
+      if (addInfo.includes("Immediate Danger: Yes")) return "Yes"
+      if (addInfo.includes("Immediate Danger: No")) return "No"
+      return "No"
+    })(),
+    isChildSafe: (() => {
+      const rawFd = row.form_data || {}
+      const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+      const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+      if (fdForm.isChildSafe || fd.isChildSafe) return fdForm.isChildSafe || fd.isChildSafe
+      const addInfo = row.additional_info || ""
+      if (addInfo.includes("Child Currently in Safe Location: Yes")) return "Yes"
+      if (addInfo.includes("Child Currently in Safe Location: No")) return "No"
+      return "Yes"
+    })(),
     documents: mapUploadedDocuments(row, true),
     status: row.application_status,
     approvedAmount: row.approved_amount || undefined,
@@ -1800,16 +1843,47 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               </div>
 
-              {/* Section 04: Additional Information (Only if provided) */}
-              {(app.additionalInfo || app.notes) && (
-                <div>
-                  <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>Additional details</SectionHeading>
-                  <div className="space-y-4 p-4 rounded-lg text-sm" style={{ background: "var(--surface-sunk)" }}>
-                    {app.additionalInfo && <Field label="Additional info" value={app.additionalInfo} />}
-                    {app.notes && <Field label="Admin notes" value={app.notes} />}
-                  </div>
+              {/* Section 04: Additional Information & Protection Safety Status */}
+              <div>
+                <SectionHeading number={nextNum()} icon={<ShieldAlert className="h-4 w-4" />}>
+                  Additional Information &amp; Protection Status
+                </SectionHeading>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                  <Field
+                    label="Reporting person is child's current parent/guardian?"
+                    value={app.isReportingPersonCurrentParent || "Yes"}
+                  />
+                  {(app.isReportingPersonCurrentParent === "No" || app.specifiedRelationship) && (
+                    <Field label="Specified relationship to child" value={app.specifiedRelationship || "—"} />
+                  )}
+                  <Field
+                    label="Is child currently in immediate danger?"
+                    value={
+                      <span className={`inline-flex items-center gap-1.5 font-bold ${app.isImmediateDanger === "Yes" ? "text-red-600" : "text-emerald-700"}`}>
+                        {app.isImmediateDanger || "No"}
+                      </span>
+                    }
+                  />
+                  <Field
+                    label="Is child currently in a safe location?"
+                    value={
+                      <span className={`inline-flex items-center gap-1.5 font-bold ${app.isChildSafe === "No" ? "text-red-600" : "text-emerald-700"}`}>
+                        {app.isChildSafe || "Yes"}
+                      </span>
+                    }
+                  />
+                  {app.additionalInfo && !app.additionalInfo.includes("Reporting Person") && !app.additionalInfo.includes("Immediate Danger") && (
+                    <div className="col-span-2">
+                      <Field label="Additional notes" value={app.additionalInfo} />
+                    </div>
+                  )}
+                  {app.notes && (
+                    <div className="col-span-2">
+                      <Field label="Admin notes" value={app.notes} />
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </>
           )}
 
