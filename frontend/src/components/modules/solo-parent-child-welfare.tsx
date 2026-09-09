@@ -1920,23 +1920,13 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                         <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
                           Confirm Child Welfare Support Approval
                         </label>
-                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md">
-                          Approved Amount: ₱{approveAmount || "5,000"}
+                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2.5 py-1 rounded-md font-mono">
+                          Fixed Grant: ₱5,000
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                        Approving will forward this child welfare grant to <strong>Financial Aid Disbursement</strong> and connect to <strong>Appointments</strong> for payout scheduling.
+                        Approving will automatically record this grant (<strong>₱5,000 Fixed Financial Aid</strong>) to <strong>Financial Aid Disbursement</strong> and connect to <strong>Appointments</strong> for payout scheduling.
                       </p>
-                      <div className="mt-3">
-                        <label className="text-xs font-semibold text-emerald-900">Approved Support Amount (₱)</label>
-                        <input
-                          type="text"
-                          value={approveAmount}
-                          onChange={(e) => setApproveAmount(e.target.value)}
-                          className="gw-input w-full mt-1 px-3 py-2 text-sm bg-white"
-                          placeholder="5000"
-                        />
-                      </div>
                     </div>
                     <div className="flex gap-3">
                       <button
@@ -1949,14 +1939,12 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                       <button
                         type="button"
                         onClick={() => {
-                          if (approveAmount.trim()) {
-                            onApprove(app.id, approveAmount)
-                            onClose()
-                          }
+                          onApprove(app.id, "5000")
+                          onClose()
                         }}
-                        className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
+                        className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer font-semibold"
                       >
-                        Confirm Approval &amp; Forward
+                        Confirm Approval &amp; Forward (₱5,000)
                       </button>
                     </div>
                   </div>
