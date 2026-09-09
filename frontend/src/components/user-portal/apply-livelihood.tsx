@@ -154,6 +154,8 @@ export default function ApplyLivelihood() {
 
   const texts = {
     en: {
+      catLivelihood: "Livelihood Assistance",
+      catTraining: "Training Program",
       reqTitle: "Requirements for QC Livelihood Program",
       reqBadge: "Livelihood Assistance",
       reqSub: "Official government service for Livelihood and Enterprise Assistance of Quezon City.",
@@ -162,8 +164,17 @@ export default function ApplyLivelihood() {
       tab2: "2. CAPITAL / MATERIALS",
       tab3: "3. LIVELIHOOD MONITORING",
       locked: "(LOCKED)",
+      lockStage2: "Stage 2 is Locked: This will only become active once your Livelihood Application is officially approved by SSDD Admin.",
+      lockStage3: "Stage 3 is Locked: This will only become active on the scheduled date and time of release for your Capital / Materials Assistance.",
+      activeAppRecord: "Active Application Record",
+      applyNew: "Apply for New Livelihood",
+      noAppTitle: "No Livelihood Application Yet",
+      noAppSub: "Get started by reading the guidelines and documentary requirements before submitting an application.",
+      applyBtn: "APPLY FOR LIVELIHOOD",
     },
     tl: {
+      catLivelihood: "Tulong sa Kabuhayan",
+      catTraining: "Programa sa Pagsasanay",
       reqTitle: "Mga Kinakailangan sa QC Livelihood Program",
       reqBadge: "Tulong sa Kabuhayan",
       reqSub: "Opisyal na serbisyo para sa Pangkabuhayan at Negosyo Assistance ng Lungsod Quezon.",
@@ -172,8 +183,17 @@ export default function ApplyLivelihood() {
       tab2: "2. KAPITAL / KAGAMITAN",
       tab3: "3. PAGSUSUBAYBAY SA KABUHAYAN",
       locked: "(NAKA-LOCK)",
+      lockStage2: "Naka-lock ang Stage 2: Magiging aktibo lamang ito kapag opisyal nang naaprubahan ng SSDD Admin ang iyong Livelihood Application.",
+      lockStage3: "Naka-lock ang Stage 3: Magiging aktibo lamang ito sa takdang araw at oras ng release ng iyong Capital / Materials Assistance.",
+      activeAppRecord: "Aktibong Talaan ng Aplikasyon",
+      applyNew: "Mag-apply ng Bagong Livelihood",
+      noAppTitle: "Wala pang Livelihood Application",
+      noAppSub: "Magsimula sa pamamagitan ng pagbasa sa mga panuntunan at documentary requirements bago magsumite ng application.",
+      applyBtn: "MAG-APPLY SA LIVELIHOOD",
     },
     bis: {
+      catLivelihood: "Tabang sa Panginabuhi",
+      catTraining: "Programa sa Pagbansay",
       reqTitle: "Mga Kinahanglanon sa QC Livelihood Program",
       reqBadge: "Tabang sa Panginabuhi",
       reqSub: "Opisyal nga serbisyo alang sa Panginabuhi ug Negosyo sa Dakbayan sa Quezon.",
@@ -182,6 +202,13 @@ export default function ApplyLivelihood() {
       tab2: "2. KAPITAL / KAGAMITAN",
       tab3: "3. PAGBANTAY SA PANGINABUHI",
       locked: "(NAKA-LOCK)",
+      lockStage2: "Naka-lock ang Stage 2: Mahimong aktibo lamang kini kon opisyal nang maaprobahan sa SSDD Admin ang imong Livelihood Application.",
+      lockStage3: "Naka-lock ang Stage 3: Mahimong aktibo lamang kini sa gitakdang adlaw ug oras sa pagpagawas sa imong Capital / Materials Assistance.",
+      activeAppRecord: "Aktibong Rekord sa Aplikasyon",
+      applyNew: "Mag-apply og Bag-ong Panginabuhi",
+      noAppTitle: "Wala pay Livelihood Application",
+      noAppSub: "Pagsugod pinaagi sa pagbasa sa mga lagda ug documentary requirements sa dili pa mosumite og aplikasyon.",
+      applyBtn: "MAG-APPLY SA PANGINABUHI",
     },
   }[langKey]
 
@@ -309,17 +336,17 @@ export default function ApplyLivelihood() {
     assistData?.release_status === "RELEASED" ||
     (rawAssistStatus === "for_release" && isPastOrNow)
 
-  const [tabLockedMessage, setTabLockedMessage] = useState<string | null>(null)
+  const [tabLockedKey, setTabLockedKey] = useState<"stage2" | "stage3" | null>(null)
 
   // Top 3-Part Program Navigation Bar
   const handleSelectTab = (tab: LivelihoodProgramTab) => {
-    setTabLockedMessage(null)
+    setTabLockedKey(null)
     if (tab === "assistance" && !isApproved) {
-      setTabLockedMessage("Naka-lock ang Stage 2: Magiging aktibo lamang ito kapag opisyal nang naaprubahan ng SSDD Admin ang iyong Livelihood Application.")
+      setTabLockedKey("stage2")
       return
     }
     if (tab === "monitoring" && !isAssistanceReleased) {
-      setTabLockedMessage("Naka-lock ang Stage 3: Magiging aktibo lamang ito sa takdang araw at oras ng release ng iyong Capital / Materials Assistance.")
+      setTabLockedKey("stage3")
       return
     }
     setIsWizardOpen(false)
@@ -356,7 +383,7 @@ export default function ApplyLivelihood() {
             }`}
           >
             <Store className="h-4 w-4 text-blue-600" />
-            <span>Livelihood Assistance</span>
+            <span>{texts.catLivelihood}</span>
           </button>
 
           <button
@@ -375,7 +402,7 @@ export default function ApplyLivelihood() {
             }`}
           >
             <GraduationCap className="h-4 w-4 text-indigo-600" />
-            <span>Training Program</span>
+            <span>{texts.catTraining}</span>
           </button>
         </div>
       </div>
@@ -385,21 +412,23 @@ export default function ApplyLivelihood() {
       ) : (
         <>
           {/* Tab Locked Alert Notice */}
-          {tabLockedMessage && (
-        <div className="p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200 animate-in fade-in duration-200">
-          <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 shrink-0 text-amber-600" />
-            <span className="font-semibold">{tabLockedMessage}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setTabLockedMessage(null)}
-            className="text-amber-700 hover:text-amber-900 font-bold px-2 py-0.5 cursor-pointer"
-          >
-            ×
-          </button>
-        </div>
-      )}
+          {tabLockedKey && (
+            <div className="p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 shrink-0 text-amber-600" />
+                <span className="font-semibold">
+                  {tabLockedKey === "stage2" ? texts.lockStage2 : texts.lockStage3}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTabLockedKey(null)}
+                className="text-amber-700 hover:text-amber-900 font-bold px-2 py-0.5 cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
       {/* Top Requirements Banner with Button to Open Modal (shown only on Step 1) */}
       {currentStep === 1 && (
@@ -531,14 +560,14 @@ export default function ApplyLivelihood() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground font-semibold">
-                  Active Application Record
+                  {texts.activeAppRecord}
                 </span>
                 <button
                   onClick={handleStartNewApplication}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
                 >
                   <PlusCircle className="h-4 w-4" />
-                  Apply for New Livelihood
+                  {texts.applyNew}
                 </button>
               </div>
 
@@ -552,16 +581,16 @@ export default function ApplyLivelihood() {
             <div className="bg-card border border-border rounded-2xl p-12 text-center space-y-4">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto opacity-60" />
               <div>
-                <h2 className="text-lg font-bold text-foreground">Wala pang Livelihood Application</h2>
+                <h2 className="text-lg font-bold text-foreground">{texts.noAppTitle}</h2>
                 <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
-                  Magsimula sa pamamagitan ng pagbasa sa mga panuntunan at documentary requirements bago magsumite ng application.
+                  {texts.noAppSub}
                 </p>
               </div>
               <button
                 onClick={handleStartNewApplication}
                 className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-sm cursor-pointer"
               >
-                APPLY FOR LIVELIHOOD
+                {texts.applyBtn}
               </button>
             </div>
           )}
