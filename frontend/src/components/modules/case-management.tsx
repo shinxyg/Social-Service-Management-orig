@@ -1036,15 +1036,28 @@ export default function CaseManagement() {
       // 3. Priority Filter
       if (selectedPriority !== "ALL" && c.priority !== selectedPriority.toLowerCase()) return false
 
-      // 4. Search Query
+      // 4. Realtime Search Query (Instant Multi-token Search across all case fields)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim()
-        const matchName = c.beneficiaryName.toLowerCase().includes(q)
-        const matchCase = c.caseNumber.toLowerCase().includes(q)
-        const matchApp = c.applicationId.toLowerCase().includes(q)
-        const matchQc = c.beneficiaryId.toLowerCase().includes(q)
-        const matchWorker = c.assignedSocialWorker.toLowerCase().includes(q)
-        if (!matchName && !matchCase && !matchApp && !matchQc && !matchWorker) return false
+        const tokens = q.split(/\s+/).filter(Boolean)
+        const searchableText = [
+          c.beneficiaryName,
+          c.caseNumber,
+          c.applicationId,
+          c.beneficiaryId,
+          c.assignedSocialWorker,
+          c.contactNo,
+          c.address,
+          c.linkedProgram,
+          c.caseType,
+          c.summary,
+          c.linkedFinancialAid?.disbursementId,
+          c.linkedFinancialAid?.assistanceType,
+          c.linkedAppointment?.referenceNo,
+        ].filter(Boolean).join(" ").toLowerCase()
+
+        const matches = tokens.every((token) => searchableText.includes(token))
+        if (!matches) return false
       }
 
       return true
