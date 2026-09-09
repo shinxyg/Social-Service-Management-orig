@@ -1603,43 +1603,33 @@ export default function ChildWelfareApplicationWizard({
                 )}
               </div>
 
-              {/* Assistance Category / Type Direct Selection */}
-              <div className="pt-2">
-                <h3 className="text-sm font-bold text-gray-900 mb-1 tracking-wide uppercase">
-                  {language === "tl" ? "PUMILI NG URI NG TULONG" : language === "bis" ? "PAGPILI OG MATANG SA TABANG" : "SELECT TYPE OF ASSISTANCE"}
+              {/* Assistance Category / Type Selection Dropdown */}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-1.5 tracking-wide uppercase">
+                  {language === "tl" ? "PUMILI NG URI NG TULONG" : language === "bis" ? "PAGPILI OG MATANG SA TABANG" : "CLICK THE TYPE OF ASSISTANCE"}
                 </h3>
-                <p className="text-xs text-gray-500 mb-3">
-                  {selectedProgram.assistanceTypeLabel || (language === "tl" ? "Pumili ng kaukulang tulong na kailangan ng bata *" : language === "bis" ? "Pagpili og matang sa tabang nga gikinahanglan sa bata *" : "Choose the type of assistance needed for the child *")}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {selectedProgram.assistanceTypes.map((type) => {
-                    const isSelected = selectedAssistanceType === type
-                    return (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setSelectedAssistanceType(type)}
-                        className={`flex items-center justify-between p-3.5 rounded-xl border text-left text-xs font-semibold transition-all cursor-pointer ${
-                          isSelected
-                            ? "border-blue-600 bg-blue-50/80 text-blue-900 shadow-xs ring-1 ring-blue-500"
-                            : attemptedNext && !selectedAssistanceType
-                            ? "border-red-300 bg-white hover:bg-gray-50 text-gray-800"
-                            : "border-gray-200 bg-white hover:bg-gray-50 text-gray-800"
-                        }`}
-                      >
-                        <span className="leading-snug">{type}</span>
-                        <div
-                          className={`h-5 w-5 rounded-full border flex items-center justify-center shrink-0 ml-3 transition-colors ${
-                            isSelected
-                              ? "border-blue-600 bg-blue-600 text-white"
-                              : "border-gray-300 bg-white"
-                          }`}
-                        >
-                          {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
-                        </div>
-                      </button>
-                    )
-                  })}
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  {selectedProgram.assistanceTypeLabel || (language === "tl" ? "Pumili ng uri ng tulong *" : language === "bis" ? "Pagpili og matang sa tabang *" : "Choose the type of assistance *")}
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedAssistanceType}
+                    onChange={(e) => setSelectedAssistanceType(e.target.value)}
+                    className={`w-full h-11 rounded-lg border bg-white px-3.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6] font-medium ${
+                      attemptedNext && !selectedAssistanceType
+                        ? "border-red-500 bg-red-50/30"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <option value="" disabled>
+                      {language === "tl" ? "Pumili ng Uri ng Tulong" : language === "bis" ? "Pagpili og Matang sa Tabang" : "Select Type of Assistance"}
+                    </option>
+                    {selectedProgram.assistanceTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
