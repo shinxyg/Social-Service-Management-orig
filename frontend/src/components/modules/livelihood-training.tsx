@@ -492,6 +492,7 @@ function ReviewModal({
 
   const finalRevisionReason = selectedRevisionReason === "Other" ? customRevisionReason : selectedRevisionReason
   const finalRejectionReason = selectedRejectionReason === "Other" ? customRejectionReason : selectedRejectionReason
+  const fullName = [app.firstName, app.middleName, app.lastName].filter(Boolean).join(" ")
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose()
@@ -997,6 +998,7 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
       : [{ equipment: "Operational Kit / Tools", quantity: "1 unit", description: "Standard package" }]
 
   const currentStatus = (initialAssist.assistance_status || "FOR PROCESSING").toUpperCase()
+  const fullName = [app.firstName, app.middleName, app.lastName].filter(Boolean).join(" ")
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose()
@@ -1311,6 +1313,10 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
     setShowConfirmComplete(false)
     setProgressUpdate("")
     setRemarks("")
+  }
+
+  const handleConfirmCompletion = async () => {
+    await saveUpdate("COMPLETED")
   }
 
   useEffect(() => {
