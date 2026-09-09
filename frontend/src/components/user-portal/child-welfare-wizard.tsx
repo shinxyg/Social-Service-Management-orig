@@ -1718,7 +1718,7 @@ export default function ChildWelfareApplicationWizard({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.parentFullName.trim() ? "text-red-600" : "text-gray-700"}`}>
-                      {language === "tl" ? "Buong Pangalan ng Magulang / Guardian / Nag-uulat *" : language === "bis" ? "Tibuok Ngalan sa Ginikanan / Guardian / Tig-report *" : "Full Name of Parent / Guardian / Reporting Person *"}
+                      {language === "tl" ? "Buong Pangalan *" : language === "bis" ? "Tibuok Ngalan *" : "Full Name *"}
                     </label>
                     <input
                       type="text"
