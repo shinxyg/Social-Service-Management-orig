@@ -105,15 +105,9 @@ exports.getAllCases = async (req, res) => {
     ] = await Promise.all([
       db.query(`SELECT * FROM aics_applications WHERE LOWER(COALESCE(status, '')) IN ('approved', 'completed', 'for_release', 'released') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM pwd_senior_applications WHERE LOWER(COALESCE(status, '')) IN ('approved', 'completed', 'for_release', 'released', 'verified') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM solo_parent_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active') ORDER BY created_at DESC`).catch(async () => {
-        return db.query(`SELECT * FROM solo_parent_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active')`).catch(() => ({ rows: [] }));
-      }),
-      db.query(`SELECT * FROM child_welfare_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active') OR LOWER(COALESCE(category_title, '')) LIKE '%nutrition%' OR LOWER(COALESCE(primary_reason_for_assistance, '')) LIKE '%nutrition%' ORDER BY created_at DESC`).catch(async () => {
-        return db.query(`SELECT * FROM child_welfare_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active') OR LOWER(COALESCE(category_title, '')) LIKE '%nutrition%' OR LOWER(COALESCE(primary_reason_for_assistance, '')) LIKE '%nutrition%'`).catch(() => ({ rows: [] }));
-      }),
-      db.query(`SELECT * FROM livelihood_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') ORDER BY created_at DESC`).catch(async () => {
-        return db.query(`SELECT * FROM livelihood_applications WHERE LOWER(COALESCE(status, '')) IN ('approved', 'completed', 'for_processing', 'for_release', 'released')`).catch(() => ({ rows: [] }));
-      }),
+      db.query(`SELECT * FROM solo_parent_applications WHERE LOWER(COALESCE(application_status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
+      db.query(`SELECT * FROM child_welfare_applications WHERE LOWER(COALESCE(application_status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active') OR LOWER(COALESCE(category_title, '')) LIKE '%nutrition%' OR LOWER(COALESCE(primary_reason_for_assistance, '')) LIKE '%nutrition%' ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
+      db.query(`SELECT * FROM livelihood_applications WHERE LOWER(COALESCE(application_status, '')) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM training_applications WHERE LOWER(COALESCE(status, '')) IN ('approved', 'completed', 'enrolled', 'graduated') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM appointments ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM financial_aid_disbursements ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
@@ -988,6 +982,100 @@ exports.getAllCases = async (req, res) => {
         monitoringLogs: mons,
         timeline,
       });
+    });
+
+    // Also include any appointments (e.g. from Child Welfare, Solo Parent, Livelihood, PWD, Senior) not yet represented in cases
+    const existingAppRefs = new Set(cases.map((c) => String(c.applicationId || '').trim().toLowerCase()));
+    const existingBeneficiaryIds = new Set(cases.map((c) => String(c.beneficiaryId || '').trim().toLowerCase()));
+
+    appointments.forEach((appt, idx) => {
+      const ref = String(appt.reference_no || appt.reference_number || appt.id || '').trim();
+      const cleanRef = ref.toLowerCase();
+      if (!ref || existingAppRefs.has(cleanRef) || existingBeneficiaryIds.has(cleanRef)) return;
+
+      const caseNum = formatCaseNumber(ref, idx + 600);
+      const override = caseRecordsMap.get(ref) || caseRecordsMap.get(caseNum) || {};
+      const concernStr = String(appt.concern || '').toLowerCase();
+      let mod = appt.module || 'AICS';
+      if (concernStr.includes('child') || concernStr.includes('nutrition')) mod = 'Child Welfare';
+      else if (concernStr.includes('solo')) mod = 'Solo Parent';
+      else if (concernStr.includes('livelihood')) mod = 'Livelihood';
+      else if (concernStr.includes('pwd')) mod = 'PWD';
+      else if (concernStr.includes('senior')) mod = 'Senior Citizen';
+
+      const fin = findFinancialAid(ref, ref);
+      const refs = referralsMap.get(ref) || referralsMap.get(caseNum) || [];
+      const mons = monitoringMap.get(ref) || monitoringMap.get(caseNum) || [];
+
+      const fullName = appt.applicant_name || 'Beneficiary';
+      const dateAppt = appt.scheduled_date || (appt.created_at ? new Date(appt.created_at).toISOString().split('T')[0] : '2026-09-09');
+
+      let resolvedStatus = override.status || 'open';
+      if (!override.status) {
+        if (mons.length > 0) resolvedStatus = 'monitoring';
+        else if (refs.length > 0) resolvedStatus = 'referred';
+      }
+
+      const timeline = [
+        {
+          id: `TL-SUB-${ref}`,
+          title: 'Application Approved / Scheduled',
+          detail: `Appointment scheduled for ${appt.concern || mod} (Ref: ${ref}).`,
+          date: dateAppt,
+          type: 'approval',
+        },
+        {
+          id: `TL-APPT-${appt.id}`,
+          title: appt.status === 'completed' ? 'Appointment Completed' : 'Appointment Scheduled',
+          detail: `Appointment at ${appt.office_location || appt.venue || 'Quezon City Hall'} (Status: ${appt.status || 'Scheduled'}).`,
+          date: dateAppt,
+          type: 'appointment',
+        },
+      ];
+
+      cases.push({
+        id: caseNum,
+        caseNumber: caseNum,
+        applicationId: ref,
+        beneficiaryId: ref,
+        beneficiaryName: fullName,
+        age: '—',
+        sex: '—',
+        civilStatus: 'Single',
+        contactNo: '09170000000',
+        email: '',
+        address: 'Quezon City',
+        linkedProgram: mod,
+        caseType: appt.concern || `${mod} Assistance`,
+        priority: override.priority || 'high',
+        dateOpened: dateAppt,
+        assignedSocialWorker: override.assigned_social_worker || 'Admin Social Worker',
+        status: resolvedStatus,
+        summary: `${appt.concern || mod} assistance and scheduled intake assessment.`,
+        linkedAppointment: {
+          id: String(appt.id),
+          date: appt.scheduled_date || '',
+          time: appt.scheduled_time || '',
+          location: appt.office_location || appt.venue || 'Quezon City Hall',
+          status: appt.status || 'Scheduled',
+        },
+        linkedFinancialAid: fin
+          ? {
+              id: String(fin.id),
+              disbursementId: fin.disbursement_id || `FA-${ref}`,
+              assistanceType: fin.assistance_type || `${mod} Assistance`,
+              fixedAmount: Number(fin.fixed_amount || 5000),
+              payoutSchedule: fin.payout_schedule || 'TBA',
+              payoutLocation: fin.payout_location || 'QC Hall Payout Center',
+              status: fin.status || 'PENDING',
+            }
+          : null,
+        referrals: refs,
+        monitoringLogs: mons,
+        timeline,
+      });
+
+      existingAppRefs.add(cleanRef);
     });
 
     // Sort cases by latest opened date descending
