@@ -13,7 +13,6 @@ import {
   FileText,
   Package,
   Activity,
-  PlusCircle,
   Lock,
 } from "lucide-react"
 
@@ -543,13 +542,6 @@ export default function ApplyLivelihood() {
                 <span className="text-xs text-muted-foreground font-semibold">
                   {texts.activeAppRecord}
                 </span>
-                <button
-                  onClick={handleStartNewApplication}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  {texts.applyNew}
-                </button>
               </div>
 
               <LivelihoodStatusCard
