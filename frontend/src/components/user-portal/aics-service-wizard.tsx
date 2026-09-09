@@ -737,16 +737,6 @@ export default function AICSServiceWizard({
             >
               {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
             </button>
-            <button
-              type="button"
-              onClick={handleReapply}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-            >
-              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-              <span>
-                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-              </span>
-            </button>
           </div>
         </div>
       </div>
@@ -841,16 +831,6 @@ export default function AICSServiceWizard({
               className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
               {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
-            </button>
-            <button
-              type="button"
-              onClick={handleReapply}
-              className="w-full max-w-md py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-            >
-              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-              <span>
-                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-              </span>
             </button>
           </div>
 

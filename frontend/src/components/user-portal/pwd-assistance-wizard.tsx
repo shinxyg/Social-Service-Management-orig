@@ -1141,25 +1141,27 @@ export default function PWDSocialAssistanceWizard({
             >
               {language === "bis" ? "TAN-AWA SA FINANCIAL AID / MY APPLICATIONS" : "VIEW IN FINANCIAL AID / MY APPLICATIONS"}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setLatestSubmittedApp(null)
-                setReference("")
-                setSubmissionStage("form")
-                setStep(1)
-                setUploadedDocs({})
-                try {
-                  ;(window as any).__isFormDirty = false
-                } catch {}
-              }}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-            >
-              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-              <span>
-                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-              </span>
-            </button>
+            {isAppApproved && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLatestSubmittedApp(null)
+                  setReference("")
+                  setSubmissionStage("form")
+                  setStep(1)
+                  setUploadedDocs({})
+                  try {
+                    ;(window as any).__isFormDirty = false
+                  } catch {}
+                }}
+                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>

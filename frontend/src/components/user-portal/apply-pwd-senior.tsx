@@ -572,34 +572,22 @@ export default function ApplyPWDSenior() {
                 </button>
               </>
             ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    try {
-                      localStorage.removeItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`)
-                      localStorage.removeItem("pwd_senior_reapplying")
-                    } catch {}
-                    ;(window as any).__isFormDirty = false
-                    window.location.href = isAssistance || isSeniorSocial ? "/portal/financial-aid" : "/portal/my-applications"
-                  }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-                >
-                  {isAssistance || isSeniorSocial
-                    ? (language === "bis" ? "TAN-AWA SA FINANCIAL AID / MY APPLICATIONS" : "VIEW IN FINANCIAL AID / DISBURSEMENT")
-                    : (language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReapply}
-                  className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-                >
-                  <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-                  <span>
-                    {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-                  </span>
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`)
+                    localStorage.removeItem("pwd_senior_reapplying")
+                  } catch {}
+                  ;(window as any).__isFormDirty = false
+                  window.location.href = isAssistance || isSeniorSocial ? "/portal/financial-aid" : "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              >
+                {isAssistance || isSeniorSocial
+                  ? (language === "bis" ? "TAN-AWA SA FINANCIAL AID / MY APPLICATIONS" : "VIEW IN FINANCIAL AID / DISBURSEMENT")
+                  : (language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY")}
+              </button>
             )}
           </div>
         </div>
