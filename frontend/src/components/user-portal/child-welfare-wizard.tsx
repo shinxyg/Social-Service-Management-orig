@@ -977,6 +977,42 @@ export default function ChildWelfareApplicationWizard({
     } catch {}
   }
 
+  // Reload / Navigation warning protection — active when user has entered form inputs or reached steps 2-4
+  const isFormDirty =
+    submissionStage === "form" &&
+    (
+      step >= 2 ||
+      formData.parentFullName.trim() !== "" ||
+      formData.parentContactNo.trim() !== "" ||
+      formData.briefDescription.trim() !== "" ||
+      formData.emergencyDate.trim() !== "" ||
+      formData.emergencyTime.trim() !== "" ||
+      formData.reasonForRequest.trim() !== "" ||
+      Object.values(uploadedFiles).some((files) => files && files.length > 0)
+    )
+
+  useEffect(() => {
+    if (isFormDirty) {
+      ;(window as any).__isFormDirty = true
+    } else {
+      ;(window as any).__isFormDirty = false
+    }
+    return () => {
+      ;(window as any).__isFormDirty = false
+    }
+  }, [isFormDirty])
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isFormDirty) {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [isFormDirty])
+
   // Listen to active user application status in Child Welfare
   useEffect(() => {
     if (isReapplying) return
@@ -1177,6 +1213,7 @@ export default function ChildWelfareApplicationWizard({
     try {
       localStorage.removeItem(`cw_reapplying_${selectedProgram.key}`)
       localStorage.removeItem(`cw_reapplying_${selectedProgram.id}`)
+      ;(window as any).__isFormDirty = false
     } catch {}
     setIsReapplying(false)
     setSubmissionStage("pending")
