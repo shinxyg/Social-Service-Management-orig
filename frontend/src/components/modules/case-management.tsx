@@ -12,7 +12,6 @@ import {
   MapPin,
   Phone,
   User,
-  Plus,
   X,
   Building,
   FileCheck,
@@ -187,29 +186,10 @@ interface CaseDetailsModalProps {
   c: CaseRecord
   onClose: () => void
   onUpdateStatus: (caseNumber: string, newStatus: CaseStatus, priority?: CasePriority, worker?: string, notes?: string) => Promise<void>
-  onAddReferral: (caseNumber: string, referral: Partial<Referral>) => Promise<void>
-  onAddMonitoring: (caseNumber: string, log: Partial<MonitoringLog>) => Promise<void>
 }
 
-function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMonitoring }: CaseDetailsModalProps) {
+function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "appointment" | "financial" | "referrals" | "monitoring" | "timeline" | "status">("overview")
-
-  // Referral form state
-  const [showReferralForm, setShowReferralForm] = useState(false)
-  const [refAgency, setRefAgency] = useState("")
-  const [refReason, setRefReason] = useState("")
-  const [refRemarks, setRefRemarks] = useState("")
-  const [refDate, setRefDate] = useState(new Date().toISOString().split("T")[0])
-  const [isSubmittingReferral, setIsSubmittingReferral] = useState(false)
-
-  // Monitoring form state
-  const [showMonitoringForm, setShowMonitoringForm] = useState(false)
-  const [monOfficer, setMonOfficer] = useState("Admin Social Worker")
-  const [monDate, setMonDate] = useState(new Date().toISOString().split("T")[0])
-  const [monStatus, setMonStatus] = useState("In Progress")
-  const [monNotes, setMonNotes] = useState("")
-  const [monNextAction, setMonNextAction] = useState("")
-  const [isSubmittingMonitoring, setIsSubmittingMonitoring] = useState(false)
 
   // Status update state
   const [isClosingCase, setIsClosingCase] = useState(c.status === "closed")
@@ -229,60 +209,6 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
       alert("Failed to update case status.")
     } finally {
       setIsUpdatingStatus(false)
-    }
-  }
-
-  const handleCreateReferral = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!refAgency || !refReason) {
-      alert("Please enter the agency/facility and referral reason.")
-      return
-    }
-    setIsSubmittingReferral(true)
-    try {
-      await onAddReferral(c.caseNumber, {
-        referredTo: refAgency,
-        reason: refReason,
-        remarks: refRemarks,
-        date: refDate,
-        referredBy: assignedWorker,
-        status: "pending",
-      })
-      setRefAgency("")
-      setRefReason("")
-      setRefRemarks("")
-      setShowReferralForm(false)
-    } catch (err) {
-      console.error(err)
-      alert("Failed to add referral.")
-    } finally {
-      setIsSubmittingReferral(false)
-    }
-  }
-
-  const handleCreateMonitoring = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!monNotes) {
-      alert("Please enter monitoring observation notes.")
-      return
-    }
-    setIsSubmittingMonitoring(true)
-    try {
-      await onAddMonitoring(c.caseNumber, {
-        officer: monOfficer,
-        date: monDate,
-        progressStatus: monStatus,
-        notes: monNotes,
-        nextAction: monNextAction,
-      })
-      setMonNotes("")
-      setMonNextAction("")
-      setShowMonitoringForm(false)
-    } catch (err) {
-      console.error(err)
-      alert("Failed to add monitoring log.")
-    } finally {
-      setIsSubmittingMonitoring(false)
     }
   }
 
@@ -591,81 +517,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
                     Coordinated inter-agency support automatically routed based on program classification and beneficiary needs.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowReferralForm(!showReferralForm)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-colors cursor-pointer shrink-0"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  {showReferralForm ? "Cancel" : "Add Referral"}
-                </button>
               </div>
-
-              {/* Add Referral Form */}
-              {showReferralForm && (
-                <form onSubmit={handleCreateReferral} className="bg-purple-50/50 border border-purple-200 rounded-xl p-4 space-y-3">
-                  <h4 className="text-xs font-bold text-purple-900 uppercase tracking-wider">Create New Referral</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <label className="block text-slate-700 font-semibold mb-1">Referred Agency / Facility *</label>
-                      <input
-                        type="text"
-                        value={refAgency}
-                        onChange={(e) => setRefAgency(e.target.value)}
-                        placeholder="e.g. QC Health Department / Hospital"
-                        className="w-full h-9 rounded-lg border border-purple-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-slate-700 font-semibold mb-1">Referral Date</label>
-                      <input
-                        type="date"
-                        value={refDate}
-                        onChange={(e) => setRefDate(e.target.value)}
-                        className="w-full h-9 rounded-lg border border-purple-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-slate-700 font-semibold mb-1">Reason for Referral *</label>
-                      <input
-                        type="text"
-                        value={refReason}
-                        onChange={(e) => setRefReason(e.target.value)}
-                        placeholder="Reason and required services..."
-                        className="w-full h-9 rounded-lg border border-purple-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
-                        required
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-slate-700 font-semibold mb-1">Remarks / Endorsement Notes</label>
-                      <input
-                        type="text"
-                        value={refRemarks}
-                        onChange={(e) => setRefRemarks(e.target.value)}
-                        placeholder="Optional remarks..."
-                        className="w-full h-9 rounded-lg border border-purple-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setShowReferralForm(false)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-purple-100/60"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingReferral}
-                      className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
-                    >
-                      {isSubmittingReferral ? "Saving..." : "Save Referral"}
-                    </button>
-                  </div>
-                </form>
-              )}
 
               {/* Referrals List */}
               {c.referrals.length === 0 ? (
@@ -724,93 +576,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
                     Continuous monitoring log tracking eligibility check-ins, financial aid disbursement, and community welfare stability.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowMonitoringForm(!showMonitoringForm)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer shrink-0"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  {showMonitoringForm ? "Cancel" : "Add Log"}
-                </button>
               </div>
-
-              {/* Add Monitoring Form */}
-              {showMonitoringForm && (
-                <form onSubmit={handleCreateMonitoring} className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 space-y-3">
-                  <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">Add Monitoring Log</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div>
-                      <label className="block text-slate-700 font-semibold mb-1">Monitoring Officer</label>
-                      <input
-                        type="text"
-                        value={monOfficer}
-                        onChange={(e) => setMonOfficer(e.target.value)}
-                        placeholder="Officer name"
-                        className="w-full h-9 rounded-lg border border-amber-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-slate-700 font-semibold mb-1">Date</label>
-                      <input
-                        type="date"
-                        value={monDate}
-                        onChange={(e) => setMonDate(e.target.value)}
-                        className="w-full h-9 rounded-lg border border-amber-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-slate-700 font-semibold mb-1">Progress Status</label>
-                      <select
-                        value={monStatus}
-                        onChange={(e) => setMonStatus(e.target.value)}
-                        className="w-full h-9 rounded-lg border border-amber-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
-                      >
-                        <option value="In Progress">In Progress</option>
-                        <option value="Stable / Good">Stable / Good</option>
-                        <option value="Needs Follow-up">Needs Follow-up</option>
-                        <option value="Resolved">Resolved</option>
-                      </select>
-                    </div>
-                    <div className="sm:col-span-3">
-                      <label className="block text-slate-700 font-semibold mb-1">Observation Notes *</label>
-                      <textarea
-                        rows={2}
-                        value={monNotes}
-                        onChange={(e) => setMonNotes(e.target.value)}
-                        placeholder="Enter progress and observations..."
-                        className="w-full rounded-lg border border-amber-200 p-2.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        required
-                      />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <label className="block text-slate-700 font-semibold mb-1">Next Action Required</label>
-                      <input
-                        type="text"
-                        value={monNextAction}
-                        onChange={(e) => setMonNextAction(e.target.value)}
-                        placeholder="e.g. Schedule follow-up visit in 2 weeks"
-                        className="w-full h-9 rounded-lg border border-amber-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setShowMonitoringForm(false)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-amber-100/60"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingMonitoring}
-                      className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50"
-                    >
-                      {isSubmittingMonitoring ? "Saving..." : "Save Log"}
-                    </button>
-                  </div>
-                </form>
-              )}
 
               {/* Monitoring List */}
               {c.monitoringLogs.length === 0 ? (
@@ -1597,8 +1363,6 @@ export default function CaseManagement() {
           c={activeCase}
           onClose={() => setActiveCase(null)}
           onUpdateStatus={handleUpdateStatus}
-          onAddReferral={handleAddReferral}
-          onAddMonitoring={handleAddMonitoring}
         />
       )}
     </div>
