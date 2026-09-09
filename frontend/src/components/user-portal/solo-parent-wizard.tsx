@@ -13,7 +13,6 @@ import {
   Loader2,
   Sparkles,
   User,
-  RotateCcw,
 } from "lucide-react"
 
 import { useLanguage } from "../ui/language-context"

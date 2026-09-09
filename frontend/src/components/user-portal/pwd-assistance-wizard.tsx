@@ -11,7 +11,6 @@ import {
   X,
   Loader2,
   Info,
-  RotateCcw,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -1025,9 +1024,9 @@ export default function PWDSocialAssistanceWizard({
       }).catch(() => {})
 
       // Dispatch real-time event to Admin dashboard
-      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNo)
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)
     } catch {
-      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNo)
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)
     }
 
     setTimeout(() => {

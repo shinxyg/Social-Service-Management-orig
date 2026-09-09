@@ -13,7 +13,6 @@ import {
   Info,
   Home,
   Search,
-  RotateCcw,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"

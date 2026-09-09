@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "react-router-dom"
-import { AlertCircle, RefreshCw, HeartHandshake, X, FileText, Info, CheckCircle2, RotateCcw } from "lucide-react"
+import { AlertCircle, RefreshCw, HeartHandshake, X, FileText, Info, CheckCircle2 } from "lucide-react"
 import PWDApplicationWizard from "./pwd-senior-wizard"
 import SeniorCitizenApplicationWizard from "./Senior-citizen-wizard"
 import PWDSocialAssistanceWizard from "./pwd-assistance-wizard"
@@ -44,22 +44,6 @@ export default function ApplyPWDSenior() {
     }
   })
   const bypassedBlockRef = useRef(bypassedBlock)
-
-  const handleReapply = () => {
-    try {
-      localStorage.setItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`, "true")
-      localStorage.setItem("pwd_senior_reapplying", "true")
-    } catch {}
-    bypassedBlockRef.current = true
-    setBypassedBlock(true)
-    setIsBlocked(false)
-    setBlockedApp(null)
-    setHasApprovedApp(false)
-    setCurrentStep(1)
-    try {
-      ;(window as any).__isFormDirty = false
-    } catch {}
-  }
 
   // Check for existing pending/active applications for this category & service
   useEffect(() => {
