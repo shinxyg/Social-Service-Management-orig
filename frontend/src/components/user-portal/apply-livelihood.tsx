@@ -148,6 +148,7 @@ export default function ApplyLivelihood() {
 
   // Active Tab: 1. Apply, 2. Capital/Materials Assistance, 3. Monitoring
   const tabParam = (searchParams.get("tab") as LivelihoodProgramTab) || "apply"
+  const [activeTab, setActiveTab] = useState<LivelihoodProgramTab>(tabParam)
   const { language } = useLanguage()
   const langKey = (language === "tl" || language === "bis" ? language : "en")
 
