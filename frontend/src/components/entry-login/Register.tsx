@@ -268,8 +268,9 @@ export const Register = () => {
   const hasLower = /[a-z]/.test(password);
   const hasUpper = /[A-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password);
   const hasMinLen = password.length >= 8;
-  const passwordValid = hasLower && hasUpper && hasNumber && hasMinLen;
+  const passwordValid = hasLower && hasUpper && hasNumber && hasSpecial && hasMinLen;
   const confirmMismatch = confirmTouched && confirmPassword.length > 0 && confirmPassword !== password;
 
   const handleAccountInfoSubmit = async (e: React.FormEvent) => {
@@ -909,6 +910,7 @@ export const Register = () => {
                       <PasswordRule met={hasLower} label="A lowercase letter" />
                       <PasswordRule met={hasUpper} label="A capital (uppercase) letter" />
                       <PasswordRule met={hasNumber} label="A number" />
+                      <PasswordRule met={hasSpecial} label="A special character (e.g. !@#$%^&*)" />
                       <PasswordRule met={hasMinLen} label="Minimum 8 characters" />
                     </div>
                   )}
