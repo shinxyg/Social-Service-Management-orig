@@ -537,57 +537,6 @@ export default function FinancialAidDisbursement() {
       </div>
 
       {/* ───────────────────────────────────────────────────────────────── */}
-      {/* ── FINAL FLOW: PENDING -> RELEASED ── */}
-      {/* ───────────────────────────────────────────────────────────────── */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 shadow-xs space-y-4">
-        <div className="border-b border-gray-100 pb-2.5">
-          <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-blue-600" />
-            Master Flow: Application → Appointment → Financial Aid → Notification
-          </h2>
-          <p className="text-xs text-gray-500">
-            Kapag nag-set ng appointment ang Admin, awtomatikong mag-si-sync ang Payout Schedule sa Financial Aid at ma-no-notify ang mamamayan.
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-4xl mx-auto py-2">
-          {/* Step 1 */}
-          <div className="flex-1 w-full bg-blue-50 border border-blue-200 rounded-xl p-3 text-center space-y-0.5">
-            <span className="text-[10px] font-bold text-blue-600 uppercase block">1. Citizen Applies</span>
-            <p className="text-xs font-bold text-gray-900">Application Approved</p>
-            <p className="text-[10px] text-gray-500">Auto Fixed Amount</p>
-          </div>
-
-          <ArrowRight className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
-
-          {/* Step 2 */}
-          <div className="flex-1 w-full bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-center space-y-0.5">
-            <span className="text-[10px] font-bold text-indigo-600 uppercase block">2. Admin Appointment</span>
-            <p className="text-xs font-bold text-gray-900">Schedule Date + Time</p>
-            <p className="text-[10px] text-gray-500">Auto-synced to Payout</p>
-          </div>
-
-          <ArrowRight className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
-
-          {/* Step 3 */}
-          <div className="flex-1 w-full bg-amber-50 border border-amber-300 rounded-xl p-3 text-center space-y-0.5 ring-2 ring-amber-200/60">
-            <span className="text-[10px] font-bold text-amber-700 uppercase block">3. Financial Aid</span>
-            <p className="text-xs font-extrabold text-amber-900">Status: PENDING</p>
-            <p className="text-[10px] text-amber-700">Citizen Attends Payout</p>
-          </div>
-
-          <ArrowRight className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
-
-          {/* Step 4 */}
-          <div className="flex-1 w-full bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-center space-y-0.5 ring-2 ring-emerald-200/60">
-            <span className="text-[10px] font-bold text-emerald-700 uppercase block">4. Final Release</span>
-            <p className="text-xs font-extrabold text-emerald-900">Status: RELEASED</p>
-            <p className="text-[10px] text-emerald-700">User Notified Automatically</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ───────────────────────────────────────────────────────────────── */}
       {/* ── DISBURSEMENT RECORDS TABLE ── */}
       {/* ───────────────────────────────────────────────────────────────── */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-xs overflow-hidden space-y-0">
