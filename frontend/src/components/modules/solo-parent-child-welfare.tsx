@@ -1413,7 +1413,6 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
   const idNumber = isSolo
     ? ((app as any).assignedIdNumber || (app as any).soloParentIdNumber || generateOfficialSoloParentId(app, allSubmissions))
     : ""
-  const [approveAmount, setApproveAmount] = useState((app as any).approvedAmount || "5000")
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
