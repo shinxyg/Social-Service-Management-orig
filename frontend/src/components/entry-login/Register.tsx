@@ -38,11 +38,6 @@ const QC_BARANGAYS = [
   'White Plains',
 ];
 
-const SUFFIX_OPTIONS = [
-  'JR.', 'JR. II', 'JR. III', 'JR. IV', 'JR. V', 'SR.',
-  'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
-  'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX',
-];
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -284,6 +279,10 @@ export const Register = () => {
 
     if (!firstName || !lastName) {
       setError('Please enter your first and last name.');
+      return;
+    }
+    if (!middleName) {
+      setError('Please enter your middle name.');
       return;
     }
     if (!birthMonth || !birthDay || !birthYear) {
@@ -609,7 +608,7 @@ export const Register = () => {
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>Middle name: (Optional)</label>
+                      <label className={labelClass}>{requiredMark} Middle name:</label>
                       <input
                         type="text"
                         value={middleName}
@@ -617,20 +616,19 @@ export const Register = () => {
                         onChange={(e) => setMiddleName(e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 30))}
                         placeholder="Enter middle name"
                         className={inputClass}
+                        required
                       />
                     </div>
                     <div>
                       <label className={labelClass}>Suffix:</label>
-                      <select
+                      <input
+                        type="text"
                         value={suffix}
-                        onChange={(e) => setSuffix(e.target.value)}
+                        maxLength={20}
+                        onChange={(e) => setSuffix(e.target.value.replace(/[^a-zA-Z0-9.\s-]/g, '').slice(0, 20))}
+                        placeholder="Enter suffix (e.g. Jr., III)"
                         className={inputClass}
-                      >
-                        <option value=""></option>
-                        {SUFFIX_OPTIONS.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
+                      />
                     </div>
                   </div>
 
