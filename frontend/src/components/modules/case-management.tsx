@@ -387,31 +387,29 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
                   </div>
                   <div>
                     <span className="text-slate-500">Age &amp; Sex</span>
-                    <p className="font-semibold text-slate-900 mt-0.5">{c.age} y/o • {c.sex}</p>
+                    <p className="font-semibold text-slate-900 mt-0.5">
+                      {[
+                        c.age && c.age !== "—" && !isNaN(Number(c.age)) ? `${c.age} yrs old` : (c.age && c.age !== "—" ? c.age : ""),
+                        c.sex && c.sex !== "—" ? c.sex : "",
+                      ].filter(Boolean).join(" • ") || "Not specified"}
+                    </p>
                   </div>
                   <div>
                     <span className="text-slate-500">Civil Status</span>
-                    <p className="font-semibold text-slate-900 mt-0.5">{c.civilStatus}</p>
+                    <p className="font-semibold text-slate-900 mt-0.5">{c.civilStatus || "Single"}</p>
                   </div>
                   <div>
                     <span className="text-slate-500">Contact Number</span>
                     <p className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
                       <Phone className="h-3 w-3 text-slate-400" />
-                      {c.contactNo}
+                      {c.contactNo || "—"}
                     </p>
                   </div>
-                  <div>
-                    <span className="text-slate-500">Email Address</span>
-                    <p className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
-                      <Mail className="h-3 w-3 text-slate-400" />
-                      {c.email || "—"}
-                    </p>
-                  </div>
-                  <div className="sm:col-span-2 lg:col-span-3">
+                  <div className="sm:col-span-2">
                     <span className="text-slate-500">Complete Address</span>
                     <p className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
                       <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      {c.address}
+                      {c.address || "Quezon City"}
                     </p>
                   </div>
                 </div>
@@ -1365,7 +1363,16 @@ export default function CaseManagement() {
                         {c.beneficiaryName}
                       </h3>
                       <p className="text-xs text-slate-500 font-mono mt-0.5">
-                        QCID: {c.beneficiaryId} • REF: {c.applicationId} • {c.age !== "—" ? `${c.age} y/o` : ""} {c.sex !== "—" ? `• ${c.sex}` : ""}
+                        QCID: {c.beneficiaryId} • REF: {c.applicationId}
+                        {[
+                          c.age && c.age !== "—" && !isNaN(Number(c.age)) ? `${c.age} yrs old` : (c.age && c.age !== "—" ? c.age : ""),
+                          c.sex && c.sex !== "—" ? c.sex : "",
+                        ].filter(Boolean).length > 0
+                          ? ` • ${[
+                              c.age && c.age !== "—" && !isNaN(Number(c.age)) ? `${c.age} yrs old` : (c.age && c.age !== "—" ? c.age : ""),
+                              c.sex && c.sex !== "—" ? c.sex : "",
+                            ].filter(Boolean).join(" • ")}`
+                          : ""}
                       </p>
                     </div>
                   </div>

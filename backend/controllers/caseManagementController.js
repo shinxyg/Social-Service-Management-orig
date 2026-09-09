@@ -356,6 +356,36 @@ exports.getAllCases = async (req, res) => {
       }
     }
 
+    // Helper for safe age calculation from DOB
+    function calculateAge(dobStr, fallbackAge) {
+      if (fallbackAge && String(fallbackAge).trim() && String(fallbackAge).trim() !== '—' && !isNaN(Number(fallbackAge))) {
+        return String(fallbackAge).trim();
+      }
+      if (!dobStr) return '';
+      try {
+        const birth = new Date(dobStr);
+        if (isNaN(birth.getTime())) return '';
+        const now = new Date();
+        let age = now.getFullYear() - birth.getFullYear();
+        const m = now.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
+          age--;
+        }
+        return age >= 0 && age <= 125 ? String(age) : '';
+      } catch {
+        return '';
+      }
+    }
+
+    // Helper for standardized sex display
+    function formatSex(s) {
+      if (!s) return '';
+      const str = String(s).trim().toLowerCase();
+      if (str === 'm' || str === 'male') return 'Male';
+      if (str === 'f' || str === 'female') return 'Female';
+      return String(s).trim();
+    }
+
     // Process AICS
     aicsRes.rows.forEach((row, idx) => {
       try {
@@ -472,8 +502,8 @@ exports.getAllCases = async (req, res) => {
           applicationId: ref,
           beneficiaryId: qcid,
           beneficiaryName: fullName,
-          age: String(row.age || '—'),
-          sex: row.gender || row.sex || '—',
+          age: String(row.age || calculateAge(row.birth_date || row.dob || row.date_of_birth) || ''),
+          sex: formatSex(row.gender || row.sex),
           civilStatus: row.civil_status || 'Single',
           contactNo: row.phone || row.contact_no || '09170000000',
           email: row.email || '',
@@ -620,8 +650,8 @@ exports.getAllCases = async (req, res) => {
           applicationId: ref,
           beneficiaryId: qcid,
           beneficiaryName: fullName,
-          age: String(row.age || '—'),
-          sex: row.sex || '—',
+          age: String(row.age || calculateAge(row.date_of_birth || row.birth_date || row.dob) || ''),
+          sex: formatSex(row.sex || row.gender),
           civilStatus: row.civil_status || 'Single',
           contactNo: row.contact_number || row.phone || '09170000000',
           email: row.email || '',
@@ -764,8 +794,8 @@ exports.getAllCases = async (req, res) => {
           applicationId: ref,
           beneficiaryId: qcid,
           beneficiaryName: fullName,
-          age: String(row.age || '—'),
-          sex: row.sex || '—',
+          age: String(row.age || calculateAge(row.date_of_birth || row.birth_date || row.dob) || ''),
+          sex: formatSex(row.sex || row.gender),
           civilStatus: row.civil_status || 'Single Parent',
           contactNo: row.contact_no || '09170000000',
           email: row.email || '',
@@ -914,8 +944,8 @@ exports.getAllCases = async (req, res) => {
           applicationId: ref,
           beneficiaryId: qcid,
           beneficiaryName: fullName,
-          age: String(row.guardian_age || '—'),
-          sex: row.guardian_sex || '—',
+          age: String(row.guardian_age || calculateAge(row.guardian_date_of_birth) || row.child_age || calculateAge(row.child_birthday) || row.age || ''),
+          sex: formatSex(row.guardian_sex || row.child_sex || row.gender || row.sex),
           civilStatus: row.guardian_civil_status || 'Single',
           contactNo: row.guardian_contact_no || '09170000000',
           email: row.guardian_email || '',
@@ -1058,8 +1088,8 @@ exports.getAllCases = async (req, res) => {
           applicationId: ref,
           beneficiaryId: qcid,
           beneficiaryName: fullName,
-          age: String(row.age || '—'),
-          sex: row.sex || '—',
+          age: String(row.age || calculateAge(row.date_of_birth || row.birth_date || row.dob) || ''),
+          sex: formatSex(row.sex || row.gender),
           civilStatus: row.civil_status || 'Single',
           contactNo: row.mobile_number || row.contact_no || '09170000000',
           email: row.email || '',
@@ -1192,8 +1222,8 @@ exports.getAllCases = async (req, res) => {
           applicationId: ref,
           beneficiaryId: qcid,
           beneficiaryName: fullName,
-          age: String(row.age || '—'),
-          sex: row.sex || '—',
+          age: String(row.age || calculateAge(row.date_of_birth || row.birth_date || row.dob) || ''),
+          sex: formatSex(row.sex || row.gender),
           civilStatus: 'Single',
           contactNo: row.contact_no || '09170000000',
           email: row.email || '',
@@ -1286,8 +1316,8 @@ exports.getAllCases = async (req, res) => {
           applicationId: ref,
           beneficiaryId: ref,
           beneficiaryName: fullName,
-          age: '—',
-          sex: '—',
+          age: String(appt.age || appt.applicant_age || calculateAge(appt.date_of_birth || appt.birthdate) || ''),
+          sex: formatSex(appt.sex || appt.gender || appt.applicant_sex),
           civilStatus: 'Single',
           contactNo: '09170000000',
           email: '',
