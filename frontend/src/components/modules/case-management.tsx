@@ -579,123 +579,52 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">External &amp; Inter-Agency Referrals</h3>
-                  <p className="text-xs text-slate-500">
-                    Connect beneficiary with healthcare facilities, TESDA, livelihood programs, or legal aid.
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">External &amp; Inter-Agency Referrals</h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200 uppercase">
+                      Automated Network
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Coordinated inter-agency support automatically routed based on program classification and beneficiary needs.
                   </p>
                 </div>
-                {!showReferralForm && (
-                  <button
-                    type="button"
-                    onClick={() => setShowReferralForm(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-2xs"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Referral
-                  </button>
-                )}
               </div>
-
-              {/* Add Referral Form */}
-              {showReferralForm && (
-                <form onSubmit={handleCreateReferral} className="bg-purple-50/60 border border-purple-200 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between border-b border-purple-200/60 pb-2">
-                    <span className="text-xs font-bold text-purple-900 uppercase tracking-wider">New Inter-Agency Referral</span>
-                    <button
-                      type="button"
-                      onClick={() => setShowReferralForm(false)}
-                      className="text-slate-400 hover:text-slate-700 text-xs font-semibold"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <label className="font-semibold text-slate-700">Referred To (Agency / Facility) *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Quezon City General Hospital - Pediatrics"
-                        value={refAgency}
-                        onChange={(e) => setRefAgency(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-semibold text-slate-700">Referral Date</label>
-                      <input
-                        type="date"
-                        value={refDate}
-                        onChange={(e) => setRefDate(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="font-semibold text-slate-700">Reason / Service Required *</label>
-                      <textarea
-                        required
-                        rows={2}
-                        placeholder="Detail the specialized assistance, medical check-up, or training requested..."
-                        value={refReason}
-                        onChange={(e) => setRefReason(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="font-semibold text-slate-700">Special Remarks / Referral Slip Notes</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Endorsement letter provided to client"
-                        value={refRemarks}
-                        onChange={(e) => setRefRemarks(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowReferralForm(false)}
-                      className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingReferral}
-                      className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {isSubmittingReferral ? "Saving..." : "Save Referral"}
-                    </button>
-                  </div>
-                </form>
-              )}
 
               {/* Referrals List */}
               {c.referrals.length === 0 ? (
                 <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-500">
-                  No referrals created for this case yet. Click &quot;Add Referral&quot; to refer client to external partner agencies.
+                  No active referrals required for this case. All essential services provided in-house.
                 </div>
               ) : (
                 <div className="space-y-3">
                   {c.referrals.map((ref) => (
-                    <div key={ref.id} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2 shadow-2xs">
+                    <div key={ref.id} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2.5 shadow-2xs">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4 text-purple-600" />
-                          <h4 className="text-xs font-bold text-slate-900">{ref.referredTo}</h4>
+                          <div className="h-7 w-7 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+                            <Building className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-900">{ref.referredTo}</h4>
+                            <span className="text-[10px] text-slate-400 font-mono">ID: {ref.id}</span>
+                          </div>
                         </div>
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800">
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-purple-100 text-purple-800 border border-purple-200 uppercase tracking-wide">
                           {ref.status.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-700 leading-relaxed">{ref.reason}</p>
+                      <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                        {ref.reason}
+                      </p>
                       {ref.remarks && (
-                        <p className="text-[11px] text-slate-500 italic">Remarks: {ref.remarks}</p>
+                        <p className="text-[11px] text-slate-500 italic">
+                          <strong className="text-slate-600 not-italic font-semibold">Service Remarks:</strong> {ref.remarks}
+                        </p>
                       )}
-                      <div className="text-[11px] text-slate-400 pt-1 border-t border-slate-100 flex items-center justify-between">
-                        <span>Referred by: {ref.referredBy}</span>
-                        <span>Date: {formatDate(ref.date)}</span>
+                      <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <span>Referred by: <strong className="text-slate-600">{ref.referredBy}</strong></span>
+                        <span>Date Logged: <strong className="text-slate-600 font-mono">{formatDate(ref.date)}</strong></span>
                       </div>
                     </div>
                   ))}
@@ -709,134 +638,47 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Case Monitoring &amp; Progress Logs</h3>
-                  <p className="text-xs text-slate-500">
-                    Track home visits, welfare check-ins, livelihood sustainability, and aftercare progress.
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">Case Monitoring &amp; Welfare Progress</h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 uppercase">
+                      Automated Welfare Tracking
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Continuous monitoring log tracking eligibility check-ins, financial aid disbursement, and community welfare stability.
                   </p>
                 </div>
-                {!showMonitoringForm && (
-                  <button
-                    type="button"
-                    onClick={() => setShowMonitoringForm(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-2xs"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Record Check-in
-                  </button>
-                )}
               </div>
-
-              {/* Add Monitoring Form */}
-              {showMonitoringForm && (
-                <form onSubmit={handleCreateMonitoring} className="bg-amber-50/60 border border-amber-200 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between border-b border-amber-200/60 pb-2">
-                    <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">New Monitoring Entry</span>
-                    <button
-                      type="button"
-                      onClick={() => setShowMonitoringForm(false)}
-                      className="text-slate-400 hover:text-slate-700 text-xs font-semibold"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div>
-                      <label className="font-semibold text-slate-700">Check-in Date</label>
-                      <input
-                        type="date"
-                        value={monDate}
-                        onChange={(e) => setMonDate(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-semibold text-slate-700">Officer / Social Worker</label>
-                      <input
-                        type="text"
-                        value={monOfficer}
-                        onChange={(e) => setMonOfficer(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-semibold text-slate-700">Progress Status</label>
-                      <select
-                        value={monStatus}
-                        onChange={(e) => setMonStatus(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="In Progress">In Progress</option>
-                        <option value="Satisfactory">Satisfactory</option>
-                        <option value="Needs Follow-up">Needs Follow-up</option>
-                        <option value="Goal Achieved">Goal Achieved</option>
-                      </select>
-                    </div>
-                    <div className="sm:col-span-3">
-                      <label className="font-semibold text-slate-700">Observations &amp; Assessment Notes *</label>
-                      <textarea
-                        required
-                        rows={2}
-                        placeholder="Document beneficiary current situation, recovery status, child attendance, or enterprise revenue..."
-                        value={monNotes}
-                        onChange={(e) => setMonNotes(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <label className="font-semibold text-slate-700">Next Action Plan</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Schedule final evaluation on next month"
-                        value={monNextAction}
-                        onChange={(e) => setMonNextAction(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowMonitoringForm(false)}
-                      className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingMonitoring}
-                      className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {isSubmittingMonitoring ? "Saving..." : "Record Check-in"}
-                    </button>
-                  </div>
-                </form>
-              )}
 
               {/* Monitoring List */}
               {c.monitoringLogs.length === 0 ? (
                 <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-500">
-                  No monitoring logs recorded yet. Add check-in logs to track beneficiary progress over time.
+                  No monitoring logs recorded.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {c.monitoringLogs.map((log) => (
-                    <div key={log.id} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2 shadow-2xs">
+                  {c.monitoringLogs.map((m) => (
+                    <div key={m.id} className="bg-white border border-slate-200 rounded-xl p-4 space-y-2 shadow-2xs">
                       <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                          <Activity className="h-4 w-4 text-amber-600" />
-                          Progress Status: <span className="text-amber-800">{log.progressStatus}</span>
-                        </span>
-                        <span className="text-xs text-slate-500 font-mono">{formatDate(log.date)}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 rounded-md bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                            <Activity className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-800">
+                            Status: <strong className="text-amber-700">{m.progressStatus}</strong>
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-mono text-slate-400 font-semibold">{formatDate(m.date)}</span>
                       </div>
-                      <p className="text-xs text-slate-700 leading-relaxed">{log.notes}</p>
-                      {log.nextAction && (
-                        <div className="text-[11px] text-blue-800 bg-blue-50 p-2 rounded-lg flex items-center gap-1.5">
-                          <ArrowRight className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                          <span><strong>Next Action:</strong> {log.nextAction}</span>
+                      <p className="text-xs text-slate-700 leading-relaxed">{m.notes}</p>
+                      {m.nextAction && (
+                        <div className="bg-amber-50/70 border border-amber-100 rounded-lg p-2 text-xs text-amber-900">
+                          <span className="font-bold">Next Action:</span> {m.nextAction}
                         </div>
                       )}
-                      <div className="text-[11px] text-slate-400 pt-1 border-t border-slate-100">
-                        Officer: {log.officer}
+                      <div className="text-[11px] text-slate-400 pt-1 border-t border-slate-100 flex items-center justify-between">
+                        <span>Supervising Officer: <strong className="text-slate-600">{m.officer}</strong></span>
+                        <span className="font-mono text-[10px] text-slate-400">LOG ID: {m.id}</span>
                       </div>
                     </div>
                   ))}
@@ -845,7 +687,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
             </div>
           )}
 
-          {/* TAB 6: Chronological Case Timeline */}
+          {/* TAB 6: Chronological Timeline */}
           {activeTab === "timeline" && (
             <div className="space-y-4">
               <div>
