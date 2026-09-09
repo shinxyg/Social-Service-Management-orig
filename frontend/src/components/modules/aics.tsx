@@ -352,7 +352,7 @@ export default function AICS() {
                   {applications.length === 0 && !loading && (
                     <tr>
                       <td colSpan={5} className="py-6 text-center text-sm text-gray-400">
-                        Walang applications na natagpuan.
+                        No applications found.
                       </td>
                     </tr>
                   )}

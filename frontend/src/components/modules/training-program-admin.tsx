@@ -324,7 +324,7 @@ export default function TrainingProgramAdmin() {
         <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-2">
           <Award className="h-8 w-8 text-muted-foreground mx-auto" />
           <p className="text-sm font-bold text-foreground">No Training Applications Found</p>
-          <p className="text-xs text-muted-foreground">Walang tugmang records para sa filter o search term na ito.</p>
+          <p className="text-xs text-muted-foreground">No matching records found for this filter or search term.</p>
         </div>
       ) : (
         <div className="space-y-3">

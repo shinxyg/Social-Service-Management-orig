@@ -705,7 +705,7 @@ export default function BeneficiaryManagement() {
             {filteredList.length === 0 ? (
               <div className="text-center py-12">
                 <IdCard className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground">Walang nahanap na beneficiary.</p>
+                <p className="text-muted-foreground">No beneficiaries found.</p>
               </div>
             ) : (
               <div className="space-y-3">

@@ -605,7 +605,7 @@ export default function FinancialAidDisbursement() {
               {filteredDisbursements.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
-                    Walang disbursement record na tumutugma sa filter.
+                    No disbursement records match the filter.
                   </td>
                 </tr>
               ) : (

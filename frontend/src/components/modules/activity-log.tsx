@@ -469,7 +469,7 @@ export default function ActivityLog() {
           {!trashLoading && recentlyDeleted.length === 0 ? (
             <div className="text-center py-12">
               <Trash2 className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-              <p className="text-muted-foreground">Walang laman ang trash.</p>
+              <p className="text-muted-foreground">Trash is empty.</p>
             </div>
           ) : (
             <div>
@@ -585,7 +585,7 @@ export default function ActivityLog() {
             {!loading && filtered.length === 0 ? (
               <div className="text-center py-12">
                 <History className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground">Walang nahanap na activity.</p>
+                <p className="text-muted-foreground">No activity found.</p>
               </div>
             ) : (
               <div>
