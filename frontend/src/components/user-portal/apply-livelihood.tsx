@@ -15,8 +15,6 @@ import {
   Activity,
   PlusCircle,
   Lock,
-  GraduationCap,
-  Store,
 } from "lucide-react"
 
 type LivelihoodProgramTab = "apply" | "assistance" | "monitoring"
