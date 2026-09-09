@@ -1008,9 +1008,38 @@ export default function ChildWelfareApplicationWizard({
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [appStatus, setAppStatus] = useState<"pending" | "approved" | "rejected">("pending")
   const [reference, setReference] = useState("")
-  const [isReapplying, setIsReapplying] = useState(false)
+  const [isReapplying, setIsReapplying] = useState(() => {
+    try {
+      const progKey = initialProgramKey || "nutritional-assistance"
+      const progId = initialProgramId || 1
+      const isUrlParam = typeof window !== "undefined" && window.location.search.includes("reapply=true")
+      const isLocal =
+        localStorage.getItem(`cw_reapplying_${progKey}`) === "true" ||
+        localStorage.getItem(`cw_reapplying_${progId}`) === "true"
+      return Boolean(isUrlParam || isLocal)
+    } catch {
+      return false
+    }
+  })
+
+  // Keep state synced with selectedProgram & localStorage
+  useEffect(() => {
+    try {
+      const isLocal =
+        localStorage.getItem(`cw_reapplying_${selectedProgram.key}`) === "true" ||
+        localStorage.getItem(`cw_reapplying_${selectedProgram.id}`) === "true"
+      if (isLocal) {
+        setIsReapplying(true)
+        setSubmissionStage("form")
+      }
+    } catch {}
+  }, [selectedProgram.id, selectedProgram.key])
 
   const handleReapply = () => {
+    try {
+      localStorage.setItem(`cw_reapplying_${selectedProgram.key}`, "true")
+      localStorage.setItem(`cw_reapplying_${selectedProgram.id}`, "true")
+    } catch {}
     setIsReapplying(true)
     setSubmissionStage("form")
     setStep(1)
@@ -1019,6 +1048,7 @@ export default function ChildWelfareApplicationWizard({
     setCheck1(false)
     setCheck2(false)
     setCheck3(false)
+    setSelectedAssistanceType("")
     try {
       ;(window as any).__isFormDirty = false
     } catch {}
@@ -1218,6 +1248,10 @@ export default function ChildWelfareApplicationWizard({
       notifyApplicationChange("APPLICATION_SUBMITTED", "child_welfare", ref)
     }
 
+    try {
+      localStorage.removeItem(`cw_reapplying_${selectedProgram.key}`)
+      localStorage.removeItem(`cw_reapplying_${selectedProgram.id}`)
+    } catch {}
     setIsReapplying(false)
     setSubmissionStage("pending")
   }
@@ -1283,6 +1317,10 @@ export default function ChildWelfareApplicationWizard({
               <button
                 type="button"
                 onClick={() => {
+                  try {
+                    localStorage.removeItem(`cw_reapplying_${selectedProgram.key}`)
+                    localStorage.removeItem(`cw_reapplying_${selectedProgram.id}`)
+                  } catch {}
                   ;(window as any).__isFormDirty = false
                   window.location.href = "/portal/my-applications"
                 }}
@@ -1372,6 +1410,10 @@ export default function ChildWelfareApplicationWizard({
               <button
                 type="button"
                 onClick={() => {
+                  try {
+                    localStorage.removeItem(`cw_reapplying_${selectedProgram.key}`)
+                    localStorage.removeItem(`cw_reapplying_${selectedProgram.id}`)
+                  } catch {}
                   ;(window as any).__isFormDirty = false
                   window.location.href = "/portal/my-applications"
                 }}
@@ -1473,6 +1515,10 @@ export default function ChildWelfareApplicationWizard({
           <button
             type="button"
             onClick={() => {
+              try {
+                localStorage.removeItem(`cw_reapplying_${selectedProgram.key}`)
+                localStorage.removeItem(`cw_reapplying_${selectedProgram.id}`)
+              } catch {}
               ;(window as any).__isFormDirty = false
               window.location.href = "/portal/my-applications"
             }}
