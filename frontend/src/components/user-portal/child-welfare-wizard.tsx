@@ -744,6 +744,7 @@ interface ChildWelfareWizardProps {
   initialProgramId?: number
   initialProgramKey?: string
   onStepChange?: (step: number) => void
+  onSubmissionStageChange?: (stage: "form" | "matching" | "pending", status?: string) => void
 }
 
 const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
@@ -754,6 +755,7 @@ export default function ChildWelfareApplicationWizard({
   initialProgramId,
   initialProgramKey,
   onStepChange,
+  onSubmissionStageChange,
 }: ChildWelfareWizardProps) {
   const { t, language } = useLanguage()
 
@@ -1223,6 +1225,11 @@ export default function ChildWelfareApplicationWizard({
     setSubmissionStage("pending")
   }
 
+  // Notify parent of stage changes
+  useEffect(() => {
+    onSubmissionStageChange?.(submissionStage, appStatus)
+  }, [submissionStage, appStatus, onSubmissionStageChange])
+
   if (submissionStage === "pending") {
     // 1. REJECTED STATE (matching AICS)
     if (appStatus === "rejected") {
@@ -1233,27 +1240,46 @@ export default function ChildWelfareApplicationWizard({
               <X className="h-7 w-7" strokeWidth={2.5} />
             </div>
             <h2 className="text-lg font-bold text-gray-900">
-              Hindi Na-approve ang Application
+              {language === "en"
+                ? "Application Disapproved"
+                : language === "bis"
+                ? "Wala Na-aprobahan ang Aplikasyon"
+                : "Hindi Na-approve ang Application"}
             </h2>
             <p className="text-xs text-gray-600 max-w-sm">
-              Paumanhin, hindi na-approve ang inyong aplikasyon para sa {selectedProgram.title}.
-              Maaari kang makipag-ugnayan sa Quezon City Social Welfare Office para sa karagdagang detalye o mag-apply muli kung may mga dokumentong kailangang ayusin.
+              {language === "en"
+                ? `We regret to inform you that your application for ${selectedProgram.title} was not approved. You may contact the Quezon City Social Welfare Office for more details or submit a new application.`
+                : language === "bis"
+                ? `Gikasubo namo nga wala na-aprobahan ang imong aplikasyon para sa ${selectedProgram.title}. Mahimo kang makig-alayon sa Quezon City Social Welfare Office o mag-apply pag-usab.`
+                : `Paumanhin, hindi na-approve ang inyong aplikasyon para sa ${selectedProgram.title}. Maaari kang makipag-ugnayan sa Quezon City Social Welfare Office para sa karagdagang detalye o mag-apply muli kung may mga dokumentong kailangang ayusin.`}
             </p>
             <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
               <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                <span className="text-gray-500">{t("referenceNumber") || "Reference Number"}</span>
+                <span className="text-gray-500">
+                  {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
+                </span>
                 <span className="font-mono font-bold text-gray-900 text-sm">{reference}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">Program</span>
+                <span className="text-gray-500">
+                  {language === "en" ? "Program" : "Programa"}
+                </span>
                 <span className="font-semibold text-gray-900">{selectedProgram.title}</span>
               </div>
               {selectedAssistanceType && (
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500">{t("typeOfAssistance") || "Uri ng Tulong"}</span>
+                  <span className="text-gray-500">
+                    {language === "en" ? "Type of Assistance" : language === "bis" ? "Matang sa Tabang" : "Uri ng Tulong"}
+                  </span>
                   <span className="font-semibold text-gray-900">{selectedAssistanceType}</span>
                 </div>
               )}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">
+                  {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
+                </span>
+                <span className="font-semibold text-gray-900">{formData.firstName} {formData.lastName}</span>
+              </div>
             </div>
 
             <div className="w-full flex flex-col gap-2 mt-2">
@@ -1265,7 +1291,7 @@ export default function ChildWelfareApplicationWizard({
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
               >
-                VIEW IN APPLICATION HISTORY
+                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
               </button>
               <button
                 type="button"
@@ -1273,7 +1299,9 @@ export default function ChildWelfareApplicationWizard({
                 className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
               >
                 <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-                <span>MAG-APPLY MULI (RE-APPLY)</span>
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
               </button>
             </div>
           </div>
@@ -1290,35 +1318,57 @@ export default function ChildWelfareApplicationWizard({
               <Check className="h-7 w-7" strokeWidth={3} />
             </div>
             <h2 className="text-lg font-bold text-gray-900">
-              Na-approve ang Application!
+              {language === "en"
+                ? "Application Approved!"
+                : language === "bis"
+                ? "Na-aprobahan ang Aplikasyon!"
+                : "Na-approve ang Application!"}
             </h2>
             <p className="text-xs text-gray-600 max-w-sm">
-              Ang inyong aplikasyon para sa {selectedProgram.title} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.
+              {language === "en"
+                ? `Your application for ${selectedProgram.title} has been officially approved by the Quezon City Social Services Development Department.`
+                : language === "bis"
+                ? `Ang imong aplikasyon para sa ${selectedProgram.title} opisyal na nga gi-aprobahan sa Quezon City Social Services Development Department.`
+                : `Ang inyong aplikasyon para sa ${selectedProgram.title} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.`}
             </p>
             <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
               <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                <span className="text-gray-500">{t("referenceNumber") || "Reference Number"}</span>
+                <span className="text-gray-500">
+                  {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
+                </span>
                 <span className="font-mono font-bold text-blue-700 text-sm">{reference}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">Program</span>
+                <span className="text-gray-500">
+                  {language === "en" ? "Program" : "Programa"}
+                </span>
                 <span className="font-semibold text-gray-900">{selectedProgram.title}</span>
               </div>
               {selectedAssistanceType && (
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500">{t("typeOfAssistance") || "Uri ng Tulong"}</span>
+                  <span className="text-gray-500">
+                    {language === "en" ? "Type of Assistance" : language === "bis" ? "Matang sa Tabang" : "Uri ng Tulong"}
+                  </span>
                   <span className="font-semibold text-gray-900">{selectedAssistanceType}</span>
                 </div>
               )}
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">{t("applicantName") || "Pangalan ng Aplikante"}</span>
+                <span className="text-gray-500">
+                  {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
+                </span>
                 <span className="font-semibold text-gray-900">{formData.firstName} {formData.lastName}</span>
               </div>
             </div>
 
             <div className="w-full bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 text-xs text-emerald-800 text-left flex items-start gap-2.5">
               <Info className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-              <span>Maaari mo nang subaybayan ang release schedule, appointment, o claim instructions sa inyong Application History at Notifications.</span>
+              <span>
+                {language === "en"
+                  ? "You can now track the release schedule, appointment, or claiming instructions in your Application History and Notifications."
+                  : language === "bis"
+                  ? "Mahimo na nimo masubay ang release schedule, appointment, o instruksyon sa pag-claim sa imong Application History ug Notifications."
+                  : "Maaari mo nang subaybayan ang release schedule, appointment, o claim instructions sa inyong Application History at Notifications."}
+              </span>
             </div>
 
             <div className="w-full flex flex-col gap-2 mt-2">
@@ -1330,7 +1380,7 @@ export default function ChildWelfareApplicationWizard({
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
               >
-                VIEW IN APPLICATION HISTORY
+                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
               </button>
               <button
                 type="button"
@@ -1338,7 +1388,9 @@ export default function ChildWelfareApplicationWizard({
                 className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
               >
                 <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-                <span>MAG-APPLY MULI (RE-APPLY)</span>
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
               </button>
             </div>
           </div>
@@ -1354,40 +1406,70 @@ export default function ChildWelfareApplicationWizard({
         </div>
         <div className="space-y-2">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            {t("cwPendingBadge") || "Kasalukuyang Sinusuri (Pending Review)"}
+            {language === "en"
+              ? "Under Review (Pending)"
+              : language === "bis"
+              ? "Gisusi Pa (Pending)"
+              : (t("cwPendingBadge") || "Kasalukuyang Sinusuri (Pending Review)")}
           </span>
-          <h2 className="text-lg md:text-xl font-bold text-gray-900">{t("cwSuccessTitle") || "Matagumpay na Naisumite ang Aplikasyon!"}</h2>
+          <h2 className="text-lg md:text-xl font-bold text-gray-900">
+            {language === "en"
+              ? "Application Submitted Successfully!"
+              : language === "bis"
+              ? "Malampusong Nasumite ang Aplikasyon!"
+              : (t("cwSuccessTitle") || "Matagumpay na Naisumite ang Aplikasyon!")}
+          </h2>
           <p className="text-xs text-gray-600 max-w-md mx-auto">
-            {t("cwSuccessDesc", { program: selectedProgram.title }) || `Ang inyong aplikasyon para sa ${selectedProgram.title} ay natanggap na at kasalukuyang sinusuri ng Quezon City SSDD Social Worker.`}
+            {language === "en"
+              ? `Your application for ${selectedProgram.title} has been received and is currently being reviewed by the Quezon City SSDD Social Worker.`
+              : language === "bis"
+              ? `Ang imong aplikasyon para sa ${selectedProgram.title} nadawat na ug kasamtangang gisusi sa Quezon City SSDD Social Worker.`
+              : (t("cwSuccessDesc", { program: selectedProgram.title }) || `Ang inyong aplikasyon para sa ${selectedProgram.title} ay natanggap na at kasalukuyang sinusuri ng Quezon City SSDD Social Worker.`)}
           </p>
         </div>
 
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 max-w-md mx-auto text-left space-y-2.5 text-xs">
           <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-            <span className="text-gray-500">{t("referenceNumber") || "Reference Number"}:</span>
+            <span className="text-gray-500">
+              {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}:
+            </span>
             <span className="font-mono font-bold text-blue-700 text-sm">{reference}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">Program:</span>
+            <span className="text-gray-500">
+              {language === "en" ? "Program" : "Programa"}:
+            </span>
             <span className="font-semibold text-gray-900">{selectedProgram.title}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">{t("typeOfAssistance") || "Uri ng Tulong"}:</span>
+            <span className="text-gray-500">
+              {language === "en" ? "Type of Assistance" : language === "bis" ? "Matang sa Tabang" : "Uri ng Tulong"}:
+            </span>
             <span className="font-semibold text-gray-900">{selectedAssistanceType}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">{t("applicantName") || "Pangalan ng Aplikante"}:</span>
+            <span className="text-gray-500">
+              {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}:
+            </span>
             <span className="font-semibold text-gray-900">{formData.firstName} {formData.lastName}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">{t("parentGuardian") || "Magulang / Guardian"}:</span>
+            <span className="text-gray-500">
+              {language === "en" ? "Parent / Guardian" : language === "bis" ? "Ginikanan / Guardian" : "Magulang / Guardian"}:
+            </span>
             <span className="font-semibold text-gray-900">{formData.parentFullName}</span>
           </div>
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-800 max-w-md mx-auto flex items-center gap-2 text-left">
           <Info className="h-4 w-4 text-blue-600 shrink-0" />
-          <span>{t("trackPortalNotifDesc") || "Maaari ninyong i-track ang status sa inyong Portal Notifications at Activity History."}</span>
+          <span>
+            {language === "en"
+              ? "You can track your application status in your Portal Notifications and Activity History."
+              : language === "bis"
+              ? "Mahimo nimong masubay ang status sa imong Portal Notifications ug Kasaysayan sa Kalihokan."
+              : (t("trackPortalNotifDesc") || "Maaari ninyong i-track ang status sa inyong Portal Notifications at Activity History.")}
+          </span>
         </div>
 
         <div className="flex flex-col items-center justify-center gap-2 pt-2 w-full max-w-md mx-auto">
@@ -1399,7 +1481,7 @@ export default function ChildWelfareApplicationWizard({
             }}
             className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
           >
-            VIEW IN APPLICATION HISTORY
+            {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
           </button>
           <button
             type="button"
@@ -1407,7 +1489,9 @@ export default function ChildWelfareApplicationWizard({
             className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
           >
             <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-            <span>MAG-APPLY MULI (RE-APPLY)</span>
+            <span>
+              {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+            </span>
           </button>
         </div>
       </div>

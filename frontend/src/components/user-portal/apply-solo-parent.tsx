@@ -241,6 +241,7 @@ export default function ApplySoloParent() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
   const [understood, setUnderstood] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
+  const [cwSubmissionStage, setCwSubmissionStage] = useState<"form" | "matching" | "pending">("form")
 
   useEffect(() => {
     setSelectedCategoryId(null)
@@ -348,8 +349,8 @@ export default function ApplySoloParent() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {/* Top Requirements Banner with Button to Open Modal (shown only on Step 1) */}
-      {!isBlocked && currentStep === 1 && (
+      {/* Top Requirements Banner with Button to Open Modal (shown only on Step 1 when not in approved/submitted state) */}
+      {!isBlocked && (!isChildWelfare || cwSubmissionStage !== "pending") && currentStep === 1 && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-4 animate-in fade-in duration-150">
           <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -403,6 +404,7 @@ export default function ApplySoloParent() {
           initialProgramId={matchedCwProgram.id}
           initialProgramKey={matchedCwProgram.key}
           onStepChange={setCurrentStep}
+          onSubmissionStageChange={(stage) => setCwSubmissionStage(stage)}
         />
       ) : (
         <SoloParentApplicationWizard
