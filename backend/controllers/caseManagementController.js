@@ -155,10 +155,87 @@ exports.getAllCases = async (req, res) => {
 
     function generateAutoReferrals(moduleName, caseType, dateStr, ref, worker) {
       const mod = String(moduleName || 'AICS').toLowerCase();
+      const type = String(caseType || '').toLowerCase();
       const workerName = worker || 'Admin Social Worker';
       const d = dateStr || new Date().toISOString().split('T')[0];
 
       if (mod.includes('child')) {
+        // 1. Child Protection Assistance
+        if (type.includes('protection') || type.includes('abuse') || type.includes('neglect') || type.includes('custody') || type.includes('danger') || type.includes('threat')) {
+          return [
+            {
+              id: `REF-AUTO-1-${ref}`,
+              date: d,
+              referredTo: 'Quezon City Protection Center for Women and Children (QCPC) / PNP WCPD',
+              reason: 'Urgent crisis intervention, protective custody referral, forensic medical evaluation, and legal referral.',
+              referredBy: workerName,
+              status: 'accepted',
+              remarks: 'Case file expedited for 24/7 protection response and child safety containment.',
+            },
+            {
+              id: `REF-AUTO-2-${ref}`,
+              date: d,
+              referredTo: 'Barangay Council for the Protection of Children (BCPC) – Community Safety Desk',
+              reason: 'Community-level monitoring, spot check-ins, and protective neighborhood supervision.',
+              referredBy: workerName,
+              status: 'accepted',
+              remarks: 'Barangay focal worker designated for weekly home safety verification.',
+            },
+            {
+              id: `REF-AUTO-3-${ref}`,
+              date: d,
+              referredTo: 'SSDD Child Rights, Advocacy & Legal Assistance Unit',
+              reason: 'Legal case representation, protective custody endorsement, and child rights advocacy.',
+              referredBy: workerName,
+              status: 'in_review',
+              remarks: 'Legal officer assigned for case docketing and family court coordination.',
+            },
+            {
+              id: `REF-AUTO-4-${ref}`,
+              date: d,
+              referredTo: 'Quezon City General Hospital – Child Advocacy and Psychosocial Support Desk',
+              reason: 'Trauma-informed psychosocial counseling, pediatric mental health therapy, and pediatric healthcare assessment.',
+              referredBy: workerName,
+              status: 'accepted',
+              remarks: 'Clinical counseling schedule queued for child emotional stabilization.',
+            },
+          ];
+        }
+
+        // 2. Emergency Child Assistance
+        if (type.includes('emergency') || type.includes('crisis') || type.includes('disaster') || type.includes('rescue')) {
+          return [
+            {
+              id: `REF-AUTO-1-${ref}`,
+              date: d,
+              referredTo: 'QC Disaster Risk Reduction and Management Office (QCDRRMO) & Quick Response Team',
+              reason: 'Immediate emergency relief dispatch, emergency transport, and crisis shelter allocation.',
+              referredBy: workerName,
+              status: 'accepted',
+              remarks: 'Priority emergency ticket registered for immediate family relief support.',
+            },
+            {
+              id: `REF-AUTO-2-${ref}`,
+              date: d,
+              referredTo: 'Quezon City General Hospital – Pediatric Emergency & Crisis Center',
+              reason: 'Emergency pediatric triage, urgent medical intervention, and hospitalization subsidy.',
+              referredBy: workerName,
+              status: 'accepted',
+              remarks: 'Direct hospital endorsement guarantee for urgent medical care.',
+            },
+            {
+              id: `REF-AUTO-3-${ref}`,
+              date: d,
+              referredTo: 'SSDD Quick Response & Emergency Welfare Desk',
+              reason: 'Emergency financial relief payout, food supply packs, and transitional temporary lodging.',
+              referredBy: workerName,
+              status: 'accepted',
+              remarks: 'Emergency cash grant and relief pack dispatched for immediate claiming.',
+            },
+          ];
+        }
+
+        // 3. Nutritional Assistance
         return [
           {
             id: `REF-AUTO-1-${ref}`,
@@ -172,11 +249,20 @@ exports.getAllCases = async (req, res) => {
           {
             id: `REF-AUTO-2-${ref}`,
             date: d,
-            referredTo: 'SSDD Child Rights & Protection Unit',
-            reason: 'Comprehensive child welfare intake, pediatric healthcare support, and educational material assistance.',
+            referredTo: 'Barangay Nutrition Scholar (BNS) & Community Supplementary Feeding Center',
+            reason: 'Daily hot meals feeding program, micronutrient supplementation, and regular bi-weekly weight monitoring.',
             referredBy: workerName,
             status: 'accepted',
-            remarks: 'Welfare assessment file linked for ongoing social worker monitoring.',
+            remarks: 'Enrolled in the 90-day dietary rehabilitation cycle.',
+          },
+          {
+            id: `REF-AUTO-3-${ref}`,
+            date: d,
+            referredTo: 'QC Food Security Task Force & SSDD Food Relief Division',
+            reason: 'Monthly family food packs, enriched infant milk formula, and fortified dietary supplements.',
+            referredBy: workerName,
+            status: 'in_review',
+            remarks: 'Food pack supply card activated for monthly distribution.',
           },
         ];
       }
@@ -196,10 +282,19 @@ exports.getAllCases = async (req, res) => {
             id: `REF-AUTO-2-${ref}`,
             date: d,
             referredTo: 'Quezon City Health Department – Maternal & Child Care Section',
-            reason: 'Comprehensive health services and pediatric medical subsidies for solo parent dependents.',
+            reason: 'Comprehensive health services, pediatric care, and 10% discount + VAT exemption for solo parent dependents.',
             referredBy: workerName,
             status: 'accepted',
             remarks: 'Healthcare booklet and medical assistance endorsement active.',
+          },
+          {
+            id: `REF-AUTO-3-${ref}`,
+            date: d,
+            referredTo: 'Quezon City Legal Aid Office – Family Support & Custody Desk',
+            reason: 'Free legal counseling for child support enforcement, custody documentation, and paternal acknowledgment.',
+            referredBy: workerName,
+            status: 'in_review',
+            remarks: 'Endorsed for legal consult and parental support assistance.',
           },
         ];
       }
@@ -225,6 +320,15 @@ exports.getAllCases = async (req, res) => {
             status: 'completed',
             remarks: 'ID and welfare entitlement credentials officially authenticated.',
           },
+          {
+            id: `REF-AUTO-3-${ref}`,
+            date: d,
+            referredTo: 'QC Community Inclusive Workforce & Assistive Device Hub',
+            reason: isPwd ? 'Assistive mobility devices, accessible livelihood training, and workplace inclusion matching.' : 'Senior social recreation, physical wellness programs, and community volunteer circles.',
+            referredBy: workerName,
+            status: 'accepted',
+            remarks: 'Community welfare participation record created.',
+          },
         ];
       }
 
@@ -248,10 +352,68 @@ exports.getAllCases = async (req, res) => {
             status: 'completed',
             remarks: 'Training orientation modules scheduled.',
           },
+          {
+            id: `REF-AUTO-3-${ref}`,
+            date: d,
+            referredTo: 'Quezon City Cooperative Development Authority (QCCDA)',
+            reason: 'Access to community seed capital grants, low-interest micro-credit, and cooperative enterprise membership.',
+            referredBy: workerName,
+            status: 'in_review',
+            remarks: 'Queued for cooperative financial empowerment orientation.',
+          },
         ];
       }
 
-      // AICS (Default)
+      // AICS (Default - medical, funeral, education, financial, etc.)
+      const isFuneral = type.includes('funeral') || type.includes('burial');
+      const isEducation = type.includes('educ') || type.includes('school');
+
+      if (isFuneral) {
+        return [
+          {
+            id: `REF-AUTO-1-${ref}`,
+            date: d,
+            referredTo: 'Quezon City Public Cemetery & Mortuary Assistance Services',
+            reason: 'Burial plot accommodation, mortuary fee subsidies, and funeral logistics support.',
+            referredBy: workerName,
+            status: 'accepted',
+            remarks: 'Funeral assistance endorsement and burial coordinator assigned.',
+          },
+          {
+            id: `REF-AUTO-2-${ref}`,
+            date: d,
+            referredTo: 'SSDD Crisis Intervention Unit (CIU) – Burial Amelioration Desk',
+            reason: 'Immediate financial aid grant payout and bereavement counseling.',
+            referredBy: workerName,
+            status: 'accepted',
+            remarks: 'Bereavement grant certified for financial disbursement.',
+          },
+        ];
+      }
+
+      if (isEducation) {
+        return [
+          {
+            id: `REF-AUTO-1-${ref}`,
+            date: d,
+            referredTo: 'Quezon City Scholarship and Youth Development Program (SYDP)',
+            reason: 'Tuition grant endorsement, academic stipend evaluation, and school supply distribution.',
+            referredBy: workerName,
+            status: 'accepted',
+            remarks: 'Student record linked with City Education registry.',
+          },
+          {
+            id: `REF-AUTO-2-${ref}`,
+            date: d,
+            referredTo: 'Division of City Schools – Student Welfare Desk',
+            reason: 'Enrollment facilitation, learning kit provision, and student welfare support.',
+            referredBy: workerName,
+            status: 'accepted',
+            remarks: 'School focal coordinator notified for educational assistance disbursement.',
+          },
+        ];
+      }
+
       return [
         {
           id: `REF-AUTO-1-${ref}`,
@@ -270,6 +432,15 @@ exports.getAllCases = async (req, res) => {
           referredBy: workerName,
           status: 'accepted',
           remarks: 'Crisis assistance case record endorsed for continuing support.',
+        },
+        {
+          id: `REF-AUTO-3-${ref}`,
+          date: d,
+          referredTo: 'Philippine Charity Sweepstakes Office (PCSO) / Malasakit Center',
+          reason: 'Supplemental hospital bill assistance and continuing prescription medicine funding.',
+          referredBy: workerName,
+          status: 'in_review',
+          remarks: 'Malasakit partner referral endorsement issued.',
         },
       ];
     }
@@ -853,8 +1024,17 @@ exports.getAllCases = async (req, res) => {
         const catTitle = String(row.category_title || '').toLowerCase();
         const catReason = String(row.primary_reason_for_assistance || '').toLowerCase();
         const catSupp = String(row.support_category || '').toLowerCase();
+        const isProtection = catTitle.includes('protection') || catReason.includes('protection') || catSupp.includes('protection');
+        const isEmergency = catTitle.includes('emergency') || catReason.includes('emergency') || catSupp.includes('emergency');
         const isNutrition = catTitle.includes('nutrition') || catReason.includes('nutrition') || catSupp.includes('nutrition');
-        const caseType = isNutrition ? 'Child Nutrition & Feeding Program' : (row.category_title || 'Child Welfare & Protection Assistance');
+
+        const caseType = isProtection
+          ? 'Child Protection & Safety Intervention'
+          : isEmergency
+          ? 'Child Emergency Welfare & Crisis Relief'
+          : isNutrition
+          ? 'Child Nutrition & Feeding Program'
+          : (row.category_title || 'Child Welfare & Protection Assistance');
 
         let refs = referralsMap.get(ref) || referralsMap.get(caseNum) || [];
         if (refs.length === 0) {
