@@ -415,8 +415,8 @@ export default function ApplySoloParent() {
           isModalOpen={showRequirementsModal}
           onStepChange={setCurrentStep}
           onBlockedStatusChange={(blocked) => {
+            setIsBlocked(Boolean(blocked))
             if (blocked) {
-              setIsBlocked(true)
               setShowRequirementsModal(false)
             }
           }}

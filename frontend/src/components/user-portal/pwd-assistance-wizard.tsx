@@ -11,6 +11,7 @@ import {
   X,
   Loader2,
   Info,
+  RotateCcw,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -548,7 +549,7 @@ export default function PWDSocialAssistanceWizard({
   onBack,
   onStepChange,
 }: PWDSocialAssistanceWizardProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [profile, setProfile] = useState<UserProfile>(() => (propUserProfile || getCurrentUserProfile()) as any)
 
   useEffect(() => {
@@ -1071,18 +1072,38 @@ export default function PWDSocialAssistanceWizard({
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {isAppApproved ? "Application Approved" : "You Have an Active Application"}
-            </h2>
-            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
               {isAppApproved
-                ? "Your application for PWD Social Assistance has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications."
-                : "Your application for PWD Social Assistance has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."}
+                ? language === "en"
+                  ? "Application Approved!"
+                  : language === "bis"
+                  ? "Na-aprobahan ang Aplikasyon!"
+                  : "Na-approve ang Application!"
+                : language === "en"
+                ? "You Have an Active Application"
+                : language === "bis"
+                ? "Aduna Ka Nay Aktibo nga Aplikasyon"
+                : "May Kasalukuyan Ka Nang Aktibong Aplikasyon"}
+            </h2>
+            <p className="text-xs text-gray-600 max-w-md mt-1 leading-relaxed">
+              {isAppApproved
+                ? (language === "en"
+                    ? "Your application for PWD Social Assistance has been officially approved! You can check your scheduled appointment or payout release status."
+                    : language === "bis"
+                    ? "Ang imong aplikasyon para sa PWD Social Assistance opisyal nang na-aprobahan sa Quezon City."
+                    : "Ang inyong aplikasyon para sa PWD Social Assistance ay opisyal nang na-apruba ng Quezon City Social Services.")
+                : (language === "en"
+                    ? "Your application for PWD Social Assistance has been successfully submitted and is currently pending review. Please wait for an assessment before submitting a new application."
+                    : language === "bis"
+                    ? "Ang imong aplikasyon para sa PWD Social Assistance nasumite na ug kasamtangang girebyu."
+                    : "Ang inyong aplikasyon para sa PWD Social Assistance ay matagumpay na naisumite at kasalukuyang sinusuri.")}
             </p>
           </div>
 
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">Application Reference No.:</span>
+              <span className="text-gray-500 font-medium">
+                {language === "en" ? "Reference Number:" : language === "bis" ? "Numero sa Reperensya:" : "Application Reference No.:"}
+              </span>
               <span className="font-mono font-bold text-blue-600">{displayRef}</span>
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
@@ -1090,17 +1111,19 @@ export default function PWDSocialAssistanceWizard({
               {isAppApproved ? (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Approved
+                  {language === "en" ? "Approved" : language === "bis" ? "Aprobado" : "Approved"}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  Under Review (Pending)
+                  {language === "en" ? "Under Review (Pending)" : language === "bis" ? "Gisusi Pa (Pending)" : "Kasalukuyang Sinusuri (Pending)"}
                 </span>
               )}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Date Filed:</span>
+              <span className="text-gray-500 font-medium">
+                {language === "en" ? "Date Filed:" : language === "bis" ? "Petsa sa Pag-file:" : "Petsa ng Pag-apply:"}
+              </span>
               <span className="font-semibold text-gray-700">
                 {displayDate}
               </span>
@@ -1111,27 +1134,32 @@ export default function PWDSocialAssistanceWizard({
             <button
               type="button"
               onClick={() => {
+                ;(window as any).__isFormDirty = false
                 window.location.href = "/portal/financial-aid"
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              VIEW IN FINANCIAL AID / MY APPLICATIONS
+              {language === "bis" ? "TAN-AWA SA FINANCIAL AID / MY APPLICATIONS" : "VIEW IN FINANCIAL AID / MY APPLICATIONS"}
             </button>
-            {isAppApproved && (
-              <button
-                type="button"
-                onClick={() => {
-                  setLatestSubmittedApp(null)
-                  setReference("")
-                  setSubmissionStage("form")
-                  setStep(1)
-                  setUploadedDocs({})
-                }}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-              >
-                Submit Another Application (Apply Again)
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setLatestSubmittedApp(null)
+                setReference("")
+                setSubmissionStage("form")
+                setStep(1)
+                setUploadedDocs({})
+                try {
+                  ;(window as any).__isFormDirty = false
+                } catch {}
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+              <span>
+                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+              </span>
+            </button>
           </div>
         </div>
       </div>

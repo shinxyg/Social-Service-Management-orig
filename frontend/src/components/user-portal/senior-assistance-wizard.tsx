@@ -13,6 +13,7 @@ import {
   Info,
   Home,
   Search,
+  RotateCcw,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -160,7 +161,7 @@ function ReviewField({ label, value }: { label: string; value: string }) {
 }
 
 export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOCK_USER_PROFILE, onStepChange }: SeniorAssistanceWizardProps) {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
 
   const STEPS = [
     { id: 1, label: t("wizardChecklist").toUpperCase() },
@@ -798,39 +799,56 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
             </div>
           </div>
 
-          <div className="w-full pt-2 flex flex-col gap-2">
+          <div className="w-full pt-2 flex flex-col gap-2.5">
             <button
               type="button"
               onClick={() => {
+                try {
+                  localStorage.removeItem("pwd_senior_reapplying_senior_social-assistance")
+                  localStorage.removeItem("pwd_senior_reapplying")
+                } catch {}
                 window.location.href = "/portal/financial-aid"
               }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wider"
             >
-              VIEW IN FINANCIAL AID / MY APPLICATIONS
+              {language === "tl"
+                ? "TINGNAN SA FINANCIAL AID / APPLICATION HISTORY"
+                : language === "ceb"
+                ? "TAN-AWA SA FINANCIAL AID / APPLICATION HISTORY"
+                : "VIEW IN FINANCIAL AID / APPLICATION HISTORY"}
             </button>
-            {isAppApproved && (
-              <button
-                type="button"
-                onClick={() => {
-                  const currentRef = latestSubmittedApp?.referenceNumber || latestSubmittedApp?.reference_number || referenceNumber || "all"
-                  bypassedActiveAppRef.current = true
-                  dismissedAppRefCurrent.current = currentRef
-                  setLatestSubmittedApp(null)
-                  setSubmitted(false)
-                  setReferenceNumber("")
-                  setIsResident(false)
-                  setIsSenior(false)
-                  setHasSeniorId(false)
-                  setIsIndigentOrInNeed(false)
-                  setIsIdVerified(false)
-                  setUploadedFiles({})
-                  setStep(1)
-                }}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
-              >
-                Submit Another Application (Apply Again)
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                const currentRef = latestSubmittedApp?.referenceNumber || latestSubmittedApp?.reference_number || referenceNumber || "all"
+                bypassedActiveAppRef.current = true
+                dismissedAppRefCurrent.current = currentRef
+                try {
+                  localStorage.setItem("pwd_senior_reapplying_senior_social-assistance", "true")
+                  localStorage.setItem("pwd_senior_reapplying", "true")
+                } catch {}
+                setLatestSubmittedApp(null)
+                setSubmitted(false)
+                setReferenceNumber("")
+                setIsResident(false)
+                setIsSenior(false)
+                setHasSeniorId(false)
+                setIsIndigentOrInNeed(false)
+                setIsIdVerified(false)
+                setUploadedFiles({})
+                setStep(1)
+              }}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>
+                {language === "tl"
+                  ? "MAG-APPLY MULI (RE-APPLY)"
+                  : language === "ceb"
+                  ? "PAG-APPLY PAG-USAB (RE-APPLY)"
+                  : "RE-APPLY (APPLY AGAIN)"}
+              </span>
+            </button>
           </div>
         </div>
       </div>

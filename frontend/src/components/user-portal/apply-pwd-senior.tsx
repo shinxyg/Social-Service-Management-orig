@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "react-router-dom"
-import { AlertCircle, RefreshCw, HeartHandshake, X, FileText, Info, CheckCircle2 } from "lucide-react"
+import { AlertCircle, RefreshCw, HeartHandshake, X, FileText, Info, CheckCircle2, RotateCcw } from "lucide-react"
 import PWDApplicationWizard from "./pwd-senior-wizard"
 import SeniorCitizenApplicationWizard from "./Senior-citizen-wizard"
 import PWDSocialAssistanceWizard from "./pwd-assistance-wizard"
@@ -11,7 +11,7 @@ import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
 export default function ApplyPWDSenior() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [searchParams] = useSearchParams()
 
   const urlCategory = searchParams.get("category")?.toLowerCase() // "pwd" | "senior"
@@ -31,8 +31,35 @@ export default function ApplyPWDSenior() {
   const isSeniorSocial = isSenior && urlType === "social-assistance"
   const isSeniorId = isSenior && !isSeniorMedicine && !isSeniorMovie && !isSeniorSocial
   const isAssistance = !isSenior && urlType === "assistance"
-  const [bypassedBlock, setBypassedBlock] = useState(false)
-  const bypassedBlockRef = useRef(false)
+
+  const [bypassedBlock, setBypassedBlock] = useState(() => {
+    try {
+      const isUrlParam = typeof window !== "undefined" && window.location.search.includes("reapply=true")
+      const isLocal =
+        localStorage.getItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`) === "true" ||
+        localStorage.getItem("pwd_senior_reapplying") === "true"
+      return Boolean(isUrlParam || isLocal)
+    } catch {
+      return false
+    }
+  })
+  const bypassedBlockRef = useRef(bypassedBlock)
+
+  const handleReapply = () => {
+    try {
+      localStorage.setItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`, "true")
+      localStorage.setItem("pwd_senior_reapplying", "true")
+    } catch {}
+    bypassedBlockRef.current = true
+    setBypassedBlock(true)
+    setIsBlocked(false)
+    setBlockedApp(null)
+    setHasApprovedApp(false)
+    setCurrentStep(1)
+    try {
+      ;(window as any).__isFormDirty = false
+    } catch {}
+  }
 
   // Check for existing pending/active applications for this category & service
   useEffect(() => {
@@ -254,8 +281,22 @@ export default function ApplyPWDSenior() {
 
   // Keep modal closed on navigation so user can see and access the form UI directly
   useEffect(() => {
-    bypassedBlockRef.current = false
-    setBypassedBlock(false)
+    try {
+      const isReapp =
+        localStorage.getItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`) === "true" ||
+        localStorage.getItem("pwd_senior_reapplying") === "true" ||
+        (typeof window !== "undefined" && window.location.search.includes("reapply=true"))
+      if (isReapp) {
+        bypassedBlockRef.current = true
+        setBypassedBlock(true)
+      } else {
+        bypassedBlockRef.current = false
+        setBypassedBlock(false)
+      }
+    } catch {
+      bypassedBlockRef.current = false
+      setBypassedBlock(false)
+    }
     setShowModal(false)
     setUnderstood(false)
     setCurrentStep(1)
@@ -392,30 +433,64 @@ export default function ApplyPWDSenior() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {isAppApproved ? "Application Approved" : "You Have an Active Application"}
+              {isAppApproved
+                ? language === "en"
+                  ? "Application Approved"
+                  : language === "bis"
+                  ? "Na-aprobahan ang Aplikasyon!"
+                  : "Na-approve ang Application!"
+                : language === "en"
+                ? "You Have an Existing Active Application"
+                : language === "bis"
+                ? "Aduna Ka Nay Aktibo nga Aplikasyon"
+                : "May Kasalukuyan Ka Nang Aktibong Aplikasyon"}
             </h2>
-            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+            <p className="text-xs text-gray-600 max-w-md mt-1 leading-relaxed">
               {isAppApproved
                 ? (isSeniorMedicine
-                    ? `Your application for Medicine Discount Booklet has been officially approved! Your official booklet number has been issued and sent to your registered email.`
+                    ? (language === "en"
+                        ? "Your application for Medicine Discount Booklet has been officially approved! Your official booklet number has been issued."
+                        : language === "bis"
+                        ? "Ang imong aplikasyon para sa Medicine Discount Booklet opisyal nang na-aprobahan."
+                        : "Ang inyong aplikasyon para sa Medicine Discount Booklet ay opisyal nang na-apruba ng Quezon City.")
                     : isSeniorMovie
-                    ? `Your application for Free Movie Booklet has been officially approved! Your official booklet number has been issued and sent to your registered email.`
+                    ? (language === "en"
+                        ? "Your application for Free Movie Booklet has been officially approved! Your official booklet number has been issued."
+                        : language === "bis"
+                        ? "Ang imong aplikasyon para sa Free Movie Booklet opisyal nang na-aprobahan."
+                        : "Ang inyong aplikasyon para sa Free Movie Booklet ay opisyal nang na-apruba ng Quezon City.")
                     : isAssistance || isSeniorSocial
-                    ? `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status in Financial Aid / My Applications.`
-                    : `Your application for ${serviceCleanTitle} has been officially approved! You already have an active ID. If you need to renew or replace your ID, please choose an option below.`)
-                : `Your application for ${serviceCleanTitle} has been successfully submitted and is currently pending review. Please wait for an assessment before submitting a new application.`}
+                    ? (language === "en"
+                        ? `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status.`
+                        : language === "bis"
+                        ? `Ang imong aplikasyon para sa ${serviceCleanTitle} opisyal nang na-aprobahan sa Quezon City.`
+                        : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay opisyal nang na-apruba ng Quezon City Social Services.`)
+                    : (language === "en"
+                        ? `Your application for ${serviceCleanTitle} has been officially approved! You already have an active ID.`
+                        : language === "bis"
+                        ? `Ang imong aplikasyon para sa ${serviceCleanTitle} opisyal nang na-aprobahan. Aduna ka nay aktibo nga ID.`
+                        : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay opisyal nang na-apruba ng Quezon City.`))
+                : (language === "en"
+                    ? `Your application for ${serviceCleanTitle} has been successfully submitted and is currently pending review. Please wait for an assessment before submitting a new application.`
+                    : language === "bis"
+                    ? `Ang imong aplikasyon para sa ${serviceCleanTitle} nasumite na ug kasamtangang girebyu.`
+                    : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay matagumpay na naisumite at kasalukuyang sinusuri.`)}
             </p>
           </div>
 
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">Application Reference No.:</span>
+              <span className="text-gray-500 font-medium">
+                {language === "en" ? "Reference Number:" : language === "bis" ? "Numero sa Reperensya:" : "Application Reference No.:"}
+              </span>
               <span className="font-mono font-bold text-blue-600">{displayRef}</span>
             </div>
             {assignedBookletNo && (
               <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                 <span className="text-gray-500 font-medium">
-                  {isSeniorMedicine || isSeniorMovie ? "Official Booklet Number:" : "Official ID Number:"}
+                  {isSeniorMedicine || isSeniorMovie
+                    ? (language === "en" ? "Official Booklet Number:" : language === "bis" ? "Numero sa Booklet:" : "Numero ng Booklet:")
+                    : (language === "en" ? "Official ID Number:" : language === "bis" ? "Numero sa ID:" : "Opisyal na Numero ng ID:")}
                 </span>
                 <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                   {assignedBookletNo}
@@ -427,17 +502,19 @@ export default function ApplyPWDSenior() {
               {isAppApproved ? (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Approved
+                  {language === "en" ? "Approved" : language === "bis" ? "Aprobado" : "Approved"}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  Under Review (Pending)
+                  {language === "en" ? "Under Review (Pending)" : language === "bis" ? "Gisusi Pa (Pending)" : "Kasalukuyang Sinusuri (Pending)"}
                 </span>
               )}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Date Filed:</span>
+              <span className="text-gray-500 font-medium">
+                {language === "en" ? "Date Filed:" : language === "bis" ? "Petsa sa Pag-file:" : "Petsa ng Pag-apply:"}
+              </span>
               <span className="font-semibold text-gray-700">
                 {displayDate}
               </span>
@@ -456,8 +533,8 @@ export default function ApplyPWDSenior() {
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
                 >
                   {isSenior
-                    ? "Apply for Renewal (Renewal SENIOR ID)"
-                    : "Apply for Renewal (Renewal PWD ID)"}
+                    ? (language === "en" ? "Apply for Renewal (Renewal SENIOR ID)" : language === "bis" ? "Pag-apply para sa Renewal (Renewal SENIOR ID)" : "Mag-apply para sa Renewal (Renewal SENIOR ID)")
+                    : (language === "en" ? "Apply for Renewal (Renewal PWD ID)" : language === "bis" ? "Pag-apply para sa Renewal (Renewal PWD ID)" : "Mag-apply para sa Renewal (Renewal PWD ID)")}
                 </button>
                 <button
                   type="button"
@@ -467,17 +544,31 @@ export default function ApplyPWDSenior() {
                   }}
                   className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
                 >
-                  Apply for Replacement / Lost ID
+                  {language === "en" ? "Apply for Replacement / Lost ID" : language === "bis" ? "Pag-apply para sa Replacement / Nawala nga ID" : "Mag-apply para sa Replacement / Nawalang ID"}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
+                    try {
+                      localStorage.removeItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`)
+                      localStorage.removeItem("pwd_senior_reapplying")
+                    } catch {}
                     ;(window as any).__isFormDirty = false
                     window.location.href = "/portal/my-applications"
                   }}
-                  className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors cursor-pointer uppercase tracking-wide"
                 >
-                  View in Application History
+                  {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReapply}
+                  className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                  <span>
+                    {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                  </span>
                 </button>
               </>
             ) : (
@@ -485,12 +576,28 @@ export default function ApplyPWDSenior() {
                 <button
                   type="button"
                   onClick={() => {
+                    try {
+                      localStorage.removeItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`)
+                      localStorage.removeItem("pwd_senior_reapplying")
+                    } catch {}
                     ;(window as any).__isFormDirty = false
                     window.location.href = isAssistance || isSeniorSocial ? "/portal/financial-aid" : "/portal/my-applications"
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
                 >
-                  {isAssistance || isSeniorSocial ? "VIEW IN FINANCIAL AID / DISBURSEMENT" : "VIEW IN APPLICATION HISTORY"}
+                  {isAssistance || isSeniorSocial
+                    ? (language === "bis" ? "TAN-AWA SA FINANCIAL AID / MY APPLICATIONS" : "VIEW IN FINANCIAL AID / DISBURSEMENT")
+                    : (language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReapply}
+                  className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                  <span>
+                    {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                  </span>
                 </button>
               </>
             )}

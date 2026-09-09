@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles, AlertCircle } from "lucide-react"
+import { X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles, AlertCircle, RotateCcw } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -26,7 +26,7 @@ import { getCurrentUserProfile, getLoggedInUserQcid, toISODateString } from "../
 import { notifyApplicationChange } from "../../utils/realtimeSync"
 
 export default function ApplyAICS({ initialType, initialTypeKey, onBack }: ApplyAICSProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [sampleDocOpen, setSampleDocOpen] = useState<string | null>(null)
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -163,6 +163,18 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const requirements = AICS_REQUIREMENTS[resolvedTypeKey] || AICS_REQUIREMENTS["aicsMedical"]
   const hasRequirements = Boolean(requirements)
 
+  const [isReapplying, setIsReapplying] = useState(() => {
+    try {
+      const isUrlParam = typeof window !== "undefined" && window.location.search.includes("reapply=true")
+      const isLocal =
+        localStorage.getItem(`aics_reapplying_${resolvedTypeKey}`) === "true" ||
+        localStorage.getItem("aics_reapplying") === "true"
+      return Boolean(isUrlParam || isLocal)
+    } catch {
+      return false
+    }
+  })
+
   const [step, setStep] = useState<Step>(
     hasRequirements ? "checklist" : "form"
   )
@@ -178,6 +190,29 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [checklistPriorAid, setChecklistPriorAid] = useState<"yes" | "no">("no")
   const [priorAidOffice, setPriorAidOffice] = useState("")
   const [priorAidType, setPriorAidType] = useState("")
+
+  const handleReapply = () => {
+    try {
+      localStorage.setItem(`aics_reapplying_${resolvedTypeKey}`, "true")
+      localStorage.setItem("aics_reapplying", "true")
+    } catch {}
+    setIsReapplying(true)
+    setStep(hasRequirements ? "checklist" : "form")
+    setReference("")
+    setAppStatus("pending")
+    setUploadedDocs({})
+    setChecklistResident(false)
+    setChecklistPatient(false)
+    setChecklistPriorAid("no")
+    setEduEligResident(false)
+    setEduEligAge(false)
+    setEduEligSchool(false)
+    setEduEligIndigent(false)
+    setChecklistDeceasedResident("")
+    try {
+      ;(window as any).__isFormDirty = false
+    } catch {}
+  }
 
   const [eduEligResident, setEduEligResident] = useState(false)
   const [eduEligAge, setEduEligAge] = useState(false)
@@ -2402,33 +2437,72 @@ const handleFinalSubmit = async () => {
     // NA-REJECT
     if (appStatus === "rejected") {
       return (
-        <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
-          <div className="bg-card border border-border rounded-2xl p-8 shadow-soft flex flex-col items-center text-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-red-500/10 flex items-center justify-center">
-              <X className="h-7 w-7 text-red-500" />
+        <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-2xl bg-red-50 flex items-center justify-center text-red-500">
+              <X className="h-7 w-7" strokeWidth={2.5} />
             </div>
-            <h2 className="text-lg font-heading font-semibold text-foreground">
-              Hindi Na-approve ang Application
+            <h2 className="text-lg font-bold text-gray-900">
+              {language === "en"
+                ? "Application Disapproved"
+                : language === "bis"
+                ? "Wala Na-aprobahan ang Aplikasyon"
+                : "Hindi Na-approve ang Application"}
             </h2>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Paumanhin, hindi na-approve ang iyong aplikasyon para sa {type.toLowerCase()}.
-              Maaari kang makipag-ugnayan sa social welfare office para sa karagdagang detalye
-              o mag-apply muli kung may mga dokumentong kailangang ayusin.
+            <p className="text-xs text-gray-600 max-w-sm">
+              {language === "en"
+                ? `We regret to inform you that your application for ${type} was not approved. You may contact the Quezon City Social Welfare Office for more details or submit a new application.`
+                : language === "bis"
+                ? `Gikasubo namo nga wala na-aprobahan ang imong aplikasyon para sa ${type}. Mahimo kang makig-alayon sa Quezon City Social Welfare Office o mag-apply pag-usab.`
+                : `Paumanhin, hindi na-approve ang iyong aplikasyon para sa ${type.toLowerCase()}. Maaari kang makipag-ugnayan sa Quezon City Social Welfare Office para sa karagdagang detalye o mag-apply muli kung may mga dokumentong kailangang ayusin.`}
             </p>
-            <div className="mt-2 bg-muted rounded-xl px-4 py-3 w-full">
-              <p className="text-xs text-muted-foreground">{t("referenceNumber")}</p>
-              <p className="text-sm font-semibold text-foreground">{reference}</p>
+            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                <span className="text-gray-500">
+                  {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
+                </span>
+                <span className="font-mono font-bold text-gray-900 text-sm">{reference}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">
+                  {language === "en" ? "Service" : language === "bis" ? "Serbisyo" : "Serbisyo"}
+                </span>
+                <span className="font-semibold text-gray-900">{type}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">
+                  {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
+                </span>
+                <span className="font-semibold text-gray-900">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                ;(window as any).__isFormDirty = false
-                window.location.href = "/portal/my-applications"
-              }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              VIEW IN APPLICATION HISTORY
-            </button>
+
+            <div className="w-full flex flex-col gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
+                    localStorage.removeItem("aics_reapplying")
+                  } catch {}
+                  ;(window as any).__isFormDirty = false
+                  window.location.href = "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              >
+                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+              </button>
+              <button
+                type="button"
+                onClick={handleReapply}
+                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
+              </button>
+            </div>
           </div>
 
           {onBack && (
@@ -2446,32 +2520,88 @@ const handleFinalSubmit = async () => {
     // NA-APPROVE (o completed)
     if (appStatus === "approved" || appStatus === "completed") {
       return (
-        <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
-          <div className="bg-card border border-border rounded-2xl p-8 shadow-soft flex flex-col items-center text-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-              <Check className="h-7 w-7 text-emerald-500" />
+        <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 ring-8 ring-emerald-50/50">
+              <Check className="h-7 w-7" strokeWidth={3} />
             </div>
-            <h2 className="text-lg font-heading font-semibold text-foreground">
-              Na-approve ang Application!
+            <h2 className="text-lg font-bold text-gray-900">
+              {language === "en"
+                ? "Application Approved!"
+                : language === "bis"
+                ? "Na-aprobahan ang Aplikasyon!"
+                : "Na-approve ang Application!"}
             </h2>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Maaari mo nang tignan ang iyong appointment sa Appointments page para sa
-              susunod na hakbang.
+            <p className="text-xs text-gray-600 max-w-sm">
+              {language === "en"
+                ? `Your application for ${type} has been officially approved by the Quezon City Social Services Development Department.`
+                : language === "bis"
+                ? `Ang imong aplikasyon para sa ${type} opisyal nga na-aprobahan sa Quezon City Social Services Development Department.`
+                : `Ang inyong aplikasyon para sa ${type} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.`}
             </p>
-            <div className="mt-2 bg-muted rounded-xl px-4 py-3 w-full">
-              <p className="text-xs text-muted-foreground">{t("referenceNumber")}</p>
-              <p className="text-sm font-semibold text-foreground">{reference}</p>
+            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                <span className="text-gray-500">
+                  {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
+                </span>
+                <span className="font-mono font-bold text-blue-700 text-sm">{reference}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">
+                  {language === "en" ? "Service" : language === "bis" ? "Serbisyo" : "Serbisyo"}
+                </span>
+                <span className="font-semibold text-gray-900">{type}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">
+                  {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
+                </span>
+                <span className="font-semibold text-gray-900">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">
+                  {language === "en" ? "Date" : language === "bis" ? "Petsa" : "Petsa"}
+                </span>
+                <span className="font-semibold text-gray-900">
+                  {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
+                </span>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                ;(window as any).__isFormDirty = false
-                window.location.href = "/portal/my-applications"
-              }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              VIEW IN APPLICATION HISTORY
-            </button>
+
+            <p className="text-xs text-blue-600 font-medium">
+              {language === "en"
+                ? "You may check your release schedule, appointment, or claim instructions in your Application History."
+                : language === "bis"
+                ? "Mahimo nimong subayon ang iskedyul sa pagpagawas, appointment, o instruksyon sa pag-claim sa Kasaysayan sa Aplikasyon."
+                : "Maaari mo nang subaybayan ang release schedule, appointment, o claim instructions sa inyong Application History at Notifications."}
+            </p>
+
+            <div className="w-full flex flex-col gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
+                    localStorage.removeItem("aics_reapplying")
+                  } catch {}
+                  ;(window as any).__isFormDirty = false
+                  window.location.href = "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              >
+                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+              </button>
+              <button
+                type="button"
+                onClick={handleReapply}
+                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
+              </button>
+            </div>
           </div>
 
           {onBack && (
@@ -2518,7 +2648,7 @@ const handleFinalSubmit = async () => {
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
               <span className="text-muted-foreground">{t("applicantLabel")}</span>
-              <span className="font-semibold text-foreground">{name || "Applicant"}</span>
+              <span className="font-semibold text-foreground">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
               <span className="text-muted-foreground">{t("dateLabel")}</span>
@@ -2546,26 +2676,26 @@ const handleFinalSubmit = async () => {
             <button
               type="button"
               onClick={() => {
+                try {
+                  localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
+                  localStorage.removeItem("aics_reapplying")
+                } catch {}
                 ;(window as any).__isFormDirty = false
                 window.location.href = "/portal/my-applications"
               }}
               className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              VIEW IN APPLICATION HISTORY
+              {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
             </button>
             <button
               type="button"
-              onClick={() => {
-                try {
-                  localStorage.setItem("aics_application_submitted", String(Date.now()))
-                } catch {}
-                window.dispatchEvent(new CustomEvent("aics_applications_updated"))
-                window.dispatchEvent(new CustomEvent("aics_application_submitted"))
-                window.location.reload()
-              }}
-              className="w-full max-w-md py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
+              onClick={handleReapply}
+              className="w-full max-w-md py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
             >
-              Tingnan ang Application Status
+              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+              <span>
+                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+              </span>
             </button>
           </div>
         </div>

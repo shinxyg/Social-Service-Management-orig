@@ -13,6 +13,7 @@ import {
   Loader2,
   Sparkles,
   User,
+  RotateCcw,
 } from "lucide-react"
 
 import { useLanguage } from "../ui/language-context"
@@ -1132,9 +1133,23 @@ export default function SoloParentApplicationWizard({
   const [blockReason, setBlockReason] = useState<"draft" | "pending" | "approved" | null>(null)
   const [blockedReference, setBlockedReference] = useState("")
   const [blockedApp, setBlockedApp] = useState<any>(null)
-  const [isReapplying, setIsReapplying] = useState(false)
+  const [isReapplying, setIsReapplying] = useState(() => {
+    try {
+      const isUrl = typeof window !== "undefined" && window.location.search.includes("reapply=true")
+      const isLocal =
+        localStorage.getItem("solo_parent_reapplying") === "true" ||
+        localStorage.getItem(`solo_parent_reapplying_${idStatus || "new"}`) === "true"
+      return Boolean(isUrl || isLocal)
+    } catch {
+      return false
+    }
+  })
 
-  const handleStartReapply = (targetType: "renewal" | "loss") => {
+  const handleStartReapply = (targetType: "new" | "renewal" | "loss") => {
+    try {
+      localStorage.setItem("solo_parent_reapplying", "true")
+      localStorage.setItem(`solo_parent_reapplying_${targetType}`, "true")
+    } catch {}
     ;(window as any).__isFormDirty = false
     setIsReapplying(true)
     setIdStatus(targetType)
@@ -1146,6 +1161,7 @@ export default function SoloParentApplicationWizard({
     setExistingIdNumber("")
     setIsResident(false)
     setHasSoleParentalCare(false)
+    setUploadedDocs({})
     try {
       const newUrl = `/portal/apply-solo-parent?category=solo-parent&type=${targetType}&reapply=true`
       window.history.replaceState(null, "", newUrl)
@@ -1672,20 +1688,36 @@ export default function SoloParentApplicationWizard({
           <div>
             <h2 className="text-lg font-bold text-gray-900">
               {isAppApproved
-                ? "Application Approved"
-                : "You Have an Existing Pending Application"}
+                ? language === "en"
+                  ? "Application Approved"
+                  : language === "bis"
+                  ? "Na-aprobahan ang Aplikasyon!"
+                  : "Na-approve ang Application!"
+                : language === "en"
+                ? "You Have an Existing Active Application"
+                : language === "bis"
+                ? "Aduna Ka Nay Aktibo nga Aplikasyon"
+                : "May Kasalukuyan Ka Nang Aktibong Aplikasyon"}
             </h2>
-            <p className="text-sm text-gray-500 max-w-md mt-1 leading-relaxed">
+            <p className="text-xs text-gray-600 max-w-md mt-1 leading-relaxed">
               {isAppApproved
-                ? "Your application for Solo Parent ID has been officially approved! You already have an active Solo Parent ID. If you need to renew or replace your ID, please choose an option below."
-                : "Your application for Solo Parent ID has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."}
+                ? language === "en"
+                  ? "Your application for Solo Parent ID has been officially approved! You already have an active Solo Parent ID. If you need to renew or replace your ID, please choose an option below."
+                  : language === "bis"
+                  ? "Ang imong aplikasyon para sa Solo Parent ID opisyal nga na-aprobahan sa Quezon City. Aduna ka nay aktibo nga ID."
+                  : "Ang inyong aplikasyon para sa Solo Parent ID ay opisyal nang na-apruba ng Quezon City Social Services Development Department."
+                : language === "en"
+                ? "Your application for Solo Parent ID has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."
+                : language === "bis"
+                ? "Ang imong aplikasyon para sa Solo Parent ID nasumite na ug kasamtangang girebyu sa Social Worker."
+                : "Ang inyong aplikasyon para sa Solo Parent ID ay matagumpay na naisumite at kasalukuyang sinusuri ng Social Worker."}
             </p>
           </div>
 
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">
-                Application Reference No.:
+                {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
               </span>
               <span className="font-mono font-bold text-blue-600">
                 {displayRef}
@@ -1694,7 +1726,7 @@ export default function SoloParentApplicationWizard({
             {assignedIdNo && (
               <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                 <span className="text-gray-500 font-medium">
-                  Official ID Number:
+                  {language === "en" ? "Official ID Number" : language === "bis" ? "Opisyal nga Numero sa ID" : "Opisyal na Numero ng ID"}
                 </span>
                 <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                   {assignedIdNo}
@@ -1706,17 +1738,19 @@ export default function SoloParentApplicationWizard({
               {isAppApproved ? (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Approved
+                  {language === "en" ? "Approved" : language === "bis" ? "Aprobado" : "Approved"}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  Under Review (Pending)
+                  {language === "en" ? "Under Review (Pending)" : language === "bis" ? "Gisusi Pa (Pending)" : "Kasalukuyang Sinusuri (Pending)"}
                 </span>
               )}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Date Filed:</span>
+              <span className="text-gray-500 font-medium">
+                {language === "en" ? "Date Filed" : language === "bis" ? "Petsa sa Pag-file" : "Petsa ng Pag-apply"}
+              </span>
               <span className="font-semibold text-gray-700">{displayDate}</span>
             </div>
           </div>
@@ -1729,37 +1763,67 @@ export default function SoloParentApplicationWizard({
                   onClick={() => handleStartReapply("renewal")}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
                 >
-                  Apply for Renewal (Renewal Solo Parent ID)
+                  {language === "en" ? "Apply for Renewal (Renewal Solo Parent ID)" : language === "bis" ? "Pag-apply para sa Renewal (Renewal Solo Parent ID)" : "Mag-apply para sa Renewal (Renewal Solo Parent ID)"}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleStartReapply("loss")}
                   className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
                 >
-                  Apply for Replacement / Lost ID
+                  {language === "en" ? "Apply for Replacement / Lost ID" : language === "bis" ? "Pag-apply para sa Replacement / Nawala nga ID" : "Mag-apply para sa Replacement / Nawalang ID"}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
+                    try {
+                      localStorage.removeItem("solo_parent_reapplying")
+                      localStorage.removeItem(`solo_parent_reapplying_${idStatus || "new"}`)
+                    } catch {}
                     ;(window as any).__isFormDirty = false
                     window.location.href = "/portal/my-applications"
                   }}
-                  className="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 text-xs font-medium transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors cursor-pointer uppercase tracking-wide"
                 >
-                  View in Application History
+                  {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStartReapply("new")}
+                  className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                  <span>
+                    {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                  </span>
                 </button>
               </>
             ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  ;(window as any).__isFormDirty = false
-                  window.location.href = "/portal/my-applications"
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-              >
-                VIEW IN APPLICATION HISTORY
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      localStorage.removeItem("solo_parent_reapplying")
+                      localStorage.removeItem(`solo_parent_reapplying_${idStatus || "new"}`)
+                    } catch {}
+                    ;(window as any).__isFormDirty = false
+                    window.location.href = "/portal/my-applications"
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+                >
+                  {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStartReapply((idStatus as any) || "new")}
+                  className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                  <span>
+                    {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                  </span>
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -1793,17 +1857,27 @@ export default function SoloParentApplicationWizard({
               <Sparkles className="w-3.5 h-3.5" /> Application Submitted Successfully!
             </span>
             <h2 className="text-2xl font-bold text-foreground">
-              Mabuhay! Ang inyong aplikasyon ay Natanggap Na
+              {language === "en"
+                ? "Application Received!"
+                : language === "bis"
+                ? "Nadawat na ang Imong Aplikasyon!"
+                : "Mabuhay! Ang inyong aplikasyon ay Natanggap Na"}
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Ang inyong Solo Parent ID application ay matagumpay na naisumite at kasalukuyang sinusuri.
+              {language === "en"
+                ? "Your Solo Parent ID application has been submitted and is currently being assessed."
+                : language === "bis"
+                ? "Ang imong aplikasyon para sa Solo Parent ID nasumite na ug kasamtangang gisusi."
+                : "Ang inyong Solo Parent ID application ay matagumpay na naisumite at kasalukuyang sinusuri."}
             </p>
           </div>
 
           {/* Reference Card */}
           <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
             <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-              <span className="font-semibold text-muted-foreground">Application Reference No.:</span>
+              <span className="font-semibold text-muted-foreground">
+                {language === "en" ? "Reference Number:" : language === "bis" ? "Numero sa Reperensya:" : "Application Reference No.:"}
+              </span>
               <span className="font-mono font-bold text-blue-700 text-sm">{reference}</span>
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
@@ -1815,11 +1889,15 @@ export default function SoloParentApplicationWizard({
               <span className="font-semibold text-foreground uppercase">{applicationTypeLabel}</span>
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Aplikante:</span>
+              <span className="text-muted-foreground">
+                {language === "en" ? "Applicant:" : language === "bis" ? "Aplikante:" : "Aplikante:"}
+              </span>
               <span className="font-semibold text-foreground">{fullApplicantName || "Applicant"}</span>
             </div>
             <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Petsa:</span>
+              <span className="text-muted-foreground">
+                {language === "en" ? "Date:" : language === "bis" ? "Petsa:" : "Petsa:"}
+              </span>
               <span className="text-foreground">
                 {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
               </span>
@@ -1829,15 +1907,50 @@ export default function SoloParentApplicationWizard({
           <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
             <Info className="w-4 h-4 text-blue-600 shrink-0" />
             <p>
-              Maaari ninyong tingnan ang Notifications para sa mga update sa inyong aplikasyon.
+              {language === "en"
+                ? "You may check Notifications or Application History for updates on your application."
+                : language === "bis"
+                ? "Mahimo nimong tan-awon ang Mga Notipikasyon o Kasaysayan sa Aplikasyon para sa mga update."
+                : "Maaari ninyong tingnan ang Notifications para sa mga update sa inyong aplikasyon."}
             </p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
-            <span>
-              Awtomatikong lilipat sa application status sa loob ng {redirectCountdown} segundo...
-            </span>
+          <div className="flex flex-col items-center justify-center gap-3 pt-1">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#3b82f6]" />
+              <span>
+                {language === "en"
+                  ? `Redirecting to application status in ${redirectCountdown} seconds...`
+                  : language === "bis"
+                  ? `Mibalhin sa status sa aplikasyon sulod sa ${redirectCountdown} segundo...`
+                  : `Awtomatikong lilipat sa application status sa loob ng ${redirectCountdown} segundo...`}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.removeItem("solo_parent_reapplying")
+                  localStorage.removeItem(`solo_parent_reapplying_${idStatus || "new"}`)
+                } catch {}
+                ;(window as any).__isFormDirty = false
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStartReapply((idStatus as any) || "new")}
+              className="w-full max-w-md py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+              <span>
+                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+              </span>
+            </button>
           </div>
         </div>
       </div>

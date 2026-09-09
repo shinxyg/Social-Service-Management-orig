@@ -11,6 +11,7 @@ import {
   ChevronUp,
   Sparkles,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -182,7 +183,7 @@ export default function AICSServiceWizard({
   serviceType,
   onBack,
 }: AICSServiceWizardProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   // Requirements Modal state
   const reqKey =
@@ -198,6 +199,18 @@ export default function AICSServiceWizard({
   const [showInfoBanner, setShowInfoBanner] = useState(true)
   const [showSlotBanner, setShowSlotBanner] = useState(true)
 
+  const [isReapplying, setIsReapplying] = useState(() => {
+    try {
+      const isUrlParam = typeof window !== "undefined" && window.location.search.includes("reapply=true")
+      const isLocal =
+        localStorage.getItem(`aics_reapplying_${serviceType}`) === "true" ||
+        localStorage.getItem("aics_reapplying") === "true"
+      return Boolean(isUrlParam || isLocal)
+    } catch {
+      return false
+    }
+  })
+
   // Current Step: 1 = checklist, 2 = personal, 3 = documents, 4 = review, 5 = submitted, 6 = pending review
   const [currentStep, setCurrentStep] = useState<number>(1)
   const [returnToReview, setReturnToReview] = useState(false)
@@ -211,6 +224,27 @@ export default function AICSServiceWizard({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [referenceNo, setReferenceNo] = useState("")
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+
+  const handleReapply = () => {
+    try {
+      localStorage.setItem(`aics_reapplying_${serviceType}`, "true")
+      localStorage.setItem("aics_reapplying", "true")
+    } catch {}
+    setIsReapplying(true)
+    setIsBlocked(false)
+    setCurrentStep(1)
+    setReferenceNo("")
+    setQcResident(false)
+    setCrisisSituation(false)
+    setReceivedMaterialPrior("")
+    setReceivedFoodPrior("")
+    setValidIdFiles([])
+    setBarangayCertFiles([])
+    setSupportingDocFiles([])
+    try {
+      ;(window as any).__isFormDirty = false
+    } catch {}
+  }
 
   // Camera modal state
   const [cameraModalOpen, setCameraModalOpen] = useState(false)
@@ -639,6 +673,11 @@ export default function AICSServiceWizard({
         console.warn("Could not save auto-disbursement entry:", errDisb)
       }
 
+      try {
+        localStorage.removeItem(`aics_reapplying_${serviceType}`)
+        localStorage.removeItem("aics_reapplying")
+      } catch {}
+
       setIsSubmitting(false)
       setCurrentStep(5)
     }
@@ -655,35 +694,60 @@ export default function AICSServiceWizard({
   // If blocked (Existing Pending Application)
   if (isBlocked) {
     return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4">
+      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
         {onBack && (
           <button
             onClick={onBack}
             className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            ← Back
+            ← {t("back")}
           </button>
         )}
-        <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
           <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
             <Info className="h-7 w-7 text-amber-500" />
           </div>
           <h2 className="text-lg font-bold text-gray-900">
-            You Have an Existing Pending Application
+            {language === "en"
+              ? "You Have an Existing Active Application"
+              : language === "bis"
+              ? "Aduna Ka Nay Aktibo nga Aplikasyon"
+              : "May Kasalukuyan Ka Nang Aktibong Aplikasyon"}
           </h2>
-          <p className="text-sm text-gray-500 max-w-sm">
-            You already have a pending application for {serviceTitle}. Please wait for the evaluation before submitting a new application.
+          <p className="text-xs text-gray-600 max-w-sm">
+            {language === "en"
+              ? `You already have an active application for ${serviceTitle}. Please wait for the evaluation or view updates in Application History.`
+              : language === "bis"
+              ? `Aduna ka nay aplikasyon para sa ${serviceTitle}. Palihug paghulat sa ebalwasyon o tan-awa ang mga update sa Kasaysayan sa Aplikasyon.`
+              : `Mayroon ka nang aplikasyon para sa ${serviceTitle}. Mangyaring maghintay muna sa pagsusuri o tingnan ang mga update sa Application History.`}
           </p>
-          <button
-            type="button"
-            onClick={() => {
-              ;(window as any).__isFormDirty = false
-              window.location.href = "/portal/my-applications"
-            }}
-            className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide mt-2"
-          >
-            VIEW IN APPLICATION HISTORY
-          </button>
+
+          <div className="w-full flex flex-col gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.removeItem(`aics_reapplying_${serviceType}`)
+                  localStorage.removeItem("aics_reapplying")
+                } catch {}
+                ;(window as any).__isFormDirty = false
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+            </button>
+            <button
+              type="button"
+              onClick={handleReapply}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+              <span>
+                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -767,12 +831,26 @@ export default function AICSServiceWizard({
             <button
               type="button"
               onClick={() => {
+                try {
+                  localStorage.removeItem(`aics_reapplying_${serviceType}`)
+                  localStorage.removeItem("aics_reapplying")
+                } catch {}
                 ;(window as any).__isFormDirty = false
                 window.location.href = "/portal/my-applications"
               }}
               className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              VIEW IN APPLICATION HISTORY
+              {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+            </button>
+            <button
+              type="button"
+              onClick={handleReapply}
+              className="w-full max-w-md py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+              <span>
+                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+              </span>
             </button>
           </div>
 
