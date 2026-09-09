@@ -150,7 +150,6 @@ export default function LivelihoodApplicationWizard({
     onStepChange?.(step)
   }, [step, onStepChange])
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [confirmedTrue, setConfirmedTrue] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isEditingInfo, setIsEditingInfo] = useState(false)
 
@@ -376,11 +375,6 @@ export default function LivelihoodApplicationWizard({
 
   // Submit Application
   const handleSubmit = async () => {
-    if (!confirmedTrue) {
-      setErrors((prev) => ({ ...prev, confirmation: "Please check the confirmation checkbox to proceed." }))
-      return
-    }
-
     setIsSubmitting(true)
     try {
       const payload = {
@@ -1881,32 +1875,6 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Confirmation Checkbox */}
-              <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5">
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    id="livelihood-submit-confirm-checkbox"
-                    checked={confirmedTrue}
-                    onChange={(e) => {
-                      setConfirmedTrue(e.target.checked)
-                      setErrors((prev) => {
-                        const next = { ...prev }
-                        delete next.confirmation
-                        return next
-                      })
-                    }}
-                    className="h-4 w-4 mt-0.5 accent-blue-600 rounded cursor-pointer"
-                  />
-                  <div className="text-xs sm:text-sm font-medium text-foreground">
-                    <p className="font-bold text-foreground">Confirmation</p>
-                    <p className="text-muted-foreground mt-0.5">
-                      I confirm that all information provided is true and correct.
-                    </p>
-                  </div>
-                </label>
-                {errors.confirmation && <p className="text-xs text-red-500 mt-2">{errors.confirmation}</p>}
-              </div>
             </div>
 
             {/* Buttons */}
@@ -1924,7 +1892,7 @@ export default function LivelihoodApplicationWizard({
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={isSubmitting || !confirmedTrue}
+                disabled={isSubmitting}
                 id="btn-submit-livelihood-app"
                 className="px-8 h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold tracking-wide transition-all shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
               >
