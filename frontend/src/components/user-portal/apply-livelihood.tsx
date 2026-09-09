@@ -364,49 +364,6 @@ export default function ApplyLivelihood() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] py-4 max-w-5xl mx-auto px-4 space-y-6">
-      {/* Top Level Sub-Module Switcher */}
-      <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-border">
-        <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-xl border border-border">
-          <button
-            type="button"
-            onClick={() => {
-              setSearchParams((prev) => {
-                const next = new URLSearchParams(prev)
-                next.set("category", "livelihood")
-                return next
-              })
-            }}
-            className={`px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
-              !isTraining
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Store className="h-4 w-4 text-blue-600" />
-            <span>{texts.catLivelihood}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setSearchParams((prev) => {
-                const next = new URLSearchParams(prev)
-                next.set("category", "training")
-                return next
-              })
-            }}
-            className={`px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
-              isTraining
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <GraduationCap className="h-4 w-4 text-indigo-600" />
-            <span>{texts.catTraining}</span>
-          </button>
-        </div>
-      </div>
-
       {isTraining ? (
         <TrainingProgramView />
       ) : (
