@@ -146,6 +146,9 @@ export default function LivelihoodApplicationWizard({
   const { t } = useLanguage()
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [returnToReview, setReturnToReview] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isEditingInfo, setIsEditingInfo] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -163,10 +166,6 @@ export default function LivelihoodApplicationWizard({
     window.addEventListener("beforeunload", handleBeforeUnload)
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [step, isSubmitting])
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isEditingInfo, setIsEditingInfo] = useState(false)
 
   // Form State initialized with Profile data
   const [formData, setFormData] = useState<LivelihoodFormData>(() => {
