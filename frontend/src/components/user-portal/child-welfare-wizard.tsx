@@ -15,6 +15,7 @@ import {
   User,
   Camera,
   ChevronUp,
+  RotateCcw,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import { getCurrentUserProfile } from "../../utils/userProfile"
@@ -1006,11 +1007,29 @@ export default function ChildWelfareApplicationWizard({
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [appStatus, setAppStatus] = useState<"pending" | "approved" | "rejected">("pending")
   const [reference, setReference] = useState("")
+  const [isReapplying, setIsReapplying] = useState(false)
+
+  const handleReapply = () => {
+    setIsReapplying(true)
+    setSubmissionStage("form")
+    setStep(1)
+    setReference("")
+    setUploadedFiles({})
+    setCheck1(false)
+    setCheck2(false)
+    setCheck3(false)
+    setReceivedPrior("")
+    try {
+      ;(window as any).__isFormDirty = false
+    } catch {}
+  }
 
   // Listen to active user application status in Child Welfare
   useEffect(() => {
+    if (isReapplying) return
     let active = true
     const checkActiveApplication = async () => {
+      if (isReapplying) return
       try {
         const prof = getCurrentUserProfile()
         const uid = prof.id || (userProfile as any)?.id || (userProfile as any)?.userId || ""
@@ -1022,7 +1041,7 @@ export default function ChildWelfareApplicationWizard({
           const res = await fetch(`${API_BASE}/api/child-welfare/user/${uid}`, { headers })
           if (res.ok) {
             const data = await res.json()
-            if (active) {
+            if (active && !isReapplying) {
               const applications = data.applications || []
               const matched = applications.find((a: any) => {
                 if (!a) return false
@@ -1059,10 +1078,12 @@ export default function ChildWelfareApplicationWizard({
 
     checkActiveApplication()
     const unsubscribe = subscribeToRealtimeChanges(() => {
-      checkActiveApplication()
+      if (!isReapplying) checkActiveApplication()
     })
 
-    const handleUpdate = () => checkActiveApplication()
+    const handleUpdate = () => {
+      if (!isReapplying) checkActiveApplication()
+    }
     window.addEventListener("child_welfare_applications_updated", handleUpdate)
     window.addEventListener("applications_updated", handleUpdate)
     window.addEventListener("storage", handleUpdate)
@@ -1074,7 +1095,7 @@ export default function ChildWelfareApplicationWizard({
       window.removeEventListener("applications_updated", handleUpdate)
       window.removeEventListener("storage", handleUpdate)
     }
-  }, [selectedProgram.id, selectedProgram.title, userProfile])
+  }, [selectedProgram.id, selectedProgram.title, userProfile, isReapplying])
 
   // Validations
   const step1Valid =
@@ -1198,6 +1219,7 @@ export default function ChildWelfareApplicationWizard({
       notifyApplicationChange("APPLICATION_SUBMITTED", "child_welfare", ref)
     }
 
+    setIsReapplying(false)
     setSubmissionStage("pending")
   }
 
@@ -1233,16 +1255,27 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                ;(window as any).__isFormDirty = false
-                window.location.href = "/portal/my-applications"
-              }}
-              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              VIEW IN APPLICATION HISTORY
-            </button>
+
+            <div className="w-full flex flex-col gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  ;(window as any).__isFormDirty = false
+                  window.location.href = "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              >
+                VIEW IN APPLICATION HISTORY
+              </button>
+              <button
+                type="button"
+                onClick={handleReapply}
+                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <span>MAG-APPLY MULI (RE-APPLY)</span>
+              </button>
+            </div>
           </div>
         </div>
       )
@@ -1288,16 +1321,26 @@ export default function ChildWelfareApplicationWizard({
               <span>Maaari mo nang subaybayan ang release schedule, appointment, o claim instructions sa inyong Application History at Notifications.</span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                ;(window as any).__isFormDirty = false
-                window.location.href = "/portal/my-applications"
-              }}
-              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              VIEW IN APPLICATION HISTORY
-            </button>
+            <div className="w-full flex flex-col gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  ;(window as any).__isFormDirty = false
+                  window.location.href = "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              >
+                VIEW IN APPLICATION HISTORY
+              </button>
+              <button
+                type="button"
+                onClick={handleReapply}
+                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <span>MAG-APPLY MULI (RE-APPLY)</span>
+              </button>
+            </div>
           </div>
         </div>
       )
@@ -1347,16 +1390,24 @@ export default function ChildWelfareApplicationWizard({
           <span>{t("trackPortalNotifDesc") || "Maaari ninyong i-track ang status sa inyong Portal Notifications at Activity History."}</span>
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-3 pt-2">
+        <div className="flex flex-col items-center justify-center gap-2 pt-2 w-full max-w-md mx-auto">
           <button
             type="button"
             onClick={() => {
               ;(window as any).__isFormDirty = false
               window.location.href = "/portal/my-applications"
             }}
-            className="w-full max-w-md py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
           >
             VIEW IN APPLICATION HISTORY
+          </button>
+          <button
+            type="button"
+            onClick={handleReapply}
+            className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+            <span>MAG-APPLY MULI (RE-APPLY)</span>
           </button>
         </div>
       </div>
