@@ -10,10 +10,37 @@ const FIXED_ASSISTANCE_AMOUNTS = {
   'Transportation Assistance': 1000,
   'PWD Social Assistance': 2000,
   'Senior Social Assistance': 2000,
+  'Child Welfare Support': 5000,
+  'Nutritional Assistance': 5000,
+  'Nutritional Assistance (Child Welfare)': 5000,
+  'Child Protection Assistance': 5000,
+  'Emergency Assistance': 5000,
+  'Child Welfare Assistance': 5000,
+  'Solo Parent Welfare Assistance': 5000,
+  'Solo Parent Assistance': 5000,
   'Livelihood Capital Assistance': 15000,
   'Livelihood Assistance': 15000,
   'Livelihood Program': 15000,
 };
+
+function resolveFixedAmount(concern) {
+  if (!concern) return 5000;
+  const c = String(concern).trim();
+  if (FIXED_ASSISTANCE_AMOUNTS[c]) return FIXED_ASSISTANCE_AMOUNTS[c];
+  const clean = c.replace(/\s*assistance/gi, '').trim();
+  const formatted = clean.charAt(0).toUpperCase() + clean.slice(1) + ' Assistance';
+  if (FIXED_ASSISTANCE_AMOUNTS[formatted]) return FIXED_ASSISTANCE_AMOUNTS[formatted];
+
+  const lower = c.toLowerCase();
+  if (lower.includes('funeral') || lower.includes('burial')) return 10000;
+  if (lower.includes('livelihood')) return 15000;
+  if (lower.includes('nutrition') || lower.includes('child') || lower.includes('medical') || lower.includes('emergency') || lower.includes('solo')) return 5000;
+  if (lower.includes('education')) return 3000;
+  if (lower.includes('pwd') || lower.includes('senior')) return 2000;
+  if (lower.includes('food')) return 1500;
+  if (lower.includes('transport')) return 1000;
+  return 5000;
+}
 
 // Helper: parse date and time string to Date object in Philippine Standard Time (UTC+8)
 function parseDateTime(dateStr, timeStr) {
@@ -184,6 +211,22 @@ exports.getDisbursements = async (req, res) => {
       await db.query(`
         DELETE FROM financial_aid_disbursements
         WHERE assistance_type ILIKE '%ID Card%' OR assistance_type ILIKE '%Issuance%'
+      `);
+    } catch (_) {}
+
+    // Auto-correct any disbursements where fixed_amount was mistakenly set to 1000 instead of 5000
+    try {
+      await db.query(`
+        UPDATE financial_aid_disbursements
+        SET fixed_amount = 5000
+        WHERE (fixed_amount = 1000 OR fixed_amount IS NULL)
+          AND (
+            assistance_type ILIKE '%nutrition%'
+            OR assistance_type ILIKE '%child%'
+            OR assistance_type ILIKE '%medical%'
+            OR assistance_type ILIKE '%solo%'
+            OR assistance_type ILIKE '%emergency%'
+          )
       `);
     } catch (_) {}
 
@@ -467,7 +510,7 @@ exports.createDisbursement = async (req, res) => {
     }
 
     const cleanAssistance = assistanceType.includes('Assistance') ? assistanceType : `${assistanceType} Assistance`;
-    const finalAmount = fixedAmount || FIXED_ASSISTANCE_AMOUNTS[cleanAssistance] || 1000;
+    const finalAmount = fixedAmount || resolveFixedAmount(assistanceType);
     const finalDateApproved = dateApproved || new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
     const disbursementId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 

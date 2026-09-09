@@ -11,10 +11,34 @@ export const FIXED_ASSISTANCE_AMOUNTS: Record<string, number> = {
   "Senior Social Assistance": 2000,
   "Child Welfare Support": 5000,
   "Nutritional Assistance": 5000,
+  "Nutritional Assistance (Child Welfare)": 5000,
   "Child Protection Assistance": 5000,
   "Emergency Assistance": 5000,
   "Child Welfare Assistance": 5000,
+  "Solo Parent Welfare Assistance": 5000,
+  "Solo Parent Assistance": 5000,
   "Livelihood Capital Assistance": 15000,
+  "Livelihood Assistance": 15000,
+  "Livelihood Program": 15000,
+}
+
+export function resolveFixedAmount(concern: string): number {
+  if (!concern) return 5000
+  const c = String(concern).trim()
+  if (FIXED_ASSISTANCE_AMOUNTS[c]) return FIXED_ASSISTANCE_AMOUNTS[c]
+  const clean = c.replace(/\s*assistance/gi, "").trim()
+  const formatted = clean.charAt(0).toUpperCase() + clean.slice(1) + " Assistance"
+  if (FIXED_ASSISTANCE_AMOUNTS[formatted]) return FIXED_ASSISTANCE_AMOUNTS[formatted]
+
+  const lower = c.toLowerCase()
+  if (lower.includes("funeral") || lower.includes("burial")) return 10000
+  if (lower.includes("livelihood")) return 15000
+  if (lower.includes("nutrition") || lower.includes("child") || lower.includes("medical") || lower.includes("emergency") || lower.includes("solo")) return 5000
+  if (lower.includes("education")) return 3000
+  if (lower.includes("pwd") || lower.includes("senior")) return 2000
+  if (lower.includes("food")) return 1500
+  if (lower.includes("transport")) return 1000
+  return 5000
 }
 
 export type DisbursementStage = "PENDING" | "RELEASED"
@@ -103,15 +127,22 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
         realOnes.forEach((r) => {
           const key = (r.applicationRef || r.disbursementId || r.id || "").trim()
           if (!key) return
+          // Ensure correct fixed amount is applied
+          const correctAmount = resolveFixedAmount(r.assistanceType)
+          const recordWithCorrectAmount: SyncedDisbursementRecord = {
+            ...r,
+            fixedAmount: (r.fixedAmount && r.fixedAmount !== 1000) ? r.fixedAmount : correctAmount,
+          }
+
           if (!recordMap.has(key)) {
-            recordMap.set(key, r)
+            recordMap.set(key, recordWithCorrectAmount)
           } else {
             const existing = recordMap.get(key)!
             // Prefer RELEASED over PENDING, or newer date
             if (r.status === "RELEASED" && existing.status !== "RELEASED") {
-              recordMap.set(key, r)
+              recordMap.set(key, { ...recordWithCorrectAmount, status: "RELEASED" })
             } else if (r.appointmentDate && !existing.appointmentDate) {
-              recordMap.set(key, r)
+              recordMap.set(key, recordWithCorrectAmount)
             }
           }
         })
@@ -221,9 +252,9 @@ export function syncAppointmentToFinancialAid(params: {
   const currentDisbursements = getSavedDisbursements()
   let found = false
 
+  const fixedAmount = resolveFixedAmount(params.concern)
   const rawConcern = params.concern.replace(/\s*assistance/gi, "").trim()
-  const formattedConcern = rawConcern.charAt(0).toUpperCase() + rawConcern.slice(1) + " Assistance"
-  const fixedAmount = FIXED_ASSISTANCE_AMOUNTS[formattedConcern] || FIXED_ASSISTANCE_AMOUNTS[params.concern] || 1000
+  const formattedConcern = params.concern.includes("Assistance") ? params.concern : (rawConcern.charAt(0).toUpperCase() + rawConcern.slice(1) + " Assistance")
 
   // Format date to human readable e.g. August 31, 2026
   let formattedDate = params.date

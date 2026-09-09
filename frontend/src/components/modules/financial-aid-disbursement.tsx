@@ -16,6 +16,7 @@ import {
 import { API_BASE } from "../../config/api"
 import {
   FIXED_ASSISTANCE_AMOUNTS,
+  resolveFixedAmount,
   type DisbursementStage,
   type SyncedDisbursementRecord,
   getSavedDisbursements,
@@ -56,7 +57,11 @@ export default function FinancialAidDisbursement() {
                 applicationRef: d.application_ref,
                 applicantName: d.applicant_name,
                 assistanceType: d.assistance_type,
-                fixedAmount: Number(d.fixed_amount) > 0 ? Number(d.fixed_amount) : 15000,
+                fixedAmount: Number(d.fixed_amount) > 0
+                  ? ((Number(d.fixed_amount) === 1000 && (String(d.assistance_type).toLowerCase().includes("nutrition") || String(d.assistance_type).toLowerCase().includes("child") || String(d.assistance_type).toLowerCase().includes("solo")))
+                      ? 5000
+                      : Number(d.fixed_amount))
+                  : resolveFixedAmount(d.assistance_type),
                 dateApproved: d.date_approved,
                 status: d.status as DisbursementStage,
                 appointmentDate: d.appointment_date,
@@ -87,7 +92,7 @@ export default function FinancialAidDisbursement() {
             const aicsRecords = approvedApps.map((app: any) => {
               const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
               const type = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
-              const amount = FIXED_ASSISTANCE_AMOUNTS[type] || 1000
+              const amount = resolveFixedAmount(type)
               const isReleased = String(app.status || "").toLowerCase() === "released"
 
               return {

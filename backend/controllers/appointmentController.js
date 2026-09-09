@@ -10,10 +10,37 @@ const FIXED_ASSISTANCE_AMOUNTS = {
   'Transportation Assistance': 1000,
   'PWD Social Assistance': 2000,
   'Senior Social Assistance': 2000,
+  'Child Welfare Support': 5000,
+  'Nutritional Assistance': 5000,
+  'Nutritional Assistance (Child Welfare)': 5000,
+  'Child Protection Assistance': 5000,
+  'Emergency Assistance': 5000,
+  'Child Welfare Assistance': 5000,
+  'Solo Parent Welfare Assistance': 5000,
+  'Solo Parent Assistance': 5000,
   'Livelihood Capital Assistance': 15000,
   'Livelihood Assistance': 15000,
   'Livelihood Program': 15000,
 };
+
+function resolveFixedAmount(concern) {
+  if (!concern) return 5000;
+  const c = String(concern).trim();
+  if (FIXED_ASSISTANCE_AMOUNTS[c]) return FIXED_ASSISTANCE_AMOUNTS[c];
+  const clean = c.replace(/\s*assistance/gi, '').trim();
+  const formatted = clean.charAt(0).toUpperCase() + clean.slice(1) + ' Assistance';
+  if (FIXED_ASSISTANCE_AMOUNTS[formatted]) return FIXED_ASSISTANCE_AMOUNTS[formatted];
+
+  const lower = c.toLowerCase();
+  if (lower.includes('funeral') || lower.includes('burial')) return 10000;
+  if (lower.includes('livelihood')) return 15000;
+  if (lower.includes('nutrition') || lower.includes('child') || lower.includes('medical') || lower.includes('emergency') || lower.includes('solo')) return 5000;
+  if (lower.includes('education')) return 3000;
+  if (lower.includes('pwd') || lower.includes('senior')) return 2000;
+  if (lower.includes('food')) return 1500;
+  if (lower.includes('transport')) return 1000;
+  return 5000;
+}
 
 async function initAppointmentTables() {
   try {
@@ -259,7 +286,7 @@ exports.scheduleAppointment = async (req, res) => {
 async function syncAppointmentWithDisbursement(appt) {
   try {
     const cleanAssistance = appt.concern.includes('Assistance') ? appt.concern : `${appt.concern} Assistance`;
-    const fixedAmount = FIXED_ASSISTANCE_AMOUNTS[cleanAssistance] || FIXED_ASSISTANCE_AMOUNTS[appt.concern] || 1000;
+    const fixedAmount = resolveFixedAmount(appt.concern);
     const disbursementId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const checkDisb = await db.query(
