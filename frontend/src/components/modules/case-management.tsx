@@ -252,7 +252,6 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
       setRefReason("")
       setRefRemarks("")
       setShowReferralForm(false)
-      setSelectedStatus("referred")
     } catch (err) {
       console.error(err)
       alert("Failed to add referral.")
@@ -279,7 +278,6 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
       setMonNotes("")
       setMonNextAction("")
       setShowMonitoringForm(false)
-      setSelectedStatus("monitoring")
     } catch (err) {
       console.error(err)
       alert("Failed to add monitoring log.")
