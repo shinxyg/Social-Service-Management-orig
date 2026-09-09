@@ -14,7 +14,6 @@ import {
   Mail,
   User,
   Plus,
-  ChevronRight,
   X,
   Building,
   FileCheck,
@@ -1399,20 +1398,15 @@ export default function CaseManagement() {
                     )}
                   </div>
 
-                  {/* Right Column: Case Action */}
-                  <div className="flex items-center gap-3 shrink-0 self-end lg:self-center">
-                    {c.status !== "open" && (
+                  {/* Right Column: Case Status (if not open) */}
+                  {c.status !== "open" && (
+                    <div className="flex items-center gap-3 shrink-0 self-end lg:self-center">
                       <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border ${sm.chip}`}>
                         <span className={`h-2 w-2 rounded-full ${sm.dot}`} />
                         {sm.label}
                       </span>
-                    )}
-
-                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 group-hover:bg-blue-600 text-white text-xs font-bold transition-all shadow-xs">
-                      Open Case
-                      <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </span>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )
