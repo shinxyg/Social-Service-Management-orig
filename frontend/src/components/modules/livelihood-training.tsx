@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import {
   Check,
   X,
-  Eye,
   FileText,
   Clock,
   CheckCircle2,
@@ -26,6 +25,7 @@ import {
   RotateCcw,
   ShieldAlert,
   Award,
+  ChevronRight,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import TrainingProgramAdmin from "./training-program-admin"
@@ -2343,11 +2343,15 @@ export default function LivelihoodApplicationsAdmin() {
                 {filteredApps.map((app) => {
                   const name = [app.firstName, app.middleName, app.lastName].filter(Boolean).join(" ")
                   return (
-                    <div key={app.id} className="bg-card border border-border rounded-xl p-4 sm:p-5 hover:shadow-md transition-shadow">
+                    <div
+                      key={app.id}
+                      onClick={() => setSelectedReviewApp(app)}
+                      className="bg-card border border-border rounded-xl p-4 sm:p-5 hover:shadow-md hover:border-blue-500/60 transition-all cursor-pointer group"
+                    >
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div className="flex-1 min-w-0 space-y-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base font-bold text-foreground truncate">{name}</h3>
+                            <h3 className="text-base font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">{name}</h3>
                             <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
                               {app.entrepreneurCategory}
                             </span>
@@ -2371,15 +2375,8 @@ export default function LivelihoodApplicationsAdmin() {
                           </div>
                         </div>
 
-                        <div className="flex items-center sm:self-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedReviewApp(app)}
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
-                          >
-                            <Eye className="h-4 w-4" />
-                            [ REVIEW ]
-                          </button>
+                        <div className="flex items-center sm:self-center shrink-0">
+                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 transition-transform group-hover:translate-x-1" />
                         </div>
                       </div>
                     </div>
