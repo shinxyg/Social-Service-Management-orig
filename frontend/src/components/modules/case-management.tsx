@@ -17,7 +17,6 @@ import {
   Building,
   FileCheck,
   Activity,
-  ArrowRight,
   Info,
   ShieldCheck,
   Sparkles,
@@ -593,7 +592,81 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
                     Coordinated inter-agency support automatically routed based on program classification and beneficiary needs.
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowReferralForm(!showReferralForm)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-colors cursor-pointer shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {showReferralForm ? "Cancel" : "Add Referral"}
+                </button>
               </div>
+
+              {/* Add Referral Form */}
+              {showReferralForm && (
+                <form onSubmit={handleCreateReferral} className="bg-purple-50/50 border border-purple-200 rounded-xl p-4 space-y-3">
+                  <h4 className="text-xs font-bold text-purple-900 uppercase tracking-wider">Create New Referral</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="block text-slate-700 font-semibold mb-1">Referred Agency / Facility *</label>
+                      <input
+                        type="text"
+                        value={refAgency}
+                        onChange={(e) => setRefAgency(e.target.value)}
+                        placeholder="e.g. QC Health Department / Hospital"
+                        className="w-full h-9 rounded-lg border border-purple-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 font-semibold mb-1">Referral Date</label>
+                      <input
+                        type="date"
+                        value={refDate}
+                        onChange={(e) => setRefDate(e.target.value)}
+                        className="w-full h-9 rounded-lg border border-purple-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 font-semibold mb-1">Reason for Referral *</label>
+                      <input
+                        type="text"
+                        value={refReason}
+                        onChange={(e) => setRefReason(e.target.value)}
+                        placeholder="Reason and required services..."
+                        className="w-full h-9 rounded-lg border border-purple-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        required
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 font-semibold mb-1">Remarks / Endorsement Notes</label>
+                      <input
+                        type="text"
+                        value={refRemarks}
+                        onChange={(e) => setRefRemarks(e.target.value)}
+                        placeholder="Optional remarks..."
+                        className="w-full h-9 rounded-lg border border-purple-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowReferralForm(false)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-purple-100/60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingReferral}
+                      className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+                    >
+                      {isSubmittingReferral ? "Saving..." : "Save Referral"}
+                    </button>
+                  </div>
+                </form>
+              )}
 
               {/* Referrals List */}
               {c.referrals.length === 0 ? (
@@ -652,7 +725,93 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
                     Continuous monitoring log tracking eligibility check-ins, financial aid disbursement, and community welfare stability.
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMonitoringForm(!showMonitoringForm)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {showMonitoringForm ? "Cancel" : "Add Log"}
+                </button>
               </div>
+
+              {/* Add Monitoring Form */}
+              {showMonitoringForm && (
+                <form onSubmit={handleCreateMonitoring} className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 space-y-3">
+                  <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">Add Monitoring Log</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <label className="block text-slate-700 font-semibold mb-1">Monitoring Officer</label>
+                      <input
+                        type="text"
+                        value={monOfficer}
+                        onChange={(e) => setMonOfficer(e.target.value)}
+                        placeholder="Officer name"
+                        className="w-full h-9 rounded-lg border border-amber-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 font-semibold mb-1">Date</label>
+                      <input
+                        type="date"
+                        value={monDate}
+                        onChange={(e) => setMonDate(e.target.value)}
+                        className="w-full h-9 rounded-lg border border-amber-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 font-semibold mb-1">Progress Status</label>
+                      <select
+                        value={monStatus}
+                        onChange={(e) => setMonStatus(e.target.value)}
+                        className="w-full h-9 rounded-lg border border-amber-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      >
+                        <option value="In Progress">In Progress</option>
+                        <option value="Stable / Good">Stable / Good</option>
+                        <option value="Needs Follow-up">Needs Follow-up</option>
+                        <option value="Resolved">Resolved</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="block text-slate-700 font-semibold mb-1">Observation Notes *</label>
+                      <textarea
+                        rows={2}
+                        value={monNotes}
+                        onChange={(e) => setMonNotes(e.target.value)}
+                        placeholder="Enter progress and observations..."
+                        className="w-full rounded-lg border border-amber-200 p-2.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        required
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="block text-slate-700 font-semibold mb-1">Next Action Required</label>
+                      <input
+                        type="text"
+                        value={monNextAction}
+                        onChange={(e) => setMonNextAction(e.target.value)}
+                        placeholder="e.g. Schedule follow-up visit in 2 weeks"
+                        className="w-full h-9 rounded-lg border border-amber-200 px-3 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowMonitoringForm(false)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-amber-100/60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingMonitoring}
+                      className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50"
+                    >
+                      {isSubmittingMonitoring ? "Saving..." : "Save Log"}
+                    </button>
+                  </div>
+                </form>
+              )}
 
               {/* Monitoring List */}
               {c.monitoringLogs.length === 0 ? (

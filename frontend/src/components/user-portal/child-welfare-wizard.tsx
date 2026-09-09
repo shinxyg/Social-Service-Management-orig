@@ -865,8 +865,10 @@ export default function ChildWelfareApplicationWizard({
     isChildSafe: "Yes",
     isParentAvailable: "Yes",
     emergencyType: "Emergency Medical Assistance",
+    emergencyDate: "",
+    emergencyTime: "",
     emergencyDateTime: "",
-    reportEmergencyPriority: false,
+    reportEmergencyPriority: true,
     currentLivingSituation: "",
 
     // Certification
@@ -1063,7 +1065,7 @@ export default function ChildWelfareApplicationWizard({
     formData.parentContactNo.trim().length >= 11 &&
     (formData.isReportingPersonCurrentParent !== "No" || formData.specifiedRelationship.trim() !== "") &&
     (!selectedProgram.hasProtectionConcern || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== "")) &&
-    (!selectedProgram.hasEmergencyInfo || (formData.emergencyType.trim() !== "" && formData.emergencyDateTime.trim() !== "" && formData.briefDescription.trim() !== "")) &&
+    (!selectedProgram.hasEmergencyInfo || (formData.emergencyType.trim() !== "" && (formData.emergencyDate.trim() !== "" || formData.emergencyDateTime.trim() !== "") && formData.briefDescription.trim() !== "")) &&
     (!selectedProgram.hasPsychosocialReason || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== "")) &&
     (!selectedProgram.hasShelterCareInfo || (formData.reasonForRequest.trim() !== "" && formData.currentLivingSituation.trim() !== "")) &&
     (!selectedProgram.hasParentingReason || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== ""))
@@ -1946,13 +1948,13 @@ export default function ChildWelfareApplicationWizard({
                 <div className="space-y-4 pt-3 border-t border-gray-200">
                   <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2">
                     <Activity className="w-4 h-4 text-amber-600" />
-                    EMERGENCY DETAILS
+                    {language === "tl" ? "III. DETALYE NG EMERHENSIYA" : language === "bis" ? "III. DETALYE SA EMERHENSIYA" : "III. EMERGENCY DETAILS"}
                   </h4>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Type of Emergency *
+                        {language === "tl" ? "Uri ng Emerhensiya *" : language === "bis" ? "Matang sa Emerhensiya *" : "Type of Emergency *"}
                       </label>
                       <select
                         value={formData.emergencyType}
@@ -1961,51 +1963,62 @@ export default function ChildWelfareApplicationWizard({
                       >
                         <option value="Emergency Medical Assistance">Emergency Medical Assistance</option>
                         <option value="Emergency Food Assistance">Emergency Food Assistance</option>
-                        <option value="Emergency Transportation Assistance">Emergency Transportation Assistance</option>
-                        <option value="Emergency Shelter Assistance">Emergency Shelter Assistance</option>
-                        <option value="Emergency Protection Assistance">Emergency Protection Assistance</option>
-                        <option value="Other Crisis">Other Crisis</option>
+                        <option value="Emergency Shelter / Temporary Housing">Emergency Shelter / Temporary Housing</option>
+                        <option value="Emergency Transportation">Emergency Transportation</option>
+                        <option value="Disaster / Calamity Assistance">Disaster / Calamity Assistance</option>
+                        <option value="Accident / Injury">Accident / Injury</option>
+                        <option value="Other">Other</option>
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Approximate Date & Time of Incident / Need *
+                        {language === "tl" ? "Tinatayang Petsa ng Insidente *" : language === "bis" ? "Petsa sa Hitabo *" : "Approximate Date of Incident / Need *"}
                       </label>
                       <input
-                        type="text"
-                        value={formData.emergencyDateTime}
-                        onChange={(e) => updateField("emergencyDateTime", e.target.value)}
-                        placeholder="Hal. Today, 2:00 PM"
-                        className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        type="date"
+                        value={formData.emergencyDate}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          updateField("emergencyDate", val)
+                          updateField("emergencyDateTime", [val, formData.emergencyTime].filter(Boolean).join(" at "))
+                        }}
+                        className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        {language === "tl" ? "Oras ng Insidente / Pangangailangan" : language === "bis" ? "Oras sa Hitabo" : "Time of Incident / Need"}
+                      </label>
+                      <input
+                        type="time"
+                        value={formData.emergencyTime}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          updateField("emergencyTime", val)
+                          updateField("emergencyDateTime", [formData.emergencyDate, val].filter(Boolean).join(" at "))
+                        }}
+                        className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
                       />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Brief Description of the Emergency Situation *
+                      {language === "tl" ? "Maikling Paglalarawan ng Sitwasyong Pang-emerhensiya *" : language === "bis" ? "Mubo nga Deskripsyon sa Sitwasyon sa Emerhensiya *" : "Brief Description of the Emergency Situation *"}
                     </label>
                     <textarea
                       rows={3}
                       value={formData.briefDescription}
                       onChange={(e) => updateField("briefDescription", e.target.value)}
-                      placeholder="Please explain the urgent assistance required..."
+                      placeholder={
+                        language === "tl"
+                          ? "Ilarawan ang nangyari at kung anong tulong ang agarang kailangan..."
+                          : language === "bis"
+                          ? "Ihulagway kung unsay nahitabo ug unsang tabang ang gikinahanglan..."
+                          : "Please explain what happened and the urgent assistance required..."
+                      }
                       className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
-                  </div>
-
-                  <div className="p-3.5 rounded-xl border border-red-200 bg-red-50/50">
-                    <label className="flex items-start gap-2.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.reportEmergencyPriority}
-                        onChange={(e) => updateField("reportEmergencyPriority", e.target.checked)}
-                        className="mt-0.5 h-4 w-4 rounded text-red-600 accent-red-600 cursor-pointer"
-                      />
-                      <span className="text-xs font-semibold text-red-800">
-                        Mark this application as HIGH PRIORITY EMERGENCY for immediate SSDD action.
-                      </span>
-                    </label>
                   </div>
                 </div>
               )}
@@ -2227,8 +2240,15 @@ export default function ChildWelfareApplicationWizard({
                   {selectedProgram.hasEmergencyInfo && (
                     <>
                       <ReviewField label="Emergency Type" value={formData.emergencyType} />
-                      <ReviewField label="Incident Date & Time" value={formData.emergencyDateTime} />
-                      <ReviewField label="Priority Level" value={formData.reportEmergencyPriority ? "HIGH PRIORITY EMERGENCY" : "Standard"} />
+                      <ReviewField
+                        label="Incident Date & Time"
+                        value={
+                          [formData.emergencyDate, formData.emergencyTime].filter(Boolean).join(" at ") ||
+                          formData.emergencyDateTime ||
+                          "—"
+                        }
+                      />
+                      <ReviewField label="Priority Level" value="HIGH PRIORITY (Emergency Response)" />
                     </>
                   )}
                   {selectedProgram.hasShelterCareInfo && (

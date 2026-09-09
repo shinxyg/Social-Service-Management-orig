@@ -171,6 +171,10 @@ interface ChildWelfareSubmission {
   specifiedRelationship?: string
   isImmediateDanger?: string
   isChildSafe?: string
+  emergencyType?: string
+  emergencyDate?: string
+  emergencyTime?: string
+  emergencyDateTime?: string
 
   documents: ApplicationDocument[]
 
@@ -583,6 +587,30 @@ function mapChildWelfareRow(row: any): ChildWelfareSubmission {
       if (addInfo.includes("Child Currently in Safe Location: Yes")) return "Yes"
       if (addInfo.includes("Child Currently in Safe Location: No")) return "No"
       return "Yes"
+    })(),
+    emergencyType: (() => {
+      const rawFd = row.form_data || {}
+      const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+      const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+      return fdForm.emergencyType || fd.emergencyType || (row as any).emergency_type || ""
+    })(),
+    emergencyDate: (() => {
+      const rawFd = row.form_data || {}
+      const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+      const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+      return fdForm.emergencyDate || fd.emergencyDate || ""
+    })(),
+    emergencyTime: (() => {
+      const rawFd = row.form_data || {}
+      const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+      const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+      return fdForm.emergencyTime || fd.emergencyTime || ""
+    })(),
+    emergencyDateTime: (() => {
+      const rawFd = row.form_data || {}
+      const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+      const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+      return [fdForm.emergencyDate, fdForm.emergencyTime].filter(Boolean).join(" at ") || fdForm.emergencyDateTime || fd.emergencyDateTime || ""
     })(),
     documents: mapUploadedDocuments(row, true),
     status: row.application_status,
@@ -1747,6 +1775,19 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                     label="Type of assistance"
                     value={app.supportTypes && app.supportTypes.length > 0 ? (Array.isArray(app.supportTypes) ? app.supportTypes.join(", ") : app.supportTypes) : "—"}
                   />
+                  {app.emergencyType && (
+                    <Field label="Type of emergency" value={app.emergencyType} />
+                  )}
+                  {(app.emergencyDate || app.emergencyDateTime) && (
+                    <Field
+                      label="Approximate date &amp; time of incident"
+                      value={
+                        [app.emergencyDate, app.emergencyTime].filter(Boolean).join(" at ") ||
+                        app.emergencyDateTime ||
+                        "—"
+                      }
+                    />
+                  )}
                   <Field label="Residency status" value="Residente ng Lungsod Quezon (Verified)" />
                   {app.primaryReasonForAssistance && (
                     <Field label="Reason for assistance / Concern" value={app.primaryReasonForAssistance} />
