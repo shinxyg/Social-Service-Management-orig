@@ -19,7 +19,6 @@ import {
   FileText,
   Wallet,
   BookOpen,
-  Globe,
 } from "lucide-react"
 import { Tooltip } from "../ui/tooltip"
 import { ProfileModal } from "../ui/profile-modal"
@@ -488,7 +487,7 @@ function ResidentHeader({
   dark: boolean
   onToggleDark: () => void
 }) {
-  const { t, language, setLanguage } = useLanguage()
+  const { t, language } = useLanguage()
   const residentNav = getResidentNav(t)
   const location = useLocation()
   const currentFullUrl = location.pathname + location.search
