@@ -3,7 +3,6 @@ import {
   Wallet,
   CheckCircle2,
   Clock,
-  ArrowRight,
   ShieldCheck,
   Search,
   Eye,
