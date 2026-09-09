@@ -64,6 +64,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [shake, setShake] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   // Audio challenge state
   const [audioCode, setAudioCode] = useState(() => generateRandomAudioCode());
@@ -79,6 +80,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
       setIsPlayingAudio(false);
       setAudioInput('');
       setErrorMessage('');
+      setShowInfo(false);
       setMode('visual');
     }
   }, [isOpen]);
@@ -266,7 +268,34 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
         </div>
 
         {/* Content Area */}
-        {mode === 'visual' ? (
+        {showInfo ? (
+          <div className="p-4 bg-slate-50 space-y-3 animate-fade-in text-xs text-slate-600">
+            <div className="flex items-center gap-2 text-[#1A73E8] font-bold text-sm">
+              <Info className="w-4 h-4" />
+              <span>About reCAPTCHA Security</span>
+            </div>
+            <p className="leading-relaxed">
+              This security challenge verifies that you are a real resident and prevents automated bot scripts from spamming the login system.
+            </p>
+            <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="font-bold text-slate-800 shrink-0">🖼️ Image Mode:</span>
+                <span>Select all square tiles that match the challenge prompt.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-bold text-slate-800 shrink-0">🎧 Audio Mode:</span>
+                <span>Press play to hear the spoken digits, then type them into the box.</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowInfo(false)}
+              className="w-full py-2 bg-[#1A73E8] hover:bg-[#1557B0] text-white font-bold rounded text-xs transition-colors cursor-pointer text-center"
+            >
+              Back to Challenge
+            </button>
+          </div>
+        ) : mode === 'visual' ? (
           /* 3x3 Sliced Real Photo Grid */
           <div className="p-2.5 bg-slate-100">
             <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-sm border border-slate-300">
@@ -394,9 +423,11 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
 
             <button
               type="button"
-              onClick={() => alert('reCAPTCHA security challenge verifies human interaction through visual puzzles or audio recognition.')}
-              title="Help & Info"
-              className="p-1.5 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors cursor-pointer"
+              onClick={() => setShowInfo((v) => !v)}
+              title="Help & Security Info"
+              className={`p-1.5 rounded transition-colors cursor-pointer ${
+                showInfo ? 'text-[#1A73E8] bg-blue-50' : 'hover:text-slate-800 hover:bg-slate-100'
+              }`}
             >
               <Info className="w-4 h-4" />
             </button>
