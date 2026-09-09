@@ -1053,7 +1053,8 @@ export default function CaseManagement() {
           c.summary,
           c.linkedFinancialAid?.disbursementId,
           c.linkedFinancialAid?.assistanceType,
-          c.linkedAppointment?.referenceNo,
+          c.linkedAppointment?.id,
+          c.linkedAppointment?.location,
         ].filter(Boolean).join(" ").toLowerCase()
 
         const matches = tokens.every((token) => searchableText.includes(token))
