@@ -1723,7 +1723,7 @@ export default function ChildWelfareApplicationWizard({
                     <input
                       type="text"
                       value={formData.parentFullName}
-                      onChange={(e) => updateField("parentFullName", e.target.value.toUpperCase())}
+                      onChange={(e) => updateField("parentFullName", e.target.value.replace(/[^a-zA-Z\sñÑ.-]/g, "").toUpperCase())}
                       placeholder={language === "tl" ? "Ilagay ang Buong Pangalan" : "Enter Full Name"}
                       className={`w-full h-10 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${
                         attemptedNext && !formData.parentFullName.trim() ? "border-red-500" : "border-gray-300"
@@ -1817,7 +1817,7 @@ export default function ChildWelfareApplicationWizard({
                       <input
                         type="text"
                         value={formData.specifiedRelationship}
-                        onChange={(e) => updateField("specifiedRelationship", e.target.value)}
+                        onChange={(e) => updateField("specifiedRelationship", e.target.value.replace(/[^a-zA-Z\sñÑ.-]/g, ""))}
                         placeholder={language === "tl" ? "Ilagay ang relasyon" : "Enter relationship"}
                         className={`w-full max-w-md h-10 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${
                           attemptedNext && !formData.specifiedRelationship.trim() ? "border-red-500" : "border-gray-300"
