@@ -822,40 +822,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                 ? "TAN-AWA SA FINANCIAL AID / APPLICATION HISTORY"
                 : "VIEW IN FINANCIAL AID / APPLICATION HISTORY"}
             </button>
-            {isAppApproved && (
-              <button
-                type="button"
-                onClick={() => {
-                  const currentRef = latestSubmittedApp?.referenceNumber || latestSubmittedApp?.reference_number || referenceNumber || "all"
-                  bypassedActiveAppRef.current = true
-                  dismissedAppRefCurrent.current = currentRef
-                  try {
-                    localStorage.setItem("pwd_senior_reapplying_senior_social-assistance", "true")
-                    localStorage.setItem("pwd_senior_reapplying", "true")
-                  } catch {}
-                  setLatestSubmittedApp(null)
-                  setSubmitted(false)
-                  setReferenceNumber("")
-                  setIsResident(false)
-                  setIsSenior(false)
-                  setHasSeniorId(false)
-                  setIsIndigentOrInNeed(false)
-                  setIsIdVerified(false)
-                  setUploadedFiles({})
-                  setStep(1)
-                }}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>
-                  {language === "tl"
-                    ? "MAG-APPLY MULI (RE-APPLY)"
-                    : language === "bis"
-                    ? "PAG-APPLY PAG-USAB (RE-APPLY)"
-                    : "RE-APPLY (APPLY AGAIN)"}
-                </span>
-              </button>
-            )}
           </div>
         </div>
       </div>
