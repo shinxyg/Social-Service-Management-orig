@@ -155,16 +155,17 @@ export function generateUniqueQcid(): string {
  * Automatically ensures a unique, persistent QCID is attached to the user.
  */
 export function getCurrentUserProfile(): LoggedInUserProfile {
-  const u = getCurrentUser()
+  const currentUser = getCurrentUser()
+  const u = currentUser || {}
 
   let qcid = u?.qcidNumber || u?.qcid_number || u?.qcidNo || u?.qcid
   if (!qcid || qcid === "110000116932100" || qcid === "11000015952309" || qcid === "110000572516915") {
     // If QCID is missing or hardcoded sample, generate a unique one and persist it
     qcid = generateUniqueQcid()
-    if (u) {
-      u.qcidNumber = qcid
-      u.qcidNo = qcid
-      localStorage.setItem("currentUser", JSON.stringify(u))
+    if (currentUser) {
+      currentUser.qcidNumber = qcid
+      currentUser.qcidNo = qcid
+      localStorage.setItem("currentUser", JSON.stringify(currentUser))
     }
   }
 

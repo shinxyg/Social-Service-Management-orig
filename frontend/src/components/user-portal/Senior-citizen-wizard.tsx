@@ -223,7 +223,14 @@ export interface UserProfile {
   emergencyAddress?: string
 }
 
-const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
+const MOCK_USER_PROFILE: UserProfile = {
+  qcid: "110000116932100",
+  firstName: "Resident",
+  lastName: "User",
+  addressStreet: "",
+  addressBarangay: "SAUYO",
+  addressCityMunicipality: "QUEZON CITY",
+} as any
 
 interface SeniorCitizenApplicationWizardProps {
   onBack?: () => void

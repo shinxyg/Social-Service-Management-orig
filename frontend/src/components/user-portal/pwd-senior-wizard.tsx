@@ -299,9 +299,14 @@ interface PWDApplicationWizardProps {
   onStepChange?: (step: number) => void
 }
 
-import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
-
-const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
+const MOCK_USER_PROFILE: UserProfile = {
+  qcid: "110000116932100",
+  firstName: "Resident",
+  lastName: "User",
+  addressStreet: "",
+  addressBarangay: "SAUYO",
+  addressCityMunicipality: "QUEZON CITY",
+} as any
 
 // real uploaded file + generated preview URL, instead of a plain boolean
 interface UploadedDoc {

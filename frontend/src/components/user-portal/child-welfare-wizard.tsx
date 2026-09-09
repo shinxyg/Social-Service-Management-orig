@@ -666,7 +666,14 @@ interface ChildWelfareWizardProps {
   onSubmissionStageChange?: (stage: "form" | "matching" | "pending", status?: string) => void
 }
 
-const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
+const MOCK_USER_PROFILE: UserProfile = {
+  qcid: "110000116932100",
+  firstName: "Resident",
+  lastName: "User",
+  addressStreet: "",
+  addressBarangay: "SAUYO",
+  addressCityMunicipality: "QUEZON CITY",
+} as any
 
 export default function ChildWelfareApplicationWizard({
   onBack,

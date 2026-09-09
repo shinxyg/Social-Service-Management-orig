@@ -43,9 +43,14 @@ export interface UserProfile {
   email?: string
 }
 
-import { getCurrentUserProfile } from "../../utils/userProfile"
-
-const MOCK_USER_PROFILE: UserProfile = getCurrentUserProfile() as any
+const MOCK_USER_PROFILE: UserProfile = {
+  qcid: "110000116932100",
+  firstName: "Resident",
+  lastName: "User",
+  addressStreet: "",
+  addressBarangay: "SAUYO",
+  addressCityMunicipality: "QUEZON CITY",
+} as any
 
 export interface SeniorAssistanceWizardProps {
   onBack?: () => void
