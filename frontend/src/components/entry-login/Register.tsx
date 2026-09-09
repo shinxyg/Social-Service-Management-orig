@@ -60,9 +60,9 @@ export const Register = () => {
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const otpInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [resendMessage, setResendMessage] = useState('');
-  const [resendCooldown, setResendCooldown] = useState(0);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -96,13 +96,6 @@ export const Register = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigatingToLogin, setIsNavigatingToLogin] = useState(false);
-
-  // Countdown ticker for the Resend Code cooldown.
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [resendCooldown]);
 
   // Reset dependent fields when city changes.
   useEffect(() => {
@@ -162,7 +155,6 @@ export const Register = () => {
       const data = await res.json();
       if (res.ok && data.success) {
         setOtpSent(true);
-        setResendCooldown(59);
         setOtpDigits(['', '', '', '', '', '']);
       } else {
         setError(data.message || 'Failed to send OTP. Please check your email address.');
@@ -173,12 +165,6 @@ export const Register = () => {
     } finally {
       setIsSendingOtp(false);
     }
-  };
-
-  const formatCooldown = (totalSeconds: number) => {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const maskEmail = (value: string) => {
@@ -219,11 +205,11 @@ export const Register = () => {
   };
 
   const handleResendCode = async () => {
-    if (resendCooldown > 0) return;
+    if (isResendingOtp) return;
     setError('');
     setOtpDigits(['', '', '', '', '', '']);
     setResendMessage('Sending a new code to your email...');
-    setResendCooldown(59);
+    setIsResendingOtp(true);
 
     try {
       const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
@@ -243,6 +229,8 @@ export const Register = () => {
       }
     } catch (err) {
       setError('Network error while resending OTP.');
+    } finally {
+      setIsResendingOtp(false);
     }
     setTimeout(() => setResendMessage(''), 5000);
   };
@@ -548,22 +536,15 @@ export const Register = () => {
                   </button>
 
                   <p className="text-center text-xs text-slate-500">
-                    {resendCooldown > 0 ? (
-                      <>
-                        Resend code in <span className="font-bold text-slate-700">{formatCooldown(resendCooldown)}</span>
-                      </>
-                    ) : (
-                      <>
-                        Didn't receive a code?{' '}
-                        <button
-                          type="button"
-                          onClick={handleResendCode}
-                          className="text-blue-600 hover:underline font-semibold bg-transparent border-none cursor-pointer p-0"
-                        >
-                          Resend Code
-                        </button>
-                      </>
-                    )}
+                    Didn't receive a code?{' '}
+                    <button
+                      type="button"
+                      disabled={isResendingOtp}
+                      onClick={handleResendCode}
+                      className="text-blue-600 hover:underline font-semibold bg-transparent border-none cursor-pointer p-0 disabled:opacity-50"
+                    >
+                      {isResendingOtp ? 'Sending...' : 'Resend Code'}
+                    </button>
                   </p>
 
                   {resendMessage && (

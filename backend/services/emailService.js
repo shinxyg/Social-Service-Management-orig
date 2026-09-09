@@ -361,7 +361,6 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
   const transporter = createTransporter();
   const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
-  const attachments = getLogoAttachments();
 
   const mailOptions = {
     from: `"GovServe" <${senderEmail}>`,
@@ -369,7 +368,6 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
     subject: `[GovServe] Your OTP Verification Code: ${otpCode}`,
     text: `Your GovServe OTP Verification Code is: ${otpCode}. This code is valid for 10 minutes. Do not share this code with anyone.`,
     html: htmlContent,
-    attachments,
   };
 
   if (transporter) {
@@ -387,9 +385,9 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
           secure: false,
           auth: { user: senderEmail, pass: emailPass },
           tls: { rejectUnauthorized: false },
-          connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 15000,
+          connectionTimeout: 4000,
+          greetingTimeout: 4000,
+          socketTimeout: 5000,
         });
         const info = await fallbackTransporter.sendMail(mailOptions);
         console.log(`[Gmail SMTP 587] OTP delivered to ${recipientEmail}. MessageId: ${info.messageId}`);

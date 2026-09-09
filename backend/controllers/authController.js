@@ -74,28 +74,23 @@ exports.sendOtp = async (req, res) => {
       isUsed: false,
     });
 
-    console.log(`[OTP] Generated OTP ${otpCode} for ${cleanEmail}. Dispatching email...`);
+    console.log(`[OTP] Generated OTP ${otpCode} for ${cleanEmail}. Dispatching email in background...`);
 
-    // Dispatch official email via Gmail SMTP / Fallback
-    const emailResult = await sendOtpEmail({
+    // Dispatch official email asynchronously in background so client response is instant
+    sendOtpEmail({
       recipientEmail: cleanEmail,
       otpCode,
       recipientName: recipientName || 'Resident',
+    }).then((emailResult) => {
+      console.log(`[OTP Background Dispatch] Result for ${cleanEmail}:`, emailResult);
+    }).catch((err) => {
+      console.error(`[OTP Background Dispatch Error] Failed for ${cleanEmail}:`, err.message);
     });
 
-    if (emailResult.success) {
-      return res.status(200).json({
-        success: true,
-        message: `A 6-digit verification code has been sent to ${cleanEmail}.`,
-        provider: emailResult.provider,
-      });
-    } else {
-      return res.status(500).json({
-        success: false,
-        message: 'Could not send verification email. Please check your email address and try again.',
-        details: emailResult.message,
-      });
-    }
+    return res.status(200).json({
+      success: true,
+      message: `A 6-digit verification code has been sent to ${cleanEmail}.`,
+    });
   } catch (err) {
     console.error('Error in sendOtp controller:', err);
     return res.status(500).json({ success: false, message: 'Server error while sending OTP', error: err.message });
