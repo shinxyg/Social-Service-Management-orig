@@ -21,6 +21,7 @@ import {
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
 function formatFileSize(bytes?: number) {
   if (!bytes) return "0.0 KB"
@@ -169,23 +170,25 @@ export default function LivelihoodApplicationWizard({
 
   // Form State initialized with Profile data
   const [formData, setFormData] = useState<LivelihoodFormData>(() => {
+    const prof = getCurrentUserProfile()
+    const loggedQcid = getLoggedInUserQcid() || prof.qcidNo || DEFAULT_USER_PROFILE.qcid
     return {
-      qcid: initialData?.qcid || DEFAULT_USER_PROFILE.qcid,
-      firstName: initialData?.firstName || DEFAULT_USER_PROFILE.firstName,
-      middleName: initialData?.middleName || DEFAULT_USER_PROFILE.middleName || "",
-      lastName: initialData?.lastName || DEFAULT_USER_PROFILE.lastName,
-      suffix: initialData?.suffix || DEFAULT_USER_PROFILE.suffix || "",
-      nationality: initialData?.nationality || DEFAULT_USER_PROFILE.nationality,
-      dateOfBirth: initialData?.dateOfBirth || DEFAULT_USER_PROFILE.dateOfBirth,
-      age: String(initialData?.age || DEFAULT_USER_PROFILE.age),
-      gender: initialData?.gender || DEFAULT_USER_PROFILE.gender,
-      civilStatus: initialData?.civilStatus || DEFAULT_USER_PROFILE.civilStatus,
-      bloodType: (initialData as any)?.bloodType || DEFAULT_USER_PROFILE.bloodType || "O+",
-      houseBuildingNo: initialData?.houseBuildingNo || DEFAULT_USER_PROFILE.houseBuildingNo,
-      streetName: initialData?.streetName || DEFAULT_USER_PROFILE.streetName,
-      barangay: initialData?.barangay || DEFAULT_USER_PROFILE.barangay,
-      phoneNumber: initialData?.phoneNumber || DEFAULT_USER_PROFILE.phoneNumber,
-      email: initialData?.email || DEFAULT_USER_PROFILE.email,
+      qcid: initialData?.qcid || loggedQcid,
+      firstName: initialData?.firstName || (prof.firstName && prof.firstName !== "RESIDENT" ? prof.firstName : DEFAULT_USER_PROFILE.firstName),
+      middleName: initialData?.middleName || prof.middleName || DEFAULT_USER_PROFILE.middleName || "",
+      lastName: initialData?.lastName || (prof.lastName && prof.lastName !== "RESIDENT" ? prof.lastName : DEFAULT_USER_PROFILE.lastName),
+      suffix: initialData?.suffix || prof.suffix || DEFAULT_USER_PROFILE.suffix || "",
+      nationality: initialData?.nationality || "FILIPINO",
+      dateOfBirth: initialData?.dateOfBirth || prof.birthDate || DEFAULT_USER_PROFILE.dateOfBirth,
+      age: String(initialData?.age || prof.age || DEFAULT_USER_PROFILE.age),
+      gender: initialData?.gender || prof.gender || DEFAULT_USER_PROFILE.gender,
+      civilStatus: initialData?.civilStatus || prof.civilStatus || DEFAULT_USER_PROFILE.civilStatus,
+      bloodType: (initialData as any)?.bloodType || "O+",
+      houseBuildingNo: initialData?.houseBuildingNo || prof.houseNo || DEFAULT_USER_PROFILE.houseBuildingNo,
+      streetName: initialData?.streetName || prof.street || DEFAULT_USER_PROFILE.streetName,
+      barangay: initialData?.barangay || prof.barangay || DEFAULT_USER_PROFILE.barangay,
+      phoneNumber: initialData?.phoneNumber || prof.contactNo || DEFAULT_USER_PROFILE.phoneNumber,
+      email: initialData?.email || prof.email || DEFAULT_USER_PROFILE.email,
 
       livelihoodType: initialData?.livelihoodType || "",
       livelihoodStatus: initialData?.livelihoodStatus || "",
@@ -391,9 +394,10 @@ export default function LivelihoodApplicationWizard({
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
+      const loggedQcid = getLoggedInUserQcid() || formData.qcid || "110000116932100"
       const payload = {
-        userId: formData.qcid || "110000116932100",
-        qcid: formData.qcid,
+        userId: loggedQcid,
+        qcid: formData.qcid || loggedQcid,
         firstName: formData.firstName,
         middleName: formData.middleName,
         lastName: formData.lastName,

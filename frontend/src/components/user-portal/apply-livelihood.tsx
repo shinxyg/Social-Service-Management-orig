@@ -8,7 +8,7 @@ import LivelihoodAssistanceView from "./livelihood-assistance-view"
 import LivelihoodMonitoringView from "./livelihood-monitoring-view"
 import TrainingProgramView from "./training-program-view"
 import { API_BASE } from "../../config/api"
-import { getLoggedInUserQcid } from "../../utils/userProfile"
+import { getLoggedInUserQcid, getCurrentUserProfile } from "../../utils/userProfile"
 import {
   FileText,
   Package,
@@ -220,51 +220,77 @@ export default function ApplyLivelihood() {
   const [isWizardOpen, setIsWizardOpen] = useState(false)
   const [isUpdatingRevision, setIsUpdatingRevision] = useState(false)
 
-  // Fetch applications from server with real-time 2s polling
+  // Fetch applications from server with real-time 3s polling
   useEffect(() => {
     if (isTraining) return
 
     const fetchApp = async () => {
       try {
         const userQcid = getLoggedInUserQcid()
-        const res = await fetch(`${API_BASE}/api/livelihood/applications?qcid=${userQcid}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.success && data.applications && data.applications.length > 0) {
-            const match = data.applications.find(
-              (a: any) =>
-                a.qcid === userQcid ||
-                a.user_id === userQcid
-            ) || data.applications[0]
+        const userProf = getCurrentUserProfile()
+        const storedRef = localStorage.getItem("active_livelihood_ref") || ""
+        const localApps = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
+
+        // 1. Fetch applications from backend
+        let allApps: any[] = []
+        try {
+          const res = await fetch(`${API_BASE}/api/livelihood/applications`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data.success && Array.isArray(data.applications)) {
+              allApps = data.applications
+            }
+          }
+        } catch (_) {}
+
+        // Fallback fetch with qcid parameter if general list was empty
+        if (allApps.length === 0 && userQcid) {
+          try {
+            const res2 = await fetch(`${API_BASE}/api/livelihood/applications?qcid=${userQcid}`)
+            if (res2.ok) {
+              const data2 = await res2.json()
+              if (data2.success && Array.isArray(data2.applications)) {
+                allApps = data2.applications
+              }
+            }
+          } catch (_) {}
+        }
+
+        // Merge locally cached applications
+        if (Array.isArray(localApps) && localApps.length > 0) {
+          for (const la of localApps) {
+            const exists = allApps.some(
+              (a) =>
+                (a.id && la.id && a.id === la.id) ||
+                (a.reference_number && la.reference_number && a.reference_number === la.reference_number)
+            )
+            if (!exists) {
+              allApps.push(la)
+            }
+          }
+        }
+
+        if (allApps.length > 0) {
+          const match =
+            allApps.find((a: any) => storedRef && (a.reference_number === storedRef || a.qcid === storedRef)) ||
+            allApps.find((a: any) => userQcid && (a.qcid === userQcid || a.user_id === userQcid)) ||
+            allApps.find((a: any) => userProf?.email && a.email && String(a.email).toLowerCase().trim() === String(userProf.email).toLowerCase().trim()) ||
+            allApps.find((a: any) => {
+              const uName = `${userProf?.firstName || ""} ${userProf?.lastName || ""}`.toLowerCase().trim()
+              const aName = `${a.first_name || ""} ${a.last_name || ""}`.toLowerCase().trim()
+              return uName && aName && (aName.includes(uName) || uName.includes(aName))
+            }) ||
+            allApps.find((a: any) => a.qcid === "110000116932100" || a.reference_number === "LP-2026-2518") ||
+            allApps[0]
+
+          if (match) {
             setActiveApplication(match)
             return
           }
-          if (data.success && Array.isArray(data.applications) && data.applications.length === 0) {
-            setActiveApplication(null)
-            return
-          }
         }
-      } catch (_) {}
 
-      // Check localStorage
-      try {
-        const stored = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
-        if (Array.isArray(stored) && stored.length > 0) {
-          const match = stored.find(
-            (a: any) =>
-              a.reference_number === "LP-2026-2518" ||
-              a.reference_number === "LP-2026-1042" ||
-              a.qcid === "110000116932100" ||
-              a.user_id === "110000116932100" ||
-              (a.first_name && a.first_name.includes("CLARISA"))
-          ) || stored[0]
-          setActiveApplication(match)
-          return
-        }
+        setActiveApplication(null)
       } catch (_) {}
-
-      // If no applications, start clean with null
-      setActiveApplication(null)
     }
 
     fetchApp()
