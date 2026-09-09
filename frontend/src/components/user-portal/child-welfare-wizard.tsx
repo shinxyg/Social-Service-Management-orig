@@ -1162,7 +1162,7 @@ export default function ChildWelfareApplicationWizard({
           supportTypes: [selectedAssistanceType],
         },
       },
-      requiredDocumentIds: selectedProgram.documents.map((d) => d.id),
+      requiredDocumentIds: selectedProgram.documents.filter((d) => d.required).map((d) => d.id),
     }
 
     try {

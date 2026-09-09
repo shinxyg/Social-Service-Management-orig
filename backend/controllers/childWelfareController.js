@@ -8,15 +8,85 @@ function generateReference(qcid) {
   return '110000116932100';
 }
 
+async function getUniqueReferenceNumber(baseRef) {
+  let clean = String(baseRef || '').trim() || generateReference();
+  let candidate = clean;
+  let attempt = 0;
+  while (true) {
+    const existing = await db.query('SELECT id FROM child_welfare_applications WHERE reference_number = $1', [candidate]);
+    if (existing.rows.length === 0) {
+      return candidate;
+    }
+    attempt++;
+    candidate = `${clean}-${attempt}`;
+  }
+}
+
 async function initChildWelfareColumns() {
   try {
     await db.query(`
+      CREATE TABLE IF NOT EXISTS child_welfare_applications (
+        id SERIAL PRIMARY KEY,
+        reference_number VARCHAR(100) UNIQUE NOT NULL,
+        user_id VARCHAR(100) NOT NULL,
+        application_status VARCHAR(50) DEFAULT 'draft',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
       ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
       ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS approved_amount VARCHAR(50);
       ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS approved_by VARCHAR(100);
       ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS admin_notes TEXT;
       ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
       ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS uploaded_documents JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS form_data JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS category_id VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS category_title VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS required_document_ids JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_first_name VARCHAR(150);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_middle_name VARCHAR(150);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_last_name VARCHAR(150);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_sex VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_date_of_birth VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_age INTEGER;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_civil_status VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_relationship_to_child VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_contact_no VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_email VARCHAR(150);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS guardian_valid_id VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS address_house_no VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS address_street VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS address_barangay VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS address_city_municipality VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_name VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_sex VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_birthday VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_age INTEGER;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_school_daycare VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_birth_certificate VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_grade_level VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_school_address TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_enrollment_status VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_special_needs VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_special_needs_specify TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS household_members VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS children_studying VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS monthly_household_income VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS main_source_income VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS employment_status VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS other_financial_support TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS support_types JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS support_other TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS primary_reason_for_assistance TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS specific_needs TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS estimated_amount_needed VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS urgency VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_living_arrangement VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS other_children_needing_assistance VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS other_children_count VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS other_govt_assistance_received VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS other_govt_program TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS additional_info TEXT;
     `);
   } catch (e) {
     console.warn('[Child Welfare DB init columns]:', e.message);
@@ -30,7 +100,16 @@ exports.createApplication = async (req, res) => {
     const { userId, applicationData, requiredDocumentIds } = req.body;
     const { isResident, selectedCategoryId, selectedCategory, formData = {} } = applicationData || {};
 
-    const referenceNumber = req.body.referenceNumber || req.body.reference_number || (formData && (formData.qcidNumber || formData.qcidNo || formData.qcId)) || generateReference();
+    // Clean up any unsubmitted draft records so they never block new attempts
+    if (userId && String(userId) !== '0') {
+      await db.query(
+        `DELETE FROM child_welfare_applications WHERE user_id = $1 AND application_status = 'draft'`,
+        [String(userId)]
+      ).catch(() => {});
+    }
+
+    const baseRef = req.body.referenceNumber || req.body.reference_number || (formData && (formData.qcidNumber || formData.qcidNo || formData.qcId)) || generateReference();
+    const referenceNumber = await getUniqueReferenceNumber(baseRef);
 
     const guardianFirstName = formData.guardianFirstName || formData.parentFullName || '';
     const guardianMiddleName = formData.guardianMiddleName || '';
@@ -79,6 +158,8 @@ exports.createApplication = async (req, res) => {
     const childLivingArrangement = formData.childLivingArrangement || formData.currentLivingSituation || '';
     const otherChildrenNeedingAssistance = formData.otherChildrenNeedingAssistance || '';
     const otherChildrenCount = formData.otherChildrenCount || '';
+    const otherGovtAssistanceReceived = formData.otherGovtAssistanceReceived || '';
+    const otherGovtProgram = formData.otherGovtProgram || '';
     const safetyInfo = [
       formData.isImmediateDanger ? `Immediate Danger: ${formData.isImmediateDanger}` : '',
       formData.isChildSafe ? `Child Currently in Safe Location: ${formData.isChildSafe}` : '',
@@ -104,7 +185,7 @@ exports.createApplication = async (req, res) => {
         support_types, support_other,
         primary_reason_for_assistance, specific_needs, estimated_amount_needed, urgency,
         child_living_arrangement, other_children_needing_assistance, other_children_count,
-        other_govt_assistance_received, other_govt_program, additional_info
+        other_govt_assistance_received, other_govt_program, additional_info, form_data
       ) VALUES (
         $1, $2, 'draft', $3, $4, $5,
         $6, $7, $8, $9, $10,
@@ -118,7 +199,7 @@ exports.createApplication = async (req, res) => {
         $38, $39,
         $40, $41, $42, $43,
         $44, $45, $46,
-        $47, $48, $49
+        $47, $48, $49, $50
       ) RETURNING id, reference_number`,
       [
         referenceNumber, String(userId || '0'), categoryId, categoryTitle, JSON.stringify(requiredDocumentIds || []),
@@ -133,7 +214,7 @@ exports.createApplication = async (req, res) => {
         JSON.stringify(supportTypes || []), supportOther || null,
         primaryReason || null, specificNeeds || null, estimatedAmountNeeded || null, urgency || null,
         childLivingArrangement || null, otherChildrenNeedingAssistance || null, otherChildrenCount || null,
-        otherGovtAssistanceReceived || null, otherGovtProgram || null, additionalInfo || null,
+        otherGovtAssistanceReceived || null, otherGovtProgram || null, additionalInfo || null, JSON.stringify(formData || {}),
       ]
     );
 
