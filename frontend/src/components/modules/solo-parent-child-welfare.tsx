@@ -1918,14 +1918,14 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                     <div>
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                          Confirm Child Welfare Support Approval
+                          Confirm {(app as any).supportCategory || "Child Welfare Support"} Approval
                         </label>
                         <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2.5 py-1 rounded-md font-mono">
                           Fixed Grant: ₱5,000
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                        Approving will automatically record this grant (<strong>₱5,000 Fixed Financial Aid</strong>) to <strong>Financial Aid Disbursement</strong> and connect to <strong>Appointments</strong> for payout scheduling.
+                        Approving will automatically record this grant (<strong>₱5,000 Fixed Financial Aid</strong>) for <strong>{(app as any).supportCategory || "Child Welfare Assistance"}</strong> to <strong>Financial Aid Disbursement</strong> and connect to <strong>Appointments</strong> for payout scheduling.
                       </p>
                     </div>
                     <div className="flex gap-3">

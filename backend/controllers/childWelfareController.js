@@ -389,6 +389,8 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
+    const finalAmount = status === 'approved' ? (approvedAmount || '5000') : null;
+
     const result = await db.query(
       `UPDATE child_welfare_applications
        SET application_status = $1, admin_notes = $2, rejection_reason = $3,
@@ -399,13 +401,71 @@ exports.updateApplicationStatus = async (req, res) => {
         adminNotes || null,
         status === 'rejected' ? rejectionReason : null,
         status === 'approved' ? req.user?.id || null : null,
-        status === 'approved' ? approvedAmount || null : null,
+        finalAmount,
         applicationId,
       ]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+
+    const app = result.rows[0];
+
+    // Auto-sync with Financial Aid Disbursements and Appointments upon approval
+    if (status === 'approved') {
+      try {
+        const guardianName = [app.guardian_first_name, app.guardian_middle_name, app.guardian_last_name].filter(Boolean).join(' ').trim().toUpperCase() || 'GUARDIAN / BENEFICIARY';
+        const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        const title = app.category_title ? `${app.category_title} (Child Welfare)` : 'Child Welfare Assistance';
+        const amt = Number(finalAmount) || 5000;
+
+        const disbCheck = await db.query('SELECT id FROM financial_aid_disbursements WHERE application_ref = $1', [app.reference_number]);
+        if (disbCheck.rows.length === 0) {
+          await db.query(
+            `INSERT INTO financial_aid_disbursements (
+              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+              date_approved, status, venue, remarks
+            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
+            ON CONFLICT DO NOTHING`,
+            [
+              disbId,
+              app.reference_number,
+              guardianName,
+              title,
+              amt,
+              new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+              'Quezon City Hall - SSDD Child Welfare Section',
+              'Approved Child Welfare financial grant. Ready for Appointment scheduling and payout.',
+            ]
+          );
+        } else {
+          await db.query(
+            `UPDATE financial_aid_disbursements
+             SET fixed_amount = $1, applicant_name = $2, assistance_type = $3, updated_at = NOW()
+             WHERE application_ref = $4`,
+            [amt, guardianName, title, app.reference_number]
+          );
+        }
+
+        // Auto-create pending appointment record if not existing
+        const apptCheck = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [app.reference_number]);
+        if (apptCheck.rows.length === 0) {
+          await db.query(
+            `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes)
+             VALUES ($1, 'Child Welfare', $2, $3, 'pending', 'Quezon City Hall - SSDD Child Welfare Section', 'Approved grant payout scheduling.')
+             ON CONFLICT DO NOTHING`,
+            [app.reference_number, guardianName, title]
+          );
+        }
+      } catch (syncErr) {
+        console.warn('[Child Welfare Approval Sync Warning]:', syncErr.message);
+      }
+    } else if (status === 'rejected') {
+      try {
+        await db.query('DELETE FROM financial_aid_disbursements WHERE application_ref = $1', [app.reference_number]).catch(() => {});
+        await db.query('DELETE FROM appointments WHERE reference_no = $1', [app.reference_number]).catch(() => {});
+      } catch (_) {}
     }
 
     res.status(200).json({ success: true, message: 'Application status updated', application: result.rows[0] });
