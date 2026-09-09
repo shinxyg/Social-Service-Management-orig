@@ -212,7 +212,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
   const [isSubmittingMonitoring, setIsSubmittingMonitoring] = useState(false)
 
   // Status update state
-  const [selectedStatus, setSelectedStatus] = useState<CaseStatus>(c.status)
+  const [isClosingCase, setIsClosingCase] = useState(c.status === "closed")
   const [selectedPriority, setSelectedPriority] = useState<CasePriority>(c.priority)
   const [assignedWorker, setAssignedWorker] = useState(c.assignedSocialWorker || "Admin Social Worker")
   const [statusNotes, setStatusNotes] = useState("")
@@ -220,9 +220,10 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
 
   const handleSaveStatus = async () => {
     setIsUpdatingStatus(true)
+    const targetStatus: CaseStatus = isClosingCase ? "closed" : c.status
     try {
-      await onUpdateStatus(c.caseNumber, selectedStatus, selectedPriority, assignedWorker, statusNotes)
-      alert(`Case ${c.caseNumber} status successfully updated to ${selectedStatus.toUpperCase()}.`)
+      await onUpdateStatus(c.caseNumber, targetStatus, selectedPriority, assignedWorker, statusNotes)
+      alert(`Case ${c.caseNumber} updates successfully saved.`)
     } catch (err) {
       console.error(err)
       alert("Failed to update case status.")
@@ -1037,17 +1038,20 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <label className="font-bold text-slate-800">Overall Case Status</label>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value as CaseStatus)}
-                      className="w-full mt-1.5 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white font-bold text-slate-900 focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="open">OPEN — Active Intake Stage</option>
-                      <option value="monitoring">UNDER MONITORING — Follow-up Active</option>
-                      <option value="referred">REFERRED — External Agency Coordination</option>
-                      <option value="closed">CLOSED — Resolved &amp; Completed</option>
-                    </select>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="font-bold text-slate-800">Current Case Stage</label>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
+                        Live Auto-Synced
+                      </span>
+                    </div>
+                    <div className="px-3 py-2 border border-slate-200 bg-slate-50/90 rounded-lg text-xs font-bold text-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${sm.dot}`} />
+                        <span>{sm.label}</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-semibold text-slate-500 uppercase">{c.status}</span>
+                    </div>
                   </div>
 
                   <div>
@@ -1069,18 +1073,19 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
                       type="text"
                       value={assignedWorker}
                       onChange={(e) => setAssignedWorker(e.target.value)}
+                      placeholder="Enter assigned case officer name"
                       className="w-full mt-1.5 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   <div className="sm:col-span-2">
                     <label className="font-bold text-slate-800">
-                      {selectedStatus === "closed" ? "Case Closure Summary & Evaluation *" : "Case Notes / Supervisor Action Summary"}
+                      {isClosingCase ? "Case Closure Summary & Evaluation *" : "Case Notes / Supervisor Action Summary"}
                     </label>
                     <textarea
                       rows={3}
                       placeholder={
-                        selectedStatus === "closed"
+                        isClosingCase
                           ? "Document final case outcome, verification of benefits received, and reason for case closure..."
                           : "Enter internal case remarks or next intervention steps..."
                       }
@@ -1088,6 +1093,21 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
                       onChange={(e) => setStatusNotes(e.target.value)}
                       className="w-full mt-1.5 px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white text-slate-900 focus:ring-2 focus:ring-blue-500"
                     />
+                  </div>
+
+                  <div className="sm:col-span-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={isClosingCase}
+                        onChange={(e) => setIsClosingCase(e.target.checked)}
+                        className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>Mark case as Officially Resolved &amp; Closed</span>
+                    </label>
+                    <p className="text-[11px] text-slate-500 mt-1 pl-6.5">
+                      Check this box when all assistance, appointments, financial aid, and monitoring visits have been concluded.
+                    </p>
                   </div>
                 </div>
 
@@ -1103,7 +1123,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus, onAddReferral, onAddMoni
                     ) : (
                       <>
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        {selectedStatus === "closed" ? "Save & Close Case" : "Save Case Changes"}
+                        {isClosingCase ? "Save & Close Case" : "Save Case Updates"}
                       </>
                     )}
                   </button>
