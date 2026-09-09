@@ -1132,10 +1132,10 @@ export default function CaseManagement() {
           <Search className="h-4 w-4 text-slate-400 shrink-0" />
           <input
             type="text"
-            placeholder="Search by client name, case number (CM-...), QCID, or reference number..."
+            placeholder="SEARCH BY CLIENT NAME, CASE NUMBER (CM-...), QCID, OR REFERENCE NUMBER..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs md:text-sm bg-transparent border-none outline-none text-slate-900 placeholder:text-slate-400"
+            onChange={(e) => setSearchQuery(e.target.value.toUpperCase())}
+            className="w-full text-xs md:text-sm bg-transparent border-none outline-none text-slate-900 placeholder:text-slate-400 uppercase font-medium"
           />
           {searchQuery && (
             <button
