@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   MapPin,
   Phone,
-  Mail,
   User,
   Plus,
   X,
