@@ -170,8 +170,13 @@ export default function LivelihoodApplicationWizard({
 
   // Form State initialized with Profile data
   const [formData, setFormData] = useState<LivelihoodFormData>(() => {
-    const prof = getCurrentUserProfile()
-    const loggedQcid = getLoggedInUserQcid() || prof.qcidNo || DEFAULT_USER_PROFILE.qcid
+    let prof: any = {}
+    let loggedQcid = DEFAULT_USER_PROFILE.qcid
+    try {
+      prof = getCurrentUserProfile() || {}
+      loggedQcid = getLoggedInUserQcid() || prof.qcidNo || DEFAULT_USER_PROFILE.qcid
+    } catch (_) {}
+
     return {
       qcid: initialData?.qcid || loggedQcid,
       firstName: initialData?.firstName || (prof.firstName && prof.firstName !== "RESIDENT" ? prof.firstName : DEFAULT_USER_PROFILE.firstName),
