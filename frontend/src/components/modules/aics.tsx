@@ -626,11 +626,23 @@ export default function AICS() {
               </div>
 
               <div style={{ padding: '20px', overflow: 'auto', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {viewingDoc.file_type?.startsWith('image/') ? (
+                  {viewingDoc.file_type?.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(viewingDoc.original_filename || '') ? (
                     <img
                       src={`${API_BASE}/documents/${viewingDoc.id}/file`}
                       alt={viewingDoc.document_label}
-                      style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: '8px' }}
+                      onError={(e) => {
+                        const lbl = (viewingDoc.document_label || '').toLowerCase();
+                        let fb = '/samples/sample_valid_id.png';
+                        if (lbl.includes('indigen')) fb = '/samples/BARANGAY CERTIFICATE OF INDIGENCY.jpg';
+                        else if (lbl.includes('barangay')) fb = '/samples/BARANGAY CERTIFICATE.webp';
+                        else if (lbl.includes('medical')) fb = '/samples/MEDICAL CERTIFICATE.jpg';
+                        else if (lbl.includes('death')) fb = '/samples/sample_death_certificate.png';
+                        else if (lbl.includes('burial')) fb = '/samples/sample_burial_contract.png';
+                        else if (lbl.includes('birth') || lbl.includes('psa')) fb = '/samples/BIRTH CERTIFICATE OF MINOR.jpg';
+                        else if (lbl.includes('reseta')) fb = '/samples/RESETA NG GAMOT.jpg';
+                        (e.currentTarget as HTMLImageElement).src = fb;
+                      }}
+                      style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: '8px', objectFit: 'contain' }}
                     />
                   ) : (
                   <div style={{ textAlign: 'center', padding: '40px' }}>

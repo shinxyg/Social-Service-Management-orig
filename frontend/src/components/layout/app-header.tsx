@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useLocation } from "react-router-dom"
-import { Bell, User, Settings, Sun, Moon, LogOut, Globe } from "lucide-react"
+import { Bell, User, Settings, Sun, Moon, LogOut } from "lucide-react"
 import { moduleRoutes } from "./routes"
 import { Tooltip } from "../ui/tooltip"
 import { SettingsModal } from "../ui/settings-modal"
@@ -14,7 +14,7 @@ export function AppHeader({
   dark: boolean
   onToggleDark: () => void
 }) {
-  const { t, language, setLanguage } = useLanguage()
+  const { t, language } = useLanguage()
   const location = useLocation()
   const current = moduleRoutes.find((r) => r.path === location.pathname)
   const [menuOpen, setMenuOpen] = useState(false)
