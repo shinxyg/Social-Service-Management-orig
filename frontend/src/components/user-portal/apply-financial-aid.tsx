@@ -160,7 +160,44 @@ export default function ApplyFinancialAid() {
           }
         } catch {}
 
-        // 3. Fetch from backend financial-aid endpoint (filter only records that belong to current user)
+        // 3. Fetch Child Welfare Approved Applications for user
+        try {
+          const userObj = JSON.parse(localStorage.getItem("user") || "{}")
+          const userId = userObj.id || qcId
+          const cwRes = await fetch(`${API_BASE}/api/child-welfare/user/${userId}`)
+          if (cwRes.ok) {
+            const cwData = await cwRes.json()
+            const cwApps = Array.isArray(cwData.applications) ? cwData.applications : []
+            const approvedCw = cwApps.filter((c: any) => {
+              const st = String(c.application_status || c.status).toLowerCase()
+              return st === "approved" || st === "released" || st === "completed" || st === "for_release"
+            })
+            approvedCw.forEach((c: any) => {
+              const ref = c.reference_number || `CW-2026-${c.id}`
+              const supportTitle = c.category_title ? `${c.category_title} (Child Welfare)` : "Child Welfare Support"
+              const amount = Number(c.approved_amount) || FIXED_ASSISTANCE_AMOUNTS[supportTitle] || 5000
+              const isReleased = String(c.application_status || c.status).toLowerCase() === "released" || String(c.application_status || c.status).toLowerCase() === "completed"
+              remoteRecords.push({
+                id: `user-cw-${c.id || ref}`,
+                disbursementId: `DISB-2026-${String(c.id || 1).padStart(4, "0")}`,
+                applicationRef: ref,
+                applicantName: [c.guardian_first_name, c.guardian_last_name].filter(Boolean).join(" ").toUpperCase() || userFull.toUpperCase(),
+                assistanceType: supportTitle,
+                fixedAmount: amount,
+                dateApproved: new Date(c.updated_at || c.created_at || Date.now()).toLocaleDateString("en-PH", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }),
+                status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
+                venue: "Quezon City Hall - SSDD Child Welfare Section",
+                remarks: "Child Welfare financial support grant.",
+              })
+            })
+          }
+        } catch {}
+
+        // 4. Fetch from backend financial-aid endpoint (filter only records that belong to current user)
         const resDb = await fetch(`${API_BASE}/api/financial-aid`)
         if (resDb.ok) {
           const dataDb = await resDb.json()

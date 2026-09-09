@@ -613,19 +613,28 @@ export default function MyApplications() {
                   day: "numeric",
                 }),
                 status:
-                  app.application_status === "approved"
+                  app.application_status === "approved" || app.status === "approved"
                     ? "Approved"
-                    : app.application_status === "released"
+                    : app.application_status === "released" || app.status === "released" || app.application_status === "completed" || app.status === "completed"
                     ? "Released"
+                    : app.application_status === "rejected" || app.status === "rejected"
+                    ? "Rejected"
                     : "Under Review",
-                applicantName: app.child_name || "Beneficiary Child",
+                applicantName: app.child_name || [app.guardian_first_name, app.guardian_last_name].filter(Boolean).join(" ") || "Beneficiary Child",
                 dateOfBirth: userProfile.birthDateDisplay,
                 address:
                   app.address ||
                   `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
-                contactNumber: app.contact_number || userProfile.mobileNumber,
-                email: app.email || userProfile.email,
-                remarks: app.application_status === "approved" ? "Approved by Child Welfare" : "Under review",
+                contactNumber: app.guardian_contact_no || app.contact_number || userProfile.mobileNumber,
+                email: app.guardian_email || app.email || userProfile.email,
+                remarks:
+                  app.application_status === "approved"
+                    ? `Aprubado para sa Ayuda (₱${(Number(app.approved_amount) || 5000).toLocaleString()}) - Nakatala sa Financial Aid & Appointments`
+                    : app.application_status === "released"
+                    ? `Na-release na ang Ayuda (₱${(Number(app.approved_amount) || 5000).toLocaleString()})`
+                    : app.application_status === "rejected"
+                    ? (app.rejection_reason ? `Tinanggihan: ${app.rejection_reason}` : "Tinanggihan")
+                    : "Kasalukuyang sinusuri (Under review)",
               }))
             allFoundApps.push(...mappedCw)
           }

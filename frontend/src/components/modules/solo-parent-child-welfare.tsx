@@ -22,6 +22,12 @@ import {
 import { API_BASE as APP_API_BASE } from "../../config/api"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { useLanguage } from "../ui/language-context"
+import {
+  getSavedDisbursements,
+  saveDisbursements,
+  pushUserNotification,
+  type SyncedDisbursementRecord,
+} from "../../utils/financialAidSync"
 
 interface ApplicationDocument {
   name: string
@@ -2100,27 +2106,109 @@ useEffect(() => {
     try {
       await approveSubmission(app, value)
 
-      if (isSoloParent(app) && app.email) {
-        try {
-          fetch(`${API_BASE}/email/send-solo-parent-id`, {
-            method: "POST",
-            headers: authHeaders(),
-            body: JSON.stringify({
-              recipientEmail: app.email,
-              recipientName: displayName(app),
-              soloParentIdNumber: value,
-              referenceNumber: app.referenceNumber,
-              classification: app.classification,
-              applicationType: app.applicationType,
-              approvedDate: new Date().toISOString(),
-              contactNumber: app.contactNo,
-              address: [app.addressHouseNo, app.addressStreet, app.addressBarangay, app.addressCityMunicipality].filter(Boolean).join(", "),
-            }),
-          }).catch((e) => console.warn("[Solo Parent Email Error]:", e))
-        } catch (mailErr) {
-          console.warn("[Solo Parent Email Dispatch Failed]:", mailErr)
+      if (isSoloParent(app)) {
+        if (app.email) {
+          try {
+            fetch(`${API_BASE}/email/send-solo-parent-id`, {
+              method: "POST",
+              headers: authHeaders(),
+              body: JSON.stringify({
+                recipientEmail: app.email,
+                recipientName: displayName(app),
+                soloParentIdNumber: value,
+                referenceNumber: app.referenceNumber,
+                classification: app.classification,
+                applicationType: app.applicationType,
+                approvedDate: new Date().toISOString(),
+                contactNumber: app.contactNo,
+                address: [app.addressHouseNo, app.addressStreet, app.addressBarangay, app.addressCityMunicipality].filter(Boolean).join(", "),
+              }),
+            }).catch((e) => console.warn("[Solo Parent Email Error]:", e))
+          } catch (mailErr) {
+            console.warn("[Solo Parent Email Dispatch Failed]:", mailErr)
+          }
         }
+
+        // Sync Solo Parent ID claiming to Appointments
+        try {
+          fetch(`${APP_API_BASE}/api/appointments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              referenceNo: app.referenceNumber,
+              reference_no: app.referenceNumber,
+              module: "Solo Parent",
+              applicantName: displayName(app),
+              applicant_name: displayName(app),
+              concern: "Solo Parent ID Card Claiming",
+              status: "pending",
+            }),
+          }).catch(() => {})
+        } catch {}
+
+        pushUserNotification({
+          title: "Solo Parent ID: Approved",
+          desc: `Congratulations! Your Solo Parent ID application (ID No. ${value}) has been approved and forwarded to Appointments for claiming schedule.`,
+          applicationRef: app.referenceNumber,
+          assistanceType: "Solo Parent ID",
+        })
+      } else {
+        // Child Welfare Support Grant
+        const grantAmount = Number(value) || 5000
+        const supportTitle = app.supportCategory ? `${app.supportCategory} (Child Welfare)` : "Child Welfare Support"
+
+        // 1. Sync to Financial Aid Disbursements
+        try {
+          const currentDisbursements = getSavedDisbursements()
+          if (!currentDisbursements.some((d) => d.applicationRef === app.referenceNumber)) {
+            const newRecord: SyncedDisbursementRecord = {
+              id: `disb-cw-${app.referenceNumber || Date.now()}`,
+              disbursementId: `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`,
+              applicationRef: app.referenceNumber,
+              applicantName: displayName(app).toUpperCase(),
+              assistanceType: supportTitle,
+              fixedAmount: grantAmount,
+              dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
+              status: "PENDING",
+              venue: "Quezon City Hall - Social Services Development Department",
+              remarks: "Awtomatikong pumasok mula sa Child Welfare Assistance aplikasyon.",
+            }
+            saveDisbursements([newRecord, ...currentDisbursements])
+          }
+        } catch (err) {
+          console.warn("Failed saving child welfare disbursement record:", err)
+        }
+
+        // 2. Sync to Appointments for payout scheduling
+        try {
+          fetch(`${APP_API_BASE}/api/appointments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              referenceNo: app.referenceNumber,
+              reference_no: app.referenceNumber,
+              module: "Child Welfare",
+              applicantName: displayName(app),
+              applicant_name: displayName(app),
+              concern: supportTitle,
+              status: "pending",
+            }),
+          }).catch(() => {})
+        } catch {}
+
+        // 3. In-portal Bell Notification
+        pushUserNotification({
+          title: "Child Welfare: Approved",
+          desc: `Congratulations! Your application for ${supportTitle} has been approved and forwarded to Appointments for payout scheduling and Financial Aid Disbursement (₱${grantAmount.toLocaleString()}).`,
+          applicationRef: app.referenceNumber,
+          assistanceType: supportTitle,
+          amount: grantAmount,
+        })
       }
+
+      window.dispatchEvent(new Event("appointments_updated"))
+      window.dispatchEvent(new Event("financial_disbursements_updated"))
+      window.dispatchEvent(new Event("storage"))
 
       await loadApplications()
       notifyApplicationChange("APPLICATION_APPROVED", isSoloParent(app) ? "solo_parent" : "child_welfare", app.referenceNumber)

@@ -9,6 +9,12 @@ export const FIXED_ASSISTANCE_AMOUNTS: Record<string, number> = {
   "Transportation Assistance": 1000,
   "PWD Social Assistance": 2000,
   "Senior Social Assistance": 2000,
+  "Child Welfare Support": 5000,
+  "Nutritional Assistance": 5000,
+  "Child Protection Assistance": 5000,
+  "Emergency Assistance": 5000,
+  "Child Welfare Assistance": 5000,
+  "Livelihood Capital Assistance": 15000,
 }
 
 export type DisbursementStage = "PENDING" | "RELEASED"
@@ -58,7 +64,12 @@ export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
     lower.includes("food assistance") ||
     lower.includes("material assistance") ||
     lower.includes("transportation assistance") ||
-    lower.includes("burial assistance")
+    lower.includes("burial assistance") ||
+    lower.includes("child welfare") ||
+    lower.includes("nutritional") ||
+    lower.includes("child protection") ||
+    lower.includes("emergency assistance") ||
+    lower.includes("livelihood")
   ) {
     return false
   }
@@ -66,7 +77,7 @@ export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
   return (
     lower.includes("id") ||
     lower.includes("booklet") ||
-    lower.includes("solo parent") ||
+    (lower.includes("solo parent") && !lower.includes("child welfare") && !lower.includes("assistance")) ||
     lower.includes("pwd") ||
     lower.includes("senior")
   )

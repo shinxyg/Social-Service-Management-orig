@@ -454,6 +454,47 @@ export default function Appointments() {
           })
         }
 
+        // 4. Fetch from /api/child-welfare/admin/all (Approved Child Welfare Only)
+        try {
+          const resCw = await fetch(`${API_BASE}/api/child-welfare/admin/all?limit=100`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          })
+          if (resCw.ok) {
+            const dataCw = await resCw.json()
+            const cwApps = Array.isArray(dataCw.applications) ? dataCw.applications : []
+            cwApps.forEach((c: any) => {
+              const st = String(c.application_status || c.status).toLowerCase()
+              if (st === "approved" || st === "for_release" || st === "released" || st === "completed") {
+                const ref = c.reference_number || `CW-2026-${c.id}`
+                const apptId = `cw-appt-${c.id || ref}`
+                const fullName =
+                  [c.guardian_first_name, c.guardian_last_name].filter(Boolean).join(" ") ||
+                  c.child_name ||
+                  "APPLICANT"
+                const concernName = c.category_title ? `${c.category_title} (Child Welfare)` : "Child Welfare Support"
+                const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concernName}`]
+
+                appts.push({
+                  id: apptId,
+                  referenceNo: ref,
+                  module: "Child Welfare",
+                  applicantName: fullName,
+                  submittedAt: c.updated_at || c.created_at || new Date().toISOString(),
+                  concern: concernName,
+                  status: (cached?.status || "pending") as AppointmentStatus,
+                  scheduledDate: cached?.scheduledDate,
+                  scheduledTime: cached?.scheduledTime,
+                  officeLocation: cached?.officeLocation || "Quezon City Hall",
+                  notes: cached?.notes,
+                })
+              }
+            })
+          }
+        } catch {}
+
         // Strict single-appointment deduplication by normalized reference / applicant
         const dedupedMap = new Map<string, AppointmentRequest>()
         const statusPriority: Record<AppointmentStatus, number> = { completed: 3, scheduled: 2, pending: 1 }

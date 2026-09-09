@@ -222,6 +222,52 @@ export default function FinancialAidDisbursement() {
             }
           }
         } catch {}
+
+        // 5. Fetch from /api/child-welfare/admin/all (Approved Child Welfare Only)
+        try {
+          const resCw = await fetch(`${API_BASE}/api/child-welfare/admin/all?limit=100`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          })
+          if (resCw.ok) {
+            const dataCw = await resCw.json()
+            const cwApps = Array.isArray(dataCw.applications) ? dataCw.applications : []
+            const approvedCw = cwApps.filter((c: any) => {
+              const st = String(c.application_status || c.status).toLowerCase()
+              return st === "approved" || st === "for_release" || st === "released" || st === "completed"
+            })
+            approvedCw.forEach((c: any) => {
+              const ref = c.reference_number || `CW-2026-${c.id}`
+              if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
+                const fullName =
+                  [c.guardian_first_name, c.guardian_last_name].filter(Boolean).join(" ").toUpperCase() ||
+                  c.child_name?.toUpperCase() ||
+                  "BENEFICIARY"
+                const supportTitle = c.category_title ? `${c.category_title} (Child Welfare)` : "Child Welfare Support"
+                const amount = Number(c.approved_amount) || FIXED_ASSISTANCE_AMOUNTS[supportTitle] || 5000
+                const isReleased = String(c.application_status || c.status).toLowerCase() === "released"
+                remoteRecords.push({
+                  id: `remote-cw-${c.id || ref}`,
+                  disbursementId: `DISB-2026-${String(c.id || 101).padStart(4, "0")}`,
+                  applicationRef: ref,
+                  applicantName: fullName,
+                  assistanceType: supportTitle,
+                  fixedAmount: amount,
+                  dateApproved: new Date(c.updated_at || c.created_at || Date.now()).toLocaleDateString("en-PH", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  }),
+                  status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
+                  venue: "Quezon City Hall - SSDD Child Welfare Section",
+                  remarks: "Awtomatikong pumasok mula sa Child Welfare Assistance aplikasyon.",
+                })
+              }
+            })
+          }
+        } catch {}
       } catch (err) {
         console.warn("Could not fetch remote disbursements/applications:", err)
       }
