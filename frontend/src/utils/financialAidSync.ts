@@ -308,7 +308,7 @@ export function syncAppointmentToFinancialAid(params: {
 
   // Send User Notification for Scheduled Payout Appointment
   pushUserNotification({
-    title: "Nakatakda ang Inyong Payout Appointment",
+    title: "Payout Appointment Scheduled",
     desc: `Your Financial Aid payout appointment has been scheduled.\nDate: ${formattedDate}\nTime: ${params.time}\nLocation: ${params.location || "Quezon City Hall"}\nAmount: ₱${fixedAmount.toLocaleString()}`,
     applicationRef: params.referenceNo,
     assistanceType: formattedConcern,
@@ -363,7 +363,7 @@ export function syncFinancialAidRelease(recordId: string, details: {
     const rec = releasedRecord as SyncedDisbursementRecord
     // Send User Notification for Released Aid
     pushUserNotification({
-      title: "Na-release na ang Inyong Ayuda",
+      title: "Financial Aid Released",
       desc: `Your Financial Aid (${rec.assistanceType} — ₱${rec.fixedAmount.toLocaleString()}) has been released successfully. Date: ${details.releasedDate}.`,
       applicationRef: rec.applicationRef,
       assistanceType: rec.assistanceType,
@@ -445,7 +445,7 @@ export function checkAndAutoReleaseScheduledDisbursements(): number {
 
         // Send User Notification for Auto-Released Aid
         pushUserNotification({
-          title: "Na-release na ang Inyong Ayuda",
+          title: "Financial Aid Released",
           desc: `Your Financial Aid (${d.assistanceType} — ₱${d.fixedAmount.toLocaleString()}) has been automatically released at the scheduled appointment time (${d.appointmentDate} – ${finalReleaseTime}).`,
           applicationRef: d.applicationRef,
           assistanceType: d.assistanceType,
@@ -457,7 +457,7 @@ export function checkAndAutoReleaseScheduledDisbursements(): number {
           status: "RELEASED" as DisbursementStage,
           releasedDate: `${formattedReleaseDate} ${finalReleaseTime}`,
           releasedBy: "Automated Scheduled Payout System / Disbursing Officer",
-          remarks: `Awtomatikong na-release sa takdang oras ng appointment (${d.appointmentDate} - ${finalReleaseTime}).`,
+          remarks: `Automatically released at scheduled appointment time (${d.appointmentDate} - ${finalReleaseTime}).`,
         }
       }
     }

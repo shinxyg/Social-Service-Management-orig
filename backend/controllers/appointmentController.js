@@ -344,7 +344,7 @@ async function syncAppointmentWithDisbursement(appt) {
       `INSERT INTO user_notifications (title, description, application_ref)
        VALUES ($1, $2, $3)`,
       [
-        'Nakatakda ang Inyong Payout Appointment',
+        'Payout Appointment Scheduled',
         `Your Financial Aid payout appointment has been scheduled.\nDate: ${appt.scheduled_date}\nTime: ${appt.scheduled_time}\nLocation: ${appt.office_location || 'Quezon City Hall'}\nAmount: ₱${fixedAmount.toLocaleString()}`,
         appt.reference_no,
       ]

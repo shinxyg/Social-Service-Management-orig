@@ -685,9 +685,15 @@ function ResidentHeader({
             if (Array.isArray(parsedUserNotifs)) {
               parsedUserNotifs.forEach((un: any) => {
                 if (!dismissedIds.includes(un.id) && !items.some((it) => it.id === un.id)) {
+                  let normalizedTitle = un.title || ""
+                  if (normalizedTitle.includes("Nakatakda") || normalizedTitle.includes("Payout Appointment")) {
+                    normalizedTitle = "Payout Appointment Scheduled"
+                  } else if (normalizedTitle.includes("Na-release") || normalizedTitle.includes("Ayuda")) {
+                    normalizedTitle = "Financial Aid Released"
+                  }
                   items.push({
                     id: un.id,
-                    title: un.title,
+                    title: normalizedTitle,
                     desc: un.desc,
                     time: un.time || new Date().toLocaleString("en-US"),
                     unread: !readIds.includes(un.id),

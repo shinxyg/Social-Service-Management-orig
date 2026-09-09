@@ -130,7 +130,7 @@ async function autoReleaseScheduledDisbursements() {
             `INSERT INTO user_notifications (title, description, application_ref)
              VALUES ($1, $2, $3)`,
             [
-              'Na-release na ang Inyong Ayuda',
+              'Financial Aid Released',
               `Your Financial Aid (${d.assistance_type} — ₱${Number(d.fixed_amount).toLocaleString()}) has been automatically released at the scheduled appointment time (${apptDate} – ${releaseTime}).`,
               d.application_ref,
             ]
@@ -578,7 +578,7 @@ exports.releaseDisbursement = async (req, res) => {
       `INSERT INTO user_notifications (title, description, application_ref)
        VALUES ($1, $2, $3)`,
       [
-        'Na-release na ang Inyong Ayuda',
+        'Financial Aid Released',
         `Your Financial Aid (${d.assistance_type} — ₱${Number(d.fixed_amount).toLocaleString()}) has been released successfully. Date: ${finalDate}.`,
         d.application_ref,
       ]
