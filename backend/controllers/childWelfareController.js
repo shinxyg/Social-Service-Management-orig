@@ -8,6 +8,22 @@ function generateReference(qcid) {
   return '110000116932100';
 }
 
+async function initChildWelfareColumns() {
+  try {
+    await db.query(`
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS approved_amount VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS approved_by VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS admin_notes TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS uploaded_documents JSONB DEFAULT '[]'::jsonb;
+    `);
+  } catch (e) {
+    console.warn('[Child Welfare DB init columns]:', e.message);
+  }
+}
+initChildWelfareColumns();
+
 // Create new application
 exports.createApplication = async (req, res) => {
   try {

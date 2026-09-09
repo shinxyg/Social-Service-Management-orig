@@ -34,6 +34,59 @@ function getCaseType(cat, type, specificTitle) {
   return 'Community Welfare Assistance';
 }
 
+async function initCaseManagementTables() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS case_records (
+        id SERIAL PRIMARY KEY,
+        case_number VARCHAR(100) UNIQUE NOT NULL,
+        application_ref VARCHAR(100) NOT NULL,
+        program VARCHAR(100) NOT NULL DEFAULT 'AICS',
+        status VARCHAR(50) NOT NULL DEFAULT 'open',
+        priority VARCHAR(50) NOT NULL DEFAULT 'medium',
+        assigned_social_worker VARCHAR(150) DEFAULT 'Admin Social Worker',
+        notes TEXT,
+        closed_at TIMESTAMP,
+        closed_reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS case_referrals (
+        id SERIAL PRIMARY KEY,
+        case_number VARCHAR(100) NOT NULL,
+        application_ref VARCHAR(100),
+        referred_to VARCHAR(200) NOT NULL,
+        service_reason TEXT NOT NULL,
+        referred_by VARCHAR(150) DEFAULT 'Admin Social Worker',
+        referral_date VARCHAR(50),
+        status VARCHAR(50) DEFAULT 'pending',
+        remarks TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS case_monitoring (
+        id SERIAL PRIMARY KEY,
+        case_number VARCHAR(100) NOT NULL,
+        application_ref VARCHAR(100),
+        officer_name VARCHAR(150) DEFAULT 'Admin Social Worker',
+        monitoring_date VARCHAR(50),
+        progress_status VARCHAR(100) DEFAULT 'In Progress',
+        notes TEXT,
+        next_action TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+    `);
+  } catch (e) {
+    console.warn('[Case Management init tables]:', e.message);
+  }
+}
+initCaseManagementTables();
+
 exports.getAllCases = async (req, res) => {
   try {
     // 1. Fetch Approved Applications from all modules
@@ -50,16 +103,18 @@ exports.getAllCases = async (req, res) => {
       referralsRes,
       monitoringRes,
     ] = await Promise.all([
-      db.query(`SELECT * FROM aics_applications WHERE LOWER(status) IN ('approved', 'completed', 'for_release', 'released') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM pwd_senior_applications WHERE LOWER(status) IN ('approved', 'completed', 'for_release', 'released', 'verified') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM solo_parent_applications WHERE LOWER(application_status) = 'approved' AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM child_welfare_applications WHERE (is_archived IS NOT true) AND (LOWER(application_status) IN ('approved', 'completed', 'for_release', 'released') OR LOWER(COALESCE(category_title, '')) LIKE '%nutrition%' OR LOWER(COALESCE(primary_reason_for_assistance, '')) LIKE '%nutrition%') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM livelihood_applications WHERE LOWER(application_status) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(async () => {
-        return db.query(`SELECT * FROM livelihood_applications WHERE LOWER(status) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(() => ({ rows: [] }));
+      db.query(`SELECT * FROM aics_applications WHERE LOWER(COALESCE(status, '')) IN ('approved', 'completed', 'for_release', 'released') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
+      db.query(`SELECT * FROM pwd_senior_applications WHERE LOWER(COALESCE(status, '')) IN ('approved', 'completed', 'for_release', 'released', 'verified') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
+      db.query(`SELECT * FROM solo_parent_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active') ORDER BY created_at DESC`).catch(async () => {
+        return db.query(`SELECT * FROM solo_parent_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active')`).catch(() => ({ rows: [] }));
       }),
-      db.query(`SELECT * FROM training_applications WHERE LOWER(status) IN ('approved', 'completed', 'enrolled', 'graduated') AND (is_archived IS NOT true) ORDER BY created_at DESC`).catch(async () => {
-        return db.query(`SELECT * FROM training_applications WHERE LOWER(status) IN ('approved', 'completed', 'enrolled', 'graduated') ORDER BY created_at DESC`).catch(() => ({ rows: [] }));
+      db.query(`SELECT * FROM child_welfare_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active') OR LOWER(COALESCE(category_title, '')) LIKE '%nutrition%' OR LOWER(COALESCE(primary_reason_for_assistance, '')) LIKE '%nutrition%' ORDER BY created_at DESC`).catch(async () => {
+        return db.query(`SELECT * FROM child_welfare_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_release', 'released', 'active') OR LOWER(COALESCE(category_title, '')) LIKE '%nutrition%' OR LOWER(COALESCE(primary_reason_for_assistance, '')) LIKE '%nutrition%'`).catch(() => ({ rows: [] }));
       }),
+      db.query(`SELECT * FROM livelihood_applications WHERE LOWER(COALESCE(application_status, status, '')) IN ('approved', 'completed', 'for_processing', 'for_release', 'released') ORDER BY created_at DESC`).catch(async () => {
+        return db.query(`SELECT * FROM livelihood_applications WHERE LOWER(COALESCE(status, '')) IN ('approved', 'completed', 'for_processing', 'for_release', 'released')`).catch(() => ({ rows: [] }));
+      }),
+      db.query(`SELECT * FROM training_applications WHERE LOWER(COALESCE(status, '')) IN ('approved', 'completed', 'enrolled', 'graduated') ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM appointments ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM financial_aid_disbursements ORDER BY created_at DESC`).catch(() => ({ rows: [] })),
       db.query(`SELECT * FROM case_records`).catch(() => ({ rows: [] })),
