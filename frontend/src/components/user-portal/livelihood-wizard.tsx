@@ -149,6 +149,20 @@ export default function LivelihoodApplicationWizard({
   useEffect(() => {
     onStepChange?.(step)
   }, [step, onStepChange])
+
+  // Alert before reloading when on step 2 or higher
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (step >= 2 && !isSubmitting) {
+        e.preventDefault()
+        e.returnValue = ""
+        return ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [step, isSubmitting])
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isEditingInfo, setIsEditingInfo] = useState(false)
