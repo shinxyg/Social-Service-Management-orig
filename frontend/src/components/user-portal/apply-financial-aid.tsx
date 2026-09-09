@@ -163,8 +163,12 @@ export default function ApplyFinancialAid() {
         // 3. Fetch Child Welfare Approved Applications for user
         try {
           const userObj = JSON.parse(localStorage.getItem("user") || "{}")
-          const userId = userObj.id || qcId
-          const cwRes = await fetch(`${API_BASE}/api/child-welfare/user/${userId}`)
+          const userId = userObj.id || qcId || "0"
+          const token = localStorage.getItem("token") || localStorage.getItem("authToken") || ""
+          const cwRes = await fetch(
+            `${API_BASE}/api/child-welfare/user/${userId}?qcid=${encodeURIComponent(qcId)}&email=${encodeURIComponent(userProfile?.email || "")}`,
+            { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+          )
           if (cwRes.ok) {
             const cwData = await cwRes.json()
             const cwApps = Array.isArray(cwData.applications) ? cwData.applications : []
