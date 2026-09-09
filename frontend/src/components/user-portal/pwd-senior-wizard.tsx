@@ -4,6 +4,7 @@ import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
 type DisabilityClass = "apparent" | "non-apparent" | null
 type IdStatus = "new" | "renewal" | "loss" | null

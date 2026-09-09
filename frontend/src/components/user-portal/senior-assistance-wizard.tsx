@@ -735,9 +735,9 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
       }).catch(() => {})
 
       // Dispatch real-time event to Admin dashboard
-      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)
     } catch {
-      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
+      notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)
     }
 
     bypassedActiveAppRef.current = false
@@ -818,7 +818,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
             >
               {language === "tl"
                 ? "TINGNAN SA FINANCIAL AID / APPLICATION HISTORY"
-                : language === "ceb"
+                : language === "bis"
                 ? "TAN-AWA SA FINANCIAL AID / APPLICATION HISTORY"
                 : "VIEW IN FINANCIAL AID / APPLICATION HISTORY"}
             </button>
@@ -850,7 +850,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
                 <span>
                   {language === "tl"
                     ? "MAG-APPLY MULI (RE-APPLY)"
-                    : language === "ceb"
+                    : language === "bis"
                     ? "PAG-APPLY PAG-USAB (RE-APPLY)"
                     : "RE-APPLY (APPLY AGAIN)"}
                 </span>
