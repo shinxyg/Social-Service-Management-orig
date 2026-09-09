@@ -44,14 +44,27 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
+const REG_DRAFT_KEY = 'govserve_register_draft';
+
+const getSavedDraft = () => {
+  try {
+    const raw = sessionStorage.getItem(REG_DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const Register = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>(0);
   const location = useLocation();
   const googleProfile = (location.state as { googleProfile?: { email: string; firstName: string; lastName: string } } | null)?.googleProfile;
 
-  const [email, setEmail] = useState(googleProfile?.email || '');
-  const [otpSent, setOtpSent] = useState(false);
+  const [savedDraft] = useState(() => getSavedDraft());
+
+  const [step, setStep] = useState<Step>(() => (savedDraft?.step === 1 ? 1 : 0));
+  const [email, setEmail] = useState(() => savedDraft?.email || googleProfile?.email || '');
+  const [otpSent, setOtpSent] = useState(() => savedDraft?.otpSent ?? false);
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const otpInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [resendMessage, setResendMessage] = useState('');
@@ -59,26 +72,26 @@ export const Register = () => {
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [isResendingOtp, setIsResendingOtp] = useState(false);
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [suffix, setSuffix] = useState('');
-  const [birthMonth, setBirthMonth] = useState('');
-  const [birthDay, setBirthDay] = useState('');
-  const [birthYear, setBirthYear] = useState('');
+  const [firstName, setFirstName] = useState(() => savedDraft?.firstName ?? '');
+  const [lastName, setLastName] = useState(() => savedDraft?.lastName ?? '');
+  const [middleName, setMiddleName] = useState(() => savedDraft?.middleName ?? '');
+  const [suffix, setSuffix] = useState(() => savedDraft?.suffix ?? '');
+  const [birthMonth, setBirthMonth] = useState(() => savedDraft?.birthMonth ?? '');
+  const [birthDay, setBirthDay] = useState(() => savedDraft?.birthDay ?? '');
+  const [birthYear, setBirthYear] = useState(() => savedDraft?.birthYear ?? '');
 
   // Step 2 - Address
-  const [city, setCity] = useState('');
-  const [specifyCity, setSpecifyCity] = useState('');
-  const [houseNo, setHouseNo] = useState('');
-  const [street, setStreet] = useState('');
-  const [barangay, setBarangay] = useState('');
+  const [city, setCity] = useState(() => savedDraft?.city ?? '');
+  const [specifyCity, setSpecifyCity] = useState(() => savedDraft?.specifyCity ?? '');
+  const [houseNo, setHouseNo] = useState(() => savedDraft?.houseNo ?? '');
+  const [street, setStreet] = useState(() => savedDraft?.street ?? '');
+  const [barangay, setBarangay] = useState(() => savedDraft?.barangay ?? '');
 
   // Step 2 - Employment Details
-  const [workingInQC, setWorkingInQC] = useState<'Yes' | 'No' | ''>('');
-  const [occupation, setOccupation] = useState('');
-  const [sex, setSex] = useState('');
-  const [mobileNumber, setMobileNumber] = useState('09');
+  const [workingInQC, setWorkingInQC] = useState<'Yes' | 'No' | ''>(() => savedDraft?.workingInQC ?? '');
+  const [occupation, setOccupation] = useState(() => savedDraft?.occupation ?? '');
+  const [sex, setSex] = useState(() => savedDraft?.sex ?? '');
+  const [mobileNumber, setMobileNumber] = useState(() => savedDraft?.mobileNumber ?? '09');
 
   // Step 2 - Login Credentials
   const [password, setPassword] = useState('');
@@ -92,12 +105,83 @@ export const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigatingToLogin, setIsNavigatingToLogin] = useState(false);
 
+  // Sync draft state to sessionStorage whenever form changes so reload preserves step 1
+  useEffect(() => {
+    if (step === 2) {
+      try {
+        sessionStorage.removeItem(REG_DRAFT_KEY);
+      } catch {}
+      return;
+    }
+    try {
+      sessionStorage.setItem(
+        REG_DRAFT_KEY,
+        JSON.stringify({
+          step,
+          email,
+          otpSent,
+          firstName,
+          lastName,
+          middleName,
+          suffix,
+          birthMonth,
+          birthDay,
+          birthYear,
+          city,
+          specifyCity,
+          houseNo,
+          street,
+          barangay,
+          workingInQC,
+          occupation,
+          sex,
+          mobileNumber,
+        })
+      );
+    } catch {}
+  }, [
+    step,
+    email,
+    otpSent,
+    firstName,
+    lastName,
+    middleName,
+    suffix,
+    birthMonth,
+    birthDay,
+    birthYear,
+    city,
+    specifyCity,
+    houseNo,
+    street,
+    barangay,
+    workingInQC,
+    occupation,
+    sex,
+    mobileNumber,
+  ]);
+
+  // Warn user before accidental page reload / navigation when on Step 1
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (step === 1) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [step]);
+
   // Reset dependent fields when city changes.
   useEffect(() => {
-    setSpecifyCity('');
-    setHouseNo('');
-    setStreet('');
-    setBarangay('');
+    if (!city) {
+      setSpecifyCity('');
+      setHouseNo('');
+      setStreet('');
+      setBarangay('');
+    }
   }, [city]);
 
   // Clear occupation whenever the person says they don't work in QC.
@@ -377,6 +461,9 @@ export const Register = () => {
   };
 
   const handleBackToLogin = () => {
+    try {
+      sessionStorage.removeItem(REG_DRAFT_KEY);
+    } catch {}
     setIsNavigatingToLogin(true);
     setTimeout(() => {
       navigate('/login');
@@ -553,7 +640,12 @@ export const Register = () => {
 
                   <button
                     type="button"
-                    onClick={() => setOtpSent(false)}
+                    onClick={() => {
+                      setOtpSent(false);
+                      try {
+                        sessionStorage.removeItem(REG_DRAFT_KEY);
+                      } catch {}
+                    }}
                     className="w-full text-center text-xs text-slate-400 hover:text-slate-600 hover:underline font-medium bg-transparent border-none cursor-pointer p-0"
                   >
                     Use a different email
