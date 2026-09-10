@@ -200,10 +200,10 @@ exports.register = async (req, res) => {
     const newUser = {
       email: cleanEmail,
       password: password || 'default123',
-      firstName: (firstName || '').trim(),
-      lastName: (lastName || '').trim(),
-      middleName: (middleName || '').trim(),
-      suffix: (suffix || '').trim(),
+      firstName: (firstName || '').trim().toUpperCase(),
+      lastName: (lastName || '').trim().toUpperCase(),
+      middleName: (middleName || '').trim().toUpperCase(),
+      suffix: (suffix || '').trim().toUpperCase(),
       birthDate: finalBirthDate,
       birthMonth: birthMonth || '',
       birthDay: birthDay || '',
@@ -922,6 +922,15 @@ exports.getAllUsers = async (req, res) => {
 
     let dbUsers = [];
     try {
+      // Strictly standardize all existing names in database to UPPERCASE
+      await db.query(`
+        UPDATE users 
+        SET first_name = UPPER(first_name), 
+            middle_name = UPPER(middle_name), 
+            last_name = UPPER(last_name), 
+            suffix = UPPER(suffix);
+      `).catch(() => {});
+
       const result = await db.query(`SELECT * FROM users ORDER BY id ASC`);
       dbUsers = result.rows || [];
     } catch (dbErr) {
@@ -1004,10 +1013,12 @@ exports.getAllUsers = async (req, res) => {
           totalApps = aicsCount + pwdCount + soloCount + childCount + liveCount;
         } catch {}
 
-        const fullName = [u.first_name, u.middle_name, u.last_name, u.suffix]
+        const rawFullName = [u.first_name, u.middle_name, u.last_name, u.suffix]
           .filter(Boolean)
           .join(' ')
           .trim() || (String(u.role || '').toLowerCase() === 'admin' || u.email === 'admin' ? 'System Administrator' : 'Registered Resident');
+
+        const fullName = rawFullName.toUpperCase();
 
         const isAdmin = ['admin', 'administrator', 'super_admin'].includes(String(u.role || '').toLowerCase()) || u.email === 'admin' || u.email === 'admin@quezoncity.gov.ph';
         const displayRole = isAdmin ? 'ADMINISTRATOR' : 'USER / BENEFICIARY';
@@ -1028,10 +1039,10 @@ exports.getAllUsers = async (req, res) => {
           numericId: u.id,
           qcidNumber: userQcid,
           name: fullName,
-          firstName: u.first_name || '',
-          lastName: u.last_name || '',
-          middleName: u.middle_name || '',
-          suffix: u.suffix || '',
+          firstName: (u.first_name || '').toUpperCase(),
+          lastName: (u.last_name || '').toUpperCase(),
+          middleName: (u.middle_name || '').toUpperCase(),
+          suffix: (u.suffix || '').toUpperCase(),
           email: cleanDisplayEmail,
           contactNumber: u.mobile_number || u.phone || u.contact_no || '—',
           role: displayRole,
@@ -1175,11 +1186,11 @@ exports.getUserById = async (req, res) => {
         id: `USR-${String(dbUser.id).padStart(4, '0')}`,
         numericId: dbUser.id,
         qcidNumber: dbUser.qcid_number || `110000${String(dbUser.id).padStart(9, '0')}`,
-        name: fullName,
-        firstName: dbUser.first_name || '',
-        lastName: dbUser.last_name || '',
-        middleName: dbUser.middle_name || '',
-        suffix: dbUser.suffix || '',
+        name: fullName.toUpperCase(),
+        firstName: (dbUser.first_name || '').toUpperCase(),
+        lastName: (dbUser.last_name || '').toUpperCase(),
+        middleName: (dbUser.middle_name || '').toUpperCase(),
+        suffix: (dbUser.suffix || '').toUpperCase(),
         email: dbUser.email,
         contactNumber: dbUser.mobile_number || '—',
         role: isAdmin ? 'ADMINISTRATOR' : 'USER / BENEFICIARY',
@@ -1264,6 +1275,10 @@ exports.updateUser = async (req, res) => {
     const contact = mobileNumber || contactNumber;
     const normRole = (role && String(role).toLowerCase().includes('admin')) ? 'admin' : 'user';
     const normStatus = (status && String(status).toLowerCase().includes('inactive')) ? 'inactive' : 'active';
+    const cleanFirst = firstName ? String(firstName).trim().toUpperCase() : null;
+    const cleanLast = lastName ? String(lastName).trim().toUpperCase() : null;
+    const cleanMiddle = middleName ? String(middleName).trim().toUpperCase() : null;
+    const cleanSuffix = suffix ? String(suffix).trim().toUpperCase() : null;
 
     const updateRes = await db.query(
       `UPDATE users SET
@@ -1277,7 +1292,7 @@ exports.updateUser = async (req, res) => {
         updated_at = NOW()
        WHERE id = $8 OR qcid_number = $9 OR LOWER(email) = $10
        RETURNING id, email, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, updated_at`,
-      [firstName, lastName, middleName, suffix, contact, normRole, normStatus, cleanId || '0', id, String(id).toLowerCase()]
+      [cleanFirst, cleanLast, cleanMiddle, cleanSuffix, contact, normRole, normStatus, cleanId || '0', id, String(id).toLowerCase()]
     );
 
     if (updateRes.rows.length === 0) {

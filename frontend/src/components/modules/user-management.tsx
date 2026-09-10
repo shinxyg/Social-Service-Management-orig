@@ -166,7 +166,7 @@ function UserCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <h3 className="text-base font-bold text-slate-900 tracking-tight truncate">
+            <h3 className="text-base font-bold text-slate-900 tracking-tight truncate uppercase">
               {u.name}
             </h3>
 
@@ -357,7 +357,7 @@ function ManageUserModal({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg md:text-xl font-extrabold text-slate-900">
+                <h2 className="text-lg md:text-xl font-extrabold text-slate-900 uppercase">
                   {detailedUser.name}
                 </h2>
                 <span
