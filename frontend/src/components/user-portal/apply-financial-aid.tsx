@@ -4,8 +4,6 @@ import {
   CheckCircle2,
   Clock,
   ShieldCheck,
-  Copy,
-  Check,
   Calendar,
   Info,
   MapPin,
@@ -27,7 +25,6 @@ import { useLanguage } from "../ui/language-context"
 export default function ApplyFinancialAid() {
   const { t } = useLanguage()
   const [disbursements, setDisbursements] = useState<SyncedDisbursementRecord[]>([])
-  const [copiedVoucher, setCopiedVoucher] = useState<string | null>(null)
 
   // Auto-sync approved disbursements and scheduled payout appointments
   useEffect(() => {
@@ -362,12 +359,6 @@ export default function ApplyFinancialAid() {
       window.removeEventListener("storage", handleSync)
     }
   }, [])
-
-  const handleCopy = (voucher: string) => {
-    navigator.clipboard?.writeText(voucher)
-    setCopiedVoucher(voucher)
-    setTimeout(() => setCopiedVoucher(null), 2000)
-  }
 
   const getStageBadge = (status: DisbursementStage, hasAppointment?: boolean) => {
     if (status === "RELEASED") {

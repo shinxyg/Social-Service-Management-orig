@@ -9,8 +9,6 @@ import {
   CheckCircle2,
   ArrowRight,
   Info,
-  Copy,
-  Check,
   User,
   Building2,
   FileCheck,
@@ -114,8 +112,6 @@ export default function LivelihoodAssistanceView({
   application,
   onProceedToMonitoring,
 }: LivelihoodAssistanceViewProps) {
-  const [copiedRef, setCopiedRef] = useState(false)
-
   // 1-second real-time tick to guarantee live transition exactly when scheduled time arrives
   const [, setTick] = useState(0)
   useEffect(() => {
@@ -156,14 +152,6 @@ export default function LivelihoodAssistanceView({
       : "for_processing"
   const fullName = `${application.first_name || ""} ${application.middle_name ? application.middle_name + " " : ""}${application.last_name || ""}${application.suffix ? " " + application.suffix : ""}`.trim() || "Beneficiary Name"
   const financialAmount = Number(assistance.approved_financial_amount) || 15000
-
-  const handleCopyRef = () => {
-    if (application.reference_number) {
-      navigator.clipboard?.writeText(application.reference_number)
-      setCopiedRef(true)
-      setTimeout(() => setCopiedRef(false), 2000)
-    }
-  }
 
   const requestedAssistance = Array.isArray(application.assistance_needed) && application.assistance_needed.length > 0
     ? application.assistance_needed.join(", ")

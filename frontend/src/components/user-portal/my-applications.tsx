@@ -9,8 +9,6 @@ import {
   Sparkles,
   ChevronRight,
   ShieldCheck,
-  Copy,
-  Check,
   Banknote,
   MapPin,
   Trash2,
@@ -910,12 +908,6 @@ export default function MyApplications() {
       app.assistanceCategory.toLowerCase().includes(q)
     )
   })
-
-  const handleCopyNo = (text: string) => {
-    navigator.clipboard?.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   // STATUS HELPERS
   const getStatusBadge = (status: ApplicationStatus) => {
