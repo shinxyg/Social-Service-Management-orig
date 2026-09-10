@@ -27,6 +27,7 @@ import { getCurrentUserProfile } from "../../utils/userProfile"
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import {
   FIXED_ASSISTANCE_AMOUNTS,
+  resolveFixedAmount,
   getSavedDisbursements,
   checkAndAutoReleaseScheduledDisbursements,
   isIdOrDocumentService,
@@ -1573,9 +1574,95 @@ export default function MyApplications() {
                     )
                   }
 
-                  const rawType = (app.assistance || "").replace(/\s*assistance/gi, "").trim()
-                  const formattedType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
-                  const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[formattedType] || FIXED_ASSISTANCE_AMOUNTS[app.assistance] || 1000
+                  const isLivelihoodApp =
+                    app.assistanceCategory === "Livelihood" ||
+                    app.assistance.toLowerCase().includes("livelihood")
+
+                  if (isLivelihoodApp) {
+                    const isReleased = app.status === "Released"
+                    return (
+                      <div className="bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-emerald-50/90 border border-amber-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                            <GraduationCap className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-0.5 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-extrabold uppercase text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                                Livelihood Grant Package
+                              </span>
+                              <span className="text-[11px] font-mono text-amber-900 font-bold">
+                                {app.applicationNo}
+                              </span>
+                            </div>
+                            <p className="font-bold text-gray-900">
+                              Approved Capital Grant: <span className="text-emerald-700 font-black text-sm">₱15,000</span> + Starter Pack &amp; Tools
+                            </p>
+                            <p className="text-[11px] text-gray-600 flex items-center gap-1">
+                              <Package className="w-3 h-3 text-amber-600" />
+                              <span>Package Inclusions: <strong className="text-amber-950">₱15,000 Seed Capital • Starter Pack • Equipment Kit</strong></span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="sm:text-right shrink-0">
+                          <span className="text-[10px] text-gray-400 font-bold uppercase block">{isReleased ? "Grant Status" : "Capital Seed"}</span>
+                          <span className="text-lg font-black text-emerald-700">₱15,000</span>
+                          {isReleased ? (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300 block mt-0.5">
+                              ✓ In Monitoring
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 block mt-0.5">
+                              Approved Package
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  const isTrainingApp =
+                    app.assistanceCategory === "Training" ||
+                    app.assistance.toLowerCase().includes("training")
+
+                  if (isTrainingApp) {
+                    return (
+                      <div className="bg-gradient-to-r from-purple-50/90 via-indigo-50/60 to-blue-50/90 border border-purple-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                            <GraduationCap className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-0.5 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-extrabold uppercase text-purple-900 bg-purple-100 px-2 py-0.5 rounded border border-purple-300">
+                                Skills Training Program
+                              </span>
+                              <span className="text-[11px] font-mono text-purple-900 font-bold">
+                                {app.applicationNo}
+                              </span>
+                            </div>
+                            <p className="font-bold text-gray-900">
+                              Enrolled Course: <span className="text-purple-900 font-bold text-sm">{app.assistance}</span>
+                            </p>
+                            <p className="text-[11px] text-gray-600 flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-purple-600" />
+                              <span>Free Government Vocational Training &amp; Starter Certificate</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="sm:text-right shrink-0">
+                          <span className="text-[10px] text-gray-400 font-bold uppercase block">Course Fee</span>
+                          <span className="text-sm font-black text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full border border-purple-300 inline-block mt-0.5">
+                            100% FREE / SCHOLARSHIP
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  const fixedAmt = resolveFixedAmount(app.assistance)
 
                   const savedDisbursements = getSavedDisbursements()
                   const matchDisb = savedDisbursements.find(
