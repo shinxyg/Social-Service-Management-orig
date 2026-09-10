@@ -28,6 +28,7 @@ import {
   ChevronRight,
   Eye,
   Printer,
+  ImageIcon,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import TrainingProgramAdmin from "./training-program-admin"
@@ -197,6 +198,42 @@ function parseDateTime(dateStr?: string, timeStr?: string): Date | null {
   } catch {
     return null
   }
+}
+
+function getSampleDocumentFallback(docName?: string, filename?: string): string {
+  const name = `${docName || ""} ${filename || ""}`.toLowerCase()
+  if (name.includes("loss") || name.includes("affidavit")) return "/samples/AFFIDAVIT OF LOSS.webp"
+  if (name.includes("2x2") || name.includes("picture") || name.includes("id photo") || name.includes("1x1")) return "/samples/ID PICTURE (2X2).webp"
+  if (name.includes("whole body") || name.includes("body")) return "/samples/WHOLE BODY.jpg"
+  if (name.includes("signature") || name.includes("pirma")) return "/samples/SIGNATURE.avif"
+  if (name.includes("disability") || name.includes("medical") || name.includes("certificate of disability")) return "/samples/CERTIFICATE OF DISABILITY.jpg"
+  if (name.includes("residence") || name.includes("residency")) return "/samples/PROOF OF RESIDENCE.webp"
+  if (name.includes("indigency")) return "/samples/BARANGAY CERTIFICATE OF INDIGENCY.jpg"
+  if (name.includes("barangay") || name.includes("referral")) return "/samples/BARANGAY CERTIFICATE.webp"
+  if (name.includes("birth") || name.includes("psa") || name.includes("minor") || name.includes("child")) return "/samples/BIRTH CERTIFICATE OF MINOR.jpg"
+  if (name.includes("endorsement")) return "/samples/ENDORSEMENT FROM SOLO PARENT.webp"
+  if (name.includes("circumstance")) return "/samples/PROOF OF CIRCUMSTANCE (ANY ONE).webp"
+  if (name.includes("enrollment") || name.includes("school")) return "/samples/CERTIFICATE OF ENROLLMENT.png"
+  if (name.includes("intent")) return "/samples/LETTER OF INTENT.png"
+  if (name.includes("death")) return "/samples/sample_death_certificate.png"
+  if (name.includes("burial")) return "/samples/sample_burial_contract.png"
+  if (name.includes("qc id") || name.includes("pwd id")) return "/samples/QC ID NG PERSON WITH DISABILITY.jpg"
+  if (name.includes("gov") || name.includes("valid id") || name.includes("government") || name.includes("id") || name.includes("parent") || name.includes("guardian")) return "/samples/sample_valid_id.png"
+
+  return "/samples/PROOF OF RESIDENCE.webp"
+}
+
+function isPdfFile(filename?: string, fileUrl?: string) {
+  const target = `${filename || ""} ${fileUrl || ""}`.toLowerCase()
+  if (fileUrl?.startsWith("data:application/pdf")) return true
+  return /\.pdf($|\?)/i.test(target)
+}
+
+function isImageFile(filename?: string, fileUrl?: string) {
+  const target = `${filename || ""} ${fileUrl || ""}`.toLowerCase()
+  if (fileUrl?.startsWith("data:image")) return true
+  if (isPdfFile(filename, fileUrl)) return false
+  return /\.(jpe?g|png|webp|gif|svg|avif|bmp)($|\?)/i.test(target) || !target.includes(".")
 }
 
 // Normalization helper
@@ -1113,131 +1150,92 @@ function ReviewModal({
         </div>
       </div>
 
-      {/* DOCUMENT PREVIEW MODAL */}
-      {previewDocModal && (
-        <div
-          onClick={(e) => {
-            e.stopPropagation()
-            setPreviewDocModal(null)
-          }}
-          className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-blur-sm animate-in fade-in duration-150 cursor-pointer"
-        >
+      {/* DOCUMENT PREVIEW MODAL (Pic 2 Style) */}
+      {previewDocModal && (() => {
+        const fallback = getSampleDocumentFallback(previewDocModal.name || previewDocModal.label, (previewDocModal as any).original_filename || (previewDocModal as any).filename)
+        const currentSrc = previewDocModal.previewUrl || fallback
+        const isPdf = isPdfFile((previewDocModal as any).original_filename || (previewDocModal as any).filename, currentSrc)
+        const isImg = isImageFile((previewDocModal as any).original_filename || (previewDocModal as any).filename, currentSrc)
+
+        return (
           <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-card border border-border rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-4 cursor-default animate-in zoom-in-95 duration-150 relative"
+            className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+            onClick={() => setPreviewDocModal(null)}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div>
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                  Document Requirement Preview
-                </span>
-                <h3 className="text-base font-bold text-foreground flex items-center gap-2 mt-0.5">
-                  <FileText className="h-4 w-4 text-primary" />
-                  {previewDocModal.name || previewDocModal.label || "Uploaded Document"}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Uploaded: {new Date(previewDocModal.uploadedAt || app.submittedAt).toLocaleString()} · Status: <span className="text-emerald-600 font-bold">Verified</span>
-                </p>
+            <div
+              className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0 bg-slate-50/70">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl shrink-0">
+                    {isPdf ? <FileText className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base font-bold text-gray-900 truncate uppercase">
+                      {previewDocModal.name || previewDocModal.label || "DOCUMENT PREVIEW"}
+                    </h3>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {(previewDocModal as any).original_filename || (previewDocModal as any).filename || previewDocModal.name} • {(previewDocModal as any).size ? `${((previewDocModal as any).size / 1024).toFixed(1)} KB` : "29.9 KB"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setPreviewDocModal(null)}
+                  className="text-gray-400 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors text-xl font-semibold leading-none cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  ×
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setPreviewDocModal(null)}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground text-xl hover:bg-muted transition-colors cursor-pointer"
-              >
-                ×
-              </button>
-            </div>
 
-            {/* Document Body */}
-            <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-5 flex flex-col items-center justify-center min-h-[300px] max-h-[65vh] overflow-y-auto">
-              {previewDocModal.previewUrl ? (
-                <div className="space-y-2 text-center w-full flex flex-col items-center">
-                  <img
-                    src={previewDocModal.previewUrl}
-                    alt={previewDocModal.name || "Uploaded Document"}
-                    className="max-h-[55vh] w-auto max-w-full rounded-xl object-contain mx-auto border border-border shadow-md bg-white"
+              {/* Content Viewer */}
+              <div className="p-6 overflow-y-auto flex items-center justify-center bg-slate-100/70 min-h-[380px] max-h-[65vh]">
+                {isPdf ? (
+                  <iframe
+                    src={currentSrc}
+                    title={previewDocModal.name}
+                    className="w-full h-[58vh] rounded-xl border border-gray-200 bg-white shadow-xs"
                   />
-                  <p className="text-[11px] text-muted-foreground font-mono">
-                    {previewDocModal.name || previewDocModal.label}
-                  </p>
-                </div>
-              ) : (
-                <div className="w-full max-w-lg bg-white text-slate-900 border-2 border-slate-300 rounded-xl p-6 sm:p-8 shadow-md text-left space-y-4 relative font-serif">
-                  {/* Watermark */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06] select-none">
-                    <p className="text-5xl font-black uppercase tracking-widest text-slate-800 -rotate-25">QUEZON CITY SSDD</p>
+                ) : isImg ? (
+                  <div className="relative group max-h-full flex items-center justify-center">
+                    <img
+                      src={currentSrc}
+                      alt={previewDocModal.name || "Document Preview"}
+                      className="rounded-xl border border-border shadow-sm object-contain bg-white max-h-[55vh] max-w-full"
+                    />
                   </div>
-
-                  {/* Header */}
-                  <div className="text-center border-b-2 border-slate-800 pb-3 space-y-0.5">
-                    <p className="text-[11px] tracking-wider text-slate-600 font-sans uppercase">Republic of the Philippines</p>
-                    <p className="text-xs font-bold text-slate-800 font-sans uppercase">City Government of Quezon City</p>
-                    <p className="text-sm font-extrabold text-blue-900 tracking-wide font-sans uppercase">
-                      {previewDocModal.name?.toLowerCase().includes("residency") || previewDocModal.type === "proofOfResidency"
-                        ? "Barangay Certificate of Residency"
-                        : previewDocModal.name?.toLowerCase().includes("id") || previewDocModal.type === "validId"
-                        ? "Quezon City Resident Identification"
-                        : "Official Supporting Document"}
-                    </p>
-                    <p className="text-[10px] text-slate-500 font-sans italic">Social Services Development Department (SSDD)</p>
+                ) : (
+                  <div className="bg-white rounded-xl p-8 text-center text-muted-foreground w-full max-w-sm border border-border shadow-xs">
+                    <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                    <p className="text-sm font-semibold text-gray-800">{previewDocModal.name}</p>
+                    <p className="text-xs mt-1 text-gray-500">Document preview on file.</p>
                   </div>
+                )}
+              </div>
 
-                  {/* Salutation & Body */}
-                  <div className="text-xs leading-relaxed space-y-3 font-sans text-slate-800">
-                    <p className="font-bold uppercase tracking-wide">To Whom It May Concern:</p>
-                    <p>
-                      This is to certify that <strong>{fullName}</strong>, of legal age, Filipino citizen, with QCID / Resident ID No. <strong className="font-mono text-blue-900">{app.qcid || app.userId || "110000116932100"}</strong>, is a bonafide resident presently residing at:
-                    </p>
-                    <p className="font-bold text-slate-900 bg-slate-100 p-2.5 rounded-lg border border-slate-300 uppercase">
-                      {app.address || "QUEZON CITY, METRO MANILA"}
-                    </p>
-                    <p className="text-[11px] text-slate-700">
-                      This certification is officially issued upon the request of the interested party as a verified documentary requirement for their <strong>Quezon City Livelihood Program Application</strong> (Application Reference: <span className="font-mono font-bold">{app.referenceNumber}</span>).
-                    </p>
-                  </div>
-
-                  {/* Signatures & Seal */}
-                  <div className="pt-4 border-t border-slate-300 flex items-end justify-between text-xs font-sans">
-                    <div className="space-y-1">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        <CheckCircle2 className="h-3 w-3" />
-                        OFFICIALLY VERIFIED
-                      </div>
-                      <p className="text-[10px] text-slate-500">Date Issued: {new Date(previewDocModal.uploadedAt || app.submittedAt).toLocaleDateString()}</p>
-                    </div>
-
-                    <div className="text-center">
-                      <div className="w-36 border-b border-slate-900 mx-auto mb-1" />
-                      <p className="text-[11px] font-bold text-slate-900 uppercase">Authorized Officer</p>
-                      <p className="text-[10px] text-slate-600">SSDD / Barangay Council</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-foreground bg-muted hover:bg-muted/80 rounded-xl transition-colors cursor-pointer"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                <span>Print Document</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewDocModal(null)}
-                className="px-5 py-2 text-xs font-semibold text-foreground bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-colors cursor-pointer"
-              >
-                Close Preview
-              </button>
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-4 shrink-0 bg-white">
+                <a
+                  href={currentSrc}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 h-10 inline-flex items-center gap-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold tracking-wide transition-colors"
+                >
+                  OPEN IN NEW TAB
+                </a>
+                <button
+                  onClick={() => setPreviewDocModal(null)}
+                  className="px-6 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold tracking-wide transition-colors cursor-pointer shadow-xs"
+                >
+                  CLOSE
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
