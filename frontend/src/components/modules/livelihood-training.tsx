@@ -2799,11 +2799,15 @@ export default function LivelihoodApplicationsAdmin() {
                     : new Date(app.submittedAt).toLocaleDateString()
 
                   return (
-                    <div key={app.id} className="bg-card border border-border rounded-xl p-4 sm:p-5 hover:shadow-md transition-shadow">
+                    <div
+                      key={app.id}
+                      onClick={() => setSelectedAssistanceApp(app)}
+                      className="bg-card border border-border rounded-xl p-4 sm:p-5 hover:shadow-md hover:border-indigo-500/60 transition-all cursor-pointer group"
+                    >
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div className="flex-1 min-w-0 space-y-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base font-bold text-foreground truncate">{name}</h3>
+                            <h3 className="text-base font-bold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">{name}</h3>
                             <span className="font-mono text-xs font-semibold text-foreground">REF: {app.referenceNumber}</span>
                             <AssistanceStatusBadge status={assistStatus} />
                           </div>
@@ -2831,15 +2835,7 @@ export default function LivelihoodApplicationsAdmin() {
                         </div>
 
                         <div className="flex items-center sm:self-center shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedAssistanceApp(app)}
-                            id={`btn-process-assistance-${app.id}`}
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
-                          >
-                            <Package className="h-4 w-4" />
-                            [ PROCESS ASSISTANCE ]
-                          </button>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-indigo-600 transition-transform group-hover:translate-x-1" />
                         </div>
                       </div>
                     </div>
@@ -2897,11 +2893,15 @@ export default function LivelihoodApplicationsAdmin() {
                   const lastUpdate = app.monitoring[0]?.progress_update || "Active business operation"
 
                   return (
-                    <div key={app.id} className="bg-card border border-border rounded-xl p-4 sm:p-5 hover:shadow-md transition-shadow">
+                    <div
+                      key={app.id}
+                      onClick={() => setSelectedMonitoringApp(app)}
+                      className="bg-card border border-border rounded-xl p-4 sm:p-5 hover:shadow-md hover:border-emerald-500/60 transition-all cursor-pointer group"
+                    >
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div className="flex-1 min-w-0 space-y-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base font-bold text-foreground truncate">{name}</h3>
+                            <h3 className="text-base font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">{name}</h3>
                             <span className="font-mono text-xs font-semibold text-foreground">REF: {app.referenceNumber}</span>
                             <MonitoringStatusBadge status={monStatus} />
                           </div>
@@ -2925,15 +2925,7 @@ export default function LivelihoodApplicationsAdmin() {
                         </div>
 
                         <div className="flex items-center sm:self-center shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedMonitoringApp(app)}
-                            id={`btn-monitor-${app.id}`}
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
-                          >
-                            <Activity className="h-4 w-4" />
-                            [ MONITOR ]
-                          </button>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-emerald-600 transition-transform group-hover:translate-x-1" />
                         </div>
                       </div>
                     </div>
