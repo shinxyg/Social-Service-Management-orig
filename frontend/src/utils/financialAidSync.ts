@@ -107,19 +107,105 @@ export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
   )
 }
 
+// ── DELETED DISBURSEMENTS TRACKER ──
+export function getDeletedDisbursementKeys(): Set<string> {
+  try {
+    const raw = localStorage.getItem("deleted_financial_disbursement_keys")
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return new Set(parsed)
+    }
+  } catch {}
+  return new Set()
+}
+
+export function markDisbursementAsDeleted(keys: string[]) {
+  try {
+    const deleted = getDeletedDisbursementKeys()
+    keys.forEach((k) => {
+      if (k && k.trim()) deleted.add(k.trim())
+    })
+    localStorage.setItem("deleted_financial_disbursement_keys", JSON.stringify(Array.from(deleted)))
+  } catch {}
+}
+
+export async function deleteFinancialAidDisbursement(record: {
+  id?: string
+  disbursementId?: string
+  applicationRef?: string
+  applicantName?: string
+}) {
+  const keysToDelete = [
+    record.id,
+    record.disbursementId,
+    record.applicationRef,
+  ].filter(Boolean) as string[]
+
+  // 1. Mark in permanent deleted blacklist to prevent re-generation from auto-sync
+  markDisbursementAsDeleted(keysToDelete)
+
+  // 2. Remove from localStorage
+  try {
+    const raw = localStorage.getItem("all_financial_disbursements")
+    if (raw) {
+      const list = JSON.parse(raw)
+      if (Array.isArray(list)) {
+        const next = list.filter((item: any) => {
+          const idMatch = keysToDelete.includes(item.id) || keysToDelete.includes(item.disbursementId) || keysToDelete.includes(item.applicationRef)
+          return !idMatch
+        })
+        localStorage.setItem("all_financial_disbursements", JSON.stringify(next))
+      }
+    }
+  } catch {}
+
+  // 3. Delete from backend tables
+  try {
+    const cleanAppRef = (record.applicationRef || "")
+      .replace(/^db-appt-/, "")
+      .replace(/^aics-appt-/, "")
+      .replace(/^pwd-senior-appt-/, "")
+
+    const requests: Promise<any>[] = []
+    if (record.id) requests.push(fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(record.id)}`, { method: "DELETE" }))
+    if (record.disbursementId) requests.push(fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(record.disbursementId)}`, { method: "DELETE" }))
+    if (record.applicationRef) {
+      requests.push(fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(record.applicationRef)}`, { method: "DELETE" }))
+      requests.push(fetch(`${API_BASE}/api/financial-aid/cleanup-user/${encodeURIComponent(record.applicationRef)}`, { method: "DELETE" }))
+    }
+    if (cleanAppRef && cleanAppRef !== record.applicationRef) {
+      requests.push(fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(cleanAppRef)}`, { method: "DELETE" }))
+      requests.push(fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(cleanAppRef)}`, { method: "DELETE" }))
+      requests.push(fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(cleanAppRef)}`, { method: "DELETE" }))
+    }
+
+    await Promise.allSettled(requests)
+  } catch (err) {
+    console.warn("Error deleting disbursement from backend:", err)
+  }
+
+  // 4. Notify all components
+  window.dispatchEvent(new Event("financial_disbursements_updated"))
+  window.dispatchEvent(new Event("storage"))
+}
+
 // ── GET DISBURSEMENTS ──
 export function getSavedDisbursements(): SyncedDisbursementRecord[] {
   try {
+    const deletedKeys = getDeletedDisbursementKeys()
     const raw = localStorage.getItem("all_financial_disbursements")
     if (raw) {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) {
-        // Filter out dummy sample records (d1 to d8) and any pure ID services
+        // Filter out dummy sample records (d1 to d8), pure ID services, and deleted keys
         const realOnes = parsed.filter(
           (p) =>
             p &&
             !["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"].includes(p.id) &&
-            !isIdOrDocumentService(p.assistanceType)
+            !isIdOrDocumentService(p.assistanceType) &&
+            !deletedKeys.has(p.id) &&
+            !deletedKeys.has(p.disbursementId) &&
+            !deletedKeys.has(p.applicationRef)
         )
 
         // Deduplicate records by applicationRef or assistanceType
@@ -160,6 +246,7 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
 export function clearAllDisbursements() {
   try {
     localStorage.removeItem("all_financial_disbursements")
+    localStorage.removeItem("deleted_financial_disbursement_keys")
     window.dispatchEvent(new Event("financial_disbursements_updated"))
     window.dispatchEvent(new Event("storage"))
   } catch (e) {}

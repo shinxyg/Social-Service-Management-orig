@@ -21,6 +21,8 @@ import {
   getSavedDisbursements,
   checkAndAutoReleaseScheduledDisbursements,
   parseAppointmentDateTime,
+  deleteFinancialAidDisbursement,
+  getDeletedDisbursementKeys,
 } from "../../utils/financialAidSync"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
 
@@ -42,6 +44,7 @@ export default function FinancialAidDisbursement() {
         // Auto-release engine: check if any appointment time has arrived
         checkAndAutoReleaseScheduledDisbursements()
 
+        const deletedKeys = getDeletedDisbursementKeys()
         const localDisbursements = getSavedDisbursements()
         let remoteRecords: SyncedDisbursementRecord[] = []
 
@@ -50,26 +53,36 @@ export default function FinancialAidDisbursement() {
           if (resDb.ok) {
             const dataDb = await resDb.json()
             if (dataDb.disbursements && Array.isArray(dataDb.disbursements)) {
-              const dbRecords: SyncedDisbursementRecord[] = dataDb.disbursements.map((d: any) => ({
-                id: `db-${d.id}`,
-                disbursementId: d.disbursement_id,
-                applicationRef: d.application_ref,
-                applicantName: d.applicant_name,
-                assistanceType: d.assistance_type,
-                fixedAmount: Number(d.fixed_amount) > 0
-                  ? ((Number(d.fixed_amount) === 1000 && (String(d.assistance_type).toLowerCase().includes("nutrition") || String(d.assistance_type).toLowerCase().includes("child") || String(d.assistance_type).toLowerCase().includes("solo")))
-                      ? 5000
-                      : Number(d.fixed_amount))
-                  : resolveFixedAmount(d.assistance_type),
-                dateApproved: d.date_approved,
-                status: d.status as DisbursementStage,
-                appointmentDate: d.appointment_date,
-                appointmentTime: d.appointment_time,
-                venue: d.venue,
-                releasedDate: d.released_date,
-                releasedBy: d.released_by,
-                remarks: d.remarks,
-              }))
+              const dbRecords: SyncedDisbursementRecord[] = dataDb.disbursements
+                .filter((d: any) => {
+                  const dbId = `db-${d.id}`
+                  return (
+                    !deletedKeys.has(dbId) &&
+                    !deletedKeys.has(String(d.id)) &&
+                    !deletedKeys.has(d.disbursement_id) &&
+                    !deletedKeys.has(d.application_ref)
+                  )
+                })
+                .map((d: any) => ({
+                  id: `db-${d.id}`,
+                  disbursementId: d.disbursement_id,
+                  applicationRef: d.application_ref,
+                  applicantName: d.applicant_name,
+                  assistanceType: d.assistance_type,
+                  fixedAmount: Number(d.fixed_amount) > 0
+                    ? ((Number(d.fixed_amount) === 1000 && (String(d.assistance_type).toLowerCase().includes("nutrition") || String(d.assistance_type).toLowerCase().includes("child") || String(d.assistance_type).toLowerCase().includes("solo")))
+                        ? 5000
+                        : Number(d.fixed_amount))
+                    : resolveFixedAmount(d.assistance_type),
+                  dateApproved: d.date_approved,
+                  status: d.status as DisbursementStage,
+                  appointmentDate: d.appointment_date,
+                  appointmentTime: d.appointment_time,
+                  venue: d.venue,
+                  releasedDate: d.released_date,
+                  releasedBy: d.released_by,
+                  remarks: d.remarks,
+                }))
               remoteRecords.push(...dbRecords)
             }
           }
@@ -81,6 +94,11 @@ export default function FinancialAidDisbursement() {
             const rejectedRefs = new Set<string>()
             const approvedApps = data.applications.filter((app: any) => {
               const ref = app.qc_id || app.reference_no || app.reference_number || "110000116932100"
+              const idStr = `remote-${app.id || app.qc_id || app.reference_no}`
+              const disbId = `DISB-2026-${String(app.id || 101).padStart(4, "0")}`
+              if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId) || deletedKeys.has(String(app.id))) {
+                return false
+              }
               if (app.status === "rejected" || app.status === "pending") {
                 rejectedRefs.add(ref)
                 return false
@@ -108,7 +126,7 @@ export default function FinancialAidDisbursement() {
                 }),
                 status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
                 venue: "Quezon City Hall",
-                remarks: "Awtomatikong pumasok mula sa isinumiteng aplikasyon.",
+                remarks: "Automatically generated from submitted application.",
               }
             })
 
@@ -146,6 +164,13 @@ export default function FinancialAidDisbursement() {
 
         if (Array.isArray(pwdSeniorApps) && pwdSeniorApps.length > 0) {
           const approvedPwdApps = pwdSeniorApps.filter((app: any) => {
+            const ref = app.referenceNumber || app.reference_number || "PWD-QC-2026"
+            const idStr = `remote-pwd-${app.id || ref}`
+            const disbId = `DISB-2026-${String(app.id || ref).slice(-4).padStart(4, "0")}`
+            if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId) || deletedKeys.has(String(app.id))) {
+              return false
+            }
+
             const isAssistance =
               app.type === "assistance" ||
               app.type === "social-assistance" ||
@@ -183,7 +208,7 @@ export default function FinancialAidDisbursement() {
               }),
               status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
               venue: "Quezon City Hall",
-              remarks: "Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.",
+              remarks: "Automatically generated from PWD/Senior Social Assistance application.",
             }
           })
 
@@ -203,11 +228,17 @@ export default function FinancialAidDisbursement() {
               const approvedLiv = dataLiv.filter((l: any) => String(l.application_status || l.status).toLowerCase() === "approved")
               approvedLiv.forEach((l: any) => {
                 const ref = l.reference_number || `LP-2026-${l.id}`
+                const idStr = `remote-liv-${l.id || ref}`
+                const disbId = `DISB-2026-${String(l.id || 101).padStart(4, "0")}`
+                if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId) || deletedKeys.has(String(l.id))) {
+                  return
+                }
+
                 if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
                   const fullName = `${l.first_name || ""} ${l.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY"
                   remoteRecords.push({
                     id: `remote-liv-${l.id || ref}`,
-                    disbursementId: `DISB-2026-${String(l.id || 101).padStart(4, "0")}`,
+                    disbursementId: disbId,
                     applicationRef: ref,
                     applicantName: fullName,
                     assistanceType: "Livelihood Capital Assistance",
@@ -219,7 +250,7 @@ export default function FinancialAidDisbursement() {
                     }),
                     status: "PENDING" as DisbursementStage,
                     venue: "Quezon City Hall - SSDD Livelihood Center",
-                    remarks: "Awtomatikong pumasok mula sa na-aprubahang Livelihood application.",
+                    remarks: "Automatically generated from approved Livelihood application.",
                   })
                 }
               })
@@ -244,6 +275,12 @@ export default function FinancialAidDisbursement() {
             })
             approvedCw.forEach((c: any) => {
               const ref = c.reference_number || `CW-2026-${c.id}`
+              const idStr = `remote-cw-${c.id || ref}`
+              const disbId = `DISB-2026-${String(c.id || 101).padStart(4, "0")}`
+              if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId) || deletedKeys.has(String(c.id))) {
+                return
+              }
+
               if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
                 const fullName =
                   [c.guardian_first_name, c.guardian_last_name].filter(Boolean).join(" ").toUpperCase() ||
@@ -253,8 +290,8 @@ export default function FinancialAidDisbursement() {
                 const amount = Number(c.approved_amount) || FIXED_ASSISTANCE_AMOUNTS[supportTitle] || 5000
                 const isReleased = String(c.application_status || c.status).toLowerCase() === "released"
                 remoteRecords.push({
-                  id: `remote-cw-${c.id || ref}`,
-                  disbursementId: `DISB-2026-${String(c.id || 101).padStart(4, "0")}`,
+                  id: idStr,
+                  disbursementId: disbId,
                   applicationRef: ref,
                   applicantName: fullName,
                   assistanceType: supportTitle,
@@ -266,7 +303,7 @@ export default function FinancialAidDisbursement() {
                   }),
                   status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
                   venue: "Quezon City Hall - SSDD Child Welfare Section",
-                  remarks: "Awtomatikong pumasok mula sa Child Welfare Assistance aplikasyon.",
+                  remarks: "Automatically generated from Child Welfare Assistance application.",
                 })
               }
             })
@@ -306,6 +343,14 @@ export default function FinancialAidDisbursement() {
           merged.push(l)
         }
       })
+
+      // Filter against deleted keys
+      merged = merged.filter(
+        (d) =>
+          !deletedKeys.has(d.id) &&
+          !deletedKeys.has(d.disbursementId) &&
+          !deletedKeys.has(d.applicationRef)
+      )
 
       // Attach schedule from appointments/cache and check real-time auto-release
       merged = merged.map((d) => {
@@ -426,7 +471,7 @@ export default function FinancialAidDisbursement() {
             Financial Aid Disbursement
           </h1>
           <p className="text-sm text-gray-500 max-w-2xl">
-            Awtomatikong naka-sync sa <strong>Admin Appointments</strong> at <strong>Applications</strong>. Fixed amount ang tulong at magiging <strong>RELEASED</strong> kapag kinumpirma ang payout.
+            Automatically synchronized with <strong>Admin Appointments</strong> and <strong>Applications</strong>. Assistance amount is fixed and transitions to <strong>RELEASED</strong> upon payout schedule or confirmation.
           </p>
         </div>
 
@@ -437,12 +482,13 @@ export default function FinancialAidDisbursement() {
               await fetch(`${API_BASE}/api/financial-aid/cleanup`, { method: "POST" })
             } catch {}
             localStorage.removeItem("all_financial_disbursements")
+            localStorage.removeItem("deleted_financial_disbursement_keys")
             window.dispatchEvent(new Event("financial_disbursements_updated"))
             window.location.reload()
           }}
           className="text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer self-start sm:self-auto"
         >
-          I-reset / Linisin ang Test Data
+          Reset / Clear Test Data
         </button>
       </div>
 
@@ -450,7 +496,7 @@ export default function FinancialAidDisbursement() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-500 uppercase">Total Na-release</span>
+            <span className="text-xs font-bold text-gray-500 uppercase">Total Released</span>
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5" />
             </div>
@@ -459,13 +505,13 @@ export default function FinancialAidDisbursement() {
             ₱{totalDisbursed.toLocaleString()}
           </p>
           <p className="text-[11px] text-emerald-600 font-semibold mt-1">
-            ✓ {releasedCount} benepisyaryo ang nabayaran
+            ✓ {releasedCount} beneficiaries paid
           </p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-500 uppercase">Pending Releasing</span>
+            <span className="text-xs font-bold text-gray-500 uppercase">Pending Release</span>
             <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
               <Clock className="w-5 h-5" />
             </div>
@@ -474,13 +520,13 @@ export default function FinancialAidDisbursement() {
             ₱{pendingAmount.toLocaleString()}
           </p>
           <p className="text-[11px] text-amber-600 font-semibold mt-1">
-            {pendingCount} nakabinbing ayuda
+            {pendingCount} pending payouts
           </p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-500 uppercase">Kabuuang Rekord</span>
+            <span className="text-xs font-bold text-gray-500 uppercase">Total Records</span>
             <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
               <Users className="w-5 h-5" />
             </div>
@@ -504,7 +550,7 @@ export default function FinancialAidDisbursement() {
             PENDING → RELEASED
           </p>
           <p className="text-[11px] text-indigo-600 font-semibold mt-1">
-            Auto-synced sa Appointment Schedule
+            Auto-synced with Appointment Schedule
           </p>
         </div>
       </div>
@@ -516,10 +562,10 @@ export default function FinancialAidDisbursement() {
         <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
           <h2 className="text-xs font-bold uppercase text-gray-700 flex items-center gap-1.5">
             <Banknote className="w-4 h-4 text-emerald-600" />
-            Itinakdang Fixed Amount Rates
+            Configured Fixed Amount Rates
           </h2>
           <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
-            Awtomatikong Halaga
+            Automated Rates
           </span>
         </div>
 
@@ -550,10 +596,10 @@ export default function FinancialAidDisbursement() {
             <div>
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-blue-600" />
-                Mga Talaan ng Financial Aid Disbursement
+                Financial Aid Disbursement Records
               </h3>
               <p className="text-xs text-gray-500">
-                Awtomatikong konektado sa appointments at kusang nag-a-auto-release sa takdang oras ng payout.
+                Automatically connected to appointments and auto-releases on the scheduled payout time.
               </p>
             </div>
 
@@ -562,7 +608,7 @@ export default function FinancialAidDisbursement() {
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Hanapin ang ID / Benepisyaryo..."
+                placeholder="Search ID / Beneficiary name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 h-9 text-xs border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
@@ -667,7 +713,7 @@ export default function FinancialAidDisbursement() {
                             type="button"
                             onClick={() => setSelectedDetailsRecord(d)}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
-                            title="Tingnan ang buong detalye ng ayuda"
+                            title="View full disbursement details"
                           >
                             <Eye className="w-3.5 h-3.5 text-blue-600" />
                             <span>View</span>
@@ -675,34 +721,21 @@ export default function FinancialAidDisbursement() {
                           <button
                             type="button"
                             onClick={async () => {
-                              if (confirm(`Burahin ang disbursement record para kay ${d.applicantName}?`)) {
-                                const cleanAppRef = d.applicationRef.replace(/^db-appt-/, '').replace(/^aics-appt-/, '').replace(/^pwd-senior-appt-/, '')
-                                try {
-                                  await Promise.allSettled([
-                                    fetch(`${API_BASE}/api/financial-aid/${d.id}`, { method: "DELETE" }),
-                                    fetch(`${API_BASE}/api/financial-aid/${d.disbursementId}`, { method: "DELETE" }),
-                                    fetch(`${API_BASE}/api/financial-aid/${d.applicationRef}`, { method: "DELETE" }),
-                                    fetch(`${API_BASE}/api/aics/applications/${cleanAppRef}`, { method: "DELETE" }),
-                                    fetch(`${API_BASE}/api/aics/applications/${d.applicationRef}`, { method: "DELETE" }),
-                                    fetch(`${API_BASE}/api/pwd-senior/applications/${cleanAppRef}`, { method: "DELETE" }),
-                                    fetch(`${API_BASE}/api/pwd-senior/applications/${d.applicationRef}`, { method: "DELETE" }),
-                                  ])
-                                } catch {}
-                                const raw = localStorage.getItem("all_financial_disbursements")
-                                if (raw) {
-                                  const list = JSON.parse(raw)
-                                  if (Array.isArray(list)) {
-                                    const next = list.filter((item: any) => item.id !== d.id && item.disbursementId !== d.disbursementId && item.applicationRef !== d.applicationRef)
-                                    localStorage.setItem("all_financial_disbursements", JSON.stringify(next))
-                                  }
-                                }
-                                setDisbursements((prev) => prev.filter((item) => item.id !== d.id && item.disbursementId !== d.disbursementId && item.applicationRef !== d.applicationRef))
-                                window.dispatchEvent(new Event("financial_disbursements_updated"))
+                              if (window.confirm(`Are you sure you want to delete the financial aid record for ${d.applicantName}?`)) {
+                                await deleteFinancialAidDisbursement(d)
+                                setDisbursements((prev) =>
+                                  prev.filter(
+                                    (item) =>
+                                      item.id !== d.id &&
+                                      item.disbursementId !== d.disbursementId &&
+                                      item.applicationRef !== d.applicationRef
+                                  )
+                                )
                                 notifyApplicationChange("APPLICATION_DELETED", "all", d.applicationRef)
                               }
                             }}
                             className="inline-flex items-center justify-center p-1.5 rounded-xl border border-red-200 bg-red-50/70 hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
-                            title="Burahin ang rekord na ito"
+                            title="Delete this record"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -816,7 +849,7 @@ export default function FinancialAidDisbursement() {
 
               {selectedDetailsRecord.remarks && (
                 <div className="bg-gray-50 rounded-xl p-3 text-[11px] text-gray-600 space-y-1">
-                  <span className="font-bold text-gray-700 block">Tala / Remarks:</span>
+                  <span className="font-bold text-gray-700 block">Notes / Remarks:</span>
                   <p>{selectedDetailsRecord.remarks}</p>
                 </div>
               )}
@@ -830,28 +863,31 @@ export default function FinancialAidDisbursement() {
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span>I-print ang Voucher</span>
+                  <span>Print Voucher</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={async () => {
-                    if (window.confirm("Sigurado ka bang nais mong burahin ang record na ito sa Financial Aid?")) {
-                      try {
-                        await fetch(`${API_BASE}/api/financial-aid/${selectedDetailsRecord.id || selectedDetailsRecord.disbursementId}`, {
-                          method: "DELETE",
-                        })
-                      } catch {}
-                      setDisbursements((prev) => prev.filter((d) => d.disbursementId !== selectedDetailsRecord.disbursementId))
-                      notifyApplicationChange("APPLICATION_DELETED", "all", selectedDetailsRecord.applicationRef || selectedDetailsRecord.disbursementId)
+                    if (window.confirm(`Are you sure you want to delete this Financial Aid disbursement record (${selectedDetailsRecord.disbursementId})?`)) {
+                      const rec = selectedDetailsRecord
+                      await deleteFinancialAidDisbursement(rec)
+                      setDisbursements((prev) =>
+                        prev.filter(
+                          (item) =>
+                            item.id !== rec.id &&
+                            item.disbursementId !== rec.disbursementId &&
+                            item.applicationRef !== rec.applicationRef
+                        )
+                      )
+                      notifyApplicationChange("APPLICATION_DELETED", "all", rec.applicationRef || rec.disbursementId)
                       setSelectedDetailsRecord(null)
-                      window.location.reload()
                     }
                   }}
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>Burahin</span>
+                  <span>Delete</span>
                 </button>
               </div>
 
@@ -860,7 +896,7 @@ export default function FinancialAidDisbursement() {
                 onClick={() => setSelectedDetailsRecord(null)}
                 className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
               >
-                Isara
+                Close
               </button>
             </div>
           </div>
