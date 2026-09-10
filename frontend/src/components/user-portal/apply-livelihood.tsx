@@ -57,8 +57,8 @@ const DEFAULT_LIVELIHOOD_APP: LivelihoodApplicationRecord = {
   created_at: "2026-08-15T09:41:00Z",
   assistance: {
     reference_number: "LP-2026-2518",
-    assistance_status: "released",
-    release_status: "RELEASED",
+    assistance_status: "for_processing",
+    release_status: "NOT RELEASED",
     approved_financial_amount: 15000,
     approved_materials: [
       { item: "Rice Sacks (50kg)", quantity: "2 sacks", remarks: "Sinandomeng premium grain" },
@@ -68,27 +68,12 @@ const DEFAULT_LIVELIHOOD_APP: LivelihoodApplicationRecord = {
       { equipment: "Heavy-duty Display Shelving Rack", quantity: "1 unit", remarks: "4-tier powder-coated steel" },
       { equipment: "Digital Weighing Scale", quantity: "1 unit", remarks: "30kg capacity rechargeable" },
     ],
-    release_date: "September 1, 2026",
-    release_time: "9:00 AM - 11:30 AM",
+    release_date: "",
+    release_time: "",
     release_location: "Quezon City Hall - SSDD Livelihood Center",
     instructions: "Please bring a valid ID and your claim voucher.",
-    released_at: "2026-09-01T09:30:00.000Z",
-    released_by: "SSDD Admin Evaluator",
   },
-  monitoring: [
-    {
-      id: "MON-2518-1",
-      reference_number: "LP-2026-2518",
-      monitoring_status: "ACTIVE",
-      monitoring_date: "September 1, 2026",
-      inspection_date: "September 1, 2026",
-      progress_update: "Initial monitoring has started. The beneficiary has received the approved livelihood assistance.",
-      remarks: "The beneficiary has received the approved livelihood assistance and organized initial inventory.",
-      next_follow_up_date: "September 20, 2026",
-      officer_name: "SSDD Social Worker / Admin",
-      created_at: "2026-09-01T10:00:00.000Z",
-    },
-  ],
+  monitoring: [],
 }
 
 // Helper: parse date and time string to Date object in Philippine Standard Time (UTC+8)
@@ -386,16 +371,9 @@ export default function ApplyLivelihood() {
     const currentStatusKey = `${activeApplication.application_status}_${assistData?.assistance_status || ""}_${assistData?.release_status || ""}_${isAssistanceReleased}`
     const isStatusChanged = prevStatusKeyRef.current !== "" && prevStatusKeyRef.current !== currentStatusKey
 
-    // Initial auto-routing when app loads without explicit tab in URL, or when status updates
+    // Initial auto-routing when app loads, or when status updates
     if (!hasInitializedTabRef.current || isStatusChanged) {
       prevStatusKeyRef.current = currentStatusKey
-
-      // If user provided a specific ?tab= in the URL on initial mount, respect it
-      if (!hasInitializedTabRef.current && searchParams.get("tab")) {
-        hasInitializedTabRef.current = true
-        return
-      }
-
       hasInitializedTabRef.current = true
 
       if (isAssistanceReleased) {
@@ -494,11 +472,13 @@ export default function ApplyLivelihood() {
 
           {/* Tab 2: Capital / Materials Assistance */}
           <button
+            type="button"
             onClick={() => handleSelectTab("assistance")}
             id="tab-capital-assistance"
-            className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+            disabled={!isApproved}
+            className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 select-none ${
               !isApproved
-                ? "opacity-60 bg-muted/30 text-muted-foreground cursor-not-allowed"
+                ? "opacity-50 bg-muted/40 text-muted-foreground cursor-not-allowed border border-dashed border-border"
                 : activeTab === "assistance"
                 ? "bg-indigo-600 text-white shadow-sm cursor-pointer"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-pointer"
@@ -510,11 +490,13 @@ export default function ApplyLivelihood() {
 
           {/* Tab 3: Livelihood Monitoring */}
           <button
+            type="button"
             onClick={() => handleSelectTab("monitoring")}
             id="tab-livelihood-monitoring"
-            className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+            disabled={!isAssistanceReleased}
+            className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 select-none ${
               !isAssistanceReleased
-                ? "opacity-60 bg-muted/30 text-muted-foreground cursor-not-allowed"
+                ? "opacity-50 bg-muted/40 text-muted-foreground cursor-not-allowed border border-dashed border-border"
                 : activeTab === "monitoring"
                 ? "bg-emerald-600 text-white shadow-sm cursor-pointer"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-pointer"
