@@ -1336,7 +1336,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
 
     const updatedAssist: CapitalMaterialsAssistance = {
       ...initialAssist,
-      assistance_status: finalStatus,
+      assistance_status: finalStatus as "FOR PROCESSING" | "FOR RELEASE" | "RELEASED",
       release_status: isReleased ? "RELEASED" : "NOT RELEASED",
       approved_financial_amount: cleanAmt,
       approved_materials: cleanMaterials.length > 0 ? cleanMaterials : materials,
@@ -1623,6 +1623,16 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
                     onChange={(e) => setReleaseLocation(e.target.value)}
                     placeholder="Quezon City Hall - SSDD Livelihood Center"
                     className="w-full px-3 py-1.5 border border-border rounded-lg bg-background text-foreground text-xs focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="col-span-full">
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase block mb-1">Instructions / Notes for Beneficiary</span>
+                  <textarea
+                    rows={2}
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    placeholder="e.g. Please bring a valid ID, photocopy of QCID, and original barangay certificate."
+                    className="w-full px-3 py-1.5 border border-border rounded-lg bg-background text-foreground text-xs focus:ring-1 focus:ring-blue-500 resize-none"
                   />
                 </div>
               </div>
