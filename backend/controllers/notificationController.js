@@ -36,36 +36,55 @@ async function ensureTables() {
 // Ensure tables exist on load
 ensureTables();
 
+function extractIdentifiers(req) {
+  const src = { ...req.query, ...req.body };
+  const rawList = [
+    src.userId,
+    src.qcid,
+    src.email,
+    src.ref,
+    src.userIdentifier,
+    src.user_id,
+    src.qcidNumber,
+  ];
+  return Array.from(
+    new Set(
+      rawList
+        .filter(Boolean)
+        .map((s) => String(s).trim())
+        .filter((s) => s.length > 0 && s !== 'undefined' && s !== 'null')
+    )
+  );
+}
+
 // GET /api/notifications
 // Aggregates real-time notifications for user across all services and syncs read/dismissed state
 exports.getNotifications = async (req, res) => {
   try {
     await ensureTables();
-    const { userId, qcid, email, ref } = req.query;
-
-    const identifiers = Array.from(
-      new Set(
-        [userId, qcid, email, ref]
-          .filter(Boolean)
-          .map((s) => String(s).trim())
-          .filter((s) => s.length > 0)
-      )
-    );
-
+    const identifiers = extractIdentifiers(req);
+    const { email } = req.query;
     const userEmail = (email || '').toLowerCase().trim();
-    const primaryUserKey = String(qcid || userId || email || ref || 'guest').trim();
 
-    // 1. Fetch persistent read and dismissed state for this user
+    // 1. Fetch persistent read and dismissed state and __ALL__ cutoff for this user
     let userStateMap = {};
+    let dismissAllCutoff = null;
+
     if (identifiers.length > 0) {
       try {
         const stateRes = await db.query(
-          `SELECT notif_id, is_read, is_dismissed 
+          `SELECT notif_id, is_read, is_dismissed, updated_at 
            FROM user_notification_state 
            WHERE user_identifier = ANY($1::text[])`,
           [identifiers]
         );
         stateRes.rows.forEach((r) => {
+          if (r.notif_id === '__ALL__' && r.is_dismissed) {
+            const cutoffDate = new Date(r.updated_at);
+            if (!dismissAllCutoff || cutoffDate > dismissAllCutoff) {
+              dismissAllCutoff = cutoffDate;
+            }
+          }
           userStateMap[r.notif_id] = {
             is_read: Boolean(r.is_read),
             is_dismissed: Boolean(r.is_dismissed),
@@ -76,6 +95,17 @@ exports.getNotifications = async (req, res) => {
       }
     }
 
+    const isItemDismissed = (notifId, createdAt) => {
+      if (userStateMap[notifId]?.is_dismissed) return true;
+      if (dismissAllCutoff && createdAt) {
+        const itemDate = new Date(createdAt);
+        if (!isNaN(itemDate.getTime()) && itemDate.getTime() <= dismissAllCutoff.getTime()) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     const items = [];
 
     // 2. Fetch direct user_notifications
@@ -84,14 +114,14 @@ exports.getNotifications = async (req, res) => {
       let params = [];
       if (identifiers.length > 0) {
         query = `SELECT * FROM user_notifications 
-                 WHERE user_id = ANY($1::text[]) OR application_ref = ANY($1::text[]) OR user_id IS NULL 
+                 WHERE user_id = ANY($1::text[]) OR application_ref = ANY($1::text[])
                  ORDER BY created_at DESC LIMIT 50`;
         params = [identifiers];
       }
       const directRes = await db.query(query, params);
       directRes.rows.forEach((r) => {
         const notifId = `db-notif-${r.id}`;
-        if (!userStateMap[notifId]?.is_dismissed && !r.is_dismissed) {
+        if (!isItemDismissed(notifId, r.created_at) && !r.is_dismissed) {
           items.push({
             id: notifId,
             title: r.title,
@@ -118,17 +148,18 @@ exports.getNotifications = async (req, res) => {
         aicsRes.rows.forEach((app) => {
           if (app.status === 'approved' || app.status === 'rejected' || app.status === 'completed') {
             const notifId = `aics-${app.id}-${app.status}`;
-            if (!userStateMap[notifId]?.is_dismissed) {
+            const appDate = app.updated_at || app.created_at;
+            if (!isItemDismissed(notifId, appDate)) {
               const isApproved = app.status === 'approved' || app.status === 'completed';
               items.push({
                 id: notifId,
                 title: isApproved ? 'AICS Assistance Application: Approved' : 'AICS Assistance Application: Not Approved',
                 desc: `${app.assistance_type || 'AICS Financial Aid'} — Ref: ${app.reference_no || app.qc_id}`,
-                time: new Date(app.updated_at || app.created_at).toLocaleString('en-US'),
+                time: new Date(appDate).toLocaleString('en-US'),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reason: app.rejection_reason || null,
                 reference_no: app.reference_no || app.qc_id,
-                created_at: app.updated_at || app.created_at,
+                created_at: appDate,
               });
             }
           }
@@ -149,7 +180,8 @@ exports.getNotifications = async (req, res) => {
         pwdRes.rows.forEach((app) => {
           if (app.status === 'approved' || app.status === 'rejected' || app.status === 'completed' || app.status === 'for_release') {
             const notifId = `pwd-${app.id || app.reference_number}-${app.status}`;
-            if (!userStateMap[notifId]?.is_dismissed) {
+            const appDate = app.approved_date || app.created_at;
+            if (!isItemDismissed(notifId, appDate)) {
               const isApproved = app.status === 'approved' || app.status === 'completed' || app.status === 'for_release';
               const isSenior = (app.category || '').toLowerCase().includes('senior');
               const isAssistance = String(app.service || app.category || '').toLowerCase().includes('assistance');
@@ -177,11 +209,11 @@ exports.getNotifications = async (req, res) => {
                 id: notifId,
                 title,
                 desc: `${serviceLabel} — Ref: ${app.assigned_id_number || app.reference_number || app.id}`,
-                time: new Date(app.approved_date || app.created_at).toLocaleString('en-US'),
+                time: new Date(appDate).toLocaleString('en-US'),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reason: app.rejection_reason || null,
                 reference_no: app.assigned_id_number || app.reference_number || app.id,
-                created_at: app.approved_date || app.created_at,
+                created_at: appDate,
               });
             }
           }
@@ -202,17 +234,18 @@ exports.getNotifications = async (req, res) => {
         spRes.rows.forEach((app) => {
           if (app.application_status === 'approved' || app.application_status === 'rejected' || app.application_status === 'completed') {
             const notifId = `sp-${app.id}-${app.application_status}`;
-            if (!userStateMap[notifId]?.is_dismissed) {
+            const appDate = app.updated_at || app.created_at;
+            if (!isItemDismissed(notifId, appDate)) {
               const isApproved = app.application_status === 'approved' || app.application_status === 'completed';
               items.push({
                 id: notifId,
                 title: isApproved ? 'Solo Parent Application: Approved' : 'Solo Parent Application: Not Approved',
                 desc: `Solo Parent ID & Services — Ref: ${app.assigned_id_number || app.reference_number}`,
-                time: new Date(app.updated_at || app.created_at).toLocaleString('en-US'),
+                time: new Date(appDate).toLocaleString('en-US'),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reason: app.rejection_reason || null,
                 reference_no: app.assigned_id_number || app.reference_number,
-                created_at: app.updated_at || app.created_at,
+                created_at: appDate,
               });
             }
           }
@@ -233,17 +266,18 @@ exports.getNotifications = async (req, res) => {
         cwRes.rows.forEach((app) => {
           if (app.application_status === 'approved' || app.application_status === 'rejected' || app.application_status === 'completed') {
             const notifId = `cw-${app.id}-${app.application_status}`;
-            if (!userStateMap[notifId]?.is_dismissed) {
+            const appDate = app.updated_at || app.created_at;
+            if (!isItemDismissed(notifId, appDate)) {
               const isApproved = app.application_status === 'approved' || app.application_status === 'completed';
               items.push({
                 id: notifId,
                 title: isApproved ? 'Child Welfare Application: Approved' : 'Child Welfare Application: Not Approved',
                 desc: `Child Welfare Assistance — Ref: ${app.reference_number}`,
-                time: new Date(app.updated_at || app.created_at).toLocaleString('en-US'),
+                time: new Date(appDate).toLocaleString('en-US'),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reason: app.rejection_reason || null,
                 reference_no: app.reference_number,
-                created_at: app.updated_at || app.created_at,
+                created_at: appDate,
               });
             }
           }
@@ -264,17 +298,18 @@ exports.getNotifications = async (req, res) => {
         livRes.rows.forEach((app) => {
           if (app.application_status === 'approved' || app.application_status === 'rejected' || app.application_status === 'needs_revision' || app.application_status === 'for_release' || app.application_status === 'released') {
             const notifId = `liv-${app.id}-${app.application_status}`;
-            if (!userStateMap[notifId]?.is_dismissed) {
+            const appDate = app.updated_at || app.created_at;
+            if (!isItemDismissed(notifId, appDate)) {
               const isApproved = app.application_status === 'approved' || app.application_status === 'for_release' || app.application_status === 'released';
               items.push({
                 id: notifId,
                 title: isApproved ? 'Livelihood & Training Application: Approved' : app.application_status === 'needs_revision' ? 'Livelihood Application: Needs Revision' : 'Livelihood & Training Application: Not Approved',
                 desc: `${app.livelihood_type || 'Livelihood Program'} — Ref: ${app.reference_number}`,
-                time: new Date(app.updated_at || app.created_at).toLocaleString('en-US'),
+                time: new Date(appDate).toLocaleString('en-US'),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reason: app.rejection_reason || null,
                 reference_no: app.reference_number,
-                created_at: app.updated_at || app.created_at,
+                created_at: appDate,
               });
             }
           }
@@ -301,19 +336,20 @@ exports.getNotifications = async (req, res) => {
           const apptDate = d.scheduled_date || d.appointment_date;
           const apptTime = d.scheduled_time || d.appointment_time;
           const venue = d.office_location || d.venue || 'Quezon City Hall';
+          const disbDate = d.updated_at || d.created_at;
 
           // Scheduled Appointment Notification
           if (apptDate) {
             const notifId = `disb-appt-${d.id || d.disbursement_id}-${apptDate}`;
-            if (!userStateMap[notifId]?.is_dismissed) {
+            if (!isItemDismissed(notifId, disbDate)) {
               items.push({
                 id: notifId,
                 title: 'Payout Appointment Scheduled',
                 desc: `Scheduled on ${apptDate} ${apptTime ? `at ${apptTime}` : ''} at ${venue} (Ref: ${d.application_ref})`,
-                time: new Date(d.updated_at || d.created_at).toLocaleString('en-US'),
+                time: new Date(disbDate).toLocaleString('en-US'),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reference_no: d.application_ref,
-                created_at: d.updated_at || d.created_at,
+                created_at: disbDate,
               });
             }
           }
@@ -321,15 +357,16 @@ exports.getNotifications = async (req, res) => {
           // Released Notification
           if (d.status === 'RELEASED' || d.appt_status === 'completed') {
             const notifId = `disb-rel-${d.id || d.disbursement_id}`;
-            if (!userStateMap[notifId]?.is_dismissed) {
+            const relDate = d.released_date || d.updated_at || d.created_at;
+            if (!isItemDismissed(notifId, relDate)) {
               items.push({
                 id: notifId,
                 title: 'Financial Aid Released',
                 desc: `₱${Number(d.fixed_amount || 15000).toLocaleString()} financial aid officially released at ${venue}.`,
-                time: new Date(d.released_date || d.updated_at || d.created_at).toLocaleString('en-US'),
+                time: new Date(relDate).toLocaleString('en-US'),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reference_no: d.application_ref,
-                created_at: d.released_date || d.updated_at || d.created_at,
+                created_at: relDate,
               });
             }
           }
@@ -383,20 +420,23 @@ exports.markAsRead = async (req, res) => {
   try {
     await ensureTables();
     const { id } = req.params;
-    const { userIdentifier = 'default_user' } = req.body;
+    const identifiers = extractIdentifiers(req);
+    const primaryIdent = identifiers[0] || 'default_user';
 
     if (id.startsWith('db-notif-')) {
       const dbId = id.replace('db-notif-', '');
       await db.query(`UPDATE user_notifications SET is_read = true WHERE id::text = $1`, [dbId]);
     }
 
-    await db.query(
-      `INSERT INTO user_notification_state (user_identifier, notif_id, is_read, is_dismissed)
-       VALUES ($1, $2, true, false)
-       ON CONFLICT (user_identifier, notif_id)
-       DO UPDATE SET is_read = true, updated_at = NOW()`,
-      [userIdentifier, id]
-    );
+    for (const ident of (identifiers.length > 0 ? identifiers : [primaryIdent])) {
+      await db.query(
+        `INSERT INTO user_notification_state (user_identifier, notif_id, is_read, is_dismissed)
+         VALUES ($1, $2, true, false)
+         ON CONFLICT (user_identifier, notif_id)
+         DO UPDATE SET is_read = true, updated_at = NOW()`,
+        [ident, id]
+      );
+    }
 
     res.json({ success: true, message: 'Notification marked as read.' });
   } catch (err) {
@@ -409,7 +449,9 @@ exports.markAsRead = async (req, res) => {
 exports.markAllAsRead = async (req, res) => {
   try {
     await ensureTables();
-    const { userIdentifier = 'default_user', notifIds = [] } = req.body;
+    const identifiers = extractIdentifiers(req);
+    const { notifIds = [] } = req.body;
+    const primaryIdent = identifiers[0] || 'default_user';
 
     if (Array.isArray(notifIds) && notifIds.length > 0) {
       for (const notifId of notifIds) {
@@ -418,13 +460,15 @@ exports.markAllAsRead = async (req, res) => {
           await db.query(`UPDATE user_notifications SET is_read = true WHERE id::text = $1`, [dbId]);
         }
 
-        await db.query(
-          `INSERT INTO user_notification_state (user_identifier, notif_id, is_read, is_dismissed)
-           VALUES ($1, $2, true, false)
-           ON CONFLICT (user_identifier, notif_id)
-           DO UPDATE SET is_read = true, updated_at = NOW()`,
-          [userIdentifier, notifId]
-        );
+        for (const ident of (identifiers.length > 0 ? identifiers : [primaryIdent])) {
+          await db.query(
+            `INSERT INTO user_notification_state (user_identifier, notif_id, is_read, is_dismissed)
+             VALUES ($1, $2, true, false)
+             ON CONFLICT (user_identifier, notif_id)
+             DO UPDATE SET is_read = true, updated_at = NOW()`,
+            [ident, notifId]
+          );
+        }
       }
     }
 
@@ -440,20 +484,23 @@ exports.dismissNotification = async (req, res) => {
   try {
     await ensureTables();
     const { id } = req.params;
-    const { userIdentifier = 'default_user' } = req.body || req.query;
+    const identifiers = extractIdentifiers(req);
+    const primaryIdent = identifiers[0] || 'default_user';
 
     if (id.startsWith('db-notif-')) {
       const dbId = id.replace('db-notif-', '');
       await db.query(`UPDATE user_notifications SET is_dismissed = true WHERE id::text = $1`, [dbId]);
     }
 
-    await db.query(
-      `INSERT INTO user_notification_state (user_identifier, notif_id, is_read, is_dismissed)
-       VALUES ($1, $2, true, true)
-       ON CONFLICT (user_identifier, notif_id)
-       DO UPDATE SET is_dismissed = true, updated_at = NOW()`,
-      [userIdentifier, id]
-    );
+    for (const ident of (identifiers.length > 0 ? identifiers : [primaryIdent])) {
+      await db.query(
+        `INSERT INTO user_notification_state (user_identifier, notif_id, is_read, is_dismissed, updated_at)
+         VALUES ($1, $2, true, true, NOW())
+         ON CONFLICT (user_identifier, notif_id)
+         DO UPDATE SET is_dismissed = true, updated_at = NOW()`,
+        [ident, id]
+      );
+    }
 
     res.json({ success: true, message: 'Notification dismissed.' });
   } catch (err) {
@@ -466,8 +513,22 @@ exports.dismissNotification = async (req, res) => {
 exports.dismissAllNotifications = async (req, res) => {
   try {
     await ensureTables();
-    const { userIdentifier = 'default_user', notifIds = [] } = req.body || req.query;
+    const identifiers = extractIdentifiers(req);
+    const { notifIds = [] } = req.body || req.query;
+    const primaryIdent = identifiers[0] || 'default_user';
 
+    // 1. Mark __ALL__ with current timestamp for all identifiers
+    for (const ident of (identifiers.length > 0 ? identifiers : [primaryIdent])) {
+      await db.query(
+        `INSERT INTO user_notification_state (user_identifier, notif_id, is_read, is_dismissed, updated_at)
+         VALUES ($1, '__ALL__', true, true, NOW())
+         ON CONFLICT (user_identifier, notif_id)
+         DO UPDATE SET is_dismissed = true, updated_at = NOW()`,
+        [ident]
+      );
+    }
+
+    // 2. Mark specific notifIds if provided
     if (Array.isArray(notifIds) && notifIds.length > 0) {
       for (const notifId of notifIds) {
         if (notifId.startsWith('db-notif-')) {
@@ -475,14 +536,25 @@ exports.dismissAllNotifications = async (req, res) => {
           await db.query(`UPDATE user_notifications SET is_dismissed = true WHERE id::text = $1`, [dbId]);
         }
 
-        await db.query(
-          `INSERT INTO user_notification_state (user_identifier, notif_id, is_read, is_dismissed)
-           VALUES ($1, $2, true, true)
-           ON CONFLICT (user_identifier, notif_id)
-           DO UPDATE SET is_dismissed = true, updated_at = NOW()`,
-          [userIdentifier, notifId]
-        );
+        for (const ident of (identifiers.length > 0 ? identifiers : [primaryIdent])) {
+          await db.query(
+            `INSERT INTO user_notification_state (user_identifier, notif_id, is_read, is_dismissed, updated_at)
+             VALUES ($1, $2, true, true, NOW())
+             ON CONFLICT (user_identifier, notif_id)
+             DO UPDATE SET is_dismissed = true, updated_at = NOW()`,
+            [ident, notifId]
+          );
+        }
       }
+    }
+
+    // 3. Mark direct user_notifications as dismissed
+    if (identifiers.length > 0) {
+      await db.query(
+        `UPDATE user_notifications SET is_dismissed = true 
+         WHERE user_id = ANY($1::text[]) OR application_ref = ANY($1::text[])`,
+        [identifiers]
+      );
     }
 
     res.json({ success: true, message: 'All notifications dismissed.' });

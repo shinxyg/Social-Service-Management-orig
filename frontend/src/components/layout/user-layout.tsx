@@ -159,17 +159,26 @@ function getReadNotifIds(): string[] {
   }
 }
 
+function getUserIdentifiers() {
+  const prof = getCurrentUserProfile()
+  const qcid = prof.qcidNumber || prof.qcidNo || getLoggedInUserQcid() || "user"
+  const email = (prof.email || "").toLowerCase().trim()
+  const userId = String(prof.id || "1")
+  return { userIdentifier: qcid, qcid, email, userId, ref: qcid }
+}
+
 function markNotifAsRead(id: string, userIdentifier?: string) {
   const readIds = getReadNotifIds()
   if (!readIds.includes(id)) {
     localStorage.setItem("aics_read_notifs", JSON.stringify([...readIds, id]))
   }
-  const ident = userIdentifier || getLoggedInUserQcid() || "user"
+  const idents = getUserIdentifiers()
+  if (userIdentifier) idents.userIdentifier = userIdentifier
   try {
     fetch(`${API_BASE}/api/notifications/${encodeURIComponent(id)}/read`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userIdentifier: ident }),
+      body: JSON.stringify(idents),
     }).catch(() => {})
   } catch (_) {}
 }
@@ -188,12 +197,13 @@ function dismissNotif(id: string, userIdentifier?: string) {
     localStorage.setItem("aics_dismissed_notifs", JSON.stringify([...dismissedIds, id]))
     window.dispatchEvent(new Event("user_notifications_updated"))
   }
-  const ident = userIdentifier || getLoggedInUserQcid() || "user"
+  const idents = getUserIdentifiers()
+  if (userIdentifier) idents.userIdentifier = userIdentifier
   try {
     fetch(`${API_BASE}/api/notifications/${encodeURIComponent(id)}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userIdentifier: ident }),
+      body: JSON.stringify(idents),
     }).catch(() => {})
   } catch (_) {}
 }
@@ -203,12 +213,13 @@ function dismissAllNotifs(ids: string[], userIdentifier?: string) {
   const set = new Set([...dismissedIds, ...ids])
   localStorage.setItem("aics_dismissed_notifs", JSON.stringify(Array.from(set)))
   window.dispatchEvent(new Event("user_notifications_updated"))
-  const ident = userIdentifier || getLoggedInUserQcid() || "user"
+  const idents = getUserIdentifiers()
+  if (userIdentifier) idents.userIdentifier = userIdentifier
   try {
     fetch(`${API_BASE}/api/notifications/all`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userIdentifier: ident, notifIds: ids }),
+      body: JSON.stringify({ ...idents, notifIds: ids }),
     }).catch(() => {})
   } catch (_) {}
 }
