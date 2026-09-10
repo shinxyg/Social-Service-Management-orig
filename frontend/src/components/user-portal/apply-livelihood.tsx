@@ -14,8 +14,6 @@ import {
   Package,
   Activity,
   Lock,
-  Plus,
-  Info,
 } from "lucide-react"
 
 type LivelihoodProgramTab = "apply" | "assistance" | "monitoring"
