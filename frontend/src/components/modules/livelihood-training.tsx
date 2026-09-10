@@ -1247,8 +1247,7 @@ interface AssistanceModalProps {
   onSaveAssistance?: (appId: string | number, assistance: CapitalMaterialsAssistance) => Promise<void>
 }
 
-function AssistanceModal({ app, onClose }: AssistanceModalProps) {
-
+function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProps) {
   const initialAssist: CapitalMaterialsAssistance = app.assistance || {
     id: `ASST-${app.id || app.referenceNumber}`,
     application_id: app.id,
@@ -1264,25 +1263,106 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
     release_location: "Quezon City Hall - SSDD Livelihood Center",
     instructions: "Please bring a valid ID and your Livelihood Application Reference Number.",
   }
+
   const parsedAssistAmt = parseFloat(String(initialAssist.approved_financial_amount || "").replace(/[^0-9.]/g, ""))
   const parsedAppEst = parseFloat(String(app.estimatedAmount || "").replace(/[^0-9.]/g, ""))
   const rawInitialAmt = parsedAssistAmt > 0 ? parsedAssistAmt : parsedAppEst > 0 ? parsedAppEst : 15000
 
-  const financialAmount = (rawInitialAmt > 0 ? rawInitialAmt : 15000).toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  const [saving, setSaving] = useState(false)
+  const [assistanceStatus, setAssistanceStatus] = useState<string>(
+    (initialAssist.assistance_status || "FOR PROCESSING").toUpperCase()
+  )
+  const [financialAmount, setFinancialAmount] = useState<string>(String(rawInitialAmt))
+  const [materials, setMaterials] = useState<MaterialItem[]>(() => {
+    if (initialAssist.approved_materials && initialAssist.approved_materials.length > 0) {
+      return initialAssist.approved_materials
+    }
+    return [{ item: "Starter Livelihood Supply Pack", quantity: "1 set", description: "Standard initial allocation" }]
   })
-  const materials: MaterialItem[] =
-    initialAssist.approved_materials && initialAssist.approved_materials.length > 0
-      ? initialAssist.approved_materials
-      : [{ item: "Starter Livelihood Supply Pack", quantity: "1 set", description: "Standard initial allocation" }]
-  const equipment: EquipmentApprovedItem[] =
-    initialAssist.approved_equipment && initialAssist.approved_equipment.length > 0
-      ? initialAssist.approved_equipment
-      : [{ equipment: "Operational Kit / Tools", quantity: "1 unit", description: "Standard package" }]
+  const [equipment, setEquipment] = useState<EquipmentApprovedItem[]>(() => {
+    if (initialAssist.approved_equipment && initialAssist.approved_equipment.length > 0) {
+      return initialAssist.approved_equipment
+    }
+    return [{ equipment: "Operational Kit / Tools", quantity: "1 unit", description: "Standard package" }]
+  })
+  const [releaseDate, setReleaseDate] = useState<string>(
+    initialAssist.release_date || new Date().toISOString().split("T")[0]
+  )
+  const [releaseTime, setReleaseTime] = useState<string>(initialAssist.release_time || "09:00 AM")
+  const [releaseLocation, setReleaseLocation] = useState<string>(
+    initialAssist.release_location || "Quezon City Hall - SSDD Livelihood Center"
+  )
+  const [instructions, setInstructions] = useState<string>(
+    initialAssist.instructions || "Please bring a valid ID and your Livelihood Application Reference Number."
+  )
 
-  const currentStatus = (initialAssist.assistance_status || "FOR PROCESSING").toUpperCase()
   const fullName = [app.firstName, app.middleName, app.lastName].filter(Boolean).join(" ")
+
+  const handleAddMaterial = () => {
+    setMaterials([...materials, { item: "", quantity: "1 set", description: "" }])
+  }
+
+  const handleRemoveMaterial = (index: number) => {
+    setMaterials(materials.filter((_, i) => i !== index))
+  }
+
+  const handleUpdateMaterial = (index: number, field: keyof MaterialItem, val: string) => {
+    const next = [...materials]
+    next[index] = { ...next[index], [field]: val }
+    setMaterials(next)
+  }
+
+  const handleAddEquipment = () => {
+    setEquipment([...equipment, { equipment: "", quantity: "1 unit", description: "" }])
+  }
+
+  const handleRemoveEquipment = (index: number) => {
+    setEquipment(equipment.filter((_, i) => i !== index))
+  }
+
+  const handleUpdateEquipment = (index: number, field: keyof EquipmentApprovedItem, val: string) => {
+    const next = [...equipment]
+    next[index] = { ...next[index], [field]: val }
+    setEquipment(next)
+  }
+
+  const handleSave = async (statusOverride?: string) => {
+    const finalStatus = (statusOverride || assistanceStatus).toUpperCase()
+    const isReleased = finalStatus === "RELEASED"
+    const cleanAmt = parseFloat(String(financialAmount).replace(/[^0-9.]/g, "")) || 15000
+
+    const cleanMaterials = materials.filter((m) => m.item.trim().length > 0)
+    const cleanEquipment = equipment.filter((e) => e.equipment.trim().length > 0)
+
+    const updatedAssist: CapitalMaterialsAssistance = {
+      ...initialAssist,
+      assistance_status: finalStatus,
+      release_status: isReleased ? "RELEASED" : "NOT RELEASED",
+      approved_financial_amount: cleanAmt,
+      approved_materials: cleanMaterials.length > 0 ? cleanMaterials : materials,
+      approved_equipment: cleanEquipment.length > 0 ? cleanEquipment : equipment,
+      release_date: releaseDate,
+      release_time: releaseTime,
+      release_location: releaseLocation,
+      instructions: instructions,
+      released_by: "SSDD Admin Evaluator",
+      released_at: isReleased ? initialAssist.released_at || new Date().toISOString() : undefined,
+      updated_at: new Date().toISOString(),
+    }
+
+    setSaving(true)
+    try {
+      if (onSaveAssistance) {
+        await onSaveAssistance(app.id, updatedAssist)
+      }
+      onClose()
+    } catch (err) {
+      console.error("Error saving assistance:", err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose()
@@ -1296,7 +1376,7 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 cursor-pointer"
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto cursor-pointer"
     >
       {/* Floating Exit Button outside the box */}
       <button
@@ -1311,24 +1391,24 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
 
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-card border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 cursor-default relative"
+        className="bg-card border border-border rounded-2xl w-full max-w-3xl max-h-[92vh] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 cursor-default relative my-4"
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30 shrink-0">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-bold text-foreground">
-              Capital / Materials Assistance Details
+              Capital &amp; Materials Assistance Allocation
             </h2>
             <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                currentStatus === "RELEASED"
-                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                  : currentStatus === "FOR RELEASE"
-                  ? "bg-blue-500/15 text-blue-700 dark:text-blue-300"
-                  : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+              className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                assistanceStatus === "RELEASED"
+                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
+                  : assistanceStatus === "FOR RELEASE"
+                  ? "bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30"
+                  : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30"
               }`}
             >
-              {currentStatus}
+              {assistanceStatus}
             </span>
           </div>
           <button
@@ -1345,19 +1425,19 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
           <div className="border border-border rounded-xl p-4 bg-muted/20 space-y-3">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <span className="text-muted-foreground block">Applicant Name</span>
+                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Applicant Name</span>
                 <span className="font-bold text-foreground block mt-0.5">{fullName}</span>
               </div>
               <div>
-                <span className="text-muted-foreground block">Reference Number</span>
+                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Reference Number</span>
                 <span className="font-mono font-bold text-foreground block mt-0.5">{app.referenceNumber}</span>
               </div>
               <div>
-                <span className="text-muted-foreground block">Livelihood Type</span>
+                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Livelihood Type</span>
                 <span className="font-bold text-foreground block mt-0.5">{app.entrepreneurCategory}</span>
               </div>
               <div>
-                <span className="text-muted-foreground block">Business Name</span>
+                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Business Name</span>
                 <span className="font-bold text-foreground block mt-0.5">{app.businessName}</span>
               </div>
             </div>
@@ -1365,13 +1445,27 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
 
           {/* Section 2: Set Approved Assistance */}
           <div className="border border-border rounded-xl p-5 space-y-5 bg-card shadow-xs">
-            <div className="border-b border-border pb-3">
-              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
-                Approved Assistance Allocation
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Specify approved financial capital grant, materials/supplies, and equipment
-              </p>
+            <div className="border-b border-border pb-3 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                  Assistance Allocation Setup
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Configure approved seed capital, requested materials/supplies, and equipment
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground font-semibold">Stage:</span>
+                <select
+                  value={assistanceStatus}
+                  onChange={(e) => setAssistanceStatus(e.target.value)}
+                  className="px-3 py-1.5 border border-border rounded-lg text-xs font-bold bg-background text-foreground focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="FOR PROCESSING">FOR PROCESSING</option>
+                  <option value="FOR RELEASE">FOR RELEASE</option>
+                  <option value="RELEASED">RELEASED</option>
+                </select>
+              </div>
             </div>
 
             {/* A. Financial Assistance */}
@@ -1383,16 +1477,12 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
               <div className="relative max-w-sm">
                 <span className="absolute left-3 top-2.5 text-sm font-bold text-muted-foreground">₱</span>
                 <input
-                  type="text"
-                  disabled={true}
-                  value={
-                    financialAmount && parseFloat(financialAmount.replace(/[^0-9.]/g, "")) > 0
-                      ? financialAmount
-                      : "15,000.00"
-                  }
-                  readOnly
-                  placeholder="15,000.00"
-                  className="w-full pl-8 pr-3 py-2 text-sm font-bold border border-border rounded-xl bg-muted/40 text-foreground cursor-not-allowed opacity-90 select-none"
+                  type="number"
+                  step="500"
+                  value={financialAmount}
+                  onChange={(e) => setFinancialAmount(e.target.value)}
+                  placeholder="15000"
+                  className="w-full pl-8 pr-3 py-2 text-sm font-bold border border-border rounded-xl bg-background text-foreground focus:ring-2 focus:ring-blue-500 font-mono"
                 />
               </div>
             </div>
@@ -1402,32 +1492,46 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                   <Package className="h-4 w-4 text-blue-600" />
-                  Materials / Supplies ({materials.length})
+                  Materials &amp; Supplies ({materials.length})
                 </label>
+                <button
+                  type="button"
+                  onClick={handleAddMaterial}
+                  className="px-3 py-1 rounded-lg text-xs font-semibold bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Material
+                </button>
               </div>
 
               {materials.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">No material items requested by applicant.</p>
+                <p className="text-xs text-muted-foreground italic">No material items listed. Click Add Material to add.</p>
               ) : (
                 <div className="space-y-2">
                   {materials.map((mat, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-2 p-2.5 rounded-xl border border-border bg-muted/15 items-center text-xs">
                       <input
                         type="text"
-                        disabled={true}
-                        readOnly
-                        placeholder="Item name"
+                        placeholder="Material item description"
                         value={mat.item}
-                        className="col-span-8 px-3 py-1.5 border border-border rounded-lg bg-muted/40 text-foreground cursor-not-allowed opacity-90 select-none font-medium"
+                        onChange={(e) => handleUpdateMaterial(idx, "item", e.target.value)}
+                        className="col-span-7 px-3 py-1.5 border border-border rounded-lg bg-background text-foreground font-medium focus:ring-1 focus:ring-blue-500"
                       />
                       <input
                         type="text"
-                        disabled={true}
-                        readOnly
-                        placeholder="Quantity"
+                        placeholder="Quantity (e.g. 1 set, 5 bags)"
                         value={mat.quantity}
-                        className="col-span-4 px-3 py-1.5 border border-border rounded-lg bg-muted/40 text-foreground cursor-not-allowed opacity-90 select-none font-medium"
+                        onChange={(e) => handleUpdateMaterial(idx, "quantity", e.target.value)}
+                        className="col-span-4 px-3 py-1.5 border border-border rounded-lg bg-background text-foreground font-medium focus:ring-1 focus:ring-blue-500"
                       />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMaterial(idx)}
+                        className="col-span-1 p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors flex items-center justify-center cursor-pointer"
+                        title="Remove item"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1439,79 +1543,149 @@ function AssistanceModal({ app, onClose }: AssistanceModalProps) {
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                   <Wrench className="h-4 w-4 text-indigo-600" />
-                  Equipment ({equipment.length})
+                  Equipment &amp; Tools ({equipment.length})
                 </label>
+                <button
+                  type="button"
+                  onClick={handleAddEquipment}
+                  className="px-3 py-1 rounded-lg text-xs font-semibold bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Equipment
+                </button>
               </div>
 
               {equipment.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">No equipment requested by applicant.</p>
+                <p className="text-xs text-muted-foreground italic">No equipment requested. Click Add Equipment to add.</p>
               ) : (
                 <div className="space-y-2">
                   {equipment.map((eq, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-2 p-2.5 rounded-xl border border-border bg-muted/15 items-center text-xs">
                       <input
                         type="text"
-                        disabled={true}
-                        readOnly
                         placeholder="Equipment name"
                         value={eq.equipment}
-                        className="col-span-8 px-3 py-1.5 border border-border rounded-lg bg-muted/40 text-foreground cursor-not-allowed opacity-90 select-none font-medium"
+                        onChange={(e) => handleUpdateEquipment(idx, "equipment", e.target.value)}
+                        className="col-span-7 px-3 py-1.5 border border-border rounded-lg bg-background text-foreground font-medium focus:ring-1 focus:ring-blue-500"
                       />
                       <input
                         type="text"
-                        disabled={true}
-                        readOnly
-                        placeholder="Quantity"
+                        placeholder="Quantity (e.g. 1 unit)"
                         value={eq.quantity}
-                        className="col-span-4 px-3 py-1.5 border border-border rounded-lg bg-muted/40 text-foreground cursor-not-allowed opacity-90 select-none font-medium"
+                        onChange={(e) => handleUpdateEquipment(idx, "quantity", e.target.value)}
+                        className="col-span-4 px-3 py-1.5 border border-border rounded-lg bg-background text-foreground font-medium focus:ring-1 focus:ring-blue-500"
                       />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveEquipment(idx)}
+                        className="col-span-1 p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors flex items-center justify-center cursor-pointer"
+                        title="Remove equipment"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
+            {/* Release Schedule Settings */}
+            <div className="space-y-3 pt-3 border-t border-border">
+              <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                <Calendar className="h-4 w-4 text-emerald-600" />
+                Release Schedule &amp; Handover Location
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase block mb-1">Target Release Date</span>
+                  <input
+                    type="date"
+                    value={releaseDate}
+                    onChange={(e) => setReleaseDate(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-border rounded-lg bg-background text-foreground text-xs focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase block mb-1">Release Time</span>
+                  <input
+                    type="text"
+                    value={releaseTime}
+                    onChange={(e) => setReleaseTime(e.target.value)}
+                    placeholder="09:00 AM - 11:30 AM"
+                    className="w-full px-3 py-1.5 border border-border rounded-lg bg-background text-foreground text-xs focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="col-span-full">
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase block mb-1">Release Venue / Location</span>
+                  <input
+                    type="text"
+                    value={releaseLocation}
+                    onChange={(e) => setReleaseLocation(e.target.value)}
+                    placeholder="Quezon City Hall - SSDD Livelihood Center"
+                    className="w-full px-3 py-1.5 border border-border rounded-lg bg-background text-foreground text-xs focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Section 3: Financial Aid & Appointments Integration Notice */}
-            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/25 space-y-2 mt-4">
+            <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/25 space-y-1.5">
               <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-                <Calendar className="h-4.5 w-4.5" />
+                <Calendar className="h-4 w-4" />
                 <h4 className="text-xs font-bold uppercase tracking-wider">
-                  Disbursement &amp; Appointment Scheduling
+                  Disbursement &amp; Appointment Synchronization
                 </h4>
               </div>
               <p className="text-xs text-foreground leading-relaxed">
-                Ang naaprubahang <strong>Livelihood Capital Assistance</strong> na ito ay awtomatikong nakatala sa{" "}
-                <strong>Financial Aid Disbursements</strong>. Ang pagtatakda ng petsa, oras, at venue ng release/payout ay
-                pinamamahalaan sa pamamagitan ng <strong>Appointments</strong> module.
+                Ang <strong>Livelihood Capital Assistance</strong> na ito ay awtomatikong naka-sync sa{" "}
+                <strong>Financial Aid Disbursements</strong> at <strong>Appointments</strong> module para sa payout tracking.
               </p>
-            </div>
-
-            {/* Allocation Status Badge */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border mt-4">
-              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                <span>Naka-lock ang opisyal na allocation batay sa isinumite ng aplikante. Pumunta sa Appointments para sa release schedule.</span>
-              </div>
-
-              <div
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 select-none flex items-center gap-1.5 shrink-0"
-              >
-                <Check className="h-4 w-4 text-emerald-600" />
-                ✓ [ ALLOCATION LOCKED / VIEW ONLY ]
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-border bg-muted/30 flex justify-end gap-3 shrink-0">
+        {/* Footer Action Buttons */}
+        <div className="px-6 py-4 border-t border-border bg-muted/30 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 rounded-xl border border-border text-foreground font-semibold text-xs hover:bg-muted transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-border text-foreground font-semibold text-xs hover:bg-muted transition-colors cursor-pointer"
           >
-            Close
+            Cancel / Close
           </button>
+
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave("FOR PROCESSING")}
+              className="px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground font-bold text-xs shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Save Allocation
+            </button>
+
+            {assistanceStatus !== "RELEASED" && (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => handleSave("FOR RELEASE")}
+                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              >
+                <Clock className="h-3.5 w-3.5" />
+                <span>Mark as For Release</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave("RELEASED")}
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>{saving ? "Saving..." : "Confirm & Mark as Released"}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
