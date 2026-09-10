@@ -159,11 +159,19 @@ function getReadNotifIds(): string[] {
   }
 }
 
-function markNotifAsRead(id: string) {
+function markNotifAsRead(id: string, userIdentifier?: string) {
   const readIds = getReadNotifIds()
   if (!readIds.includes(id)) {
     localStorage.setItem("aics_read_notifs", JSON.stringify([...readIds, id]))
   }
+  const ident = userIdentifier || getLoggedInUserQcid() || "user"
+  try {
+    fetch(`${API_BASE}/api/notifications/${encodeURIComponent(id)}/read`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userIdentifier: ident }),
+    }).catch(() => {})
+  } catch (_) {}
 }
 
 function getDismissedNotifIds(): string[] {
@@ -174,19 +182,35 @@ function getDismissedNotifIds(): string[] {
   }
 }
 
-function dismissNotif(id: string) {
+function dismissNotif(id: string, userIdentifier?: string) {
   const dismissedIds = getDismissedNotifIds()
   if (!dismissedIds.includes(id)) {
     localStorage.setItem("aics_dismissed_notifs", JSON.stringify([...dismissedIds, id]))
     window.dispatchEvent(new Event("user_notifications_updated"))
   }
+  const ident = userIdentifier || getLoggedInUserQcid() || "user"
+  try {
+    fetch(`${API_BASE}/api/notifications/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userIdentifier: ident }),
+    }).catch(() => {})
+  } catch (_) {}
 }
 
-function dismissAllNotifs(ids: string[]) {
+function dismissAllNotifs(ids: string[], userIdentifier?: string) {
   const dismissedIds = getDismissedNotifIds()
   const set = new Set([...dismissedIds, ...ids])
   localStorage.setItem("aics_dismissed_notifs", JSON.stringify(Array.from(set)))
   window.dispatchEvent(new Event("user_notifications_updated"))
+  const ident = userIdentifier || getLoggedInUserQcid() || "user"
+  try {
+    fetch(`${API_BASE}/api/notifications/all`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userIdentifier: ident, notifIds: ids }),
+    }).catch(() => {})
+  } catch (_) {}
 }
 
 function Avatar({ size = 36 }: { size?: number }) {
@@ -573,110 +597,54 @@ function ResidentHeader({
         const dismissedIds = getDismissedNotifIds()
         const items: AicsNotification[] = []
         const prof = getCurrentUserProfile()
-        const userQcId = prof.qcidNumber || prof.qcidNo || getLoggedInUserQcid()
+        const userQcId = prof.qcidNumber || prof.qcidNo || getLoggedInUserQcid() || "110000116932100"
         const userEmail = (prof.email || "").toLowerCase().trim()
         const userId = String(prof.id || "1")
 
-        // ---- AICS (Only for this logged-in user) ----
-        if (userQcId) {
-          try {
-            const aicsRes = await fetch(`${API_BASE}/api/aics/applications?qcId=${userQcId}`)
-            if (aicsRes.ok) {
-              const aicsData = await aicsRes.json()
-              const relevant = (aicsData.applications || []).filter(
-                (app: any) =>
-                  (app.status === "approved" || app.status === "rejected") &&
-                  (app.qc_id === userQcId || (userEmail && (app.email || "").toLowerCase() === userEmail)) &&
-                  !dismissedIds.includes(`aics-${app.id}-${app.status}`)
-              )
-              relevant.forEach((app: any) => {
-                const notifId = `aics-${app.id}-${app.status}`
-                const isApproved = app.status === "approved"
-                items.push({
-                  id: notifId,
-                  title: isApproved ? (t("notifAicsApprovedTitle") || "AICS Assistance Application: Approved") : (t("notifAicsRejectedTitle") || "AICS Assistance Application: Not Approved"),
-                  desc: `${app.assistance_type} — Ref: ${app.reference_no || app.qc_id}`,
-                  time: new Date(app.updated_at || app.created_at).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
-                  unread: !readIds.includes(notifId),
-                  reason: app.rejection_reason || null,
-                })
-              })
-            }
-          } catch {}
-        }
-
-        // ---- PWD & Senior Citizen (API + LocalStorage for this user) ----
+        // 1. Primary: Fetch real-time synchronized notifications from PostgreSQL backend
         try {
-          let pwdSeniorList: any[] = []
-          try {
-            const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
-            if (res.ok) {
-              const data = await res.json()
-              if (Array.isArray(data)) pwdSeniorList = data
-            }
-          } catch {}
+          const notifRes = await fetch(
+            `${API_BASE}/api/notifications?qcid=${encodeURIComponent(userQcId)}&userId=${encodeURIComponent(userId)}&email=${encodeURIComponent(userEmail)}&ref=${encodeURIComponent(userQcId)}`
+          )
+          if (notifRes.ok) {
+            const notifData = await notifRes.json()
+            if (Array.isArray(notifData.notifications)) {
+              notifData.notifications.forEach((n: any) => {
+                if (!dismissedIds.includes(n.id)) {
+                  let translatedTitle = n.title
+                  if (n.title.includes("AICS") && n.title.includes("Approved")) {
+                    translatedTitle = t("notifAicsApprovedTitle") || n.title
+                  } else if (n.title.includes("AICS") && n.title.includes("Not Approved")) {
+                    translatedTitle = t("notifAicsRejectedTitle") || n.title
+                  } else if (n.title.includes("Solo Parent") && n.title.includes("Approved")) {
+                    translatedTitle = t("notifSoloParentApprovedTitle") || n.title
+                  } else if (n.title.includes("Solo Parent") && n.title.includes("Not Approved")) {
+                    translatedTitle = t("notifSoloParentRejectedTitle") || n.title
+                  } else if (n.title.includes("Child Welfare") && n.title.includes("Approved")) {
+                    translatedTitle = t("notifChildWelfareApprovedTitle") || n.title
+                  } else if (n.title.includes("Child Welfare") && n.title.includes("Not Approved")) {
+                    translatedTitle = t("notifChildWelfareRejectedTitle") || n.title
+                  } else if (n.title.includes("Livelihood") && n.title.includes("Approved")) {
+                    translatedTitle = t("notifLivelihoodApprovedTitle") || n.title
+                  } else if (n.title.includes("Livelihood") && n.title.includes("Not Approved")) {
+                    translatedTitle = t("notifLivelihoodRejectedTitle") || n.title
+                  }
 
-          const storedPwd = localStorage.getItem("pwd_senior_applications")
-          if (storedPwd) {
-            const parsedPwd = JSON.parse(storedPwd)
-            if (Array.isArray(parsedPwd)) {
-              parsedPwd.forEach((p: any) => {
-                if (!pwdSeniorList.some((pl) => (pl.id && pl.id === p.id) || (pl.referenceNumber && pl.referenceNumber === p.referenceNumber))) {
-                  pwdSeniorList.push(p)
+                  items.push({
+                    id: n.id,
+                    title: translatedTitle,
+                    desc: n.desc || n.description,
+                    time: n.time || new Date(n.created_at || Date.now()).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
+                    unread: !readIds.includes(n.id) && Boolean(n.unread),
+                    reason: n.reason || null,
+                  })
                 }
               })
             }
           }
+        } catch (_) {}
 
-          const userPwdApps = pwdSeniorList.filter(
-            (app: any) =>
-              (app.qcid === userQcId || app.qcId === userQcId || app.referenceNumber === userQcId || app.reference_number === userQcId || (userEmail && (app.email || "").toLowerCase() === userEmail)) &&
-              (app.status === "approved" || app.status === "rejected" || app.status === "completed" || app.status === "for_release") &&
-              !dismissedIds.includes(`pwd-${app.id || app.referenceNumber}-${app.status}`)
-          )
-
-          userPwdApps.forEach((app: any) => {
-            const notifId = `pwd-${app.id || app.referenceNumber}-${app.status}`
-            const isApproved = app.status === "approved" || app.status === "completed" || app.status === "for_release"
-            const isSenior = (app.category || "").toLowerCase().includes("senior")
-            const isAssistance =
-              app.type === "assistance" ||
-              app.type === "social-assistance" ||
-              String(app.category || "").toLowerCase().includes("assistance") ||
-              String(app.service || "").toLowerCase().includes("assistance") ||
-              String(app.assistanceType || "").toLowerCase().includes("assistance")
-            const isRenewal = app.type === "renewal"
-            const isLoss = app.type === "replacement" || app.type === "loss"
-
-            let title = ""
-            let serviceLabel = ""
-            if (isAssistance) {
-              serviceLabel = isSenior ? "Senior Citizen Social Assistance" : "PWD Social Assistance"
-              title = isApproved ? `${serviceLabel} Application: Approved` : `${serviceLabel} Application: Not Approved`
-            } else if (isSenior) {
-              serviceLabel = `Senior Citizen Services (${isRenewal ? "Renewal" : isLoss ? "Replacement" : "New Application"})`
-              title = isApproved
-                ? (isRenewal ? "Senior Citizen ID (Renewal): Approved" : isLoss ? "Senior Citizen ID (Replacement): Approved" : "Senior Citizen ID Application: Approved")
-                : "Senior Citizen ID Application: Not Approved"
-            } else {
-              serviceLabel = `PWD Services (${isRenewal ? "Renewal" : isLoss ? "Replacement" : "New Application"})`
-              title = isApproved
-                ? (isRenewal ? "PWD ID (Renewal): Approved" : isLoss ? "PWD ID (Replacement): Approved" : "PWD ID Application: Approved")
-                : "PWD ID Application: Not Approved"
-            }
-
-            items.push({
-              id: notifId,
-              title,
-              desc: `${serviceLabel} — Ref: ${app.assignedIdNumber || app.referenceNumber || app.reference_number || app.id}`,
-              time: new Date(app.approvedDate || app.submittedAt || app.submissionDate || Date.now()).toLocaleString("en-US"),
-              unread: !readIds.includes(notifId),
-              reason: app.rejectionReason || null,
-            })
-          })
-        } catch {}
-
-        // ---- General User Notifications & Disbursements Payouts ----
+        // 2. Secondary fallback: Also check local storage cached items if any
         try {
           const rawUserNotifs = localStorage.getItem("all_user_notifications")
           if (rawUserNotifs) {
@@ -684,15 +652,9 @@ function ResidentHeader({
             if (Array.isArray(parsedUserNotifs)) {
               parsedUserNotifs.forEach((un: any) => {
                 if (!dismissedIds.includes(un.id) && !items.some((it) => it.id === un.id)) {
-                  let normalizedTitle = un.title || ""
-                  if (normalizedTitle.includes("Nakatakda") || normalizedTitle.includes("Payout Appointment")) {
-                    normalizedTitle = "Payout Appointment Scheduled"
-                  } else if (normalizedTitle.includes("Na-release") || normalizedTitle.includes("Ayuda")) {
-                    normalizedTitle = "Financial Aid Released"
-                  }
                   items.push({
                     id: un.id,
-                    title: normalizedTitle,
+                    title: un.title,
                     desc: un.desc,
                     time: un.time || new Date().toLocaleString("en-US"),
                     unread: !readIds.includes(un.id),
@@ -703,90 +665,21 @@ function ResidentHeader({
           }
         } catch {}
 
-        // ---- Solo Parent (Only for this user) ----
-        try {
-          const spRes = await fetch(`${API_BASE}/api/solo-parent/user/${userId}`)
-          if (spRes.ok) {
-            const spData = await spRes.json()
-            const relevant = (spData.applications || []).filter(
-              (app: any) =>
-                (app.application_status === "approved" || app.application_status === "rejected") &&
-                !dismissedIds.includes(`sp-${app.id}-${app.application_status}`)
-            )
-            relevant.forEach((app: any) => {
-              const notifId = `sp-${app.id}-${app.application_status}`
-              const isApproved = app.application_status === "approved"
-              items.push({
-                id: notifId,
-                title: isApproved ? (t("notifSoloParentApprovedTitle") || "Solo Parent Application: Approved") : (t("notifSoloParentRejectedTitle") || "Solo Parent Application: Not Approved"),
-                desc: `Solo Parent — Ref: ${app.reference_number}`,
-                time: new Date(app.updated_at || app.created_at).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
-                unread: !readIds.includes(notifId),
-                reason: app.rejection_reason || null,
-              })
-            })
+        // Deduplicate and sort
+        const uniqueMap = new Map<string, AicsNotification>()
+        items.forEach((item) => {
+          if (!uniqueMap.has(item.id)) {
+            uniqueMap.set(item.id, item)
           }
-        } catch {}
+        })
 
-        // ---- Child Welfare (Only for this user) ----
-        try {
-          const cwRes = await fetch(`${API_BASE}/api/child-welfare/user/${userId}`)
-          if (cwRes.ok) {
-            const cwData = await cwRes.json()
-            const relevant = (cwData.applications || []).filter(
-              (app: any) =>
-                (app.application_status === "approved" || app.application_status === "rejected") &&
-                !dismissedIds.includes(`cw-${app.id}-${app.application_status}`)
-            )
-            relevant.forEach((app: any) => {
-              const notifId = `cw-${app.id}-${app.application_status}`
-              const isApproved = app.application_status === "approved"
-              items.push({
-                id: notifId,
-                title: isApproved ? (t("notifChildWelfareApprovedTitle") || "Child Welfare Application: Approved") : (t("notifChildWelfareRejectedTitle") || "Child Welfare Application: Not Approved"),
-                desc: `Child Welfare — Ref: ${app.reference_number}`,
-                time: new Date(app.updated_at || app.created_at).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
-                unread: !readIds.includes(notifId),
-              })
-            })
-          }
-        } catch {}
-
-        // ---- Livelihood & Training (Only for this user) ----
-        try {
-          const storedLiv = localStorage.getItem("livelihood_applications")
-          if (storedLiv) {
-            const parsedLiv = JSON.parse(storedLiv)
-            if (Array.isArray(parsedLiv)) {
-              const userLivApps = parsedLiv.filter(
-                (app: any) =>
-                  (app.qcId === userQcId || app.qcid === userQcId || (userEmail && (app.email || "").toLowerCase() === userEmail)) &&
-                  (app.status === "approved" || app.status === "rejected") &&
-                  !dismissedIds.includes(`liv-${app.id}-${app.status}`)
-              )
-              userLivApps.forEach((app: any) => {
-                const notifId = `liv-${app.id}-${app.status}`
-                const isApproved = app.status === "approved"
-                items.push({
-                  id: notifId,
-                  title: isApproved ? (t("notifLivelihoodApprovedTitle") || "Livelihood & Training Application: Approved") : (t("notifLivelihoodRejectedTitle") || "Livelihood & Training Application: Not Approved"),
-                  desc: `${app.programName || "Livelihood"} — Ref: ${app.id}`,
-                  time: new Date(app.approvedDate || app.createdAt || Date.now()).toLocaleString(language === "en" ? "en-US" : "fil-PH"),
-                  unread: !readIds.includes(notifId),
-                  reason: app.rejectionReason || null,
-                })
-              })
-            }
-          }
-        } catch {}
-
-        items.sort((a, b) => Number(b.unread) - Number(a.unread))
-        setNotifications(items)
+        const sortedItems = Array.from(uniqueMap.values()).sort((a, b) => Number(b.unread) - Number(a.unread))
+        setNotifications(sortedItems)
       } catch {}
     }
 
     fetchNotifs()
-    const interval = setInterval(fetchNotifs, 4000)
+    const interval = setInterval(fetchNotifs, 3000)
     const handleNotifUpdate = () => fetchNotifs()
     window.addEventListener("user_notifications_updated", handleNotifUpdate)
     window.addEventListener("storage", handleNotifUpdate)
@@ -796,12 +689,14 @@ function ResidentHeader({
       window.removeEventListener("user_notifications_updated", handleNotifUpdate)
       window.removeEventListener("storage", handleNotifUpdate)
     }
-  }, [language])
+  }, [language, t])
 
   const unreadNotifCount = notifications.filter((n) => n.unread).length
 
   const handleNotifClick = (id: string) => {
-    markNotifAsRead(id)
+    const prof = getCurrentUserProfile()
+    const userQcId = prof.qcidNumber || prof.qcidNo || getLoggedInUserQcid() || "user"
+    markNotifAsRead(id, userQcId)
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, unread: false } : n)))
     const notif = notifications.find((n) => n.id === id)
     if (notif) {
@@ -812,14 +707,18 @@ function ResidentHeader({
 
   const handleDismissNotif = (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    dismissNotif(id)
+    const prof = getCurrentUserProfile()
+    const userQcId = prof.qcidNumber || prof.qcidNo || getLoggedInUserQcid() || "user"
+    dismissNotif(id, userQcId)
     setNotifications((prev) => prev.filter((n) => n.id !== id))
   }
 
   const handleDismissAll = (e: React.MouseEvent) => {
     e.stopPropagation()
+    const prof = getCurrentUserProfile()
+    const userQcId = prof.qcidNumber || prof.qcidNo || getLoggedInUserQcid() || "user"
     const allIds = notifications.map((n) => n.id)
-    dismissAllNotifs(allIds)
+    dismissAllNotifs(allIds, userQcId)
     setNotifications([])
   }
 
