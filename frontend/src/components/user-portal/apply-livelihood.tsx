@@ -78,51 +78,6 @@ const DEFAULT_LIVELIHOOD_APP: LivelihoodApplicationRecord = {
   monitoring: [],
 }
 
-// Helper: parse date and time string to Date object in Philippine Standard Time (UTC+8)
-function parseDateTime(dateStr?: string, timeStr?: string): Date | null {
-  if (!dateStr) return null
-  try {
-    let year: number, month: number, day: number
-    const str = String(dateStr).trim()
-    const isoMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/)
-    if (isoMatch) {
-      year = parseInt(isoMatch[1], 10)
-      month = parseInt(isoMatch[2], 10) - 1
-      day = parseInt(isoMatch[3], 10)
-    } else {
-      const usMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/)
-      if (usMatch) {
-        month = parseInt(usMatch[1], 10) - 1
-        day = parseInt(usMatch[2], 10)
-        year = parseInt(usMatch[3], 10)
-      } else {
-        const d = new Date(dateStr)
-        if (isNaN(d.getTime())) return null
-        year = d.getFullYear()
-        month = d.getMonth()
-        day = d.getDate()
-      }
-    }
-
-    let hours = 9
-    let minutes = 0
-    if (timeStr) {
-      const match = String(timeStr).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i)
-      if (match) {
-        hours = parseInt(match[1], 10)
-        minutes = parseInt(match[2], 10)
-        const ampm = match[3]?.toUpperCase()
-        if (ampm === "PM" && hours < 12) hours += 12
-        if (ampm === "AM" && hours === 12) hours = 0
-      }
-    }
-
-    const targetUtcMs = Date.UTC(year, month, day, hours - 8, minutes, 0, 0)
-    return new Date(targetUtcMs)
-  } catch {
-    return null
-  }
-}
 
 export default function ApplyLivelihood() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -204,8 +159,7 @@ export default function ApplyLivelihood() {
 
   // Requirements Modal visibility & acceptance
   const [showRequirements, setShowRequirements] = useState(false)
-  const [requirementsAccepted, setRequirementsAccepted] = useState(false)
-  const [currentStep, setCurrentStep] = useState(1)
+  const [requirementsAccepted] = useState(false)
 
   // Current Application Record
   const [activeApplication, setActiveApplication] = useState<LivelihoodApplicationRecord | null>(null)
@@ -570,7 +524,6 @@ export default function ApplyLivelihood() {
               isUpdatingRevision={isUpdatingRevision}
               onSuccessSubmit={handleSuccessSubmit}
               onCancel={() => setIsWizardOpen(false)}
-              onStepChange={setCurrentStep}
             />
           ) : activeApplication ? (
             <div className="space-y-4">
