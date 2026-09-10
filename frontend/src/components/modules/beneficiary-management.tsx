@@ -207,6 +207,52 @@ function BeneficiaryCard({ b, onOpen }: { b: Beneficiary; onOpen: (id: string) =
   )
 }
 
+function getBeneficiaryCardPhoto(b: Beneficiary): string {
+  if (b.photoUrl && (b.photoUrl.startsWith("data:") || b.photoUrl.startsWith("http") || b.photoUrl.startsWith("/"))) {
+    return b.photoUrl
+  }
+
+  try {
+    const qcid = (b.qcidNumber || b.idNumber || "").trim().toLowerCase()
+    const email = (b.email || "").trim().toLowerCase()
+    const name = (b.fullName || "").trim().toLowerCase()
+
+    const localKeys = ["pwd_senior_applications", "solo_parent_applications", "child_welfare_applications", "applications", "all_user_applications"]
+    for (const k of localKeys) {
+      const raw = localStorage.getItem(k)
+      if (raw) {
+        const list = JSON.parse(raw)
+        if (Array.isArray(list)) {
+          const match = list.find((a: any) => {
+            if (!a) return false
+            const aQc = String(a.referenceNumber || a.qcid || a.qcidNo || a.assignedIdNumber || "").trim().toLowerCase()
+            const aEmail = String(a.email || "").trim().toLowerCase()
+            const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase()
+            return (qcid && aQc.includes(qcid)) || (email && aEmail === email) || (name && aName === name)
+          })
+          if (match && Array.isArray(match.documents)) {
+            const photoDoc = match.documents.find((d: any) => {
+              const n = String(d.name || d.filename || "").toLowerCase()
+              return (
+                n.includes("photo") ||
+                n.includes("picture") ||
+                n.includes("2x2") ||
+                n.includes("1x1") ||
+                n.includes("idphoto")
+              ) && d.fileUrl
+            })
+            if (photoDoc?.fileUrl) return photoDoc.fileUrl
+            const anyImg = match.documents.find((d: any) => d.fileUrl && d.fileUrl.startsWith("data:image"))
+            if (anyImg?.fileUrl) return anyImg.fileUrl
+          }
+        }
+      }
+    }
+  } catch {}
+
+  return ""
+}
+
 // =====================================================================================
 // Beneficiary Profile Modal
 // =====================================================================================
@@ -228,6 +274,7 @@ function BeneficiaryProfileModal({
   onSetPending: (id: string, remarks: string) => Promise<void>
   isProcessing: boolean
 }) {
+  const cardPhoto = getBeneficiaryCardPhoto(b)
   const [tab, setTab] = useState<ProfileTab>("overview")
   const [idType, setIdType] = useState(b.idType || "QCitizen ID")
   const [idNumber, setIdNumber] = useState(b.idNumber || b.qcidNumber || "")
@@ -415,8 +462,8 @@ function BeneficiaryProfileModal({
                     {/* Details with QC Logo on right side */}
                     <div className="p-3 flex gap-2.5 items-start relative bg-gradient-to-br from-slate-50 via-white to-red-50/20">
                       <div className="w-20 h-24 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative z-10">
-                        {b.photoUrl ? (
-                          <img src={b.photoUrl} alt="Cardholder" className="w-full h-full object-cover" />
+                        {cardPhoto ? (
+                          <img src={cardPhoto} alt="Cardholder" className="w-full h-full object-cover" />
                         ) : (
                           <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
                             <User className="w-8 h-8 text-slate-300 mb-1" />

@@ -625,12 +625,48 @@ async function getAllBeneficiaries(req, res) {
         resolvedCivilStatus = 'Single';
       }
 
+      // Resolve photo from user profile or application documents (2x2 / ID Photo)
+      let resolvedPhotoUrl = b.profile_photo_url || b.photo_url || null;
+      if (!resolvedPhotoUrl) {
+        const pwdMatch = pwdList.find(app => (bQcid && String(app.reference_number || app.id || '').toLowerCase().includes(bQcid)) || (bEmail && String(app.email || '').toLowerCase() === bEmail));
+        if (pwdMatch) {
+          const docs = Array.isArray(pwdMatch.documents) ? pwdMatch.documents : (typeof pwdMatch.documents === 'string' ? JSON.parse(pwdMatch.documents || '[]') : []);
+          const photoDoc = docs.find(d => {
+            const n = String(d.name || d.filename || '').toLowerCase();
+            return (n.includes('photo') || n.includes('picture') || n.includes('2x2') || n.includes('1x1') || n.includes('idphoto')) && d.fileUrl;
+          });
+          if (photoDoc && photoDoc.fileUrl) {
+            resolvedPhotoUrl = photoDoc.fileUrl;
+          } else {
+            const anyImg = docs.find(d => d.fileUrl && String(d.fileUrl).startsWith('data:image'));
+            if (anyImg && anyImg.fileUrl) resolvedPhotoUrl = anyImg.fileUrl;
+          }
+        }
+      }
+      if (!resolvedPhotoUrl) {
+        const soloMatch = soloList.find(app => (bQcid && String(app.qcid_number || app.reference_number || app.user_id || '').toLowerCase().includes(bQcid)) || (bEmail && String(app.email || '').toLowerCase() === bEmail));
+        if (soloMatch) {
+          const docs = Array.isArray(soloMatch.documents) ? soloMatch.documents : (typeof soloMatch.documents === 'string' ? JSON.parse(soloMatch.documents || '[]') : []);
+          const photoDoc = docs.find(d => {
+            const n = String(d.name || d.filename || '').toLowerCase();
+            return (n.includes('photo') || n.includes('picture') || n.includes('2x2') || n.includes('1x1')) && d.fileUrl;
+          });
+          if (photoDoc && photoDoc.fileUrl) {
+            resolvedPhotoUrl = photoDoc.fileUrl;
+          } else {
+            const anyImg = docs.find(d => d.fileUrl && String(d.fileUrl).startsWith('data:image'));
+            if (anyImg && anyImg.fileUrl) resolvedPhotoUrl = anyImg.fileUrl;
+          }
+        }
+      }
+
       return {
         id: String(b.id),
         beneficiaryNo: bNum,
         fullName: (b.full_name || '').toUpperCase(),
         firstName: b.first_name,
         lastName: b.last_name,
+        photoUrl: resolvedPhotoUrl || undefined,
         age: String(b.age || "—"),
         sex: b.sex || "—",
         civilStatus: String(resolvedCivilStatus).toUpperCase(),

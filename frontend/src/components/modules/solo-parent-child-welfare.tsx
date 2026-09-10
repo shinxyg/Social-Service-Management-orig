@@ -1196,14 +1196,39 @@ function OfficialSoloParentIdCardModal({
     window.print()
   }
 
-  const photoDoc = (app.documents || []).find(
-    (d) =>
-      (d.name || "").toLowerCase().includes("2x2") ||
-      (d.name || "").toLowerCase().includes("picture") ||
-      (d.filename || "").toLowerCase().includes("2x2") ||
-      (d.filename || "").toLowerCase().includes("picture")
-  )
-  const photoUrl = photoDoc?.fileUrl || "/samples/ID PICTURE (2X2).webp"
+  const photoDoc = (app.documents || []).find((d) => {
+    const n = (d.name || "").toLowerCase()
+    const fn = (d.filename || "").toLowerCase()
+    return (
+      n.includes("photo") ||
+      n.includes("picture") ||
+      n.includes("2x2") ||
+      n.includes("1x1") ||
+      n.includes("idphoto") ||
+      n.includes("avatar") ||
+      n.includes("selfie") ||
+      fn.includes("photo") ||
+      fn.includes("picture") ||
+      fn.includes("2x2") ||
+      fn.includes("1x1")
+    )
+  })
+
+  let photoUrl = ""
+  if (photoDoc && photoDoc.fileUrl && (photoDoc.fileUrl.startsWith("data:") || photoDoc.fileUrl.startsWith("http") || photoDoc.fileUrl.startsWith("/") || photoDoc.fileUrl.startsWith("blob:"))) {
+    photoUrl = photoDoc.fileUrl
+  } else {
+    const anyImageDoc = (app.documents || []).find((d) => d.fileUrl && (d.fileUrl.startsWith("data:image") || d.fileUrl.startsWith("blob:")))
+    if (anyImageDoc?.fileUrl) {
+      photoUrl = anyImageDoc.fileUrl
+    } else if ((app as any).photoUrl) {
+      photoUrl = (app as any).photoUrl
+    } else if ((app as any).profilePhotoUrl) {
+      photoUrl = (app as any).profilePhotoUrl
+    } else {
+      photoUrl = "/samples/ID PICTURE (2X2).webp"
+    }
+  }
 
   const fdCard = (app as any).formData || (app as any).form_data || (app as any).extra_data?.formData || {}
   const edCard = (app as any).extraData || (app as any).extra_data || {}

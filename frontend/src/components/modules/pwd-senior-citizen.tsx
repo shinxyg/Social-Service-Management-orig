@@ -724,14 +724,42 @@ function OfficialIdCardModal({
     app.address ||
     "Quezon City"
 
-  const photoDoc = (app.documents || []).find(
-    (d) =>
-      (d.name || "").toLowerCase().includes("2x2") ||
-      (d.name || "").toLowerCase().includes("picture") ||
-      (d.filename || "").toLowerCase().includes("2x2") ||
-      (d.filename || "").toLowerCase().includes("picture")
-  )
-  const photoUrl = photoDoc ? getDocImageUrl(photoDoc) : "/samples/ID PICTURE (2X2).webp"
+  const photoDoc = (app.documents || []).find((d) => {
+    const n = (d.name || "").toLowerCase()
+    const fn = (d.filename || "").toLowerCase()
+    return (
+      n.includes("photo") ||
+      n.includes("picture") ||
+      n.includes("2x2") ||
+      n.includes("1x1") ||
+      n.includes("idphoto") ||
+      n.includes("avatar") ||
+      n.includes("selfie") ||
+      fn.includes("photo") ||
+      fn.includes("picture") ||
+      fn.includes("2x2") ||
+      fn.includes("1x1")
+    )
+  })
+
+  // Prioritize actual uploaded fileUrl first, then any uploaded image dataUrl, then profile photo, then placeholder
+  let photoUrl = ""
+  if (photoDoc && photoDoc.fileUrl && (photoDoc.fileUrl.startsWith("data:") || photoDoc.fileUrl.startsWith("http") || photoDoc.fileUrl.startsWith("/") || photoDoc.fileUrl.startsWith("blob:"))) {
+    photoUrl = photoDoc.fileUrl
+  } else {
+    const anyImageDoc = (app.documents || []).find((d) => d.fileUrl && (d.fileUrl.startsWith("data:image") || d.fileUrl.startsWith("blob:")))
+    if (anyImageDoc?.fileUrl) {
+      photoUrl = anyImageDoc.fileUrl
+    } else if ((app as any).photoUrl) {
+      photoUrl = (app as any).photoUrl
+    } else if ((app as any).profilePhotoUrl) {
+      photoUrl = (app as any).profilePhotoUrl
+    } else if (photoDoc) {
+      photoUrl = getDocImageUrl(photoDoc)
+    } else {
+      photoUrl = "/samples/ID PICTURE (2X2).webp"
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
