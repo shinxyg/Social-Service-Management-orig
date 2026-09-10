@@ -110,8 +110,8 @@ export default function ApplyLivelihood() {
       noAppTitle: "No Livelihood Application Yet",
       noAppSub: "Get started by reading the guidelines and documentary requirements before submitting an application.",
       applyBtn: "APPLY FOR LIVELIHOOD",
-      reApplyBtn: "Re-Apply for Livelihood",
-      reApplySub: "Need to submit a new or re-apply for another livelihood program?",
+      combinedBtn: "View Requirements & Re-Apply",
+      reApplySub: "Need to check requirements or re-apply for another livelihood grant?",
     },
     tl: {
       catLivelihood: "Tulong sa Kabuhayan",
@@ -131,8 +131,8 @@ export default function ApplyLivelihood() {
       noAppTitle: "Wala pang Livelihood Application",
       noAppSub: "Magsimula sa pamamagitan ng pagbasa sa mga panuntunan at documentary requirements bago magsumite ng application.",
       applyBtn: "MAG-APPLY SA LIVELIHOOD",
-      reApplyBtn: "Mag-apply Muli (Re-Apply)",
-      reApplySub: "Gusto mo bang mag-apply muli para sa bagong livelihood assistance o negosyo?",
+      combinedBtn: "Tingnan ang Requirements & Mag-apply Muli",
+      reApplySub: "Gusto mo bang suriin ang requirements o mag-apply muli para sa bagong negosyo?",
     },
     bis: {
       catLivelihood: "Tabang sa Panginabuhi",
@@ -152,8 +152,8 @@ export default function ApplyLivelihood() {
       noAppTitle: "Wala pay Livelihood Application",
       noAppSub: "Pagsugod pinaagi sa pagbasa sa mga lagda ug documentary requirements sa dili pa mosumite og aplikasyon.",
       applyBtn: "MAG-APPLY SA PANGINABUHI",
-      reApplyBtn: "Mag-apply Pag-usab (Re-Apply)",
-      reApplySub: "Gusto ba nimo mag-apply pag-usab alang sa bag-ong negosyo?",
+      combinedBtn: "Tan-awa ang Requirements & Mag-apply Pag-usab",
+      reApplySub: "Gusto ba nimo tan-awon ang requirements o mag-apply pag-usab alang sa bag-ong negosyo?",
     },
   }[langKey]
 
@@ -403,27 +403,14 @@ export default function ApplyLivelihood() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0 self-end md:self-center flex-wrap">
+          <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
             <button
               type="button"
-              onClick={() => setShowRequirements(true)}
-              className="inline-flex items-center justify-center px-3.5 py-2 rounded-xl text-xs font-semibold border border-border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+              onClick={handleStartNewApplication}
+              className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all cursor-pointer hover:scale-[1.02]"
             >
-              <Info className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
-              <span>{texts.viewReq}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsUpdatingRevision(false)
-                setIsWizardOpen(true)
-                handleTabChange("apply")
-                window.scrollTo({ top: 0, behavior: "smooth" })
-              }}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors cursor-pointer"
-            >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              <span>{texts.reApplyBtn}</span>
+              <FileText className="h-4 w-4 mr-2" />
+              <span>{texts.combinedBtn}</span>
             </button>
           </div>
         </div>
