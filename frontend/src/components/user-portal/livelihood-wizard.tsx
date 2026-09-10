@@ -234,27 +234,32 @@ export default function LivelihoodApplicationWizard({
     const file = files[0]
     if (!file) return
 
-    const newDocs: UploadedDocItem[] = [
-      {
-        id: `${type}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        type,
-        label:
-          type === "validId"
-            ? "Valid ID / QCID"
-            : type === "proofOfResidency"
-            ? "Proof of Residency"
-            : "Other Supporting Document",
-        name: file.name,
-        size: file.size,
-        previewUrl: URL.createObjectURL(file),
-        file,
-      },
-    ]
+    const reader = new FileReader()
+    reader.onload = (loadEvent) => {
+      const dataUrl = (loadEvent.target?.result as string) || ""
+      const newDocs: UploadedDocItem[] = [
+        {
+          id: `${type}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          type,
+          label:
+            type === "validId"
+              ? "Valid ID / QCID"
+              : type === "proofOfResidency"
+              ? "Proof of Residency"
+              : "Other Supporting Document",
+          name: file.name,
+          size: file.size,
+          previewUrl: dataUrl,
+          file,
+        },
+      ]
 
-    setFormData((prev) => ({
-      ...prev,
-      uploadedDocuments: [...prev.uploadedDocuments.filter((d) => d.type !== type), ...newDocs],
-    }))
+      setFormData((prev) => ({
+        ...prev,
+        uploadedDocuments: [...prev.uploadedDocuments.filter((d) => d.type !== type), ...newDocs],
+      }))
+    }
+    reader.readAsDataURL(file)
 
     // Clear field error if set
     setErrors((prev) => {
@@ -430,7 +435,11 @@ export default function LivelihoodApplicationWizard({
           id: d.id,
           type: d.type,
           label: d.label,
+          name: d.name,
           original_filename: d.name,
+          previewUrl: d.previewUrl || (d as any).file_url || "",
+          file_url: d.previewUrl || (d as any).file_url || "",
+          size: d.size,
           uploaded_at: new Date().toISOString(),
         })),
       }

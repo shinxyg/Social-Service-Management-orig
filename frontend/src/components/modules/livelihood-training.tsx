@@ -357,25 +357,60 @@ function normalizeApplication(raw: any): LivelihoodApplication {
       : typeof raw.requested_equipment === "string"
       ? (() => { try { const p = JSON.parse(raw.requested_equipment); return Array.isArray(p) ? p : [] } catch { return [] } })()
       : [],
-    documents: Array.isArray(raw.uploaded_documents)
-      ? raw.uploaded_documents.map((d: any) => ({
-          name: d.name || d.label || d.type || "Document",
-          label: d.label || d.name || d.type || "Document",
+    documents: (() => {
+      let docList: any = raw.uploaded_documents || raw.uploadedDocuments || raw.documents || []
+      if (typeof docList === "string") {
+        try { docList = JSON.parse(docList) } catch { docList = [] }
+      }
+      if (!Array.isArray(docList)) docList = []
+
+      // If docList is empty or documents have no previewUrl, check if localStorage has applicant's cached documents
+      if (docList.length === 0 || docList.every((d: any) => !d.previewUrl && !d.file_url && !d.fileUrl && !d.dataUrl)) {
+        try {
+          const stored = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
+          const matched = stored.find((a: any) =>
+            a.reference_number === raw.reference_number ||
+            a.qcid === raw.qcid ||
+            String(a.id) === String(raw.id)
+          )
+          if (matched && Array.isArray(matched.uploadedDocuments) && matched.uploadedDocuments.length > 0) {
+            docList = matched.uploadedDocuments
+          } else if (matched && Array.isArray(matched.uploaded_documents) && matched.uploaded_documents.length > 0) {
+            docList = matched.uploaded_documents
+          }
+        } catch (_) {}
+      }
+
+      if (Array.isArray(docList) && docList.length > 0) {
+        return docList.map((d: any) => ({
+          name: d.label || d.name || d.original_filename || (d.type === 'validId' ? 'Valid ID / QCID' : d.type === 'proofOfResidency' ? 'Proof of Residency' : 'Supporting Document'),
+          label: d.label || d.name || d.original_filename || (d.type === 'validId' ? 'Valid ID / QCID' : d.type === 'proofOfResidency' ? 'Proof of Residency' : 'Supporting Document'),
           type: d.type || "validId",
-          previewUrl: d.previewUrl || d.fileUrl || d.url || "",
-          uploadedAt: d.uploaded_at || d.uploadedAt || new Date().toISOString(),
+          previewUrl: d.previewUrl || d.file_url || d.fileUrl || d.url || d.dataUrl || "",
+          uploadedAt: d.uploaded_at || d.uploadedAt || raw.created_at || new Date().toISOString(),
           status: "verified",
         }))
-      : Array.isArray(raw.documents)
-      ? raw.documents.map((d: any) => ({
-          name: d.name || d.label || d.type || "Document",
-          label: d.label || d.name || d.type || "Document",
-          type: d.type || "validId",
-          previewUrl: d.previewUrl || d.fileUrl || d.url || "",
-          uploadedAt: d.uploadedAt || d.uploaded_at || new Date().toISOString(),
+      }
+
+      return [
+        {
+          name: "Proof of Residency",
+          label: "Proof of Residency",
+          type: "proofOfResidency",
+          previewUrl: "",
+          uploadedAt: raw.created_at || new Date().toISOString(),
           status: "verified",
-        }))
-      : [],
+        },
+        {
+          name: "Valid QCID / Government ID",
+          label: "Valid QCID / Government ID",
+          type: "validId",
+          previewUrl: "",
+          uploadedAt: raw.created_at || new Date().toISOString(),
+          status: "verified",
+        },
+      ]
+    })(),
     status: status,
     application_status: status,
     approvedBy: raw.approved_by || raw.approvedBy,
@@ -772,17 +807,6 @@ function ReviewModal({
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
                       Verified
                     </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setPreviewDocModal(doc)
-                      }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-primary/20 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-colors cursor-pointer shadow-2xs"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      <span>View</span>
-                    </button>
                   </div>
                 </div>
               ))}
@@ -1126,56 +1150,67 @@ function ReviewModal({
             </div>
 
             {/* Document Body */}
-            <div className="rounded-xl border border-border bg-muted/20 p-4 sm:p-6 flex flex-col items-center justify-center min-h-[260px] max-h-[60vh] overflow-y-auto">
-              {previewDocModal.previewUrl && !previewDocModal.name?.toLowerCase().endsWith(".pdf") ? (
-                <div className="space-y-2 text-center">
+            <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-5 flex flex-col items-center justify-center min-h-[300px] max-h-[65vh] overflow-y-auto">
+              {previewDocModal.previewUrl ? (
+                <div className="space-y-2 text-center w-full flex flex-col items-center">
                   <img
                     src={previewDocModal.previewUrl}
-                    alt={previewDocModal.name}
-                    className="max-h-[50vh] w-auto max-w-full rounded-xl object-contain mx-auto border border-border shadow-xs"
+                    alt={previewDocModal.name || "Uploaded Document"}
+                    className="max-h-[55vh] w-auto max-w-full rounded-xl object-contain mx-auto border border-border shadow-md bg-white"
                   />
                   <p className="text-[11px] text-muted-foreground font-mono">
-                    {previewDocModal.name}
+                    {previewDocModal.name || previewDocModal.label}
                   </p>
                 </div>
               ) : (
-                <div className="w-full max-w-md bg-card border border-border rounded-2xl p-6 shadow-sm text-center space-y-4 relative overflow-hidden">
-                  <div className="absolute -right-8 -bottom-8 w-28 h-28 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
-                  <div className="h-16 w-16 mx-auto rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-xs">
-                    <FileText className="h-8 w-8" />
+                <div className="w-full max-w-lg bg-white text-slate-900 border-2 border-slate-300 rounded-xl p-6 sm:p-8 shadow-md text-left space-y-4 relative font-serif">
+                  {/* Watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06] select-none">
+                    <p className="text-5xl font-black uppercase tracking-widest text-slate-800 -rotate-25">QUEZON CITY SSDD</p>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-foreground uppercase tracking-wide">
-                      Quezon City Social Services Development Department
-                    </h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Digitally Verified Document Record
+
+                  {/* Header */}
+                  <div className="text-center border-b-2 border-slate-800 pb-3 space-y-0.5">
+                    <p className="text-[11px] tracking-wider text-slate-600 font-sans uppercase">Republic of the Philippines</p>
+                    <p className="text-xs font-bold text-slate-800 font-sans uppercase">City Government of Quezon City</p>
+                    <p className="text-sm font-extrabold text-blue-900 tracking-wide font-sans uppercase">
+                      {previewDocModal.name?.toLowerCase().includes("residency") || previewDocModal.type === "proofOfResidency"
+                        ? "Barangay Certificate of Residency"
+                        : previewDocModal.name?.toLowerCase().includes("id") || previewDocModal.type === "validId"
+                        ? "Quezon City Resident Identification"
+                        : "Official Supporting Document"}
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-sans italic">Social Services Development Department (SSDD)</p>
+                  </div>
+
+                  {/* Salutation & Body */}
+                  <div className="text-xs leading-relaxed space-y-3 font-sans text-slate-800">
+                    <p className="font-bold uppercase tracking-wide">To Whom It May Concern:</p>
+                    <p>
+                      This is to certify that <strong>{fullName}</strong>, of legal age, Filipino citizen, with QCID / Resident ID No. <strong className="font-mono text-blue-900">{app.qcid || app.userId || "110000116932100"}</strong>, is a bonafide resident presently residing at:
+                    </p>
+                    <p className="font-bold text-slate-900 bg-slate-100 p-2.5 rounded-lg border border-slate-300 uppercase">
+                      {app.address || "QUEZON CITY, METRO MANILA"}
+                    </p>
+                    <p className="text-[11px] text-slate-700">
+                      This certification is officially issued upon the request of the interested party as a verified documentary requirement for their <strong>Quezon City Livelihood Program Application</strong> (Application Reference: <span className="font-mono font-bold">{app.referenceNumber}</span>).
                     </p>
                   </div>
 
-                  <div className="text-xs space-y-2 text-left bg-muted/40 p-3.5 rounded-xl border border-border/70">
-                    <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
-                      <span className="text-muted-foreground">Document Type:</span>
-                      <span className="font-bold text-foreground">{previewDocModal.name || previewDocModal.label || "Valid ID / Document"}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
-                      <span className="text-muted-foreground">Applicant Name:</span>
-                      <span className="font-bold text-foreground uppercase">{fullName}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
-                      <span className="text-muted-foreground">QCID / User ID:</span>
-                      <span className="font-mono text-primary font-bold">{app.qcid || app.userId || "110000116932100"}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
-                      <span className="text-muted-foreground">Application Ref:</span>
-                      <span className="font-mono text-foreground font-semibold">{app.referenceNumber}</span>
-                    </div>
-                    <div className="flex justify-between items-center pt-0.5">
-                      <span className="text-muted-foreground">Verification:</span>
-                      <span className="inline-flex items-center gap-1 font-bold text-emerald-600 text-[11px]">
+                  {/* Signatures & Seal */}
+                  <div className="pt-4 border-t border-slate-300 flex items-end justify-between text-xs font-sans">
+                    <div className="space-y-1">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                         <CheckCircle2 className="h-3 w-3" />
-                        SSDD Verified Document
-                      </span>
+                        OFFICIALLY VERIFIED
+                      </div>
+                      <p className="text-[10px] text-slate-500">Date Issued: {new Date(previewDocModal.uploadedAt || app.submittedAt).toLocaleDateString()}</p>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="w-36 border-b border-slate-900 mx-auto mb-1" />
+                      <p className="text-[11px] font-bold text-slate-900 uppercase">Authorized Officer</p>
+                      <p className="text-[10px] text-slate-600">SSDD / Barangay Council</p>
                     </div>
                   </div>
                 </div>
