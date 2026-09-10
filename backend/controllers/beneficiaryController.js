@@ -704,6 +704,7 @@ async function verifyBeneficiary(req, res) {
     const noteText = remarks || reason || `Beneficiary status set to ${cleanStatus}.`;
 
     let updatedBeneficiary = null;
+    const parsedId = !isNaN(parseInt(id, 10)) ? parseInt(id, 10) : -1;
 
     try {
       const updateQuery = `
@@ -715,10 +716,10 @@ async function verifyBeneficiary(req, res) {
             id_type = COALESCE($4, id_type),
             id_number = COALESCE($5, id_number),
             updated_at = NOW()
-        WHERE id = $6 OR beneficiary_number = $6
+        WHERE id = $6 OR beneficiary_number = $7
         RETURNING *
       `;
-      const updateRes = await db.query(updateQuery, [cleanStatus, verified_by, noteText, id_type || null, id_number || null, id]);
+      const updateRes = await db.query(updateQuery, [cleanStatus, verified_by, noteText, id_type || null, id_number || null, parsedId, String(id)]);
       if (updateRes.rows.length > 0) {
         updatedBeneficiary = updateRes.rows[0];
 
