@@ -332,7 +332,7 @@ function BeneficiaryProfileModal({
               {b.enrolledPrograms.length === 0 ? (
                 <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                   <IdCard className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                  <p className="text-sm text-muted-foreground">Wala pang naka-enroll na programa ang beneficiary na ito.</p>
+                  <p className="text-sm text-muted-foreground">No enrolled programs for this beneficiary yet.</p>
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -482,7 +482,7 @@ function BeneficiaryProfileModal({
               {b.history.length === 0 ? (
                 <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                   <History className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                  <p className="text-sm text-muted-foreground">Wala pang naitalang history events ang profile na ito.</p>
+                  <p className="text-sm text-muted-foreground">No history events recorded for this profile yet.</p>
                 </div>
               ) : (
                 <div className="space-y-0">
@@ -891,7 +891,7 @@ export default function BeneficiaryManagement() {
             <div className="text-center py-16 bg-white rounded-xl border border-border shadow-xs">
               <ShieldCheck className="h-12 w-12 text-emerald-600 mx-auto mb-3 opacity-80" />
               <p className="text-base font-bold text-foreground">All Beneficiaries Verified</p>
-              <p className="text-xs text-muted-foreground mt-1">Lahat ng beneficiary ay verified na sa database.</p>
+              <p className="text-xs text-muted-foreground mt-1">All beneficiaries in the database are currently verified.</p>
             </div>
           ) : (
             <div className="space-y-3">
