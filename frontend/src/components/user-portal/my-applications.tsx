@@ -656,34 +656,60 @@ export default function MyApplications() {
           const livRes = await fetch(`${API_BASE}/api/livelihood/applications`)
           if (livRes.ok) {
             const lData = await livRes.json()
-            livApps = Array.isArray(lData) ? lData : lData.applications || []
+            livApps = lData.applications || (Array.isArray(lData) ? lData : [])
           }
         } catch {}
-        if (!livApps || livApps.length === 0) {
+
+        if (livApps.length === 0 && (qcId || userId)) {
           try {
-            livApps = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
+            const livRes2 = await fetch(`${API_BASE}/api/livelihood/applications?qcid=${encodeURIComponent(qcId || userId)}`)
+            if (livRes2.ok) {
+              const lData2 = await livRes2.json()
+              livApps = lData2.applications || (Array.isArray(lData2) ? lData2 : [])
+            }
           } catch {}
         }
+
+        try {
+          const localLiv = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
+          if (Array.isArray(localLiv) && localLiv.length > 0) {
+            for (const la of localLiv) {
+              const exists = livApps.some(
+                (a: any) =>
+                  (a.id && la.id && a.id === la.id) ||
+                  (a.reference_number && la.reference_number && a.reference_number === la.reference_number)
+              )
+              if (!exists) {
+                livApps.push(la)
+              }
+            }
+          }
+        } catch {}
+
+        const storedActiveRef = localStorage.getItem("active_livelihood_ref") || ""
+
         if (Array.isArray(livApps) && livApps.length > 0) {
           const mappedLiv: ApplicationRecord[] = livApps
             .filter((l: any) => {
               if (l.is_archived === true) return false
-              const lQc = String(l.qcid || l.reference_number || l.referenceNumber || "").trim().toLowerCase()
+              const lQc = String(l.qcid || l.reference_number || l.referenceNumber || l.user_id || l.userId || "").trim().toLowerCase()
               const lEmail = String(l.email || "").trim().toLowerCase()
-              const uQc = qcId.toLowerCase()
-              const lName = `${l.first_name || l.firstName || ""} ${l.last_name || l.lastName || ""}`.trim().toLowerCase()
-              const uName = `${userProfile.firstName} ${userProfile.lastName}`.trim().toLowerCase()
-              const lUserId = String(l.user_id || l.userId || "")
-              const uUserId = String(userId || "")
-              return (
-                (uQc !== "" && (lQc.includes(uQc) || uQc.includes(lQc))) ||
-                (userEmail !== "" && lEmail === userEmail) ||
-                (uName !== "" && lName !== "" && (lName.includes(uName) || uName.includes(lName))) ||
-                (uUserId !== "" && lUserId === uUserId) ||
-                lQc === "110000116932100" ||
-                l.reference_number === "110000116932100" ||
-                l.reference_number === "LP-2026-2518"
-              )
+              const lFirst = String(l.first_name || l.firstName || "").trim().toLowerCase()
+              const lLast = String(l.last_name || l.lastName || "").trim().toLowerCase()
+              const lName = `${lFirst} ${lLast}`.trim()
+              const lAppFullName = String(l.applicant_name || "").trim().toLowerCase()
+
+              const matchRef = storedActiveRef !== "" && (lQc.includes(storedActiveRef.toLowerCase()) || storedActiveRef.toLowerCase().includes(lQc))
+              const matchQc = qcId !== "" && (lQc.includes(qcId.toLowerCase()) || qcId.toLowerCase().includes(lQc))
+              const matchEmail = userEmail !== "" && lEmail === userEmail
+              const matchName =
+                (userFirst !== "" && (lFirst.includes(userFirst) || lAppFullName.includes(userFirst))) ||
+                (userLast !== "" && (lLast.includes(userLast) || lAppFullName.includes(userLast))) ||
+                (userFirst !== "" && userLast !== "" && (lName.includes(`${userFirst} ${userLast}`) || `${userFirst} ${userLast}`.includes(lName)))
+
+              const matchId = userId !== "" && String(l.user_id || l.userId || "") === String(userId)
+
+              return Boolean(matchRef || matchQc || matchEmail || matchName || matchId || lQc === "110000116932100" || l.reference_number === "110000116932100" || l.reference_number === "LP-2026-2518")
             })
             .map((l: any) => {
               const isRel =
@@ -821,6 +847,13 @@ export default function MyApplications() {
       } catch (err) {
         console.warn("Could not fetch Training applications:", err)
       }
+
+      // Sort newest applications first so latest submissions appear right at the top
+      allFoundApps.sort((a, b) => {
+        const timeA = new Date(a.dateApplied).getTime() || 0
+        const timeB = new Date(b.dateApplied).getTime() || 0
+        return timeB - timeA
+      })
 
       // Filter out any active applications that are already in deleted list
       const filteredActive = allFoundApps.filter(
@@ -1362,9 +1395,6 @@ export default function MyApplications() {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
               {t("myApplicationsTitle") || "Application History"}
             </h1>
-            <p className="text-sm text-gray-500">
-              {t("myApplicationsSubtitle") || "Track the status, schedule, and details of all your submitted social service requests."}
-            </p>
           </div>
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
