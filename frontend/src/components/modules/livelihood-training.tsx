@@ -28,8 +28,6 @@ import {
   ChevronRight,
   Eye,
   Printer,
-  Download,
-  ExternalLink,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import TrainingProgramAdmin from "./training-program-admin"
