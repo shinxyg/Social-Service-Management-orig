@@ -20,7 +20,12 @@ import {
   FileCheck,
   Building2,
   CreditCard,
-  PhoneCall
+  PhoneCall,
+  Stethoscope,
+  Heart,
+  Package,
+  Utensils,
+  Bus,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
@@ -282,7 +287,8 @@ export default function CitizenGuideHub() {
     {
       type: "medical",
       title: "Medical Assistance",
-      icon: "🩺",
+      icon: Stethoscope,
+      iconColor: "text-rose-600 bg-rose-50 border-rose-200",
       path: "/portal/aics?type=medical",
       desc: "Financial assistance for hospitalization bills, chemotherapy, dialysis, prescribed medications, and laboratory diagnostic procedures.",
       requirements: ["Medical Abstract / Certificate", "Hospital Bill / Statement of Account or Pharmacy Quotation", "Barangay Certificate of Indigency", "Valid QCID / Government ID"]
@@ -290,7 +296,8 @@ export default function CitizenGuideHub() {
     {
       type: "funeral",
       title: "Funeral & Burial Assistance",
-      icon: "🕊️",
+      icon: Heart,
+      iconColor: "text-slate-700 bg-slate-100 border-slate-200",
       path: "/portal/aics?type=funeral",
       desc: "Emergency support for funeral, burial, cremation, and casket expenses for deceased family members.",
       requirements: ["Registered Death Certificate", "Funeral Contract / Statement of Account", "Barangay Certificate of Indigency", "Valid QCID / Gov ID of Claimant"]
@@ -298,7 +305,8 @@ export default function CitizenGuideHub() {
     {
       type: "educational",
       title: "Educational Assistance",
-      icon: "🎓",
+      icon: GraduationCap,
+      iconColor: "text-blue-600 bg-blue-50 border-blue-200",
       path: "/portal/aics?type=educational",
       desc: "Financial grant for school fees, supplies, learning materials, and student allowance for indigent students.",
       requirements: ["Certificate of Enrollment / Registration", "School ID / Student Assessment Form", "Barangay Indigency", "Parent/Guardian Valid ID"]
@@ -306,7 +314,8 @@ export default function CitizenGuideHub() {
     {
       type: "material",
       title: "Material Assistance",
-      icon: "📦",
+      icon: Package,
+      iconColor: "text-amber-600 bg-amber-50 border-amber-200",
       path: "/portal/aics?type=material",
       desc: "Direct provisions of assistive supplies, emergency hygiene packs, and material relief for displaced or distressed citizens.",
       requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Social Worker Case Validation"]
@@ -314,7 +323,8 @@ export default function CitizenGuideHub() {
     {
       type: "food",
       title: "Food Assistance",
-      icon: "🍲",
+      icon: Utensils,
+      iconColor: "text-emerald-600 bg-emerald-50 border-emerald-200",
       path: "/portal/aics?type=food",
       desc: "Emergency nutritional food support and subsistence vouchers for families facing sudden economic crisis.",
       requirements: ["Barangay Certificate of Indigency", "Valid QCID / Government ID", "Proof of Family Dependency"]
@@ -322,7 +332,8 @@ export default function CitizenGuideHub() {
     {
       type: "transportation",
       title: "Transportation Assistance",
-      icon: "🚌",
+      icon: Bus,
+      iconColor: "text-indigo-600 bg-indigo-50 border-indigo-200",
       path: "/portal/aics?type=transportation",
       desc: "Travel allowance for stranded individuals or residents needing emergency transit/repatriation to their home provinces.",
       requirements: ["Barangay Certificate / Police or Blotter Report if stranded", "Valid QCID / Gov ID", "Proof of Travel Necessity"]
@@ -948,9 +959,9 @@ export default function CitizenGuideHub() {
                   >
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl p-2 rounded-xl bg-slate-100 group-hover:scale-110 transition-transform">
-                          {svc.icon}
-                        </span>
+                        <div className={`p-2.5 rounded-xl border ${svc.iconColor} group-hover:scale-105 transition-transform flex items-center justify-center shrink-0 shadow-2xs`}>
+                          <svc.icon className="h-5 w-5" />
+                        </div>
                         <div>
                           <h3 className="font-bold text-gray-900 text-sm">{svc.title}</h3>
                           <span className="text-[11px] text-blue-600 font-semibold">Crisis Financial Aid</span>

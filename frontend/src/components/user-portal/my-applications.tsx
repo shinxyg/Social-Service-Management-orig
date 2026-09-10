@@ -67,7 +67,6 @@ export default function MyApplications() {
   const [deletedApplications, setDeletedApplications] = useState<ApplicationRecord[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null)
-  const [copied, setCopied] = useState(false)
 
   // Dialog modal states
   const [appToDelete, setAppToDelete] = useState<ApplicationRecord | null>(null)
@@ -1860,7 +1859,7 @@ export default function MyApplications() {
             toastMessage.type === "danger" ? "bg-red-600" : "bg-emerald-600"
           }`}
         >
-          {toastMessage.type === "danger" ? <Trash2 className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+          {toastMessage.type === "danger" ? <Trash2 className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
           <span>{toastMessage.text}</span>
         </div>
       )}
