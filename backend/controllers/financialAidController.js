@@ -251,7 +251,11 @@ exports.getDisbursements = async (req, res) => {
             SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
           )
           AND application_ref NOT IN (
-            SELECT reference_number FROM livelihood_applications WHERE application_status = 'approved' OR status = 'approved'
+            SELECT l.reference_number 
+            FROM livelihood_applications l
+            INNER JOIN livelihood_assistance la ON l.reference_number = la.reference_number
+            WHERE (l.application_status = 'approved' OR l.status = 'approved')
+              AND la.assistance_status IN ('for_release', 'released', 'FOR RELEASE', 'RELEASED')
           )
           AND application_ref NOT IN (
             SELECT reference_number FROM solo_parent_applications WHERE application_status = 'approved'
@@ -263,10 +267,14 @@ exports.getDisbursements = async (req, res) => {
       `);
     } catch (_) {}
 
-    // Auto-populate disbursements from approved livelihood applications if not yet present
+    // Auto-populate disbursements from approved livelihood applications whose capital assistance is ready for release
     try {
       const approvedLivelihood = await db.query(
-        `SELECT reference_number, first_name, last_name, estimated_amount FROM livelihood_applications WHERE application_status = 'approved'`
+        `SELECT l.reference_number, l.first_name, l.last_name, l.estimated_amount 
+         FROM livelihood_applications l
+         INNER JOIN livelihood_assistance la ON l.reference_number = la.reference_number
+         WHERE l.application_status = 'approved' 
+           AND (la.assistance_status = 'for_release' OR la.assistance_status = 'released' OR la.assistance_status = 'FOR RELEASE' OR la.assistance_status = 'RELEASED')`
       );
       for (const row of approvedLivelihood.rows) {
         const disbCheck = await db.query(

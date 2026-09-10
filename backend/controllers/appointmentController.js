@@ -91,10 +91,14 @@ exports.getAppointments = async (req, res) => {
       `);
     } catch (_) {}
 
-    // Auto-populate appointments from approved livelihood applications if not yet present and not deleted
+    // Auto-populate appointments from approved livelihood applications whose capital assistance is ready for release
     try {
       const approvedLivelihood = await db.query(
-        `SELECT reference_number, first_name, last_name FROM livelihood_applications WHERE application_status = 'approved'`
+        `SELECT l.reference_number, l.first_name, l.last_name 
+         FROM livelihood_applications l
+         INNER JOIN livelihood_assistance la ON l.reference_number = la.reference_number
+         WHERE l.application_status = 'approved' 
+           AND (la.assistance_status = 'for_release' OR la.assistance_status = 'released' OR la.assistance_status = 'FOR RELEASE' OR la.assistance_status = 'RELEASED')`
       );
       for (const row of approvedLivelihood.rows) {
         const refNo = String(row.reference_number || '').trim();
@@ -105,7 +109,7 @@ exports.getAppointments = async (req, res) => {
           await db.query(
             `INSERT INTO appointments
               (reference_no, module, applicant_name, concern, status, office_location, notes)
-             VALUES ($1, 'Livelihood', $2, 'Livelihood Capital Assistance', 'pending', 'Quezon City Hall - SSDD Livelihood Center', 'Awtomatikong pumasok mula sa na-aprubahang Livelihood application para sa scheduling.')
+             VALUES ($1, 'Livelihood', $2, 'Livelihood Capital Assistance', 'pending', 'Quezon City Hall - SSDD Livelihood Center', 'Awtomatikong pumasok mula sa na-aprubahang Livelihood Capital allocation para sa appointment scheduling.')
              ON CONFLICT DO NOTHING`,
             [refNo, fullName]
           );
@@ -146,8 +150,15 @@ exports.getAppointments = async (req, res) => {
     const result = await db.query(
       `SELECT a.* FROM appointments a
        WHERE (
-            a.reference_no LIKE 'LP-%'
-         OR a.module IN ('Livelihood', 'PWD', 'Senior Citizen', 'Solo Parent', 'Child Welfare')
+            (a.reference_no LIKE 'LP-%' AND a.reference_no IN (
+               SELECT reference_number FROM livelihood_assistance 
+               WHERE assistance_status IN ('for_release', 'released', 'FOR RELEASE', 'RELEASED')
+            ))
+         OR (a.module = 'Livelihood' AND a.reference_no IN (
+               SELECT reference_number FROM livelihood_assistance 
+               WHERE assistance_status IN ('for_release', 'released', 'FOR RELEASE', 'RELEASED')
+            ))
+         OR a.module IN ('PWD', 'Senior Citizen', 'Solo Parent', 'Child Welfare')
          OR a.reference_no IN (
            SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
          )
