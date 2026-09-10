@@ -258,6 +258,33 @@ exports.createApplication = async (req, res) => {
       savePersistentApps(memoryApplications);
     }
 
+    try {
+      const { ensureBeneficiaryForUser } = require('./beneficiaryController');
+      ensureBeneficiaryForUser({
+        userId,
+        qcid: qcid || referenceNumber,
+        fullName: `${firstName || ''} ${lastName || ''}`.trim(),
+        firstName,
+        middleName,
+        lastName,
+        suffix,
+        age: parsedAge,
+        sex: gender,
+        civilStatus,
+        birthDate: dateOfBirth,
+        address: `${houseBuildingNo || ''} ${streetName || ''} ${barangay || ''}`.trim(),
+        contactNo: phoneNumber,
+        email,
+        idType: 'QCitizen ID',
+        idNumber: qcid || referenceNumber,
+        program: 'Livelihood',
+        applicationRef: savedApp.reference_number,
+        action: 'Application submitted',
+        remarks: `Livelihood Assistance application submitted for ${livelihoodType || 'Micro-Enterprise'}.`,
+        performedBy: `${firstName || ''} ${lastName || ''}`.trim(),
+      }).catch(() => {});
+    } catch {}
+
     return res.status(201).json({
       success: true,
       message: 'Matagumpay na naisumite ang iyong Livelihood Program Application.',

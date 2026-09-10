@@ -162,6 +162,30 @@ exports.createApplication = async (req, res) => {
 
     await client.query('COMMIT');
 
+    try {
+      const { ensureBeneficiaryForUser } = require('./beneficiaryController');
+      ensureBeneficiaryForUser({
+        qcid: qcId,
+        fullName: `${finalFirstName} ${finalLastName}`.trim(),
+        firstName: finalFirstName,
+        middleName,
+        lastName: finalLastName,
+        suffix,
+        age: parsedAge,
+        sex: gender,
+        civilStatus,
+        birthDate,
+        address,
+        contactNo: phone,
+        email,
+        program: 'AICS',
+        applicationRef: referenceNo,
+        action: 'Application submitted',
+        remarks: `${finalAssistanceType} application submitted.`,
+        performedBy: `${finalFirstName} ${finalLastName}`.trim(),
+      }).catch(() => {});
+    } catch {}
+
     if (logActivity) {
       logActivity(req, 'SUBMIT_AICS_APPLICATION', `Application submitted for ${finalAssistanceType} (Ref: ${referenceNo})`).catch(() => {});
     }

@@ -133,6 +133,34 @@ exports.createApplication = async (req, res) => {
 
     const saved = result.rows[0];
 
+    try {
+      const { ensureBeneficiaryForUser } = require('./beneficiaryController');
+      ensureBeneficiaryForUser({
+        userId,
+        qcid: fd.qcidNumber || referenceNumber,
+        fullName: `${fd.firstName || ''} ${fd.lastName || ''}`.trim(),
+        firstName: fd.firstName,
+        middleName: fd.middleName,
+        lastName: fd.lastName,
+        suffix: fd.suffix,
+        age: safeAge,
+        sex: fd.sex,
+        civilStatus: fd.civilStatus,
+        birthDate: fd.dobMonth && fd.dobDay && fd.dobYear ? `${fd.dobMonth}/${fd.dobDay}/${fd.dobYear}` : null,
+        address: `${fd.addressHouseNo || ''} ${fd.addressStreet || ''} ${fd.addressBarangay || ''} ${fd.addressCityMunicipality || ''}`.trim(),
+        contactNo: fd.contactNo,
+        email: fd.email,
+        householdMembers: Array.isArray(familyMembers) ? String(familyMembers.length + 1) : '2',
+        idType: 'Solo Parent ID',
+        idNumber: soloParentIdNum || referenceNumber,
+        program: 'Solo Parent',
+        applicationRef: saved.reference_number,
+        action: 'Application submitted',
+        remarks: `Solo Parent (${idStatus}) application submitted.`,
+        performedBy: `${fd.firstName || ''} ${fd.lastName || ''}`.trim(),
+      }).catch(() => {});
+    } catch {}
+
     res.status(201).json({
       success: true,
       message: 'Application created successfully',

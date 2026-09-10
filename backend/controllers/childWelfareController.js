@@ -220,6 +220,33 @@ exports.createApplication = async (req, res) => {
 
     const saved = result.rows[0];
 
+    try {
+      const { ensureBeneficiaryForUser } = require('./beneficiaryController');
+      ensureBeneficiaryForUser({
+        userId,
+        qcid: (formData && (formData.qcidNumber || formData.qcidNo || formData.qcId)) || referenceNumber,
+        fullName: [guardianFirstName, guardianMiddleName, guardianLastName].filter(Boolean).join(' ').trim() || childName,
+        firstName: guardianFirstName,
+        middleName: guardianMiddleName,
+        lastName: guardianLastName,
+        age: guardianAge,
+        sex: guardianSex,
+        civilStatus: guardianCivilStatus,
+        birthDate: guardianDateOfBirth,
+        address: `${addressHouseNo || ''} ${addressStreet || ''} ${addressBarangay || ''} ${addressCity || ''}`.trim(),
+        contactNo: guardianContactNo,
+        email: guardianEmail,
+        householdMembers: householdMembers ? String(householdMembers) : '2',
+        idType: guardianValidId || 'Valid ID',
+        idNumber: referenceNumber,
+        program: 'Child Welfare',
+        applicationRef: saved.reference_number,
+        action: 'Application submitted',
+        remarks: `Child Welfare (${categoryTitle || 'General'}) application submitted for ${childName}.`,
+        performedBy: [guardianFirstName, guardianLastName].filter(Boolean).join(' ') || 'Guardian',
+      }).catch(() => {});
+    } catch {}
+
     res.status(201).json({
       success: true,
       message: 'Application created successfully',

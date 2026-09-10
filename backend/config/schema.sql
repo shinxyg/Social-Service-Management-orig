@@ -401,3 +401,70 @@ CREATE INDEX IF NOT EXISTS idx_pwd_senior_ref ON pwd_senior_applications(referen
 CREATE INDEX IF NOT EXISTS idx_pwd_senior_cat ON pwd_senior_applications(category);
 CREATE INDEX IF NOT EXISTS idx_pwd_senior_status ON pwd_senior_applications(status);
 
+-- 15. Beneficiaries Table (1:1 with Users / Citizens)
+CREATE TABLE IF NOT EXISTS beneficiaries (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  beneficiary_number VARCHAR(100) UNIQUE NOT NULL,
+  full_name VARCHAR(255) NOT NULL,
+  first_name VARCHAR(100),
+  middle_name VARCHAR(100),
+  last_name VARCHAR(100),
+  suffix VARCHAR(50),
+  age VARCHAR(20),
+  sex VARCHAR(50),
+  civil_status VARCHAR(100),
+  birth_date VARCHAR(50),
+  address TEXT,
+  contact_no VARCHAR(50),
+  email VARCHAR(150),
+  qcid_number VARCHAR(100),
+  household_members VARCHAR(50) DEFAULT '1',
+  verification_status VARCHAR(50) DEFAULT 'pending', -- 'verified', 'pending', 'unverified'
+  verification_date TIMESTAMP WITH TIME ZONE,
+  verified_by VARCHAR(150),
+  verification_remarks TEXT,
+  id_type VARCHAR(100),
+  id_number VARCHAR(100),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_beneficiaries_user_id ON beneficiaries(user_id);
+CREATE INDEX IF NOT EXISTS idx_beneficiaries_num ON beneficiaries(beneficiary_number);
+CREATE INDEX IF NOT EXISTS idx_beneficiaries_qcid ON beneficiaries(qcid_number);
+CREATE INDEX IF NOT EXISTS idx_beneficiaries_email ON beneficiaries(email);
+CREATE INDEX IF NOT EXISTS idx_beneficiaries_status ON beneficiaries(verification_status);
+
+-- 16. Beneficiary Verification Audit Table (1:M with Beneficiaries)
+CREATE TABLE IF NOT EXISTS beneficiary_verifications (
+  id SERIAL PRIMARY KEY,
+  beneficiary_id INTEGER REFERENCES beneficiaries(id) ON DELETE CASCADE,
+  status VARCHAR(50) NOT NULL, -- 'verified', 'unverified', 'pending'
+  reviewed_by VARCHAR(150) NOT NULL,
+  reviewed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  reason TEXT,
+  remarks TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ben_verif_ben_id ON beneficiary_verifications(beneficiary_id);
+
+-- 17. Beneficiary History & Activity Log (1:M with Beneficiaries)
+CREATE TABLE IF NOT EXISTS beneficiary_history (
+  id SERIAL PRIMARY KEY,
+  beneficiary_id INTEGER REFERENCES beneficiaries(id) ON DELETE CASCADE,
+  application_id VARCHAR(100),
+  program VARCHAR(100) NOT NULL, -- 'AICS', 'PWD', 'Senior Citizen', 'Solo Parent', 'Child Welfare', 'Livelihood', 'Training', 'System'
+  action VARCHAR(150) NOT NULL,
+  performed_by VARCHAR(150) NOT NULL,
+  status VARCHAR(50),
+  detail TEXT,
+  remarks TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ben_history_ben_id ON beneficiary_history(beneficiary_id);
+CREATE INDEX IF NOT EXISTS idx_ben_history_created_at ON beneficiary_history(created_at DESC);
+
+

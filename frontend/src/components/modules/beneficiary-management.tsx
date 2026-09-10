@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react"
+import { useState, useEffect, useCallback, type ReactElement } from "react"
 import {
   IdCard,
   Search,
@@ -12,13 +12,18 @@ import {
   Home,
   History,
   ChevronRight,
+  Loader2,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react"
+import { API_BASE } from "../../config/api"
+import { subscribeToRealtimeChanges, notifyApplicationChange } from "../../utils/realtimeSync"
 
 // =====================================================================================
 // Types
 // =====================================================================================
 
-type ProgramKey = "AICS" | "PWD" | "Senior Citizen" | "Solo Parent" | "Child Welfare" | "Livelihood"
+type ProgramKey = "AICS" | "PWD" | "Senior Citizen" | "Solo Parent" | "Child Welfare" | "Livelihood" | "General" | "System"
 type VerificationStatus = "verified" | "pending" | "unverified"
 
 interface EnrolledProgram {
@@ -34,21 +39,29 @@ interface HistoryEvent {
   program: ProgramKey
   action: string
   detail: string
+  performedBy?: string
+  status?: string
 }
 
 interface Beneficiary {
   id: string
   beneficiaryNo: string
   fullName: string
+  firstName?: string
+  lastName?: string
   age: string
   sex: string
+  civilStatus?: string
   address: string
   contactNo: string
+  email?: string
+  qcidNumber?: string
   householdMembers: string
   dateRegistered: string
   verificationStatus: VerificationStatus
   verifiedBy?: string
   verifiedDate?: string
+  verificationRemarks?: string
   idType?: string
   idNumber?: string
   enrolledPrograms: EnrolledProgram[]
@@ -56,146 +69,18 @@ interface Beneficiary {
 }
 
 // =====================================================================================
-// Mock data — same client roster used across the other modules
+// Theme & Utility Helpers
 // =====================================================================================
 
-const MOCK_BENEFICIARIES: Beneficiary[] = [
-  {
-    id: "BEN-001",
-    beneficiaryNo: "BNF-2026-0001",
-    fullName: "Clarisa Mae Dimal",
-    age: "21",
-    sex: "Female",
-    address: "11 Sampaloc Street, Brgy. Sauyo, Quezon City",
-    contactNo: "0917 555 1234",
-    householdMembers: "4",
-    dateRegistered: "2026-08-15",
-    verificationStatus: "verified",
-    verifiedBy: "Admin User",
-    verifiedDate: "2026-08-15",
-    idType: "PhilID",
-    idNumber: "1234-5678-9012",
-    enrolledPrograms: [
-      { program: "AICS", referenceNo: "110000116932100", status: "Approved", dateEnrolled: "2026-08-15" },
-      { program: "Child Welfare", referenceNo: "110000116932100", status: "Pending", dateEnrolled: "2026-08-18" },
-      { program: "Livelihood", referenceNo: "110000116932100", status: "Pending", dateEnrolled: "2026-08-15" },
-    ],
-    history: [
-      { id: "H-001", date: "2026-08-15", program: "AICS", action: "Application submitted", detail: "Medical Assistance application." },
-      { id: "H-002", date: "2026-08-21", program: "AICS", action: "Application approved", detail: "Medical Assistance approved and released." },
-      { id: "H-003", date: "2026-08-18", program: "Child Welfare", action: "Application submitted", detail: "Medical support for child (Josh Dimal)." },
-    ],
-  },
-  {
-    id: "BEN-002",
-    beneficiaryNo: "BNF-2026-0002",
-    fullName: "Rosalinda Torres",
-    age: "71",
-    sex: "Female",
-    address: "Purok 5, Barangay Malaya, Quezon City",
-    contactNo: "0917 555 2233",
-    householdMembers: "3",
-    dateRegistered: "2026-08-14",
-    verificationStatus: "verified",
-    verifiedBy: "Admin User",
-    verifiedDate: "2026-08-14",
-    idType: "Voter's ID",
-    idNumber: "8812-4471",
-    enrolledPrograms: [{ program: "Senior Citizen", referenceNo: "SC-2026-4521", status: "Released", dateEnrolled: "2026-08-14" }],
-    history: [
-      { id: "H-004", date: "2026-08-14", program: "Senior Citizen", action: "Application submitted", detail: "New OSCA ID application." },
-      { id: "H-005", date: "2026-08-25", program: "Senior Citizen", action: "ID released", detail: "OSCA ID released at QC Hall." },
-    ],
-  },
-  {
-    id: "BEN-003",
-    beneficiaryNo: "BNF-2026-0003",
-    fullName: "Julius Cabrera",
-    age: "36",
-    sex: "Male",
-    address: "Zone 1, Barangay San Roque, Quezon City",
-    contactNo: "0928 774 4410",
-    householdMembers: "5",
-    dateRegistered: "2026-08-13",
-    verificationStatus: "pending",
-    idType: "PWD ID (expired)",
-    idNumber: "PWD-2023-00127",
-    enrolledPrograms: [{ program: "PWD", referenceNo: "PWD-2026-3421", status: "Approved", dateEnrolled: "2026-08-13" }],
-    history: [
-      { id: "H-006", date: "2026-08-13", program: "PWD", action: "Renewal submitted", detail: "PWD ID renewal application." },
-      { id: "H-007", date: "2026-08-13", program: "PWD", action: "Renewal approved", detail: "New ID number PWD-2026-00127 assigned." },
-    ],
-  },
-  {
-    id: "BEN-004",
-    beneficiaryNo: "BNF-2026-0004",
-    fullName: "Emilyn Salazar",
-    age: "34",
-    sex: "Female",
-    address: "Purok 2, Barangay Sto. Niño, Quezon City",
-    contactNo: "0917 332 8891",
-    householdMembers: "2",
-    dateRegistered: "2026-08-17",
-    verificationStatus: "unverified",
-    enrolledPrograms: [{ program: "Solo Parent", referenceNo: "SP-2026-4821", status: "Pending", dateEnrolled: "2026-08-17" }],
-    history: [{ id: "H-008", date: "2026-08-17", program: "Solo Parent", action: "Application submitted", detail: "New Solo Parent ID — death of spouse." }],
-  },
-  {
-    id: "BEN-005",
-    beneficiaryNo: "BNF-2026-0005",
-    fullName: "Ferdinand Villanueva",
-    age: "54",
-    sex: "Male",
-    address: "23 Masagana St., Brgy. Payatas, Quezon City",
-    contactNo: "0915 887 2210",
-    householdMembers: "2",
-    dateRegistered: "2026-08-09",
-    verificationStatus: "verified",
-    verifiedBy: "Jonalyn P.",
-    verifiedDate: "2026-08-09",
-    idType: "PWD ID",
-    idNumber: "PWD-2021-00981",
-    enrolledPrograms: [
-      { program: "Livelihood", referenceNo: "PBQC-2026-1955", status: "Pending", dateEnrolled: "2026-08-09" },
-      { program: "Livelihood", referenceNo: "TRNG-2026-2201", status: "Scheduled", dateEnrolled: "2026-08-16" },
-    ],
-    history: [
-      { id: "H-009", date: "2026-08-09", program: "Livelihood", action: "Application submitted", detail: "Urban Agriculture livelihood application." },
-      { id: "H-010", date: "2026-08-16", program: "Livelihood", action: "Training scheduled", detail: "Motorcycle/Small Engine Servicing Training, Aug 27." },
-    ],
-  },
-  {
-    id: "BEN-006",
-    beneficiaryNo: "BNF-2026-0006",
-    fullName: "Bryan Aguilar",
-    age: "41",
-    sex: "Male",
-    address: "Zone 4, Barangay Bagumbayan, Quezon City",
-    contactNo: "0928 110 4477",
-    householdMembers: "4",
-    dateRegistered: "2026-08-17",
-    verificationStatus: "pending",
-    idType: "Old Solo Parent ID",
-    idNumber: "SP-2023-00892",
-    enrolledPrograms: [{ program: "Solo Parent", referenceNo: "SP-2026-4790", status: "Rejected", dateEnrolled: "2026-08-15" }],
-    history: [
-      { id: "H-011", date: "2026-08-15", program: "Solo Parent", action: "Renewal submitted", detail: "Solo Parent ID renewal." },
-      { id: "H-012", date: "2026-08-17", program: "Solo Parent", action: "Renewal rejected", detail: "Incomplete requirements — missing endorsement." },
-    ],
-  },
-]
-
-// =====================================================================================
-// Theme
-// =====================================================================================
-
-const programColors: Record<ProgramKey, string> = {
+const programColors: Record<string, string> = {
   AICS: "bg-blue-50 text-blue-700 border-blue-200",
   PWD: "bg-purple-50 text-purple-700 border-purple-200",
   "Senior Citizen": "bg-amber-50 text-amber-700 border-amber-200",
   "Solo Parent": "bg-violet-50 text-violet-700 border-violet-200",
   "Child Welfare": "bg-rose-50 text-rose-700 border-rose-200",
   Livelihood: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  General: "bg-slate-50 text-slate-700 border-slate-200",
+  System: "bg-gray-100 text-gray-700 border-gray-300",
 }
 
 const PROGRAM_OPTIONS: ProgramKey[] = ["AICS", "PWD", "Senior Citizen", "Solo Parent", "Child Welfare", "Livelihood"]
@@ -227,16 +112,25 @@ function getVerificationTheme(status?: string) {
 }
 
 function getProgramColor(prog?: string) {
-  if (prog && programColors[prog as ProgramKey]) return programColors[prog as ProgramKey]
+  if (prog && programColors[prog]) return programColors[prog]
   return "bg-slate-50 text-slate-700 border-slate-200"
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+function formatDate(iso?: string) {
+  if (!iso) return "—"
+  try {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return iso
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+  } catch {
+    return iso
+  }
 }
 
-function initials(name: string) {
-  const parts = name.trim().split(" ")
+function initials(name?: string) {
+  if (!name) return "BN"
+  const parts = name.trim().split(" ").filter(Boolean)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
   return `${parts[0]?.charAt(0) ?? ""}${parts[parts.length - 1]?.charAt(0) ?? ""}`.toUpperCase()
 }
 
@@ -280,14 +174,20 @@ function BeneficiaryCard({ b, onOpen }: { b: Beneficiary; onOpen: (id: string) =
           </div>
           <p className="text-xs text-muted-foreground mb-2 font-mono">{b.beneficiaryNo}</p>
           <div className="flex items-center gap-2 flex-wrap mb-2">
-            {b.enrolledPrograms.map((p, i) => (
-              <span key={i} className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getProgramColor(p.program)}`}>
-                {p.program}
+            {b.enrolledPrograms.length > 0 ? (
+              b.enrolledPrograms.map((p, i) => (
+                <span key={i} className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getProgramColor(p.program)}`}>
+                  {p.program}
+                </span>
+              ))
+            ) : (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-medium border bg-slate-50 text-slate-600 border-slate-200">
+                Registered Beneficiary
               </span>
-            ))}
+            )}
           </div>
           <div className="flex items-center gap-4 flex-wrap text-xs text-muted-foreground">
-            <span>{b.age} y/o, {b.sex}</span>
+            <span>{b.age} y/o{b.sex && b.sex !== "—" ? `, ${b.sex}` : ""}</span>
             <span>Household: {b.householdMembers}</span>
             <span>Registered {formatDate(b.dateRegistered)}</span>
           </div>
@@ -295,7 +195,7 @@ function BeneficiaryCard({ b, onOpen }: { b: Beneficiary; onOpen: (id: string) =
         <div className="flex flex-col items-end gap-2 shrink-0">
           <button
             onClick={() => onOpen(b.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors shadow-sm"
           >
             View Profile
             <ChevronRight className="h-3.5 w-3.5" />
@@ -317,33 +217,38 @@ function BeneficiaryProfileModal({
   onClose,
   onVerify,
   onReject,
+  onSetPending,
+  isProcessing,
 }: {
   b: Beneficiary
   onClose: () => void
-  onVerify: (id: string, idType: string, idNumber: string) => void
-  onReject: (id: string) => void
+  onVerify: (id: string, idType: string, idNumber: string, remarks: string) => Promise<void>
+  onReject: (id: string, remarks: string) => Promise<void>
+  onSetPending: (id: string, remarks: string) => Promise<void>
+  isProcessing: boolean
 }) {
   const [tab, setTab] = useState<ProfileTab>("overview")
-  const [idType, setIdType] = useState(b.idType || "")
-  const [idNumber, setIdNumber] = useState(b.idNumber || "")
+  const [idType, setIdType] = useState(b.idType || "QCitizen ID")
+  const [idNumber, setIdNumber] = useState(b.idNumber || b.qcidNumber || "")
+  const [remarks, setRemarks] = useState(b.verificationRemarks || "")
 
   const vt = getVerificationTheme(b.verificationStatus)
 
   const tabs: { key: ProfileTab; label: string; icon: ReactElement }[] = [
     { key: "overview", label: "Overview", icon: <User className="h-3.5 w-3.5" /> },
-    { key: "programs", label: "Enrolled Programs", icon: <IdCard className="h-3.5 w-3.5" /> },
+    { key: "programs", label: `Enrolled Programs (${b.enrolledPrograms.length})`, icon: <IdCard className="h-3.5 w-3.5" /> },
     { key: "verification", label: "Verification", icon: <ShieldCheck className="h-3.5 w-3.5" /> },
-    { key: "history", label: "History", icon: <History className="h-3.5 w-3.5" /> },
+    { key: "history", label: `History (${b.history.length})`, icon: <History className="h-3.5 w-3.5" /> },
   ]
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8 flex flex-col max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8 flex flex-col max-h-[90vh] overflow-hidden border border-border">
         {/* Header */}
-        <div className="px-6 pt-5 pb-4 border-b border-border">
+        <div className="px-6 pt-5 pb-4 border-b border-border bg-slate-50/50">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white text-base font-semibold">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-800 text-white text-base font-semibold shadow-inner">
                 {initials(b.fullName)}
               </div>
               <div className="min-w-0">
@@ -354,13 +259,18 @@ function BeneficiaryProfileModal({
                     {vt?.icon}
                     {vt?.label}
                   </span>
+                  {b.qcidNumber && (
+                    <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md font-mono">
+                      QCID: {b.qcidNumber}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
             <button
               onClick={onClose}
               aria-label="Close"
-              className="text-muted-foreground hover:text-foreground hover:bg-gray-100 rounded-full h-8 w-8 flex items-center justify-center shrink-0 transition-colors text-xl font-light"
+              className="text-muted-foreground hover:text-foreground hover:bg-gray-200/60 rounded-full h-8 w-8 flex items-center justify-center shrink-0 transition-colors text-xl font-light"
             >
               ×
             </button>
@@ -383,7 +293,7 @@ function BeneficiaryProfileModal({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-6 overflow-y-auto space-y-6">
+        <div className="px-6 py-6 overflow-y-auto space-y-6 flex-1">
           {tab === "overview" && (
             <div>
               <SectionHeading icon={<User className="h-4 w-4" />}>Personal Information</SectionHeading>
@@ -400,6 +310,8 @@ function BeneficiaryProfileModal({
                   }
                 />
                 <Field label="Date Registered" value={formatDate(b.dateRegistered)} />
+                <Field label="Email Address" value={b.email || "—"} />
+                <Field label="Civil Status" value={b.civilStatus || "—"} />
                 <div className="col-span-2">
                   <Field
                     label="Address"
@@ -421,21 +333,26 @@ function BeneficiaryProfileModal({
                 Enrolled Programs ({b.enrolledPrograms.length})
               </SectionHeading>
               {b.enrolledPrograms.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-6 text-center">Wala pang naka-enroll na programa.</p>
+                <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  <IdCard className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm text-muted-foreground">Wala pang naka-enroll na programa ang beneficiary na ito.</p>
+                </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {b.enrolledPrograms.map((p, i) => (
-                    <div key={i} className="border border-border rounded-lg p-3 bg-white flex items-center justify-between gap-3">
+                    <div key={i} className="border border-border rounded-xl p-3.5 bg-white flex items-center justify-between gap-3 shadow-xs">
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${programColors[p.program]}`}>
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${getProgramColor(p.program)}`}>
                             {p.program}
                           </span>
-                          <span className="text-xs text-muted-foreground font-mono">{p.referenceNo}</span>
+                          <span className="text-xs text-muted-foreground font-mono font-medium">{p.referenceNo}</span>
                         </div>
-                        <p className="text-xs text-muted-foreground">Enrolled {formatDate(p.dateEnrolled)}</p>
+                        <p className="text-xs text-muted-foreground">Enrolled on {formatDate(p.dateEnrolled)}</p>
                       </div>
-                      <span className="px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{p.status}</span>
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                        {p.status}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -449,57 +366,112 @@ function BeneficiaryProfileModal({
 
               {b.verificationStatus === "verified" ? (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-                  <p className="text-sm text-emerald-800">
-                    <strong>Verified</strong> on {b.verifiedDate ? formatDate(b.verifiedDate) : "—"} by {b.verifiedBy}
-                  </p>
-                  <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
-                    <Field label="ID Type" value={b.idType} />
-                    <Field label="ID Number" value={b.idNumber} />
+                  <div className="flex items-center gap-2 text-emerald-800 font-semibold mb-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                    <span>Verified Beneficiary</span>
                   </div>
+                  <p className="text-xs text-emerald-700">
+                    Verified on <strong>{b.verifiedDate ? formatDate(b.verifiedDate) : "—"}</strong> by <strong>{b.verifiedBy || "Social Worker"}</strong>
+                  </p>
+                  {b.verificationRemarks && (
+                    <p className="text-xs text-emerald-800 mt-2 bg-emerald-100/50 p-2 rounded border border-emerald-200/50">
+                      <strong>Remarks:</strong> {b.verificationRemarks}
+                    </p>
+                  )}
+                  <div className="grid grid-cols-2 gap-4 mt-3 text-sm pt-2 border-t border-emerald-200/60">
+                    <Field label="ID Type" value={b.idType || "QCitizen ID"} />
+                    <Field label="ID Number" value={b.idNumber || b.qcidNumber || "—"} />
+                  </div>
+                </div>
+              ) : b.verificationStatus === "unverified" ? (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 text-red-800 font-semibold mb-1">
+                    <XCircle className="h-5 w-5 text-red-600" />
+                    <span>Unverified Beneficiary</span>
+                  </div>
+                  <p className="text-xs text-red-700">
+                    This profile is flagged as unverified due to missing or non-matching records.
+                  </p>
+                  {b.verificationRemarks && (
+                    <p className="text-xs text-red-800 mt-2 bg-red-100/50 p-2 rounded border border-red-200/50">
+                      <strong>Remarks:</strong> {b.verificationRemarks}
+                    </p>
+                  )}
                 </div>
               ) : (
-                <div className="space-y-3 bg-slate-50 border border-slate-100 rounded-xl p-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground">ID Type</label>
-                      <input
-                        value={idType}
-                        onChange={(e) => setIdType(e.target.value)}
-                        placeholder="e.g. PhilID, PWD ID"
-                        className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground">ID Number</label>
-                      <input
-                        value={idNumber}
-                        onChange={(e) => setIdNumber(e.target.value)}
-                        placeholder="e.g. 1234-5678-9012"
-                        className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 text-amber-800 font-semibold mb-1">
+                    <Clock className="h-5 w-5 text-amber-600" />
+                    <span>Pending Identity Verification</span>
                   </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => {
-                        if (!idType.trim() || !idNumber.trim()) return
-                        onVerify(b.id, idType, idNumber)
-                      }}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition-colors"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Confirm Verification
-                    </button>
-                    <button
-                      onClick={() => onReject(b.id)}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      Mark Unverified
-                    </button>
-                  </div>
+                  <p className="text-xs text-amber-700">
+                    Review and confirm client identification documents to grant full verified beneficiary status.
+                  </p>
                 </div>
               )}
+
+              {/* Admin Verification Controls */}
+              <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                  Update Verification Status
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground">ID Type</label>
+                    <input
+                      value={idType}
+                      onChange={(e) => setIdType(e.target.value)}
+                      placeholder="e.g. QCitizen ID, PhilID, PWD ID"
+                      className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground">ID Number</label>
+                    <input
+                      value={idNumber}
+                      onChange={(e) => setIdNumber(e.target.value)}
+                      placeholder="e.g. 110000116932100"
+                      className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-muted-foreground">Verification Remarks / Notes</label>
+                    <input
+                      value={remarks}
+                      onChange={(e) => setRemarks(e.target.value)}
+                      placeholder="e.g. Verified against QCitizen Portal and Voter's Record."
+                      className="w-full mt-1 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <button
+                    disabled={isProcessing}
+                    onClick={() => onVerify(b.id, idType, idNumber, remarks)}
+                    className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium text-xs hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    Confirm Verified
+                  </button>
+                  <button
+                    disabled={isProcessing}
+                    onClick={() => onReject(b.id, remarks)}
+                    className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white font-medium text-xs hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                    Flag Unverified
+                  </button>
+                  <button
+                    disabled={isProcessing}
+                    onClick={() => onSetPending(b.id, remarks)}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-slate-200 text-slate-700 font-medium text-xs hover:bg-slate-300 transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Set Pending
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -508,31 +480,46 @@ function BeneficiaryProfileModal({
               <SectionHeading icon={<History className="h-4 w-4" />}>
                 Program & Assistance History ({b.history.length})
               </SectionHeading>
-              <div className="space-y-0">
-                {b.history
-                  .slice()
-                  .reverse()
-                  .map((ev, idx) => (
-                    <div key={ev.id} className="flex gap-3 pb-4 last:pb-0">
-                      <div className="flex flex-col items-center shrink-0">
-                        <div className="h-8 w-8 rounded-full flex items-center justify-center bg-slate-100">
-                          <Home className="h-3.5 w-3.5 text-slate-600" />
+              {b.history.length === 0 ? (
+                <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  <History className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm text-muted-foreground">Wala pang naitalang history events ang profile na ito.</p>
+                </div>
+              ) : (
+                <div className="space-y-0">
+                  {b.history
+                    .slice()
+                    .reverse()
+                    .map((ev, idx) => (
+                      <div key={ev.id || idx} className="flex gap-3 pb-4 last:pb-0">
+                        <div className="flex flex-col items-center shrink-0">
+                          <div className="h-8 w-8 rounded-full flex items-center justify-center bg-slate-100 border border-slate-200 shadow-xs">
+                            <Home className="h-3.5 w-3.5 text-slate-600" />
+                          </div>
+                          {idx !== b.history.length - 1 && <div className="flex-1 w-px bg-border mt-1" />}
                         </div>
-                        {idx !== b.history.length - 1 && <div className="flex-1 w-px bg-border mt-1" />}
-                      </div>
-                      <div className="flex-1 min-w-0 pb-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${programColors[ev.program]}`}>
-                            {ev.program}
-                          </span>
-                          <span className="text-sm font-semibold text-foreground">{ev.action}</span>
+                        <div className="flex-1 min-w-0 pb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${getProgramColor(ev.program)}`}>
+                              {ev.program}
+                            </span>
+                            <span className="text-sm font-semibold text-foreground">{ev.action}</span>
+                            {ev.status && (
+                              <span className="text-[11px] px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
+                                {ev.status}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-foreground">{ev.detail}</p>
+                          <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-1.5">
+                            <span>{formatDate(ev.date)}</span>
+                            {ev.performedBy && <span>• By {ev.performedBy}</span>}
+                          </div>
                         </div>
-                        <p className="text-sm text-foreground">{ev.detail}</p>
-                        <p className="text-[11px] text-muted-foreground mt-1.5">{formatDate(ev.date)}</p>
                       </div>
-                    </div>
-                  ))}
-              </div>
+                    ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -541,7 +528,7 @@ function BeneficiaryProfileModal({
         <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-white shrink-0">
           <button
             onClick={onClose}
-            className="px-6 py-2 rounded-lg border border-border text-foreground font-medium hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-gray-50 transition-colors shadow-xs"
           >
             Close
           </button>
@@ -558,34 +545,135 @@ function BeneficiaryProfileModal({
 type MainTab = "list" | "verification" | "history"
 
 export default function BeneficiaryManagement() {
-  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(MOCK_BENEFICIARIES)
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<MainTab>("list")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterProgram, setFilterProgram] = useState<"all" | ProgramKey>("all")
   const [filterVerification, setFilterVerification] = useState<"all" | VerificationStatus>("all")
+  const [toastMessage, setToastMessage] = useState<{ text: string; type?: "success" | "danger" } | null>(null)
+
+  const showToast = (text: string, type: "success" | "danger" = "success") => {
+    setToastMessage({ text, type })
+    setTimeout(() => setToastMessage(null), 4000)
+  }
+
+  // Fetch beneficiaries from backend database
+  const fetchBeneficiaries = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`${API_BASE}/api/beneficiaries`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch beneficiaries`)
+      const data = await res.json()
+      if (data.success && Array.isArray(data.beneficiaries)) {
+        setBeneficiaries(data.beneficiaries)
+      } else {
+        throw new Error(data.error || "Failed to load beneficiary records")
+      }
+    } catch (err: any) {
+      console.warn("[BeneficiaryManagement] Fetch failed:", err.message)
+      setError(err.message || "Could not connect to database.")
+    } finally {
+      if (!isSilent) setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchBeneficiaries()
+
+    // Subscribe to cross-tab / realtime application and beneficiary status updates
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      fetchBeneficiaries(true)
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [fetchBeneficiaries])
 
   const selected = beneficiaries.find((b) => b.id === selectedId) ?? null
 
-  const handleVerify = (id: string, idType: string, idNumber: string) => {
-    setBeneficiaries((prev) =>
-      prev.map((b) =>
-        b.id === id
-          ? {
-              ...b,
-              verificationStatus: "verified" as const,
-              idType,
-              idNumber,
-              verifiedBy: "Admin User",
-              verifiedDate: new Date().toISOString().split("T")[0],
-            }
-          : b
-      )
-    )
+  // Handle Admin Verification
+  const handleVerify = async (id: string, idType: string, idNumber: string, remarks: string) => {
+    setIsProcessing(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/beneficiaries/${encodeURIComponent(id)}/verify`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "verified",
+          id_type: idType,
+          id_number: idNumber,
+          verified_by: "Admin User",
+          remarks: remarks || "Identity verified with valid documents.",
+        }),
+      })
+
+      if (!res.ok) throw new Error("Failed to verify beneficiary on server.")
+      await res.json()
+
+      showToast(`Beneficiary verified successfully!`, "success")
+      notifyApplicationChange("STATUS_CHANGED", "all", id)
+      await fetchBeneficiaries(true)
+    } catch (err: any) {
+      showToast(err.message || "Failed to verify beneficiary.", "danger")
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
-  const handleReject = (id: string) => {
-    setBeneficiaries((prev) => prev.map((b) => (b.id === id ? { ...b, verificationStatus: "unverified" as const } : b)))
+  // Handle Admin Rejection / Unverified Flag
+  const handleReject = async (id: string, remarks: string) => {
+    setIsProcessing(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/beneficiaries/${encodeURIComponent(id)}/verify`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "unverified",
+          verified_by: "Admin User",
+          remarks: remarks || "Marked unverified due to incomplete/unmatched credentials.",
+        }),
+      })
+
+      if (!res.ok) throw new Error("Failed to flag beneficiary on server.")
+      showToast(`Beneficiary marked as unverified.`, "danger")
+      notifyApplicationChange("STATUS_CHANGED", "all", id)
+      await fetchBeneficiaries(true)
+    } catch (err: any) {
+      showToast(err.message || "Failed to update beneficiary status.", "danger")
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  // Handle Admin Setting Pending
+  const handleSetPending = async (id: string, remarks: string) => {
+    setIsProcessing(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/beneficiaries/${encodeURIComponent(id)}/verify`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "pending",
+          verified_by: "Admin User",
+          remarks: remarks || "Status reset to pending verification.",
+        }),
+      })
+
+      if (!res.ok) throw new Error("Failed to update status on server.")
+      showToast(`Beneficiary status reset to pending.`, "success")
+      notifyApplicationChange("STATUS_CHANGED", "all", id)
+      await fetchBeneficiaries(true)
+    } catch (err: any) {
+      showToast(err.message || "Failed to reset status.", "danger")
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const filteredList = beneficiaries.filter((b) => {
@@ -594,14 +682,22 @@ export default function BeneficiaryManagement() {
     const matchSearch =
       searchTerm === "" ||
       b.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.beneficiaryNo.toLowerCase().includes(searchTerm.toLowerCase())
+      b.beneficiaryNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (b.qcidNumber && b.qcidNumber.toLowerCase().includes(searchTerm.toLowerCase()))
     return matchProgram && matchVerification && matchSearch
   })
 
   const pendingVerification = beneficiaries.filter((b) => b.verificationStatus !== "verified")
 
   const allHistory = beneficiaries
-    .flatMap((b) => b.history.map((h) => ({ ...h, fullName: b.fullName, beneficiaryNo: b.beneficiaryNo, beneficiaryId: b.id })))
+    .flatMap((b) =>
+      b.history.map((h) => ({
+        ...h,
+        fullName: b.fullName,
+        beneficiaryNo: b.beneficiaryNo,
+        beneficiaryId: b.id,
+      }))
+    )
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   const stats = {
@@ -613,38 +709,87 @@ export default function BeneficiaryManagement() {
 
   const MAIN_TABS: { key: MainTab; label: string; icon: ReactElement }[] = [
     { key: "list", label: "Beneficiary List", icon: <IdCard className="h-4 w-4" /> },
-    { key: "verification", label: "Verification Queue", icon: <ShieldCheck className="h-4 w-4" /> },
+    { key: "verification", label: `Verification Queue (${stats.pending + stats.unverified})`, icon: <ShieldCheck className="h-4 w-4" /> },
     { key: "history", label: "History Log", icon: <History className="h-4 w-4" /> },
   ]
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center gap-2">
-        <h1 className="text-3xl font-bold text-foreground">Beneficiary Management</h1>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Beneficiaries", value: stats.total, color: "blue" },
-          { label: "Verified", value: stats.verified, color: "green" },
-          { label: "Pending", value: stats.pending, color: "yellow" },
-          { label: "Unverified", value: stats.unverified, color: "red" },
-        ].map((stat) => (
-          <div key={stat.label} className={`rounded-lg p-4 bg-${stat.color}-50 border border-${stat.color}-200`}>
-            <p className={`text-xs font-semibold text-${stat.color}-700 uppercase`}>{stat.label}</p>
-            <p className={`text-3xl font-bold text-${stat.color}-700 mt-2`}>{stat.value}</p>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-300">
+          <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-xl text-sm font-medium ${
+              toastMessage.type === "danger" ? "bg-red-600" : "bg-emerald-600"
+            }`}
+          >
+            {toastMessage.type === "danger" ? <XCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+            <span>{toastMessage.text}</span>
           </div>
-        ))}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Beneficiary Management</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Centralized database of social service beneficiaries, program enrollments, and identity verification.
+          </p>
+        </div>
+        <button
+          onClick={() => fetchBeneficiaries()}
+          disabled={isLoading}
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-border bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-xs disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
 
-      {/* Main tabs */}
-      <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit flex-wrap">
+      {/* Error Banner if any */}
+      {error && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-between gap-3 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+            <span>Notice: {error}</span>
+          </div>
+          <button
+            onClick={() => fetchBeneficiaries()}
+            className="text-xs font-semibold underline hover:no-underline text-amber-800"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-xl p-4 bg-blue-50/70 border border-blue-200 shadow-xs">
+          <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Total Beneficiaries</p>
+          <p className="text-3xl font-bold text-blue-800 mt-2">{stats.total}</p>
+        </div>
+        <div className="rounded-xl p-4 bg-emerald-50/70 border border-emerald-200 shadow-xs">
+          <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Verified</p>
+          <p className="text-3xl font-bold text-emerald-800 mt-2">{stats.verified}</p>
+        </div>
+        <div className="rounded-xl p-4 bg-amber-50/70 border border-amber-200 shadow-xs">
+          <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Pending</p>
+          <p className="text-3xl font-bold text-amber-800 mt-2">{stats.pending}</p>
+        </div>
+        <div className="rounded-xl p-4 bg-red-50/70 border border-red-200 shadow-xs">
+          <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Unverified</p>
+          <p className="text-3xl font-bold text-red-800 mt-2">{stats.unverified}</p>
+        </div>
+      </div>
+
+      {/* Main Tabs Navigation */}
+      <div className="flex items-center gap-1 bg-muted rounded-xl p-1 w-fit flex-wrap border border-border/50">
         {MAIN_TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               tab === t.key ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -654,27 +799,27 @@ export default function BeneficiaryManagement() {
         ))}
       </div>
 
-      {/* Beneficiary List */}
+      {/* Beneficiary List View */}
       {tab === "list" && (
         <div className="space-y-4">
-          <div className="bg-card border border-border rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-border rounded-xl p-4 space-y-4 shadow-xs">
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search by name or beneficiary no..."
+                placeholder="Search by name, QCID, or beneficiary number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="flex-1 px-3.5 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               />
             </div>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 pt-1">
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">Program</label>
                 <select
                   value={filterProgram}
                   onChange={(e) => setFilterProgram(e.target.value as any)}
-                  className="mt-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 block"
+                  className="mt-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 block bg-white"
                 >
                   <option value="all">All Programs</option>
                   {PROGRAM_OPTIONS.map((p) => (
@@ -689,7 +834,7 @@ export default function BeneficiaryManagement() {
                 <select
                   value={filterVerification}
                   onChange={(e) => setFilterVerification(e.target.value as any)}
-                  className="mt-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 block"
+                  className="mt-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 block bg-white"
                 >
                   <option value="all">All Statuses</option>
                   <option value="verified">Verified</option>
@@ -701,11 +846,22 @@ export default function BeneficiaryManagement() {
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">Beneficiaries ({filteredList.length})</h2>
-            {filteredList.length === 0 ? (
-              <div className="text-center py-12">
-                <IdCard className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground">No beneficiaries found.</p>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-foreground">
+                Beneficiaries ({filteredList.length})
+              </h2>
+            </div>
+
+            {isLoading ? (
+              <div className="text-center py-16 bg-white rounded-xl border border-border shadow-xs">
+                <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground font-medium">Loading beneficiary records...</p>
+              </div>
+            ) : filteredList.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-xl border border-border shadow-xs">
+                <IdCard className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-40" />
+                <p className="text-base font-semibold text-foreground">No beneficiaries found</p>
+                <p className="text-xs text-muted-foreground mt-1">Try adjusting your search query or filters.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -718,14 +874,25 @@ export default function BeneficiaryManagement() {
         </div>
       )}
 
-      {/* Verification Queue */}
+      {/* Verification Queue View */}
       {tab === "verification" && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">Needs Verification ({pendingVerification.length})</h2>
-          {pendingVerification.length === 0 ? (
-            <div className="text-center py-12">
-              <ShieldCheck className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-              <p className="text-muted-foreground">Lahat ng beneficiary ay verified na.</p>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-foreground">
+              Needs Verification Queue ({pendingVerification.length})
+            </h2>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-border shadow-xs">
+              <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground font-medium">Loading queue...</p>
+            </div>
+          ) : pendingVerification.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-border shadow-xs">
+              <ShieldCheck className="h-12 w-12 text-emerald-600 mx-auto mb-3 opacity-80" />
+              <p className="text-base font-bold text-foreground">All Beneficiaries Verified</p>
+              <p className="text-xs text-muted-foreground mt-1">Lahat ng beneficiary ay verified na sa database.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -737,48 +904,73 @@ export default function BeneficiaryManagement() {
         </div>
       )}
 
-      {/* History Log */}
+      {/* History Log View */}
       {tab === "history" && (
-        <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <h2 className="text-sm font-semibold text-foreground">All beneficiary history ({allHistory.length})</h2>
+        <div className="bg-white border border-border rounded-xl shadow-xs overflow-hidden">
+          <div className="px-5 py-4 border-b border-border bg-slate-50/60 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-foreground">
+              System-wide Beneficiary Activity Log ({allHistory.length})
+            </h2>
           </div>
           <div>
-            {allHistory.map((ev) => (
-              <div
-                key={ev.id}
-                onClick={() => setSelectedId(ev.beneficiaryId)}
-                className="flex gap-4 px-4 py-4 border-b border-border last:border-0 hover:bg-gray-50 cursor-pointer"
-              >
-                <div className="flex flex-col items-center shrink-0">
-                  <div className="h-9 w-9 rounded-full flex items-center justify-center bg-slate-100">
-                    <Home className="h-4 w-4 text-slate-600" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0 pb-1">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-sm font-semibold text-foreground">{ev.fullName}</span>
-                    <span className="text-[11px] text-muted-foreground font-mono">{ev.beneficiaryNo}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${programColors[ev.program]}`}>
-                      {ev.program}
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground font-medium">{ev.action}</p>
-                  <p className="text-sm text-muted-foreground">{ev.detail}</p>
-                  <p className="text-[11px] text-muted-foreground mt-1.5">{formatDate(ev.date)}</p>
-                </div>
+            {isLoading ? (
+              <div className="text-center py-16">
+                <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Loading history entries...</p>
               </div>
-            ))}
+            ) : allHistory.length === 0 ? (
+              <div className="text-center py-16">
+                <History className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-40" />
+                <p className="text-sm text-muted-foreground">No history events recorded yet.</p>
+              </div>
+            ) : (
+              allHistory.map((ev, idx) => (
+                <div
+                  key={ev.id || idx}
+                  onClick={() => setSelectedId(ev.beneficiaryId)}
+                  className="flex gap-4 px-5 py-4 border-b border-border last:border-0 hover:bg-slate-50/80 cursor-pointer transition-colors"
+                >
+                  <div className="flex flex-col items-center shrink-0">
+                    <div className="h-9 w-9 rounded-full flex items-center justify-center bg-slate-100 border border-slate-200">
+                      <Home className="h-4 w-4 text-slate-600" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0 pb-1">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-sm font-bold text-foreground">{ev.fullName}</span>
+                      <span className="text-[11px] text-muted-foreground font-mono font-medium">{ev.beneficiaryNo}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${getProgramColor(ev.program)}`}>
+                        {ev.program}
+                      </span>
+                      {ev.status && (
+                        <span className="text-[11px] px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded font-medium">
+                          {ev.status}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-foreground font-semibold">{ev.action}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{ev.detail}</p>
+                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-1.5">
+                      <span>{formatDate(ev.date)}</span>
+                      {ev.performedBy && <span>• By {ev.performedBy}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
 
+      {/* Selected Profile Modal */}
       {selected && (
         <BeneficiaryProfileModal
           b={selected}
           onClose={() => setSelectedId(null)}
           onVerify={handleVerify}
           onReject={handleReject}
+          onSetPending={handleSetPending}
+          isProcessing={isProcessing}
         />
       )}
     </div>

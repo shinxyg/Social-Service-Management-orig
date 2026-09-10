@@ -360,6 +360,33 @@ exports.createApplication = async (req, res) => {
       });
     }
 
+    try {
+      const { ensureBeneficiaryForUser } = require('./beneficiaryController');
+      const progName = (newApp.category || '').toLowerCase().includes('senior') ? 'Senior Citizen' : 'PWD';
+      ensureBeneficiaryForUser({
+        qcid: newApp.referenceNumber,
+        fullName: `${newApp.firstName} ${newApp.lastName}`.trim(),
+        firstName: newApp.firstName,
+        middleName: newApp.middleName,
+        lastName: newApp.lastName,
+        suffix: newApp.suffix,
+        age: newApp.age,
+        sex: newApp.sex,
+        civilStatus: newApp.civilStatus,
+        birthDate: newApp.dateOfBirth,
+        address: newApp.address || `${newApp.houseNo || ''} ${newApp.street || ''} ${newApp.barangay || ''}`.trim(),
+        contactNo: newApp.contactNo || newApp.cellphoneNo,
+        email: newApp.email,
+        idType: newApp.existingIdNumber ? `${progName} ID` : 'Valid ID',
+        idNumber: newApp.existingIdNumber || newApp.referenceNumber,
+        program: progName,
+        applicationRef: newApp.referenceNumber,
+        action: 'Application submitted',
+        remarks: `${progName} (${newApp.type}) application submitted.`,
+        performedBy: `${newApp.firstName} ${newApp.lastName}`.trim(),
+      }).catch(() => {});
+    } catch {}
+
     return res.status(201).json({ success: true, application: newApp });
   } catch (err) {
     console.error('Error creating PWD/Senior application:', err);
