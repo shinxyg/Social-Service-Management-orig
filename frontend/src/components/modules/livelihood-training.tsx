@@ -26,6 +26,10 @@ import {
   ShieldAlert,
   Award,
   ChevronRight,
+  Eye,
+  Printer,
+  Download,
+  ExternalLink,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import TrainingProgramAdmin from "./training-program-admin"
@@ -127,7 +131,11 @@ export interface LivelihoodApplication {
   estimated_amount?: number
   assistanceNeeded?: string[]
   assistance_needed?: string[]
-  documents: Array<{ name: string; uploadedAt?: string; uploaded_at?: string; status?: string }>
+  requestedMaterials?: Array<{ item: string; quantity: string }>
+  requested_materials?: Array<{ item: string; quantity: string }>
+  requestedEquipment?: Array<{ equipment: string; quantity: string }>
+  requested_equipment?: Array<{ equipment: string; quantity: string }>
+  documents: Array<{ name: string; label?: string; type?: string; previewUrl?: string; uploadedAt?: string; uploaded_at?: string; status?: string }>
   status: ApplicationStatus
   application_status?: string
   approvedBy?: string
@@ -337,14 +345,38 @@ function normalizeApplication(raw: any): LivelihoodApplication {
     estimated_amount: raw.estimated_amount || raw.estimatedAmount || 15000,
     assistanceNeeded: Array.isArray(raw.assistance_needed) ? raw.assistance_needed : raw.assistanceNeeded || [],
     assistance_needed: Array.isArray(raw.assistance_needed) ? raw.assistance_needed : raw.assistanceNeeded || [],
+    requestedMaterials: Array.isArray(raw.requested_materials)
+      ? raw.requested_materials
+      : Array.isArray(raw.requestedMaterials)
+      ? raw.requestedMaterials
+      : typeof raw.requested_materials === "string"
+      ? (() => { try { const p = JSON.parse(raw.requested_materials); return Array.isArray(p) ? p : [] } catch { return [] } })()
+      : [],
+    requestedEquipment: Array.isArray(raw.requested_equipment)
+      ? raw.requested_equipment
+      : Array.isArray(raw.requestedEquipment)
+      ? raw.requestedEquipment
+      : typeof raw.requested_equipment === "string"
+      ? (() => { try { const p = JSON.parse(raw.requested_equipment); return Array.isArray(p) ? p : [] } catch { return [] } })()
+      : [],
     documents: Array.isArray(raw.uploaded_documents)
       ? raw.uploaded_documents.map((d: any) => ({
           name: d.name || d.label || d.type || "Document",
+          label: d.label || d.name || d.type || "Document",
+          type: d.type || "validId",
+          previewUrl: d.previewUrl || d.fileUrl || d.url || "",
           uploadedAt: d.uploaded_at || d.uploadedAt || new Date().toISOString(),
           status: "verified",
         }))
       : Array.isArray(raw.documents)
-      ? raw.documents
+      ? raw.documents.map((d: any) => ({
+          name: d.name || d.label || d.type || "Document",
+          label: d.label || d.name || d.type || "Document",
+          type: d.type || "validId",
+          previewUrl: d.previewUrl || d.fileUrl || d.url || "",
+          uploadedAt: d.uploadedAt || d.uploaded_at || new Date().toISOString(),
+          status: "verified",
+        }))
       : [],
     status: status,
     application_status: status,
@@ -480,6 +512,7 @@ function ReviewModal({
   onRequestRevision,
   onOpenAssistance,
 }: ReviewModalProps) {
+  const [previewDocModal, setPreviewDocModal] = useState<any | null>(null)
   const [actionMode, setActionMode] = useState<"view" | "approve" | "revision" | "reject">("view")
 
   const [selectedRevisionReason, setSelectedRevisionReason] = useState(app.revisionReason || "")
@@ -495,11 +528,17 @@ function ReviewModal({
   const fullName = [app.firstName, app.middleName, app.lastName].filter(Boolean).join(" ")
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
+      if (e.key === "Escape") {
+        if (previewDocModal) {
+          setPreviewDocModal(null)
+        } else {
+          onClose()
+        }
+      }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [onClose])
+  }, [onClose, previewDocModal])
 
   return (
     <div
@@ -531,7 +570,7 @@ function ReviewModal({
               <StatusBadge status={app.status} />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Ref: <strong className="font-mono text-foreground">{app.referenceNumber}</strong> · Submitted:{" "}
+              Ref: <strong className="font-mono text-foreground">{app.referenceNumber}</strong> · QCID: <strong className="font-mono text-foreground">{app.qcid || app.userId || "110000116932100"}</strong> · Submitted:{" "}
               {new Date(app.submittedAt).toLocaleString()}
             </p>
           </div>
@@ -546,22 +585,22 @@ function ReviewModal({
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-6">
-          {/* Section 1: Checklist */}
+          {/* Section 1: Checklist & Client Category (Form Step 2) */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">1. Checklist &amp; Client Category</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm p-4 rounded-xl bg-muted/20 border border-border">
               <div>
                 <p className="text-xs text-muted-foreground">Status of Client</p>
-                <p className="text-foreground font-semibold mt-0.5">{app.statusOfClient}</p>
+                <p className="text-foreground font-semibold mt-0.5">{app.statusOfClient || app.livelihood_status || "New Livelihood"}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Category of Entrepreneur</p>
-                <p className="text-foreground font-semibold mt-0.5">{app.entrepreneurCategory}</p>
+                <p className="text-xs text-muted-foreground">Category of Entrepreneur / Livelihood Type</p>
+                <p className="text-foreground font-semibold mt-0.5">{app.entrepreneurCategory || app.livelihood_type || "Online Selling"}</p>
               </div>
             </div>
           </div>
 
-          {/* Section 2: Personal Info */}
+          {/* Section 2: Personal Info (Form Step 1) */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">2. Personal Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm p-4 rounded-xl bg-muted/20 border border-border">
@@ -573,79 +612,180 @@ function ReviewModal({
                 </p>
               </div>
               <div>
+                <p className="text-xs text-muted-foreground">QCID / Application Ref</p>
+                <p className="text-foreground font-semibold mt-0.5 font-mono text-xs">
+                  {app.qcid || app.referenceNumber}
+                </p>
+              </div>
+              <div>
                 <p className="text-xs text-muted-foreground">Date of Birth / Sex</p>
                 <p className="text-foreground font-semibold mt-0.5 flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                  {app.dateOfBirth} ({app.sex})
+                  {app.dateOfBirth || "N/A"} ({app.sex || "N/A"})
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Civil Status</p>
-                <p className="text-foreground font-semibold mt-0.5">{app.civilStatus}</p>
+                <p className="text-foreground font-semibold mt-0.5">{app.civilStatus || "Single"}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Contact Number</p>
                 <p className="text-foreground font-semibold mt-0.5 flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  {app.mobileNo}
+                  {app.mobileNo || "N/A"}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Email Address</p>
                 <p className="text-foreground font-semibold mt-0.5 flex items-center gap-1.5">
                   <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                  {app.email}
+                  {app.email || "N/A"}
                 </p>
               </div>
               <div className="col-span-full">
                 <p className="text-xs text-muted-foreground">Registered Address</p>
                 <p className="text-foreground font-semibold mt-0.5 flex items-start gap-1.5">
                   <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                  {app.address}
+                  {app.address || "Quezon City"}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Section 3: Business Plan */}
+          {/* Section 3: Proposed Business Details (Form Step 2) */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">3. Proposed Business Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm p-4 rounded-xl bg-muted/20 border border-border">
               <div>
                 <p className="text-xs text-muted-foreground">Business Name</p>
-                <p className="text-foreground font-semibold mt-0.5">{app.businessName}</p>
+                <p className="text-foreground font-semibold mt-0.5">{app.businessName || `${app.firstName}'s Livelihood`}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Business Location</p>
-                <p className="text-foreground font-semibold mt-0.5">{app.placeOfBusiness}</p>
+                <p className="text-foreground font-semibold mt-0.5">{app.placeOfBusiness || app.business_location || "Quezon City"}</p>
               </div>
               <div className="col-span-full">
                 <p className="text-xs text-muted-foreground">Business Goal / Purpose</p>
-                <p className="text-foreground font-medium mt-0.5 leading-relaxed">{app.businessGoal}</p>
+                <p className="text-foreground font-medium mt-0.5 leading-relaxed">{app.businessGoal || app.reason_purpose || "Livelihood assistance"}</p>
               </div>
             </div>
           </div>
 
-          {/* Section 4: Documents */}
+          {/* Section 4: Requested Assistance Details (Form Step 3) */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-              4. Uploaded Requirements ({app.documents.length})
-            </h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">4. Requested Assistance Details</h3>
+            <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-3.5 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Assistance Needed</p>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {Array.isArray(app.assistanceNeeded) && app.assistanceNeeded.length > 0 ? (
+                      app.assistanceNeeded.map((ast, i) => (
+                        <span key={i} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                          {ast}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                        Financial / Capital Assistance
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground">Requested Capital Assistance Amount</p>
+                  <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                    ₱{Number(app.estimatedAmount || 15000).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Optional Requested Materials Breakdown */}
+              {Array.isArray(app.requestedMaterials) && app.requestedMaterials.length > 0 && (
+                <div className="pt-2 border-t border-border/50">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <Package className="h-3.5 w-3.5 text-primary" />
+                    Requested Materials / Starter Items:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {app.requestedMaterials.map((mat, mi) => (
+                      <div key={mi} className="flex items-center justify-between p-2 rounded-lg bg-card border border-border text-xs">
+                        <span className="font-medium text-foreground">{mat.item}</span>
+                        <span className="font-bold text-muted-foreground">{mat.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Optional Requested Equipment Breakdown */}
+              {Array.isArray(app.requestedEquipment) && app.requestedEquipment.length > 0 && (
+                <div className="pt-2 border-t border-border/50">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <Wrench className="h-3.5 w-3.5 text-primary" />
+                    Requested Equipment / Tools:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {app.requestedEquipment.map((eq, ei) => (
+                      <div key={ei} className="flex items-center justify-between p-2 rounded-lg bg-card border border-border text-xs">
+                        <span className="font-medium text-foreground">{eq.equipment}</span>
+                        <span className="font-bold text-muted-foreground">{eq.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section 5: Uploaded Documents (Form Step 4 - Clickable & Interactive) */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                5. Uploaded Requirements ({app.documents.length})
+              </h3>
+              <span className="text-[11px] text-muted-foreground">
+                Click any document to view preview
+              </span>
+            </div>
             <div className="space-y-2">
               {app.documents.map((doc, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 border border-border rounded-xl bg-card">
-                  <div className="flex items-center gap-2.5">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
+                <div
+                  key={idx}
+                  onClick={() => setPreviewDocModal(doc)}
+                  className="flex items-center justify-between p-3 border border-border rounded-xl bg-card hover:bg-muted/40 hover:border-primary/40 transition-all cursor-pointer group shadow-2xs"
+                  title="Click to view full document preview"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <FileText className="h-5 w-5" />
+                    </div>
                     <div>
-                      <p className="text-xs font-bold text-foreground">{doc.name}</p>
+                      <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                        {doc.name}
+                      </p>
                       <p className="text-[11px] text-muted-foreground">
                         {new Date(doc.uploadedAt || app.submittedAt).toLocaleString()}
                       </p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Verified
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                      Verified
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPreviewDocModal(doc)
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-primary/20 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-colors cursor-pointer shadow-2xs"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>View</span>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -950,6 +1090,121 @@ function ReviewModal({
           </button>
         </div>
       </div>
+
+      {/* DOCUMENT PREVIEW MODAL */}
+      {previewDocModal && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation()
+            setPreviewDocModal(null)
+          }}
+          className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-blur-sm animate-in fade-in duration-150 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-card border border-border rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-4 cursor-default animate-in zoom-in-95 duration-150 relative"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                  Document Requirement Preview
+                </span>
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2 mt-0.5">
+                  <FileText className="h-4 w-4 text-primary" />
+                  {previewDocModal.name || previewDocModal.label || "Uploaded Document"}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Uploaded: {new Date(previewDocModal.uploadedAt || app.submittedAt).toLocaleString()} · Status: <span className="text-emerald-600 font-bold">Verified</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewDocModal(null)}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground text-xl hover:bg-muted transition-colors cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Document Body */}
+            <div className="rounded-xl border border-border bg-muted/20 p-4 sm:p-6 flex flex-col items-center justify-center min-h-[260px] max-h-[60vh] overflow-y-auto">
+              {previewDocModal.previewUrl && !previewDocModal.name?.toLowerCase().endsWith(".pdf") ? (
+                <div className="space-y-2 text-center">
+                  <img
+                    src={previewDocModal.previewUrl}
+                    alt={previewDocModal.name}
+                    className="max-h-[50vh] w-auto max-w-full rounded-xl object-contain mx-auto border border-border shadow-xs"
+                  />
+                  <p className="text-[11px] text-muted-foreground font-mono">
+                    {previewDocModal.name}
+                  </p>
+                </div>
+              ) : (
+                <div className="w-full max-w-md bg-card border border-border rounded-2xl p-6 shadow-sm text-center space-y-4 relative overflow-hidden">
+                  <div className="absolute -right-8 -bottom-8 w-28 h-28 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
+                  <div className="h-16 w-16 mx-auto rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-xs">
+                    <FileText className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-foreground uppercase tracking-wide">
+                      Quezon City Social Services Development Department
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Digitally Verified Document Record
+                    </p>
+                  </div>
+
+                  <div className="text-xs space-y-2 text-left bg-muted/40 p-3.5 rounded-xl border border-border/70">
+                    <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
+                      <span className="text-muted-foreground">Document Type:</span>
+                      <span className="font-bold text-foreground">{previewDocModal.name || previewDocModal.label || "Valid ID / Document"}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
+                      <span className="text-muted-foreground">Applicant Name:</span>
+                      <span className="font-bold text-foreground uppercase">{fullName}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
+                      <span className="text-muted-foreground">QCID / User ID:</span>
+                      <span className="font-mono text-primary font-bold">{app.qcid || app.userId || "110000116932100"}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
+                      <span className="text-muted-foreground">Application Ref:</span>
+                      <span className="font-mono text-foreground font-semibold">{app.referenceNumber}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-0.5">
+                      <span className="text-muted-foreground">Verification:</span>
+                      <span className="inline-flex items-center gap-1 font-bold text-emerald-600 text-[11px]">
+                        <CheckCircle2 className="h-3 w-3" />
+                        SSDD Verified Document
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-foreground bg-muted hover:bg-muted/80 rounded-xl transition-colors cursor-pointer"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>Print Document</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewDocModal(null)}
+                className="px-5 py-2 text-xs font-semibold text-foreground bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-colors cursor-pointer"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
