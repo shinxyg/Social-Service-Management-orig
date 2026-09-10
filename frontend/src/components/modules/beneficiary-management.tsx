@@ -51,8 +51,11 @@ interface Beneficiary {
   lastName?: string
   age: string
   sex: string
+  gender?: string
+  birthDate?: string
   civilStatus?: string
   address: string
+  barangay?: string
   contactNo: string
   email?: string
   qcidNumber?: string
@@ -64,6 +67,7 @@ interface Beneficiary {
   verificationRemarks?: string
   idType?: string
   idNumber?: string
+  photoUrl?: string
   enrolledPrograms: EnrolledProgram[]
   history: HistoryEvent[]
 }
@@ -440,7 +444,7 @@ function BeneficiaryProfileModal({
                             <span className="text-[7px] font-semibold text-slate-400 uppercase">Birthdate:</span> {b.birthDate || "—"}
                           </div>
                           <div>
-                            <span className="text-[7px] font-semibold text-slate-400 uppercase">Sex / Blood:</span> {b.gender || "—"} / O+
+                            <span className="text-[7px] font-semibold text-slate-400 uppercase">Sex / Blood:</span> {b.sex || b.gender || "—"} / O+
                           </div>
                         </div>
 
