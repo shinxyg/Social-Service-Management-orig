@@ -19,6 +19,7 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
     `).catch(() => {});
 
     await db.query(`UPDATE beneficiaries SET full_name = UPPER(full_name)`).catch(() => {});
+    await db.query(`UPDATE beneficiaries SET civil_status = 'Single' WHERE civil_status IS NULL OR civil_status = '' OR civil_status = '—'`).catch(() => {});
 
     // 2. Fetch all real users from users table
     const usersRes = await db.query(`SELECT * FROM users ORDER BY id ASC`).catch(() => ({ rows: [] }));
@@ -48,9 +49,11 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
         if (!isNaN(bYear)) calcAge = String(new Date().getFullYear() - bYear);
       }
 
+      const userCivilStatus = (u.civil_status && u.civil_status !== '—' && u.civil_status.trim() !== '') ? u.civil_status : 'Single';
+
       // Check if beneficiary already exists for this user
       const existing = await db.query(
-        `SELECT id FROM beneficiaries WHERE user_id = $1 OR (email IS NOT NULL AND LOWER(email) = $2) OR (qcid_number IS NOT NULL AND qcid_number = $3) LIMIT 1`,
+        `SELECT id, civil_status FROM beneficiaries WHERE user_id = $1 OR (email IS NOT NULL AND LOWER(email) = $2) OR (qcid_number IS NOT NULL AND qcid_number = $3) LIMIT 1`,
         [userId, cleanEmail, cleanQcid || '___NONE___']
       ).catch(() => ({ rows: [] }));
 
@@ -59,12 +62,12 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
         await db.query(
           `INSERT INTO beneficiaries (
             user_id, beneficiary_number, full_name, first_name, middle_name, last_name, suffix,
-            age, sex, address, contact_no, email, qcid_number, household_members,
+            age, sex, civil_status, address, contact_no, email, qcid_number, household_members,
             verification_status, verified_by, verification_date, verification_remarks,
             id_type, id_number, created_at, updated_at
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, '1',
-            $14, $15, $16, $17, $18, $19, $20, NOW()
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, '1',
+            $15, $16, $17, $18, $19, $20, $21, NOW()
           ) ON CONFLICT (beneficiary_number) DO NOTHING`,
           [
             userId,
@@ -76,6 +79,7 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
             u.suffix || null,
             calcAge || '—',
             u.sex || '—',
+            userCivilStatus,
             resolvedAddress,
             u.mobile_number || '—',
             u.email || null,
@@ -89,6 +93,8 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
             u.created_at || new Date(),
           ]
         ).catch(() => {});
+      } else if (!existing.rows[0].civil_status || existing.rows[0].civil_status === '—') {
+        await db.query(`UPDATE beneficiaries SET civil_status = $1 WHERE id = $2`, [userCivilStatus, existing.rows[0].id]).catch(() => {});
       }
     }
   } catch (err) {
@@ -523,6 +529,28 @@ async function getAllBeneficiaries(req, res) {
           status: h.status,
         }));
 
+      // Resolve Civil Status from beneficiary record or linked application forms
+      let resolvedCivilStatus = (b.civil_status && b.civil_status !== '—' && b.civil_status.trim() !== '') ? b.civil_status : null;
+      if (!resolvedCivilStatus) {
+        const pwdMatch = pwdList.find(app => (bQcid && String(app.reference_number || app.id || '').toLowerCase().includes(bQcid)) || (bEmail && String(app.email || '').toLowerCase() === bEmail));
+        if (pwdMatch && pwdMatch.civil_status) resolvedCivilStatus = pwdMatch.civil_status;
+      }
+      if (!resolvedCivilStatus) {
+        const soloMatch = soloList.find(app => (bQcid && String(app.qcid_number || app.reference_number || app.user_id || '').toLowerCase().includes(bQcid)) || (bEmail && String(app.email || '').toLowerCase() === bEmail));
+        if (soloMatch) resolvedCivilStatus = soloMatch.civil_status || 'Single Parent';
+      }
+      if (!resolvedCivilStatus) {
+        const aicsMatch = aicsList.find(app => (bQcid && String(app.qc_id || app.reference_no || '').toLowerCase().includes(bQcid)) || (bEmail && String(app.email || '').toLowerCase() === bEmail));
+        if (aicsMatch && aicsMatch.civil_status) resolvedCivilStatus = aicsMatch.civil_status;
+      }
+      if (!resolvedCivilStatus) {
+        const livMatch = livList.find(app => (bQcid && String(app.qcid || app.reference_number || app.user_id || '').toLowerCase().includes(bQcid)) || (bEmail && String(app.email || '').toLowerCase() === bEmail));
+        if (livMatch && livMatch.civil_status) resolvedCivilStatus = livMatch.civil_status;
+      }
+      if (!resolvedCivilStatus) {
+        resolvedCivilStatus = 'Single';
+      }
+
       return {
         id: String(b.id),
         beneficiaryNo: bNum,
@@ -531,7 +559,7 @@ async function getAllBeneficiaries(req, res) {
         lastName: b.last_name,
         age: String(b.age || "—"),
         sex: b.sex || "—",
-        civilStatus: b.civil_status || "—",
+        civilStatus: String(resolvedCivilStatus).toUpperCase(),
         address: b.address || "Quezon City",
         contactNo: b.contact_no || "—",
         email: b.email || "—",
