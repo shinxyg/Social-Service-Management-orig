@@ -346,8 +346,8 @@ export default function CitizenGuideHub() {
       title: "AICS Crisis Assistance",
       badge: "Financial & Material Aid",
       icon: ShieldAlert,
-      color: "bg-red-50 text-red-600 border-red-200",
-      btnColor: "bg-red-600 hover:bg-red-700",
+      color: "bg-blue-50 text-blue-600 border-blue-200",
+      btnColor: "bg-blue-600 hover:bg-blue-700",
       desc: "Immediate relief and financial assistance for individuals and families in crisis situations (Medical, Funeral, Educational, Food, Transportation, Material).",
       features: ["Emergency Cash Aid", "Hospital & Med Support", "Direct Payout via Financial Aid", "Same-week Processing"],
       primaryAction: { label: "Explore AICS Services", path: "/portal/aics?type=medical" },
@@ -370,8 +370,8 @@ export default function CitizenGuideHub() {
       title: "Senior Citizen Services",
       badge: "OSCA Elderly Welfare",
       icon: Users,
-      color: "bg-amber-50 text-amber-600 border-amber-200",
-      btnColor: "bg-amber-600 hover:bg-amber-700",
+      color: "bg-blue-50 text-blue-600 border-blue-200",
+      btnColor: "bg-blue-600 hover:bg-blue-700",
       desc: "Programs for citizens aged 60+, including Official Senior ID registration, Medicine Discount Booklets, Free Movie Booklets, and Social Pension.",
       features: ["20% Senior Discount", "Medicine Purchase Booklet", "Free QC Movie Booklet", "Social Pension Program"],
       primaryAction: { label: "Apply Senior ID", path: "/portal/apply-pwd-senior?category=senior&type=new" },
@@ -382,8 +382,8 @@ export default function CitizenGuideHub() {
       title: "Solo Parent Services",
       badge: "RA 11861 Benefits",
       icon: Baby,
-      color: "bg-purple-50 text-purple-600 border-purple-200",
-      btnColor: "bg-purple-600 hover:bg-purple-700",
+      color: "bg-blue-50 text-blue-600 border-blue-200",
+      btnColor: "bg-blue-600 hover:bg-blue-700",
       desc: "Empowering single parents through Solo Parent ID issuance, 7-day parental leaves, educational grants, and monthly cash subsidies.",
       features: ["Solo Parent ID", "7-Day Additional Leave", "10% Discount on Child Essentials", "Monthly Subsidy for Low-Income"],
       primaryAction: { label: "Apply Solo Parent ID", path: "/portal/apply-solo-parent?category=solo-parent&type=new" },
@@ -394,8 +394,8 @@ export default function CitizenGuideHub() {
       title: "Child Welfare Services",
       badge: "Protection & Nutrition",
       icon: HeartHandshake,
-      color: "bg-rose-50 text-rose-600 border-rose-200",
-      btnColor: "bg-rose-600 hover:bg-rose-700",
+      color: "bg-blue-50 text-blue-600 border-blue-200",
+      btnColor: "bg-blue-600 hover:bg-blue-700",
       desc: "Dedicated social protection for minors, nutritional supplemental programs, emergency child welfare, and family psychosocial support.",
       features: ["Nutritional Assistance", "Emergency Child Protection", "Psychosocial Support", "Temporary Foster & Shelter"],
       primaryAction: { label: "Child Welfare Services", path: "/portal/apply-solo-parent?category=child-welfare&program=nutritional-assistance" },
@@ -406,8 +406,8 @@ export default function CitizenGuideHub() {
       title: "Livelihood & Skills Training",
       badge: "Socio-Economic Development",
       icon: GraduationCap,
-      color: "bg-teal-50 text-teal-600 border-teal-200",
-      btnColor: "bg-teal-600 hover:bg-teal-700",
+      color: "bg-blue-50 text-blue-600 border-blue-200",
+      btnColor: "bg-blue-600 hover:bg-blue-700",
       desc: "Empowering residents with micro-enterprise capital assistance grants, toolkits/equipment support, and technical vocational courses.",
       features: ["Seed Capital Grant", "Livelihood Toolkits", "Vocational Training Courses", "Mentorship & Monitoring"],
       primaryAction: { label: "Apply Livelihood Grant", path: "/portal/apply-livelihood?category=livelihood" },
@@ -418,8 +418,8 @@ export default function CitizenGuideHub() {
       title: "Financial Aid & Payout Tracker",
       badge: "Disbursement & Payouts",
       icon: Wallet,
-      color: "bg-emerald-50 text-emerald-600 border-emerald-200",
-      btnColor: "bg-emerald-600 hover:bg-emerald-700",
+      color: "bg-blue-50 text-blue-600 border-blue-200",
+      btnColor: "bg-blue-600 hover:bg-blue-700",
       desc: "Check and track your approved financial aid payouts, payout schedule appointments, official QR claim vouchers, and cash distribution.",
       features: ["Real-time Payout Status", "Official Claim QR Code", "Scheduled Venue & Time", "Direct Cash / Bank Release"],
       primaryAction: { label: "Open Payout Tracker", path: "/portal/financial-aid" },
@@ -632,12 +632,14 @@ export default function CitizenGuideHub() {
                 {filteredAics.map((svc) => (
                   <div
                     key={svc.type}
-                    className="p-4 rounded-xl border border-red-200 bg-red-50/40 flex flex-col justify-between gap-3 hover:bg-white transition-all"
+                    className="p-4 rounded-xl border border-blue-200 bg-blue-50/40 flex flex-col justify-between gap-3 hover:bg-white transition-all"
                   >
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{svc.icon}</span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">
+                        <div className="p-1.5 rounded-lg bg-blue-100 text-blue-600 border border-blue-200 flex items-center justify-center">
+                          <svc.icon className="h-4 w-4" />
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">
                           AICS Crisis Aid
                         </span>
                         <h3 className="font-bold text-gray-900 text-sm">{svc.title}</h3>
@@ -647,7 +649,7 @@ export default function CitizenGuideHub() {
                     <button
                       type="button"
                       onClick={() => navigate(svc.path)}
-                      className="w-full py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                      className="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
                     >
                       Apply for {svc.title} <ArrowRight className="h-3.5 w-3.5" />
                     </button>
@@ -694,18 +696,18 @@ export default function CitizenGuideHub() {
               <div className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
                   <div className="space-y-1">
-                    <div className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 uppercase tracking-wide">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wide">
                       <ShieldAlert className="h-4 w-4" />
                       Crisis Intervention Program
                     </div>
                     <h3 className="text-xl font-extrabold text-gray-900">
-                      AICS 6 Assistance Types & Document Checklist
+                      AICS 6 Assistance Types &amp; Document Checklist
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={() => navigate("/portal/aics?type=medical")}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                   >
                     Open AICS Application <ArrowRight className="h-3.5 w-3.5" />
                   </button>
@@ -719,9 +721,9 @@ export default function CitizenGuideHub() {
                     >
                       <div className="space-y-3">
                         <div className="flex items-center gap-3">
-                          <span className="text-2xl p-2 rounded-xl bg-slate-100 group-hover:scale-110 transition-transform">
-                            {svc.icon}
-                          </span>
+                          <div className={`p-2.5 rounded-xl border ${svc.iconColor} group-hover:scale-105 transition-transform flex items-center justify-center shrink-0 shadow-2xs`}>
+                            <svc.icon className="h-5 w-5" />
+                          </div>
                           <div>
                             <h4 className="font-bold text-gray-900 text-sm">{svc.title}</h4>
                             <span className="text-[11px] text-blue-600 font-semibold">Crisis Financial Aid</span>
@@ -744,7 +746,7 @@ export default function CitizenGuideHub() {
                       <button
                         type="button"
                         onClick={() => navigate(svc.path)}
-                        className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         Apply for {svc.title} <ArrowRight className="h-3.5 w-3.5" />
                       </button>
@@ -931,12 +933,12 @@ export default function CitizenGuideHub() {
             <div id="aics-breakdown" className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
                 <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 uppercase tracking-wide">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wide">
                     <ShieldAlert className="h-4 w-4" />
                     Crisis Intervention Program
                   </div>
                   <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-                    AICS Assistance Types & Document Checklist
+                    AICS Assistance Types &amp; Document Checklist
                   </h2>
                   <p className="text-sm text-gray-500">
                     Direct financial and material assistance for indigent individuals in crisis situations.
@@ -945,7 +947,7 @@ export default function CitizenGuideHub() {
                 <button
                   type="button"
                   onClick={() => navigate("/portal/aics?type=medical")}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer self-start md:self-auto"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer self-start md:self-auto"
                 >
                   Open AICS Application <ArrowRight className="h-3.5 w-3.5" />
                 </button>
@@ -984,7 +986,7 @@ export default function CitizenGuideHub() {
                     <button
                       type="button"
                       onClick={() => navigate(svc.path)}
-                      className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       Apply for {svc.title} <ArrowRight className="h-3.5 w-3.5" />
                     </button>
@@ -1112,7 +1114,7 @@ export default function CitizenGuideHub() {
         {/* 7. FREQUENTLY ASKED QUESTIONS (FAQS) */}
         <div className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200">
+            <div className="p-3 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200">
               <HelpCircle className="h-6 w-6" />
             </div>
             <div>
