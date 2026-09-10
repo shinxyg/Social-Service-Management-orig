@@ -786,24 +786,50 @@ function OfficialIdCardModal({
               }}
             >
               {/* Header */}
-              <div className={`px-4 py-2.5 flex items-center justify-between text-white ${isPwdApp ? "bg-[#1d4ed8]" : "bg-[#0369a1]"}`}>
-                <div>
-                  <p className="text-[8px] font-bold tracking-widest uppercase opacity-90 leading-tight">Republic of the Philippines</p>
-                  <p className="text-xs font-black tracking-wide leading-tight uppercase">Quezon City Government</p>
+              <div
+                className={`px-3.5 py-2.5 flex items-center justify-between shadow-xs ${
+                  isPwdApp
+                    ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950"
+                    : "bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 text-white"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <img src="/gov-serves-seal.png" alt="QC Seal" className="w-7 h-7 object-contain drop-shadow-xs rounded-full bg-white/20 p-0.5" />
+                  <div>
+                    <p className={`text-[7.5px] font-bold tracking-widest uppercase leading-tight ${isPwdApp ? "text-slate-800" : "text-blue-100 opacity-90"}`}>
+                      Republic of the Philippines
+                    </p>
+                    <p className={`text-xs font-black tracking-wide leading-tight uppercase ${isPwdApp ? "text-slate-950" : "text-white"}`}>
+                      Quezon City Government
+                    </p>
+                  </div>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+                <span
+                  className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                    isPwdApp
+                      ? "bg-slate-950 text-amber-300 border-slate-800 shadow-xs"
+                      : "bg-white/20 text-white border-white/30"
+                  }`}
+                >
                   {isPwdApp ? "PDAO CARD" : "OSCA CARD"}
                 </span>
               </div>
 
               {/* Sub-header */}
-              <div className={`py-1 text-center text-[10px] font-black uppercase tracking-widest ${isPwdApp ? "bg-amber-400 text-slate-900" : "bg-emerald-600 text-white"}`}>
+              <div
+                className={`py-1 text-center text-[9.5px] font-black uppercase tracking-widest ${
+                  isPwdApp
+                    ? "bg-slate-950 text-amber-300 border-b border-amber-500/40"
+                    : "bg-amber-400 text-slate-950"
+                }`}
+              >
                 {isPwdApp ? "Persons with Disability Affairs Office" : "Office for Senior Citizens Affairs"}
               </div>
 
-              {/* Details */}
-              <div className="p-3 flex gap-3 items-start">
-                <div className="w-22 h-26 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative">
+              {/* Details with QC Logo on right side */}
+              <div className="p-3 flex gap-2.5 items-start relative">
+                {/* 2x2 Photo */}
+                <div className="w-22 h-26 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative z-10">
                   {photoUrl ? (
                     <img src={photoUrl} alt="Cardholder" className="w-full h-full object-cover" />
                   ) : (
@@ -812,15 +838,18 @@ function OfficialIdCardModal({
                       <span className="text-[7px] font-bold uppercase tracking-wider">2x2 Photo</span>
                     </div>
                   )}
-                  <div className="absolute bottom-0 inset-x-0 bg-slate-900/80 text-white text-[6.5px] text-center py-0.5 font-bold uppercase">
+                  <div className={`absolute bottom-0 inset-x-0 text-white text-[6.5px] text-center py-0.5 font-bold uppercase ${isPwdApp ? "bg-amber-600" : "bg-blue-900"}`}>
                     QC {isPwdApp ? "PDAO" : "OSCA"}
                   </div>
                 </div>
 
-                <div className="flex-1 min-w-0 space-y-1">
+                {/* Details text */}
+                <div className="flex-1 min-w-0 space-y-1 relative z-10">
                   <div>
                     <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC ID Number</span>
-                    <p className="text-sm font-black text-blue-900 font-mono tracking-wide leading-none">{idNumber}</p>
+                    <p className={`text-sm font-black font-mono tracking-wide leading-none ${isPwdApp ? "text-amber-700" : "text-blue-900"}`}>
+                      {idNumber}
+                    </p>
                   </div>
 
                   <div className="pt-0.5">
@@ -831,12 +860,12 @@ function OfficialIdCardModal({
                   {isPwdApp ? (
                     <div className="pt-0.5">
                       <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Type of Disability</span>
-                      <p className="text-[9.5px] font-bold text-red-700 leading-tight">{app.disabilityType || "Visual Disability"}</p>
+                      <p className="text-[9.5px] font-bold text-red-700 leading-tight truncate">{app.disabilityType || "Visual Disability"}</p>
                     </div>
                   ) : (
                     <div className="pt-0.5">
                       <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Classification</span>
-                      <p className="text-[9.5px] font-bold text-emerald-800 leading-tight">Senior Citizen Welfare Beneficiary</p>
+                      <p className="text-[9.5px] font-bold text-emerald-800 leading-tight truncate">Senior Citizen Welfare Beneficiary</p>
                     </div>
                   )}
 
@@ -852,6 +881,16 @@ function OfficialIdCardModal({
                   <div className="text-[8.5px] text-slate-700 truncate pt-0.5">
                     <span className="text-[7px] font-semibold text-slate-400 uppercase">Address:</span> {app.address || "Quezon City"}
                   </div>
+                </div>
+
+                {/* QC Official Logo on the right side */}
+                <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
+                  <img
+                    src="/gov-serves-seal.png"
+                    alt="QC Official Seal"
+                    className="w-14 h-14 object-contain drop-shadow-md hover:scale-105 transition-transform"
+                  />
+                  <span className="text-[6px] font-black uppercase text-slate-600 tracking-tighter mt-0.5">QC SEAL</span>
                 </div>
               </div>
 

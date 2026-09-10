@@ -362,22 +362,116 @@ function BeneficiaryProfileModal({
               <SectionHeading icon={<ShieldCheck className="h-4 w-4" />}>Identity Verification</SectionHeading>
 
               {b.verificationStatus === "verified" ? (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-                  <div className="flex items-center gap-2 text-emerald-800 font-semibold mb-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                    <span>Verified Beneficiary</span>
-                  </div>
-                  <p className="text-xs text-emerald-700">
-                    Verified on <strong>{b.verifiedDate ? formatDate(b.verifiedDate) : "—"}</strong> by <strong>{b.verifiedBy || "Social Worker"}</strong>
-                  </p>
-                  {b.verificationRemarks && (
-                    <p className="text-xs text-emerald-800 mt-2 bg-emerald-100/50 p-2 rounded border border-emerald-200/50">
-                      <strong>Remarks:</strong> {b.verificationRemarks}
+                <div className="space-y-4">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-emerald-800 font-semibold mb-1">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        <span>Verified Beneficiary</span>
+                      </div>
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/70 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        ACTIVE ID
+                      </span>
+                    </div>
+                    <p className="text-xs text-emerald-700">
+                      Verified on <strong>{b.verifiedDate ? formatDate(b.verifiedDate) : "—"}</strong> by <strong>{b.verifiedBy || "Social Worker"}</strong>
                     </p>
-                  )}
-                  <div className="grid grid-cols-2 gap-4 mt-3 text-sm pt-2 border-t border-emerald-200/60">
-                    <Field label="ID Type" value={b.idType || "QCitizen ID"} />
-                    <Field label="ID Number" value={b.idNumber || b.qcidNumber || "—"} />
+                    {b.verificationRemarks && (
+                      <p className="text-xs text-emerald-800 mt-2 bg-emerald-100/50 p-2 rounded border border-emerald-200/50">
+                        <strong>Remarks:</strong> {b.verificationRemarks}
+                      </p>
+                    )}
+                    <div className="grid grid-cols-2 gap-4 mt-3 text-sm pt-2 border-t border-emerald-200/60">
+                      <Field label="ID Type" value={b.idType || "QCitizen ID"} />
+                      <Field label="ID Number" value={b.idNumber || b.qcidNumber || "—"} />
+                    </div>
+                  </div>
+
+                  {/* Official QCitizen ID Card (RED Header with QC Logo on right) */}
+                  <div className="border border-slate-300 rounded-2xl overflow-hidden shadow-md bg-white select-none max-w-md mx-auto">
+                    {/* Header - RED */}
+                    <div className="px-3.5 py-2.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs">
+                      <div className="flex items-center gap-2">
+                        <img src="/gov-serves-seal.png" alt="QC Seal" className="w-7 h-7 object-contain drop-shadow-xs rounded-full bg-white/20 p-0.5" />
+                        <div>
+                          <p className="text-[7.5px] font-bold tracking-widest uppercase opacity-90 leading-tight">Republic of the Philippines</p>
+                          <p className="text-xs font-black tracking-wide leading-tight uppercase">Quezon City Government</p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+                        QCITIZEN ID
+                      </span>
+                    </div>
+
+                    {/* Sub-header */}
+                    <div className="py-1 text-center text-[9.5px] font-black uppercase tracking-widest bg-amber-400 text-slate-950">
+                      Quezon City Resident Identification Card
+                    </div>
+
+                    {/* Details with QC Logo on right side */}
+                    <div className="p-3 flex gap-2.5 items-start relative bg-gradient-to-br from-slate-50 via-white to-red-50/20">
+                      <div className="w-20 h-24 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative z-10">
+                        {b.photoUrl ? (
+                          <img src={b.photoUrl} alt="Cardholder" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                            <User className="w-8 h-8 text-slate-300 mb-1" />
+                            <span className="text-[7px] font-bold uppercase tracking-wider">2x2 Photo</span>
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 inset-x-0 bg-red-900/90 text-white text-[6.5px] text-center py-0.5 font-bold uppercase">
+                          QC CITIZEN
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0 space-y-1 relative z-10">
+                        <div>
+                          <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QCitizen ID Number</span>
+                          <p className="text-sm font-black text-red-700 font-mono tracking-wide leading-none">{b.qcidNumber || b.idNumber || b.beneficiaryNo}</p>
+                        </div>
+
+                        <div className="pt-0.5">
+                          <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Cardholder Full Name</span>
+                          <p className="text-xs font-black text-slate-900 leading-tight uppercase truncate">{b.fullName}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-1 pt-0.5 text-[8.5px] text-slate-700">
+                          <div>
+                            <span className="text-[7px] font-semibold text-slate-400 uppercase">Birthdate:</span> {b.birthDate || "—"}
+                          </div>
+                          <div>
+                            <span className="text-[7px] font-semibold text-slate-400 uppercase">Sex / Blood:</span> {b.gender || "—"} / O+
+                          </div>
+                        </div>
+
+                        <div className="text-[8.5px] text-slate-700 truncate pt-0.5">
+                          <span className="text-[7px] font-semibold text-slate-400 uppercase">Address:</span> {b.address || b.barangay ? `${b.address || ""} Brgy. ${b.barangay || ""}`.trim() : "Quezon City"}
+                        </div>
+                      </div>
+
+                      {/* QC Official Seal on right side */}
+                      <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
+                        <img
+                          src="/gov-serves-seal.png"
+                          alt="QC Official Seal"
+                          className="w-13 h-13 object-contain drop-shadow-md hover:scale-105 transition-transform"
+                        />
+                        <span className="text-[6px] font-black uppercase text-slate-600 tracking-tighter mt-0.5">QC SEAL</span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Signature & Barcode */}
+                    <div className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]">
+                      <div>
+                        <p className="font-mono font-bold text-slate-700 tracking-widest text-[8px]">|||| | || |||| | | ||| ||||</p>
+                        <span className="text-slate-400 text-[6.5px] uppercase font-semibold">Status: Verified Resident</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="w-16 border-b border-slate-400 mx-auto mb-0.5" />
+                        <p className="font-bold text-slate-800 text-[7px] leading-tight uppercase">MA. JOSEFINA G. BELMONTE</p>
+                        <p className="text-[6px] text-slate-500 uppercase leading-none">City Mayor</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : b.verificationStatus === "unverified" ? (
