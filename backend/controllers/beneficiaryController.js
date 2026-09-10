@@ -1,107 +1,98 @@
 const db = require('../config/db');
 
 // In-memory fallback if database query fails or tables are initializing
-let memoryBeneficiaries = [
-  {
-    id: 1,
-    beneficiary_number: "BNF-2026-0001",
-    full_name: "Clarisa Mae Dimal",
-    first_name: "Clarisa Mae",
-    last_name: "Dimal",
-    age: "21",
-    sex: "Female",
-    address: "11 Sampaloc Street, Brgy. Sauyo, Quezon City",
-    contact_no: "0917 555 1234",
-    household_members: "4",
-    verification_status: "verified",
-    verified_by: "Admin User",
-    verification_date: "2026-08-15T08:30:00Z",
-    verification_remarks: "Verified via PhilSys National ID authentication",
-    id_type: "PhilID",
-    id_number: "1234-5678-9012",
-    created_at: "2026-08-15T08:00:00Z",
-    updated_at: "2026-08-15T08:30:00Z",
-  },
-  {
-    id: 2,
-    beneficiary_number: "BNF-2026-0002",
-    full_name: "Rosalinda Torres",
-    first_name: "Rosalinda",
-    last_name: "Torres",
-    age: "71",
-    sex: "Female",
-    address: "Purok 5, Barangay Malaya, Quezon City",
-    contact_no: "0917 555 2233",
-    household_members: "3",
-    verification_status: "verified",
-    verified_by: "Admin User",
-    verification_date: "2026-08-14T10:15:00Z",
-    verification_remarks: "Verified with OSCA Senior Registry record",
-    id_type: "Voter's ID",
-    id_number: "8812-4471",
-    created_at: "2026-08-14T09:00:00Z",
-    updated_at: "2026-08-14T10:15:00Z",
-  },
-  {
-    id: 3,
-    beneficiary_number: "BNF-2026-0003",
-    full_name: "Julius Cabrera",
-    first_name: "Julius",
-    last_name: "Cabrera",
-    age: "36",
-    sex: "Male",
-    address: "Zone 1, Barangay San Roque, Quezon City",
-    contact_no: "0928 774 4410",
-    household_members: "5",
-    verification_status: "pending",
-    id_type: "PWD ID (expired)",
-    id_number: "PWD-2023-00127",
-    created_at: "2026-08-13T11:00:00Z",
-    updated_at: "2026-08-13T11:00:00Z",
-  },
-  {
-    id: 4,
-    beneficiary_number: "BNF-2026-0004",
-    full_name: "Emilyn Salazar",
-    first_name: "Emilyn",
-    last_name: "Salazar",
-    age: "34",
-    sex: "Female",
-    address: "Purok 2, Barangay Sto. Niño, Quezon City",
-    contact_no: "0917 332 8891",
-    household_members: "2",
-    verification_status: "unverified",
-    verification_remarks: "Missing death certificate of spouse",
-    created_at: "2026-08-17T14:20:00Z",
-    updated_at: "2026-08-17T14:20:00Z",
-  },
-  {
-    id: 5,
-    beneficiary_number: "BNF-2026-0005",
-    full_name: "RENZ MAHINAY MILLARES",
-    first_name: "RENZ",
-    middle_name: "MAHINAY",
-    last_name: "MILLARES",
-    age: "28",
-    sex: "Male",
-    address: "123 Katipunan Ave, Brgy. Loyola Heights, Quezon City",
-    contact_no: "09155212352",
-    email: "renzmillares@gmail.com",
-    qcid_number: "110000116932100",
-    household_members: "3",
-    verification_status: "verified",
-    verified_by: "Admin Officer",
-    verification_date: "2026-09-08T09:00:00Z",
-    verification_remarks: "Official QCitizen ID and supporting documents authenticated",
-    id_type: "QCitizen ID",
-    id_number: "110000116932100",
-    created_at: "2026-09-08T08:30:00Z",
-    updated_at: "2026-09-08T09:00:00Z",
-  }
-];
-
+let memoryBeneficiaries = [];
 let memoryVerifications = [];
 let memoryHistory = [];
+
+/**
+ * Automatically synchronize real users and applicants into beneficiaries table
+ * and purge any obsolete mock/dummy records.
+ */
+async function syncRealUsersAndApplicantsToBeneficiaries() {
+  try {
+    // 1. Purge known dummy records if they exist in DB
+    await db.query(`
+      DELETE FROM beneficiaries 
+      WHERE full_name IN ('Clarisa Mae Dimal', 'Rosalinda Torres', 'Julius Cabrera', 'Emilyn Salazar', 'Ferdinand Villanueva', 'Bryan Aguilar')
+         OR beneficiary_number IN ('BNF-2026-0001', 'BNF-2026-0002', 'BNF-2026-0003', 'BNF-2026-0004')
+    `).catch(() => {});
+
+    // 2. Fetch all real users from users table
+    const usersRes = await db.query(`SELECT * FROM users ORDER BY id ASC`).catch(() => ({ rows: [] }));
+    const users = usersRes.rows || [];
+
+    for (const u of users) {
+      const resolvedName = [u.first_name, u.middle_name, u.last_name, u.suffix].filter(Boolean).join(' ').trim() || u.email || 'Citizen User';
+      const cleanEmail = (u.email || '').trim().toLowerCase();
+      const cleanQcid = (u.qcid_number || '').trim();
+      const userId = u.id;
+
+      // Construct address
+      const addressParts = [
+        u.house_no,
+        u.street,
+        u.barangay ? `Brgy. ${u.barangay}` : null,
+        u.city || 'Quezon City',
+      ].filter(Boolean);
+      const resolvedAddress = addressParts.join(', ') || 'Quezon City';
+
+      // Calculate age if available
+      let calcAge = null;
+      if (u.birth_year && !isNaN(parseInt(u.birth_year, 10))) {
+        calcAge = String(new Date().getFullYear() - parseInt(u.birth_year, 10));
+      } else if (u.birth_date) {
+        const bYear = new Date(u.birth_date).getFullYear();
+        if (!isNaN(bYear)) calcAge = String(new Date().getFullYear() - bYear);
+      }
+
+      // Check if beneficiary already exists for this user
+      const existing = await db.query(
+        `SELECT id FROM beneficiaries WHERE user_id = $1 OR (email IS NOT NULL AND LOWER(email) = $2) OR (qcid_number IS NOT NULL AND qcid_number = $3) LIMIT 1`,
+        [userId, cleanEmail, cleanQcid || '___NONE___']
+      ).catch(() => ({ rows: [] }));
+
+      if (existing.rows.length === 0) {
+        const bnfNumber = await generateBeneficiaryNumber();
+        await db.query(
+          `INSERT INTO beneficiaries (
+            user_id, beneficiary_number, full_name, first_name, middle_name, last_name, suffix,
+            age, sex, address, contact_no, email, qcid_number, household_members,
+            verification_status, verified_by, verification_date, verification_remarks,
+            id_type, id_number, created_at, updated_at
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, '1',
+            $14, $15, $16, $17, $18, $19, $20, NOW()
+          ) ON CONFLICT (beneficiary_number) DO NOTHING`,
+          [
+            userId,
+            bnfNumber,
+            resolvedName,
+            u.first_name || null,
+            u.middle_name || null,
+            u.last_name || null,
+            u.suffix || null,
+            calcAge || '—',
+            u.sex || '—',
+            resolvedAddress,
+            u.mobile_number || '—',
+            u.email || null,
+            u.qcid_number || null,
+            cleanQcid ? 'verified' : 'pending',
+            cleanQcid ? 'System Auto-Verification' : null,
+            cleanQcid ? new Date() : null,
+            cleanQcid ? 'Verified via registered QCitizen account credentials' : null,
+            cleanQcid ? 'QCitizen ID' : 'Government ID',
+            cleanQcid || null,
+            u.created_at || new Date(),
+          ]
+        ).catch(() => {});
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Syncing real users to beneficiaries failed:', err.message);
+  }
+}
 
 /**
  * Generate unique Beneficiary Number (e.g. BNF-2026-0001)
@@ -367,37 +358,15 @@ async function logBeneficiaryEvent(eventData) {
  */
 async function getAllBeneficiaries(req, res) {
   try {
+    // 1. Sync real user accounts and purge obsolete mock accounts
+    await syncRealUsersAndApplicantsToBeneficiaries();
+
     let dbBeneficiaries = [];
     try {
       const bRes = await db.query(`SELECT * FROM beneficiaries ORDER BY id DESC`);
       dbBeneficiaries = bRes.rows;
     } catch {
-      dbBeneficiaries = memoryBeneficiaries;
-    }
-
-    // Seed default records if completely empty
-    if (dbBeneficiaries.length === 0 && memoryBeneficiaries.length > 0) {
-      for (const m of memoryBeneficiaries) {
-        try {
-          await db.query(
-            `INSERT INTO beneficiaries (
-              id, beneficiary_number, full_name, first_name, middle_name, last_name, suffix,
-              age, sex, address, contact_no, email, qcid_number, household_members,
-              verification_status, verified_by, verification_date, verification_remarks,
-              id_type, id_number, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-            ON CONFLICT (beneficiary_number) DO NOTHING`,
-            [
-              m.id, m.beneficiary_number, m.full_name, m.first_name || null, m.middle_name || null, m.last_name || null, m.suffix || null,
-              m.age, m.sex, m.address, m.contact_no, m.email || null, m.qcid_number || null, m.household_members || '1',
-              m.verification_status || 'pending', m.verified_by || null, m.verification_date || null, m.verification_remarks || null,
-              m.id_type || 'Valid ID', m.id_number || null, m.created_at || new Date(), m.updated_at || new Date()
-            ]
-          );
-        } catch {}
-      }
-      const bRes = await db.query(`SELECT * FROM beneficiaries ORDER BY id DESC`);
-      dbBeneficiaries = bRes.rows.length > 0 ? bRes.rows : memoryBeneficiaries;
+      dbBeneficiaries = [];
     }
 
     // Fetch history logs for each beneficiary
@@ -406,7 +375,7 @@ async function getAllBeneficiaries(req, res) {
       const hRes = await db.query(`SELECT * FROM beneficiary_history ORDER BY created_at DESC`);
       allHistory = hRes.rows;
     } catch {
-      allHistory = memoryHistory;
+      allHistory = [];
     }
 
     // Cross-link applications from all service tables
