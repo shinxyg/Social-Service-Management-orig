@@ -16,6 +16,7 @@ import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { readFileAsDataUrl } from "../../utils/fileUpload"
 
 export interface UserProfile {
   userId?: string
@@ -959,10 +960,25 @@ export default function PWDSocialAssistanceWizard({
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     setSubmissionStage("matching")
     const qcid = getLoggedInUserQcid() || (userProfile as any)?.qcidNo || "110000116932100"
     setReference(qcid)
+
+    const docItems = await Promise.all(
+      Object.keys(uploadedDocs).flatMap((docId) =>
+        (uploadedDocs[docId] || []).map(async (file) => {
+          const dataUrl = file ? await readFileAsDataUrl(file) : ""
+          return {
+            name: docId,
+            filename: file.name,
+            fileUrl: dataUrl || "",
+            uploadedAt: new Date().toISOString(),
+            status: "verified",
+          }
+        })
+      )
+    )
 
     const newApp = {
       id: `APP-AST-${Date.now()}`,
@@ -1002,14 +1018,7 @@ export default function PWDSocialAssistanceWizard({
       monthlyHouseholdIncome: formData.monthlyHouseholdIncome || "",
       monthlyHouseholdExpenses: formData.monthlyHouseholdExpenses || "",
       applyingFor: "myself",
-      documents: Object.keys(uploadedDocs).flatMap((docId) =>
-        (uploadedDocs[docId] || []).map((file) => ({
-          name: docId,
-          filename: file.name,
-          uploadedAt: new Date().toISOString(),
-          status: "verified",
-        }))
-      ),
+      documents: docItems,
       status: "pending",
     }
 

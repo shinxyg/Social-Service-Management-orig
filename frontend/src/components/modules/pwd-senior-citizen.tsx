@@ -562,7 +562,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 function getDocImageUrl(doc: ApplicationDocument | null): string {
   if (!doc) return ""
-  if (doc.fileUrl && (doc.fileUrl.startsWith("data:image") || doc.fileUrl.startsWith("http") || doc.fileUrl.startsWith("/"))) {
+  if (doc.fileUrl && (doc.fileUrl.startsWith("data:") || doc.fileUrl.startsWith("http") || doc.fileUrl.startsWith("/") || doc.fileUrl.startsWith("blob:"))) {
     return doc.fileUrl
   }
 

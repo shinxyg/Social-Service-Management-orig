@@ -131,6 +131,7 @@ const LOSS_DOCUMENTS: DocumentItem[] = [
 ]
 
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { readFileAsDataUrl } from "../../utils/fileUpload"
 
 function generateReference(qcid?: string) {
   if (qcid && qcid.trim() && qcid !== "110000116932100") return qcid.trim()
@@ -770,12 +771,26 @@ export default function SeniorCitizenApplicationWizard({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [referenceNo, setReferenceNo] = useState("")
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     setIsSubmitting(true)
     const refNum = generateReference(userProfile?.qcidNo)
 
     try {
       const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+      const documentItems = await Promise.all(
+        Object.keys(uploadedFiles).map(async (k) => {
+          const f = uploadedFiles[k]?.[0]
+          const dataUrl = f ? await readFileAsDataUrl(f) : ""
+          return {
+            name: k,
+            filename: f?.name || "doc.jpg",
+            fileUrl: dataUrl || "",
+            uploadedAt: new Date().toISOString(),
+            status: "verified",
+          }
+        })
+      )
+
       const newApp = {
         id: `APP-${Date.now()}`,
         submittedAt: new Date().toISOString(),
@@ -813,12 +828,7 @@ export default function SeniorCitizenApplicationWizard({
         relationshipToApplicant: formData.emergencyRelationship || userProfile?.emergencyRelationship || "",
         emergencyAddress: formData.emergencyAddress || `${formData.houseNo || userProfile?.addressHouseNo || "11"} ${formData.street || userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST"} ${formData.barangay || userProfile?.addressBarangay || "Sauyo"}, QUEZON CITY`.trim(),
         emergencyResidentialAddress: formData.emergencyAddress || `${formData.houseNo || userProfile?.addressHouseNo || "11"} ${formData.street || userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST"} ${formData.barangay || userProfile?.addressBarangay || "Sauyo"}, QUEZON CITY`.trim(),
-        documents: Object.keys(uploadedFiles).map((k) => ({
-          name: k,
-          filename: uploadedFiles[k]?.[0]?.name || "doc.pdf",
-          uploadedAt: new Date().toISOString(),
-          status: "verified",
-        })),
+        documents: documentItems,
         status: "pending",
       }
       localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing]))

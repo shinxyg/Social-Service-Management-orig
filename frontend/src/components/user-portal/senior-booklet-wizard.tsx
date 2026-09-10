@@ -17,6 +17,7 @@ import DocumentCameraModal from "../ui/document-camera-modal"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { readFileAsDataUrl } from "../../utils/fileUpload"
 
 export interface UserProfile {
   qcidNo?: string
@@ -892,13 +893,21 @@ export default function SeniorBookletWizard({
       city: formData.addressCity,
       status: "pending",
       submittedAt: new Date().toISOString(),
-      documents: Object.entries(uploadedFiles).map(([id, file]) => ({
-        id,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        uploadedAt: new Date().toISOString(),
-      })),
+      documents: await Promise.all(
+        Object.entries(uploadedFiles).map(async ([id, file]) => {
+          const dataUrl = file ? await readFileAsDataUrl(file) : ""
+          return {
+            id,
+            name: file.name,
+            filename: file.name,
+            fileUrl: dataUrl || "",
+            size: file.size,
+            type: file.type,
+            uploadedAt: new Date().toISOString(),
+            status: "verified",
+          }
+        })
+      ),
     }
 
     try {

@@ -18,6 +18,7 @@ import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { readFileAsDataUrl } from "../../utils/fileUpload"
 
 
 export interface UserProfile {
@@ -652,7 +653,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
     setStep((prev) => Math.max(prev - 1, 1))
   }
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     setIsSubmitting(true)
     const qcid = userProfile?.qcidNo || formData.qcidNumber || "110000116932100"
     setReferenceNumber(qcid)
@@ -714,12 +715,19 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
         sourceOfIncome: formData.sourceOfIncome,
         purposeOfAssistance: formData.purposeOfAssistance,
       },
-      documents: Object.keys(uploadedFiles).map((k) => ({
-        name: k,
-        filename: uploadedFiles[k]?.name || "doc.pdf",
-        uploadedAt: new Date().toISOString(),
-        status: "verified",
-      })),
+      documents: await Promise.all(
+        Object.keys(uploadedFiles).map(async (k) => {
+          const f = uploadedFiles[k]
+          const dataUrl = f ? await readFileAsDataUrl(f) : ""
+          return {
+            name: k,
+            filename: f?.name || "doc.jpg",
+            fileUrl: dataUrl || "",
+            uploadedAt: new Date().toISOString(),
+            status: "verified",
+          }
+        })
+      ),
       status: "pending",
     }
 
