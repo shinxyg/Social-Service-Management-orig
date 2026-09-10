@@ -509,16 +509,8 @@ export default function CitizenGuideHub() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
-                onClick={() => navigate("/portal/aics?type=medical")}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold shadow-lg shadow-blue-500/30 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <ShieldAlert className="h-4 w-4" />
-                Apply for AICS Crisis Aid
-              </button>
-              <button
-                type="button"
                 onClick={() => navigate("/portal/my-applications")}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold backdrop-blur-sm border border-white/20 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold backdrop-blur-sm border border-white/20 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
               >
                 <FileText className="h-4 w-4" />
                 Track My Applications
