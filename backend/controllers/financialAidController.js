@@ -457,21 +457,6 @@ exports.getUserDisbursements = async (req, res) => {
   }
 };
 
-// DELETE /api/financial-aid/:id
-exports.deleteDisbursement = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const cleanId = String(id || '').trim();
-    await db.query(
-      `DELETE FROM financial_aid_disbursements WHERE id::text = $1 OR disbursement_id = $1 OR application_ref = $1`,
-      [cleanId]
-    );
-    res.json({ message: 'Disbursement record deleted successfully.' });
-  } catch (err) {
-    console.error('Error deleting disbursement:', err);
-    res.status(500).json({ error: 'Failed to delete disbursement.' });
-  }
-};
 
 // POST /api/financial-aid/cleanup
 exports.cleanupOrphanDisbursements = async (req, res) => {
@@ -612,13 +597,50 @@ exports.releaseDisbursement = async (req, res) => {
 exports.deleteDisbursement = async (req, res) => {
   try {
     const { id } = req.params;
-    const cleanId = String(id || '').trim();
+    const rawId = String(id || '').trim();
+    const cleanId = rawId
+      .replace(/^db-/, '')
+      .replace(/^remote-pwd-/, '')
+      .replace(/^remote-cw-/, '')
+      .replace(/^remote-liv-/, '')
+      .replace(/^remote-/, '')
+      .trim();
+
+    // Query matching row first to capture application_ref and applicant_name
+    const found = await db.query(
+      `SELECT application_ref, applicant_name, disbursement_id FROM financial_aid_disbursements 
+       WHERE id::text = $1 OR id::text = $2 OR disbursement_id = $1 OR disbursement_id = $2 OR application_ref = $1 OR application_ref = $2`,
+      [rawId, cleanId]
+    );
+
+    const appRef = found.rows[0]?.application_ref || cleanId;
+    const applicantName = found.rows[0]?.applicant_name || '';
+
+    // 1. Delete from financial_aid_disbursements table
     await db.query(
       `DELETE FROM financial_aid_disbursements 
-       WHERE id::text = $1 OR disbursement_id = $1 OR application_ref = $1`,
-      [cleanId]
+       WHERE id::text = $1 OR id::text = $2 OR disbursement_id = $1 OR disbursement_id = $2 OR application_ref = $1 OR application_ref = $2`,
+      [rawId, cleanId]
     );
-    res.json({ message: 'Disbursement deleted successfully.' });
+
+    // 2. Also delete from underlying application tables so it does not auto-repopulate
+    if (appRef) {
+      await Promise.allSettled([
+        db.query(`DELETE FROM child_welfare_applications WHERE reference_number = $1 OR id::text = $1`, [appRef]),
+        db.query(`DELETE FROM pwd_senior_applications WHERE reference_number = $1 OR id::text = $1`, [appRef]),
+        db.query(`DELETE FROM livelihood_applications WHERE reference_number = $1 OR id::text = $1`, [appRef]),
+        db.query(`DELETE FROM aics_applications WHERE reference_no = $1 OR reference_number = $1 OR id::text = $1`, [appRef]),
+        db.query(`DELETE FROM appointments WHERE reference_no = $1`, [appRef]),
+      ]);
+    }
+
+    if (applicantName) {
+      await Promise.allSettled([
+        db.query(`DELETE FROM appointments WHERE applicant_name ILIKE $1`, [applicantName]),
+      ]);
+    }
+
+    res.json({ message: 'Disbursement and associated records deleted successfully.' });
   } catch (err) {
     console.error('Error deleting disbursement:', err);
     res.status(500).json({ error: 'Failed to delete disbursement.' });
@@ -633,10 +655,20 @@ exports.deleteUserDisbursements = async (req, res) => {
     const result = await db.query(
       `DELETE FROM financial_aid_disbursements 
        WHERE applicant_name ILIKE $1 
-          OR application_ref ILIKE $1`,
+          OR application_ref ILIKE $1
+          OR disbursement_id ILIKE $1`,
       [term]
     );
-    res.json({ message: `Deleted ${result.rowCount} disbursements.` });
+
+    await Promise.allSettled([
+      db.query(`DELETE FROM child_welfare_applications WHERE reference_number ILIKE $1 OR guardian_first_name ILIKE $1 OR guardian_last_name ILIKE $1`, [term]),
+      db.query(`DELETE FROM pwd_senior_applications WHERE reference_number ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1`, [term]),
+      db.query(`DELETE FROM livelihood_applications WHERE reference_number ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1`, [term]),
+      db.query(`DELETE FROM aics_applications WHERE reference_no ILIKE $1 OR reference_number ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1`, [term]),
+      db.query(`DELETE FROM appointments WHERE reference_no ILIKE $1 OR applicant_name ILIKE $1`, [term]),
+    ]);
+
+    res.json({ message: `Deleted ${result.rowCount} disbursements and associated applications.` });
   } catch (err) {
     console.error('Error clearing disbursements:', err);
     res.status(500).json({ error: 'Failed to clear disbursements.' });

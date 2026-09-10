@@ -173,6 +173,9 @@ export async function deleteFinancialAidDisbursement(record: {
       requests.push(fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(record.applicationRef)}`, { method: "DELETE" }))
       requests.push(fetch(`${API_BASE}/api/financial-aid/cleanup-user/${encodeURIComponent(record.applicationRef)}`, { method: "DELETE" }))
     }
+    if (record.applicantName) {
+      requests.push(fetch(`${API_BASE}/api/financial-aid/cleanup-user/${encodeURIComponent(record.applicantName.trim())}`, { method: "DELETE" }))
+    }
     if (cleanAppRef && cleanAppRef !== record.applicationRef) {
       requests.push(fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(cleanAppRef)}`, { method: "DELETE" }))
       requests.push(fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(cleanAppRef)}`, { method: "DELETE" }))
