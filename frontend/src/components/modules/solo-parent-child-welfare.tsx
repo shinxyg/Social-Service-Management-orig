@@ -1393,63 +1393,89 @@ function OfficialSoloParentIdCardModal({
           ) : (
             /* BACK CARD */
             <div
-              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none p-4 flex flex-col justify-between"
+              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none flex flex-col justify-between"
               style={{
                 aspectRatio: "1.586 / 1",
-                background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+                background: "linear-gradient(135deg, #fff5f5 0%, #ffffff 50%, #fef2f2 100%)",
               }}
             >
-              <div>
-                <div className="flex items-center justify-between border-b border-slate-200 pb-1">
-                  <p className="text-[9px] font-bold text-slate-900 uppercase tracking-wide">
-                    Republic Act 11861 Expanded Solo Parents Welfare Act
-                  </p>
-                  <span className="text-[7px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                    QC-SSDD
-                  </span>
-                </div>
-
-                <div className="mt-2 space-y-1 text-[8px] text-slate-600 leading-tight">
-                  <p>• Entitled to 10% discount and VAT exemption on baby's milk, food, medicine, and diapers.</p>
-                  <p>• Prioritization in housing, educational grants, and livelihood assistance programs.</p>
-                  <p>• Card is non-transferable and must be presented upon claiming municipal benefits.</p>
-                </div>
-
-                {/* Children / Dependents List */}
-                <div className="mt-2 border-t border-slate-200 pt-1.5">
-                  <p className="text-[8px] font-bold text-slate-800 uppercase mb-1">Registered Children / Dependents:</p>
-                  <div className="grid grid-cols-2 gap-1 text-[7.5px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200 max-h-12 overflow-y-auto">
-                    {(app.familyMembers && app.familyMembers.length > 0) ? (
-                      app.familyMembers.map((m, i) => (
-                        <div key={i} className="truncate">
-                          <span className="font-bold">• {m.name || (m as any).fullName || `${m.relationship}: child`}</span> ({m.age || "—"} yo)
-                        </div>
-                      ))
-                    ) : (
-                      <div className="col-span-2 text-slate-400">1 Child / Dependent on file</div>
-                    )}
-                  </div>
-                </div>
+              {/* Background Watermark Seal */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
+                <img src="/gov-serves-seal.png" alt="" className="w-48 h-48 object-contain" />
               </div>
 
-              <div className="border-t border-slate-200 pt-1.5 space-y-1">
-                <p className="text-[8px] font-bold text-slate-800 uppercase">In case of emergency, please notify:</p>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[7.5px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200">
-                  <div>
-                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase tracking-wider">Contact Person</span>
-                    <span className="font-bold text-slate-900 truncate block">{emergencyPerson}</span>
+              {/* Back Header Strip */}
+              <div className="px-3.5 py-1.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs relative z-10">
+                <div className="flex items-center gap-1.5">
+                  <img src="/gov-serves-seal.png" alt="QC Seal" className="w-4 h-4 object-contain rounded-full bg-white/20 p-0.5" />
+                  <p className="text-[8.5px] font-black uppercase tracking-wide leading-tight">
+                    Republic Act 11861 — Expanded Solo Parents Welfare Act
+                  </p>
+                </div>
+                <span className="text-[7.5px] font-black text-amber-900 bg-amber-300 px-2 py-0.5 rounded-full border border-amber-400/80 shadow-xs">
+                  QC-SSDD
+                </span>
+              </div>
+
+              <div className="p-3 pt-2 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
+                <div>
+                  {/* Benefits / Rights List */}
+                  <div className="bg-red-50/70 border border-red-200/80 rounded-lg p-2 space-y-1 text-[7.5px] text-slate-800 leading-tight">
+                    <p className="flex items-start gap-1">
+                      <span className="text-red-600 font-bold shrink-0">✓</span>
+                      <span><strong>10% Discount &amp; VAT Exemption</strong> on infant formula, baby food, prescribed medicines, and essential supplies.</span>
+                    </p>
+                    <p className="flex items-start gap-1">
+                      <span className="text-red-600 font-bold shrink-0">✓</span>
+                      <span><strong>Prioritization</strong> in local government housing, educational scholarships, and livelihood grants.</span>
+                    </p>
+                    <p className="flex items-start gap-1">
+                      <span className="text-red-600 font-bold shrink-0">✓</span>
+                      <span>Non-transferable official municipal privilege card valid nationwide across the Philippines.</span>
+                    </p>
                   </div>
-                  <div>
-                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase tracking-wider">Contact Number</span>
-                    <span className="font-mono font-bold text-blue-700 block">{emergencyPhone}</span>
+
+                  {/* Children / Dependents List */}
+                  <div className="mt-1.5">
+                    <p className="text-[7.5px] font-black text-red-900 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span>
+                      Registered Children / Dependents:
+                    </p>
+                    <div className="grid grid-cols-2 gap-1 text-[7.5px] text-slate-700 bg-white/90 p-1.5 rounded-lg border border-red-200/60 max-h-11 overflow-y-auto">
+                      {(app.familyMembers && app.familyMembers.length > 0) ? (
+                        app.familyMembers.map((m, i) => (
+                          <div key={i} className="truncate flex items-center gap-1">
+                            <span className="font-bold text-slate-900">• {m.name || (m as any).fullName || `${m.relationship}: child`}</span>
+                            <span className="text-slate-400">({m.age || "—"} yo)</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-2 text-slate-400 italic">1 Dependent on file</div>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase tracking-wider">Relationship</span>
-                    <span className="font-semibold text-slate-800 truncate block">{emergencyRel}</span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-400 block text-[6.5px] uppercase tracking-wider">Emergency Address</span>
-                    <span className="font-semibold text-slate-800 truncate block">{emergencyAddr}</span>
+                </div>
+
+                {/* Emergency Contact */}
+                <div className="border-t border-red-200/70 pt-1.5">
+                  <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider mb-1">In case of emergency, please notify:</p>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7px] text-slate-700 bg-white/90 p-1.5 rounded-lg border border-red-200/60 shadow-xs">
+                    <div>
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Contact Person: </span>
+                      <span className="font-bold text-slate-900 truncate">{emergencyPerson}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Phone: </span>
+                      <span className="font-mono font-bold text-red-700">{emergencyPhone}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Relation: </span>
+                      <span className="font-semibold text-slate-800 truncate">{emergencyRel}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Address: </span>
+                      <span className="font-semibold text-slate-800 truncate">{emergencyAddr}</span>
+                    </div>
                   </div>
                 </div>
               </div>

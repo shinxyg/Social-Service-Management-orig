@@ -914,47 +914,91 @@ function OfficialIdCardModal({
           ) : (
             /* BACK CARD */
             <div
-              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none p-4 flex flex-col justify-between"
+              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none flex flex-col justify-between"
               style={{
                 aspectRatio: "1.586 / 1",
-                background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+                background: isPwdApp
+                  ? "linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #fefce8 100%)"
+                  : "linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0fdf4 100%)",
               }}
             >
-              <div>
-                <div className="flex items-center justify-between border-b border-slate-200 pb-1">
-                  <p className="text-[9px] font-bold text-slate-900 uppercase tracking-wide">
-                    {isPwdApp ? "Republic Act 7277 / RA 9442 Magna Carta for PWDs" : "Republic Act 9994 Expanded Senior Citizens Act"}
-                  </p>
-                  <span className="text-[7px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                    VALID: 1 YEAR
-                  </span>
-                </div>
-                <ul className="text-[8px] text-slate-600 mt-2 space-y-1 list-disc pl-4">
-                  <li>20% discount and VAT exemption on medicines, medical supplies, and dental services.</li>
-                  <li>20% discount on public domestic transportation (air, sea, land, MRT/LRT).</li>
-                  <li>20% discount on hotels, restaurants, and recreational centers.</li>
-                  <li>Valid from <span className="font-semibold text-slate-800">{appDate}</span> until <span className="font-semibold text-slate-800">{expiryDateStr}</span> across the Philippines.</li>
-                </ul>
+              {/* Background Watermark Seal */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
+                <img src="/gov-serves-seal.png" alt="" className="w-48 h-48 object-contain" />
               </div>
 
-              <div className="border-t border-slate-200 pt-2 space-y-1.5">
-                <p className="text-[8.5px] font-bold text-slate-800 uppercase">In case of emergency, please notify:</p>
-                <div className="grid grid-cols-2 gap-2 text-[8px] text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-200">
-                  <div>
-                    <span className="font-bold text-slate-400 block text-[7px] uppercase tracking-wider">Contact Person</span>
-                    <span className="font-bold text-slate-900 truncate block">{emergencyPerson}</span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-400 block text-[7px] uppercase tracking-wider">Contact Number</span>
-                    <span className="font-mono font-bold text-blue-700 block">{emergencyPhone}</span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-400 block text-[7px] uppercase tracking-wider">Relationship</span>
-                    <span className="font-semibold text-slate-800 truncate block">{emergencyRel}</span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-400 block text-[7px] uppercase tracking-wider">Emergency Address</span>
-                    <span className="font-semibold text-slate-800 truncate block">{emergencyAddr}</span>
+              {/* Back Header Strip */}
+              <div
+                className={`px-3.5 py-1.5 flex items-center justify-between shadow-xs relative z-10 ${
+                  isPwdApp
+                    ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950"
+                    : "bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 text-white"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <img src="/gov-serves-seal.png" alt="QC Seal" className="w-4 h-4 object-contain rounded-full bg-white/20 p-0.5" />
+                  <p className="text-[8.5px] font-black uppercase tracking-wide leading-tight">
+                    {isPwdApp
+                      ? "Republic Act 7277 / RA 9442 — Magna Carta for PWDs"
+                      : "Republic Act 9994 — Expanded Senior Citizens Act"}
+                  </p>
+                </div>
+                <span
+                  className={`text-[7.5px] font-black px-2 py-0.5 rounded-full border shadow-xs ${
+                    isPwdApp
+                      ? "bg-slate-950 text-amber-300 border-slate-800"
+                      : "bg-amber-400 text-slate-950 border-amber-500"
+                  }`}
+                >
+                  {isPwdApp ? "QC-PDAO" : "QC-OSCA"}
+                </span>
+              </div>
+
+              <div className="p-3 pt-2 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
+                {/* Benefits / Rights List */}
+                <div
+                  className={`rounded-lg p-2 space-y-1 text-[7.5px] text-slate-800 leading-tight border ${
+                    isPwdApp ? "bg-amber-50/80 border-amber-200/80" : "bg-blue-50/80 border-blue-200/80"
+                  }`}
+                >
+                  <p className="flex items-start gap-1">
+                    <span className={`font-bold shrink-0 ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>✓</span>
+                    <span><strong>20% Discount &amp; VAT Exemption</strong> on medicines, medical supplies, and dental services.</span>
+                  </p>
+                  <p className="flex items-start gap-1">
+                    <span className={`font-bold shrink-0 ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>✓</span>
+                    <span><strong>20% Discount</strong> on public domestic transportation (air, sea, land, MRT/LRT), hotels, and restaurants.</span>
+                  </p>
+                  <p className="flex items-start gap-1">
+                    <span className={`font-bold shrink-0 ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>✓</span>
+                    <span>Valid from <strong className="text-slate-900">{appDate}</strong> to <strong className="text-slate-900">{expiryDateStr}</strong> across all cities in the Philippines.</span>
+                  </p>
+                </div>
+
+                {/* Emergency Contact */}
+                <div className={`border-t pt-1.5 ${isPwdApp ? "border-amber-200/70" : "border-blue-200/70"}`}>
+                  <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider mb-1">In case of emergency, please notify:</p>
+                  <div
+                    className={`grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7px] text-slate-700 bg-white/90 p-1.5 rounded-lg border shadow-xs ${
+                      isPwdApp ? "border-amber-200/60" : "border-blue-200/60"
+                    }`}
+                  >
+                    <div>
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Contact Person: </span>
+                      <span className="font-bold text-slate-900 truncate">{emergencyPerson}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Phone: </span>
+                      <span className={`font-mono font-bold ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>{emergencyPhone}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Relation: </span>
+                      <span className="font-semibold text-slate-800 truncate">{emergencyRel}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Address: </span>
+                      <span className="font-semibold text-slate-800 truncate">{emergencyAddr}</span>
+                    </div>
                   </div>
                 </div>
               </div>
