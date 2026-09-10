@@ -589,8 +589,14 @@ export default function BeneficiaryManagement() {
       fetchBeneficiaries(true)
     })
 
+    // Silent background poll every 8 seconds for multi-device sync
+    const interval = setInterval(() => {
+      fetchBeneficiaries(true)
+    }, 8000)
+
     return () => {
       unsubscribe()
+      clearInterval(interval)
     }
   }, [fetchBeneficiaries])
 
