@@ -841,10 +841,6 @@ export default function AICSServiceWizard({
             <button
               type="button"
               onClick={() => {
-                try {
-                  localStorage.removeItem(`aics_reapplying_${serviceType}`)
-                  localStorage.removeItem("aics_reapplying")
-                } catch {}
                 ;(window as any).__isFormDirty = false
                 window.location.href = "/portal/my-applications"
               }}
@@ -852,16 +848,18 @@ export default function AICSServiceWizard({
             >
               {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
             </button>
-            <button
-              type="button"
-              onClick={handleReapply}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-            >
-              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-              <span>
-                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-              </span>
-            </button>
+            {blockedApp && blockedApp.status && blockedApp.status.toLowerCase() !== "pending" && blockedApp.status.toLowerCase() !== "under_review" && (
+              <button
+                type="button"
+                onClick={handleReapply}
+                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>

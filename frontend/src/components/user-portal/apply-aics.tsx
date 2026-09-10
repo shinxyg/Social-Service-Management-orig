@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react"
-import { X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles, AlertCircle, RotateCcw } from "lucide-react"
+import { X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles, AlertCircle, RotateCcw, Clock } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -2701,23 +2701,23 @@ const handleFinalSubmit = async () => {
       )
     }
 
-    // NASA "PENDING" PA RIN (default, habang naghihintay)
+    // NASA "PENDING" PA RIN (habang sinusuri ng Social Worker)
     return (
       <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
         <div className="bg-white border border-border rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-emerald-50">
-            <Check className="w-8 h-8" />
+          <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-50/60 shadow-xs">
+            <Clock className="w-8 h-8" />
           </div>
 
           <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <Sparkles className="w-3.5 h-3.5" /> {t("applicationSubmittedBadge")}
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+              <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending Review
             </span>
             <h2 className="text-2xl font-bold text-foreground">
-              {t("submittedWelcomeTitle")}
+              Application Under Review
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              {t("submittedSubtitle").replace("{type}", type)}
+              Your application for {type} has been submitted and is currently being evaluated by a Social Worker.
             </p>
           </div>
 
@@ -2735,18 +2735,24 @@ const handleFinalSubmit = async () => {
               <span className="text-muted-foreground">{t("applicantLabel")}</span>
               <span className="font-semibold text-foreground">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
+            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
               <span className="text-muted-foreground">{t("dateLabel")}</span>
               <span className="text-foreground">
                 {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
               </span>
             </div>
+            <div className="flex justify-between items-center text-xs text-foreground pt-0.5">
+              <span className="text-muted-foreground">Status</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                Pending Review
+              </span>
+            </div>
           </div>
 
-          <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
-            <Info className="w-4 h-4 text-blue-600 shrink-0" />
+          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
+            <Info className="w-4 h-4 text-amber-600 shrink-0" />
             <p>
-              {t("notifCheckNote")}
+              Please wait for the social worker's evaluation. You will receive updates in your Application History and Notifications.
             </p>
           </div>
 
@@ -2754,26 +2760,12 @@ const handleFinalSubmit = async () => {
             <button
               type="button"
               onClick={() => {
-                try {
-                  localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
-                  localStorage.removeItem("aics_reapplying")
-                } catch {}
                 ;(window as any).__isFormDirty = false
                 window.location.href = "/portal/my-applications"
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
               {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
-            </button>
-            <button
-              type="button"
-              onClick={handleReapply}
-              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-            >
-              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-              <span>
-                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-              </span>
             </button>
           </div>
         </div>
