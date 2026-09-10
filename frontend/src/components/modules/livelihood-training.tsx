@@ -26,8 +26,6 @@ import {
   ShieldAlert,
   Award,
   ChevronRight,
-  Eye,
-  Printer,
   ImageIcon,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
