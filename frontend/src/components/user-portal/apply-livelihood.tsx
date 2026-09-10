@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "react-router-dom"
 import { useLanguage } from "../ui/language-context"
 import { LivelihoodRequirementsModal } from "./livelihood-requirements-data"
@@ -375,6 +375,38 @@ export default function ApplyLivelihood() {
     setIsWizardOpen(false)
     handleTabChange(tab)
   }
+
+  // Auto-switch to active stage when application data arrives or status transitions
+  const hasInitializedTabRef = useRef(false)
+  const prevStatusKeyRef = useRef<string>("")
+
+  useEffect(() => {
+    if (!activeApplication) return
+
+    const currentStatusKey = `${activeApplication.application_status}_${assistData?.assistance_status || ""}_${assistData?.release_status || ""}_${isAssistanceReleased}`
+    const isStatusChanged = prevStatusKeyRef.current !== "" && prevStatusKeyRef.current !== currentStatusKey
+
+    // Initial auto-routing when app loads without explicit tab in URL, or when status updates
+    if (!hasInitializedTabRef.current || isStatusChanged) {
+      prevStatusKeyRef.current = currentStatusKey
+
+      // If user provided a specific ?tab= in the URL on initial mount, respect it
+      if (!hasInitializedTabRef.current && searchParams.get("tab")) {
+        hasInitializedTabRef.current = true
+        return
+      }
+
+      hasInitializedTabRef.current = true
+
+      if (isAssistanceReleased) {
+        handleTabChange("monitoring")
+      } else if (isApproved) {
+        handleTabChange("assistance")
+      } else {
+        handleTabChange("apply")
+      }
+    }
+  }, [activeApplication, isApproved, isAssistanceReleased, assistData])
 
   // If currently on a locked tab, fallback to available tab
   useEffect(() => {
