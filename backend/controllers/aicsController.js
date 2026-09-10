@@ -243,19 +243,21 @@ async function enrichApplicationWithSuffix(app) {
   return app;
 }
 
-// GET /api/aics/applications  (para sa admin, may optional ?status= filter)
-// GET /api/aics/applications  (may optional ?status= at ?qcId= filter)
+// GET /api/aics/applications
 exports.getApplications = async (req, res) => {
   try {
-    const { status, qcId } = req.query;
+    const { status, qcId, email } = req.query;
     let query = 'SELECT * FROM aics_applications';
     const conditions = [];
     const params = [];
 
     if (qcId) {
-      params.push(qcId);
       params.push(`%${qcId}%`);
-      conditions.push(`(qc_id = $${params.length - 1} OR reference_no = $${params.length - 1} OR reference_no LIKE $${params.length})`);
+      conditions.push(`(qc_id ILIKE $${params.length} OR reference_no ILIKE $${params.length})`);
+    }
+    if (email) {
+      params.push(`%${email.trim().toLowerCase()}%`);
+      conditions.push(`LOWER(email) LIKE $${params.length}`);
     }
     if (status) {
       params.push(status);
@@ -273,7 +275,7 @@ exports.getApplications = async (req, res) => {
         const enriched = await enrichApplicationWithSuffix(row);
         return {
           ...enriched,
-          reference_no: enriched.qc_id || enriched.reference_no || '110000116932100',
+          reference_no: enriched.reference_no || enriched.qc_id || '110000116932100',
         };
       })
     );

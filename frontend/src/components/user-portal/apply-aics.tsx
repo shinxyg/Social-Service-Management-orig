@@ -164,11 +164,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
 
   const [isReapplying, setIsReapplying] = useState(() => {
     try {
-      const isUrlParam = typeof window !== "undefined" && window.location.search.includes("reapply=true")
-      const isLocal =
-        localStorage.getItem(`aics_reapplying_${resolvedTypeKey}`) === "true" ||
-        localStorage.getItem("aics_reapplying") === "true"
-      return Boolean(isUrlParam || isLocal)
+      return typeof window !== "undefined" && window.location.search.includes("reapply=true")
     } catch {
       return false
     }
@@ -195,11 +191,8 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [priorAidType, setPriorAidType] = useState("")
 
   const handleReapply = () => {
-    try {
-      localStorage.setItem(`aics_reapplying_${resolvedTypeKey}`, "true")
-      localStorage.setItem("aics_reapplying", "true")
-    } catch {}
     setIsReapplying(true)
+    isReapplyingRef.current = true
     setStep(hasRequirements ? "checklist" : "form")
     setReference("")
     setAppStatus("pending")
@@ -573,7 +566,7 @@ const canProceedPersonal = Boolean(
 
         let remoteApps: any[] = []
         try {
-          const res = await fetch(`${API_BASE}/api/aics/applications${userQcid ? `?qcId=${encodeURIComponent(userQcid)}` : ""}`)
+          const res = await fetch(`${API_BASE}/api/aics/applications`)
           if (res.ok) {
             const data = await res.json()
             if (data && Array.isArray(data.applications)) {
@@ -610,7 +603,7 @@ const canProceedPersonal = Boolean(
           const aType = String(a.assistance_type || a.service || a.type || "").toLowerCase()
 
           if (resolvedTypeKey === "aicsMedical" || type.toLowerCase().includes("med")) {
-            return aType.includes("med") || aType.includes("gamot") || aType.includes("hospital")
+            return aType.includes("med") || aType.includes("gamot") || aType.includes("hospital") || aType.includes("krisis") || aType === ""
           }
           if (resolvedTypeKey === "aicsFuneral" || type.toLowerCase().includes("funeral") || type.toLowerCase().includes("libing") || type.toLowerCase().includes("burial")) {
             return aType.includes("funeral") || aType.includes("burial") || aType.includes("libing")
@@ -626,10 +619,13 @@ const canProceedPersonal = Boolean(
           const appQc = String(a.qc_id || a.reference_no || a.reference_number || "").trim().toLowerCase()
           const appEmail = String(a.email || "").trim().toLowerCase()
           const appName = String(a.full_name || `${a.first_name || ""} ${a.last_name || ""}`).trim().toLowerCase()
+          const appFirst = String(a.first_name || "").trim().toLowerCase()
+          const appLast = String(a.last_name || "").trim().toLowerCase()
 
           if (userQcid && (appQc === userQcid || appQc.includes(userQcid) || userQcid.includes(appQc))) return true
-          if (userEmail && appEmail && appEmail === userEmail) return true
-          if (userFirst && userLast && appName.includes(userFirst) && appName.includes(userLast)) return true
+          if (userEmail && appEmail && (appEmail === userEmail || appEmail.includes(userEmail) || userEmail.includes(appEmail))) return true
+          if (userFirst && userLast && ((appFirst === userFirst && appLast === userLast) || (appName.includes(userFirst) && appName.includes(userLast)))) return true
+          if (userFirst && userFirst.length >= 3 && (appFirst === userFirst || appName.includes(userFirst))) return true
           return false
         }
 
