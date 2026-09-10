@@ -14,6 +14,8 @@ import {
   Package,
   Activity,
   Lock,
+  Plus,
+  Info,
 } from "lucide-react"
 
 type LivelihoodProgramTab = "apply" | "assistance" | "monitoring"
@@ -147,12 +149,14 @@ export default function ApplyLivelihood() {
       tab3: "3. LIVELIHOOD MONITORING",
       locked: "(LOCKED)",
       lockStage2: "Stage 2 is Locked: This will only become active once your Livelihood Application is officially approved by SSDD Admin.",
-      lockStage3: "Stage 3 is Locked: This will only become active on the scheduled date and time of release for your Capital / Materials Assistance.",
+      lockStage3: "Stage 3 is Locked: This will only become active once your Capital / Materials Assistance has been officially released.",
       activeAppRecord: "Active Application Record",
       applyNew: "Apply for New Livelihood",
       noAppTitle: "No Livelihood Application Yet",
       noAppSub: "Get started by reading the guidelines and documentary requirements before submitting an application.",
       applyBtn: "APPLY FOR LIVELIHOOD",
+      reApplyBtn: "Re-Apply for Livelihood",
+      reApplySub: "Need to submit a new or re-apply for another livelihood program?",
     },
     tl: {
       catLivelihood: "Tulong sa Kabuhayan",
@@ -166,12 +170,14 @@ export default function ApplyLivelihood() {
       tab3: "3. PAGSUSUBAYBAY SA KABUHAYAN",
       locked: "(NAKA-LOCK)",
       lockStage2: "Naka-lock ang Stage 2: Magiging aktibo lamang ito kapag opisyal nang naaprubahan ng SSDD Admin ang iyong Livelihood Application.",
-      lockStage3: "Naka-lock ang Stage 3: Magiging aktibo lamang ito sa takdang araw at oras ng release ng iyong Capital / Materials Assistance.",
+      lockStage3: "Naka-lock ang Stage 3: Magiging aktibo lamang ito kapag opisyal nang nai-release ang iyong Capital / Materials Assistance.",
       activeAppRecord: "Aktibong Talaan ng Aplikasyon",
       applyNew: "Mag-apply ng Bagong Livelihood",
       noAppTitle: "Wala pang Livelihood Application",
       noAppSub: "Magsimula sa pamamagitan ng pagbasa sa mga panuntunan at documentary requirements bago magsumite ng application.",
       applyBtn: "MAG-APPLY SA LIVELIHOOD",
+      reApplyBtn: "Mag-apply Muli (Re-Apply)",
+      reApplySub: "Gusto mo bang mag-apply muli para sa bagong livelihood assistance o negosyo?",
     },
     bis: {
       catLivelihood: "Tabang sa Panginabuhi",
@@ -185,12 +191,14 @@ export default function ApplyLivelihood() {
       tab3: "3. PAGBANTAY SA PANGINABUHI",
       locked: "(NAKA-LOCK)",
       lockStage2: "Naka-lock ang Stage 2: Mahimong aktibo lamang kini kon opisyal nang maaprobahan sa SSDD Admin ang imong Livelihood Application.",
-      lockStage3: "Naka-lock ang Stage 3: Mahimong aktibo lamang kini sa gitakdang adlaw ug oras sa pagpagawas sa imong Capital / Materials Assistance.",
+      lockStage3: "Naka-lock ang Stage 3: Mahimong aktibo lamang kini kon opisyal nang napagawas ang imong Capital / Materials Assistance.",
       activeAppRecord: "Aktibong Rekord sa Aplikasyon",
       applyNew: "Mag-apply og Bag-ong Panginabuhi",
       noAppTitle: "Wala pay Livelihood Application",
       noAppSub: "Pagsugod pinaagi sa pagbasa sa mga lagda ug documentary requirements sa dili pa mosumite og aplikasyon.",
       applyBtn: "MAG-APPLY SA PANGINABUHI",
+      reApplyBtn: "Mag-apply Pag-usab (Re-Apply)",
+      reApplySub: "Gusto ba nimo mag-apply pag-usab alang sa bag-ong negosyo?",
     },
   }[langKey]
 
@@ -336,13 +344,13 @@ export default function ApplyLivelihood() {
   // Lock states according to workflow specifications
   const isApproved = activeApplication?.application_status === "approved"
   const assistData = activeApplication?.assistance
-  const assistScheduledDt = parseDateTime(assistData?.release_date, assistData?.release_time)
-  const isPastOrNow = assistScheduledDt !== null && Date.now() >= assistScheduledDt.getTime()
-  const rawAssistStatus = (assistData?.assistance_status || "").toLowerCase()
+  const rawAssistStatus = (assistData?.assistance_status || "").toLowerCase().trim()
+  const rawReleaseStatus = (assistData?.release_status || "").toLowerCase().trim()
+  const hasMonitoringLogs = Array.isArray(activeApplication?.monitoring) && activeApplication.monitoring.length > 0
   const isAssistanceReleased =
     rawAssistStatus === "released" ||
-    assistData?.release_status === "RELEASED" ||
-    (rawAssistStatus === "for_release" && isPastOrNow)
+    rawReleaseStatus === "released" ||
+    hasMonitoringLogs
 
   const [tabLockedKey, setTabLockedKey] = useState<"stage2" | "stage3" | null>(null)
 
@@ -420,38 +428,52 @@ export default function ApplyLivelihood() {
             </div>
           )}
 
-      {/* Top Requirements Banner with Button to Open Modal (shown only on Step 1) */}
-      {currentStep === 1 && (
-        <div className="mb-4 animate-in fade-in duration-150">
-          <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 text-blue-700">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-sm md:text-base font-bold text-foreground">
-                    {texts.reqTitle}
-                  </h1>
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
-                    {texts.reqBadge}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {texts.reqSub}
-                </p>
-              </div>
+      {/* Top Requirements & Re-Apply Banner */}
+      <div className="mb-4 animate-in fade-in duration-150">
+        <div className="bg-card border border-border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900">
+              <FileText className="w-5 h-5" />
             </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-sm md:text-base font-bold text-foreground">
+                  {texts.reqTitle}
+                </h1>
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                  {texts.reqBadge}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-2xl">
+                {texts.reqSub} {texts.reApplySub}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 self-end md:self-center flex-wrap">
             <button
               type="button"
               onClick={() => setShowRequirements(true)}
-              className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer shrink-0"
+              className="inline-flex items-center justify-center px-3.5 py-2 rounded-xl text-xs font-semibold border border-border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
             >
-              {texts.viewReq}
+              <Info className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
+              <span>{texts.viewReq}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsUpdatingRevision(false)
+                setIsWizardOpen(true)
+                handleTabChange("apply")
+                window.scrollTo({ top: 0, behavior: "smooth" })
+              }}
+              className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              <span>{texts.reApplyBtn}</span>
             </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Top 3-Part Program Navigation Bar */}
       <div className="bg-card border border-border rounded-2xl p-2 shadow-xs">
@@ -496,7 +518,7 @@ export default function ApplyLivelihood() {
             disabled={!isAssistanceReleased}
             className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 select-none ${
               !isAssistanceReleased
-                ? "opacity-50 bg-muted/40 text-muted-foreground cursor-not-allowed border border-dashed border-border"
+                ? "opacity-50 bg-muted/40 text-muted-foreground cursor-not-allowed border border-dashed border-border pointer-events-none"
                 : activeTab === "monitoring"
                 ? "bg-emerald-600 text-white shadow-sm cursor-pointer"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/40 cursor-pointer"
