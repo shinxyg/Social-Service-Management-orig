@@ -159,14 +159,17 @@ function SectionHeading({ icon, children }: { icon: React.ReactNode; children: R
 function BeneficiaryCard({ b, onOpen }: { b: Beneficiary; onOpen: (id: string) => void }) {
   const vt = getVerificationTheme(b.verificationStatus)
   return (
-    <div className="border border-border rounded-xl p-4 bg-white transition-shadow hover:shadow-sm">
+    <div
+      onClick={() => onOpen(b.id)}
+      className="border border-border rounded-xl p-4 bg-white transition-all hover:shadow-md hover:border-blue-200 cursor-pointer group"
+    >
       <div className="flex items-start gap-4">
-        <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-semibold">
+        <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white text-sm font-semibold group-hover:bg-blue-600 transition-colors">
           {initials(b.fullName)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <p className="text-sm font-semibold text-foreground uppercase">{b.fullName}</p>
+            <p className="text-sm font-semibold text-foreground uppercase group-hover:text-blue-600 transition-colors">{b.fullName}</p>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${vt?.chip || 'bg-slate-100 text-slate-700'}`}>
               {vt?.icon}
               {vt?.label}
@@ -192,14 +195,8 @@ function BeneficiaryCard({ b, onOpen }: { b: Beneficiary; onOpen: (id: string) =
             <span>Registered {formatDate(b.dateRegistered)}</span>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <button
-            onClick={() => onOpen(b.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            View Profile
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
+        <div className="flex items-center self-center shrink-0 text-muted-foreground group-hover:text-blue-600 transition-colors">
+          <ChevronRight className="h-5 w-5" />
         </div>
       </div>
     </div>
