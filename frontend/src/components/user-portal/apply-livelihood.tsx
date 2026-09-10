@@ -159,7 +159,7 @@ export default function ApplyLivelihood() {
 
   // Requirements Modal visibility & acceptance
   const [showRequirements, setShowRequirements] = useState(false)
-  const [requirementsAccepted] = useState(false)
+  const [requirementsAccepted, setRequirementsAccepted] = useState(false)
 
   // Current Application Record
   const [activeApplication, setActiveApplication] = useState<LivelihoodApplicationRecord | null>(null)
