@@ -71,48 +71,14 @@ export default function ApplyPWDSenior() {
           if (!Array.isArray(localApps)) localApps = []
         } catch {}
 
+        let allApps: any[] = []
         if (backendApps.length > 0) {
-          let updatedLocal = false
-          localApps = localApps.map((la: any) => {
-            const matchInBackend = backendApps.find((ba: any) => {
-              if (ba.id && ba.id === la.id) return true
-              const baRef = String(ba.referenceNumber || ba.reference_no || ba.reference_number || "").trim()
-              const laRef = String(la.referenceNumber || la.reference_no || la.reference_number || "").trim()
-              return baRef && laRef && baRef === laRef
-            })
-            if (matchInBackend) {
-              const bStatus = String(matchInBackend.status || "").toLowerCase()
-              const lStatus = String(la.status || "").toLowerCase()
-              if (bStatus && bStatus !== lStatus) {
-                updatedLocal = true
-                return {
-                  ...la,
-                  status: matchInBackend.status,
-                  assignedIdNumber: matchInBackend.assignedIdNumber || matchInBackend.assigned_id_number || la.assignedIdNumber,
-                  approvedDate: matchInBackend.approvedDate || matchInBackend.approved_date || la.approvedDate,
-                }
-              }
-            }
-            return la
-          })
-          if (updatedLocal) {
-            try {
-              localStorage.setItem("pwd_senior_applications", JSON.stringify(localApps))
-            } catch {}
-          }
-        }
-
-        const allApps: any[] = [...backendApps]
-        for (const la of localApps) {
-          const exists = allApps.some((a) => {
-            if (a.id && a.id === la.id) return true
-            const aRef = String(a.referenceNumber || a.reference_no || a.reference_number || "").trim()
-            const laRef = String(la.referenceNumber || la.reference_no || la.reference_number || "").trim()
-            return aRef && laRef && aRef === laRef
-          })
-          if (!exists) {
-            allApps.push(la)
-          }
+          allApps = [...backendApps]
+          try {
+            localStorage.setItem("pwd_senior_applications", JSON.stringify(backendApps))
+          } catch {}
+        } else {
+          allApps = [...localApps]
         }
 
         const currentQcid = getLoggedInUserQcid() || "110000572516915"

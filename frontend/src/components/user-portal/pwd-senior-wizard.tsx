@@ -766,6 +766,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
       }
 
       let allUserPwdApps: any[] = []
+      let backendFetched = false
 
       // Check backend API first
       try {
@@ -774,12 +775,16 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
           const apps = await res.json()
           if (Array.isArray(apps)) {
             allUserPwdApps = apps.filter(checkUserMatches)
+            backendFetched = true
+            try {
+              localStorage.setItem("pwd_senior_applications", JSON.stringify(apps))
+            } catch {}
           }
         }
       } catch {}
 
-      // Merge localStorage applications in real-time
-      if (isMounted) {
+      // Fallback to localStorage only if backend was not reachable (offline)
+      if (!backendFetched && isMounted) {
         const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
         for (const k of localKeys) {
           try {

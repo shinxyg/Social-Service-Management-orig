@@ -617,6 +617,7 @@ export default function SeniorCitizenApplicationWizard({
       }
 
       let allUserSeniorApps: any[] = []
+      let backendFetched = false
 
       // 1. Fetch from backend API
       try {
@@ -625,12 +626,16 @@ export default function SeniorCitizenApplicationWizard({
           const apps = await res.json()
           if (Array.isArray(apps)) {
             allUserSeniorApps = apps.filter(checkUserMatches)
+            backendFetched = true
+            try {
+              localStorage.setItem("pwd_senior_applications", JSON.stringify(apps))
+            } catch {}
           }
         }
       } catch {}
 
-      // 2. Check localStorage in real-time
-      if (isMounted) {
+      // 2. Check localStorage only if offline / backend not fetched
+      if (!backendFetched && isMounted) {
         const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
         for (const k of localKeys) {
           try {

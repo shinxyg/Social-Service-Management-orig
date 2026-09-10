@@ -386,26 +386,35 @@ export default function SeniorBookletWizard({
       if (!isMounted) return
       try {
         let allApps: any[] = []
+        let backendFetched = false
         try {
           const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
           if (res.ok) {
             const data = await res.json()
-            if (Array.isArray(data)) allApps = data
+            if (Array.isArray(data)) {
+              allApps = data
+              backendFetched = true
+              try {
+                localStorage.setItem("pwd_senior_applications", JSON.stringify(data))
+              } catch {}
+            }
           }
         } catch {}
 
-        const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
-        for (const k of localKeys) {
-          try {
-            const local = JSON.parse(localStorage.getItem(k) || "[]")
-            if (Array.isArray(local)) {
-              for (const la of local) {
-                if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
-                  allApps.push(la)
+        if (!backendFetched) {
+          const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
+          for (const k of localKeys) {
+            try {
+              const local = JSON.parse(localStorage.getItem(k) || "[]")
+              if (Array.isArray(local)) {
+                for (const la of local) {
+                  if (la && !allApps.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
+                    allApps.push(la)
+                  }
                 }
               }
-            }
-          } catch {}
+            } catch {}
+          }
         }
 
         const userEmail = (userProfile?.email || formData.emailAddress || "").toLowerCase().trim()

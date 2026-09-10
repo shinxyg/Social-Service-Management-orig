@@ -414,22 +414,21 @@ export default function MyApplications() {
           localPwdApps = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
         } catch {}
 
-        // Merge API and LocalStorage applications
-        const combinedMap = new Map<string, any>()
-        if (Array.isArray(localPwdApps)) {
-          localPwdApps.forEach((p) => {
-            const key = p.id || p.referenceNumber || p.assignedIdNumber || `${p.category}-${p.type}-${p.email}`
-            combinedMap.set(key, p)
-          })
+        let pwdApps: any[] = []
+        if (Array.isArray(apiPwdApps) && apiPwdApps.length > 0) {
+          pwdApps = apiPwdApps
+          try {
+            localStorage.setItem("pwd_senior_applications", JSON.stringify(apiPwdApps))
+          } catch {}
+        } else if (Array.isArray(apiPwdApps)) {
+          // Server returned empty list -> keep in sync
+          pwdApps = []
+          try {
+            localStorage.setItem("pwd_senior_applications", JSON.stringify([]))
+          } catch {}
+        } else {
+          pwdApps = Array.isArray(localPwdApps) ? localPwdApps : []
         }
-        if (Array.isArray(apiPwdApps)) {
-          apiPwdApps.forEach((p) => {
-            const key = p.id || p.referenceNumber || p.assignedIdNumber || `${p.category}-${p.type}-${p.email}`
-            combinedMap.set(key, p)
-          })
-        }
-
-        const pwdApps = Array.from(combinedMap.values())
 
         const mappedPwd: ApplicationRecord[] = (pwdApps || [])
           .filter((p: any) => {
