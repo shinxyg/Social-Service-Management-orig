@@ -12,6 +12,7 @@ import {
   Sparkles,
   AlertCircle,
   RotateCcw,
+  Clock,
 } from "lucide-react"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -330,7 +331,7 @@ export default function AICSServiceWizard({
 
         let remoteApps: any[] = []
         try {
-          const res = await fetch(`${API_BASE}/api/aics/applications${userQcid ? `?qcId=${encodeURIComponent(userQcid)}` : ""}`)
+          const res = await fetch(`${API_BASE}/api/aics/applications`)
           if (res.ok) {
             const data = await res.json()
             if (data && Array.isArray(data.applications)) {
@@ -370,10 +371,13 @@ export default function AICSServiceWizard({
           const appQc = String(a.qc_id || a.reference_no || a.reference_number || "").trim().toLowerCase()
           const appEmail = String(a.email || "").trim().toLowerCase()
           const appName = String(a.full_name || `${a.first_name || ""} ${a.last_name || ""}`).trim().toLowerCase()
+          const appFirst = String(a.first_name || "").trim().toLowerCase()
+          const appLast = String(a.last_name || "").trim().toLowerCase()
 
           if (userQcid && (appQc === userQcid || appQc.includes(userQcid) || userQcid.includes(appQc))) return true
-          if (userEmail && appEmail && appEmail === userEmail) return true
-          if (userFirst && userLast && appName.includes(userFirst) && appName.includes(userLast)) return true
+          if (userEmail && appEmail && (appEmail === userEmail || appEmail.includes(userEmail) || userEmail.includes(appEmail))) return true
+          if (userFirst && userLast && ((appFirst === userFirst && appLast === userLast) || (appName.includes(userFirst) && appName.includes(userLast)))) return true
+          if (userFirst && userFirst.length >= 3 && (appFirst === userFirst || appName.includes(userFirst))) return true
           return false
         }
 
@@ -793,62 +797,60 @@ export default function AICSServiceWizard({
 
   // If blocked (Existing Pending Application)
   if (isBlocked) {
-    return (
-      <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            ← {t("back")}
-          </button>
-        )}
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Info className="h-7 w-7 text-amber-500" />
-          </div>
-          <h2 className="text-lg font-bold text-gray-900">
-            {language === "en"
-              ? "You Have an Existing Active Application"
-              : language === "bis"
-              ? "Aduna Ka Nay Aktibo nga Aplikasyon"
-              : "May Kasalukuyan Ka Nang Aktibong Aplikasyon"}
-          </h2>
-          <p className="text-xs text-gray-600 max-w-sm">
-            {language === "en"
-              ? `You already have an active application for ${serviceTitle}. Please wait for the evaluation or view updates in Application History.`
-              : language === "bis"
-              ? `Aduna ka nay aplikasyon para sa ${serviceTitle}. Palihug paghulat sa ebalwasyon o tan-awa ang mga update sa Kasaysayan sa Aplikasyon.`
-              : `Mayroon ka nang aplikasyon para sa ${serviceTitle}. Mangyaring maghintay muna sa pagsusuri o tingnan ang mga update sa Application History.`}
-          </p>
+    const status = (blockedApp?.status || "pending").toLowerCase()
+    const applicantFullName = [firstName, middleName, lastName, suffix].filter(Boolean).join(" ") || "Applicant"
 
-          <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
-            <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-              <span className="text-gray-500">Reference Number</span>
-              <span className="font-mono font-bold text-blue-700 text-sm">{referenceNo || blockedApp?.reference_no || blockedApp?.qc_id}</span>
+    if (status === "rejected") {
+      return (
+        <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-2xl bg-red-50 flex items-center justify-center text-red-500">
+              <X className="h-7 w-7" strokeWidth={2.5} />
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">Service</span>
-              <span className="font-semibold text-gray-900">{serviceTitle}</span>
+            <h2 className="text-lg font-bold text-gray-900">
+              {language === "en"
+                ? "Application Disapproved"
+                : language === "bis"
+                ? "Wala Na-aprobahan ang Aplikasyon"
+                : "Hindi Na-approve ang Application"}
+            </h2>
+            <p className="text-xs text-gray-600 max-w-sm">
+              {language === "en"
+                ? `We regret to inform you that your application for ${serviceTitle} was not approved. You may contact the Quezon City Social Welfare Office for more details or submit a new application.`
+                : language === "bis"
+                ? `Gikasubo namo nga wala na-aprobahan ang imong aplikasyon para sa ${serviceTitle}. Mahimo kang makig-alayon sa Quezon City Social Welfare Office o mag-apply pag-usab.`
+                : `Paumanhin, hindi na-approve ang iyong aplikasyon para sa ${serviceTitle.toLowerCase()}. Maaari kang makipag-ugnayan sa Quezon City Social Welfare Office para sa karagdagang detalye o mag-apply muli kung may mga dokumentong kailangang ayusin.`}
+            </p>
+            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                <span className="text-gray-500">Reference Number</span>
+                <span className="font-mono font-bold text-gray-900 text-sm">{referenceNo || blockedApp?.reference_no || blockedApp?.qc_id}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Service</span>
+                <span className="font-semibold text-gray-900">{serviceTitle}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Applicant Name</span>
+                <span className="font-semibold text-gray-900">{applicantFullName}</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">Status</span>
-              <span className="font-semibold text-amber-600 uppercase">{blockedApp?.status || "Pending Review"}</span>
-            </div>
-          </div>
 
-          <div className="w-full flex flex-col gap-2 mt-2">
-            <button
-              type="button"
-              onClick={() => {
-                ;(window as any).__isFormDirty = false
-                window.location.href = "/portal/my-applications"
-              }}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
-            </button>
-            {blockedApp && blockedApp.status && blockedApp.status.toLowerCase() !== "pending" && blockedApp.status.toLowerCase() !== "under_review" && (
+            <div className="w-full flex flex-col gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(`aics_reapplying_${serviceType}`)
+                    localStorage.removeItem("aics_reapplying")
+                  } catch {}
+                  ;(window as any).__isFormDirty = false
+                  window.location.href = "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              >
+                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+              </button>
               <button
                 type="button"
                 onClick={handleReapply}
@@ -859,7 +861,145 @@ export default function AICSServiceWizard({
                   {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
                 </span>
               </button>
-            )}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (status === "approved" || status === "completed") {
+      return (
+        <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 ring-8 ring-emerald-50/50">
+              <Check className="h-7 w-7" strokeWidth={3} />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">
+              {language === "en"
+                ? "Application Approved!"
+                : language === "bis"
+                ? "Na-aprobahan ang Aplikasyon!"
+                : "Na-approve ang Application!"}
+            </h2>
+            <p className="text-xs text-gray-600 max-w-sm">
+              {language === "en"
+                ? `Your application for ${serviceTitle} has been officially approved by the Quezon City Social Services Development Department.`
+                : language === "bis"
+                ? `Ang imong aplikasyon para sa ${serviceTitle} opisyal nga na-aprobahan sa Quezon City Social Services Development Department.`
+                : `Ang inyong aplikasyon para sa ${serviceTitle} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.`}
+            </p>
+            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                <span className="text-gray-500">Reference Number</span>
+                <span className="font-mono font-bold text-blue-700 text-sm">{referenceNo || blockedApp?.reference_no || blockedApp?.qc_id}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Service</span>
+                <span className="font-semibold text-gray-900">{serviceTitle}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Applicant Name</span>
+                <span className="font-semibold text-gray-900">{applicantFullName}</span>
+              </div>
+            </div>
+
+            <div className="w-full flex flex-col gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(`aics_reapplying_${serviceType}`)
+                    localStorage.removeItem("aics_reapplying")
+                  } catch {}
+                  ;(window as any).__isFormDirty = false
+                  window.location.href = "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              >
+                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+              </button>
+              <button
+                type="button"
+                onClick={handleReapply}
+                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    // Default: Pending Review / Under Review
+    return (
+      <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
+        <div className="bg-white border border-border rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
+          <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-50/60 shadow-xs">
+            <Clock className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+              <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending Review
+            </span>
+            <h2 className="text-2xl font-bold text-foreground">
+              Application Under Review
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Your application for {serviceTitle} has been submitted and is currently being evaluated by a Social Worker.
+            </p>
+          </div>
+
+          {/* Reference Card */}
+          <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
+            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
+              <span className="font-semibold text-muted-foreground">{t("appRefNoLabel")}</span>
+              <span className="font-mono font-bold text-blue-700 text-sm">{referenceNo || blockedApp?.reference_no || blockedApp?.qc_id}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-foreground">
+              <span className="text-muted-foreground">{t("serviceLabel")}</span>
+              <span className="font-semibold text-foreground">{serviceTitle}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-foreground">
+              <span className="text-muted-foreground">{t("applicantLabel")}</span>
+              <span className="font-semibold text-foreground">{applicantFullName}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
+              <span className="text-muted-foreground">{t("dateLabel")}</span>
+              <span className="text-foreground">
+                {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-foreground pt-0.5">
+              <span className="text-muted-foreground">Status</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                Pending Review
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
+            <Info className="w-4 h-4 text-amber-600 shrink-0" />
+            <p>
+              Please wait for the social worker's evaluation. You will receive updates in your Application History and Notifications.
+            </p>
+          </div>
+
+          <div className="w-full max-w-md mx-auto flex flex-col gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                ;(window as any).__isFormDirty = false
+                window.location.href = "/portal/my-applications"
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+            </button>
           </div>
         </div>
       </div>
