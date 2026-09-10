@@ -166,7 +166,7 @@ function BeneficiaryCard({ b, onOpen }: { b: Beneficiary; onOpen: (id: string) =
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <p className="text-sm font-semibold text-foreground">{b.fullName}</p>
+            <p className="text-sm font-semibold text-foreground uppercase">{b.fullName}</p>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${vt?.chip || 'bg-slate-100 text-slate-700'}`}>
               {vt?.icon}
               {vt?.label}
@@ -252,7 +252,7 @@ function BeneficiaryProfileModal({
                 {initials(b.fullName)}
               </div>
               <div className="min-w-0">
-                <h2 className="text-lg font-bold text-foreground truncate">{b.fullName}</h2>
+                <h2 className="text-lg font-bold text-foreground truncate uppercase">{b.fullName}</h2>
                 <p className="text-sm text-muted-foreground mt-0.5 font-mono">{b.beneficiaryNo}</p>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${vt?.chip || 'bg-slate-100 text-slate-700'}`}>
@@ -937,7 +937,7 @@ export default function BeneficiaryManagement() {
                   </div>
                   <div className="flex-1 min-w-0 pb-1">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-sm font-bold text-foreground">{ev.fullName}</span>
+                      <span className="text-sm font-bold text-foreground uppercase">{ev.fullName}</span>
                       <span className="text-[11px] text-muted-foreground font-mono font-medium">{ev.beneficiaryNo}</span>
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${getProgramColor(ev.program)}`}>
                         {ev.program}

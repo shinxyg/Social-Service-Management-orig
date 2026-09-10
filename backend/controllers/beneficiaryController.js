@@ -11,19 +11,21 @@ let memoryHistory = [];
  */
 async function syncRealUsersAndApplicantsToBeneficiaries() {
   try {
-    // 1. Purge known dummy records if they exist in DB
+    // 1. Purge known dummy records if they exist in DB and uppercase existing names
     await db.query(`
       DELETE FROM beneficiaries 
       WHERE full_name IN ('Clarisa Mae Dimal', 'Rosalinda Torres', 'Julius Cabrera', 'Emilyn Salazar', 'Ferdinand Villanueva', 'Bryan Aguilar')
          OR beneficiary_number IN ('BNF-2026-0001', 'BNF-2026-0002', 'BNF-2026-0003', 'BNF-2026-0004')
     `).catch(() => {});
 
+    await db.query(`UPDATE beneficiaries SET full_name = UPPER(full_name)`).catch(() => {});
+
     // 2. Fetch all real users from users table
     const usersRes = await db.query(`SELECT * FROM users ORDER BY id ASC`).catch(() => ({ rows: [] }));
     const users = usersRes.rows || [];
 
     for (const u of users) {
-      const resolvedName = [u.first_name, u.middle_name, u.last_name, u.suffix].filter(Boolean).join(' ').trim() || u.email || 'Citizen User';
+      const resolvedName = ([u.first_name, u.middle_name, u.last_name, u.suffix].filter(Boolean).join(' ').trim() || u.email || 'Citizen User').toUpperCase();
       const cleanEmail = (u.email || '').trim().toLowerCase();
       const cleanQcid = (u.qcid_number || '').trim();
       const userId = u.id;
@@ -142,7 +144,7 @@ async function ensureBeneficiaryForUser(data) {
     fullName ||
     [firstName, middleName, lastName, suffix].filter(Boolean).join(' ') ||
     'Citizen Beneficiary'
-  ).trim();
+  ).trim().toUpperCase();
 
   const cleanEmail = (email || '').trim().toLowerCase();
   const cleanQcid = (qcid || '').trim();
@@ -524,7 +526,7 @@ async function getAllBeneficiaries(req, res) {
       return {
         id: String(b.id),
         beneficiaryNo: bNum,
-        fullName: b.full_name,
+        fullName: (b.full_name || '').toUpperCase(),
         firstName: b.first_name,
         lastName: b.last_name,
         age: String(b.age || "—"),
