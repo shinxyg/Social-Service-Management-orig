@@ -1050,18 +1050,6 @@ export default function MyApplications() {
                 <span className="text-xl sm:text-2xl font-mono font-black text-blue-700">
                   {selectedApp.applicationNo}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handleCopyNo(selectedApp.applicationNo)}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
-                  title="Copy Reference Number"
-                >
-                  {copied ? (
-                    <Check className="w-4 h-4 text-emerald-600" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </button>
               </div>
             </div>
 

@@ -202,16 +202,8 @@ export default function LivelihoodAssistanceView({
 
           <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-xl p-3 sm:text-right shrink-0">
             <span className="text-[10px] text-white/70 uppercase font-semibold block">Application Reference</span>
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="mt-0.5">
               <span className="font-mono text-base font-bold text-white">{application.reference_number}</span>
-              <button
-                type="button"
-                onClick={handleCopyRef}
-                className="p-1 rounded bg-white/10 hover:bg-white/20 text-white/90 transition-colors cursor-pointer"
-                title="Copy reference number"
-              >
-                {copiedRef ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
-              </button>
             </div>
           </div>
         </div>

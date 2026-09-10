@@ -473,18 +473,6 @@ export default function ApplyFinancialAid() {
                       <span className="font-mono text-sm font-bold text-blue-700">
                         {d.disbursementId}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(d.disbursementId)}
-                        title="Kopyahin ang Disbursement ID"
-                        className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors cursor-pointer"
-                      >
-                        {copiedVoucher === d.disbursementId ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
                       <span className="text-[11px] font-medium text-gray-400">
                         • Application Ref: <strong>{d.applicationRef}</strong>
                       </span>
