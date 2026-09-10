@@ -800,7 +800,7 @@ function OfficialIdCardModal({
                       Republic of the Philippines
                     </p>
                     <p className={`text-xs font-black tracking-wide leading-tight uppercase ${isPwdApp ? "text-slate-950" : "text-white"}`}>
-                      Quezon City Government
+                      GOV SERVICES
                     </p>
                   </div>
                 </div>

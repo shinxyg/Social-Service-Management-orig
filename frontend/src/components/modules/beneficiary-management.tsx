@@ -399,7 +399,7 @@ function BeneficiaryProfileModal({
                         <img src="/gov-serves-seal.png" alt="QC Seal" className="w-7 h-7 object-contain drop-shadow-xs rounded-full bg-white/20 p-0.5" />
                         <div>
                           <p className="text-[7.5px] font-bold tracking-widest uppercase opacity-90 leading-tight">Republic of the Philippines</p>
-                          <p className="text-xs font-black tracking-wide leading-tight uppercase">Quezon City Government</p>
+                          <p className="text-xs font-black tracking-wide leading-tight uppercase">GOV SERVICES</p>
                         </div>
                       </div>
                       <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
