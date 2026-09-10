@@ -133,7 +133,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [type] = useState(initialType || assistanceTypes[0])
   const [reference, setReference] = useState("")
   const [appStatus, setAppStatus] = useState<"pending" | "approved" | "rejected" | "completed">("pending")
-  const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
 
   const isFuneralAssistance =
     initialTypeKey === "aicsFuneral" ||

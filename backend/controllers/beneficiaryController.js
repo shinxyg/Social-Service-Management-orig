@@ -20,6 +20,16 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
 
     await db.query(`UPDATE beneficiaries SET full_name = UPPER(full_name)`).catch(() => {});
     await db.query(`UPDATE beneficiaries SET civil_status = 'Single' WHERE civil_status IS NULL OR civil_status = '' OR civil_status = '—'`).catch(() => {});
+    
+    // Ensure all registered accounts require social worker verification (not auto-verified)
+    await db.query(`
+      UPDATE beneficiaries 
+      SET verification_status = 'pending', verified_by = NULL, verification_date = NULL, verification_remarks = 'Pending identity verification by Social Worker.'
+      WHERE verified_by = 'System Auto-Verification' OR verified_by IS NULL OR verification_status IS NULL
+    `).catch(() => {});
+
+    // Remove synthetic auto-verification history events
+    await db.query(`DELETE FROM beneficiary_history WHERE performed_by = 'System Auto-Verification'`).catch(() => {});
 
     // 2. Fetch all real users from users table
     const usersRes = await db.query(`SELECT * FROM users ORDER BY id ASC`).catch(() => ({ rows: [] }));
@@ -53,7 +63,7 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
 
       // Check if beneficiary already exists for this user
       const existing = await db.query(
-        `SELECT id, civil_status FROM beneficiaries WHERE user_id = $1 OR (email IS NOT NULL AND LOWER(email) = $2) OR (qcid_number IS NOT NULL AND qcid_number = $3) LIMIT 1`,
+        `SELECT id, civil_status, verification_status FROM beneficiaries WHERE user_id = $1 OR (email IS NOT NULL AND LOWER(email) = $2) OR (qcid_number IS NOT NULL AND qcid_number = $3) LIMIT 1`,
         [userId, cleanEmail, cleanQcid || '___NONE___']
       ).catch(() => ({ rows: [] }));
 
@@ -84,10 +94,10 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
             u.mobile_number || '—',
             u.email || null,
             u.qcid_number || null,
-            cleanQcid ? 'verified' : 'pending',
-            cleanQcid ? 'System Auto-Verification' : null,
-            cleanQcid ? new Date() : null,
-            cleanQcid ? 'Verified via registered QCitizen account credentials' : null,
+            'pending',
+            null,
+            null,
+            'Pending identity verification by Social Worker.',
             cleanQcid ? 'QCitizen ID' : 'Government ID',
             cleanQcid || null,
             u.created_at || new Date(),

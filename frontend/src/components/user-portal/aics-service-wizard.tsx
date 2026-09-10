@@ -822,6 +822,21 @@ export default function AICSServiceWizard({
               : `Mayroon ka nang aplikasyon para sa ${serviceTitle}. Mangyaring maghintay muna sa pagsusuri o tingnan ang mga update sa Application History.`}
           </p>
 
+          <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+              <span className="text-gray-500">Reference Number</span>
+              <span className="font-mono font-bold text-blue-700 text-sm">{referenceNo || blockedApp?.reference_no || blockedApp?.qc_id}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Service</span>
+              <span className="font-semibold text-gray-900">{serviceTitle}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Status</span>
+              <span className="font-semibold text-amber-600 uppercase">{blockedApp?.status || "Pending Review"}</span>
+            </div>
+          </div>
+
           <div className="w-full flex flex-col gap-2 mt-2">
             <button
               type="button"
@@ -836,6 +851,16 @@ export default function AICSServiceWizard({
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
               {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+            </button>
+            <button
+              type="button"
+              onClick={handleReapply}
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+              <span>
+                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+              </span>
             </button>
           </div>
         </div>
