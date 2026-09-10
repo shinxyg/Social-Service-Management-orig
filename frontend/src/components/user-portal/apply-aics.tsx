@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles, AlertCircle, RotateCcw } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
@@ -174,6 +174,10 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
       return false
     }
   })
+  const isReapplyingRef = useRef(isReapplying)
+  useEffect(() => {
+    isReapplyingRef.current = isReapplying
+  }, [isReapplying])
 
   const [step, setStep] = useState<Step>(
     hasRequirements ? "checklist" : "form"
@@ -555,52 +559,138 @@ const canProceedPersonal = Boolean(
     (doc) => (uploadedDocs[doc]?.length ?? 0) > 0
   )
 
+  // Check for existing active/pending applications for the current user & service
   useEffect(() => {
-  if (step !== "pending" || !reference) return
-  if (appStatus !== "pending") return
+    let isMounted = true
 
-  const checkStatus = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/aics/applications/${reference}`)
-      if (!res.ok) return
-      const data = await res.json()
-      const status = data.application?.status
-      if (status && status !== "pending") {
-        setAppStatus(status)
-      }
-    } catch (err) {
-      console.warn("Status check skipped/offline:", err)
-    }
-  }
+    const checkActiveAicsApplication = async () => {
+      if (isReapplyingRef.current) return
+      try {
+        const userProfile = getCurrentUserProfile()
+        const userQcid = (getLoggedInUserQcid() || userProfile.qcidNo || "").trim().toLowerCase()
+        const userEmail = (userProfile.email || "").trim().toLowerCase()
+        const userFirst = (userProfile.firstName || "").trim().toLowerCase()
+        const userLast = (userProfile.lastName || "").trim().toLowerCase()
 
-  checkStatus()
-  const interval = setInterval(checkStatus, 5000)
-  return () => clearInterval(interval)
-}, [step, reference, appStatus])
-
-  // Auto-redirect to pending status screen after 3 seconds on pending
-  useEffect(() => {
-    if (step !== "pending") return
-
-    setRedirectCountdown(3)
-    const interval = setInterval(() => {
-      setRedirectCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          try {
-            localStorage.setItem("aics_application_submitted", String(Date.now()))
-          } catch {}
-          window.dispatchEvent(new CustomEvent("aics_applications_updated"))
-          window.dispatchEvent(new CustomEvent("aics_application_submitted"))
-          window.location.reload()
-          return 0
+        let remoteApps: any[] = []
+        try {
+          const res = await fetch(`${API_BASE}/api/aics/applications${userQcid ? `?qcId=${encodeURIComponent(userQcid)}` : ""}`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data && Array.isArray(data.applications)) {
+              remoteApps = data.applications
+            } else if (Array.isArray(data)) {
+              remoteApps = data
+            }
+          }
+        } catch (err) {
+          console.warn("Could not fetch remote AICS applications:", err)
         }
-        return prev - 1
-      })
-    }, 1000)
 
+        let localApps: any[] = []
+        try {
+          const raw = localStorage.getItem("aics_applications")
+          if (raw) localApps = JSON.parse(raw)
+          if (!Array.isArray(localApps)) localApps = []
+        } catch {}
+
+        const allApps: any[] = [...remoteApps]
+        for (const la of localApps) {
+          const exists = allApps.some((a) => {
+            if (a.id && la.id && a.id === la.id) return true
+            const aRef = String(a.reference_no || a.reference_number || a.qc_id || "").trim()
+            const laRef = String(la.reference_no || la.reference_number || la.qc_id || "").trim()
+            return aRef && laRef && aRef === laRef
+          })
+          if (!exists) allApps.push(la)
+        }
+
+        const matchService = (a: any) => {
+          if (!a) return false
+          if (a.is_archived === true) return false
+          const aType = String(a.assistance_type || a.service || a.type || "").toLowerCase()
+
+          if (resolvedTypeKey === "aicsMedical" || type.toLowerCase().includes("med")) {
+            return aType.includes("med") || aType.includes("gamot") || aType.includes("hospital")
+          }
+          if (resolvedTypeKey === "aicsFuneral" || type.toLowerCase().includes("funeral") || type.toLowerCase().includes("libing") || type.toLowerCase().includes("burial")) {
+            return aType.includes("funeral") || aType.includes("burial") || aType.includes("libing")
+          }
+          if (resolvedTypeKey === "aicsEducational" || type.toLowerCase().includes("educ") || type.toLowerCase().includes("aral")) {
+            return aType.includes("educ") || aType.includes("school") || aType.includes("tuition") || aType.includes("aral")
+          }
+          return aType.includes(resolvedTypeKey.replace("aics", "").toLowerCase()) || aType.includes(type.toLowerCase())
+        }
+
+        const isUserMatch = (a: any) => {
+          if (!a) return false
+          const appQc = String(a.qc_id || a.reference_no || a.reference_number || "").trim().toLowerCase()
+          const appEmail = String(a.email || "").trim().toLowerCase()
+          const appName = String(a.full_name || `${a.first_name || ""} ${a.last_name || ""}`).trim().toLowerCase()
+
+          if (userQcid && (appQc === userQcid || appQc.includes(userQcid) || userQcid.includes(appQc))) return true
+          if (userEmail && appEmail && appEmail === userEmail) return true
+          if (userFirst && userLast && appName.includes(userFirst) && appName.includes(userLast)) return true
+          return false
+        }
+
+        const matchingApps = allApps.filter((a) => matchService(a) && isUserMatch(a))
+        const activeApp = matchingApps.find((a) => {
+          const s = String(a.status || "pending").toLowerCase()
+          return s === "pending" || s === "under_review" || s === "for_assessment" || s === "assessment" || s === "approved" || s === "completed" || s === "for_release"
+        })
+
+        if (isMounted && activeApp && !isReapplyingRef.current) {
+          const ref = activeApp.reference_no || activeApp.reference_number || activeApp.qc_id || (activeApp.id ? `AICS-2026-${String(activeApp.id).padStart(4, "0")}` : "")
+          setReference(ref)
+          setAppStatus((activeApp.status?.toLowerCase() as any) || "pending")
+          setStep("pending")
+          if (activeApp.first_name) setPFirstName(activeApp.first_name)
+          if (activeApp.last_name) setPLastName(activeApp.last_name)
+          if (activeApp.email) setPEmail(activeApp.email)
+        }
+      } catch (err) {
+        console.warn("[ApplyAICS] Error checking active application:", err)
+      }
+    }
+
+    checkActiveAicsApplication()
+    const interval = setInterval(checkActiveAicsApplication, 3000)
+
+    const handleUpdate = () => checkActiveAicsApplication()
+    window.addEventListener("aics_applications_updated", handleUpdate)
+    window.addEventListener("govserve_realtime_event", handleUpdate)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      window.removeEventListener("aics_applications_updated", handleUpdate)
+      window.removeEventListener("govserve_realtime_event", handleUpdate)
+    }
+  }, [type, resolvedTypeKey])
+
+  // Live status poller when viewing pending status screen
+  useEffect(() => {
+    if (step !== "pending" || !reference) return
+
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(reference)}`)
+        if (!res.ok) return
+        const data = await res.json()
+        const status = data.application?.status
+        if (status && status.toLowerCase() !== appStatus) {
+          setAppStatus(status.toLowerCase() as any)
+        }
+      } catch (err) {
+        console.warn("Status check skipped/offline:", err)
+      }
+    }
+
+    checkStatus()
+    const interval = setInterval(checkStatus, 4000)
     return () => clearInterval(interval)
-  }, [step])
+  }, [step, reference, appStatus])
 
 
 const checkDuplicateBeneficiary = async () => {

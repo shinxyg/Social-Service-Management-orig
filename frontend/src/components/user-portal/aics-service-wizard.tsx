@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   Check,
   Upload,
@@ -210,6 +210,10 @@ export default function AICSServiceWizard({
       return false
     }
   })
+  const isReapplyingRef = useRef(isReapplying)
+  useEffect(() => {
+    isReapplyingRef.current = isReapplying
+  }, [isReapplying])
 
   // Current Step: 1 = checklist, 2 = personal, 3 = documents, 4 = review, 5 = submitted, 6 = pending review
   const [currentStep, setCurrentStep] = useState<number>(1)
@@ -218,7 +222,7 @@ export default function AICSServiceWizard({
 
   // Eligibility check state
   const [isBlocked, setIsBlocked] = useState(false)
-  const [_blockedApp, setBlockedApp] = useState<any>(null)
+  const [blockedApp, setBlockedApp] = useState<any>(null)
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -310,6 +314,102 @@ export default function AICSServiceWizard({
       }
     } catch {}
   }, [])
+
+  // Check for existing active/pending applications for this AICS service
+  useEffect(() => {
+    let isMounted = true
+
+    const checkActiveApp = async () => {
+      if (isReapplyingRef.current) return
+      try {
+        const u = getCurrentUserProfile()
+        const userQcid = (getLoggedInUserQcid() || u.qcidNo || "").trim().toLowerCase()
+        const userEmail = (u.email || "").trim().toLowerCase()
+        const userFirst = (u.firstName || "").trim().toLowerCase()
+        const userLast = (u.lastName || "").trim().toLowerCase()
+
+        let remoteApps: any[] = []
+        try {
+          const res = await fetch(`${API_BASE}/api/aics/applications${userQcid ? `?qcId=${encodeURIComponent(userQcid)}` : ""}`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data && Array.isArray(data.applications)) {
+              remoteApps = data.applications
+            } else if (Array.isArray(data)) {
+              remoteApps = data
+            }
+          }
+        } catch {}
+
+        let localApps: any[] = []
+        try {
+          const raw = localStorage.getItem("aics_applications")
+          if (raw) localApps = JSON.parse(raw)
+          if (!Array.isArray(localApps)) localApps = []
+        } catch {}
+
+        const allApps: any[] = [...remoteApps]
+        for (const la of localApps) {
+          const exists = allApps.some((a) => {
+            if (a.id && la.id && a.id === la.id) return true
+            const aRef = String(a.reference_no || a.reference_number || a.qc_id || "").trim()
+            const laRef = String(la.reference_no || la.reference_number || la.qc_id || "").trim()
+            return aRef && laRef && aRef === laRef
+          })
+          if (!exists) allApps.push(la)
+        }
+
+        const matchService = (a: any) => {
+          if (!a || a.is_archived === true) return false
+          const aType = String(a.assistance_type || a.service || a.type || "").toLowerCase()
+          return aType.includes(serviceType.toLowerCase())
+        }
+
+        const isUserMatch = (a: any) => {
+          if (!a) return false
+          const appQc = String(a.qc_id || a.reference_no || a.reference_number || "").trim().toLowerCase()
+          const appEmail = String(a.email || "").trim().toLowerCase()
+          const appName = String(a.full_name || `${a.first_name || ""} ${a.last_name || ""}`).trim().toLowerCase()
+
+          if (userQcid && (appQc === userQcid || appQc.includes(userQcid) || userQcid.includes(appQc))) return true
+          if (userEmail && appEmail && appEmail === userEmail) return true
+          if (userFirst && userLast && appName.includes(userFirst) && appName.includes(userLast)) return true
+          return false
+        }
+
+        const matchingApps = allApps.filter((a) => matchService(a) && isUserMatch(a))
+        const activeApp = matchingApps.find((a) => {
+          const s = String(a.status || "pending").toLowerCase()
+          return s === "pending" || s === "under_review" || s === "for_assessment" || s === "assessment" || s === "approved" || s === "completed" || s === "for_release"
+        })
+
+        if (isMounted && activeApp && !isReapplyingRef.current) {
+          setIsBlocked(true)
+          setBlockedApp(activeApp)
+          setReferenceNo(activeApp.reference_no || activeApp.reference_number || activeApp.qc_id || (activeApp.id ? `AICS-2026-${String(activeApp.id).padStart(4, "0")}` : ""))
+        } else if (isMounted && !activeApp) {
+          setIsBlocked(false)
+          setBlockedApp(null)
+        }
+      } catch (err) {
+        console.warn("[AICSServiceWizard] Error checking active application:", err)
+      }
+    }
+
+    checkActiveApp()
+    const interval = setInterval(checkActiveApp, 3000)
+
+    const handleUpdate = () => checkActiveApp()
+    window.addEventListener("aics_applications_updated", handleUpdate)
+    window.addEventListener("govserve_realtime_event", handleUpdate)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      window.removeEventListener("aics_applications_updated", handleUpdate)
+      window.removeEventListener("govserve_realtime_event", handleUpdate)
+    }
+  }, [serviceType])
 
   // Material Step 2 details
   const [materialReason, setMaterialReason] = useState("")
