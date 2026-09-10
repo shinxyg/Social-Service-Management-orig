@@ -516,18 +516,82 @@ async function getAllBeneficiaries(req, res) {
         }
       });
 
-      // Beneficiary timeline history
-      const history = allHistory
+      // Beneficiary timeline history: combine explicit DB history + automatic application submissions + verification events + profile registration
+      const historyList = [];
+
+      // 1. Explicit DB history
+      allHistory
         .filter((h) => String(h.beneficiary_id) === String(bId))
-        .map((h) => ({
-          id: `H-${h.id}`,
-          date: new Date(h.created_at || Date.now()).toISOString().split('T')[0],
-          program: h.program || "General",
-          action: h.action,
-          detail: h.detail || h.remarks || `${h.action} recorded.`,
-          performedBy: h.performed_by,
-          status: h.status,
-        }));
+        .forEach((h) => {
+          historyList.push({
+            id: `H-DB-${h.id}`,
+            date: new Date(h.created_at || Date.now()).toISOString().split('T')[0],
+            rawTimestamp: new Date(h.created_at || Date.now()).getTime(),
+            program: h.program || "General",
+            action: h.action,
+            detail: h.detail || h.remarks || `${h.action} recorded.`,
+            performedBy: h.performed_by || "Social Worker",
+            status: h.status || "Active",
+          });
+        });
+
+      // 2. Automatic history from all enrolled programs
+      enrolledPrograms.forEach((p, idx) => {
+        const actionLabel = String(p.status).toLowerCase().includes('approv') || String(p.status).toLowerCase().includes('release')
+          ? `${p.program} Application Approved`
+          : String(p.status).toLowerCase().includes('reject')
+          ? `${p.program} Application Rejected`
+          : `${p.program} Application Submitted`;
+
+        historyList.push({
+          id: `H-APP-${bId}-${p.program}-${p.referenceNo || idx}`,
+          date: p.dateEnrolled || new Date(b.created_at || Date.now()).toISOString().split('T')[0],
+          rawTimestamp: new Date(p.dateEnrolled || b.created_at || Date.now()).getTime() + idx * 1000,
+          program: p.program,
+          action: actionLabel,
+          detail: `${p.program} assistance application (Ref: ${p.referenceNo || 'N/A'}) status: ${p.status}.`,
+          performedBy: b.full_name || "Applicant",
+          status: p.status,
+        });
+      });
+
+      // 3. Verification Event
+      if (b.verification_status === 'verified' || b.verified_by) {
+        historyList.push({
+          id: `H-VERIF-${bId}`,
+          date: b.verification_date ? new Date(b.verification_date).toISOString().split('T')[0] : new Date(b.created_at || Date.now()).toISOString().split('T')[0],
+          rawTimestamp: new Date(b.verification_date || b.created_at || Date.now()).getTime() + 500,
+          program: "General",
+          action: "Identity Verified",
+          detail: b.verification_remarks || `Beneficiary identity authenticated and verified by ${b.verified_by || 'Social Worker'}.`,
+          performedBy: b.verified_by || "Social Worker",
+          status: "Verified",
+        });
+      }
+
+      // 4. Registration Event
+      historyList.push({
+        id: `H-REG-${bId}`,
+        date: new Date(b.created_at || Date.now()).toISOString().split('T')[0],
+        rawTimestamp: new Date(b.created_at || Date.now()).getTime(),
+        program: "System",
+        action: "Beneficiary Profile Registered",
+        detail: `Citizen profile officially registered in Quezon City Social Services database with QCID: ${b.qcid_number || 'N/A'}.`,
+        performedBy: "System Registration",
+        status: "Registered",
+      });
+
+      // Sort history chronologically descending and remove duplicate event keys
+      const historySeen = new Set();
+      const history = historyList
+        .sort((a, b) => b.rawTimestamp - a.rawTimestamp)
+        .filter((item) => {
+          const key = `${item.program}_${item.action}_${item.detail}`;
+          if (historySeen.has(key)) return false;
+          historySeen.add(key);
+          return true;
+        })
+        .map(({ rawTimestamp, ...item }) => item);
 
       // Resolve Civil Status from beneficiary record or linked application forms
       let resolvedCivilStatus = (b.civil_status && b.civil_status !== '—' && b.civil_status.trim() !== '') ? b.civil_status : null;
