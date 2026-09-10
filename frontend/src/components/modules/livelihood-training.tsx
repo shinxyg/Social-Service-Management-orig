@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Check,
   X,
@@ -1282,20 +1283,19 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
       : [{ equipment: "Operational Kit / Tools", quantity: "1 unit", description: "Applicant requested equipment" }]
 
   const fullName = [app.firstName, app.middleName, app.lastName].filter(Boolean).join(" ")
+  const navigate = useNavigate()
 
-  const handleApproveAndProceed = async (targetStatus: "FOR RELEASE" | "RELEASED") => {
-    const isReleased = targetStatus === "RELEASED"
+  const handleConfirmAndProceed = async () => {
     const updatedAssist: CapitalMaterialsAssistance = {
       ...initialAssist,
-      assistance_status: targetStatus,
-      release_status: isReleased ? "RELEASED" : "NOT RELEASED",
+      assistance_status: "FOR RELEASE",
+      release_status: "NOT RELEASED",
       approved_financial_amount: rawInitialAmt,
       approved_materials: materials,
       approved_equipment: equipment,
       release_location: initialAssist.release_location || "Quezon City Hall - SSDD Livelihood Center",
       instructions: initialAssist.instructions || "Please bring a valid ID and your Livelihood Application Reference Number.",
       released_by: "SSDD Admin Evaluator",
-      released_at: isReleased ? initialAssist.released_at || new Date().toISOString() : undefined,
       updated_at: new Date().toISOString(),
     }
 
@@ -1304,7 +1304,10 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
       if (onSaveAssistance) {
         await onSaveAssistance(app.id, updatedAssist)
       }
+      window.dispatchEvent(new Event("appointments_updated"))
+      window.dispatchEvent(new Event("applications_updated"))
       onClose()
+      navigate("/appointments")
     } catch (err) {
       console.error("Error updating assistance:", err)
     } finally {
@@ -1480,7 +1483,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
                 </h4>
               </div>
               <p className="text-xs text-foreground leading-relaxed">
-                Kapag na-click ang <strong>&quot;Approve &amp; Set for Release&quot;</strong>, matatapos ang Capital allocation stage at awtomatikong papasok ang aplikasyon sa <strong>Appointments</strong> module upang itakda ang petsa, oras, at venue ng release/payout.
+                Kapag na-click ang <strong>&quot;Confirm &amp; Proceed to Appointments&quot;</strong>, matatapos ang Capital allocation stage at awtomatikong dadalhin ka sa <strong>Appointments</strong> module upang itakda ang petsa, oras, at venue ng release/payout.
               </p>
             </div>
           </div>
@@ -1497,26 +1500,14 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
           </button>
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-            {currentStatus !== "RELEASED" && (
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => handleApproveAndProceed("FOR RELEASE")}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-50"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                <span>{saving ? "Saving..." : "Approve & Set for Release (Proceed to Appointments)"}</span>
-              </button>
-            )}
-
             <button
               type="button"
               disabled={saving}
-              onClick={() => handleApproveAndProceed("RELEASED")}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-50"
+              onClick={handleConfirmAndProceed}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <Check className="h-4 w-4" />
-              <span>{saving ? "Saving..." : "Confirm & Mark as Released"}</span>
+              <CheckCircle2 className="h-4 w-4" />
+              <span>{saving ? "Saving & Redirecting..." : "Confirm & Proceed to Appointments"}</span>
             </button>
           </div>
         </div>
