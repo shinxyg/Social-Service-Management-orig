@@ -644,26 +644,12 @@ function ResidentHeader({
           }
         } catch (_) {}
 
-        // 2. Secondary fallback: Also check local storage cached items if any
+        // Purge legacy dirty computer notifications cache if present
         try {
-          const rawUserNotifs = localStorage.getItem("all_user_notifications")
-          if (rawUserNotifs) {
-            const parsedUserNotifs = JSON.parse(rawUserNotifs)
-            if (Array.isArray(parsedUserNotifs)) {
-              parsedUserNotifs.forEach((un: any) => {
-                if (!dismissedIds.includes(un.id) && !items.some((it) => it.id === un.id)) {
-                  items.push({
-                    id: un.id,
-                    title: un.title,
-                    desc: un.desc,
-                    time: un.time || new Date().toLocaleString("en-US"),
-                    unread: !readIds.includes(un.id),
-                  })
-                }
-              })
-            }
+          if (localStorage.getItem("all_user_notifications")) {
+            localStorage.removeItem("all_user_notifications")
           }
-        } catch {}
+        } catch (_) {}
 
         // Deduplicate and sort
         const uniqueMap = new Map<string, AicsNotification>()

@@ -315,8 +315,19 @@ export function pushUserNotification(notif: {
       assistanceType: notif.assistanceType,
       amount: notif.amount,
     }
-    const updated = [newNotif, ...existing]
-    localStorage.setItem("all_user_notifications", JSON.stringify(updated))
+    try {
+      fetch(`${API_BASE}/api/notifications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: notif.applicationRef || null,
+          title: notif.title,
+          description: notif.desc,
+          applicationRef: notif.applicationRef || null,
+        }),
+      }).catch(() => {})
+    } catch (_) {}
+
     window.dispatchEvent(new Event("user_notifications_updated"))
     window.dispatchEvent(new Event("storage"))
   } catch (e) {
