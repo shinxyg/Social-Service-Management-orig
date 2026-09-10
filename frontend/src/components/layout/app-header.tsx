@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useLocation } from "react-router-dom"
-import { Bell, User, Settings, Sun, Moon, LogOut } from "lucide-react"
+import { User, Settings, Sun, Moon, LogOut } from "lucide-react"
 import { moduleRoutes } from "./routes"
 import { Tooltip } from "../ui/tooltip"
 import { SettingsModal } from "../ui/settings-modal"
@@ -18,12 +18,10 @@ export function AppHeader({
   const location = useLocation()
   const current = moduleRoutes.find((r) => r.path === location.pathname)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [notifOpen, setNotifOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [now, setNow] = useState(new Date())
   const menuRef = useRef<HTMLDivElement>(null)
-  const notifRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -31,39 +29,10 @@ export function AppHeader({
     window.location.href = '/login';
   };
 
-  const mockNotifications = [
-    {
-      id: 1,
-      title: t("notifAicsTitle"),
-      desc: t("notifAicsDesc"),
-      time: t("notifTime5min"),
-      unread: true,
-    },
-    {
-      id: 2,
-      title: t("notifPwdTitle"),
-      desc: t("notifPwdDesc"),
-      time: t("notifTime1hour"),
-      unread: true,
-    },
-    {
-      id: 3,
-      title: t("notifFinancialTitle"),
-      desc: t("notifFinancialDesc"),
-      time: t("notifTimeYesterday"),
-      unread: false,
-    },
-  ]
-
-
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false)
-      }
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setNotifOpen(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -87,8 +56,6 @@ export function AppHeader({
     month: "short",
     day: "numeric",
   })
-
-  const unreadCount = mockNotifications.filter((n) => n.unread).length
 
   return (
     <>
@@ -115,61 +82,6 @@ export function AppHeader({
             {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
         </Tooltip>
-
-
-
-        {/* Notifications with dropdown */}
-        <div className="relative" ref={notifRef}>
-          <Tooltip label={t("notifications")}>
-            <button
-              aria-label="Notifications"
-              onClick={() => setNotifOpen((v) => !v)}
-              className="relative h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-destructive" />
-              )}
-            </button>
-          </Tooltip>
-
-          {notifOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-card border border-border rounded-xl shadow-medium z-50 overflow-hidden">
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <span className="text-sm font-semibold text-foreground">{t("notifications")}</span>
-                {unreadCount > 0 && (
-                  <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                    {unreadCount} {t("newLabel")}
-                  </span>
-                )}
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {mockNotifications.map((n) => (
-                  <button
-                    key={n.id}
-                    className="w-full text-left px-4 py-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors flex items-start gap-2.5"
-                  >
-                    <span
-                      className={`mt-1.5 h-1.5 w-1.5 rounded-full shrink-0 ${
-                        n.unread ? "bg-primary" : "bg-transparent"
-                      }`}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground">{n.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{n.desc}</p>
-                      <p className="text-[11px] text-muted-foreground mt-1">{n.time}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <div className="px-4 py-2.5 border-t border-border">
-                <button className="w-full text-center text-xs font-medium text-primary hover:underline">
-                  {t("viewAllNotifications")}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* User menu with dropdown (Log Out included) */}
         <div className="relative" ref={menuRef}>
