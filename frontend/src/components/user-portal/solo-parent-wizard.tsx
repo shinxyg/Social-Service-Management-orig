@@ -1634,7 +1634,7 @@ export default function SoloParentApplicationWizard({
       : true) &&
     (formData.emergencyFirstName || "").trim() !== "" &&
     (formData.emergencyLastName || "").trim() !== "" &&
-    (formData.emergencyContactNo || "").trim().length === 11 &&
+    (formData.emergencyContactNo || "").replace(/\D/g, "").length >= 10 &&
     (formData.emergencyRelationship || "").trim() !== "" &&
     (formData.emergencyAddress || "").trim() !== "" &&
     (formData.bloodType || "").trim() !== ""
@@ -2840,15 +2840,9 @@ export default function SoloParentApplicationWizard({
                         maxLength={50}
                         value={formData.emergencyFirstName}
                         onChange={(e) => updateField("emergencyFirstName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
-                        readOnly={idStatus !== "new" && !isEditingInfo}
-                        disabled={idStatus !== "new" && !isEditingInfo}
                         placeholder={t("firstNameLabel") || "First name"}
                         className={`w-full h-11 rounded-lg border px-3.5 text-sm transition-colors ${
-                          idStatus !== "new" && !isEditingInfo
-                            ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                            : isEditingInfo
-                            ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                            : attemptedNext && !(formData.emergencyFirstName || "").trim()
+                          attemptedNext && !(formData.emergencyFirstName || "").trim()
                             ? "border-red-400 focus:ring-red-300 bg-red-50"
                             : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                         }`}
@@ -2863,22 +2857,16 @@ export default function SoloParentApplicationWizard({
                         maxLength={50}
                         value={formData.emergencyLastName}
                         onChange={(e) => updateField("emergencyLastName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
-                        readOnly={idStatus !== "new" && !isEditingInfo}
-                        disabled={idStatus !== "new" && !isEditingInfo}
                         placeholder={t("lastNameLabel") || "Last name"}
                         className={`w-full h-11 rounded-lg border px-3.5 text-sm transition-colors ${
-                          idStatus !== "new" && !isEditingInfo
-                            ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                            : isEditingInfo
-                            ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                            : attemptedNext && !(formData.emergencyLastName || "").trim()
+                          attemptedNext && !(formData.emergencyLastName || "").trim()
                             ? "border-red-400 focus:ring-red-300 bg-red-50"
                             : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                         }`}
                       />
                     </div>
                     <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && (formData.emergencyContactNo || "").trim().length < 11 ? "text-red-600" : "text-gray-700"}`}>
+                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && (formData.emergencyContactNo || "").replace(/\D/g, "").length < 10 ? "text-red-600" : "text-gray-700"}`}>
                         {t("phoneNumberLabel") || "Phone number"} <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -2886,15 +2874,9 @@ export default function SoloParentApplicationWizard({
                         maxLength={11}
                         value={formData.emergencyContactNo}
                         onChange={(e) => updateField("emergencyContactNo", e.target.value.replace(/\D/g, ""))}
-                        readOnly={idStatus !== "new" && !isEditingInfo}
-                        disabled={idStatus !== "new" && !isEditingInfo}
                         placeholder="09XXXXXXXXX"
                         className={`w-full h-11 rounded-lg border px-3.5 text-sm font-mono transition-colors ${
-                          idStatus !== "new" && !isEditingInfo
-                            ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                            : isEditingInfo
-                            ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                            : attemptedNext && (formData.emergencyContactNo || "").trim().length < 11
+                          attemptedNext && (formData.emergencyContactNo || "").replace(/\D/g, "").length < 10
                             ? "border-red-400 focus:ring-red-300 bg-red-50"
                             : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                         }`}
@@ -2904,38 +2886,26 @@ export default function SoloParentApplicationWizard({
                       <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyRelationship || "").trim() ? "text-red-600" : "text-gray-700"}`}>
                         {t("pwdRelationshipLabel") || "Relationship"} <span className="text-red-500">*</span>
                       </label>
-                      {idStatus !== "new" && !isEditingInfo ? (
-                        <input
-                          type="text"
-                          value={formData.emergencyRelationship || "Immediate Family"}
-                          readOnly
-                          disabled
-                          className="w-full h-11 rounded-lg border border-gray-200 px-3.5 text-sm bg-gray-100 text-gray-800 cursor-not-allowed"
-                        />
-                      ) : (
-                        <select
-                          value={formData.emergencyRelationship}
-                          onChange={(e) => updateField("emergencyRelationship", e.target.value)}
-                          className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
-                            isEditingInfo
-                              ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                              : attemptedNext && !(formData.emergencyRelationship || "").trim()
-                              ? "border-red-400 focus:ring-red-300 bg-red-50"
-                              : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                          }`}
-                        >
-                          <option value="">{t("selectRelationshipOption") || "Select Relationship"}</option>
-                          <option value="Immediate Family">Immediate Family</option>
-                          <option value="Parent">Parent</option>
-                          <option value="Child">{t("relationChild") || "Child"}</option>
-                          <option value="Spouse">{t("relationSpouse") || "Spouse"}</option>
-                          <option value="Sibling">{t("relationSibling") || "Sibling"}</option>
-                          <option value="Relative">{t("relationRelative") || "Relative"}</option>
-                          <option value="Caregiver">{t("relationCaregiver") || "Caregiver / Guardian"}</option>
-                          <option value="Friend">{t("relationFriend") || "Friend / Neighbor"}</option>
-                          <option value="Others">{t("relationOthers") || "Others"}</option>
-                        </select>
-                      )}
+                      <select
+                        value={formData.emergencyRelationship}
+                        onChange={(e) => updateField("emergencyRelationship", e.target.value)}
+                        className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
+                          attemptedNext && !(formData.emergencyRelationship || "").trim()
+                            ? "border-red-400 focus:ring-red-300 bg-red-50"
+                            : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        }`}
+                      >
+                        <option value="">{t("selectRelationshipOption") || "Select Relationship"}</option>
+                        <option value="Immediate Family">Immediate Family</option>
+                        <option value="Parent">Parent</option>
+                        <option value="Child">{t("relationChild") || "Child"}</option>
+                        <option value="Spouse">{t("relationSpouse") || "Spouse"}</option>
+                        <option value="Sibling">{t("relationSibling") || "Sibling"}</option>
+                        <option value="Relative">{t("relationRelative") || "Relative"}</option>
+                        <option value="Caregiver">{t("relationCaregiver") || "Caregiver / Guardian"}</option>
+                        <option value="Friend">{t("relationFriend") || "Friend / Neighbor"}</option>
+                        <option value="Others">{t("relationOthers") || "Others"}</option>
+                      </select>
                     </div>
                   </div>
                   <div className="mt-3">
@@ -2944,17 +2914,11 @@ export default function SoloParentApplicationWizard({
                     </label>
                     <input
                       type="text"
-                      readOnly={idStatus !== "new" && !isEditingInfo}
-                      disabled={idStatus !== "new" && !isEditingInfo}
                       value={formData.emergencyAddress}
                       onChange={(e) => updateField("emergencyAddress", e.target.value)}
                       placeholder="Emergency Residential Address"
                       className={`w-full h-11 rounded-lg border px-3.5 text-sm transition-colors ${
-                        idStatus !== "new" && !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : isEditingInfo
-                          ? "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                          : attemptedNext && !(formData.emergencyAddress || "").trim()
+                        attemptedNext && !(formData.emergencyAddress || "").trim()
                           ? "border-red-400 focus:ring-red-300 bg-red-50"
                           : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                       }`}
