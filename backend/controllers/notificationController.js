@@ -459,29 +459,31 @@ exports.getNotifications = async (req, res) => {
       } catch (_) {}
     }
 
-    // Deduplicate by semantic key (reference_no + topic) and sort
+    // Deduplicate intelligently by canonical key (normalized title + reference_no or ID)
     const uniqueMap = new Map();
     items.forEach((item) => {
-      const cleanRef = String(item.reference_no || item.id || '').trim();
-      const topic = (item.title || '')
-        .toLowerCase()
-        .replace(/application:?/g, '')
-        .replace(/id:?/g, '')
-        .replace(/[^a-z0-9]/g, '')
-        .slice(0, 20);
+      const cleanRef = String(item.reference_no || '').trim().toUpperCase();
+      const cleanTitle = String(item.title || '').trim().toLowerCase();
+      const canonicalKey = cleanRef ? `${cleanTitle}::${cleanRef}` : item.id;
 
-      const dedupeKey = cleanRef ? `${cleanRef}__${topic}` : item.id;
-
-      if (!uniqueMap.has(dedupeKey)) {
-        uniqueMap.set(dedupeKey, item);
+      if (!uniqueMap.has(canonicalKey)) {
+        uniqueMap.set(canonicalKey, item);
       } else {
-        const existing = uniqueMap.get(dedupeKey);
-        const itemDescLen = (item.desc || '').length;
-        const existDescLen = (existing.desc || '').length;
-        if (item.unread && !existing.unread) {
-          uniqueMap.set(dedupeKey, item);
-        } else if (itemDescLen > existDescLen) {
-          uniqueMap.set(dedupeKey, { ...item, unread: existing.unread && item.unread });
+        const existing = uniqueMap.get(canonicalKey);
+        const existingTime = new Date(existing.created_at || 0).getTime();
+        const newTime = new Date(item.created_at || 0).getTime();
+        // If either copy was marked as read, preserve the read status
+        const isRead = !existing.unread || !item.unread;
+        if (newTime >= existingTime) {
+          uniqueMap.set(canonicalKey, {
+            ...item,
+            unread: !isRead,
+          });
+        } else {
+          uniqueMap.set(canonicalKey, {
+            ...existing,
+            unread: !isRead,
+          });
         }
       }
     });
