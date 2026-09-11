@@ -302,7 +302,7 @@ export default function TrainingProgramAdmin() {
           </span>
           <p className="text-2xl font-bold text-purple-600 mt-1">{completedCount}</p>
           <span className="text-[11px] text-muted-foreground">
-            {isEn ? "16 hours completed" : isBis ? "16 ka oras nahuman" : "16 oras nakumpleto"}
+            {isEn ? "12 hours (4 days) completed" : isBis ? "12 ka oras nahuman" : "12 oras (4 araw) nakumpleto"}
           </span>
         </div>
       </div>
@@ -410,7 +410,7 @@ export default function TrainingProgramAdmin() {
                   <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
                     <span className="font-semibold text-foreground">Program: {app.trainingName}</span>
                     <span>Submitted: {new Date(app.submittedAt).toLocaleDateString()}</span>
-                    <span>Attendance: <strong>{app.attendance?.hoursCompleted || 0} / 16 Hours</strong></span>
+                    <span>Attendance: <strong>{Math.min(4, Math.floor((app.attendance?.hoursCompleted || 0) / 3))}/4 Days ({app.attendance?.hoursCompleted || 0} / 12 Hours)</strong></span>
                   </div>
                 </div>
 
@@ -686,17 +686,17 @@ export default function TrainingProgramAdmin() {
                 <p className="text-xs text-slate-700 max-w-lg mx-auto leading-relaxed">
                   {isEn ? (
                     <>
-                      for the successful completion of <strong>16 Hours of Intensive Training</strong> in{" "}
+                      for the successful completion of <strong>12 Hours of Intensive Training (4 Days • 3 hrs/day)</strong> in{" "}
                       <strong>{previewCertApp.trainingName}</strong> held at Gov Services Skills Development Center, Batasan Hills.
                     </>
                   ) : isBis ? (
                     <>
-                      alang sa malamposong paghuman sa <strong>16 ka Oras sa Pagsasanay</strong> sa ilalom sa{" "}
+                      alang sa malamposong paghuman sa <strong>12 ka Oras sa Pagsasanay (4 ka Adlaw • 3 ka oras/adlaw)</strong> sa ilalom sa{" "}
                       kursong <strong>{previewCertApp.trainingName}</strong> nga gipahigayon sa Gov Services Skills Development Center, Batasan Hills.
                     </>
                   ) : (
                     <>
-                      para sa matagumpay na pagtatapos ng <strong>16 Oras ng Masinsinang Pagsasanay</strong> sa ilalim ng{" "}
+                      para sa matagumpay na pagtatapos ng <strong>12 Oras ng Masinsinang Pagsasanay (4 na Araw • 3 oras/araw)</strong> sa ilalim ng{" "}
                       kursong <strong>{previewCertApp.trainingName}</strong> na ginanap sa Gov Services Skills Development Center, Batasan Hills.
                     </>
                   )}

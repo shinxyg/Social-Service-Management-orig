@@ -1140,10 +1140,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   />
                   <span className="text-xs text-muted-foreground">
                     {isEn
-                      ? "I hereby certify that all information provided is true and correct, and I commit to faithfully attend all 16 hours of the training program."
+                      ? "I hereby certify that all information provided is true and correct, and I commit to faithfully attend all 4 days (3 hours/day • 12 hours total) of the training program."
                       : isBis
-                      ? "Gipamatud-an nako nga tinuod ang tanang impormasyon ug ako matinud-anong motambong sa tanang takdang oras sa pagbansay."
-                      : "Pinatutunayan ko na totoo ang lahat ng impormasyong nakatala at ako ay tapat na dadalo sa buong takdang oras ng pagsasanay."}
+                      ? "Gipamatud-an nako nga tinuod ang tanang impormasyon ug ako matinud-anong motambong sa tanang 4 ka adlaw sa pagbansay."
+                      : "Pinatutunayan ko na totoo ang lahat ng impormasyong nakatala at ako ay tapat na dadalo sa lahat ng 4 na araw (3 oras bawat araw • 12 oras kabuuan) ng pagsasanay."}
                   </span>
                 </label>
               </div>
@@ -1717,17 +1717,17 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <p className="text-xs text-slate-700 max-w-lg mx-auto leading-relaxed">
                   {isEn ? (
                     <>
-                      for the successful completion of <strong>16 Hours of Intensive Skills Training</strong> in the course of{" "}
+                      for the successful completion of <strong>12 Hours of Intensive Skills Training (4 Days • 3 hrs/day)</strong> in the course of{" "}
                       <strong>{certificateModalApp.trainingName}</strong> held at Gov Services Skills Development Center, Batasan Hills.
                     </>
                   ) : isBis ? (
                     <>
-                      alang sa malamposong paghuman sa <strong>16 ka Oras sa Pagsasanay</strong> sa ilalom sa{" "}
+                      alang sa malamposong paghuman sa <strong>12 ka Oras sa Pagsasanay (4 ka Adlaw • 3 ka oras/adlaw)</strong> sa ilalom sa{" "}
                       kursong <strong>{certificateModalApp.trainingName}</strong> nga gipahigayon sa Gov Services Skills Development Center, Batasan Hills.
                     </>
                   ) : (
                     <>
-                      para sa matagumpay na pagtatapos ng <strong>16 Oras ng Masinsinang Pagsasanay</strong> sa ilalim ng{" "}
+                      para sa matagumpay na pagtatapos ng <strong>12 Oras ng Masinsinang Pagsasanay (4 na Araw • 3 oras/araw)</strong> sa ilalim ng{" "}
                       kursong <strong>{certificateModalApp.trainingName}</strong> na ginanap sa Gov Services Skills Development Center, Batasan Hills.
                     </>
                   )}
