@@ -12,7 +12,7 @@ import {
   parseAppointmentDateTime,
   checkAndAutoReleaseScheduledDisbursements,
 } from "../../utils/financialAidSync"
-import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { API_BASE } from "../../config/api"
 
 // ---- Types ----
@@ -414,26 +414,26 @@ export default function Appointments() {
 
         // 3. Fetch from /api/pwd-senior/applications (Approved Social Assistance Only) as fallback sync
         let pwdSeniorApps: any[] = []
+        let pwdSeniorFetchSuccess = false
         try {
           const resPwd = await fetch(`${API_BASE}/api/pwd-senior/applications`)
           if (resPwd.ok) {
             pwdSeniorApps = await resPwd.json()
+            pwdSeniorFetchSuccess = true
           }
         } catch {}
 
-        try {
-          const local = localStorage.getItem("pwd_senior_applications")
-          if (local) {
-            const parsed = JSON.parse(local)
-            if (Array.isArray(parsed)) {
-              parsed.forEach((la: any) => {
-                if (!pwdSeniorApps.some((a) => a.id === la.id || (a.referenceNumber && la.referenceNumber && a.referenceNumber === la.referenceNumber && a.type === la.type))) {
-                  pwdSeniorApps.push(la)
-                }
-              })
+        if (!pwdSeniorFetchSuccess) {
+          try {
+            const local = localStorage.getItem("pwd_senior_applications")
+            if (local) {
+              const parsed = JSON.parse(local)
+              if (Array.isArray(parsed)) {
+                pwdSeniorApps = parsed
+              }
             }
-          }
-        } catch {}
+          } catch {}
+        }
 
         if (Array.isArray(pwdSeniorApps) && pwdSeniorApps.length > 0) {
           pwdSeniorApps.forEach((app: any) => {
@@ -570,7 +570,9 @@ export default function Appointments() {
     fetchAppointments()
 
     // Auto-complete appointments and auto-release disbursements when exact scheduled date/time arrives
+    // and periodically re-fetch from database to keep appointments in real-time sync with all devices
     const liveTimer = setInterval(() => {
+      fetchAppointments()
       checkAndAutoReleaseScheduledDisbursements()
       const now = new Date()
       setAppointments((prev) => {
@@ -598,11 +600,16 @@ export default function Appointments() {
       })
     }, 3000)
 
+    const unsubscribeRealtime = subscribeToRealtimeChanges(() => {
+      fetchAppointments()
+    })
+
     const handleStorageChange = () => fetchAppointments()
     window.addEventListener("appointments_updated", handleStorageChange)
     window.addEventListener("storage", handleStorageChange)
     return () => {
       clearInterval(liveTimer)
+      unsubscribeRealtime()
       window.removeEventListener("appointments_updated", handleStorageChange)
       window.removeEventListener("storage", handleStorageChange)
     }

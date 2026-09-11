@@ -24,7 +24,7 @@ import {
   deleteFinancialAidDisbursement,
   getDeletedDisbursementKeys,
 } from "../../utils/financialAidSync"
-import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 
 export { FIXED_ASSISTANCE_AMOUNTS, type DisbursementStage, type SyncedDisbursementRecord }
 
@@ -141,26 +141,26 @@ export default function FinancialAidDisbursement() {
 
         // 3. Fetch from /api/pwd-senior/applications (Approved Social Assistance Only)
         let pwdSeniorApps: any[] = []
+        let pwdSeniorFetchSuccess = false
         try {
           const resPwd = await fetch(`${API_BASE}/api/pwd-senior/applications`)
           if (resPwd.ok) {
             pwdSeniorApps = await resPwd.json()
+            pwdSeniorFetchSuccess = true
           }
         } catch {}
 
-        try {
-          const local = localStorage.getItem("pwd_senior_applications")
-          if (local) {
-            const parsed = JSON.parse(local)
-            if (Array.isArray(parsed)) {
-              parsed.forEach((la: any) => {
-                if (!pwdSeniorApps.some((a) => a.id === la.id || (a.referenceNumber && la.referenceNumber && a.referenceNumber === la.referenceNumber && a.type === la.type))) {
-                  pwdSeniorApps.push(la)
-                }
-              })
+        if (!pwdSeniorFetchSuccess) {
+          try {
+            const local = localStorage.getItem("pwd_senior_applications")
+            if (local) {
+              const parsed = JSON.parse(local)
+              if (Array.isArray(parsed)) {
+                pwdSeniorApps = parsed
+              }
             }
-          }
-        } catch {}
+          } catch {}
+        }
 
         if (Array.isArray(pwdSeniorApps) && pwdSeniorApps.length > 0) {
           const approvedPwdApps = pwdSeniorApps.filter((app: any) => {
@@ -411,10 +411,14 @@ export default function FinancialAidDisbursement() {
 
     syncAll()
 
-    // Interval checker every 2s to auto-release when exact appointment time is reached
+    // Interval checker every 2s to auto-release when exact appointment time is reached and sync across devices
     const autoReleaseInterval = setInterval(() => {
       syncAll()
     }, 2000)
+
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      syncAll()
+    })
 
     // Listen to real-time events when appointments or applications update
     const handleStorageChange = () => syncAll()
@@ -424,6 +428,7 @@ export default function FinancialAidDisbursement() {
 
     return () => {
       clearInterval(autoReleaseInterval)
+      unsubscribe()
       window.removeEventListener("financial_disbursements_updated", handleStorageChange)
       window.removeEventListener("appointments_updated", handleStorageChange)
       window.removeEventListener("storage", handleStorageChange)

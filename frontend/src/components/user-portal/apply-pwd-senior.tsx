@@ -9,6 +9,7 @@ import SeniorSocialAssistanceWizard from "./senior-assistance-wizard"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 
 export default function ApplyPWDSenior() {
   const { t, language } = useLanguage()
@@ -53,11 +54,15 @@ export default function ApplyPWDSenior() {
       if (bypassedBlockRef.current) return
       try {
         let backendApps: any[] = []
+        let backendFetched = false
         try {
           const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
           if (res.ok) {
             const data = await res.json()
-            if (Array.isArray(data)) backendApps = data
+            if (Array.isArray(data)) {
+              backendApps = data
+              backendFetched = true
+            }
           }
         } catch (err) {
           console.warn("Could not fetch applications from backend:", err)
@@ -72,7 +77,7 @@ export default function ApplyPWDSenior() {
         } catch {}
 
         let allApps: any[] = []
-        if (backendApps.length > 0) {
+        if (backendFetched) {
           allApps = [...backendApps]
           try {
             localStorage.setItem("pwd_senior_applications", JSON.stringify(backendApps))
@@ -213,6 +218,10 @@ export default function ApplyPWDSenior() {
     checkActiveApp()
     const pollInterval = setInterval(checkActiveApp, 2000)
 
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      checkActiveApp()
+    })
+
     const handleUpdated = () => checkActiveApp()
     window.addEventListener("pwd_senior_applications_updated", handleUpdated)
     window.addEventListener("applications_updated", handleUpdated)
@@ -222,6 +231,7 @@ export default function ApplyPWDSenior() {
     return () => {
       isMounted = false
       clearInterval(pollInterval)
+      unsubscribe()
       window.removeEventListener("pwd_senior_applications_updated", handleUpdated)
       window.removeEventListener("applications_updated", handleUpdated)
       window.removeEventListener("financial_disbursements_updated", handleUpdated)

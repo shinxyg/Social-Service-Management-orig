@@ -43,13 +43,21 @@ export function notifyApplicationChange(
     localStorage.setItem("govserve_last_sync_ping", JSON.stringify(msg))
   } catch {}
 
-  // 3. Local window custom events
+  // 3. Local window custom events for all modules
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("govserve_realtime_event", { detail: msg }))
     window.dispatchEvent(new Event("solo_parent_applications_updated"))
     window.dispatchEvent(new Event("pwd_senior_applications_updated"))
     window.dispatchEvent(new Event("child_welfare_applications_updated"))
+    window.dispatchEvent(new Event("livelihood_status_updated"))
+    window.dispatchEvent(new Event("livelihood_applications_updated"))
+    window.dispatchEvent(new Event("appointments_updated"))
+    window.dispatchEvent(new Event("financial_disbursements_updated"))
+    window.dispatchEvent(new Event("financial_aid_updated"))
+    window.dispatchEvent(new Event("user_updated"))
+    window.dispatchEvent(new Event("case_management_updated"))
     window.dispatchEvent(new Event("applications_updated"))
+    window.dispatchEvent(new Event("application_updated"))
     window.dispatchEvent(new Event("storage"))
   }
 }
@@ -80,6 +88,13 @@ export function subscribeToRealtimeChanges(callback: (msg?: SyncMessage) => void
     }
   }
 
+  // Window focus & visibility change for immediate sync when user switches tabs/devices
+  const onVisibilityOrFocus = () => {
+    if (document.visibilityState === "visible") {
+      callback()
+    }
+  }
+
   if (channel) {
     channel.addEventListener("message", onChannelMsg)
   }
@@ -87,10 +102,28 @@ export function subscribeToRealtimeChanges(callback: (msg?: SyncMessage) => void
   window.addEventListener("solo_parent_applications_updated", onWindowEvent)
   window.addEventListener("pwd_senior_applications_updated", onWindowEvent)
   window.addEventListener("child_welfare_applications_updated", onWindowEvent)
+  window.addEventListener("livelihood_status_updated", onWindowEvent)
+  window.addEventListener("livelihood_applications_updated", onWindowEvent)
+  window.addEventListener("appointments_updated", onWindowEvent)
+  window.addEventListener("financial_disbursements_updated", onWindowEvent)
+  window.addEventListener("financial_aid_updated", onWindowEvent)
+  window.addEventListener("user_updated", onWindowEvent)
+  window.addEventListener("case_management_updated", onWindowEvent)
   window.addEventListener("applications_updated", onWindowEvent)
+  window.addEventListener("application_updated", onWindowEvent)
   window.addEventListener("storage", onStorage)
+  window.addEventListener("focus", onVisibilityOrFocus)
+  document.addEventListener("visibilitychange", onVisibilityOrFocus)
+
+  // Periodic heartbeat every 2.5 seconds for cross-device synchronization
+  const heartbeatInterval = setInterval(() => {
+    if (document.visibilityState === "visible") {
+      callback()
+    }
+  }, 2500)
 
   return () => {
+    clearInterval(heartbeatInterval)
     if (channel) {
       channel.removeEventListener("message", onChannelMsg)
     }
@@ -98,7 +131,17 @@ export function subscribeToRealtimeChanges(callback: (msg?: SyncMessage) => void
     window.removeEventListener("solo_parent_applications_updated", onWindowEvent)
     window.removeEventListener("pwd_senior_applications_updated", onWindowEvent)
     window.removeEventListener("child_welfare_applications_updated", onWindowEvent)
+    window.removeEventListener("livelihood_status_updated", onWindowEvent)
+    window.removeEventListener("livelihood_applications_updated", onWindowEvent)
+    window.removeEventListener("appointments_updated", onWindowEvent)
+    window.removeEventListener("financial_disbursements_updated", onWindowEvent)
+    window.removeEventListener("financial_aid_updated", onWindowEvent)
+    window.removeEventListener("user_updated", onWindowEvent)
+    window.removeEventListener("case_management_updated", onWindowEvent)
     window.removeEventListener("applications_updated", onWindowEvent)
+    window.removeEventListener("application_updated", onWindowEvent)
     window.removeEventListener("storage", onStorage)
+    window.removeEventListener("focus", onVisibilityOrFocus)
+    document.removeEventListener("visibilitychange", onVisibilityOrFocus)
   }
 }

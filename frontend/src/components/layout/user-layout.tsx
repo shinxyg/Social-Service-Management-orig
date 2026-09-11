@@ -26,6 +26,7 @@ import { useLanguage } from "../ui/language-context"
 import { getSavedProfilePhoto } from "../../utils/profilePhoto"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 import { API_BASE } from "../../config/api"
+import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 
 function WheelchairIcon({ className, ...props }: React.ComponentProps<"svg">) {
   return (
@@ -703,13 +704,17 @@ function ResidentHeader({
     }
 
     fetchNotifs()
-    const interval = setInterval(fetchNotifs, 3000)
+    const interval = setInterval(fetchNotifs, 2500)
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      fetchNotifs()
+    })
     const handleNotifUpdate = () => fetchNotifs()
     window.addEventListener("user_notifications_updated", handleNotifUpdate)
     window.addEventListener("storage", handleNotifUpdate)
 
     return () => {
       clearInterval(interval)
+      unsubscribe()
       window.removeEventListener("user_notifications_updated", handleNotifUpdate)
       window.removeEventListener("storage", handleNotifUpdate)
     }

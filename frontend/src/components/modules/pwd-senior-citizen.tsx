@@ -2228,6 +2228,7 @@ export default function PWDSeniorCitizen() {
     const fetchApps = async () => {
       try {
         let combined: ApplicationSubmission[] = []
+        let backendFetched = false
         try {
           const res = await fetch(`${API_BASE}/api/pwd-senior/applications`)
           if (res.ok) {
@@ -2238,32 +2239,32 @@ export default function PWDSeniorCitizen() {
                 !["APP-PWD-2026-001", "APP-PWD-2026-002", "APP-PWD-2026-003"].includes(a.id) &&
                 !["PWD-QC-2026-4891", "PWD-QC-2026-3109", "PWD-QC-2026-5520"].includes(a.referenceNumber)
               )
+              backendFetched = true
+              try {
+                localStorage.setItem("pwd_senior_applications", JSON.stringify(combined))
+              } catch {}
             }
           }
         } catch (err) {
           console.warn("Could not fetch PWD/Senior applications from backend:", err)
         }
 
-        // Merge localStorage and clean legacy dummy entries
-        try {
-          const raw = localStorage.getItem("pwd_senior_applications")
-          if (raw) {
-            let localApps = JSON.parse(raw)
-            if (Array.isArray(localApps)) {
-              localApps = localApps.filter((a: any) =>
-                a &&
-                !["APP-PWD-2026-001", "APP-PWD-2026-002", "APP-PWD-2026-003"].includes(a.id) &&
-                !["PWD-QC-2026-4891", "PWD-QC-2026-3109", "PWD-QC-2026-5520"].includes(a.referenceNumber)
-              )
-              localStorage.setItem("pwd_senior_applications", JSON.stringify(localApps))
-              for (const la of localApps) {
-                if (la && !combined.some((a) => (a.id && a.id === la.id) || (a.referenceNumber && a.referenceNumber === la.referenceNumber))) {
-                  combined.push(la)
-                }
+        // Only check localStorage if backend was offline / unreachable
+        if (!backendFetched) {
+          try {
+            const raw = localStorage.getItem("pwd_senior_applications")
+            if (raw) {
+              let localApps = JSON.parse(raw)
+              if (Array.isArray(localApps)) {
+                combined = localApps.filter((a: any) =>
+                  a &&
+                  !["APP-PWD-2026-001", "APP-PWD-2026-002", "APP-PWD-2026-003"].includes(a.id) &&
+                  !["PWD-QC-2026-4891", "PWD-QC-2026-3109", "PWD-QC-2026-5520"].includes(a.referenceNumber)
+                )
               }
             }
-          }
-        } catch {}
+          } catch {}
+        }
 
         if (isMounted) {
           setApplications(combined)

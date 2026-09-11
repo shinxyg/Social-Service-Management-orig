@@ -9,6 +9,7 @@ import LivelihoodMonitoringView from "./livelihood-monitoring-view"
 import TrainingProgramView from "./training-program-view"
 import { API_BASE } from "../../config/api"
 import { getLoggedInUserQcid, getCurrentUserProfile } from "../../utils/userProfile"
+import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import {
   FileText,
   Package,
@@ -164,7 +165,7 @@ export default function ApplyLivelihood() {
   const [isWizardOpen, setIsWizardOpen] = useState(false)
   const [isUpdatingRevision, setIsUpdatingRevision] = useState(false)
 
-  // Fetch applications from server with real-time 3s polling
+  // Fetch applications from server with real-time polling
   useEffect(() => {
     if (isTraining) return
 
@@ -173,43 +174,49 @@ export default function ApplyLivelihood() {
         const userQcid = getLoggedInUserQcid()
         const userProf = getCurrentUserProfile()
         const storedRef = localStorage.getItem("active_livelihood_ref") || ""
-        const localApps = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
 
         // 1. Fetch applications from backend
         let allApps: any[] = []
+        let backendSuccess = false
         try {
           const res = await fetch(`${API_BASE}/api/livelihood/applications`)
           if (res.ok) {
             const data = await res.json()
             if (data.success && Array.isArray(data.applications)) {
               allApps = data.applications
+              backendSuccess = true
+              localStorage.setItem("livelihood_applications", JSON.stringify(data.applications))
             }
           }
         } catch (_) {}
 
         // Fallback fetch with qcid parameter if general list was empty
-        if (allApps.length === 0 && userQcid) {
+        if (allApps.length === 0 && userQcid && !backendSuccess) {
           try {
             const res2 = await fetch(`${API_BASE}/api/livelihood/applications?qcid=${userQcid}`)
             if (res2.ok) {
               const data2 = await res2.json()
               if (data2.success && Array.isArray(data2.applications)) {
                 allApps = data2.applications
+                backendSuccess = true
               }
             }
           } catch (_) {}
         }
 
-        // Merge locally cached applications
-        if (Array.isArray(localApps) && localApps.length > 0) {
-          for (const la of localApps) {
-            const exists = allApps.some(
-              (a) =>
-                (a.id && la.id && a.id === la.id) ||
-                (a.reference_number && la.reference_number && a.reference_number === la.reference_number)
-            )
-            if (!exists) {
-              allApps.push(la)
+        // Only merge locally cached applications if backend is completely unreachable
+        if (!backendSuccess) {
+          const localApps = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
+          if (Array.isArray(localApps) && localApps.length > 0) {
+            for (const la of localApps) {
+              const exists = allApps.some(
+                (a) =>
+                  (a.id && la.id && a.id === la.id) ||
+                  (a.reference_number && la.reference_number && a.reference_number === la.reference_number)
+              )
+              if (!exists) {
+                allApps.push(la)
+              }
             }
           }
         }
@@ -223,9 +230,7 @@ export default function ApplyLivelihood() {
               const uName = `${userProf?.firstName || ""} ${userProf?.lastName || ""}`.toLowerCase().trim()
               const aName = `${a.first_name || ""} ${a.last_name || ""}`.toLowerCase().trim()
               return uName && aName && (aName.includes(uName) || uName.includes(aName))
-            }) ||
-            allApps.find((a: any) => a.qcid === "110000116932100" || a.reference_number === "LP-2026-2518") ||
-            allApps[0]
+            })
 
           if (match) {
             setActiveApplication(match)
@@ -233,14 +238,22 @@ export default function ApplyLivelihood() {
           }
         }
 
+        // If no match found and backend succeeded (application deleted or not found)
+        if (backendSuccess) {
+          localStorage.removeItem("active_livelihood_ref")
+        }
         setActiveApplication(null)
       } catch (_) {}
     }
 
     fetchApp()
 
-    // Poll every 3 seconds so status automatically syncs when Admin makes a decision
-    const interval = setInterval(fetchApp, 3000)
+    // Poll every 2 seconds so status automatically syncs across all devices
+    const interval = setInterval(fetchApp, 2000)
+
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      fetchApp()
+    })
 
     const handleSync = () => fetchApp()
     window.addEventListener("storage", handleSync)
@@ -248,6 +261,7 @@ export default function ApplyLivelihood() {
 
     return () => {
       clearInterval(interval)
+      unsubscribe()
       window.removeEventListener("storage", handleSync)
       window.removeEventListener("livelihood_status_updated", handleSync)
     }

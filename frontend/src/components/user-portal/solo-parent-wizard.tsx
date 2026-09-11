@@ -903,6 +903,7 @@ export default function SoloParentApplicationWizard({
   const fetchAllSoloParentApps = async () => {
     const allApps: any[] = []
     const seenIds = new Set<string>()
+    let backendSuccess = false
 
     // 1. Fetch user applications from backend
     try {
@@ -915,6 +916,7 @@ export default function SoloParentApplicationWizard({
         `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
       )
       if (res.ok) {
+        backendSuccess = true
         const data = await res.json()
         const backendApps = data.applications || data || []
         if (Array.isArray(backendApps)) {
@@ -933,6 +935,7 @@ export default function SoloParentApplicationWizard({
     try {
       const resAdmin = await fetch(`${API_BASE}/api/solo-parent/admin/all?limit=200`)
       if (resAdmin.ok) {
+        backendSuccess = true
         const dataAdmin = await resAdmin.json()
         const backendApps = dataAdmin.applications || []
         if (Array.isArray(backendApps)) {
@@ -947,31 +950,33 @@ export default function SoloParentApplicationWizard({
       }
     } catch {}
 
-    // 3. Check localStorage keys
-    const storageKeys = [
-      "solo_parent_applications",
-      "welfare_applications",
-      "all_applications_history",
-      "applications",
-      "user_applications",
-    ]
-    for (const key of storageKeys) {
-      try {
-        const raw = localStorage.getItem(key)
-        if (raw) {
-          const parsed = JSON.parse(raw)
-          const list = Array.isArray(parsed) ? parsed : Object.values(parsed)
-          for (const item of list) {
-            if (item && typeof item === "object") {
-              const k = item.id || item.referenceNumber || item.reference_number
-              if (k && !seenIds.has(String(k))) {
-                seenIds.add(String(k))
-                allApps.push(item)
+    // 3. Only check localStorage keys if backend is offline/unreachable
+    if (!backendSuccess) {
+      const storageKeys = [
+        "solo_parent_applications",
+        "welfare_applications",
+        "all_applications_history",
+        "applications",
+        "user_applications",
+      ]
+      for (const key of storageKeys) {
+        try {
+          const raw = localStorage.getItem(key)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            const list = Array.isArray(parsed) ? parsed : Object.values(parsed)
+            for (const item of list) {
+              if (item && typeof item === "object") {
+                const k = item.id || item.referenceNumber || item.reference_number
+                if (k && !seenIds.has(String(k))) {
+                  seenIds.add(String(k))
+                  allApps.push(item)
+                }
               }
             }
           }
-        }
-      } catch {}
+        } catch {}
+      }
     }
 
     return allApps
