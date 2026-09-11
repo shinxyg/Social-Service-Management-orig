@@ -358,7 +358,11 @@ export default function TrainingProgramAdmin() {
             return (
               <div
                 key={app.id}
-                className="bg-card border border-border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                onClick={() => {
+                  setSelectedApp(app)
+                  setShowRejectInput(false)
+                }}
+                className="bg-card border border-border hover:border-purple-500/50 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer group"
               >
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -389,7 +393,7 @@ export default function TrainingProgramAdmin() {
                   </div>
 
                   <div>
-                    <h4 className="font-bold text-base text-foreground">
+                    <h4 className="font-bold text-base text-foreground group-hover:text-purple-600 transition-colors">
                       {app.applicantInfo?.fullName}
                     </h4>
                     <p className="text-xs text-muted-foreground">
@@ -408,24 +412,20 @@ export default function TrainingProgramAdmin() {
                   {isCompleted && (
                     <button
                       type="button"
-                      onClick={() => setPreviewCertApp(app)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPreviewCertApp(app)
+                      }}
                       className="px-3.5 py-2 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                     >
                       <Award className="h-4 w-4" />
                       <span>{isEn ? "View Certificate" : "Tingnan ang Sertipiko"}</span>
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedApp(app)
-                      setShowRejectInput(false)
-                    }}
-                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Eye className="h-4 w-4" />
-                    <span>{isEn ? "Evaluate Application" : "Suriin ang Aplikasyon"}</span>
-                  </button>
+                  <span className="text-xs font-semibold text-purple-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                    <span>{isEn ? "Evaluate" : "Suriin"}</span>
+                    <span>→</span>
+                  </span>
                 </div>
               </div>
             )
