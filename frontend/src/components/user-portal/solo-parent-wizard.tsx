@@ -1193,11 +1193,15 @@ export default function SoloParentApplicationWizard({
   const [blockedApp, setBlockedApp] = useState<any>(null)
   const [isReapplying, setIsReapplying] = useState(() => {
     try {
-      const isUrl = typeof window !== "undefined" && window.location.search.includes("reapply=true")
-      const isLocal =
-        localStorage.getItem("solo_parent_reapplying") === "true" ||
-        localStorage.getItem(`solo_parent_reapplying_${idStatus || "new"}`) === "true"
-      return Boolean(isUrl || isLocal)
+      if (typeof window !== "undefined") {
+        const hasUrlReapply = window.location.search.includes("reapply=true")
+        if (hasUrlReapply) return true
+        localStorage.removeItem("solo_parent_reapplying")
+        localStorage.removeItem("solo_parent_reapplying_new")
+        localStorage.removeItem("solo_parent_reapplying_renewal")
+        localStorage.removeItem("solo_parent_reapplying_loss")
+      }
+      return false
     } catch {
       return false
     }
