@@ -12,15 +12,13 @@ import {
   Calendar,
   FileText,
   CalendarCheck,
-  Edit,
-  Power,
   Loader2,
   AlertCircle,
   MapPin,
   UserCheck,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
-import { subscribeToRealtimeChanges, notifyApplicationChange } from "../../utils/realtimeSync"
+import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 
 const authHeaders = (): Record<string, string> => {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
@@ -251,24 +249,12 @@ function UserCard({
 function ManageUserModal({
   user,
   onClose,
-  onStatusToggle,
-  onUpdateUser,
 }: {
   user: CentralUser
   onClose: () => void
-  onStatusToggle: (id: string, currentStatus: AccountStatus) => Promise<void>
-  onUpdateUser: (id: string, data: Partial<CentralUser>) => Promise<void>
 }) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editFirstName, setEditFirstName] = useState(user.firstName || "")
-  const [editLastName, setEditLastName] = useState(user.lastName || "")
-  const [editContact, setEditContact] = useState(user.contactNumber || "")
-  const [editRole, setEditRole] = useState<AccountRole>(user.role)
-
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
   const [detailedUser, setDetailedUser] = useState<CentralUser>(user)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isTogglingStatus, setIsTogglingStatus] = useState(false)
 
   // Fetch full details with linked applications & appointments
   useEffect(() => {
@@ -283,10 +269,6 @@ function ManageUserModal({
           const data = await res.json()
           if (data.user) {
             setDetailedUser(data.user)
-            setEditFirstName(data.user.firstName || "")
-            setEditLastName(data.user.lastName || "")
-            setEditContact(data.user.contactNumber || "")
-            setEditRole(data.user.role || user.role)
           }
         }
       } catch (err) {
@@ -301,40 +283,6 @@ function ManageUserModal({
       isMounted = false
     }
   }, [user.id, user.numericId])
-
-  const handleSaveEdit = async () => {
-    setIsSaving(true)
-    try {
-      await onUpdateUser(user.numericId ? String(user.numericId) : user.id, {
-        firstName: editFirstName,
-        lastName: editLastName,
-        contactNumber: editContact,
-        role: editRole,
-      })
-      setDetailedUser((prev) => ({
-        ...prev,
-        firstName: editFirstName,
-        lastName: editLastName,
-        name: `${editFirstName} ${editLastName}`.trim(),
-        contactNumber: editContact,
-        role: editRole,
-      }))
-      setIsEditing(false)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleToggle = async () => {
-    setIsTogglingStatus(true)
-    try {
-      const nextStatus = detailedUser.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
-      await onStatusToggle(user.numericId ? String(user.numericId) : user.id, detailedUser.status)
-      setDetailedUser((prev) => ({ ...prev, status: nextStatus }))
-    } finally {
-      setIsTogglingStatus(false)
-    }
-  }
 
   const isActive = detailedUser.status === "ACTIVE"
   const isAdmin = detailedUser.role === "ADMINISTRATOR"
@@ -399,129 +347,56 @@ function ManageUserModal({
         <div className="p-6 space-y-6 overflow-y-auto flex-1 text-slate-800">
           {/* USER INFORMATION */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5 text-blue-600" />
-                User Information
-              </h3>
-              {!isEditing ? (
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
-                >
-                  <Edit className="h-3 w-3" />
-                  Edit User
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isSaving}
-                    onClick={handleSaveEdit}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save Changes"}
-                  </button>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-blue-600" />
+              User Information
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <div>
+                <p className="text-slate-400 font-semibold uppercase">Full Name</p>
+                <p className="font-bold text-slate-900 mt-0.5">{detailedUser.name}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 font-semibold uppercase">Email Address</p>
+                <p className="font-bold text-slate-900 mt-0.5">{detailedUser.email}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 font-semibold uppercase">Contact Number</p>
+                <p className="font-bold text-slate-900 mt-0.5">{detailedUser.contactNumber || "—"}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 font-semibold uppercase">User ID</p>
+                <p className="font-mono font-bold text-slate-900 mt-0.5">{detailedUser.id}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 font-semibold uppercase">Account Role</p>
+                <p className="font-bold text-slate-900 mt-0.5">{detailedUser.role}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 font-semibold uppercase">Account Status</p>
+                <p className={`font-bold mt-0.5 ${isActive ? "text-emerald-700" : "text-rose-700"}`}>
+                  {detailedUser.status}
+                </p>
+              </div>
+              <div>
+                <p className="text-slate-400 font-semibold uppercase">Date Registered</p>
+                <p className="font-bold text-slate-900 mt-0.5">{formatDateTime(detailedUser.dateRegistered)}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 font-semibold uppercase">Last Login</p>
+                <p className="font-bold text-slate-900 mt-0.5">{formatDateTime(detailedUser.lastLogin)}</p>
+              </div>
+              {detailedUser.address && (
+                <div className="sm:col-span-2 md:col-span-3">
+                  <p className="text-slate-400 font-semibold uppercase">Registered Address</p>
+                  <p className="font-medium text-slate-900 mt-0.5 flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    {detailedUser.address}
+                  </p>
                 </div>
               )}
             </div>
-
-            {isEditing ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
-                <div>
-                  <label className="font-bold text-slate-700 uppercase block mb-1">First Name</label>
-                  <input
-                    type="text"
-                    value={editFirstName}
-                    onChange={(e) => setEditFirstName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-slate-700 uppercase block mb-1">Last Name</label>
-                  <input
-                    type="text"
-                    value={editLastName}
-                    onChange={(e) => setEditLastName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-slate-700 uppercase block mb-1">Contact Number</label>
-                  <input
-                    type="text"
-                    value={editContact}
-                    onChange={(e) => setEditContact(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-slate-700 uppercase block mb-1">Account Role</label>
-                  <select
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value as AccountRole)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    <option value="USER / BENEFICIARY">USER / BENEFICIARY</option>
-                    <option value="ADMINISTRATOR">ADMINISTRATOR</option>
-                  </select>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
-                <div>
-                  <p className="text-slate-400 font-semibold uppercase">Full Name</p>
-                  <p className="font-bold text-slate-900 mt-0.5">{detailedUser.name}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-semibold uppercase">Email Address</p>
-                  <p className="font-bold text-slate-900 mt-0.5">{detailedUser.email}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-semibold uppercase">Contact Number</p>
-                  <p className="font-bold text-slate-900 mt-0.5">{detailedUser.contactNumber || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-semibold uppercase">User ID</p>
-                  <p className="font-mono font-bold text-slate-900 mt-0.5">{detailedUser.id}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-semibold uppercase">Account Role</p>
-                  <p className="font-bold text-slate-900 mt-0.5">{detailedUser.role}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-semibold uppercase">Account Status</p>
-                  <p className={`font-bold mt-0.5 ${isActive ? "text-emerald-700" : "text-rose-700"}`}>
-                    {detailedUser.status}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-semibold uppercase">Date Registered</p>
-                  <p className="font-bold text-slate-900 mt-0.5">{formatDateTime(detailedUser.dateRegistered)}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-semibold uppercase">Last Login</p>
-                  <p className="font-bold text-slate-900 mt-0.5">{formatDateTime(detailedUser.lastLogin)}</p>
-                </div>
-                {detailedUser.address && (
-                  <div className="sm:col-span-2 md:col-span-3">
-                    <p className="text-slate-400 font-semibold uppercase">Registered Address</p>
-                    <p className="font-medium text-slate-900 mt-0.5 flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      {detailedUser.address}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* CONNECTED APPLICATION RECORDS */}
@@ -614,26 +489,20 @@ function ManageUserModal({
           )}
         </div>
 
-        {/* Modal Footer: Account Actions */}
+        {/* Modal Footer */}
         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
-          <div>
-            <button
-              type="button"
-              disabled={isTogglingStatus}
-              onClick={handleToggle}
-              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 ${
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <span>Account Status:</span>
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
                 isActive
-                  ? "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : "bg-rose-50 text-rose-700 border border-rose-200"
               }`}
             >
-              <Power className="h-3.5 w-3.5" />
-              {isTogglingStatus
-                ? "Updating..."
-                : isActive
-                ? "Deactivate Account"
-                : "Activate Account"}
-            </button>
+              {isActive ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+              {detailedUser.status}
+            </span>
           </div>
 
           <button
@@ -717,51 +586,6 @@ export default function UserManagement() {
       window.removeEventListener("user_updated", handleSync)
     }
   }, [])
-
-  // Toggle Account Status Action
-  const handleToggleStatus = async (id: string, currentStatus: AccountStatus) => {
-    const nextStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE"
-    try {
-      const res = await fetch(`${API_BASE}/api/users/${id}/status`, {
-        method: "PATCH",
-        headers: {
-          ...authHeaders(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: nextStatus }),
-      })
-      if (res.ok) {
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.id === id || String(u.numericId) === id ? { ...u, status: nextStatus } : u
-          )
-        )
-        notifyApplicationChange("APPLICATION_APPROVED", "all", id)
-      }
-    } catch (err) {
-      console.error("Failed to toggle status:", err)
-    }
-  }
-
-  // Edit User Details Action
-  const handleUpdateUser = async (id: string, data: Partial<CentralUser>) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/users/${id}`, {
-        method: "PUT",
-        headers: {
-          ...authHeaders(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-      if (res.ok) {
-        await loadUsers(true)
-        notifyApplicationChange("APPLICATION_APPROVED", "all", id)
-      }
-    } catch (err) {
-      console.error("Failed to update user:", err)
-    }
-  }
 
   // Filter users
   const filteredUsers = useMemo(() => {
@@ -970,8 +794,6 @@ export default function UserManagement() {
         <ManageUserModal
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
-          onStatusToggle={handleToggleStatus}
-          onUpdateUser={handleUpdateUser}
         />
       )}
     </div>
