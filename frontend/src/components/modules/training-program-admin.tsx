@@ -38,6 +38,10 @@ export default function TrainingProgramAdmin() {
         const list = Array.isArray(data) ? data : data.applications || []
         if (Array.isArray(list)) {
           setApplications(list)
+          if (selectedApp) {
+            const currentSelected = list.find((a: TrainingApplicationRecord) => String(a.id) === String(selectedApp.id) || a.referenceNumber === selectedApp.referenceNumber)
+            if (currentSelected) setSelectedApp(currentSelected)
+          }
           try {
             localStorage.setItem("training_applications", JSON.stringify(list))
           } catch (_) {}
@@ -56,6 +60,10 @@ export default function TrainingProgramAdmin() {
         const parsed = JSON.parse(stored)
         if (Array.isArray(parsed)) {
           setApplications(parsed)
+          if (selectedApp) {
+            const currentSelected = parsed.find((a: TrainingApplicationRecord) => String(a.id) === String(selectedApp.id) || a.referenceNumber === selectedApp.referenceNumber)
+            if (currentSelected) setSelectedApp(currentSelected)
+          }
         }
       }
     } catch (_) {}
@@ -63,9 +71,20 @@ export default function TrainingProgramAdmin() {
 
   useEffect(() => {
     fetchTrainingApplications()
-    const interval = setInterval(fetchTrainingApplications, 3000)
-    return () => clearInterval(interval)
-  }, [])
+    const interval = setInterval(fetchTrainingApplications, 2000)
+    const handleSync = () => fetchTrainingApplications()
+    window.addEventListener("storage", handleSync)
+    window.addEventListener("application_status_updated", handleSync)
+    window.addEventListener("training_applications_updated", handleSync)
+    window.addEventListener("user_notifications_updated", handleSync)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("storage", handleSync)
+      window.removeEventListener("application_status_updated", handleSync)
+      window.removeEventListener("training_applications_updated", handleSync)
+      window.removeEventListener("user_notifications_updated", handleSync)
+    }
+  }, [selectedApp?.id, selectedApp?.referenceNumber])
 
   // Sync and persist application changes
   const persistAppUpdate = async (updated: TrainingApplicationRecord) => {
@@ -506,41 +525,58 @@ export default function TrainingProgramAdmin() {
               </div>
             </div>
 
-            {/* Attendance & Session Checkers (Available if Approved) */}
+            {/* Attendance & Session Monitor (Live Observe-Only for Admin) */}
             {selectedApp.status === "approved" && (
               <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Daily Attendance &amp; Goal Tracker (3 Hours/Day • 12 Hours Target)</span>
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span>Daily Attendance Tracker (Live Observe Only • 12 Hours Target)</span>
                   </div>
-                  <span className="text-xs font-bold text-emerald-700">
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
                     {selectedApp.attendance?.hoursCompleted || 0} / 12 Hours ({Math.min(4, Math.floor((selectedApp.attendance?.hoursCompleted || 0) / 3))}/4 Days)
                   </span>
                 </div>
 
                 <div className="space-y-2">
-                  {selectedApp.attendance?.sessions?.map((sess) => (
+                  {(selectedApp.attendance?.sessions || [
+                    { day: 1, topic: "Orientation & Fundamental Skills", hours: 3, attended: false, date: "Day 1" },
+                    { day: 2, topic: "Hands-on Application & Practical Work", hours: 3, attended: false, date: "Day 2" },
+                    { day: 3, topic: "Specialized Techniques & Practical Assessment", hours: 3, attended: false, date: "Day 3" },
+                    { day: 4, topic: "Final Evaluation, Livelihood Integration & Completion", hours: 3, attended: false, date: "Day 4" },
+                  ]).map((sess) => (
                     <div
                       key={sess.day}
-                      onClick={() => handleToggleSession(selectedApp, sess.day)}
-                      className={`p-2.5 rounded-lg border flex items-center justify-between text-xs cursor-pointer transition-all ${
+                      className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${
                         sess.attended
-                          ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-900 dark:text-emerald-200 font-semibold"
-                          : "bg-background border-border text-muted-foreground hover:bg-muted/30"
+                          ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-950 dark:text-emerald-200 shadow-2xs"
+                          : "bg-muted/10 border-border text-muted-foreground"
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <div
-                          className={`w-5 h-5 rounded flex items-center justify-center text-xs ${
-                            sess.attended ? "bg-emerald-600 text-white" : "border border-border"
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            sess.attended ? "bg-emerald-600 text-white shadow-xs" : "border border-border bg-muted/30 text-muted-foreground"
                           }`}
                         >
-                          {sess.attended && <Check className="h-3 w-3" />}
+                          {sess.attended ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : `D${sess.day}`}
                         </div>
-                        <span>Day {sess.day}: {sess.topic} (3 hrs)</span>
+                        <div>
+                          <span className="font-semibold text-foreground">Day {sess.day}: {sess.topic}</span>
+                          <span className="text-[10px] text-muted-foreground block">3 Hours Daily Session</span>
+                        </div>
                       </div>
-                      <span className="text-[11px] font-semibold">{sess.attended ? "Attended (3hrs)" : "Click to Mark Present"}</span>
+                      <div>
+                        {sess.attended ? (
+                          <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 text-white shadow-2xs select-none">
+                            Attended (3hrs)
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-muted/40 text-muted-foreground border border-border select-none">
+                            Not yet attended
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

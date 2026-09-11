@@ -499,13 +499,18 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     const currentSessions = activeApplication.attendance?.sessions || [
       { day: 1, topic: "Orientation & Fundamental Skills", hours: 3, attended: false, date: "Day 1" },
       { day: 2, topic: "Hands-on Application & Practical Work", hours: 3, attended: false, date: "Day 2" },
-      { day: 3, topic: "Specialized Techniques & Daily Assessment", hours: 3, attended: false, date: "Day 3" },
-      { day: 4, topic: "Final Output, Evaluation & Certificate Grant", hours: 3, attended: false, date: "Day 4" },
+      { day: 3, topic: "Specialized Techniques & Practical Assessment", hours: 3, attended: false, date: "Day 3" },
+      { day: 4, topic: "Final Evaluation, Livelihood Integration & Completion", hours: 3, attended: false, date: "Day 4" },
     ]
+
+    const targetSession = currentSessions.find((s) => s.day === dayNumber)
+    if (targetSession && targetSession.attended) {
+      return // Already attended, do not repeat or toggle off
+    }
 
     const updatedSessions = currentSessions.map((s) => {
       if (s.day === dayNumber) {
-        return { ...s, attended: !s.attended }
+        return { ...s, attended: true }
       }
       return s
     })
@@ -1442,18 +1447,23 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => handleUserCheckin(sess.day)}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 cursor-pointer transition-transform hover:scale-105 shadow-xs ${
-                            sess.attended
-                              ? "bg-emerald-600 text-white ring-2 ring-emerald-500/30"
-                              : "bg-muted border border-border text-muted-foreground hover:border-blue-400"
-                          }`}
-                          title={sess.attended ? "Click to unmark attendance" : "Click to mark 3 hours attended"}
-                        >
-                          {sess.attended ? <Check className="h-4 w-4 stroke-[3]" /> : `D${sess.day}`}
-                        </button>
+                        {sess.attended ? (
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-xs bg-emerald-600 text-white ring-2 ring-emerald-500/30 select-none"
+                            title={isEn ? "Session Completed (3 Hours)" : "Natapos na ang Sesyon (3 Oras)"}
+                          >
+                            <Check className="h-4 w-4 stroke-[3]" />
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleUserCheckin(sess.day)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 cursor-pointer transition-transform hover:scale-105 shadow-xs bg-muted border border-border text-muted-foreground hover:border-blue-400"
+                            title={isEn ? "Click to check-in 3 hours" : "I-click para mag-check in (3 oras)"}
+                          >
+                            D{sess.day}
+                          </button>
+                        )}
                         <div>
                           <p className="font-bold text-sm text-foreground">
                             Day {sess.day}: {sess.topic}
@@ -1466,21 +1476,19 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       </div>
 
                       <div className="flex items-center gap-2 self-end sm:self-auto">
-                        <button
-                          type="button"
-                          onClick={() => handleUserCheckin(sess.day)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
-                            sess.attended
-                              ? "bg-emerald-600 text-white shadow-xs hover:bg-emerald-700"
-                              : "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-                          }`}
-                        >
-                          {sess.attended ? (
-                            <span>Attended (3hrs)</span>
-                          ) : (
+                        {sess.attended ? (
+                          <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-xs select-none cursor-default inline-flex items-center justify-center">
+                            Attended (3hrs)
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleUserCheckin(sess.day)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white shadow-xs"
+                          >
                             <span>{isEn ? "Check-in Day " + sess.day + " (3h)" : isBis ? "I-check-in Adlaw " + sess.day + " (3h)" : "I-check-in Araw " + sess.day + " (3h)"}</span>
-                          )}
-                        </button>
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
