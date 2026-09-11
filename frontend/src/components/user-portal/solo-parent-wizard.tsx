@@ -334,6 +334,7 @@ interface SoloParentApplicationWizardProps {
   isModalOpen?: boolean
   onBlockedStatusChange?: (blocked: boolean) => void
   onStepChange?: (step: number) => void
+  onSubmissionStageChange?: (stage: "form" | "matching" | "pending") => void
 }
 
 interface FamilyMember {
@@ -794,6 +795,7 @@ export default function SoloParentApplicationWizard({
   isModalOpen = false,
   onBlockedStatusChange,
   onStepChange,
+  onSubmissionStageChange,
 }: SoloParentApplicationWizardProps) {
   const { t, language } = useLanguage()
   const [profile, setProfile] = useState(() => (propUserProfile || getCurrentUserProfile()) as any)
@@ -933,16 +935,17 @@ export default function SoloParentApplicationWizard({
   const fetchAllSoloParentApps = async () => {
     const allApps: any[] = []
     const seenIds = new Set<string>()
+    let backendFetched = false
 
-    // 1. Fetch user applications from backend
+    const prof = getCurrentUserProfile()
+    const uid = userId || prof.id || ""
+    const qcid = (prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || "").trim()
+    const email = (prof.email || userProfile?.email || "").trim()
+    const fn = (prof.firstName || userProfile?.firstName || "").trim()
+    const ln = (prof.lastName || userProfile?.lastName || "").trim()
+
+    // 1. Fetch user-specific applications from backend
     try {
-      const prof = getCurrentUserProfile()
-      const uid = userId || prof.id || ""
-      const qcid = (prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || "").trim()
-      const email = (prof.email || userProfile?.email || "").trim()
-      const fn = (prof.firstName || userProfile?.firstName || "").trim()
-      const ln = (prof.lastName || userProfile?.lastName || "").trim()
-
       const res = await fetch(
         `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}&_t=${Date.now()}`,
         { cache: "no-store" }
@@ -951,6 +954,7 @@ export default function SoloParentApplicationWizard({
         const data = await res.json()
         const backendApps = data.applications || data || []
         if (Array.isArray(backendApps)) {
+          backendFetched = true
           backendApps.forEach((a: any) => {
             const key = a.id || a.reference_number || a.referenceNumber
             if (key && !seenIds.has(String(key))) {
@@ -963,68 +967,41 @@ export default function SoloParentApplicationWizard({
     } catch {}
 
     // 2. Fetch admin all applications as fallback
-    try {
-      const resAdmin = await fetch(`${API_BASE}/api/solo-parent/admin/all?limit=200&_t=${Date.now()}`, { cache: "no-store" })
-      if (resAdmin.ok) {
-        const dataAdmin = await resAdmin.json()
-        const backendApps = dataAdmin.applications || []
-        if (Array.isArray(backendApps)) {
-          backendApps.forEach((a: any) => {
-            const key = a.id || a.reference_number || a.referenceNumber
-            if (key && !seenIds.has(String(key))) {
-              seenIds.add(String(key))
-              allApps.push(a)
-            }
-          })
-        }
-      }
-    } catch {}
-
-    // 3. Fetch from pwd-senior applications table as additional source
-    try {
-      const resPwd = await fetch(`${API_BASE}/api/pwd-senior/applications?_t=${Date.now()}`, { cache: "no-store" })
-      if (resPwd.ok) {
-        const dataPwd = await resPwd.json()
-        if (Array.isArray(dataPwd)) {
-          dataPwd.forEach((a: any) => {
-            const key = a.id || a.reference_number || a.referenceNumber
-            if (key && !seenIds.has(String(key))) {
-              seenIds.add(String(key))
-              allApps.push(a)
-            }
-          })
-        }
-      }
-    } catch {}
-
-    // 4. Merge all localStorage keys
-    const storageKeys = [
-      "solo_parent_applications",
-      "welfare_applications",
-      "all_applications_history",
-      "pwd_senior_applications",
-      "applications",
-      "user_applications",
-      "all_user_applications",
-    ]
-    for (const key of storageKeys) {
+    if (allApps.length === 0) {
       try {
-        const raw = localStorage.getItem(key)
-        if (raw) {
-          const parsed = JSON.parse(raw)
-          const list = Array.isArray(parsed) ? parsed : Object.values(parsed)
-          for (const item of list) {
-            if (item && typeof item === "object") {
-              const k = item.id || item.referenceNumber || item.reference_number
-              if (k && !seenIds.has(String(k))) {
-                seenIds.add(String(k))
-                allApps.push(item)
+        const resAdmin = await fetch(`${API_BASE}/api/solo-parent/admin/all?limit=200&_t=${Date.now()}`, { cache: "no-store" })
+        if (resAdmin.ok) {
+          const dataAdmin = await resAdmin.json()
+          const backendApps = dataAdmin.applications || []
+          if (Array.isArray(backendApps)) {
+            backendFetched = true
+            backendApps.forEach((a: any) => {
+              const key = a.id || a.reference_number || a.referenceNumber
+              if (key && !seenIds.has(String(key))) {
+                seenIds.add(String(key))
+                allApps.push(a)
               }
-            }
+            })
           }
         }
       } catch {}
     }
+
+    if (backendFetched) {
+      try {
+        localStorage.setItem("solo_parent_applications", JSON.stringify(allApps))
+      } catch {}
+      return allApps
+    }
+
+    // 3. Fallback to localStorage only when backend is completely offline
+    try {
+      const raw = localStorage.getItem("solo_parent_applications")
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) return parsed
+      }
+    } catch {}
 
     return allApps
   }
@@ -1288,14 +1265,12 @@ export default function SoloParentApplicationWizard({
             String(a.classification_title || a.category || a.service || a.application_type || "").toLowerCase().includes("solo") ||
             String(a.classification_title || a.category || a.service || a.application_type || "").toLowerCase().includes("parent") ||
             Boolean(a.solo_parent_id_number || a.soloParentIdNumber || a.children || a.family_members || a.familyMembers) ||
-            Boolean(String(a.reference_number || a.referenceNumber || "").includes("110000572516915")) ||
             Boolean(String(a.assigned_id_number || a.assignedIdNumber || "").includes("SP-"))
 
           const isUserMatch =
             (userQcidClean && (aQcid.includes(userQcidClean) || userQcidClean.includes(aQcid) || aRef.includes(userQcidClean) || userQcidClean.includes(aRef) || (aAssigned && aAssigned.includes(userQcidClean)))) ||
             (userEmailClean && aEmail && userEmailClean === aEmail) ||
-            (userLnClean && aLn && (userLnClean === aLn || (userFnClean && aFn && userLnClean.includes(aLn)))) ||
-            (aRef && (aRef === "110000572516915" || aRef.includes("110000572516915")))
+            (userLnClean && aLn && (userLnClean === aLn || (userFnClean && aFn && userLnClean.includes(aLn))))
 
           return isSoloCategory && isUserMatch
         })
@@ -1410,6 +1385,10 @@ export default function SoloParentApplicationWizard({
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [reference, setReference] = useState("")
   const [redirectCountdown, setRedirectCountdown] = useState<number>(1)
+
+  useEffect(() => {
+    onSubmissionStageChange?.(submissionStage)
+  }, [submissionStage, onSubmissionStageChange])
 
   // Auto-redirect to pending status screen after 1 second on pending
   useEffect(() => {

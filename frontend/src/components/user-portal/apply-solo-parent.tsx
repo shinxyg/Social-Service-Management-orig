@@ -242,6 +242,7 @@ export default function ApplySoloParent() {
   const [understood, setUnderstood] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [cwSubmissionStage, setCwSubmissionStage] = useState<"form" | "matching" | "pending">("form")
+  const [spSubmissionStage, setSpSubmissionStage] = useState<"form" | "matching" | "pending">("form")
 
   useEffect(() => {
     setSelectedCategoryId(null)
@@ -347,11 +348,13 @@ export default function ApplySoloParent() {
   )
 
   const activeProfile = getCurrentUserProfile()
+  const isFormActive = isChildWelfare ? cwSubmissionStage === "form" : spSubmissionStage === "form"
+  const shouldShowRequirements = !isBlocked && currentStep === 1 && isFormActive
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {/* Top Requirements Banner with Button to Open Modal (shown only on Step 1 when not in approved/submitted state) */}
-      {!isBlocked && (!isChildWelfare || cwSubmissionStage !== "pending") && currentStep === 1 && (
+      {/* Top Requirements Banner with Button to Open Modal (strictly shown only on Step 1 when in form state and not blocked) */}
+      {shouldShowRequirements && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-4 animate-in fade-in duration-150">
           <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -375,10 +378,10 @@ export default function ApplySoloParent() {
                       ? "Opisyal nga serbisyo para sa Kaayohan sa Bata ug Kabatan-onan sa Gov Service."
                       : "Opisyal na serbisyo para sa Child & Youth Welfare ng Gov Service."
                     : language === "en"
-                    ? "Official service for Solo Parents (RA 8972 / RA 11861) of Gov Service."
-                    : language === "bis"
-                    ? "Opisyal nga serbisyo para sa Solo Parents (RA 8972 / RA 11861) sa Gov Service."
-                    : "Opisyal na serbisyo para sa Solo Parents (RA 8972 / RA 11861) ng Gov Service."}
+                      ? "Official service for Solo Parents (RA 8972 / RA 11861) of Gov Service."
+                      : language === "bis"
+                      ? "Opisyal nga serbisyo para sa Solo Parents (RA 8972 / RA 11861) sa Gov Service."
+                      : "Opisyal na serbisyo para sa Solo Parents (RA 8972 / RA 11861) ng Gov Service."}
                 </p>
               </div>
             </div>
@@ -415,6 +418,7 @@ export default function ApplySoloParent() {
           initialCategoryId={selectedCategoryId}
           isModalOpen={showRequirementsModal}
           onStepChange={setCurrentStep}
+          onSubmissionStageChange={(stage) => setSpSubmissionStage(stage)}
           onBlockedStatusChange={(blocked) => {
             setIsBlocked(Boolean(blocked))
             if (blocked) {
@@ -425,7 +429,7 @@ export default function ApplySoloParent() {
       )}
 
       {/* Requirements Dialog Modal appearing over content */}
-      {showRequirementsModal && !isBlocked && (
+      {showRequirementsModal && shouldShowRequirements && (
         <div
           onClick={() => setShowRequirementsModal(false)}
           className="fixed inset-0 z-60 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 cursor-pointer"
