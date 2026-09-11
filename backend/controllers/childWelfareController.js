@@ -404,8 +404,8 @@ exports.getUserApplications = async (req, res) => {
     const { qcid, email } = req.query;
 
     const cleanUserId = userId && userId !== 'undefined' && userId !== 'null' && userId !== '0' && userId !== '1' ? String(userId).trim() : null;
-    const cleanQcid = qcid && String(qcid).trim() && !['110000116932100', '11000015952309', '110000572516915'].includes(String(qcid).trim()) ? String(qcid).trim() : null;
-    const cleanEmail = email && String(email).trim() && String(email).trim().toLowerCase() !== 'resident@gmail.com' ? String(email).trim().toLowerCase() : null;
+    const cleanQcid = qcid && String(qcid).trim() ? String(qcid).trim() : null;
+    const cleanEmail = email && String(email).trim() ? String(email).trim().toLowerCase() : null;
 
     if (!cleanUserId && !cleanQcid && !cleanEmail) {
       return res.status(200).json({ success: true, applications: [] });
