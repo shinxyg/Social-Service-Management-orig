@@ -1712,128 +1712,104 @@ export default function SeniorCitizenApplicationWizard({
                 )}
 
                 {/* EMERGENCY CONTACT */}
-                {(() => {
-                  const isEmergencyEditable = true
-                  return (
-                    <div className="pt-4 border-t border-gray-200 space-y-3">
-                      <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-[#3b82f6]" />
-                        {t("emergencyContactTitle") || "EMERGENCY CONTACT"}
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyFirstName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
-                            {t("firstNameLabel") || "First Name"} <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            maxLength={50}
-                            readOnly={!isEmergencyEditable}
-                            disabled={!isEmergencyEditable}
-                            value={formData.emergencyFirstName}
-                            onChange={(e) => handleFieldChange("emergencyFirstName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
-                            placeholder={t("firstNameLabel") || "First Name"}
-                            className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
-                              !isEmergencyEditable
-                                ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
-                                : attemptedNext && !(formData.emergencyFirstName || "").trim()
-                                ? "border-red-400 focus:ring-red-300 bg-red-50"
-                                : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                            }`}
-                          />
-                        </div>
-                        <div>
-                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyLastName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
-                            {t("lastNameLabel") || "Last Name"} <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            maxLength={50}
-                            readOnly={!isEmergencyEditable}
-                            disabled={!isEmergencyEditable}
-                            value={formData.emergencyLastName}
-                            onChange={(e) => handleFieldChange("emergencyLastName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
-                            placeholder={t("lastNameLabel") || "Last Name"}
-                            className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
-                              !isEmergencyEditable
-                                ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
-                                : attemptedNext && !(formData.emergencyLastName || "").trim()
-                                ? "border-red-400 focus:ring-red-300 bg-red-50"
-                                : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                            }`}
-                          />
-                        </div>
-                        <div>
-                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && (formData.emergencyContactNo || "").trim().length < 11 ? "text-red-600" : "text-gray-700"}`}>
-                            {t("phoneNumberLabel") || "Contact Number"} <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            maxLength={11}
-                            readOnly={!isEmergencyEditable}
-                            disabled={!isEmergencyEditable}
-                            value={formData.emergencyContactNo}
-                            onChange={(e) => handleFieldChange("emergencyContactNo", e.target.value.replace(/\D/g, ""))}
-                            placeholder="09XXXXXXXXX"
-                            className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 font-mono focus:outline-none focus:ring-2 ${
-                              !isEmergencyEditable
-                                ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
-                                : attemptedNext && (formData.emergencyContactNo || "").trim().length < 11
-                                ? "border-red-400 focus:ring-red-300 bg-red-50"
-                                : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                            }`}
-                          />
-                        </div>
-                        <div>
-                          <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyRelationship || "").trim() ? "text-red-600" : "text-gray-700"}`}>
-                            {t("pwdRelationshipLabel") || "Relationship"} <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            disabled={!isEmergencyEditable}
-                            value={formData.emergencyRelationship}
-                            onChange={(e) => handleFieldChange("emergencyRelationship", e.target.value)}
-                            className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
-                              !isEmergencyEditable
-                                ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
-                                : attemptedNext && !(formData.emergencyRelationship || "").trim()
-                                ? "border-red-400 focus:ring-red-300 bg-red-50"
-                                : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                            }`}
-                          >
-                            <option value="">{t("selectRelationshipOption") || "Select Relationship"}</option>
-                            <option value="Child">{t("relationChild") || "Child"}</option>
-                            <option value="Spouse">{t("relationSpouse") || "Spouse"}</option>
-                            <option value="Sibling">{t("relationSibling") || "Sibling"}</option>
-                            <option value="Relative">{t("relationRelative") || "Relative"}</option>
-                            <option value="Caregiver">{t("relationCaregiver") || "Caregiver / Guardian"}</option>
-                            <option value="Friend">{t("relationFriend") || "Friend / Neighbor"}</option>
-                            <option value="Others">{t("relationOthers") || "Others"}</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyAddress || "").trim() ? "text-red-600" : "text-gray-700"}`}>
-                          {t("address") || "Emergency Address"} <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          readOnly={!isEmergencyEditable}
-                          disabled={!isEmergencyEditable}
-                          value={formData.emergencyAddress}
-                          onChange={(e) => handleFieldChange("emergencyAddress", e.target.value)}
-                          placeholder="Emergency Residential Address"
-                          className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
-                            !isEmergencyEditable
-                              ? "bg-gray-100 text-gray-800 cursor-not-allowed border-gray-200"
-                              : attemptedNext && !(formData.emergencyAddress || "").trim()
-                              ? "border-red-400 focus:ring-red-300 bg-red-50"
-                              : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                          }`}
-                        />
-                      </div>
+                <div className="pt-4 border-t border-gray-200 space-y-3">
+                  <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5">
+                    <User className="w-4 h-4 text-[#3b82f6]" />
+                    {t("emergencyContactTitle") || "EMERGENCY CONTACT"}
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyFirstName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
+                        {t("firstNameLabel") || "First Name"} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={50}
+                        value={formData.emergencyFirstName}
+                        onChange={(e) => handleFieldChange("emergencyFirstName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
+                        placeholder={t("firstNameLabel") || "First Name"}
+                        className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 shadow-2xs ${
+                          attemptedNext && !(formData.emergencyFirstName || "").trim()
+                            ? "border-red-400 focus:ring-red-300 bg-red-50"
+                            : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        }`}
+                      />
                     </div>
-                  )
-                })()}
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyLastName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
+                        {t("lastNameLabel") || "Last Name"} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={50}
+                        value={formData.emergencyLastName}
+                        onChange={(e) => handleFieldChange("emergencyLastName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
+                        placeholder={t("lastNameLabel") || "Last Name"}
+                        className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 shadow-2xs ${
+                          attemptedNext && !(formData.emergencyLastName || "").trim()
+                            ? "border-red-400 focus:ring-red-300 bg-red-50"
+                            : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && (formData.emergencyContactNo || "").replace(/\D/g, "").length < 10 ? "text-red-600" : "text-gray-700"}`}>
+                        {t("phoneNumberLabel") || "Contact Number"} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={11}
+                        value={formData.emergencyContactNo}
+                        onChange={(e) => handleFieldChange("emergencyContactNo", e.target.value.replace(/\D/g, ""))}
+                        placeholder="09XXXXXXXXX"
+                        className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 font-mono focus:outline-none focus:ring-2 shadow-2xs ${
+                          attemptedNext && (formData.emergencyContactNo || "").replace(/\D/g, "").length < 10
+                            ? "border-red-400 focus:ring-red-300 bg-red-50"
+                            : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyRelationship || "").trim() ? "text-red-600" : "text-gray-700"}`}>
+                        {t("pwdRelationshipLabel") || "Relationship"} <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.emergencyRelationship}
+                        onChange={(e) => handleFieldChange("emergencyRelationship", e.target.value)}
+                        className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 shadow-2xs ${
+                          attemptedNext && !(formData.emergencyRelationship || "").trim()
+                            ? "border-red-400 focus:ring-red-300 bg-red-50"
+                            : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        }`}
+                      >
+                        <option value="">{t("selectRelationshipOption") || "Select Relationship"}</option>
+                        <option value="Child">{t("relationChild") || "Child"}</option>
+                        <option value="Spouse">{t("relationSpouse") || "Spouse"}</option>
+                        <option value="Sibling">{t("relationSibling") || "Sibling"}</option>
+                        <option value="Relative">{t("relationRelative") || "Relative"}</option>
+                        <option value="Caregiver">{t("relationCaregiver") || "Caregiver / Guardian"}</option>
+                        <option value="Friend">{t("relationFriend") || "Friend / Neighbor"}</option>
+                        <option value="Others">{t("relationOthers") || "Others"}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyAddress || "").trim() ? "text-red-600" : "text-gray-700"}`}>
+                      {t("address") || "Emergency Address"} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.emergencyAddress}
+                      onChange={(e) => handleFieldChange("emergencyAddress", e.target.value)}
+                      placeholder="Emergency Residential Address"
+                      className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 shadow-2xs ${
+                        attemptedNext && !(formData.emergencyAddress || "").trim()
+                          ? "border-red-400 focus:ring-red-300 bg-red-50"
+                          : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                      }`}
+                    />
+                  </div>
+                </div>
               </div>
 
               {attemptedNext && !step2Valid && (
