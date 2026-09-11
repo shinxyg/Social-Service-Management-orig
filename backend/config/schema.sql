@@ -467,4 +467,28 @@ CREATE TABLE IF NOT EXISTS beneficiary_history (
 CREATE INDEX IF NOT EXISTS idx_ben_history_ben_id ON beneficiary_history(beneficiary_id);
 CREATE INDEX IF NOT EXISTS idx_ben_history_created_at ON beneficiary_history(created_at DESC);
 
+-- 18. Training Applications Table
+CREATE TABLE IF NOT EXISTS training_applications (
+  id SERIAL PRIMARY KEY,
+  reference_number VARCHAR(100) UNIQUE NOT NULL,
+  qcid VARCHAR(100),
+  user_id VARCHAR(100),
+  training_id VARCHAR(100) NOT NULL,
+  training_name VARCHAR(255) NOT NULL,
+  applicant_info JSONB DEFAULT '{}'::jsonb,
+  status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'approved', 'rejected', 'needs_revision'
+  schedule JSONB DEFAULT '{}'::jsonb,
+  attendance JSONB DEFAULT '{}'::jsonb,
+  certificate JSONB DEFAULT NULL,
+  approved_by VARCHAR(150),
+  approved_date TIMESTAMP WITH TIME ZONE,
+  rejection_reason TEXT,
+  revision_notes TEXT,
+  submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
+CREATE INDEX IF NOT EXISTS idx_training_ref ON training_applications(reference_number);
+CREATE INDEX IF NOT EXISTS idx_training_qcid ON training_applications(qcid);
+CREATE INDEX IF NOT EXISTS idx_training_status ON training_applications(status);

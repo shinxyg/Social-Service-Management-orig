@@ -24,8 +24,12 @@ export default function SuperAdminSidebar() {
     path === "/super-admin" ? location.pathname === "/super-admin" : location.pathname.startsWith(path)
 
   const handleLogout = () => {
+    sessionStorage.removeItem("isAuthenticated")
+    sessionStorage.removeItem("userRole")
+    sessionStorage.removeItem("currentUser")
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("currentUser")
     window.location.href = "/super-admin/login"
   }
 

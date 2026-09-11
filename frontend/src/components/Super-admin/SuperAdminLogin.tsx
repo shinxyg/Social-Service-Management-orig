@@ -15,8 +15,16 @@ export default function SuperAdminLogin() {
 
     setTimeout(() => {
       if (username === "superadmin" && password === "changeme") {
-        localStorage.setItem("isAuthenticated", "true")
-        localStorage.setItem("userRole", "super_admin")
+        sessionStorage.setItem("isAuthenticated", "true")
+        sessionStorage.setItem("userRole", "super_admin")
+        sessionStorage.setItem("currentUser", JSON.stringify({
+          firstName: "Super",
+          lastName: "Admin",
+          role: "super_admin",
+          email: "superadmin@gov.ph",
+        }))
+        localStorage.removeItem("isAuthenticated")
+        localStorage.removeItem("userRole")
         window.location.href = "/super-admin"
       } else {
         setError("Maling username o password.")

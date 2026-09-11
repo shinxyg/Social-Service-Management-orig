@@ -32,8 +32,17 @@ import StaffManagement from "./components/Super-admin/StaffManagement"
 import { LanguageProvider } from "./components/ui/language-context"
 
 export default function App() {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  const userRole = localStorage.getItem('userRole'); // 'super_admin' | 'staff' | 'user'
+  // Clear legacy persistent auth from localStorage so site always opens logged out
+  try {
+    if (localStorage.getItem('isAuthenticated')) {
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('currentUser');
+    }
+  } catch {}
+
+  const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+  const userRole = sessionStorage.getItem('userRole'); // 'super_admin' | 'staff' | 'user'
   const isSuperAdmin = isAuthenticated && userRole === 'super_admin'
   const isStaff = isAuthenticated && userRole === 'staff';
   const isResident = isAuthenticated && userRole === 'user';

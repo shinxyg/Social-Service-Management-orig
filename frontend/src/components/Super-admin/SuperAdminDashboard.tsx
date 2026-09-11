@@ -42,8 +42,12 @@ export default function SuperAdminDashboard() {
   }, [])
 
   const handleLogout = () => {
+    sessionStorage.removeItem("isAuthenticated")
+    sessionStorage.removeItem("userRole")
+    sessionStorage.removeItem("currentUser")
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("currentUser")
     window.location.href = "/super-admin/login"
   }
 

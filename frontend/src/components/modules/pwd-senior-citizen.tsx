@@ -562,13 +562,23 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 function getDocImageUrl(doc: ApplicationDocument | null): string {
   if (!doc) return ""
-  if (doc.fileUrl && (doc.fileUrl.startsWith("data:") || doc.fileUrl.startsWith("http") || doc.fileUrl.startsWith("/") || doc.fileUrl.startsWith("blob:"))) {
-    return doc.fileUrl
+  const candidate = doc.fileUrl || (doc as any).url || (doc as any).previewUrl || (doc as any).path || (doc as any).filePath
+  if (candidate && typeof candidate === "string") {
+    if (candidate.startsWith("data:") || candidate.startsWith("http") || candidate.startsWith("/") || candidate.startsWith("blob:")) {
+      return candidate
+    }
+    if (candidate.startsWith("uploads/")) {
+      return `${API_BASE}/${candidate}`
+    }
+    return `${API_BASE}/uploads/${candidate}`
+  }
+  if (doc.filename && typeof doc.filename === "string" && !doc.filename.toLowerCase().startsWith("sample") && !doc.filename.toLowerCase().includes("samples/")) {
+    return `${API_BASE}/uploads/${doc.filename}`
   }
 
   const name = (doc.name || doc.filename || "").toLowerCase()
   if (name.includes("loss") || name.includes("affidavit")) return "/samples/AFFIDAVIT OF LOSS.webp"
-  if (name.includes("2x2") || name.includes("picture (2x2)") || name.includes("id picture") || name.includes("id photo") || name.includes("1x1")) return "/samples/ID PICTURE (2X2).webp"
+  if (name.includes("2x2") || name.includes("picture (2x2)") || name.includes("id picture") || name.includes("id photo") || name.includes("idphoto") || name.includes("1x1") || name.includes("photo") || name.includes("picture")) return "/samples/ID PICTURE (2X2).webp"
   if (name.includes("whole body") || name.includes("body")) return "/samples/WHOLE BODY.jpg"
   if (name.includes("signature") || name.includes("pirma")) return "/samples/SIGNATURE.avif"
   if (name.includes("disability") || name.includes("medical") || name.includes("certificate of disability")) return "/samples/CERTIFICATE OF DISABILITY.jpg"
@@ -579,6 +589,168 @@ function getDocImageUrl(doc: ApplicationDocument | null): string {
   if (name.includes("qc id") || name.includes("pwd id")) return "/samples/QC ID NG PERSON WITH DISABILITY.jpg"
 
   return "/samples/sample_valid_id.png"
+}
+
+export function getApplicantPhotoUrl(app: ApplicationSubmission | null | any): string {
+  if (!app) return "/samples/ID PICTURE (2X2).webp"
+
+  // 1. Direct properties on the application
+  const direct =
+    app.photoUrl ||
+    app.profilePhotoUrl ||
+    app.idPhotoUrl ||
+    app.avatarUrl ||
+    app.photo ||
+    app.avatar ||
+    app.idPhoto ||
+    (app as any).formData?.idPhoto ||
+    (app as any).extra_data?.photoUrl ||
+    (app as any).extra_data?.idPhoto
+  if (direct && typeof direct === "string" && (direct.startsWith("data:") || direct.startsWith("http") || direct.startsWith("/") || direct.startsWith("blob:"))) {
+    return direct
+  }
+
+  const resolveDocSrc = (d: any): string => {
+    if (!d) return ""
+    if (typeof d === "string") {
+      if (d.startsWith("data:") || d.startsWith("http") || d.startsWith("/") || d.startsWith("blob:")) return d
+      if (d.startsWith("uploads/")) return `${API_BASE}/${d}`
+      return `${API_BASE}/uploads/${d}`
+    }
+    const rawUrl = d.fileUrl || d.url || d.previewUrl || d.path || d.filePath || d.dataUrl || d.src
+    if (rawUrl && typeof rawUrl === "string") {
+      if (rawUrl.startsWith("data:") || rawUrl.startsWith("http") || rawUrl.startsWith("/") || rawUrl.startsWith("blob:")) return rawUrl
+      if (rawUrl.startsWith("uploads/")) return `${API_BASE}/${rawUrl}`
+      return `${API_BASE}/uploads/${rawUrl}`
+    }
+    if (d.filename && typeof d.filename === "string" && !d.filename.toLowerCase().startsWith("sample") && !d.filename.toLowerCase().includes("samples/")) {
+      return `${API_BASE}/uploads/${d.filename}`
+    }
+    return ""
+  }
+
+  // 2. Parse documents list
+  let docsList: any[] = []
+  if (Array.isArray(app.documents)) {
+    docsList = app.documents
+  } else if (typeof app.documents === "string") {
+    try { docsList = JSON.parse(app.documents) } catch { docsList = [] }
+  } else if (Array.isArray(app.extra_data?.documents)) {
+    docsList = app.extra_data.documents
+  } else if (Array.isArray(app.uploaded_documents)) {
+    docsList = app.uploaded_documents
+  }
+
+  // Flatten nested structures (e.g. { files: [...] })
+  const flatDocs: any[] = []
+  for (const item of docsList) {
+    if (!item) continue
+    if (Array.isArray(item.files)) {
+      for (const f of item.files) {
+        flatDocs.push({
+          ...f,
+          name: f.name || item.name || item.documentLabel || item.documentId || "",
+          filename: f.filename || item.filename || "",
+        })
+      }
+    } else {
+      flatDocs.push(item)
+    }
+  }
+
+  // 3. Find explicit photo/picture doc
+  const photoDoc = flatDocs.find((d) => {
+    const n = String(d.name || d.documentId || d.label || d.id || "").toLowerCase()
+    const fn = String(d.filename || "").toLowerCase()
+    return (
+      n.includes("photo") ||
+      n.includes("picture") ||
+      n.includes("2x2") ||
+      n.includes("1x1") ||
+      n.includes("idphoto") ||
+      n.includes("avatar") ||
+      n.includes("selfie") ||
+      fn.includes("photo") ||
+      fn.includes("picture") ||
+      fn.includes("2x2") ||
+      fn.includes("1x1")
+    )
+  })
+
+  if (photoDoc) {
+    const src = resolveDocSrc(photoDoc)
+    if (src) return src
+  }
+
+  // 4. Any image document from flatDocs
+  const anyImageDoc = flatDocs.find((d) => {
+    const src = resolveDocSrc(d)
+    const fn = String(d.filename || d.name || "").toLowerCase()
+    return (
+      src.startsWith("data:image") ||
+      src.startsWith("blob:") ||
+      /\.(jpe?g|png|webp|avif|gif)$/i.test(fn) ||
+      /\.(jpe?g|png|webp|avif|gif)$/i.test(src)
+    )
+  })
+  if (anyImageDoc) {
+    const src = resolveDocSrc(anyImageDoc)
+    if (src) return src
+  }
+
+  // 5. Look across localStorage
+  try {
+    const localKeys = [
+      "pwd_senior_applications",
+      "solo_parent_applications",
+      "child_welfare_applications",
+      "applications",
+      "all_user_applications",
+      "active_applications",
+      "currentUser",
+      "userProfile",
+      "user",
+    ]
+    for (const key of localKeys) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          const match = parsed.find((a: any) => {
+            if (!a) return false
+            const aRef = String(a.referenceNumber || a.reference_number || a.id || a.qcid || "").trim().toLowerCase()
+            const appRef = String(app.referenceNumber || app.id || (app as any).qcid || "").trim().toLowerCase()
+            const aEmail = String(a.email || "").trim().toLowerCase()
+            const appEmail = String(app.email || "").trim().toLowerCase()
+            const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase()
+            const appName = `${app.firstName || ""} ${app.lastName || ""}`.trim().toLowerCase()
+            return (
+              (appRef && aRef && (aRef === appRef || aRef.includes(appRef) || appRef.includes(aRef))) ||
+              (appEmail && aEmail && aEmail === appEmail) ||
+              (appName && aName && aName === appName)
+            )
+          })
+          if (match && match !== app) {
+            const mPhoto = getApplicantPhotoUrl(match)
+            if (mPhoto && mPhoto !== "/samples/ID PICTURE (2X2).webp") return mPhoto
+          }
+        } else if (parsed && typeof parsed === "object") {
+          const pRef = String(parsed.qcidNumber || parsed.qcid_number || parsed.qcidNo || parsed.qcid || parsed.reference_number || "").trim().toLowerCase()
+          const appRef = String(app.referenceNumber || app.id || (app as any).qcid || "").trim().toLowerCase()
+          const pEmail = String(parsed.email || "").trim().toLowerCase()
+          const appEmail = String(app.email || "").trim().toLowerCase()
+          if ((appRef && pRef && (pRef === appRef || appRef.includes(pRef))) || (appEmail && pEmail && pEmail === appEmail)) {
+            const userPhoto = parsed.photoUrl || parsed.profilePhotoUrl || parsed.avatar || parsed.photo || parsed.idPhoto
+            if (userPhoto && typeof userPhoto === "string") return userPhoto
+          }
+        }
+      } catch {}
+    }
+  } catch {}
+
+  // 6. Fallback sample image
+  return "/samples/ID PICTURE (2X2).webp"
 }
 
 function DocumentViewerModal({
@@ -630,6 +802,292 @@ function DocumentViewerModal({
           >
             CLOSE
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+function OfficialIdCardFront({
+  app,
+  isPwdApp,
+  photoUrl,
+  idNumber,
+  appDate,
+  expiryDateStr,
+}: {
+  app: ApplicationSubmission
+  isPwdApp: boolean
+  photoUrl: string
+  idNumber: string
+  appDate: string
+  expiryDateStr: string
+}) {
+  return (
+    <div
+      className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none print:shadow-none print:border-slate-400"
+      style={{
+        aspectRatio: "1.586 / 1",
+        background: isPwdApp
+          ? "linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #eff6ff 100%)"
+          : "linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0fdf4 100%)",
+        WebkitPrintColorAdjust: "exact",
+        printColorAdjust: "exact",
+      }}
+    >
+      {/* Header */}
+      <div
+        className={`px-3.5 py-2.5 flex items-center justify-between shadow-xs ${
+          isPwdApp
+            ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950"
+            : "bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 text-white"
+        }`}
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+      >
+        <div className="flex items-center gap-2">
+          <img src="/gov-serves-seal.png" alt="QC Seal" className="w-7 h-7 object-contain drop-shadow-xs rounded-full bg-white/20 p-0.5" />
+          <div>
+            <p className={`text-[7.5px] font-bold tracking-widest uppercase leading-tight ${isPwdApp ? "text-slate-800" : "text-blue-100 opacity-90"}`}>
+              Republic of the Philippines
+            </p>
+            <p className={`text-xs font-black tracking-wide leading-tight uppercase ${isPwdApp ? "text-slate-950" : "text-white"}`}>
+              GOV SERVICES
+            </p>
+          </div>
+        </div>
+        <span
+          className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+            isPwdApp
+              ? "bg-slate-950 text-amber-300 border-slate-800 shadow-xs"
+              : "bg-white/20 text-white border-white/30"
+          }`}
+          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+        >
+          {isPwdApp ? "PDAO CARD" : "OSCA CARD"}
+        </span>
+      </div>
+
+      {/* Sub-header */}
+      <div
+        className={`py-1 text-center text-[9.5px] font-black uppercase tracking-widest ${
+          isPwdApp
+            ? "bg-slate-950 text-amber-300 border-b border-amber-500/40"
+            : "bg-amber-400 text-slate-950"
+        }`}
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+      >
+        {isPwdApp ? "Persons with Disability Affairs Office" : "Office for Senior Citizens Affairs"}
+      </div>
+
+      {/* Details with QC Logo on right side */}
+      <div className="p-3 flex gap-2.5 items-start relative">
+        {/* 2x2 Photo */}
+        <div className="w-22 h-26 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative z-10">
+          {photoUrl ? (
+            <img src={photoUrl} alt="Cardholder" className="w-full h-full object-cover" />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+              <User className="w-8 h-8 text-slate-300 mb-1" />
+              <span className="text-[7px] font-bold uppercase tracking-wider">2x2 Photo</span>
+            </div>
+          )}
+          <div
+            className={`absolute bottom-0 inset-x-0 text-white text-[6.5px] text-center py-0.5 font-bold uppercase ${isPwdApp ? "bg-amber-600" : "bg-blue-900"}`}
+            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+          >
+            QC {isPwdApp ? "PDAO" : "OSCA"}
+          </div>
+        </div>
+
+        {/* Details text */}
+        <div className="flex-1 min-w-0 space-y-1 relative z-10">
+          <div>
+            <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC ID Number</span>
+            <p className={`text-sm font-black font-mono tracking-wide leading-none ${isPwdApp ? "text-amber-700" : "text-blue-900"}`}>
+              {idNumber}
+            </p>
+          </div>
+
+          <div className="pt-0.5">
+            <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Cardholder Full Name</span>
+            <p className="text-xs font-black text-slate-900 leading-tight uppercase truncate">{displayName(app)}</p>
+          </div>
+
+          {isPwdApp ? (
+            <div className="pt-0.5">
+              <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Type of Disability</span>
+              <p className="text-[9.5px] font-bold text-red-700 leading-tight truncate">{app.disabilityType || "Visual Disability"}</p>
+            </div>
+          ) : (
+            <div className="pt-0.5">
+              <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Classification</span>
+              <p className="text-[9.5px] font-bold text-emerald-800 leading-tight truncate">Senior Citizen Welfare Beneficiary</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-1 pt-0.5 text-[8.5px] text-slate-700">
+            <div>
+              <span className="text-[7px] font-semibold text-slate-400 uppercase">Birthdate:</span> {app.dateOfBirth || "—"}
+            </div>
+            <div>
+              <span className="text-[7px] font-semibold text-slate-400 uppercase">Sex / Blood:</span> {app.sex || "—"} / O+
+            </div>
+          </div>
+
+          <div className="text-[8.5px] text-slate-700 truncate pt-0.5">
+            <span className="text-[7px] font-semibold text-slate-400 uppercase">Address:</span> {app.address || "Quezon City"}
+          </div>
+        </div>
+
+        {/* QC Official Logo on the right side */}
+        <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
+          <img
+            src="/gov-serves-seal.png"
+            alt="QC Official Seal"
+            className="w-14 h-14 object-contain drop-shadow-md hover:scale-105 transition-transform"
+          />
+          <span className="text-[6px] font-black uppercase text-slate-600 tracking-tighter mt-0.5">QC SEAL</span>
+        </div>
+      </div>
+
+      {/* Bottom Signatures & Barcode */}
+      <div
+        className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]"
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+      >
+        <div>
+          <p className="font-mono font-bold text-slate-700 tracking-widest text-[8.5px]">|||| | || |||| | | ||| ||||</p>
+          <div className="flex items-center gap-1.5 text-[6.5px] uppercase tracking-wider font-semibold">
+            <span className="text-slate-400">Issued: {appDate}</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-amber-800 font-bold">Expires: {expiryDateStr}</span>
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="w-18 border-b border-slate-400 mx-auto mb-0.5" />
+          <p className="font-bold text-slate-800 text-[7.5px] leading-tight uppercase">MA. JOSEFINA G. BELMONTE</p>
+          <p className="text-[6.5px] text-slate-500 uppercase leading-none">City Mayor</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function OfficialIdCardBack({
+  isPwdApp,
+  appDate,
+  expiryDateStr,
+  emergencyPerson,
+  emergencyPhone,
+  emergencyRel,
+  emergencyAddr,
+}: {
+  isPwdApp: boolean
+  appDate: string
+  expiryDateStr: string
+  emergencyPerson: string
+  emergencyPhone: string
+  emergencyRel: string
+  emergencyAddr: string
+}) {
+  return (
+    <div
+      className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none flex flex-col justify-between print:shadow-none print:border-slate-400"
+      style={{
+        aspectRatio: "1.586 / 1",
+        background: isPwdApp
+          ? "linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #fefce8 100%)"
+          : "linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0fdf4 100%)",
+        WebkitPrintColorAdjust: "exact",
+        printColorAdjust: "exact",
+      }}
+    >
+      {/* Background Watermark Seal */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
+        <img src="/gov-serves-seal.png" alt="" className="w-48 h-48 object-contain" />
+      </div>
+
+      {/* Back Header Strip */}
+      <div
+        className={`px-3.5 py-1.5 flex items-center justify-between shadow-xs relative z-10 ${
+          isPwdApp
+            ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950"
+            : "bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 text-white"
+        }`}
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+      >
+        <div className="flex items-center gap-1.5">
+          <img src="/gov-serves-seal.png" alt="QC Seal" className="w-4 h-4 object-contain rounded-full bg-white/20 p-0.5" />
+          <p className="text-[8.5px] font-black uppercase tracking-wide leading-tight">
+            {isPwdApp
+              ? "Republic Act 7277 / RA 9442 — Magna Carta for PWDs"
+              : "Republic Act 9994 — Expanded Senior Citizens Act"}
+          </p>
+        </div>
+        <span
+          className={`text-[7.5px] font-black px-2 py-0.5 rounded-full border shadow-xs ${
+            isPwdApp
+              ? "bg-slate-950 text-amber-300 border-slate-800"
+              : "bg-amber-400 text-slate-950 border-amber-500"
+          }`}
+          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+        >
+          {isPwdApp ? "QC-PDAO" : "QC-OSCA"}
+        </span>
+      </div>
+
+      <div className="p-3 pt-2 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
+        {/* Benefits / Rights List */}
+        <div
+          className={`rounded-lg p-2 space-y-1 text-[7.5px] text-slate-800 leading-tight border ${
+            isPwdApp ? "bg-amber-50/80 border-amber-200/80" : "bg-blue-50/80 border-blue-200/80"
+          }`}
+          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+        >
+          <p className="flex items-start gap-1">
+            <span className={`font-bold shrink-0 ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>✓</span>
+            <span><strong>20% Discount &amp; VAT Exemption</strong> on medicines, medical supplies, and dental services.</span>
+          </p>
+          <p className="flex items-start gap-1">
+            <span className={`font-bold shrink-0 ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>✓</span>
+            <span><strong>20% Discount</strong> on public domestic transportation (air, sea, land, MRT/LRT), hotels, and restaurants.</span>
+          </p>
+          <p className="flex items-start gap-1">
+            <span className={`font-bold shrink-0 ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>✓</span>
+            <span>Valid from <strong className="text-slate-900">{appDate}</strong> to <strong className="text-slate-900">{expiryDateStr}</strong> across all cities in the Philippines.</span>
+          </p>
+        </div>
+
+        {/* Emergency Contact */}
+        <div
+          className={`border-t pt-1.5 ${isPwdApp ? "border-amber-200/70" : "border-blue-200/70"}`}
+          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+        >
+          <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider mb-1">In case of emergency, please notify:</p>
+          <div
+            className={`grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7px] text-slate-700 bg-white/90 p-1.5 rounded-lg border shadow-xs ${
+              isPwdApp ? "border-amber-200/60" : "border-blue-200/60"
+            }`}
+            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+          >
+            <div>
+              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Contact Person: </span>
+              <span className="font-bold text-slate-900 truncate">{emergencyPerson}</span>
+            </div>
+            <div>
+              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Phone: </span>
+              <span className={`font-mono font-bold ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>{emergencyPhone}</span>
+            </div>
+            <div>
+              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Relation: </span>
+              <span className="font-semibold text-slate-800 truncate">{emergencyRel}</span>
+            </div>
+            <div>
+              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Address: </span>
+              <span className="font-semibold text-slate-800 truncate">{emergencyAddr}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -724,48 +1182,16 @@ function OfficialIdCardModal({
     app.address ||
     "Quezon City"
 
-  const photoDoc = (app.documents || []).find((d) => {
-    const n = (d.name || "").toLowerCase()
-    const fn = (d.filename || "").toLowerCase()
-    return (
-      n.includes("photo") ||
-      n.includes("picture") ||
-      n.includes("2x2") ||
-      n.includes("1x1") ||
-      n.includes("idphoto") ||
-      n.includes("avatar") ||
-      n.includes("selfie") ||
-      fn.includes("photo") ||
-      fn.includes("picture") ||
-      fn.includes("2x2") ||
-      fn.includes("1x1")
-    )
-  })
-
-  // Prioritize actual uploaded fileUrl first, then any uploaded image dataUrl, then profile photo, then placeholder
-  let photoUrl = ""
-  if (photoDoc && photoDoc.fileUrl && (photoDoc.fileUrl.startsWith("data:") || photoDoc.fileUrl.startsWith("http") || photoDoc.fileUrl.startsWith("/") || photoDoc.fileUrl.startsWith("blob:"))) {
-    photoUrl = photoDoc.fileUrl
-  } else {
-    const anyImageDoc = (app.documents || []).find((d) => d.fileUrl && (d.fileUrl.startsWith("data:image") || d.fileUrl.startsWith("blob:")))
-    if (anyImageDoc?.fileUrl) {
-      photoUrl = anyImageDoc.fileUrl
-    } else if ((app as any).photoUrl) {
-      photoUrl = (app as any).photoUrl
-    } else if ((app as any).profilePhotoUrl) {
-      photoUrl = (app as any).profilePhotoUrl
-    } else if (photoDoc) {
-      photoUrl = getDocImageUrl(photoDoc)
-    } else {
-      photoUrl = "/samples/ID PICTURE (2X2).webp"
-    }
-  }
+  const photoUrl = getApplicantPhotoUrl(app)
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
-      <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
-        {/* Modal Header */}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50">
+    <div
+      className="fixed inset-0 z-60 flex items-center justify-center p-4 print:static print:p-0 print:bg-white print:z-auto print:block"
+      style={{ background: "rgba(15,23,42,0.7)" }}
+    >
+      <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200 print:shadow-none print:border-none print:max-w-none print:w-full print:rounded-none">
+        {/* Modal Header (Hidden on Print) */}
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50 print:hidden">
           <div className="flex items-center gap-2">
             <IdCard className="w-5 h-5 text-blue-600" />
             <div>
@@ -780,8 +1206,8 @@ function OfficialIdCardModal({
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl font-light leading-none p-1 cursor-pointer">×</button>
         </div>
 
-        {/* Side Selector */}
-        <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-3">
+        {/* Side Selector (Hidden on Print) */}
+        <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-3 print:hidden">
           <button
             onClick={() => setActiveSide("front")}
             className={`pb-2 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
@@ -800,242 +1226,81 @@ function OfficialIdCardModal({
           </button>
         </div>
 
-        {/* Card Body */}
-        <div className="p-6 bg-slate-100/80 flex flex-col items-center justify-center overflow-y-auto">
+        {/* Card Body (Interactive Screen View — Hidden on Print) */}
+        <div className="p-6 bg-slate-100/80 flex flex-col items-center justify-center overflow-y-auto print:hidden">
           {activeSide === "front" ? (
-            /* FRONT CARD */
-            <div
-              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none"
-              style={{
-                aspectRatio: "1.586 / 1",
-                background: isPwdApp
-                  ? "linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #eff6ff 100%)"
-                  : "linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0fdf4 100%)",
-              }}
-            >
-              {/* Header */}
-              <div
-                className={`px-3.5 py-2.5 flex items-center justify-between shadow-xs ${
-                  isPwdApp
-                    ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950"
-                    : "bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <img src="/gov-serves-seal.png" alt="QC Seal" className="w-7 h-7 object-contain drop-shadow-xs rounded-full bg-white/20 p-0.5" />
-                  <div>
-                    <p className={`text-[7.5px] font-bold tracking-widest uppercase leading-tight ${isPwdApp ? "text-slate-800" : "text-blue-100 opacity-90"}`}>
-                      Republic of the Philippines
-                    </p>
-                    <p className={`text-xs font-black tracking-wide leading-tight uppercase ${isPwdApp ? "text-slate-950" : "text-white"}`}>
-                      GOV SERVICES
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                    isPwdApp
-                      ? "bg-slate-950 text-amber-300 border-slate-800 shadow-xs"
-                      : "bg-white/20 text-white border-white/30"
-                  }`}
-                >
-                  {isPwdApp ? "PDAO CARD" : "OSCA CARD"}
-                </span>
-              </div>
-
-              {/* Sub-header */}
-              <div
-                className={`py-1 text-center text-[9.5px] font-black uppercase tracking-widest ${
-                  isPwdApp
-                    ? "bg-slate-950 text-amber-300 border-b border-amber-500/40"
-                    : "bg-amber-400 text-slate-950"
-                }`}
-              >
-                {isPwdApp ? "Persons with Disability Affairs Office" : "Office for Senior Citizens Affairs"}
-              </div>
-
-              {/* Details with QC Logo on right side */}
-              <div className="p-3 flex gap-2.5 items-start relative">
-                {/* 2x2 Photo */}
-                <div className="w-22 h-26 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative z-10">
-                  {photoUrl ? (
-                    <img src={photoUrl} alt="Cardholder" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
-                      <User className="w-8 h-8 text-slate-300 mb-1" />
-                      <span className="text-[7px] font-bold uppercase tracking-wider">2x2 Photo</span>
-                    </div>
-                  )}
-                  <div className={`absolute bottom-0 inset-x-0 text-white text-[6.5px] text-center py-0.5 font-bold uppercase ${isPwdApp ? "bg-amber-600" : "bg-blue-900"}`}>
-                    QC {isPwdApp ? "PDAO" : "OSCA"}
-                  </div>
-                </div>
-
-                {/* Details text */}
-                <div className="flex-1 min-w-0 space-y-1 relative z-10">
-                  <div>
-                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC ID Number</span>
-                    <p className={`text-sm font-black font-mono tracking-wide leading-none ${isPwdApp ? "text-amber-700" : "text-blue-900"}`}>
-                      {idNumber}
-                    </p>
-                  </div>
-
-                  <div className="pt-0.5">
-                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Cardholder Full Name</span>
-                    <p className="text-xs font-black text-slate-900 leading-tight uppercase truncate">{displayName(app)}</p>
-                  </div>
-
-                  {isPwdApp ? (
-                    <div className="pt-0.5">
-                      <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Type of Disability</span>
-                      <p className="text-[9.5px] font-bold text-red-700 leading-tight truncate">{app.disabilityType || "Visual Disability"}</p>
-                    </div>
-                  ) : (
-                    <div className="pt-0.5">
-                      <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Classification</span>
-                      <p className="text-[9.5px] font-bold text-emerald-800 leading-tight truncate">Senior Citizen Welfare Beneficiary</p>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-1 pt-0.5 text-[8.5px] text-slate-700">
-                    <div>
-                      <span className="text-[7px] font-semibold text-slate-400 uppercase">Birthdate:</span> {app.dateOfBirth || "—"}
-                    </div>
-                    <div>
-                      <span className="text-[7px] font-semibold text-slate-400 uppercase">Sex / Blood:</span> {app.sex || "—"} / O+
-                    </div>
-                  </div>
-
-                  <div className="text-[8.5px] text-slate-700 truncate pt-0.5">
-                    <span className="text-[7px] font-semibold text-slate-400 uppercase">Address:</span> {app.address || "Quezon City"}
-                  </div>
-                </div>
-
-                {/* QC Official Logo on the right side */}
-                <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
-                  <img
-                    src="/gov-serves-seal.png"
-                    alt="QC Official Seal"
-                    className="w-14 h-14 object-contain drop-shadow-md hover:scale-105 transition-transform"
-                  />
-                  <span className="text-[6px] font-black uppercase text-slate-600 tracking-tighter mt-0.5">QC SEAL</span>
-                </div>
-              </div>
-
-              {/* Bottom Signatures & Barcode */}
-              <div className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]">
-                <div>
-                  <p className="font-mono font-bold text-slate-700 tracking-widest text-[8.5px]">|||| | || |||| | | ||| ||||</p>
-                  <div className="flex items-center gap-1.5 text-[6.5px] uppercase tracking-wider font-semibold">
-                    <span className="text-slate-400">Issued: {appDate}</span>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-amber-800 font-bold">Expires: {expiryDateStr}</span>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="w-18 border-b border-slate-400 mx-auto mb-0.5" />
-                  <p className="font-bold text-slate-800 text-[7.5px] leading-tight uppercase">MA. JOSEFINA G. BELMONTE</p>
-                  <p className="text-[6.5px] text-slate-500 uppercase leading-none">City Mayor</p>
-                </div>
-              </div>
-            </div>
+            <OfficialIdCardFront
+              app={app}
+              isPwdApp={isPwdApp}
+              photoUrl={photoUrl}
+              idNumber={idNumber}
+              appDate={appDate}
+              expiryDateStr={expiryDateStr}
+            />
           ) : (
-            /* BACK CARD */
-            <div
-              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none flex flex-col justify-between"
-              style={{
-                aspectRatio: "1.586 / 1",
-                background: isPwdApp
-                  ? "linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #fefce8 100%)"
-                  : "linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0fdf4 100%)",
-              }}
-            >
-              {/* Background Watermark Seal */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
-                <img src="/gov-serves-seal.png" alt="" className="w-48 h-48 object-contain" />
-              </div>
-
-              {/* Back Header Strip */}
-              <div
-                className={`px-3.5 py-1.5 flex items-center justify-between shadow-xs relative z-10 ${
-                  isPwdApp
-                    ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950"
-                    : "bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 text-white"
-                }`}
-              >
-                <div className="flex items-center gap-1.5">
-                  <img src="/gov-serves-seal.png" alt="QC Seal" className="w-4 h-4 object-contain rounded-full bg-white/20 p-0.5" />
-                  <p className="text-[8.5px] font-black uppercase tracking-wide leading-tight">
-                    {isPwdApp
-                      ? "Republic Act 7277 / RA 9442 — Magna Carta for PWDs"
-                      : "Republic Act 9994 — Expanded Senior Citizens Act"}
-                  </p>
-                </div>
-                <span
-                  className={`text-[7.5px] font-black px-2 py-0.5 rounded-full border shadow-xs ${
-                    isPwdApp
-                      ? "bg-slate-950 text-amber-300 border-slate-800"
-                      : "bg-amber-400 text-slate-950 border-amber-500"
-                  }`}
-                >
-                  {isPwdApp ? "QC-PDAO" : "QC-OSCA"}
-                </span>
-              </div>
-
-              <div className="p-3 pt-2 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
-                {/* Benefits / Rights List */}
-                <div
-                  className={`rounded-lg p-2 space-y-1 text-[7.5px] text-slate-800 leading-tight border ${
-                    isPwdApp ? "bg-amber-50/80 border-amber-200/80" : "bg-blue-50/80 border-blue-200/80"
-                  }`}
-                >
-                  <p className="flex items-start gap-1">
-                    <span className={`font-bold shrink-0 ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>✓</span>
-                    <span><strong>20% Discount &amp; VAT Exemption</strong> on medicines, medical supplies, and dental services.</span>
-                  </p>
-                  <p className="flex items-start gap-1">
-                    <span className={`font-bold shrink-0 ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>✓</span>
-                    <span><strong>20% Discount</strong> on public domestic transportation (air, sea, land, MRT/LRT), hotels, and restaurants.</span>
-                  </p>
-                  <p className="flex items-start gap-1">
-                    <span className={`font-bold shrink-0 ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>✓</span>
-                    <span>Valid from <strong className="text-slate-900">{appDate}</strong> to <strong className="text-slate-900">{expiryDateStr}</strong> across all cities in the Philippines.</span>
-                  </p>
-                </div>
-
-                {/* Emergency Contact */}
-                <div className={`border-t pt-1.5 ${isPwdApp ? "border-amber-200/70" : "border-blue-200/70"}`}>
-                  <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider mb-1">In case of emergency, please notify:</p>
-                  <div
-                    className={`grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7px] text-slate-700 bg-white/90 p-1.5 rounded-lg border shadow-xs ${
-                      isPwdApp ? "border-amber-200/60" : "border-blue-200/60"
-                    }`}
-                  >
-                    <div>
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Contact Person: </span>
-                      <span className="font-bold text-slate-900 truncate">{emergencyPerson}</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Phone: </span>
-                      <span className={`font-mono font-bold ${isPwdApp ? "text-amber-700" : "text-blue-700"}`}>{emergencyPhone}</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Relation: </span>
-                      <span className="font-semibold text-slate-800 truncate">{emergencyRel}</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Address: </span>
-                      <span className="font-semibold text-slate-800 truncate">{emergencyAddr}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <OfficialIdCardBack
+              isPwdApp={isPwdApp}
+              appDate={appDate}
+              expiryDateStr={expiryDateStr}
+              emergencyPerson={emergencyPerson}
+              emergencyPhone={emergencyPhone}
+              emergencyRel={emergencyRel}
+              emergencyAddr={emergencyAddr}
+            />
           )}
         </div>
 
-        {/* Modal Footer */}
-        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between gap-3">
+        {/* ========================================================================= */}
+        {/* PRINT-ONLY CONTAINER: RENDERS BOTH FRONT AND BACK WITH FULL RICH COLORS   */}
+        {/* ========================================================================= */}
+        <div id="official-id-card-print-area" className="hidden print:flex print:flex-col print:items-center print:justify-center print:gap-6 print:w-full print:py-4">
+          <div className="text-center print:block mb-1">
+            <p className="text-[11px] font-bold text-slate-800 tracking-wide uppercase">
+              Republic of the Philippines • City Government of Quezon City
+            </p>
+            <p className="text-[9px] text-slate-500 font-medium">
+              Official {isPwdApp ? "PDAO Disability" : "OSCA Senior Citizen"} Identification Card (Front &amp; Back)
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+            {/* Front Card */}
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">FRONT CARD</span>
+              <OfficialIdCardFront
+                app={app}
+                isPwdApp={isPwdApp}
+                photoUrl={photoUrl}
+                idNumber={idNumber}
+                appDate={appDate}
+                expiryDateStr={expiryDateStr}
+              />
+            </div>
+
+            {/* Back Card */}
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">BACK CARD</span>
+              <OfficialIdCardBack
+                isPwdApp={isPwdApp}
+                appDate={appDate}
+                expiryDateStr={expiryDateStr}
+                emergencyPerson={emergencyPerson}
+                emergencyPhone={emergencyPhone}
+                emergencyRel={emergencyRel}
+                emergencyAddr={emergencyAddr}
+              />
+            </div>
+          </div>
+
+          <div className="text-center print:block mt-1">
+            <p className="text-[8px] text-slate-400 italic">
+              ✂ Cut along the solid outer border of the cards. Laminate or fold front and back together.
+            </p>
+          </div>
+        </div>
+
+        {/* Modal Footer (Hidden on Print) */}
+        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between gap-3 print:hidden">
           <span className="text-xs text-slate-500">
             Compliant with official Quezon City PDAO &amp; OSCA card issuance guidelines.
           </span>

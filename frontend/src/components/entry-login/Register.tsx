@@ -105,6 +105,51 @@ export const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigatingToLogin, setIsNavigatingToLogin] = useState(false);
 
+  const currentYear = new Date().getFullYear();
+  const minBirthYear = currentYear - 110;
+  const maxBirthYear = currentYear;
+
+  const handleBirthDayChange = (raw: string) => {
+    const cleaned = raw.replace(/\D/g, '').slice(0, 2);
+    if (!cleaned) {
+      setBirthDay('');
+      return;
+    }
+    const val = parseInt(cleaned, 10);
+    if (val > 31) {
+      setBirthDay('31');
+    } else {
+      setBirthDay(cleaned);
+    }
+  };
+
+  const handleBirthDayBlur = () => {
+    if (birthDay) {
+      const val = parseInt(birthDay, 10);
+      if (isNaN(val) || val < 1) {
+        setBirthDay('1');
+      } else if (val > 31) {
+        setBirthDay('31');
+      }
+    }
+  };
+
+  const handleBirthYearChange = (raw: string) => {
+    const cleaned = raw.replace(/\D/g, '').slice(0, 4);
+    setBirthYear(cleaned);
+  };
+
+  const handleBirthYearBlur = () => {
+    if (birthYear && birthYear.length === 4) {
+      const val = parseInt(birthYear, 10);
+      if (val < minBirthYear) {
+        setError(`Birth year cannot be earlier than ${minBirthYear} (maximum age limit of 110 years).`);
+      } else if (val > maxBirthYear) {
+        setError(`Birth year cannot be in the future (maximum year is ${maxBirthYear}).`);
+      }
+    }
+  };
+
   // Sync draft state to sessionStorage whenever form changes so reload preserves step 1
   useEffect(() => {
     if (step === 2) {
@@ -374,6 +419,16 @@ export const Register = () => {
       setError('Please complete your birth date.');
       return;
     }
+    const dayNum = parseInt(birthDay, 10);
+    if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) {
+      setError('Please enter a valid birth day between 1 and 31.');
+      return;
+    }
+    const yearNum = parseInt(birthYear, 10);
+    if (isNaN(yearNum) || birthYear.length < 4 || yearNum < minBirthYear || yearNum > maxBirthYear) {
+      setError(`Please enter a valid birth year between ${minBirthYear} and ${maxBirthYear} (maximum age limit of 110 years).`);
+      return;
+    }
     if (!city) {
       setError('Please select your city.');
       return;
@@ -443,11 +498,13 @@ export const Register = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userRole', 'user');
-        if (data.user) {
-          localStorage.setItem('currentUser', JSON.stringify(data.user));
-        }
+        // Clear any old auth state so user must explicitly log in
+        sessionStorage.removeItem('isAuthenticated');
+        sessionStorage.removeItem('userRole');
+        sessionStorage.removeItem('currentUser');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('currentUser');
         setStep(2);
       } else {
         setError(data.message || 'Registration failed. Please try again.');
@@ -742,18 +799,22 @@ export const Register = () => {
                       <input
                         type="text"
                         inputMode="numeric"
+                        maxLength={2}
                         value={birthDay}
-                        onChange={(e) => setBirthDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                        placeholder="Day"
+                        onChange={(e) => handleBirthDayChange(e.target.value)}
+                        onBlur={handleBirthDayBlur}
+                        placeholder="Day (1-31)"
                         className={inputClass}
                         required
                       />
                       <input
                         type="text"
                         inputMode="numeric"
+                        maxLength={4}
                         value={birthYear}
-                        onChange={(e) => setBirthYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                        placeholder="Year"
+                        onChange={(e) => handleBirthYearChange(e.target.value)}
+                        onBlur={handleBirthYearBlur}
+                        placeholder={`Year (${minBirthYear}-${maxBirthYear})`}
                         className={inputClass}
                         required
                       />

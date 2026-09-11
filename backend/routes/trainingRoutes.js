@@ -10,6 +10,7 @@ router.get('/programs', trainingController.getAvailablePrograms);
 router.get('/applications', trainingController.getApplications);
 router.post('/apply', trainingController.applyForTraining);
 router.patch('/applications/:id/status', trainingController.updateApplicationStatus);
+router.delete('/applications/:id', trainingController.deleteApplication);
 
 // Reset (testing)
 router.all('/reset', trainingController.resetApplications);

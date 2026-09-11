@@ -24,8 +24,12 @@ export function AppHeader({
   const menuRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = () => {
+    sessionStorage.removeItem('isAuthenticated');
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('currentUser');
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('currentUser');
     window.location.href = '/login';
   };
 

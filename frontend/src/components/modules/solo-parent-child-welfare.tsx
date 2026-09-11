@@ -29,6 +29,7 @@ import {
   pushUserNotification,
   type SyncedDisbursementRecord,
 } from "../../utils/financialAidSync"
+import { getApplicantPhotoUrl } from "./pwd-senior-citizen"
 
 interface ApplicationDocument {
   name: string
@@ -1164,6 +1165,266 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
   return `SP-137404-${year}-${stableSeq}`
 }
 
+
+function SoloParentCardFront({
+  app,
+  photoUrl,
+  idNumber,
+  appDate,
+  expiryDateStr,
+}: {
+  app: WelfareSubmission
+  photoUrl: string
+  idNumber: string
+  appDate: string
+  expiryDateStr: string
+}) {
+  return (
+    <div
+      className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none print:shadow-none print:border-slate-400"
+      style={{
+        aspectRatio: "1.586 / 1",
+        background: "linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #eff6ff 100%)",
+        WebkitPrintColorAdjust: "exact",
+        printColorAdjust: "exact",
+      }}
+    >
+      {/* Header */}
+      <div
+        className="px-3.5 py-2.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs"
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+      >
+        <div className="flex items-center gap-2">
+          <img src="/gov-serves-seal.png" alt="QC Seal" className="w-7 h-7 object-contain drop-shadow-xs rounded-full bg-white/20 p-0.5" />
+          <div>
+            <p className="text-[7.5px] font-bold tracking-widest uppercase opacity-90 leading-tight">Republic of the Philippines</p>
+            <p className="text-xs font-black tracking-wide leading-tight uppercase">GOV SERVICES</p>
+          </div>
+        </div>
+        <span
+          className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30"
+          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+        >
+          SOLO PARENT ID
+        </span>
+      </div>
+
+      {/* Sub-header */}
+      <div
+        className="py-1 text-center text-[9.5px] font-black uppercase tracking-widest bg-amber-400 text-slate-950"
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+      >
+        Social Services Development Department — Solo Parent Welfare
+      </div>
+
+      {/* Details with QC Logo on right side */}
+      <div className="p-3 flex gap-2.5 items-start relative">
+        <div className="w-22 h-26 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative z-10">
+          {photoUrl ? (
+            <img src={photoUrl} alt="Cardholder" className="w-full h-full object-cover" />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+              <User className="w-8 h-8 text-slate-300 mb-1" />
+              <span className="text-[7px] font-bold uppercase tracking-wider">2x2 Photo</span>
+            </div>
+          )}
+          <div
+            className="absolute bottom-0 inset-x-0 bg-red-900/90 text-white text-[6.5px] text-center py-0.5 font-bold uppercase"
+            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+          >
+            QC SSDD
+          </div>
+        </div>
+
+        <div className="flex-1 min-w-0 space-y-1 relative z-10">
+          <div>
+            <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC Solo Parent ID</span>
+            <p className="text-sm font-black text-red-700 font-mono tracking-wide leading-none">{idNumber}</p>
+          </div>
+
+          <div className="pt-0.5">
+            <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Cardholder Full Name</span>
+            <p className="text-xs font-black text-slate-900 leading-tight uppercase truncate">{displayName(app)}</p>
+          </div>
+
+          <div className="pt-0.5">
+            <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Classification</span>
+            <p className="text-[9.5px] font-bold text-emerald-800 leading-tight truncate">{(app as any).classification || (app as any).selectedCategory || "Solo Parent Beneficiary"}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1 pt-0.5 text-[8.5px] text-slate-700">
+            <div>
+              <span className="text-[7px] font-semibold text-slate-400 uppercase">Birthdate:</span> {(app as any).dobYear ? `${(app as any).dobYear}-${(app as any).dobMonth || "01"}-${(app as any).dobDay || "01"}` : "—"}
+            </div>
+            <div>
+              <span className="text-[7px] font-semibold text-slate-400 uppercase">Children:</span> {(app as any).familyMembers?.length || 1} Dependent(s)
+            </div>
+          </div>
+
+          <div className="text-[8.5px] text-slate-700 truncate pt-0.5">
+            <span className="text-[7px] font-semibold text-slate-400 uppercase">Address:</span> {getAddress(app)}
+          </div>
+        </div>
+
+        {/* QC Official Logo on the right side */}
+        <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
+          <img
+            src="/gov-serves-seal.png"
+            alt="QC Official Seal"
+            className="w-14 h-14 object-contain drop-shadow-md hover:scale-105 transition-transform"
+          />
+          <span className="text-[6px] font-black uppercase text-slate-600 tracking-tighter mt-0.5">QC SEAL</span>
+        </div>
+      </div>
+
+      {/* Bottom Signatures & Barcode */}
+      <div
+        className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]"
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+      >
+        <div>
+          <p className="font-mono font-bold text-slate-700 tracking-widest text-[8.5px]">|||| | || |||| | | ||| ||||</p>
+          <div className="flex items-center gap-1.5 text-[6.5px] uppercase tracking-wider font-semibold">
+            <span className="text-slate-400">Issued: {appDate}</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-amber-800 font-bold">Expires: {expiryDateStr}</span>
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="w-18 border-b border-slate-400 mx-auto mb-0.5" />
+          <p className="font-bold text-slate-800 text-[7.5px] leading-tight uppercase">MA. JOSEFINA G. BELMONTE</p>
+          <p className="text-[6.5px] text-slate-500 uppercase leading-none">City Mayor</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SoloParentCardBack({
+  app,
+  emergencyPerson,
+  emergencyPhone,
+  emergencyRel,
+  emergencyAddr,
+}: {
+  app: WelfareSubmission
+  emergencyPerson: string
+  emergencyPhone: string
+  emergencyRel: string
+  emergencyAddr: string
+}) {
+  return (
+    <div
+      className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none flex flex-col justify-between print:shadow-none print:border-slate-400"
+      style={{
+        aspectRatio: "1.586 / 1",
+        background: "linear-gradient(135deg, #fff5f5 0%, #ffffff 50%, #fef2f2 100%)",
+        WebkitPrintColorAdjust: "exact",
+        printColorAdjust: "exact",
+      }}
+    >
+      {/* Background Watermark Seal */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
+        <img src="/gov-serves-seal.png" alt="" className="w-48 h-48 object-contain" />
+      </div>
+
+      {/* Back Header Strip */}
+      <div
+        className="px-3.5 py-1.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs relative z-10"
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+      >
+        <div className="flex items-center gap-1.5">
+          <img src="/gov-serves-seal.png" alt="QC Seal" className="w-4 h-4 object-contain rounded-full bg-white/20 p-0.5" />
+          <p className="text-[8.5px] font-black uppercase tracking-wide leading-tight">
+            Republic Act 11861 — Expanded Solo Parents Welfare Act
+          </p>
+        </div>
+        <span
+          className="text-[7.5px] font-black text-amber-900 bg-amber-300 px-2 py-0.5 rounded-full border border-amber-400/80 shadow-xs"
+          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+        >
+          QC-SSDD
+        </span>
+      </div>
+
+      <div className="p-3 pt-2 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
+        <div>
+          {/* Benefits / Rights List */}
+          <div
+            className="bg-red-50/70 border border-red-200/80 rounded-lg p-2 space-y-1 text-[7.5px] text-slate-800 leading-tight"
+            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+          >
+            <p className="flex items-start gap-1">
+              <span className="text-red-600 font-bold shrink-0">✓</span>
+              <span><strong>10% Discount &amp; VAT Exemption</strong> on infant formula, baby food, prescribed medicines, and essential supplies.</span>
+            </p>
+            <p className="flex items-start gap-1">
+              <span className="text-red-600 font-bold shrink-0">✓</span>
+              <span><strong>Prioritization</strong> in local government housing, educational scholarships, and livelihood grants.</span>
+            </p>
+            <p className="flex items-start gap-1">
+              <span className="text-red-600 font-bold shrink-0">✓</span>
+              <span>Non-transferable official municipal privilege card valid nationwide across the Philippines.</span>
+            </p>
+          </div>
+
+          {/* Children / Dependents List */}
+          <div className="mt-1.5">
+            <p className="text-[7.5px] font-black text-red-900 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span>
+              Registered Children / Dependents:
+            </p>
+            <div
+              className="grid grid-cols-2 gap-1 text-[7.5px] text-slate-700 bg-white/90 p-1.5 rounded-lg border border-red-200/60 max-h-11 overflow-y-auto"
+              style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+            >
+              {((app as any).familyMembers && (app as any).familyMembers.length > 0) ? (
+                (app as any).familyMembers.map((m: any, i: number) => (
+                  <div key={i} className="truncate flex items-center gap-1">
+                    <span className="font-bold text-slate-900">• {m.name || (m as any).fullName || `${m.relationship}: child`}</span>
+                    <span className="text-slate-400">({m.age || "—"} yo)</span>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 text-slate-400 italic">1 Dependent on file</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Emergency Contact */}
+        <div
+          className="border-t border-red-200/70 pt-1.5"
+          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+        >
+          <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider mb-1">In case of emergency, please notify:</p>
+          <div
+            className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7px] text-slate-700 bg-white/90 p-1.5 rounded-lg border border-red-200/60 shadow-xs"
+            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+          >
+            <div>
+              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Contact Person: </span>
+              <span className="font-bold text-slate-900 truncate">{emergencyPerson}</span>
+            </div>
+            <div>
+              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Phone: </span>
+              <span className="font-mono font-bold text-red-700">{emergencyPhone}</span>
+            </div>
+            <div>
+              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Relation: </span>
+              <span className="font-semibold text-slate-800 truncate">{emergencyRel}</span>
+            </div>
+            <div>
+              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Address: </span>
+              <span className="font-semibold text-slate-800 truncate">{emergencyAddr}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function OfficialSoloParentIdCardModal({
   app,
   onClose,
@@ -1173,9 +1434,12 @@ function OfficialSoloParentIdCardModal({
   onClose: () => void
   allSubmissions?: WelfareSubmission[]
 }) {
-  if (!app || !isSoloParent(app)) return null
-  const idNumber = (app as any).assignedIdNumber || (app as any).soloParentIdNumber || generateOfficialSoloParentId(app, allSubmissions)
-  const issueDateObj = new Date((app as any).approvedDate || app.submittedAt || Date.now())
+  if (!app) return null
+  const idNumber =
+    (app as any).assignedIdNumber ||
+    (app as any).soloParentIdNumber ||
+    generateOfficialSoloParentId(app, allSubmissions)
+  const issueDateObj = new Date((app as any).dateApproved || app.submittedAt || Date.now())
   const validIssueDate = isNaN(issueDateObj.getTime()) ? new Date() : issueDateObj
   const appDate = validIssueDate.toLocaleDateString("en-PH", {
     year: "numeric",
@@ -1196,68 +1460,34 @@ function OfficialSoloParentIdCardModal({
     window.print()
   }
 
-  const photoDoc = (app.documents || []).find((d) => {
-    const n = (d.name || "").toLowerCase()
-    const fn = (d.filename || "").toLowerCase()
-    return (
-      n.includes("photo") ||
-      n.includes("picture") ||
-      n.includes("2x2") ||
-      n.includes("1x1") ||
-      n.includes("idphoto") ||
-      n.includes("avatar") ||
-      n.includes("selfie") ||
-      fn.includes("photo") ||
-      fn.includes("picture") ||
-      fn.includes("2x2") ||
-      fn.includes("1x1")
-    )
-  })
-
-  let photoUrl = ""
-  if (photoDoc && photoDoc.fileUrl && (photoDoc.fileUrl.startsWith("data:") || photoDoc.fileUrl.startsWith("http") || photoDoc.fileUrl.startsWith("/") || photoDoc.fileUrl.startsWith("blob:"))) {
-    photoUrl = photoDoc.fileUrl
-  } else {
-    const anyImageDoc = (app.documents || []).find((d) => d.fileUrl && (d.fileUrl.startsWith("data:image") || d.fileUrl.startsWith("blob:")))
-    if (anyImageDoc?.fileUrl) {
-      photoUrl = anyImageDoc.fileUrl
-    } else if ((app as any).photoUrl) {
-      photoUrl = (app as any).photoUrl
-    } else if ((app as any).profilePhotoUrl) {
-      photoUrl = (app as any).profilePhotoUrl
-    } else {
-      photoUrl = "/samples/ID PICTURE (2X2).webp"
-    }
-  }
+  const photoUrl = getApplicantPhotoUrl(app)
 
   const fdCard = (app as any).formData || (app as any).form_data || (app as any).extra_data?.formData || {}
   const edCard = (app as any).extraData || (app as any).extra_data || {}
 
-  const emFirstCard = app.emergencyFirstName || fdCard.emergencyFirstName || edCard.emergencyFirstName || (app as any).emergency_first_name || ""
-  const emLastCard = app.emergencyLastName || fdCard.emergencyLastName || edCard.emergencyLastName || (app as any).emergency_last_name || ""
+  const emFirstCard = (app as any).emergencyFirstName || fdCard.emergencyFirstName || edCard.emergencyFirstName || (app as any).emergency_first_name || ""
+  const emLastCard = (app as any).emergencyLastName || fdCard.emergencyLastName || edCard.emergencyLastName || (app as any).emergency_last_name || ""
   const emCombinedCard = [emFirstCard, emLastCard].filter(Boolean).join(" ")
 
   const emergencyPerson =
     emCombinedCard ||
-    app.emergencyName ||
-    (app as any).emergency_name ||
-    fdCard.emergencyName ||
-    fdCard.emergencyContactPerson ||
-    edCard.emergencyName ||
     (app as any).emergencyContactPerson ||
+    (app as any).emergency_contact_person ||
+    fdCard.emergencyContactPerson ||
+    edCard.emergencyContactPerson ||
+    (app as any).emergencyName ||
     "—"
 
   const emergencyPhone =
-    app.emergencyContactNo ||
+    (app as any).emergencyContactNo ||
     (app as any).emergency_contact_no ||
     fdCard.emergencyContactNo ||
-    fdCard.emergencyPhone ||
-    (app as any).emergencyPhone ||
     edCard.emergencyContactNo ||
+    (app as any).contactNumber ||
     "—"
 
   const emergencyRel =
-    app.emergencyRelationship ||
+    (app as any).emergencyRelationship ||
     (app as any).emergency_relationship ||
     fdCard.emergencyRelationship ||
     edCard.emergencyRelationship ||
@@ -1265,7 +1495,7 @@ function OfficialSoloParentIdCardModal({
     "—"
 
   const emergencyAddr =
-    app.emergencyAddress ||
+    (app as any).emergencyAddress ||
     (app as any).emergency_address ||
     fdCard.emergencyAddress ||
     edCard.emergencyAddress ||
@@ -1273,10 +1503,13 @@ function OfficialSoloParentIdCardModal({
     "Quezon City"
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
-      <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
-        {/* Modal Header */}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50">
+    <div
+      className="fixed inset-0 z-60 flex items-center justify-center p-4 print:static print:p-0 print:bg-white print:z-auto print:block"
+      style={{ background: "rgba(15,23,42,0.7)" }}
+    >
+      <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200 print:shadow-none print:border-none print:max-w-none print:w-full print:rounded-none">
+        {/* Modal Header (Hidden on Print) */}
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50 print:hidden">
           <div className="flex items-center gap-2">
             <IdCard className="w-5 h-5 text-blue-600" />
             <div>
@@ -1291,8 +1524,8 @@ function OfficialSoloParentIdCardModal({
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl font-light leading-none p-1 cursor-pointer">×</button>
         </div>
 
-        {/* Side Selector */}
-        <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-3">
+        {/* Side Selector (Hidden on Print) */}
+        <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-3 print:hidden">
           <button
             onClick={() => setActiveSide("front")}
             className={`pb-2 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
@@ -1311,205 +1544,75 @@ function OfficialSoloParentIdCardModal({
           </button>
         </div>
 
-        {/* Card Body */}
-        <div className="p-6 bg-slate-100/80 flex flex-col items-center justify-center overflow-y-auto">
+        {/* Card Body (Interactive Screen View — Hidden on Print) */}
+        <div className="p-6 bg-slate-100/80 flex flex-col items-center justify-center overflow-y-auto print:hidden">
           {activeSide === "front" ? (
-            /* FRONT CARD */
-            <div
-              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none"
-              style={{
-                aspectRatio: "1.586 / 1",
-                background: "linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #eff6ff 100%)",
-              }}
-            >
-              {/* Header */}
-              <div className="px-3.5 py-2.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs">
-                <div className="flex items-center gap-2">
-                  <img src="/gov-serves-seal.png" alt="QC Seal" className="w-7 h-7 object-contain drop-shadow-xs rounded-full bg-white/20 p-0.5" />
-                  <div>
-                    <p className="text-[7.5px] font-bold tracking-widest uppercase opacity-90 leading-tight">Republic of the Philippines</p>
-                    <p className="text-xs font-black tracking-wide leading-tight uppercase">GOV SERVICES</p>
-                  </div>
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
-                  SOLO PARENT ID
-                </span>
-              </div>
-
-              {/* Sub-header */}
-              <div className="py-1 text-center text-[9.5px] font-black uppercase tracking-widest bg-amber-400 text-slate-950">
-                Social Services Development Department — Solo Parent Welfare
-              </div>
-
-              {/* Details with QC Logo on right side */}
-              <div className="p-3 flex gap-2.5 items-start relative">
-                <div className="w-22 h-26 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative z-10">
-                  {photoUrl ? (
-                    <img src={photoUrl} alt="Cardholder" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
-                      <User className="w-8 h-8 text-slate-300 mb-1" />
-                      <span className="text-[7px] font-bold uppercase tracking-wider">2x2 Photo</span>
-                    </div>
-                  )}
-                  <div className="absolute bottom-0 inset-x-0 bg-red-900/90 text-white text-[6.5px] text-center py-0.5 font-bold uppercase">
-                    QC SSDD
-                  </div>
-                </div>
-
-                <div className="flex-1 min-w-0 space-y-1 relative z-10">
-                  <div>
-                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC Solo Parent ID</span>
-                    <p className="text-sm font-black text-red-700 font-mono tracking-wide leading-none">{idNumber}</p>
-                  </div>
-
-                  <div className="pt-0.5">
-                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Cardholder Full Name</span>
-                    <p className="text-xs font-black text-slate-900 leading-tight uppercase truncate">{displayName(app)}</p>
-                  </div>
-
-                  <div className="pt-0.5">
-                    <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Classification</span>
-                    <p className="text-[9.5px] font-bold text-emerald-800 leading-tight truncate">{app.classification || (app as any).selectedCategory || "Solo Parent Beneficiary"}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-1 pt-0.5 text-[8.5px] text-slate-700">
-                    <div>
-                      <span className="text-[7px] font-semibold text-slate-400 uppercase">Birthdate:</span> {app.dobYear ? `${app.dobYear}-${app.dobMonth || "01"}-${app.dobDay || "01"}` : "—"}
-                    </div>
-                    <div>
-                      <span className="text-[7px] font-semibold text-slate-400 uppercase">Children:</span> {app.familyMembers?.length || 1} Dependent(s)
-                    </div>
-                  </div>
-
-                  <div className="text-[8.5px] text-slate-700 truncate pt-0.5">
-                    <span className="text-[7px] font-semibold text-slate-400 uppercase">Address:</span> {getAddress(app)}
-                  </div>
-                </div>
-
-                {/* QC Official Logo on the right side */}
-                <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
-                  <img
-                    src="/gov-serves-seal.png"
-                    alt="QC Official Seal"
-                    className="w-14 h-14 object-contain drop-shadow-md hover:scale-105 transition-transform"
-                  />
-                  <span className="text-[6px] font-black uppercase text-slate-600 tracking-tighter mt-0.5">QC SEAL</span>
-                </div>
-              </div>
-
-              {/* Bottom Signatures & Barcode */}
-              <div className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]">
-                <div>
-                  <p className="font-mono font-bold text-slate-700 tracking-widest text-[8.5px]">|||| | || |||| | | ||| ||||</p>
-                  <div className="flex items-center gap-1.5 text-[6.5px] uppercase tracking-wider font-semibold">
-                    <span className="text-slate-400">Issued: {appDate}</span>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-amber-800 font-bold">Expires: {expiryDateStr}</span>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="w-18 border-b border-slate-400 mx-auto mb-0.5" />
-                  <p className="font-bold text-slate-800 text-[7.5px] leading-tight uppercase">MA. JOSEFINA G. BELMONTE</p>
-                  <p className="text-[6.5px] text-slate-500 uppercase leading-none">City Mayor</p>
-                </div>
-              </div>
-            </div>
+            <SoloParentCardFront
+              app={app}
+              photoUrl={photoUrl}
+              idNumber={idNumber}
+              appDate={appDate}
+              expiryDateStr={expiryDateStr}
+            />
           ) : (
-            /* BACK CARD */
-            <div
-              className="w-full max-w-md rounded-2xl overflow-hidden shadow-lg border border-slate-300 relative bg-white select-none flex flex-col justify-between"
-              style={{
-                aspectRatio: "1.586 / 1",
-                background: "linear-gradient(135deg, #fff5f5 0%, #ffffff 50%, #fef2f2 100%)",
-              }}
-            >
-              {/* Background Watermark Seal */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
-                <img src="/gov-serves-seal.png" alt="" className="w-48 h-48 object-contain" />
-              </div>
-
-              {/* Back Header Strip */}
-              <div className="px-3.5 py-1.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs relative z-10">
-                <div className="flex items-center gap-1.5">
-                  <img src="/gov-serves-seal.png" alt="QC Seal" className="w-4 h-4 object-contain rounded-full bg-white/20 p-0.5" />
-                  <p className="text-[8.5px] font-black uppercase tracking-wide leading-tight">
-                    Republic Act 11861 — Expanded Solo Parents Welfare Act
-                  </p>
-                </div>
-                <span className="text-[7.5px] font-black text-amber-900 bg-amber-300 px-2 py-0.5 rounded-full border border-amber-400/80 shadow-xs">
-                  QC-SSDD
-                </span>
-              </div>
-
-              <div className="p-3 pt-2 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
-                <div>
-                  {/* Benefits / Rights List */}
-                  <div className="bg-red-50/70 border border-red-200/80 rounded-lg p-2 space-y-1 text-[7.5px] text-slate-800 leading-tight">
-                    <p className="flex items-start gap-1">
-                      <span className="text-red-600 font-bold shrink-0">✓</span>
-                      <span><strong>10% Discount &amp; VAT Exemption</strong> on infant formula, baby food, prescribed medicines, and essential supplies.</span>
-                    </p>
-                    <p className="flex items-start gap-1">
-                      <span className="text-red-600 font-bold shrink-0">✓</span>
-                      <span><strong>Prioritization</strong> in local government housing, educational scholarships, and livelihood grants.</span>
-                    </p>
-                    <p className="flex items-start gap-1">
-                      <span className="text-red-600 font-bold shrink-0">✓</span>
-                      <span>Non-transferable official municipal privilege card valid nationwide across the Philippines.</span>
-                    </p>
-                  </div>
-
-                  {/* Children / Dependents List */}
-                  <div className="mt-1.5">
-                    <p className="text-[7.5px] font-black text-red-900 uppercase tracking-wider mb-0.5 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span>
-                      Registered Children / Dependents:
-                    </p>
-                    <div className="grid grid-cols-2 gap-1 text-[7.5px] text-slate-700 bg-white/90 p-1.5 rounded-lg border border-red-200/60 max-h-11 overflow-y-auto">
-                      {(app.familyMembers && app.familyMembers.length > 0) ? (
-                        app.familyMembers.map((m, i) => (
-                          <div key={i} className="truncate flex items-center gap-1">
-                            <span className="font-bold text-slate-900">• {m.name || (m as any).fullName || `${m.relationship}: child`}</span>
-                            <span className="text-slate-400">({m.age || "—"} yo)</span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="col-span-2 text-slate-400 italic">1 Dependent on file</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Emergency Contact */}
-                <div className="border-t border-red-200/70 pt-1.5">
-                  <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider mb-1">In case of emergency, please notify:</p>
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7px] text-slate-700 bg-white/90 p-1.5 rounded-lg border border-red-200/60 shadow-xs">
-                    <div>
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Contact Person: </span>
-                      <span className="font-bold text-slate-900 truncate">{emergencyPerson}</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Phone: </span>
-                      <span className="font-mono font-bold text-red-700">{emergencyPhone}</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Relation: </span>
-                      <span className="font-semibold text-slate-800 truncate">{emergencyRel}</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Address: </span>
-                      <span className="font-semibold text-slate-800 truncate">{emergencyAddr}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <SoloParentCardBack
+              app={app}
+              emergencyPerson={emergencyPerson}
+              emergencyPhone={emergencyPhone}
+              emergencyRel={emergencyRel}
+              emergencyAddr={emergencyAddr}
+            />
           )}
         </div>
 
-        {/* Modal Footer */}
-        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between gap-3">
+        {/* ========================================================================= */}
+        {/* PRINT-ONLY CONTAINER: RENDERS BOTH FRONT AND BACK WITH FULL RICH COLORS   */}
+        {/* ========================================================================= */}
+        <div id="official-id-card-print-area" className="hidden print:flex print:flex-col print:items-center print:justify-center print:gap-6 print:w-full print:py-4">
+          <div className="text-center print:block mb-1">
+            <p className="text-[11px] font-bold text-slate-800 tracking-wide uppercase">
+              Republic of the Philippines • City Government of Quezon City
+            </p>
+            <p className="text-[9px] text-slate-500 font-medium">
+              Official Solo Parent Identification Card (Front &amp; Back) — RA 11861
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+            {/* Front Card */}
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">FRONT CARD</span>
+              <SoloParentCardFront
+                app={app}
+                photoUrl={photoUrl}
+                idNumber={idNumber}
+                appDate={appDate}
+                expiryDateStr={expiryDateStr}
+              />
+            </div>
+
+            {/* Back Card */}
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">BACK CARD</span>
+              <SoloParentCardBack
+                app={app}
+                emergencyPerson={emergencyPerson}
+                emergencyPhone={emergencyPhone}
+                emergencyRel={emergencyRel}
+                emergencyAddr={emergencyAddr}
+              />
+            </div>
+          </div>
+
+          <div className="text-center print:block mt-1">
+            <p className="text-[8px] text-slate-400 italic">
+              ✂ Cut along the solid outer border of the cards. Laminate or fold front and back together.
+            </p>
+          </div>
+        </div>
+
+        {/* Modal Footer (Hidden on Print) */}
+        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between gap-3 print:hidden">
           <span className="text-xs text-slate-500">
             Compliant with RA 11861 &amp; Quezon City Solo Parent Welfare ID guidelines.
           </span>

@@ -369,6 +369,32 @@ async function initDb() {
       DELETE FROM beneficiaries 
       WHERE full_name IN ('Clarisa Mae Dimal', 'Rosalinda Torres', 'Julius Cabrera', 'Emilyn Salazar', 'Ferdinand Villanueva', 'Bryan Aguilar')
          OR beneficiary_number IN ('BNF-2026-0001', 'BNF-2026-0002', 'BNF-2026-0003', 'BNF-2026-0004');
+
+      -- Training Applications Table
+      CREATE TABLE IF NOT EXISTS training_applications (
+        id SERIAL PRIMARY KEY,
+        reference_number VARCHAR(100) UNIQUE NOT NULL,
+        qcid VARCHAR(100),
+        user_id VARCHAR(100),
+        training_id VARCHAR(100) NOT NULL,
+        training_name VARCHAR(255) NOT NULL,
+        applicant_info JSONB DEFAULT '{}'::jsonb,
+        status VARCHAR(50) DEFAULT 'pending',
+        schedule JSONB DEFAULT '{}'::jsonb,
+        attendance JSONB DEFAULT '{}'::jsonb,
+        certificate JSONB DEFAULT NULL,
+        approved_by VARCHAR(150),
+        approved_date TIMESTAMP WITH TIME ZONE,
+        rejection_reason TEXT,
+        revision_notes TEXT,
+        submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_training_ref ON training_applications(reference_number);
+      CREATE INDEX IF NOT EXISTS idx_training_qcid ON training_applications(qcid);
+      CREATE INDEX IF NOT EXISTS idx_training_status ON training_applications(status);
     `);
 
     console.log('✅ PostgreSQL database tables, indexes, and default admin accounts verified/initialized successfully.');

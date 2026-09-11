@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { subscribeToRealtimeChanges, notifyApplicationChange } from "../../utils/realtimeSync"
+import { getApplicantPhotoUrl } from "./pwd-senior-citizen"
 
 // =====================================================================================
 // Types
@@ -212,6 +213,11 @@ function getBeneficiaryCardPhoto(b: Beneficiary): string {
     return b.photoUrl
   }
 
+  const resolved = getApplicantPhotoUrl(b)
+  if (resolved && resolved !== "/samples/ID PICTURE (2X2).webp") {
+    return resolved
+  }
+
   try {
     const qcid = (b.qcidNumber || b.idNumber || "").trim().toLowerCase()
     const email = (b.email || "").trim().toLowerCase()
@@ -230,20 +236,9 @@ function getBeneficiaryCardPhoto(b: Beneficiary): string {
             const aName = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase()
             return (qcid && aQc.includes(qcid)) || (email && aEmail === email) || (name && aName === name)
           })
-          if (match && Array.isArray(match.documents)) {
-            const photoDoc = match.documents.find((d: any) => {
-              const n = String(d.name || d.filename || "").toLowerCase()
-              return (
-                n.includes("photo") ||
-                n.includes("picture") ||
-                n.includes("2x2") ||
-                n.includes("1x1") ||
-                n.includes("idphoto")
-              ) && d.fileUrl
-            })
-            if (photoDoc?.fileUrl) return photoDoc.fileUrl
-            const anyImg = match.documents.find((d: any) => d.fileUrl && d.fileUrl.startsWith("data:image"))
-            if (anyImg?.fileUrl) return anyImg.fileUrl
+          if (match) {
+            const mPhoto = getApplicantPhotoUrl(match)
+            if (mPhoto && mPhoto !== "/samples/ID PICTURE (2X2).webp") return mPhoto
           }
         }
       }

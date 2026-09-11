@@ -227,22 +227,45 @@ function dismissAllNotifs(ids: string[], userIdentifier?: string) {
 function Avatar({ size = 36 }: { size?: number }) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [imgFailed, setImgFailed] = useState(false)
+  const [initials, setInitials] = useState<string>("QC")
 
   useEffect(() => {
-    const readPhoto = () => {
+    const readProfileData = () => {
       const qcid = getLoggedInUserQcid()
       const photo = getSavedProfilePhoto(qcid)
       setPhotoUrl(photo)
       setImgFailed(false)
-    }
-    readPhoto()
 
-    // Basahin ulit kapag na-update ang photo (hal. galing sa profile modal o ibang tab)
-    window.addEventListener("storage", readPhoto)
-    window.addEventListener("user_profile_updated", readPhoto)
+      const prof = getCurrentUserProfile()
+      const firstName = (prof.firstName || (prof as any).first_name || "").trim()
+      const lastName = (prof.lastName || (prof as any).last_name || "").trim()
+      const fullName = ((prof as any).fullName || (prof as any).name || "").trim()
+
+      let init = ""
+      if (firstName && lastName) {
+        init = `${firstName[0]}${lastName[0]}`.toUpperCase()
+      } else if (firstName) {
+        init = firstName.slice(0, 2).toUpperCase()
+      } else if (fullName) {
+        const parts = fullName.split(/\s+/)
+        if (parts.length >= 2) {
+          init = `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+        } else if (parts[0]) {
+          init = parts[0].slice(0, 2).toUpperCase()
+        }
+      }
+
+      setInitials(init || "QC")
+    }
+
+    readProfileData()
+
+    // Basahin ulit kapag na-update ang profile o photo
+    window.addEventListener("storage", readProfileData)
+    window.addEventListener("user_profile_updated", readProfileData)
     return () => {
-      window.removeEventListener("storage", readPhoto)
-      window.removeEventListener("user_profile_updated", readPhoto)
+      window.removeEventListener("storage", readProfileData)
+      window.removeEventListener("user_profile_updated", readProfileData)
     }
   }, [])
 
@@ -265,9 +288,9 @@ function Avatar({ size = 36 }: { size?: number }) {
   return (
     <div
       style={{ width: size, height: size }}
-      className="rounded-xl bg-linear-to-br from-primary to-info flex items-center justify-center text-xs font-semibold text-white shrink-0"
+      className="rounded-xl bg-linear-to-br from-primary to-info flex items-center justify-center text-xs font-semibold text-white shrink-0 uppercase tracking-wider select-none"
     >
-      CD
+      {initials}
     </div>
   )
 }
@@ -577,8 +600,12 @@ function ResidentHeader({
   const notifRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = () => {
+    sessionStorage.removeItem("isAuthenticated")
+    sessionStorage.removeItem("userRole")
+    sessionStorage.removeItem("currentUser")
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("currentUser")
     window.location.href = "/login"
   }
 
@@ -844,12 +871,8 @@ function ResidentHeader({
           >
             <div className="text-right hidden sm:block">
               <p className="text-xs font-medium text-foreground leading-tight">{t("hiUserShort", { name: (() => {
-                try {
-                  const u = JSON.parse(localStorage.getItem("currentUser") || "{}");
-                  return u.firstName || u.first_name || "Resident";
-                } catch {
-                  return "Resident";
-                }
+                const prof = getCurrentUserProfile();
+                return (prof.firstName || (prof as any).first_name || "Resident").toUpperCase();
               })() })}</p>            
             </div>
             <Avatar />

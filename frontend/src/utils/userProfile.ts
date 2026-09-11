@@ -46,7 +46,9 @@ export interface LoggedInUserProfile {
 
 export function getCurrentUser(): any {
   try {
-    const raw = localStorage.getItem("currentUser")
+    const isAuth = sessionStorage.getItem("isAuthenticated") === "true"
+    if (!isAuth) return null
+    const raw = sessionStorage.getItem("currentUser") || localStorage.getItem("currentUser")
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
@@ -165,7 +167,7 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
     if (currentUser) {
       currentUser.qcidNumber = qcid
       currentUser.qcidNo = qcid
-      localStorage.setItem("currentUser", JSON.stringify(currentUser))
+      sessionStorage.setItem("currentUser", JSON.stringify(currentUser))
     }
   }
 

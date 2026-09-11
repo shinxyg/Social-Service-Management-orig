@@ -1152,7 +1152,20 @@ function ReviewModal({
       {/* DOCUMENT PREVIEW MODAL (Pic 2 Style) */}
       {previewDocModal && (() => {
         const fallback = getSampleDocumentFallback(previewDocModal.name || previewDocModal.label, (previewDocModal as any).original_filename || (previewDocModal as any).filename)
-        const currentSrc = previewDocModal.previewUrl || fallback
+        const rawSrc = previewDocModal.previewUrl || previewDocModal.fileUrl || previewDocModal.url || previewDocModal.path
+        let resolvedSrc = ""
+        if (rawSrc && typeof rawSrc === "string") {
+          if (rawSrc.startsWith("data:") || rawSrc.startsWith("http") || rawSrc.startsWith("/") || rawSrc.startsWith("blob:")) {
+            resolvedSrc = rawSrc
+          } else if (rawSrc.startsWith("uploads/")) {
+            resolvedSrc = `${API_BASE}/${rawSrc}`
+          } else {
+            resolvedSrc = `${API_BASE}/uploads/${rawSrc}`
+          }
+        } else if (previewDocModal.filename && typeof previewDocModal.filename === "string" && !previewDocModal.filename.toLowerCase().startsWith("sample")) {
+          resolvedSrc = `${API_BASE}/uploads/${previewDocModal.filename}`
+        }
+        const currentSrc = resolvedSrc || fallback
         const isPdf = isPdfFile((previewDocModal as any).original_filename || (previewDocModal as any).filename, currentSrc)
         const isImg = isImageFile((previewDocModal as any).original_filename || (previewDocModal as any).filename, currentSrc)
 

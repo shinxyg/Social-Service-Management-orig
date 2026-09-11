@@ -3,6 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../config/db');
 
+let logActivity = null;
+try {
+  const actCtrl = require('./activityLogController');
+  logActivity = actCtrl.logActivity;
+} catch {}
+
 const DATA_DIR = path.join(__dirname, '../data');
 const DATA_FILE = path.join(DATA_DIR, 'training_applications.json');
 
@@ -86,7 +92,7 @@ function loadPersistentApps() {
       if (Array.isArray(parsed)) return parsed;
     }
   } catch (err) {
-    console.error('Error loading training applications:', err.message);
+    console.error('Error loading training applications from JSON:', err.message);
   }
   return [];
 }
@@ -98,65 +104,66 @@ function savePersistentApps(apps) {
     }
     fs.writeFileSync(DATA_FILE, JSON.stringify(apps, null, 2), 'utf8');
   } catch (err) {
-    console.error('Error saving training applications:', err.message);
+    console.error('Error saving training applications to JSON:', err.message);
   }
 }
 
 let memoryApplications = loadPersistentApps();
 
-// Ensure at least one initial sample if empty
-if (memoryApplications.length === 0) {
-  memoryApplications = [
-    {
-      id: 1,
-      referenceNumber: 'TP-2026-1042',
-      qcid: '110000116932100',
-      userId: '110000116932100',
-      trainingId: 'tr-sewing',
-      trainingName: 'Sewing Training',
-      applicantInfo: {
-        fullName: 'CLARISA MAE GALIAS DIMAL',
-        firstName: 'CLARISA MAE',
-        middleName: 'GALIAS',
-        lastName: 'DIMAL',
-        suffix: '',
-        email: 'clarisa.dimal@example.com',
-        contactNo: '09172345678',
-        address: '11 Sampaloc Street',
-        barangay: 'Sauyo',
-        city: 'Quezon City',
-        sex: 'Female',
-        dateOfBirth: '2004-10-29',
-        age: 21,
-        occupation: 'Self-employed / Home-based',
-      },
-      status: 'approved',
-      submittedAt: '2026-08-20T08:30:00Z',
-      approvedBy: 'QC Skills Development Division',
-      approvedDate: '2026-08-22T10:15:00Z',
-      schedule: {
-        trainingName: 'Sewing Training',
-        trainingDate: 'September 15, 2026 - September 18, 2026',
-        trainingTime: '9:00 AM - 12:00 PM',
-        trainingLocation: 'QC Skills Development Center, Batasan Hills',
-        landmark: 'Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall',
-        trainingStatus: 'Upcoming', // Upcoming | Ongoing | Completed
-      },
-      attendance: {
-        totalHours: 16,
-        hoursCompleted: 4,
-        completed: false,
-        sessions: [
-          { day: 1, topic: 'Machine Operation & Basic Safety', attended: true, date: 'September 15, 2026' },
-          { day: 2, topic: 'Pattern Drafting & Cutting Techniques', attended: false, date: 'September 16, 2026' },
-          { day: 3, topic: 'Garment Assembly & Pocket Construction', attended: false, date: 'September 17, 2026' },
-          { day: 4, topic: 'Finishing, Quality Checking & Costing', attended: false, date: 'September 18, 2026' },
-        ],
-      },
-      certificate: null,
-    },
-  ];
-  savePersistentApps(memoryApplications);
+// Ensure DB table exists
+async function initTrainingTable() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS training_applications (
+        id SERIAL PRIMARY KEY,
+        reference_number VARCHAR(100) UNIQUE NOT NULL,
+        qcid VARCHAR(100),
+        user_id VARCHAR(100),
+        training_id VARCHAR(100) NOT NULL,
+        training_name VARCHAR(255) NOT NULL,
+        applicant_info JSONB DEFAULT '{}'::jsonb,
+        status VARCHAR(50) DEFAULT 'pending',
+        schedule JSONB DEFAULT '{}'::jsonb,
+        attendance JSONB DEFAULT '{}'::jsonb,
+        certificate JSONB DEFAULT NULL,
+        approved_by VARCHAR(150),
+        approved_date TIMESTAMP WITH TIME ZONE,
+        rejection_reason TEXT,
+        revision_notes TEXT,
+        submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_training_ref ON training_applications(reference_number);
+      CREATE INDEX IF NOT EXISTS idx_training_qcid ON training_applications(qcid);
+      CREATE INDEX IF NOT EXISTS idx_training_status ON training_applications(status);
+    `);
+  } catch (e) {
+    console.warn('Note: training_applications DB table init check:', e.message);
+  }
+}
+initTrainingTable();
+
+// Format DB record to frontend structure
+function mapDbRowToApp(row) {
+  return {
+    id: row.id,
+    referenceNumber: row.reference_number,
+    qcid: row.qcid,
+    userId: row.user_id,
+    trainingId: row.training_id,
+    trainingName: row.training_name,
+    applicantInfo: typeof row.applicant_info === 'string' ? JSON.parse(row.applicant_info) : (row.applicant_info || {}),
+    status: row.status || 'pending',
+    submittedAt: row.submitted_at || row.created_at,
+    approvedBy: row.approved_by,
+    approvedDate: row.approved_date,
+    rejectionReason: row.rejection_reason,
+    revisionNotes: row.revision_notes,
+    schedule: typeof row.schedule === 'string' ? JSON.parse(row.schedule) : (row.schedule || {}),
+    attendance: typeof row.attendance === 'string' ? JSON.parse(row.attendance) : (row.attendance || {}),
+    certificate: typeof row.certificate === 'string' ? JSON.parse(row.certificate) : (row.certificate || null),
+  };
 }
 
 // GET /api/training/programs
@@ -172,11 +179,43 @@ exports.getAvailablePrograms = (req, res) => {
 };
 
 // GET /api/training/applications
-exports.getApplications = (req, res) => {
+exports.getApplications = async (req, res) => {
   try {
     const { qcid, email } = req.query;
-    let list = [...memoryApplications];
 
+    // Try querying PostgreSQL
+    try {
+      let query = 'SELECT * FROM training_applications';
+      const params = [];
+      const conditions = [];
+
+      if (qcid) {
+        params.push(String(qcid).trim());
+        conditions.push(`(qcid = $${params.length} OR user_id = $${params.length})`);
+      } else if (email) {
+        params.push(`%${String(email).trim().toLowerCase()}%`);
+        conditions.push(`LOWER(applicant_info->>'email') LIKE $${params.length}`);
+      }
+
+      if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+      }
+      query += ' ORDER BY submitted_at DESC, id DESC';
+
+      const result = await db.query(query, params);
+      if (result && Array.isArray(result.rows) && result.rows.length > 0) {
+        const apps = result.rows.map(mapDbRowToApp);
+        return res.status(200).json({
+          success: true,
+          applications: apps,
+        });
+      }
+    } catch (dbErr) {
+      console.warn('DB query failed, using memory/file storage:', dbErr.message);
+    }
+
+    // Fallback to memory / file storage
+    let list = [...memoryApplications];
     if (qcid) {
       const q = String(qcid).trim();
       list = list.filter((a) => a.qcid === q || a.userId === q);
@@ -195,7 +234,7 @@ exports.getApplications = (req, res) => {
 };
 
 // POST /api/training/apply
-exports.applyForTraining = (req, res) => {
+exports.applyForTraining = async (req, res) => {
   try {
     const { trainingId, trainingName, applicantInfo, qcid } = req.body;
 
@@ -214,60 +253,114 @@ exports.applyForTraining = (req, res) => {
     const userQcid = qcid || applicantInfo?.qcidNo || applicantInfo?.qcidNumber || '110000116932100';
     const refNum = generateReference(userQcid);
 
-    const newApp = {
-      id: Date.now(),
-      referenceNumber: refNum,
-      qcid: userQcid,
-      userId: userQcid,
-      trainingId,
-      trainingName,
-      applicantInfo: {
-        fullName: applicantInfo?.fullName || `${applicantInfo?.firstName || ''} ${applicantInfo?.lastName || ''}`.trim(),
-        firstName: applicantInfo?.firstName || '',
-        middleName: applicantInfo?.middleName || '',
-        lastName: applicantInfo?.lastName || '',
-        suffix: applicantInfo?.suffix || '',
-        email: applicantInfo?.email || '',
-        contactNo: applicantInfo?.contactNo || applicantInfo?.mobileNumber || '',
-        address: applicantInfo?.address || '',
-        barangay: applicantInfo?.barangay || '',
-        city: applicantInfo?.city || 'Quezon City',
-        sex: applicantInfo?.sex || '',
-        dateOfBirth: applicantInfo?.dateOfBirth || applicantInfo?.birthDate || '',
-        age: applicantInfo?.age || '',
-        occupation: applicantInfo?.occupation || '',
-      },
-      status: 'pending', // pending | approved | rejected | needs_revision
-      submittedAt: new Date().toISOString(),
-      schedule: {
-        trainingName,
-        trainingDate: matchedCourse.date,
-        trainingTime: matchedCourse.time,
-        trainingLocation: matchedCourse.location,
-        landmark: matchedCourse.landmark,
-        trainingStatus: 'Upcoming',
-      },
-      attendance: {
-        totalHours: matchedCourse.durationHours || 16,
-        hoursCompleted: 0,
-        completed: false,
-        sessions: [
-          { day: 1, topic: 'Orientation & Fundamental Skills', attended: false, date: matchedCourse.date.split('-')[0]?.trim() },
-          { day: 2, topic: 'Hands-on Application & Laboratory Work', attended: false, date: '' },
-          { day: 3, topic: 'Specialized Techniques & Practical Assessment', attended: false, date: '' },
-          { day: 4, topic: 'Final Evaluation, Livelihood Integration & Completion', attended: false, date: matchedCourse.date.split('-')[1]?.trim() },
-        ],
-      },
-      certificate: null,
+    const fullApplicantInfo = {
+      fullName: applicantInfo?.fullName || `${applicantInfo?.firstName || ''} ${applicantInfo?.lastName || ''}`.trim(),
+      firstName: applicantInfo?.firstName || '',
+      middleName: applicantInfo?.middleName || '',
+      lastName: applicantInfo?.lastName || '',
+      suffix: applicantInfo?.suffix || '',
+      email: applicantInfo?.email || '',
+      contactNo: applicantInfo?.contactNo || applicantInfo?.mobileNumber || '',
+      address: applicantInfo?.address || '',
+      barangay: applicantInfo?.barangay || '',
+      city: applicantInfo?.city || 'Quezon City',
+      sex: applicantInfo?.sex || '',
+      dateOfBirth: applicantInfo?.dateOfBirth || applicantInfo?.birthDate || '',
+      age: applicantInfo?.age || '',
+      occupation: applicantInfo?.occupation || '',
     };
 
-    memoryApplications.unshift(newApp);
+    const scheduleData = {
+      trainingName,
+      trainingDate: matchedCourse.date,
+      trainingTime: matchedCourse.time,
+      trainingLocation: matchedCourse.location,
+      landmark: matchedCourse.landmark,
+      trainingStatus: 'Upcoming',
+    };
+
+    const attendanceData = {
+      totalHours: matchedCourse.durationHours || 16,
+      hoursCompleted: 0,
+      completed: false,
+      sessions: [
+        { day: 1, topic: 'Orientation & Fundamental Skills', attended: false, date: matchedCourse.date.split('-')[0]?.trim() },
+        { day: 2, topic: 'Hands-on Application & Laboratory Work', attended: false, date: '' },
+        { day: 3, topic: 'Specialized Techniques & Practical Assessment', attended: false, date: '' },
+        { day: 4, topic: 'Final Evaluation, Livelihood Integration & Completion', attended: false, date: matchedCourse.date.split('-')[1]?.trim() },
+      ],
+    };
+
+    let createdApp = null;
+
+    // Save to PostgreSQL
+    try {
+      const insertQuery = `
+        INSERT INTO training_applications (
+          reference_number, qcid, user_id, training_id, training_name,
+          applicant_info, status, schedule, attendance, submitted_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+        RETURNING *
+      `;
+      const result = await db.query(insertQuery, [
+        refNum,
+        userQcid,
+        userQcid,
+        trainingId,
+        trainingName,
+        JSON.stringify(fullApplicantInfo),
+        'pending',
+        JSON.stringify(scheduleData),
+        JSON.stringify(attendanceData),
+      ]);
+
+      if (result && result.rows.length > 0) {
+        createdApp = mapDbRowToApp(result.rows[0]);
+      }
+    } catch (dbErr) {
+      console.warn('PostgreSQL insert training application error:', dbErr.message);
+    }
+
+    if (!createdApp) {
+      createdApp = {
+        id: Date.now(),
+        referenceNumber: refNum,
+        qcid: userQcid,
+        userId: userQcid,
+        trainingId,
+        trainingName,
+        applicantInfo: fullApplicantInfo,
+        status: 'pending',
+        submittedAt: new Date().toISOString(),
+        schedule: scheduleData,
+        attendance: attendanceData,
+        certificate: null,
+      };
+    }
+
+    // Keep memory / JSON file synced
+    memoryApplications.unshift(createdApp);
     savePersistentApps(memoryApplications);
+
+    // Activity Log
+    if (logActivity) {
+      try {
+        logActivity({
+          actor: fullApplicantInfo.fullName || 'Citizen User',
+          actor_role: 'User',
+          action: 'TRAINING_APPLICATION_SUBMITTED',
+          module: 'Livelihood & Training',
+          reference_no: refNum,
+          subject: trainingName,
+          detail: `Submitted new application for ${trainingName} (${refNum}).`,
+        });
+      } catch (_) {}
+    }
 
     return res.status(201).json({
       success: true,
       message: 'Application for training submitted successfully.',
-      application: newApp,
+      application: createdApp,
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
@@ -275,73 +368,193 @@ exports.applyForTraining = (req, res) => {
 };
 
 // PATCH /api/training/applications/:id/status
-exports.updateApplicationStatus = (req, res) => {
+exports.updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, rejectionReason, revisionNotes, attendance, trainingStatus, approvedBy } = req.body;
 
+    let updatedApp = null;
+
+    // 1. Try DB Update
+    try {
+      const getRes = await db.query(
+        'SELECT * FROM training_applications WHERE id::text = $1 OR reference_number = $1',
+        [String(id)]
+      );
+
+      if (getRes && getRes.rows.length > 0) {
+        const row = getRes.rows[0];
+        let newStatus = status || row.status;
+        let newApprovedBy = row.approved_by;
+        let newApprovedDate = row.approved_date;
+        let newRejectionReason = rejectionReason !== undefined ? rejectionReason : row.rejection_reason;
+        let newRevisionNotes = revisionNotes !== undefined ? revisionNotes : row.revision_notes;
+        let newSchedule = typeof row.schedule === 'string' ? JSON.parse(row.schedule) : (row.schedule || {});
+        let newAttendance = typeof row.attendance === 'string' ? JSON.parse(row.attendance) : (row.attendance || {});
+        let newCertificate = typeof row.certificate === 'string' ? JSON.parse(row.certificate) : (row.certificate || null);
+
+        if (status === 'approved') {
+          newApprovedBy = approvedBy || 'QC Skills Development Division';
+          newApprovedDate = new Date().toISOString();
+          newRejectionReason = null;
+          newRevisionNotes = null;
+        }
+
+        if (trainingStatus && newSchedule) {
+          newSchedule.trainingStatus = trainingStatus;
+        }
+
+        if (attendance) {
+          newAttendance = { ...newAttendance, ...attendance };
+          if (newAttendance.hoursCompleted >= newAttendance.totalHours || newAttendance.completed) {
+            newAttendance.completed = true;
+            if (newSchedule) newSchedule.trainingStatus = 'Completed';
+
+            if (!newCertificate) {
+              newCertificate = {
+                certificateNo: `QC-CERT-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
+                issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                title: `Certificate of Completion in ${row.training_name}`,
+                recipientName: row.applicant_info?.fullName || 'Resident Beneficiary',
+                trainingName: row.training_name,
+                hoursCompleted: newAttendance.totalHours || 16,
+                status: 'Issued',
+              };
+            }
+          }
+        }
+
+        const updateRes = await db.query(
+          `UPDATE training_applications 
+           SET status = $1, approved_by = $2, approved_date = $3, rejection_reason = $4,
+               revision_notes = $5, schedule = $6, attendance = $7, certificate = $8, updated_at = NOW()
+           WHERE id = $9 RETURNING *`,
+          [
+            newStatus,
+            newApprovedBy,
+            newApprovedDate,
+            newRejectionReason,
+            newRevisionNotes,
+            JSON.stringify(newSchedule),
+            JSON.stringify(newAttendance),
+            newCertificate ? JSON.stringify(newCertificate) : null,
+            row.id,
+          ]
+        );
+
+        if (updateRes && updateRes.rows.length > 0) {
+          updatedApp = mapDbRowToApp(updateRes.rows[0]);
+        }
+      }
+    } catch (dbErr) {
+      console.warn('PostgreSQL update training application error:', dbErr.message);
+    }
+
+    // 2. Fallback memory / JSON update
     const idx = memoryApplications.findIndex((a) => String(a.id) === String(id) || a.referenceNumber === String(id));
-    if (idx === -1) {
+    if (idx !== -1) {
+      const app = memoryApplications[idx];
+      if (status) {
+        app.status = status;
+        if (status === 'approved') {
+          app.approvedBy = approvedBy || 'QC Skills Development Division';
+          app.approvedDate = new Date().toISOString();
+          app.rejectionReason = undefined;
+          app.revisionNotes = undefined;
+        } else if (status === 'rejected') {
+          app.rejectionReason = rejectionReason || 'Requirements incomplete or slot unavailable.';
+        } else if (status === 'needs_revision') {
+          app.revisionNotes = revisionNotes || 'Please verify or update your contact details or required information.';
+        }
+      }
+      if (trainingStatus && app.schedule) {
+        app.schedule.trainingStatus = trainingStatus;
+      }
+      if (attendance) {
+        app.attendance = { ...app.attendance, ...attendance };
+        if (app.attendance.hoursCompleted >= app.attendance.totalHours || app.attendance.completed) {
+          app.attendance.completed = true;
+          if (app.schedule) app.schedule.trainingStatus = 'Completed';
+          if (!app.certificate) {
+            app.certificate = {
+              certificateNo: `QC-CERT-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
+              issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+              title: `Certificate of Completion in ${app.trainingName}`,
+              recipientName: app.applicantInfo?.fullName || 'Resident Beneficiary',
+              trainingName: app.trainingName,
+              hoursCompleted: app.attendance.totalHours || 16,
+              status: 'Issued',
+            };
+          }
+        }
+      }
+      memoryApplications[idx] = app;
+      savePersistentApps(memoryApplications);
+      if (!updatedApp) updatedApp = app;
+    }
+
+    if (!updatedApp) {
       return res.status(404).json({ success: false, message: 'Application not found.' });
     }
 
-    const app = memoryApplications[idx];
-
-    if (status) {
-      app.status = status;
-      if (status === 'approved') {
-        app.approvedBy = approvedBy || 'QC Skills Development Division';
-        app.approvedDate = new Date().toISOString();
-        app.rejectionReason = undefined;
-        app.revisionNotes = undefined;
-      } else if (status === 'rejected') {
-        app.rejectionReason = rejectionReason || 'Requirements incomplete or slot unavailable.';
-      } else if (status === 'needs_revision') {
-        app.revisionNotes = revisionNotes || 'Please verify or update your contact details or required information.';
-      }
+    // Activity Log
+    if (logActivity) {
+      try {
+        logActivity({
+          actor: approvedBy || 'Admin Staff',
+          actor_role: 'Admin',
+          action: `TRAINING_APPLICATION_${String(status || 'UPDATED').toUpperCase()}`,
+          module: 'Livelihood & Training',
+          reference_no: updatedApp.referenceNumber,
+          subject: updatedApp.trainingName,
+          detail: `Training application status updated to ${updatedApp.status} for ${updatedApp.referenceNumber}.`,
+        });
+      } catch (_) {}
     }
-
-    if (trainingStatus && app.schedule) {
-      app.schedule.trainingStatus = trainingStatus;
-    }
-
-    if (attendance) {
-      app.attendance = { ...app.attendance, ...attendance };
-      if (app.attendance.hoursCompleted >= app.attendance.totalHours || app.attendance.completed) {
-        app.attendance.completed = true;
-        if (app.schedule) app.schedule.trainingStatus = 'Completed';
-
-        // Auto issue certificate if not yet issued
-        if (!app.certificate) {
-          app.certificate = {
-            certificateNo: `QC-CERT-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
-            issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-            title: `Certificate of Completion in ${app.trainingName}`,
-            recipientName: app.applicantInfo?.fullName || 'Resident Beneficiary',
-            trainingName: app.trainingName,
-            hoursCompleted: app.attendance.totalHours,
-            status: 'Issued',
-          };
-        }
-      }
-    }
-
-    memoryApplications[idx] = app;
-    savePersistentApps(memoryApplications);
 
     return res.status(200).json({
       success: true,
       message: 'Application updated successfully.',
-      application: app,
+      application: updatedApp,
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// POST /api/training/reset
-exports.resetApplications = (req, res) => {
+// DELETE /api/training/applications/:id
+exports.deleteApplication = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    // DB delete
+    try {
+      await db.query(
+        'DELETE FROM training_applications WHERE id::text = $1 OR reference_number = $1',
+        [String(id)]
+      );
+    } catch (e) {
+      console.warn('DB delete error:', e.message);
+    }
+
+    // Memory delete
+    memoryApplications = memoryApplications.filter(
+      (a) => String(a.id) !== String(id) && a.referenceNumber !== String(id)
+    );
+    savePersistentApps(memoryApplications);
+
+    return res.status(200).json({ success: true, message: 'Training application deleted successfully.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/training/reset
+exports.resetApplications = async (req, res) => {
+  try {
+    try {
+      await db.query('DELETE FROM training_applications');
+    } catch (_) {}
     memoryApplications = [];
     savePersistentApps(memoryApplications);
     return res.status(200).json({ success: true, message: 'Training applications reset.' });
