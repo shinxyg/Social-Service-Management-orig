@@ -948,7 +948,6 @@ export default function SoloParentApplicationWizard({
         { cache: "no-store" }
       )
       if (res.ok) {
-        backendSuccess = true
         const data = await res.json()
         const backendApps = data.applications || data || []
         if (Array.isArray(backendApps)) {
