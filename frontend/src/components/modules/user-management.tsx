@@ -7,7 +7,6 @@ import {
   XCircle,
   Mail,
   Clock,
-  Eye,
   Phone,
   Calendar,
   FileText,
@@ -29,63 +28,45 @@ const authHeaders = (): Record<string, string> => {
 // Types
 // =====================================================================================
 
-export type AccountRole = "ADMINISTRATOR" | "USER / BENEFICIARY"
+export type AccountRole = "USER / BENEFICIARY" | "ADMINISTRATOR"
 export type AccountStatus = "ACTIVE" | "INACTIVE"
 
-export interface ConnectedApp {
+export interface LinkedApplication {
   reference_number: string
-  category?: string
   module?: string
+  category?: string
   type?: string
-  assistance_title?: string
   status?: string
+  created_at: string
   assigned_id_number?: string
   solo_parent_id_number?: string
-  created_at?: string
 }
 
-export interface ConnectedAppointment {
+export interface LinkedAppointment {
   appointment_reference: string
-  service_type?: string
-  appointment_date?: string
-  appointment_time?: string
+  service_type: string
+  appointment_date: string
+  appointment_time: string
   status?: string
-}
-
-export interface ConnectedCase {
-  case_number: string
-  application_ref?: string
-  program?: string
-  case_type?: string
-  status?: string
-  priority?: string
-  date_opened?: string
 }
 
 export interface CentralUser {
-  id: string
+  id: string // e.g. "USR-0278" or numeric
   numericId?: number
-  qcidNumber?: string
   name: string
   firstName?: string
   lastName?: string
-  middleName?: string
-  suffix?: string
   email: string
   contactNumber: string
+  address?: string
   role: AccountRole
   status: AccountStatus
   dateRegistered: string
   lastLogin: string
+  qcidNumber?: string
   applicationsCount?: number
-  appointmentsCount?: number
-  address?: string
-  occupation?: string
-  sex?: string
-  birthDate?: string
-  applications?: ConnectedApp[]
-  appointments?: ConnectedAppointment[]
-  cases?: ConnectedCase[]
+  applications?: LinkedApplication[]
+  appointments?: LinkedAppointment[]
 }
 
 export interface UserStats {
@@ -99,33 +80,39 @@ export interface UserStats {
 // Utility Helpers
 // =====================================================================================
 
-function formatDateTime(iso?: string) {
-  if (!iso) return "—"
+function formatDateOnly(dateStr?: string) {
+  if (!dateStr) return "—"
   try {
-    const d = new Date(iso)
-    if (isNaN(d.getTime())) return iso
-    return `${d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
   } catch {
-    return iso
+    return dateStr
   }
 }
 
-function formatDateOnly(iso?: string) {
-  if (!iso) return "—"
+function formatDateTime(dateStr?: string) {
+  if (!dateStr) return "Never logged in"
   try {
-    const d = new Date(iso)
-    if (isNaN(d.getTime())) return iso
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    return d.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
   } catch {
-    return iso
+    return dateStr
   }
 }
 
-function getInitials(name?: string) {
-  if (!name) return "QC"
-  const parts = name.trim().split(" ").filter(Boolean)
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0]?.charAt(0) ?? ""}${parts[parts.length - 1]?.charAt(0) ?? ""}`.toUpperCase()
+function getInitials(name: string) {
+  if (!name) return "U"
+  const parts = name.trim().split(" ")
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
 // =====================================================================================
@@ -137,14 +124,15 @@ function UserCard({
   onManage,
 }: {
   u: CentralUser
-  onManage: (user: CentralUser) => void
+  onManage: (u: CentralUser) => void
 }) {
   const isAdmin = u.role === "ADMINISTRATOR"
   const isActive = u.status === "ACTIVE"
 
   return (
     <div
-      className={`border rounded-2xl p-4 md:p-5 transition-all shadow-2xs hover:shadow-sm ${
+      onClick={() => onManage(u)}
+      className={`border rounded-2xl p-4 md:p-5 transition-all shadow-2xs hover:shadow-md hover:border-blue-400 cursor-pointer group ${
         isActive ? "bg-white border-slate-200" : "bg-slate-50/80 border-slate-200 opacity-90"
       }`}
     >
@@ -163,7 +151,7 @@ function UserCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <h3 className="text-base font-bold text-slate-900 tracking-tight truncate uppercase">
+            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors tracking-tight truncate uppercase">
               {u.name}
             </h3>
 
@@ -175,7 +163,7 @@ function UserCard({
                   : "bg-blue-50 text-blue-700 border border-blue-200"
               }`}
             >
-              {isAdmin ? <Shield className="h-3 w-3" /> : <UserCheck className="h-3 w-3" />}
+              <Shield className="h-3 w-3" />
               {u.role}
             </span>
 
@@ -224,18 +212,6 @@ function UserCard({
               </span>
             )}
           </div>
-        </div>
-
-        {/* Action Button */}
-        <div className="flex flex-col items-end justify-center shrink-0 self-center">
-          <button
-            type="button"
-            onClick={() => onManage(u)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow-md cursor-pointer"
-          >
-            <Eye className="h-3.5 w-3.5" />
-            Manage
-          </button>
         </div>
       </div>
     </div>
