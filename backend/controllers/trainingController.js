@@ -253,9 +253,9 @@ exports.applyForTraining = async (req, res) => {
     const matchedCourse = DEFAULT_TRAINING_COURSES.find((c) => c.id === trainingId) || {
       date: 'September 15, 2026 - September 18, 2026',
       time: '9:00 AM - 12:00 PM',
-      location: 'QC Skills Development Center, Batasan Hills',
+      location: 'Gov Services Skills Development Center, Batasan Hills',
       landmark: 'Near Batasan Hills Barangay Hall / across Puregold Batasan',
-      durationHours: 16,
+      durationHours: 12,
     };
 
     const userQcid = qcid || applicantInfo?.qcidNo || applicantInfo?.qcidNumber || '110000116932100';

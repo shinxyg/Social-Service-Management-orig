@@ -540,7 +540,7 @@ export default function TrainingProgramAdmin() {
                         </div>
                         <span>Day {sess.day}: {sess.topic} (3 hrs)</span>
                       </div>
-                      <span className="text-[11px] font-semibold">{sess.attended ? "Attended (3h) ✓" : "Click to Mark Present"}</span>
+                      <span className="text-[11px] font-semibold">{sess.attended ? "Attended (3hrs)" : "Click to Mark Present"}</span>
                     </div>
                   ))}
                 </div>

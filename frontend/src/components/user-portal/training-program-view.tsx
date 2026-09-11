@@ -1296,7 +1296,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   </div>
                   <div className="text-right shrink-0 bg-blue-500/10 border border-blue-500/20 px-3.5 py-2 rounded-xl">
                     <span className="text-xs font-bold text-blue-700 dark:text-blue-300 block">
-                      {activeApplication.attendance?.hoursCompleted || 0} / {activeApplication.attendance?.totalHours || 12} {isEn ? "Hours" : "Oras"}
+                      {activeApplication.attendance?.hoursCompleted || 0} / 12 {isEn ? "Hours" : "Oras"}
                     </span>
                     <span className="text-[11px] font-semibold text-muted-foreground">
                       {Math.min(4, Math.floor((activeApplication.attendance?.hoursCompleted || 0) / 3))} of 4 Days Completed
@@ -1311,7 +1311,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     <span className="text-blue-600 font-mono">
                       {Math.min(
                         100,
-                        Math.round(((activeApplication.attendance?.hoursCompleted || 0) / (activeApplication.attendance?.totalHours || 12)) * 100)
+                        Math.round(((activeApplication.attendance?.hoursCompleted || 0) / 12) * 100)
                       )}%
                     </span>
                   </div>
@@ -1323,7 +1323,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           100,
                           Math.max(
                             4,
-                            Math.round(((activeApplication.attendance?.hoursCompleted || 0) / (activeApplication.attendance?.totalHours || 12)) * 100)
+                            Math.round(((activeApplication.attendance?.hoursCompleted || 0) / 12) * 100)
                           )
                         )}%`,
                       }}
@@ -1375,21 +1375,16 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         <button
                           type="button"
                           onClick={() => handleUserCheckin(sess.day)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
                             sess.attended
                               ? "bg-emerald-600 text-white shadow-xs hover:bg-emerald-700"
                               : "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
                           }`}
                         >
                           {sess.attended ? (
-                            <>
-                              <Check className="h-3.5 w-3.5" />
-                              <span>{isEn ? "Attended (3h) ✓" : isBis ? "Nakatambong (3h) ✓" : "Nakatambong (3h) ✓"}</span>
-                            </>
+                            <span>Attended (3hrs)</span>
                           ) : (
-                            <>
-                              <span>{isEn ? "Check-in Day " + sess.day + " (3h)" : isBis ? "I-check-in Adlaw " + sess.day + " (3h)" : "I-check-in Araw " + sess.day + " (3h)"}</span>
-                            </>
+                            <span>{isEn ? "Check-in Day " + sess.day + " (3h)" : isBis ? "I-check-in Adlaw " + sess.day + " (3h)" : "I-check-in Araw " + sess.day + " (3h)"}</span>
                           )}
                         </button>
                       </div>

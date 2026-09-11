@@ -24,19 +24,19 @@
     },
     "status": "approved",
     "submittedAt": "2026-08-20T08:30:00Z",
-    "approvedBy": "QC Skills Development Division",
+    "approvedBy": "Gov Services Skills Development Division",
     "approvedDate": "2026-08-22T10:15:00Z",
     "schedule": {
       "trainingName": "Sewing Training",
       "trainingDate": "September 15, 2026 - September 18, 2026",
       "trainingTime": "9:00 AM - 12:00 PM",
-      "trainingLocation": "QC Skills Development Center, Batasan Hills",
+      "trainingLocation": "Gov Services Skills Development Center, Batasan Hills",
       "landmark": "Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall",
       "trainingStatus": "Upcoming"
     },
     "attendance": {
-      "totalHours": 16,
-      "hoursCompleted": 4,
+      "totalHours": 12,
+      "hoursCompleted": 3,
       "completed": false,
       "sessions": [
         {
