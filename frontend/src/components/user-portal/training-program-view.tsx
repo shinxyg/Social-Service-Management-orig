@@ -10,8 +10,6 @@ import {
   XCircle,
   FileEdit,
   Award,
-  Download,
-  Printer,
   Sparkles,
   Scissors,
   UtensilsCrossed,
