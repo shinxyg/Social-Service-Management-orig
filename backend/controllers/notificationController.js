@@ -459,11 +459,30 @@ exports.getNotifications = async (req, res) => {
       } catch (_) {}
     }
 
-    // Deduplicate by ID and sort
+    // Deduplicate by semantic key (reference_no + topic) and sort
     const uniqueMap = new Map();
     items.forEach((item) => {
-      if (!uniqueMap.has(item.id)) {
-        uniqueMap.set(item.id, item);
+      const cleanRef = String(item.reference_no || item.id || '').trim();
+      const topic = (item.title || '')
+        .toLowerCase()
+        .replace(/application:?/g, '')
+        .replace(/id:?/g, '')
+        .replace(/[^a-z0-9]/g, '')
+        .slice(0, 20);
+
+      const dedupeKey = cleanRef ? `${cleanRef}__${topic}` : item.id;
+
+      if (!uniqueMap.has(dedupeKey)) {
+        uniqueMap.set(dedupeKey, item);
+      } else {
+        const existing = uniqueMap.get(dedupeKey);
+        const itemDescLen = (item.desc || '').length;
+        const existDescLen = (existing.desc || '').length;
+        if (item.unread && !existing.unread) {
+          uniqueMap.set(dedupeKey, item);
+        } else if (itemDescLen > existDescLen) {
+          uniqueMap.set(dedupeKey, { ...item, unread: existing.unread && item.unread });
+        }
       }
     });
 
