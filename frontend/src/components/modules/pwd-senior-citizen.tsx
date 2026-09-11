@@ -1483,16 +1483,6 @@ interface DetailedViewProps {
 }
 
 function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete, allApplications }: DetailedViewProps) {
-  const rawIdNumber = app.status === "approved" && app.assignedIdNumber ? app.assignedIdNumber : generateOfficialIdNumber(app, allApplications)
-  const idNumber = isPWD(app)
-    ? rawIdNumber.replace(/^(SENIOR|OSCA)-/i, "PWD-")
-    : isSeniorBooklet
-    ? rawIdNumber.replace(/^(PWD|SENIOR|OSCA)-/i, "")
-    : rawIdNumber.replace(/^PWD-/i, "SENIOR-")
-  const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
-  const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
-  const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
-
   const subLabel = subLabelForApp(app)
   const contactNumber = isPWD(app) ? app.contactNo : app.cellphoneNo
 
@@ -1513,6 +1503,17 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete,
     String(subLabel || "").toLowerCase().includes("assistance") ||
     String((app as any).service || "").toLowerCase().includes("assistance") ||
     String((app as any).assistanceType || "").toLowerCase().includes("assistance")
+
+  const rawIdNumber = app.status === "approved" && app.assignedIdNumber ? app.assignedIdNumber : generateOfficialIdNumber(app, allApplications)
+  const idNumber = isPWD(app)
+    ? rawIdNumber.replace(/^(SENIOR|OSCA)-/i, "PWD-")
+    : isSeniorBooklet
+    ? rawIdNumber.replace(/^(PWD|SENIOR|OSCA)-/i, "")
+    : rawIdNumber.replace(/^PWD-/i, "SENIOR-")
+
+  const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
+  const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
+  const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
 
   let localEmergencyName = ""
   let localEmergencyPhone = ""
