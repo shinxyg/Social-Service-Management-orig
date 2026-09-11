@@ -51,7 +51,7 @@ const MODAL_TEXTS: Record<
     ],
     sec2Title: "Who is eligible to apply?",
     sec2Items: [
-      "Must possess a valid and active QCID.",
+      "Must possess a valid and active Gov Service ID.",
       "Must have complete and accurate personal information on profile.",
       "Must meet the eligibility guidelines of the Livelihood Program.",
       "Must not have an existing pending livelihood application.",
@@ -59,7 +59,7 @@ const MODAL_TEXTS: Record<
     sec3Title: "Documentary Requirements",
     sec3Subtitle: "Please prepare clear copies of the following:",
     sec3Items: [
-      "Valid ID / QCID",
+      "Valid ID / Gov Service ID",
       "Barangay Certificate / Proof of Residency (if required)",
       "Supporting Documents for livelihood / business proposal",
       "Other verification documents requested by administrators",
@@ -88,7 +88,7 @@ const MODAL_TEXTS: Record<
     ],
     sec2Title: "Sino ang maaaring mag-apply?",
     sec2Items: [
-      "Dapat ay may valid at active QCID.",
+      "Dapat ay may valid at active Gov Service ID.",
       "Dapat kumpleto at tama ang personal information sa profile.",
       "Dapat nakakatugon sa eligibility requirements ng Livelihood Program.",
       "Hindi dapat may existing pending livelihood application.",
@@ -96,7 +96,7 @@ const MODAL_TEXTS: Record<
     sec3Title: "Documentary Requirements",
     sec3Subtitle: "Pakihanda ang mga sumusunod:",
     sec3Items: [
-      "Valid ID / QCID",
+      "Valid ID / Gov Service ID",
       "Proof of Residency kung kinakailangan",
       "Supporting Document para sa livelihood, kung kinakailangan",
       "Iba pang dokumentong maaaring hingin ng administrator",
@@ -125,7 +125,7 @@ const MODAL_TEXTS: Record<
     ],
     sec2Title: "Kinsa ang mahimong mag-apply?",
     sec2Items: [
-      "Kinahanglan adunay balido ug aktibong QCID.",
+      "Kinahanglan adunay balido ug aktibong Gov Service ID.",
       "Kinahanglan kompleto ug husto ang personal nga impormasyon sa profile.",
       "Kinahanglan nakatuman sa eligibility requirements sa Livelihood Program.",
       "Dili kinahanglan adunay nag-ung-ong nga aplikasyon sa panginabuhi.",
@@ -133,7 +133,7 @@ const MODAL_TEXTS: Record<
     sec3Title: "Mga Dokumentong Gikinahanglan",
     sec3Subtitle: "Palihug andama ang mga mosunod:",
     sec3Items: [
-      "Valid ID / QCID",
+      "Valid ID / Gov Service ID",
       "Proof of Residency kung gikinahanglan",
       "Supporting Document alang sa panginabuhi, kung gikinahanglan",
       "Uban pang mga dokumento nga gikinahanglan sa tagdumala",

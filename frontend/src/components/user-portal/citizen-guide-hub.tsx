@@ -373,7 +373,7 @@ export default function CitizenGuideHub() {
       color: "bg-blue-50 text-blue-600 border-blue-200",
       btnColor: "bg-blue-600 hover:bg-blue-700",
       desc: "Programs for citizens aged 60+, including Official Senior ID registration, Medicine Discount Booklets, Free Movie Booklets, and Social Pension.",
-      features: ["20% Senior Discount", "Medicine Purchase Booklet", "Free QC Movie Booklet", "Social Pension Program"],
+      features: ["20% Senior Discount", "Medicine Purchase Booklet", "Free Movie Booklet", "Social Pension Program"],
       primaryAction: { label: "Apply Senior ID", path: "/portal/apply-pwd-senior?category=senior&type=new" },
       secondaryAction: { label: "Get Medicine/Movie Booklet", path: "/portal/apply-pwd-senior?category=senior&type=medicine-booklet" }
     },
@@ -430,7 +430,7 @@ export default function CitizenGuideHub() {
   const faqs = [
     {
       q: "What is AICS and who is eligible to apply?",
-      a: "AICS (Assistance to Individuals in Crisis Situations) is an emergency social welfare program by Quezon City providing financial and material assistance to residents facing unexpected crisis such as hospitalization, death of a family member, sudden loss of income, or natural calamities. Any bona fide Quezon City resident with a valid QCID or Barangay Indigency can apply."
+      a: "AICS (Assistance to Individuals in Crisis Situations) is an emergency social welfare program by Gov Service providing financial and material assistance to residents facing unexpected crisis such as hospitalization, death of a family member, sudden loss of income, or natural calamities. Any bona fide Gov Service resident with a valid Gov Service ID or Barangay Indigency can apply."
     },
     {
       q: "How do I renew or replace a lost PWD or Senior Citizen ID?",

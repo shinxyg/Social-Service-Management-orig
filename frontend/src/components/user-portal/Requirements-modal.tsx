@@ -33,12 +33,12 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
       {
         heading: "I. Ano ang Medical Assistance Program?",
         body:
-          "Ang Medical Assistance Program ay nagbibigay ng tulong pinansyal para sa mga residente ng Lungsod Quezon na walang kakayahang tugunan ang mga medikal na pangangailangan tulad ng gamot na hindi available sa Botika ng Bayan.",
+          "Ang Medical Assistance Program ay nagbibigay ng tulong pinansyal para sa mga residente ng Gov Service na walang kakayahang tugunan ang mga medikal na pangangailangan tulad ng gamot na hindi available sa Botika ng Bayan.",
       },
       {
         heading: "II. Sino ang kwalipikado sa programa?",
         list: [
-          "Mga lehitimong residente ng Lungsod Quezon at mayroong QCID.",
+          "Mga lehitimong residente ng Gov Service at mayroong Gov Service ID.",
           "Wala o hindi sapat ang kakayahan na tugunan ang mga medikal na pangangailangan.",
         ],
         listClassName: "text-muted-foreground list-decimal",
@@ -50,12 +50,12 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
           "Medical Certificate / Clinical Abstract",
           "Reseta",
           "Barangay Certificate of Indigency",
-          "QCID",
+          "Gov Service ID",
         ],
         note:
           "Kung may authorized representative (pinakamalapit na kamag-anak / nearest of kin):",
         noteList: [
-          "QCID or Valid ID",
+          "Gov Service ID o Valid ID",
           "Authorization letter nakasaad ang relasyon sa pasyente",
         ],
       },
@@ -77,7 +77,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
         body:
           "Ang funeral service package ay nakasaad sa Funeral Contract kabilang ang mga sumusunod na serbisyo na hindi lalagpas sa Php25,000:",
         list: [
-          "Retrieval of human remains from the place of death (within Quezon City)",
+          "Retrieval of human remains from the place of death (within Gov Service)",
           "Use of white casket (OMS)",
           "Embalming and funeral arrangement of viewing place for a maximum of 7 days",
           "1 standing flower arrangement",
@@ -90,7 +90,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
       },
       {
         heading: "III. Sino ang kwalipikado sa programa?",
-        body: "Indigent o mahirap na pamilya ng mga namatay na residente ng lungsod Quezon.",
+        body: "Indigent o mahirap na pamilya ng mga namatay na residente ng Gov Service.",
       },
       {
         heading: "IV. Mga Dokumentong Kailangan",
@@ -99,7 +99,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
           "Certified True Copy ng Death Certificate",
           "Notarized Funeral Contract (Original Copy; nakatala ang mga serbisyo at ang amount)",
           'Certificate of Indigency (Original Copy; specified for "funeral/burial assistance"; may dry seal at pirmado ng barangay captain o kanyang duly assigned representative)',
-          "Photocopy ng Valid Identification (ID) ng deceased at ng Informant, preferably QCID (may photo at signature)",
+          "Photocopy ng Valid Identification (ID) ng deceased at ng Informant, preferably Gov Service ID (may photo at signature)",
         ],
       },
     ],
@@ -118,7 +118,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
       {
         heading: "II. Sino ang kwalipikado sa programa?",
         list: [
-          "Taga-Quezon City na may rehistradong anak/bata na may kapansanan (may QC PWD ID)",
+          "Taga-Gov Service na may rehistradong anak/bata na may kapansanan (may Gov Service PWD ID)",
           "Edad 6 hanggang 30",
           "Kasalukuyang nag-aaral sa pampublikong paaralan mula SPED hanggang Grade 10",
           "Kabilang sa isang mahirap na pamilya na may buwanang kita na ₱13,873 pababa",
@@ -130,7 +130,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
         list: [
           "Kopya ng pinakabagong school ID o pinakahuling Certificate of Enrollment ng benepisyaryo",
           "Sertipiko ng Indigency na inisyu ng Barangay na nagsasaad ng layunin ng pag-avail ng SSDD Educational Assistance",
-          "QC ID/PWD ID",
+          "Gov Service ID / PWD ID",
         ],
       },
       {
@@ -148,23 +148,23 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
         answer: "Kabilang sa isang mahirap na pamilya na may buwanang kita na ₱13,873 pababa.",
       },
       {
-        question: "2. Kailangan po ba ng QC ID para maka-avail ng serbisyong ito?",
-        answer: "Ang aplikante po ay dapat may QC ID/PWD.",
+        question: "2. Kailangan po ba ng Gov Service ID para maka-avail ng serbisyong ito?",
+        answer: "Ang aplikante po ay dapat may Gov Service ID / PWD ID.",
       },
       {
         question: "3. Ano ang mga kakailanganin na dokumento?",
         answer:
-          "Kopya ng pinakabagong school ID o pinakahuling Certificate of Enrollment ng benepisyaryo. Sertipiko ng Indigency na inisyu ng Barangay na nagsasaad ng layunin ng pag-avail ng SSDD Educational Assistance. QC ID/PWD ID.",
+          "Kopya ng pinakabagong school ID o pinakahuling Certificate of Enrollment ng benepisyaryo. Sertipiko ng Indigency na inisyu ng Barangay na nagsasaad ng layunin ng pag-avail ng SSDD Educational Assistance. Gov Service ID / PWD ID.",
       },
       {
         question: "4. Paano mag-sumite ng aplikasyon para sa Educational Assistance Program?",
         answer:
-          "Maaaring buksan ang website ng qceservices.quezoncity.gov.ph at pumunta sa porsyon ng SSDD (Social Services Development Department) na nakalagay sa ibabang bahagi ng website. Maaaring kompletuhin ang mga kinakailangang dokumento bago magsumite ng aplikasyon.",
+          "Maaaring buksan ang online portal at pumunta sa porsyon ng SSDD (Social Services Development Department). Maaaring kompletuhin ang mga kinakailangang dokumento bago magsumite ng aplikasyon.",
       },
       {
         question: "5. Saan pwedeng i-upload ang mga dokumento?",
         answer:
-          "Maaaring i-upload ang mga kinakailangang dokumento sa SSDD portal ng QCEServices (Social Services Development Department).",
+          "Maaaring i-upload ang mga kinakailangang dokumento sa SSDD portal ng Gov Service.",
       },
       {
         question: "6. Magkano ang matatanggap sa Educational Assistance Program?",
@@ -200,7 +200,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
         body: "Para sa Applicant:",
         list: [
           "Barangay Certificate of Indigency / Residency",
-          "QCitizen ID o Valid Government-Issued ID",
+          "Gov Service ID o Valid Government-Issued ID",
           "Supporting document, kung applicable",
         ],
         note: "Depende sa uri ng assistance:",
@@ -237,7 +237,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
         body: "Para sa Applicant:",
         list: [
           "Barangay Certificate of Indigency / Residency",
-          "QCitizen ID o Valid Government-Issued ID",
+          "Gov Service ID o Valid Government-Issued ID",
           "Supporting document, kung applicable",
         ],
         note: "Type of Food Assistance:",
@@ -255,13 +255,13 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
       {
         heading: "I. Ano ang Transportation Assistance Program?",
         body:
-          "Ang Transportation Assistance Program ay nagbibigay ng tulong sa mga indibidwal o pamilyang nasa crisis situation na nangangailangan ng assistance para sa kanilang paglalakbay, lalo na para sa Balik-Probinsya. Sa QC, maaaring kabilang ang assistance ang pagbili ng ticket at iba pang travel support depende sa assessment.",
+          "Ang Transportation Assistance Program ay nagbibigay ng tulong sa mga indibidwal o pamilyang nasa crisis situation na nangangailangan ng assistance para sa kanilang paglalakbay, lalo na para sa Balik-Probinsya. Sa Gov Service, maaaring kabilang ang assistance ang pagbili ng ticket at iba pang travel support depende sa assessment.",
       },
       {
         heading: "II. Sino ang maaaring mag-apply?",
         list: [
           "Mga indibidwal o pamilyang nasa crisis situation.",
-          "Indigent Quezon City residents na nangangailangan ng transportation assistance.",
+          "Indigent Gov Service residents na nangangailangan ng transportation assistance.",
         ],
         listClassName: "text-blue-600 list-disc",
       },
@@ -270,7 +270,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
         body: "Para sa Applicant:",
         list: [
           "Barangay Certificate of Residency / Indigency",
-          "Valid Government-Issued ID (Preferably QCitizen ID)",
+          "Valid Government-Issued ID (Preferably Gov Service ID)",
         ],
         note: "Para sa Balik-Probinsya, kung applicable:",
         noteList: [
@@ -281,7 +281,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
       {
         heading: "Mahalagang Paalala",
         body:
-          "Ang QC guide para sa Balik-Probinsya ay partikular na naglilista ng Barangay Certificate of Residency/Indigency, Travel Clearance, Health Certificate at valid government ID.",
+          "Ang Gov Service guide para sa Balik-Probinsya ay partikular na naglilista ng Barangay Certificate of Residency/Indigency, Travel Clearance, Health Certificate at valid government ID.",
       },
     ],
   },

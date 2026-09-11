@@ -412,24 +412,24 @@ export default function ApplyPWDSenior() {
                         ? "Your application for Medicine Discount Booklet has been officially approved! Your official booklet number has been issued."
                         : language === "bis"
                         ? "Ang imong aplikasyon para sa Medicine Discount Booklet opisyal nang na-aprobahan."
-                        : "Ang inyong aplikasyon para sa Medicine Discount Booklet ay opisyal nang na-apruba ng Quezon City.")
+                        : "Ang inyong aplikasyon para sa Medicine Discount Booklet ay opisyal nang na-apruba ng Gov Service.")
                     : isSeniorMovie
                     ? (language === "en"
                         ? "Your application for Free Movie Booklet has been officially approved! Your official booklet number has been issued."
                         : language === "bis"
                         ? "Ang imong aplikasyon para sa Free Movie Booklet opisyal nang na-aprobahan."
-                        : "Ang inyong aplikasyon para sa Free Movie Booklet ay opisyal nang na-apruba ng Quezon City.")
+                        : "Ang inyong aplikasyon para sa Free Movie Booklet ay opisyal nang na-apruba ng Gov Service.")
                     : isAssistance || isSeniorSocial
                     ? (language === "en"
                         ? `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status.`
                         : language === "bis"
-                        ? `Ang imong aplikasyon para sa ${serviceCleanTitle} opisyal nang na-aprobahan sa Quezon City.`
-                        : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay opisyal nang na-apruba ng Quezon City Social Services.`)
+                        ? `Ang imong aplikasyon para sa ${serviceCleanTitle} opisyal nang na-aprobahan sa Gov Service.`
+                        : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay opisyal nang na-apruba ng Gov Service Social Services.`)
                     : (language === "en"
                         ? `Your application for ${serviceCleanTitle} has been officially approved! You already have an active ID.`
                         : language === "bis"
                         ? `Ang imong aplikasyon para sa ${serviceCleanTitle} opisyal nang na-aprobahan. Aduna ka nay aktibo nga ID.`
-                        : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay opisyal nang na-apruba ng Quezon City.`))
+                        : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay opisyal nang na-apruba ng Gov Service.`))
                 : (language === "en"
                     ? `Your application for ${serviceCleanTitle} has been successfully submitted and is currently pending review. Please wait for an assessment before submitting a new application.`
                     : language === "bis"

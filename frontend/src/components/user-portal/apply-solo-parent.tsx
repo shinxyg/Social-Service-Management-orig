@@ -34,7 +34,7 @@ function getLocalizedSoloParentRequirements(
         },
         {
           title: "Barangay Certificate of Residency",
-          desc: "Required if there is a change of residence in Quezon City since your last application.",
+          desc: "Required if there is a change of residence in Gov Service since your last application.",
         },
         {
           title: "Sworn Affidavit of Solo Parent",
@@ -58,7 +58,7 @@ function getLocalizedSoloParentRequirements(
         },
         {
           title: "Barangay Certificate of Residency",
-          desc: "Gikinahanglan kung adunay pagbag-o sa pinuy-anan sa Quezon City sukad sa miaging aplikasyon.",
+          desc: "Gikinahanglan kung adunay pagbag-o sa pinuy-anan sa Gov Service sukad sa miaging aplikasyon.",
         },
         {
           title: "Sworn Affidavit of Solo Parent",
@@ -81,7 +81,7 @@ function getLocalizedSoloParentRequirements(
       },
       {
         title: "Barangay Certificate of Residency",
-        desc: "Kailangan kung may pagbabago sa inyong tirahan sa Quezon City mula sa huling aplikasyon.",
+        desc: "Kailangan kung may pagbabago sa inyong tirahan sa Gov Service mula sa huling aplikasyon.",
       },
       {
         title: "Sworn Affidavit of Solo Parent",
@@ -98,7 +98,7 @@ function getLocalizedSoloParentRequirements(
           desc: "Stating the reason, date, and details of loss of your Solo Parent ID card.",
         },
         {
-          title: "Valid Government ID / QCitizen ID",
+          title: "Valid Government ID / Gov Service ID",
           desc: "With photo and signature as official proof of identity.",
         },
         {
@@ -107,7 +107,7 @@ function getLocalizedSoloParentRequirements(
         },
         {
           title: "Barangay Certificate of Residency",
-          desc: "Proof of legitimate residency in Quezon City.",
+          desc: "Proof of legitimate residency in Gov Service.",
         },
       ]
     }
@@ -118,7 +118,7 @@ function getLocalizedSoloParentRequirements(
           desc: "Nagpatin-aw sa hinungdan, petsa, ug mga detalye sa pagkawala sa imong Solo Parent ID card.",
         },
         {
-          title: "Balido nga Government ID / QCitizen ID",
+          title: "Balido nga Government ID / Gov Service ID",
           desc: "Adunay litrato ug pirma isip opisyal nga pruweba sa imong pagkatawo.",
         },
         {
@@ -127,7 +127,7 @@ function getLocalizedSoloParentRequirements(
         },
         {
           title: "Barangay Certificate of Residency",
-          desc: "Pruweba sa lehitimong pagpuyo sa Lungsod Quezon.",
+          desc: "Pruweba sa lehitimong pagpuyo sa Gov Service.",
         },
       ]
     }
@@ -137,7 +137,7 @@ function getLocalizedSoloParentRequirements(
         desc: "Nagsasaad ng dahilan, petsa, at detalye ng pagkawala ng inyong Solo Parent ID card.",
       },
       {
-        title: "Valid Government ID / QCitizen ID",
+        title: "Valid Government ID / Gov Service ID",
         desc: "May larawan at lagda bilang opisyal na patunay ng inyong pagkakakilanlan.",
       },
       {
@@ -146,7 +146,7 @@ function getLocalizedSoloParentRequirements(
       },
       {
         title: "Barangay Certificate of Residency",
-        desc: "Patunay ng lehitimong paninirahan sa Lungsod Quezon.",
+        desc: "Patunay ng lehitimong paninirahan sa Gov Service.",
       },
     ]
   }
@@ -164,7 +164,7 @@ function getLocalizedSoloParentRequirements(
       },
       {
         title: "Barangay Certificate of Residency & Parental Care",
-        desc: "Proof of legitimate residency and parental care in Quezon City.",
+        desc: "Proof of legitimate residency and parental care in Gov Service.",
       },
       {
         title: "Proof of Circumstance (Category Document)",
@@ -188,7 +188,7 @@ function getLocalizedSoloParentRequirements(
       },
       {
         title: "Barangay Certificate of Residency & Parental Care",
-        desc: "Pruweba sa lehitimong pagpuyo ug pag-atiman sa Quezon City.",
+        desc: "Pruweba sa lehitimong pagpuyo ug pag-atiman sa Gov Service.",
       },
       {
         title: "Pruweba sa Sitwasyon (Kategorya)",
@@ -211,7 +211,7 @@ function getLocalizedSoloParentRequirements(
     },
     {
       title: "Barangay Certificate of Residency & Parental Care",
-      desc: "Patunay ng lehitimong paninirahan at pangangalaga sa Lungsod Quezon.",
+      desc: "Patunay ng lehitimong paninirahan at pangangalaga sa Gov Service.",
     },
     {
       title: "Katibayan ng Sitwasyon (Category Document)",
@@ -318,10 +318,10 @@ export default function ApplySoloParent() {
       ? `Mga Kinahanglanon sa Tabang sa Kaayohan sa Bata — ${matchedCwProgram.title}`
       : `Mga Kinakailangan sa Tulong sa Kapakanan ng Bata — ${matchedCwProgram.title}`
     : language === "en"
-    ? "Requirements for Application of QC Solo Parent ID"
+    ? "Requirements for Application of Gov Service Solo Parent ID"
     : language === "bis"
-    ? "Mga Kinahanglanon sa Pag-apply og QC Solo Parent ID"
-    : "Mga Kinakailangan sa Aplikasyon ng QC Solo Parent ID"
+    ? "Mga Kinahanglanon sa Pag-apply og Gov Service Solo Parent ID"
+    : "Mga Kinakailangan sa Aplikasyon ng Gov Service Solo Parent ID"
 
   const typeBadge = isChildWelfare
     ? { label: matchedCwProgram.title, color: "bg-blue-50 text-blue-700 border-blue-200" }
@@ -369,15 +369,15 @@ export default function ApplySoloParent() {
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {isChildWelfare
                     ? language === "en"
-                      ? "Official service for Child & Youth Welfare of Quezon City."
+                      ? "Official service for Child & Youth Welfare of Gov Service."
                       : language === "bis"
-                      ? "Opisyal nga serbisyo para sa Kaayohan sa Bata ug Kabatan-onan sa Lungsod Quezon."
-                      : "Opisyal na serbisyo para sa Child & Youth Welfare ng Lungsod Quezon."
+                      ? "Opisyal nga serbisyo para sa Kaayohan sa Bata ug Kabatan-onan sa Gov Service."
+                      : "Opisyal na serbisyo para sa Child & Youth Welfare ng Gov Service."
                     : language === "en"
-                    ? "Official service for Solo Parents (RA 8972 / RA 11861) of Quezon City."
+                    ? "Official service for Solo Parents (RA 8972 / RA 11861) of Gov Service."
                     : language === "bis"
-                    ? "Opisyal nga serbisyo para sa Solo Parents (RA 8972 / RA 11861) sa Lungsod Quezon."
-                    : "Opisyal na serbisyo para sa Solo Parents (RA 8972 / RA 11861) ng Lungsod Quezon."}
+                    ? "Opisyal nga serbisyo para sa Solo Parents (RA 8972 / RA 11861) sa Gov Service."
+                    : "Opisyal na serbisyo para sa Solo Parents (RA 8972 / RA 11861) ng Gov Service."}
                 </p>
               </div>
             </div>

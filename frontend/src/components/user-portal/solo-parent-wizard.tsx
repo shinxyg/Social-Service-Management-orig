@@ -1715,8 +1715,8 @@ export default function SoloParentApplicationWizard({
                 ? language === "en"
                   ? "Your application for Solo Parent ID has been officially approved! You already have an active Solo Parent ID. If you need to renew or replace your ID, please choose an option below."
                   : language === "bis"
-                  ? "Ang imong aplikasyon para sa Solo Parent ID opisyal nga na-aprobahan sa Quezon City. Aduna ka nay aktibo nga ID."
-                  : "Ang inyong aplikasyon para sa Solo Parent ID ay opisyal nang na-apruba ng Quezon City Social Services Development Department."
+                  ? "Ang imong aplikasyon para sa Solo Parent ID opisyal nga na-aprobahan sa Gov Service. Aduna ka nay aktibo nga ID."
+                  : "Ang inyong aplikasyon para sa Solo Parent ID ay opisyal nang na-apruba ng Gov Service Social Services Development Department."
                 : language === "en"
                 ? "Your application for Solo Parent ID has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."
                 : language === "bis"
@@ -2005,19 +2005,19 @@ export default function SoloParentApplicationWizard({
                   />
                   <span className={`text-sm ${attemptedNext && !isResident ? "text-red-600 font-semibold" : "text-blue-700"}`}>
                     {language === "en"
-                      ? "Are you a legitimate resident of Quezon City?"
+                      ? "Are you a legitimate resident of Gov Service?"
                       : language === "bis"
-                      ? "Ikaw ba usa ka lehitimong residente sa Quezon City?"
-                      : "Ikaw ba ay lehitimong residente ng Quezon City?"} <span className="text-red-500">*</span>
+                      ? "Ikaw ba usa ka lehitimong residente sa Gov Service?"
+                      : "Ikaw ba ay lehitimong residente ng Gov Service?"} <span className="text-red-500">*</span>
                   </span>
                 </label>
                 {attemptedNext && !isResident && (
                   <p className="text-xs text-red-500 ml-6">
                     {language === "en"
-                      ? "Must be a legitimate resident of Quezon City to apply."
+                      ? "Must be a legitimate resident of Gov Service to apply."
                       : language === "bis"
-                      ? "Kinahanglang residente sa Quezon City aron maka-apply."
-                      : "Kinakailangang residente ng Quezon City upang makapag-apply."}
+                      ? "Kinahanglang residente sa Gov Service aron maka-apply."
+                      : "Kinakailangang residente ng Gov Service upang makapag-apply."}
                   </p>
                 )}
 

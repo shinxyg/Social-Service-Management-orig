@@ -112,13 +112,13 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Matutunan ang pattern drafting, pananahi ng mga damit at kurtina, paggamit at pag-aalaga ng sewing machine, at paglikha ng mga produktong maaaring ibenta sa komunidad.",
     date: "September 15, 2026 - September 18, 2026",
     time: "9:00 AM - 12:00 PM",
-    location: "QC Skills Development Center, Batasan Hills",
+    location: "Gov Service Skills Development Center, Batasan Hills",
     landmark: "Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall",
     totalSlots: 25,
     availableSlots: 18,
     durationHours: 16,
     instructor: "Gng. Rosa Dimaculangan (Master Tailor)",
-    prerequisites: "QC Resident (18 taong gulang pataas), may interes sa pananahi.",
+    prerequisites: "Gov Service Resident (18 taong gulang pataas), may interes sa pananahi.",
     materialsProvided: "Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.",
   },
   {
@@ -128,13 +128,13 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Matutunan ang commercial cooking, food safety & sanitation, paghahanda ng merienda at lutong ulam na patok sa karenderya, at tamang costing at pagpepresyo.",
     date: "September 20, 2026 - September 23, 2026",
     time: "1:00 PM - 4:00 PM",
-    location: "QC Skills Development Center, Batasan Hills",
+    location: "Gov Service Skills Development Center, Batasan Hills",
     landmark: "3rd Floor Culinary Lab, malapit sa Batasan Hills Barangay Hall",
     totalSlots: 25,
     availableSlots: 12,
     durationHours: 16,
     instructor: "Chef Anthony Santos (Culinary Specialist)",
-    prerequisites: "QC Resident, handang sumunod sa kitchen hygiene & food safety guidelines.",
+    prerequisites: "Gov Service Resident, handang sumunod sa kitchen hygiene & food safety guidelines.",
     materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
   },
   {
@@ -144,13 +144,13 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Pangunahing kasanayan sa haircutting at hairstyling, manicure/pedicure na may nail art, facial cleansing at basic cosmetology para sa salon o home-service livelihood.",
     date: "September 24, 2026 - September 27, 2026",
     time: "9:00 AM - 12:00 PM",
-    location: "QC Skills Development Center, Batasan Hills",
+    location: "Gov Service Skills Development Center, Batasan Hills",
     landmark: "Ground Floor Wellness Studio, tapat ng Puregold Batasan",
     totalSlots: 25,
     availableSlots: 15,
     durationHours: 16,
     instructor: "Bb. Cheryl Mendez (Certified Cosmetologist)",
-    prerequisites: "QC Resident (18 taong gulang pataas), masigasig matuto ng beauty care.",
+    prerequisites: "Gov Service Resident (18 taong gulang pataas), masigasig matuto ng beauty care.",
     materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.",
   },
   {
@@ -160,13 +160,13 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Pagsasanay sa computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, at online job preparation.",
     date: "September 28, 2026 - October 01, 2026",
     time: "1:00 PM - 4:00 PM",
-    location: "QC Skills Development Center, Batasan Hills",
+    location: "Gov Service Skills Development Center, Batasan Hills",
     landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
     totalSlots: 30,
     availableSlots: 22,
     durationHours: 16,
     instructor: "G. Mark Villanueva (IT Skills Coordinator)",
-    prerequisites: "QC Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.",
+    prerequisites: "Gov Service Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.",
     materialsProvided: "Computer workstation with internet, digital handouts, practice USB drive.",
   },
 ]
@@ -423,15 +423,15 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-600 text-white tracking-wide uppercase">
-                QC Skills Development
+                Gov Service Skills Development
               </span>
               <span className="text-xs text-muted-foreground">Livelihood &amp; Training Program Sub-Module</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Quezon City Training Program
+              Gov Service Training Program
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-2xl">
-              Libreng skills training at sertipikasyon para sa mga residente ng Quezon City.
+              Libreng skills training at sertipikasyon para sa mga residente ng Gov Service.
               Kumuha ng NC II/Skills certificate para sa livelihood assistance at hanapbuhay.
             </p>
           </div>
@@ -764,7 +764,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     Apply for Training Program
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Mabilisang aplikasyon para sa mga programang pangkabuhayan at skills training ng Quezon City.
+                    Mabilisang aplikasyon para sa mga programang pangkabuhayan at skills training ng Gov Service.
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 self-start sm:self-center">
@@ -824,20 +824,20 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   </label>
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-md">
                     <ShieldCheck className="h-3.5 w-3.5" />
-                    Verified QC Profile
+                    Verified Gov Service Profile
                   </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-muted/20 border border-border text-xs text-muted-foreground flex items-start gap-2.5">
                   <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                   <p>
-                    Ang sumusunod na impormasyon ay <strong>kusang kinuha mula sa iyong QC eServices User Profile</strong> upang hindi mo na kailangang mag-type muli.
+                    Ang sumusunod na impormasyon ay <strong>kusang kinuha mula sa iyong Gov Service User Profile</strong> upang hindi mo na kailangang mag-type muli.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <label className="block font-semibold text-muted-foreground mb-1">QC ID Reference Number</label>
+                    <label className="block font-semibold text-muted-foreground mb-1">Gov Service Reference Number</label>
                     <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border font-mono font-bold text-foreground">
                       {userQcid}
                     </div>
@@ -853,7 +853,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   <div>
                     <label className="block font-semibold text-muted-foreground mb-1">Email Address</label>
                     <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border text-foreground">
-                      {profile.email || "resident@quezoncity.gov.ph"}
+                      {profile.email || "resident@govserve.gov.ph"}
                     </div>
                   </div>
 
@@ -874,7 +874,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   <div>
                     <label className="block font-semibold text-muted-foreground mb-1">Barangay &amp; Lungsod</label>
                     <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border font-medium text-foreground">
-                      Brgy. {profile.barangay || "Sauyo"}, Quezon City
+                      Brgy. {profile.barangay || "Sauyo"}, Gov Service
                     </div>
                   </div>
                 </div>
@@ -1149,7 +1149,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 Wala Pang Natapos na Training
               </h4>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                Kapag natapos mo ang iyong 16-hour skills training, dito mo makikita at mada-download ang iyong opisyal na sertipiko mula sa Quezon City Government.
+                Kapag natapos mo ang iyong 16-hour skills training, dito mo makikita at mada-download ang iyong opisyal na sertipiko mula sa Gov Service.
               </p>
               <button
                 type="button"
@@ -1306,7 +1306,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               <div className="flex items-center justify-center gap-3">
                 <img
                   src="/samples/Government Service Integrity Seal.png"
-                  alt="QC Seal"
+                  alt="Gov Service Seal"
                   className="w-16 h-16 object-contain"
                   onError={(e) => {
                     (e.target as HTMLElement).style.display = "none"
@@ -1317,7 +1317,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     Republic of the Philippines
                   </h5>
                   <h4 className="text-base font-extrabold tracking-wide text-[#0F172A]">
-                    QUEZON CITY GOVERNMENT
+                    GOV SERVICE
                   </h4>
                   <p className="text-[10px] text-slate-600 tracking-wider uppercase">
                     Social Services Development Department • Skills Training Division
@@ -1338,20 +1338,20 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </h3>
                 <p className="text-xs text-slate-700 max-w-lg mx-auto leading-relaxed">
                   para sa matagumpay na pagtatapos ng <strong>16 Oras ng Masinsinang Pagsasanay</strong> sa ilalim ng
-                  kursong <strong>{certificateModalApp.trainingName}</strong> na ginanap sa QC Skills Development Center, Batasan Hills, Quezon City.
+                  kursong <strong>{certificateModalApp.trainingName}</strong> na ginanap sa Gov Service Skills Development Center, Batasan Hills.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-6 text-left text-[10px] text-slate-600 border-t border-slate-200">
                 <div>
-                  <p>Certificate No: <strong className="font-mono text-slate-900">{certificateModalApp.certificate?.certificateNo || `QC-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`}</strong></p>
+                  <p>Certificate No: <strong className="font-mono text-slate-900">{certificateModalApp.certificate?.certificateNo || `GS-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`}</strong></p>
                   <p>Petsa ng Pag-isyu: <strong className="text-slate-900">{certificateModalApp.certificate?.issueDate || new Date().toLocaleDateString()}</strong></p>
-                  <p>QC ID: <strong className="font-mono text-slate-900">{certificateModalApp.qcid}</strong></p>
+                  <p>Reference ID: <strong className="font-mono text-slate-900">{certificateModalApp.qcid}</strong></p>
                 </div>
 
                 <div className="text-right">
                   <div className="w-32 h-10 border-b border-slate-400 ml-auto mb-1 flex items-end justify-center">
-                    <span className="font-script text-xs text-slate-700 italic">QC Skills Director</span>
+                    <span className="font-script text-xs text-slate-700 italic">Gov Service Director</span>
                   </div>
                   <p className="font-bold text-slate-800">ATTY. MARIQUITA BELMONTE</p>
                   <p className="text-[9px] text-slate-500">SSDD Department Head</p>
