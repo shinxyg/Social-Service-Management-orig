@@ -265,7 +265,8 @@ export default function ApplySoloParent() {
         const fn = (prof.firstName || "").trim()
         const ln = (prof.lastName || "").trim()
         const res = await fetch(
-          `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}`
+          `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}&_t=${Date.now()}`,
+          { cache: "no-store" }
         )
         if (res.ok) {
           const data = await res.json()

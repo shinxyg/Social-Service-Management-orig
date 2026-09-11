@@ -945,7 +945,8 @@ export default function SoloParentApplicationWizard({
       const ln = (prof.lastName || userProfile?.lastName || "").trim()
 
       const res = await fetch(
-        `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}`
+        `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}&_t=${Date.now()}`,
+        { cache: "no-store" }
       )
       if (res.ok) {
         backendSuccess = true
@@ -965,7 +966,7 @@ export default function SoloParentApplicationWizard({
 
     // 2. Fetch admin all applications as fallback
     try {
-      const resAdmin = await fetch(`${API_BASE}/api/solo-parent/admin/all?limit=200`)
+      const resAdmin = await fetch(`${API_BASE}/api/solo-parent/admin/all?limit=200&_t=${Date.now()}`, { cache: "no-store" })
       if (resAdmin.ok) {
         backendSuccess = true
         const dataAdmin = await resAdmin.json()
@@ -1235,7 +1236,8 @@ export default function SoloParentApplicationWizard({
         // 1. Backend Eligibility API
         try {
           const res = await fetch(
-            `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}&reapply=${isReapply ? "true" : "false"}`
+            `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}&reapply=${isReapply ? "true" : "false"}&_t=${Date.now()}`,
+            { cache: "no-store" }
           )
           if (res.ok) {
             const data = await res.json()

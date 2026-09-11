@@ -74,6 +74,12 @@ app.get('/api/test-db', async (req, res) => {
     console.error('Database connection test failed:', err);
     res.status(500).json({ error: 'Database Error', details: err.message });
   }
+// Disable HTTP caching for dynamic API routes to prevent mobile browser stale caching
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
 });
 
 // API Routes
