@@ -21,6 +21,7 @@ import {
   Info,
   ShieldCheck,
   RefreshCw,
+  Lock,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, type LoggedInUserProfile } from "../../utils/userProfile"
@@ -837,44 +838,80 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <label className="block font-semibold text-muted-foreground mb-1">Gov Service Reference Number</label>
-                    <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border font-mono font-bold text-foreground">
-                      {userQcid}
+                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
+                      <span>Gov Service Reference Number</span>
+                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
+                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
+                      </span>
+                    </label>
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-mono font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
+                      <span>{userQcid}</span>
+                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-muted-foreground mb-1">Buong Pangalan (Full Name)</label>
-                    <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border font-bold text-foreground">
-                      {profile.firstName} {profile.middleName} {profile.lastName} {profile.suffix}
+                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
+                      <span>Buong Pangalan (Full Name)</span>
+                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
+                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
+                      </span>
+                    </label>
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
+                      <span className="truncate">{profile.firstName} {profile.middleName} {profile.lastName} {profile.suffix}</span>
+                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0 ml-2" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-muted-foreground mb-1">Email Address</label>
-                    <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border text-foreground">
-                      {profile.email || "resident@govserve.gov.ph"}
+                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
+                      <span>Email Address</span>
+                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
+                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
+                      </span>
+                    </label>
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
+                      <span className="truncate">{profile.email || "resident@govserve.gov.ph"}</span>
+                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0 ml-2" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-muted-foreground mb-1">Contact / Mobile Number</label>
-                    <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border font-semibold text-foreground">
-                      {profile.contactNo || profile.mobileNumber || "0917 234 5678"}
+                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
+                      <span>Contact / Mobile Number</span>
+                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
+                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
+                      </span>
+                    </label>
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-semibold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
+                      <span>{profile.contactNo || profile.mobileNumber || "0917 234 5678"}</span>
+                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-muted-foreground mb-1">Kasarian (Sex) &amp; Edad</label>
-                    <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border text-foreground">
-                      {profile.sex || "Female"} • {profile.age || "24"} taong gulang
+                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
+                      <span>Kasarian (Sex) &amp; Edad</span>
+                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
+                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
+                      </span>
+                    </label>
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
+                      <span>{profile.sex || "Female"} • {profile.age || "24"} taong gulang</span>
+                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-muted-foreground mb-1">Barangay &amp; Lungsod</label>
-                    <div className="px-3 py-2 rounded-lg bg-muted/40 border border-border font-medium text-foreground">
-                      Brgy. {profile.barangay || "Sauyo"}, Gov Service
+                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
+                      <span>Barangay &amp; Lungsod</span>
+                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
+                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
+                      </span>
+                    </label>
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-medium text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
+                      <span className="truncate">Brgy. {profile.barangay || "Sauyo"}, Gov Service</span>
+                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0 ml-2" />
                     </div>
                   </div>
                 </div>
