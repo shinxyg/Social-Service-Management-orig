@@ -950,9 +950,11 @@ export default function SoloParentApplicationWizard({
       const uid = userId || prof.id || ""
       const qcid = (prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || "").trim()
       const email = (prof.email || userProfile?.email || "").trim()
+      const fn = (prof.firstName || userProfile?.firstName || "").trim()
+      const ln = (prof.lastName || userProfile?.lastName || "").trim()
 
       const res = await fetch(
-        `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}`
+        `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}`
       )
       if (res.ok) {
         backendSuccess = true
