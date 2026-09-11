@@ -23,7 +23,7 @@ const DEFAULT_TRAINING_COURSES = [
     location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: 'Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall',
     totalSlots: 25,
-    availableSlots: 18,
+    availableSlots: 25,
     durationHours: 12,
     dailyHours: 3,
     totalDays: 4,
@@ -41,7 +41,7 @@ const DEFAULT_TRAINING_COURSES = [
     location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: '3rd Floor Culinary Lab, malapit sa Batasan Hills Barangay Hall',
     totalSlots: 25,
-    availableSlots: 12,
+    availableSlots: 25,
     durationHours: 12,
     dailyHours: 3,
     totalDays: 4,
@@ -59,7 +59,7 @@ const DEFAULT_TRAINING_COURSES = [
     location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: 'Ground Floor Wellness Studio, tapat ng Puregold Batasan',
     totalSlots: 25,
-    availableSlots: 15,
+    availableSlots: 25,
     durationHours: 12,
     dailyHours: 3,
     totalDays: 4,
@@ -77,7 +77,7 @@ const DEFAULT_TRAINING_COURSES = [
     location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: '2nd Floor Computer Laboratory, Batasan Hills Center',
     totalSlots: 30,
-    availableSlots: 22,
+    availableSlots: 30,
     durationHours: 12,
     dailyHours: 3,
     totalDays: 4,
@@ -175,11 +175,43 @@ function mapDbRowToApp(row) {
 }
 
 // GET /api/training/programs
-exports.getAvailablePrograms = (req, res) => {
+exports.getAvailablePrograms = async (req, res) => {
   try {
+    let allApps = [];
+    try {
+      const result = await db.query("SELECT * FROM training_applications WHERE status != 'rejected'");
+      if (result && Array.isArray(result.rows) && result.rows.length > 0) {
+        allApps = result.rows.map(mapDbRowToApp);
+      } else {
+        allApps = memoryApplications.filter((a) => a.status !== 'rejected');
+      }
+    } catch (_) {
+      allApps = memoryApplications.filter((a) => a.status !== 'rejected');
+    }
+
+    const dynamicPrograms = DEFAULT_TRAINING_COURSES.map((course) => {
+      const courseApps = allApps.filter(
+        (a) =>
+          a.trainingId === course.id ||
+          a.trainingName?.toLowerCase() === course.title?.toLowerCase() ||
+          a.schedule?.trainingName?.toLowerCase() === course.title?.toLowerCase()
+      );
+      const enrolledCount = courseApps.length;
+      const totalSlots = course.totalSlots || 25;
+      const availableSlots = Math.max(0, totalSlots - enrolledCount);
+      const percentFilled = Math.min(100, Math.round((enrolledCount / totalSlots) * 100));
+
+      return {
+        ...course,
+        enrolledCount,
+        availableSlots,
+        percentFilled,
+      };
+    });
+
     return res.status(200).json({
       success: true,
-      programs: DEFAULT_TRAINING_COURSES,
+      programs: dynamicPrograms,
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });

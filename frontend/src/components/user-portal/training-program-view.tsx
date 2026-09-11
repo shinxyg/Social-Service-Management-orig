@@ -43,6 +43,8 @@ export interface TrainingCourse {
   landmark: string
   totalSlots: number
   availableSlots: number
+  enrolledCount?: number
+  percentFilled?: number
   durationHours: number
   instructor: string
   prerequisites: string
@@ -116,12 +118,14 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     category: "Livelihood & Skills Development",
     description: "Learn pattern drafting, tailoring of garments and curtains, operating and maintaining sewing machines, and creating marketable products for the community.",
     date: "September 15, 2026 - September 18, 2026",
-    time: "9:00 AM - 12:00 PM",
+    time: "9:00 AM - 12:00 PM (3 Hours/Day)",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Beside Batasan Hills Barangay Hall / Across Puregold",
     totalSlots: 25,
-    availableSlots: 18,
-    durationHours: 16,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    durationHours: 12,
     instructor: "Mrs. Rosa Dimaculangan (Master Tailor)",
     prerequisites: "Gov Services Resident (18 years old and above), interest in garment making.",
     materialsProvided: "Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.",
@@ -132,12 +136,14 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     category: "Livelihood & Skills Development",
     description: "Learn commercial cooking, food safety & sanitation, preparing popular snacks and dishes for eatery businesses, and proper food costing and pricing.",
     date: "September 20, 2026 - September 23, 2026",
-    time: "1:00 PM - 4:00 PM",
+    time: "1:00 PM - 4:00 PM (3 Hours/Day)",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "3rd Floor Culinary Lab, near Batasan Hills Barangay Hall",
     totalSlots: 25,
-    availableSlots: 12,
-    durationHours: 16,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    durationHours: 12,
     instructor: "Chef Anthony Santos (Culinary Specialist)",
     prerequisites: "Gov Services Resident, willing to follow kitchen hygiene & food safety guidelines.",
     materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
@@ -148,12 +154,14 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     category: "Livelihood & Skills Development",
     description: "Core skills in haircutting, hairstyling, manicure/pedicure with nail art, facial cleansing, and basic cosmetology for salon or home-service livelihood.",
     date: "September 24, 2026 - September 27, 2026",
-    time: "9:00 AM - 12:00 PM",
+    time: "9:00 AM - 12:00 PM (3 Hours/Day)",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Ground Floor Wellness Studio, across Puregold Batasan",
     totalSlots: 25,
-    availableSlots: 15,
-    durationHours: 16,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    durationHours: 12,
     instructor: "Ms. Cheryl Mendez (Certified Cosmetologist)",
     prerequisites: "Gov Services Resident (18 years old and above), enthusiastic to learn beauty care.",
     materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.",
@@ -164,12 +172,14 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     category: "Livelihood & Skills Development",
     description: "Practical training in computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, and online job preparation.",
     date: "September 28, 2026 - October 01, 2026",
-    time: "1:00 PM - 4:00 PM",
+    time: "1:00 PM - 4:00 PM (3 Hours/Day)",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
     totalSlots: 30,
-    availableSlots: 22,
-    durationHours: 16,
+    availableSlots: 30,
+    enrolledCount: 0,
+    percentFilled: 0,
+    durationHours: 12,
     instructor: "Mr. Mark Villanueva (IT Skills Coordinator)",
     prerequisites: "Gov Services Resident seeking to learn practical computer skills from basic navigation to office tools.",
     materialsProvided: "Computer workstation with internet, digital handouts, practice USB drive.",
@@ -198,7 +208,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           ...course,
           title: "Sewing Training (Panahi)",
           description: "Pagkat-on sa pattern drafting, panahi sa mga sinina ug kurtina, paggamit ug pag-atiman sa sewing machine, ug paghimo og mga produkto nga mabaligya.",
-          prerequisites: "Residente sa QC (18 anyos pataas), interesado sa panahi.",
+          prerequisites: "Residente sa Gov Services (18 anyos pataas), interesado sa panahi.",
           materialsProvided: "Panapton, thread kit, pattern paper, tracing wheel, measuring tape.",
           landmark: "Tupad sa Batasan Hills Barangay Hall / Atbang sa Puregold",
         }
@@ -208,7 +218,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           ...course,
           title: "Cooking Training (Pagluto)",
           description: "Pagkat-on sa commercial cooking, kalimpyo sa pagkaon, pag-andam og snacks ug pagkaon alang sa karenderya, ug hustong costing.",
-          prerequisites: "Residente sa QC, andam mosunod sa food safety guidelines.",
+          prerequisites: "Residente sa Gov Services, andam mosunod sa food safety guidelines.",
           materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
           landmark: "3rd Floor Culinary Lab, duol sa Batasan Hills Barangay Hall",
         }
@@ -218,7 +228,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           ...course,
           title: "Beauty Services Training",
           description: "Kahanas sa pagtupi, hairstyling, manicure/pedicure nga may nail art, facial cleansing ug basic cosmetology alang sa salon livelihood.",
-          prerequisites: "Residente sa QC (18 anyos pataas), gusto makakat-on sa beauty care.",
+          prerequisites: "Residente sa Gov Services (18 anyos pataas), gusto makakat-on sa beauty care.",
           materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer ug mga gamit sa manicure.",
           landmark: "Ground Floor Wellness Studio, atbang sa Puregold Batasan",
         }
@@ -228,7 +238,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           ...course,
           title: "Basic Computer Training",
           description: "Pagbansay sa computer navigation, Microsoft Word typing, Excel spreadsheet budgeting, internet search, email, ug online job preparation.",
-          prerequisites: "Residente sa QC nga gustong makakat-on og computer skills.",
+          prerequisites: "Residente sa Gov Services nga gustong makakat-on og computer skills.",
           materialsProvided: "Computer workstation nga may internet, digital handouts, practice USB drive.",
           landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
         }
@@ -240,7 +250,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           ...course,
           title: "Sewing Training (Pananahi)",
           description: "Matutunan ang pattern drafting, pananahi ng mga damit at kurtina, paggamit at pag-aalaga ng sewing machine, at paglikha ng mga produktong maaaring ibenta sa komunidad.",
-          prerequisites: "QC Resident (18 taong gulang pataas), may interes sa pananahi.",
+          prerequisites: "Gov Services Resident (18 taong gulang pataas), may interes sa pananahi.",
           materialsProvided: "Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.",
           landmark: "Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall",
         }
@@ -250,7 +260,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           ...course,
           title: "Cooking Training (Pagluluto)",
           description: "Matutunan ang commercial cooking, food safety & sanitation, paghahanda ng merienda at lutong ulam na patok sa karenderya, at tamang costing at pagpepresyo.",
-          prerequisites: "QC Resident, handang sumunod sa kitchen hygiene & food safety guidelines.",
+          prerequisites: "Gov Services Resident, handang sumunod sa kitchen hygiene & food safety guidelines.",
           materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
           landmark: "3rd Floor Culinary Lab, malapit sa Batasan Hills Barangay Hall",
         }
@@ -260,7 +270,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           ...course,
           title: "Beauty Services Training",
           description: "Pangunahing kasanayan sa haircutting at hairstyling, manicure/pedicure na may nail art, facial cleansing at basic cosmetology para sa salon o home-service livelihood.",
-          prerequisites: "QC Resident (18 taong gulang pataas), masigasig matuto ng beauty care.",
+          prerequisites: "Gov Services Resident (18 taong gulang pataas), masigasig matuto ng beauty care.",
           materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.",
           landmark: "Ground Floor Wellness Studio, tapat ng Puregold Batasan",
         }
@@ -270,7 +280,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           ...course,
           title: "Basic Computer Training",
           description: "Pagsasanay sa computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, at online job preparation.",
-          prerequisites: "QC Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.",
+          prerequisites: "Gov Services Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.",
           materialsProvided: "Computer workstation with internet, digital handouts, practice USB drive.",
           landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
         }
@@ -733,11 +743,51 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {courses.map((rawCourse) => {
               const course = getLocalizedCourse(rawCourse)
-              const slotPercent = Math.round(((course.totalSlots - course.availableSlots) / course.totalSlots) * 100)
+              
+              // Dynamic slot calculations based on backend or all stored applications
+              const allStoredApps: TrainingApplicationRecord[] = (() => {
+                try {
+                  const stored = localStorage.getItem("training_applications")
+                  return stored ? JSON.parse(stored) : []
+                } catch {
+                  return []
+                }
+              })()
+
+              const courseApps = allStoredApps.filter(
+                (a) =>
+                  (a.trainingId === course.id ||
+                    a.trainingName?.toLowerCase() === course.title?.toLowerCase() ||
+                    a.schedule?.trainingName?.toLowerCase() === course.title?.toLowerCase()) &&
+                  a.status !== "rejected"
+              )
+
+              const enrolledCount =
+                course.enrolledCount !== undefined
+                  ? course.enrolledCount
+                  : courseApps.length
+              const totalSlots = course.totalSlots || 25
+              const availableSlots = Math.max(0, totalSlots - enrolledCount)
+              const slotPercent = Math.min(
+                100,
+                Math.round((enrolledCount / totalSlots) * 100)
+              )
+
+              // Check if currently logged in user is already enrolled/applied in this course
+              const isUserEnrolledInThis = allUserApplications.some(
+                (a) =>
+                  (a.trainingId === course.id ||
+                    a.trainingName?.toLowerCase() === course.title?.toLowerCase() ||
+                    a.schedule?.trainingName?.toLowerCase() === course.title?.toLowerCase()) &&
+                  a.status !== "rejected"
+              )
+
               return (
                 <div
                   key={course.id}
-                  className="bg-card border border-border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                  className={`bg-card border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group ${
+                    isUserEnrolledInThis ? "border-blue-500/40 bg-blue-500/5 ring-1 ring-blue-500/20" : "border-border"
+                  }`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">
@@ -746,17 +796,36 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           {getCourseIcon(course.id)}
                         </div>
                         <div>
-                          <h4 className="font-bold text-base text-foreground group-hover:text-blue-600 transition-colors">
-                            {course.title}
-                          </h4>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className="font-bold text-base text-foreground group-hover:text-blue-600 transition-colors">
+                              {course.title}
+                            </h4>
+                            {isUserEnrolledInThis && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/20 text-blue-700 dark:text-blue-300">
+                                {isEn ? "ENROLLED" : isBis ? "NAKA-ENROLL" : "NAKA-ENROLL"}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[11px] font-medium text-muted-foreground">
                             {course.durationHours} {isEn ? "Hours Intensive Training" : isBis ? "Oras nga Masinsinang Pagbansay" : "Oras ng Masinsinang Pagsasanay"}
                           </span>
                         </div>
                       </div>
 
-                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 whitespace-nowrap">
-                        {course.availableSlots} {isEn ? "slots left" : isBis ? "slot nahabilin" : "slots natitira"}
+                      <span
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border whitespace-nowrap ${
+                          availableSlots === 0
+                            ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                            : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        }`}
+                      >
+                        {availableSlots === 0
+                          ? isEn
+                            ? "Full (0 slots left)"
+                            : isBis
+                            ? "Puno na (0 slots)"
+                            : "Puno na (0 slots)"
+                          : `${availableSlots} ${isEn ? "slots left" : isBis ? "slot nahabilin" : "slots natitira"}`}
                       </span>
                     </div>
 
@@ -784,11 +853,17 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     <div className="pt-2">
                       <div className="flex justify-between text-[11px] font-medium text-muted-foreground mb-1">
                         <span>{isEn ? "Slots filled" : isBis ? "Mga slot nga napuno" : "Mga slot na napuno"}</span>
-                        <span>{course.totalSlots - course.availableSlots} / {course.totalSlots} {isEn ? "slots" : "slots"} ({slotPercent}%)</span>
+                        <span className="font-mono">{enrolledCount} / {totalSlots} {isEn ? "slots" : "slots"} ({slotPercent}%)</span>
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-muted/60 overflow-hidden">
                         <div
-                          className="h-full bg-blue-600 rounded-full transition-all"
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            slotPercent >= 100
+                              ? "bg-rose-500"
+                              : slotPercent > 70
+                              ? "bg-amber-500"
+                              : "bg-blue-600"
+                          }`}
                           style={{ width: `${slotPercent}%` }}
                         />
                       </div>
@@ -804,14 +879,33 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     >
                       {isEn ? "View Details" : isBis ? "Tan-awa ang Detalye" : "Tingnan ang Detalye"}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectToApply(course)}
-                      className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <span>{isEn ? "Apply Now" : isBis ? "Mag-apply Karon" : "Mag-apply Ngayon"}</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
+                    {isUserEnrolledInThis ? (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(activeApplication?.status === "approved" ? "schedule" : "apply")}
+                        className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <span>{isEn ? "View Status" : isBis ? "Tan-awa ang Status" : "Tingnan ang Status"}</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </button>
+                    ) : availableSlots === 0 ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="px-3 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-not-allowed opacity-60"
+                      >
+                        <span>{isEn ? "Slots Full" : "Puno na ang Slots"}</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectToApply(course)}
+                        className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <span>{isEn ? "Apply Now" : isBis ? "Mag-apply Karon" : "Mag-apply Ngayon"}</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               )
