@@ -579,7 +579,7 @@ export default function TrainingProgramAdmin() {
 
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                  {selectedApp.status !== "rejected" && !showRejectInput && (
+                  {(selectedApp.status === "pending" || selectedApp.status === "under_review") && !showRejectInput && (
                     <button
                       type="button"
                       onClick={() => setShowRejectInput(true)}
@@ -588,10 +588,21 @@ export default function TrainingProgramAdmin() {
                       Reject Application
                     </button>
                   )}
+                  {selectedApp.status === "approved" && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      <span>{isEn ? "Application Approved & Active in Training" : "Aprubado ang Aplikasyon • Aktibo sa Pagsasanay"}</span>
+                    </div>
+                  )}
+                  {selectedApp.status === "rejected" && (
+                    <span className="px-3 py-1.5 rounded-xl bg-rose-500/15 text-rose-700 text-xs font-bold border border-rose-500/30">
+                      {isEn ? "Application Rejected" : "Hindi Naaprubahan"}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {selectedApp.status !== "approved" && (
+                  {selectedApp.status !== "approved" && selectedApp.status !== "rejected" && (
                     <button
                       type="button"
                       onClick={() => handleApprove(selectedApp)}
@@ -612,6 +623,14 @@ export default function TrainingProgramAdmin() {
                       <span>Print Certificate</span>
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedApp(null)}
+                    className="px-4 py-2 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 text-foreground text-xs font-semibold cursor-pointer"
+                  >
+                    {isEn ? "Close" : "Isara"}
+                  </button>
                 </div>
               </div>
             </div>
