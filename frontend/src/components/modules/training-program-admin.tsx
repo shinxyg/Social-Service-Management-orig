@@ -659,7 +659,7 @@ export default function TrainingProgramAdmin() {
                     Republic of the Philippines
                   </h5>
                   <h4 className="text-base font-extrabold tracking-wide text-[#0F172A]">
-                    QUEZON CITY GOVERNMENT
+                    GOV SERVICES
                   </h4>
                   <p className="text-[10px] text-slate-600 tracking-wider uppercase">
                     Social Services Development Department • Skills Training Division
