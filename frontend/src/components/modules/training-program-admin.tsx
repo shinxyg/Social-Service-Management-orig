@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { useLanguage } from "../ui/language-context"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 import type { TrainingApplicationRecord } from "../user-portal/training-program-view"
 
 export default function TrainingProgramAdmin() {
@@ -34,10 +35,11 @@ export default function TrainingProgramAdmin() {
       const res = await fetch(`${API_BASE}/api/training/applications`)
       if (res.ok) {
         const data = await res.json()
-        if (data.success && Array.isArray(data.applications)) {
-          setApplications(data.applications)
+        const list = Array.isArray(data) ? data : data.applications || []
+        if (Array.isArray(list)) {
+          setApplications(list)
           try {
-            localStorage.setItem("training_applications", JSON.stringify(data.applications))
+            localStorage.setItem("training_applications", JSON.stringify(list))
           } catch (_) {}
           return
         }
@@ -85,10 +87,14 @@ export default function TrainingProgramAdmin() {
           rejectionReason: updated.rejectionReason,
           attendance: updated.attendance,
           trainingStatus: updated.schedule?.trainingStatus,
-          approvedBy: updated.approvedBy || "QC Skills Development Division",
+          approvedBy: updated.approvedBy || "Gov Services Skills Development Division",
         }),
       })
     } catch (_) {}
+
+    // Trigger real-time cross-tab sync so user portal notifications and application history immediately update
+    const syncType = updated.status === "approved" ? "APPLICATION_APPROVED" : updated.status === "rejected" ? "APPLICATION_REJECTED" : "STATUS_CHANGED"
+    notifyApplicationChange(syncType, "livelihood", updated.referenceNumber)
   }
 
   // Handle Approve
@@ -96,7 +102,7 @@ export default function TrainingProgramAdmin() {
     const updated: TrainingApplicationRecord = {
       ...app,
       status: "approved",
-      approvedBy: "QC Skills Development Division",
+      approvedBy: "Gov Services Skills Development Division",
       approvedDate: new Date().toISOString(),
       rejectionReason: undefined,
       revisionNotes: undefined,
@@ -680,17 +686,17 @@ export default function TrainingProgramAdmin() {
                   {isEn ? (
                     <>
                       for the successful completion of <strong>16 Hours of Intensive Training</strong> in{" "}
-                      <strong>{previewCertApp.trainingName}</strong> held at QC Skills Development Center, Batasan Hills, Quezon City.
+                      <strong>{previewCertApp.trainingName}</strong> held at Gov Services Skills Development Center, Batasan Hills.
                     </>
                   ) : isBis ? (
                     <>
                       alang sa malamposong paghuman sa <strong>16 ka Oras sa Pagsasanay</strong> sa ilalom sa{" "}
-                      kursong <strong>{previewCertApp.trainingName}</strong> nga gipahigayon sa QC Skills Development Center, Batasan Hills, Quezon City.
+                      kursong <strong>{previewCertApp.trainingName}</strong> nga gipahigayon sa Gov Services Skills Development Center, Batasan Hills.
                     </>
                   ) : (
                     <>
                       para sa matagumpay na pagtatapos ng <strong>16 Oras ng Masinsinang Pagsasanay</strong> sa ilalim ng{" "}
-                      kursong <strong>{previewCertApp.trainingName}</strong> na ginanap sa QC Skills Development Center, Batasan Hills, Quezon City.
+                      kursong <strong>{previewCertApp.trainingName}</strong> na ginanap sa Gov Services Skills Development Center, Batasan Hills.
                     </>
                   )}
                 </p>
@@ -698,14 +704,14 @@ export default function TrainingProgramAdmin() {
 
               <div className="grid grid-cols-2 gap-4 pt-6 text-left text-[10px] text-slate-600 border-t border-slate-200">
                 <div>
-                  <p>Certificate No: <strong className="font-mono text-slate-900">{previewCertApp.certificate?.certificateNo || `QC-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`}</strong></p>
+                  <p>Certificate No: <strong className="font-mono text-slate-900">{previewCertApp.certificate?.certificateNo || `GOV-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`}</strong></p>
                   <p>{isEn ? "Issue Date:" : isBis ? "Petsa sa Pag-isyu:" : "Petsa ng Pag-isyu:"} <strong className="text-slate-900">{previewCertApp.certificate?.issueDate || new Date().toLocaleDateString()}</strong></p>
                   <p>QC ID: <strong className="font-mono text-slate-900">{previewCertApp.qcid}</strong></p>
                 </div>
 
                 <div className="text-right">
                   <div className="w-32 h-10 border-b border-slate-400 ml-auto mb-1 flex items-end justify-center">
-                    <span className="font-script text-xs text-slate-700 italic">QC Skills Director</span>
+                    <span className="font-script text-xs text-slate-700 italic">Gov Services Skills Director</span>
                   </div>
                   <p className="font-bold text-slate-800">ATTY. MARIQUITA BELMONTE</p>
                   <p className="text-[9px] text-slate-500">SSDD Department Head</p>

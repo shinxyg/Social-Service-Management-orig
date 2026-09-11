@@ -401,6 +401,41 @@ exports.getNotifications = async (req, res) => {
       } catch (_) {}
     }
 
+    // 7.1. Fetch Training Program applications notifications
+    if (identifiers.length > 0 || userEmail || (userFn && userLn)) {
+      try {
+        const trnRes = await db.query(
+          `SELECT id, reference_number, user_id, qcid, training_id, training_name, applicant_info, status, rejection_reason, revision_notes, created_at, updated_at
+           FROM training_applications
+           WHERE qcid = ANY($1::text[]) OR user_id = ANY($1::text[]) OR reference_number = ANY($1::text[])
+              OR (applicant_info::text ILIKE '%' || $2 || '%' AND $2 != '')
+              OR ($3 != '' AND $4 != '' AND (applicant_info::text ILIKE '%' || $3 || '%' AND applicant_info::text ILIKE '%' || $4 || '%'))
+           ORDER BY created_at DESC`,
+          [identifiers, userEmail, userFn, userLn]
+        );
+        trnRes.rows.forEach((app) => {
+          const appStatus = (app.status || '').toLowerCase();
+          if (appStatus === 'approved' || appStatus === 'rejected' || appStatus === 'needs_revision' || appStatus === 'enrolled' || appStatus === 'completed') {
+            const notifId = `trn-${app.id}-${appStatus}`;
+            const appDate = app.updated_at || app.created_at || new Date().toISOString();
+            if (!isItemDismissed(notifId, appDate)) {
+              const isApproved = appStatus === 'approved' || appStatus === 'enrolled' || appStatus === 'completed';
+              items.push({
+                id: notifId,
+                title: isApproved ? 'Gov Services Training: Approved' : appStatus === 'needs_revision' ? 'Gov Services Training: Needs Revision' : 'Gov Services Training: Not Approved',
+                desc: `${app.training_name || 'Skills Training'} — Ref: ${app.reference_number || app.qcid}`,
+                time: new Date(appDate).toLocaleString('en-US'),
+                unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
+                reason: app.rejection_reason || null,
+                reference_no: app.reference_number || app.qcid,
+                created_at: appDate,
+              });
+            }
+          }
+        });
+      } catch (_) {}
+    }
+
     // 8. Fetch Financial Aid Disbursements & Scheduled Appointments Payouts
     if (identifiers.length > 0 || (userFn && userLn)) {
       try {

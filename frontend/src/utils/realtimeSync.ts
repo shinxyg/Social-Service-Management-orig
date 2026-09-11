@@ -51,6 +51,8 @@ export function notifyApplicationChange(
     window.dispatchEvent(new Event("child_welfare_applications_updated"))
     window.dispatchEvent(new Event("livelihood_status_updated"))
     window.dispatchEvent(new Event("livelihood_applications_updated"))
+    window.dispatchEvent(new Event("training_applications_updated"))
+    window.dispatchEvent(new Event("user_notifications_updated"))
     window.dispatchEvent(new Event("appointments_updated"))
     window.dispatchEvent(new Event("financial_disbursements_updated"))
     window.dispatchEvent(new Event("financial_aid_updated"))

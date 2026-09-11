@@ -20,13 +20,13 @@ const DEFAULT_TRAINING_COURSES = [
     description: 'Matutunan ang pattern drafting, pananahi ng mga damit at kurtina, paggamit at pag-aalaga ng sewing machine, at paglikha ng mga produktong maaaring ibenta sa komunidad.',
     date: 'September 15, 2026 - September 18, 2026',
     time: '9:00 AM - 12:00 PM',
-    location: 'QC Skills Development Center, Batasan Hills',
+    location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: 'Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall',
     totalSlots: 25,
     availableSlots: 18,
     durationHours: 16,
     instructor: 'Gng. Rosa Dimaculangan (Master Tailor)',
-    prerequisites: 'QC Resident (18 taong gulang pataas), may interes sa pananahi.',
+    prerequisites: 'Gov Services Resident (18 taong gulang pataas), may interes sa pananahi.',
     materialsProvided: 'Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.',
   },
   {
@@ -36,13 +36,13 @@ const DEFAULT_TRAINING_COURSES = [
     description: 'Matutunan ang commercial cooking, food safety & sanitation, paghahanda ng merienda at lutong ulam na patok sa karenderya, at tamang costing at pagpepresyo.',
     date: 'September 20, 2026 - September 23, 2026',
     time: '1:00 PM - 4:00 PM',
-    location: 'QC Skills Development Center, Batasan Hills',
+    location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: '3rd Floor Culinary Lab, malapit sa Batasan Hills Barangay Hall',
     totalSlots: 25,
     availableSlots: 12,
     durationHours: 16,
     instructor: 'Chef Anthony Santos (Culinary Specialist)',
-    prerequisites: 'QC Resident, handang sumunod sa kitchen hygiene & food safety guidelines.',
+    prerequisites: 'Gov Services Resident, handang sumunod sa kitchen hygiene & food safety guidelines.',
     materialsProvided: 'Ingredients kit, cooking apron, hairnet, recipe guide booklet.',
   },
   {
@@ -52,13 +52,13 @@ const DEFAULT_TRAINING_COURSES = [
     description: 'Pangunahing kasanayan sa haircutting at hairstyling, manicure/pedicure na may nail art, facial cleansing at basic cosmetology para sa salon o home-service livelihood.',
     date: 'September 24, 2026 - September 27, 2026',
     time: '9:00 AM - 12:00 PM',
-    location: 'QC Skills Development Center, Batasan Hills',
+    location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: 'Ground Floor Wellness Studio, tapat ng Puregold Batasan',
     totalSlots: 25,
     availableSlots: 15,
     durationHours: 16,
     instructor: 'Bb. Cheryl Mendez (Certified Cosmetologist)',
-    prerequisites: 'QC Resident (18 taong gulang pataas), masigasig matuto ng beauty care.',
+    prerequisites: 'Gov Services Resident (18 taong gulang pataas), masigasig matuto ng beauty care.',
     materialsProvided: 'Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.',
   },
   {
@@ -68,13 +68,13 @@ const DEFAULT_TRAINING_COURSES = [
     description: 'Pagsasanay sa computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, at online job preparation.',
     date: 'September 28, 2026 - October 01, 2026',
     time: '1:00 PM - 4:00 PM',
-    location: 'QC Skills Development Center, Batasan Hills',
+    location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: '2nd Floor Computer Laboratory, Batasan Hills Center',
     totalSlots: 30,
     availableSlots: 22,
     durationHours: 16,
     instructor: 'G. Mark Villanueva (IT Skills Coordinator)',
-    prerequisites: 'QC Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.',
+    prerequisites: 'Gov Services Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.',
     materialsProvided: 'Computer workstation with internet, digital handouts, practice USB drive.',
   },
 ];
@@ -394,7 +394,7 @@ exports.updateApplicationStatus = async (req, res) => {
         let newCertificate = typeof row.certificate === 'string' ? JSON.parse(row.certificate) : (row.certificate || null);
 
         if (status === 'approved') {
-          newApprovedBy = approvedBy || 'QC Skills Development Division';
+          newApprovedBy = approvedBy || 'Gov Services Skills Development Division';
           newApprovedDate = new Date().toISOString();
           newRejectionReason = null;
           newRevisionNotes = null;
@@ -412,7 +412,7 @@ exports.updateApplicationStatus = async (req, res) => {
 
             if (!newCertificate) {
               newCertificate = {
-                certificateNo: `QC-CERT-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
+                certificateNo: `GOV-CERT-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
                 issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
                 title: `Certificate of Completion in ${row.training_name}`,
                 recipientName: row.applicant_info?.fullName || 'Resident Beneficiary',
@@ -457,7 +457,7 @@ exports.updateApplicationStatus = async (req, res) => {
       if (status) {
         app.status = status;
         if (status === 'approved') {
-          app.approvedBy = approvedBy || 'QC Skills Development Division';
+          app.approvedBy = approvedBy || 'Gov Services Skills Development Division';
           app.approvedDate = new Date().toISOString();
           app.rejectionReason = undefined;
           app.revisionNotes = undefined;
@@ -477,7 +477,7 @@ exports.updateApplicationStatus = async (req, res) => {
           if (app.schedule) app.schedule.trainingStatus = 'Completed';
           if (!app.certificate) {
             app.certificate = {
-              certificateNo: `QC-CERT-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
+              certificateNo: `GOV-CERT-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
               issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
               title: `Certificate of Completion in ${app.trainingName}`,
               recipientName: app.applicantInfo?.fullName || 'Resident Beneficiary',
@@ -495,6 +495,24 @@ exports.updateApplicationStatus = async (req, res) => {
 
     if (!updatedApp) {
       return res.status(404).json({ success: false, message: 'Application not found.' });
+    }
+
+    // Direct Notification Entry for User Portal
+    if (status === 'approved' || status === 'rejected' || status === 'needs_revision') {
+      try {
+        const notifTitle = status === 'approved'
+          ? 'Gov Services Training: Approved'
+          : status === 'needs_revision'
+          ? 'Gov Services Training: Needs Revision'
+          : 'Gov Services Training: Not Approved';
+        const notifDesc = `${updatedApp.trainingName || 'Skills Training'} — ${status === 'approved' ? 'Aprubado ang inyong aplikasyon sa training.' : status === 'rejected' ? (rejectionReason || updatedApp.rejectionReason || 'Hindi naaprubahan ang inyong aplikasyon.') : (revisionNotes || updatedApp.revisionNotes || 'Nangangailangan ng karagdagang impormasyon.')} (Ref: ${updatedApp.referenceNumber || updatedApp.qcid})`;
+
+        await db.query(
+          `INSERT INTO user_notifications (user_id, title, description, application_ref)
+           VALUES ($1, $2, $3, $4)`,
+          [updatedApp.qcid || updatedApp.userId || '110000116932100', notifTitle, notifDesc, updatedApp.referenceNumber || updatedApp.qcid]
+        ).catch(() => {});
+      } catch (_) {}
     }
 
     // Activity Log
