@@ -753,14 +753,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
                 <div>
                   <p className="font-bold text-sm text-foreground">
-                    {isEn
-                      ? `Active Training in Progress: ${activeApplication?.trainingName}`
-                      : `Kasalukuyang Nagsasanay sa: ${activeApplication?.trainingName}`}
+                    Active Training in Progress: {activeApplication?.trainingName}
                   </p>
                   <p className="text-muted-foreground text-[11px] mt-0.5">
-                    {isEn
-                      ? "You are currently enrolled in an active training. Finish all 4 sessions and earn your certificate before applying for another program."
-                      : "Kasalukuyan kang naka-enroll sa pagsasanay. Kumpletuhin ang 4 na araw at kunin ang sertipiko bago mag-apply sa panibagong kurso."}
+                    Only one active training program is allowed at a time. Please complete all 4 daily sessions (12 hours) and receive your Certificate of Completion before applying for a new course.
                   </p>
                 </div>
               </div>
@@ -769,7 +765,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 onClick={() => setActiveTab(activeApplication?.status === "approved" ? "schedule" : "apply")}
                 className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shrink-0 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 text-xs"
               >
-                <span>{isEn ? "View Training Progress" : "Tingnan ang Attendance"}</span>
+                <span>View Training Progress</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
