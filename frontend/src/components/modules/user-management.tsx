@@ -14,7 +14,6 @@ import {
   CalendarCheck,
   Edit,
   Power,
-  RotateCcw,
   Loader2,
   AlertCircle,
   MapPin,
@@ -798,28 +797,14 @@ export default function UserManagement() {
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto font-sans">
       {/* Title Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
-              <Users className="h-4 w-4" />
-            </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-              User Management
-            </h1>
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
+            <Users className="h-4 w-4" />
           </div>
-          <p className="text-xs md:text-sm text-slate-500">
-            Central account supervision connected to citizen registration, authentication, profiles, and application records.
-          </p>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+            User Management
+          </h1>
         </div>
-
-        <button
-          type="button"
-          onClick={() => loadUsers(false)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-        >
-          <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
-          Refresh Users
-        </button>
       </div>
 
       {/* 2. DASHBOARD KPI CARDS (TOTAL USERS, ACTIVE USERS, INACTIVE USERS, ADMINISTRATORS) */}
