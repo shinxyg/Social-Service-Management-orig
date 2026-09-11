@@ -382,8 +382,25 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     setIsDetailModalOpen(true)
   }
 
+  // Check if citizen has an ongoing active training
+  const hasActiveOngoingTraining = Boolean(
+    activeApplication &&
+      activeApplication.status !== "rejected" &&
+      !activeApplication.attendance?.completed
+  )
+
   // Handle jump from course to Apply tab
   const handleSelectToApply = (course: TrainingCourse) => {
+    if (hasActiveOngoingTraining) {
+      alert(
+        isEn
+          ? `You currently have an active training program (${activeApplication?.trainingName}). You can enroll in a new training course once your current training is completed and certified.`
+          : isBis
+          ? `Aduna kay aktibong training karon (${activeApplication?.trainingName}). Makapa-enroll ka sa bag-ong kurso kung mahuman na nimo ang imong kasamtangang pagbansay.`
+          : `May kasalukuyan kang aktibong training program (${activeApplication?.trainingName}). Maaari ka lamang mag-apply sa panibagong kurso kapag natapos mo na ang iyong kasalukuyang pagsasanay at nakuha ang iyong sertipiko.`
+      )
+      return
+    }
     setSelectedCourse(course)
     setApplyCourseId(course.id)
     setIsDetailModalOpen(false)
@@ -727,6 +744,37 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
       {/* ============================================================ */}
       {activeTab === "available" && (
         <div className="space-y-6">
+          {/* Active Training Notice Banner */}
+          {hasActiveOngoingTraining && (
+            <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 rounded-2xl p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs animate-in fade-in duration-200">
+              <div className="flex items-start sm:items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-800 dark:text-amber-200 shrink-0">
+                  <Clock className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-bold text-sm text-foreground">
+                    {isEn
+                      ? `Active Training in Progress: ${activeApplication?.trainingName}`
+                      : `Kasalukuyang Nagsasanay sa: ${activeApplication?.trainingName}`}
+                  </p>
+                  <p className="text-muted-foreground text-[11px] mt-0.5">
+                    {isEn
+                      ? "You are currently enrolled in an active training. Finish all 4 sessions and earn your certificate before applying for another program."
+                      : "Kasalukuyan kang naka-enroll sa pagsasanay. Kumpletuhin ang 4 na araw at kunin ang sertipiko bago mag-apply sa panibagong kurso."}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab(activeApplication?.status === "approved" ? "schedule" : "apply")}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shrink-0 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 text-xs"
+              >
+                <span>{isEn ? "View Training Progress" : "Tingnan ang Attendance"}</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-lg font-bold text-foreground">
@@ -786,6 +834,8 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     a.schedule?.trainingName?.toLowerCase() === course.title?.toLowerCase()) &&
                   a.status !== "rejected"
               )
+
+              const isBlockedByOngoingOtherTraining = hasActiveOngoingTraining && !isUserEnrolledInThis
 
               return (
                 <div
@@ -892,6 +942,15 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       >
                         <span>{isEn ? "View Status" : isBis ? "Tan-awa ang Status" : "Tingnan ang Status"}</span>
                         <ArrowRight className="h-3.5 w-3.5" />
+                      </button>
+                    ) : isBlockedByOngoingOtherTraining ? (
+                      <button
+                        type="button"
+                        disabled
+                        title={isEn ? "Complete your active training first before applying for another course" : "Kumpletuhin muna ang kasalukuyang training bago mag-apply sa iba"}
+                        className="px-3 py-2 rounded-xl bg-muted/60 text-muted-foreground border border-border/70 text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-not-allowed opacity-60"
+                      >
+                        <span>{isEn ? "In Training" : isBis ? "Ga-training Pa" : "Nagsasanay Pa"}</span>
                       </button>
                     ) : availableSlots === 0 ? (
                       <button
@@ -1733,14 +1792,43 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               >
                 {isEn ? "Close" : isBis ? "Isira" : "Isara"}
               </button>
-              <button
-                type="button"
-                onClick={() => handleSelectToApply(selectedCourse)}
-                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>{isEn ? "Apply for This Training" : isBis ? "Mag-apply niining Pagbansay" : "Mag-apply sa Training na Ito"}</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+              {allUserApplications.some(
+                (a) =>
+                  (a.trainingId === selectedCourse.id ||
+                    a.trainingName?.toLowerCase() === selectedCourse.title?.toLowerCase() ||
+                    a.schedule?.trainingName?.toLowerCase() === selectedCourse.title?.toLowerCase()) &&
+                  a.status !== "rejected"
+              ) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDetailModalOpen(false)
+                    setActiveTab(activeApplication?.status === "approved" ? "schedule" : "apply")
+                  }}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>{isEn ? "View Training Status" : "Tingnan ang Status"}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              ) : hasActiveOngoingTraining ? (
+                <button
+                  type="button"
+                  disabled
+                  className="px-5 py-2 rounded-xl bg-muted text-muted-foreground border border-border text-xs font-bold shadow-xs cursor-not-allowed opacity-60"
+                  title={isEn ? "Complete your active training first" : "Kumpletuhin muna ang kasalukuyang training"}
+                >
+                  <span>{isEn ? "Currently in Training" : "May Aktibong Training"}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleSelectToApply(selectedCourse)}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>{isEn ? "Apply for This Training" : isBis ? "Mag-apply niining Pagbansay" : "Mag-apply sa Training na Ito"}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           </div>
         </div>
