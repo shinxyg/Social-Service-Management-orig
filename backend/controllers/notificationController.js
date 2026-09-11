@@ -46,6 +46,11 @@ function extractIdentifiers(req) {
     src.userIdentifier,
     src.user_id,
     src.qcidNumber,
+    src.reference_number,
+    src.reference_no,
+    src.applicationRef,
+    src.assignedId,
+    src.assigned_id_number,
   ];
   return Array.from(
     new Set(
@@ -62,9 +67,78 @@ function extractIdentifiers(req) {
 exports.getNotifications = async (req, res) => {
   try {
     await ensureTables();
-    const identifiers = extractIdentifiers(req);
-    const { email } = req.query;
+    let identifiers = extractIdentifiers(req);
+    const { email, firstName, lastName } = req.query;
     const userEmail = (email || '').toLowerCase().trim();
+    const userFn = (firstName || '').trim().toLowerCase();
+    const userLn = (lastName || '').trim().toLowerCase();
+
+    // 0. Auto-discover all application references belonging to this user (by name, email, qcid, or user_id)
+    try {
+      const nameOrClauses = [];
+      const nameParams = [];
+
+      if (identifiers.length > 0) {
+        nameParams.push(identifiers);
+        nameOrClauses.push(`qcid = ANY($${nameParams.length}::text[]) OR reference_number = ANY($${nameParams.length}::text[])`);
+      }
+      if (userEmail) {
+        nameParams.push(userEmail);
+        nameOrClauses.push(`LOWER(email) = $${nameParams.length}`);
+      }
+      if (userFn && userLn) {
+        nameParams.push(userFn, userLn);
+        nameOrClauses.push(`(LOWER(first_name) = $${nameParams.length - 1} AND LOWER(last_name) = $${nameParams.length})`);
+      }
+
+      if (nameOrClauses.length > 0) {
+        // Collect from solo_parent_applications
+        const spLookup = await db.query(
+          `SELECT id, reference_number, assigned_id_number, solo_parent_id_number, qcid_number FROM solo_parent_applications WHERE ${nameOrClauses.join(' OR ').replace(/qcid/g, 'qcid_number')}`,
+          nameParams
+        );
+        spLookup.rows.forEach((r) => {
+          if (r.reference_number) identifiers.push(String(r.reference_number));
+          if (r.assigned_id_number) identifiers.push(String(r.assigned_id_number));
+          if (r.solo_parent_id_number) identifiers.push(String(r.solo_parent_id_number));
+          if (r.qcid_number) identifiers.push(String(r.qcid_number));
+        });
+
+        // Collect from pwd_senior_applications
+        const pwdLookup = await db.query(
+          `SELECT id, reference_number, assigned_id_number, qcid FROM pwd_senior_applications WHERE ${nameOrClauses.join(' OR ')}`,
+          nameParams
+        );
+        pwdLookup.rows.forEach((r) => {
+          if (r.reference_number) identifiers.push(String(r.reference_number));
+          if (r.assigned_id_number) identifiers.push(String(r.assigned_id_number));
+          if (r.qcid) identifiers.push(String(r.qcid));
+        });
+
+        // Collect from livelihood_applications
+        const livLookup = await db.query(
+          `SELECT id, reference_number, qcid FROM livelihood_applications WHERE ${nameOrClauses.join(' OR ')}`,
+          nameParams
+        );
+        livLookup.rows.forEach((r) => {
+          if (r.reference_number) identifiers.push(String(r.reference_number));
+          if (r.qcid) identifiers.push(String(r.qcid));
+        });
+
+        // Collect from aics_applications
+        const aicsLookup = await db.query(
+          `SELECT id, reference_no, qc_id FROM aics_applications WHERE ${nameOrClauses.join(' OR ').replace(/qcid/g, 'qc_id').replace(/reference_number/g, 'reference_no')}`,
+          nameParams
+        );
+        aicsLookup.rows.forEach((r) => {
+          if (r.reference_no) identifiers.push(String(r.reference_no));
+          if (r.qc_id) identifiers.push(String(r.qc_id));
+        });
+      }
+      identifiers = Array.from(new Set(identifiers.filter((s) => s && s !== 'undefined' && s !== 'null')));
+    } catch (e) {
+      console.warn('Error expanding user notification identifiers:', e.message);
+    }
 
     // 1. Fetch persistent read and dismissed state and __ALL__ cutoff for this user
     let userStateMap = {};
@@ -136,14 +210,15 @@ exports.getNotifications = async (req, res) => {
     } catch (_) {}
 
     // 3. Fetch AICS applications notifications
-    if (identifiers.length > 0) {
+    if (identifiers.length > 0 || userEmail || (userFn && userLn)) {
       try {
         const aicsRes = await db.query(
           `SELECT id, reference_no, qc_id, assistance_type, status, rejection_reason, created_at, updated_at, email
            FROM aics_applications 
            WHERE qc_id = ANY($1::text[]) OR reference_no = ANY($1::text[]) OR (LOWER(email) = $2 AND $2 != '')
+              OR ($3 != '' AND $4 != '' AND (LOWER(first_name) = $3 AND LOWER(last_name) = $4))
            ORDER BY created_at DESC`,
-          [identifiers, userEmail]
+          [identifiers, userEmail, userFn, userLn]
         );
         aicsRes.rows.forEach((app) => {
           if (app.status === 'approved' || app.status === 'rejected' || app.status === 'completed') {
@@ -168,14 +243,15 @@ exports.getNotifications = async (req, res) => {
     }
 
     // 4. Fetch PWD & Senior Citizen applications notifications
-    if (identifiers.length > 0) {
+    if (identifiers.length > 0 || userEmail || (userFn && userLn)) {
       try {
         const pwdRes = await db.query(
           `SELECT id, reference_number, qcid, category, service, status, rejection_reason, approved_date, created_at, email, assigned_id_number, application_type
            FROM pwd_senior_applications 
            WHERE qcid = ANY($1::text[]) OR reference_number = ANY($1::text[]) OR assigned_id_number = ANY($1::text[]) OR (LOWER(email) = $2 AND $2 != '')
+              OR ($3 != '' AND $4 != '' AND (LOWER(first_name) = $3 AND LOWER(last_name) = $4))
            ORDER BY created_at DESC`,
-          [identifiers, userEmail]
+          [identifiers, userEmail, userFn, userLn]
         );
         pwdRes.rows.forEach((app) => {
           if (app.status === 'approved' || app.status === 'rejected' || app.status === 'completed' || app.status === 'for_release') {
@@ -222,29 +298,33 @@ exports.getNotifications = async (req, res) => {
     }
 
     // 5. Fetch Solo Parent applications notifications
-    if (identifiers.length > 0) {
+    if (identifiers.length > 0 || userEmail || (userFn && userLn)) {
       try {
         const spRes = await db.query(
-          `SELECT id, reference_number, user_id, qcid_number, application_status, rejection_reason, created_at, updated_at, email, assigned_id_number
+          `SELECT id, reference_number, user_id, qcid_number, application_status, rejection_reason, created_at, updated_at, email, assigned_id_number, solo_parent_id_number
            FROM solo_parent_applications 
-           WHERE user_id = ANY($1::text[]) OR qcid_number = ANY($1::text[]) OR reference_number = ANY($1::text[]) OR (LOWER(email) = $2 AND $2 != '')
+           WHERE user_id = ANY($1::text[]) OR qcid_number = ANY($1::text[]) OR reference_number = ANY($1::text[]) OR assigned_id_number = ANY($1::text[]) OR (LOWER(email) = $2 AND $2 != '')
+              OR ($3 != '' AND $4 != '' AND (LOWER(first_name) = $3 AND LOWER(last_name) = $4))
            ORDER BY created_at DESC`,
-          [identifiers, userEmail]
+          [identifiers, userEmail, userFn, userLn]
         );
         spRes.rows.forEach((app) => {
-          if (app.application_status === 'approved' || app.application_status === 'rejected' || app.application_status === 'completed') {
+          if (app.application_status === 'approved' || app.application_status === 'rejected' || app.application_status === 'completed' || app.application_status === 'for_release') {
             const notifId = `sp-${app.id}-${app.application_status}`;
             const appDate = app.updated_at || app.created_at;
             if (!isItemDismissed(notifId, appDate)) {
-              const isApproved = app.application_status === 'approved' || app.application_status === 'completed';
+              const isApproved = app.application_status === 'approved' || app.application_status === 'completed' || app.application_status === 'for_release';
+              const idNum = app.assigned_id_number || app.solo_parent_id_number || app.reference_number;
               items.push({
                 id: notifId,
                 title: isApproved ? 'Solo Parent Application: Approved' : 'Solo Parent Application: Not Approved',
-                desc: `Solo Parent ID & Services — Ref: ${app.assigned_id_number || app.reference_number}`,
+                desc: isApproved
+                  ? `Congratulations! Your Solo Parent ID application (ID No. ${idNum}) has been approved and forwarded to Appointments for claiming schedule.`
+                  : `Solo Parent Application: ${app.rejection_reason || 'Not approved'} (Ref: ${app.reference_number})`,
                 time: new Date(appDate).toLocaleString('en-US'),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reason: app.rejection_reason || null,
-                reference_no: app.assigned_id_number || app.reference_number,
+                reference_no: idNum,
                 created_at: appDate,
               });
             }
@@ -254,14 +334,15 @@ exports.getNotifications = async (req, res) => {
     }
 
     // 6. Fetch Child Welfare applications notifications
-    if (identifiers.length > 0) {
+    if (identifiers.length > 0 || userEmail || (userFn && userLn)) {
       try {
         const cwRes = await db.query(
-          `SELECT id, reference_number, user_id, application_status, rejection_reason, created_at, updated_at, guardian_email
+          `SELECT id, reference_number, user_id, application_status, rejection_reason, created_at, updated_at, guardian_email, support_category
            FROM child_welfare_applications 
            WHERE user_id = ANY($1::text[]) OR reference_number = ANY($1::text[]) OR (LOWER(guardian_email) = $2 AND $2 != '')
+              OR ($3 != '' AND $4 != '' AND (LOWER(guardian_first_name) = $3 AND LOWER(guardian_last_name) = $4))
            ORDER BY created_at DESC`,
-          [identifiers, userEmail]
+          [identifiers, userEmail, userFn, userLn]
         );
         cwRes.rows.forEach((app) => {
           if (app.application_status === 'approved' || app.application_status === 'rejected' || app.application_status === 'completed') {
@@ -272,7 +353,9 @@ exports.getNotifications = async (req, res) => {
               items.push({
                 id: notifId,
                 title: isApproved ? 'Child Welfare Application: Approved' : 'Child Welfare Application: Not Approved',
-                desc: `Child Welfare Assistance — Ref: ${app.reference_number}`,
+                desc: isApproved
+                  ? `Congratulations! Your application for ${app.support_category || 'Child Welfare Assistance'} has been approved and forwarded to Appointments.`
+                  : `Child Welfare Assistance: ${app.rejection_reason || 'Not approved'} (Ref: ${app.reference_number})`,
                 time: new Date(appDate).toLocaleString('en-US'),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reason: app.rejection_reason || null,
@@ -286,14 +369,15 @@ exports.getNotifications = async (req, res) => {
     }
 
     // 7. Fetch Livelihood applications notifications
-    if (identifiers.length > 0) {
+    if (identifiers.length > 0 || userEmail || (userFn && userLn)) {
       try {
         const livRes = await db.query(
           `SELECT id, reference_number, user_id, qcid, application_status, rejection_reason, created_at, updated_at, email, livelihood_type
            FROM livelihood_applications 
            WHERE qcid = ANY($1::text[]) OR user_id = ANY($1::text[]) OR reference_number = ANY($1::text[]) OR (LOWER(email) = $2 AND $2 != '')
+              OR ($3 != '' AND $4 != '' AND (LOWER(first_name) = $3 AND LOWER(last_name) = $4))
            ORDER BY created_at DESC`,
-          [identifiers, userEmail]
+          [identifiers, userEmail, userFn, userLn]
         );
         livRes.rows.forEach((app) => {
           if (app.application_status === 'approved' || app.application_status === 'rejected' || app.application_status === 'needs_revision' || app.application_status === 'for_release' || app.application_status === 'released') {
@@ -318,7 +402,7 @@ exports.getNotifications = async (req, res) => {
     }
 
     // 8. Fetch Financial Aid Disbursements & Scheduled Appointments Payouts
-    if (identifiers.length > 0) {
+    if (identifiers.length > 0 || (userFn && userLn)) {
       try {
         const disbRes = await db.query(
           `SELECT f.*, a.scheduled_date, a.scheduled_time, a.office_location, a.status as appt_status
@@ -328,8 +412,9 @@ exports.getNotifications = async (req, res) => {
              FROM appointments
              ORDER BY reference_no, created_at DESC
            ) a ON f.application_ref = a.reference_no
-           WHERE f.application_ref = ANY($1::text[]) OR a.reference_no = ANY($1::text[])`,
-          [identifiers]
+           WHERE f.application_ref = ANY($1::text[]) OR a.reference_no = ANY($1::text[])
+              OR ($2 != '' AND $3 != '' AND (LOWER(f.applicant_name) ILIKE '%' || $2 || '%' AND LOWER(f.applicant_name) ILIKE '%' || $3 || '%'))`,
+          [identifiers, userFn, userLn]
         );
 
         disbRes.rows.forEach((d) => {

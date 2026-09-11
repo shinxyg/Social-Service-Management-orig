@@ -316,11 +316,24 @@ export function pushUserNotification(notif: {
       amount: notif.amount,
     }
     try {
+      let qcidNo: string | null = null
+      let userEmail: string | null = null
+      try {
+        const stored = localStorage.getItem("user_profile")
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          qcidNo = parsed.qcidNumber || parsed.qcidNo || null
+          userEmail = parsed.email || null
+        }
+      } catch {}
+
       fetch(`${API_BASE}/api/notifications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: notif.applicationRef || null,
+          userId: notif.applicationRef || qcidNo || null,
+          qcid: qcidNo,
+          email: userEmail,
           title: notif.title,
           description: notif.desc,
           applicationRef: notif.applicationRef || null,

@@ -165,7 +165,9 @@ function getUserIdentifiers() {
   const qcid = prof.qcidNumber || prof.qcidNo || getLoggedInUserQcid() || "user"
   const email = (prof.email || "").toLowerCase().trim()
   const userId = String(prof.id || "1")
-  return { userIdentifier: qcid, qcid, email, userId, ref: qcid }
+  const firstName = (prof.firstName || "").trim()
+  const lastName = (prof.lastName || "").trim()
+  return { userIdentifier: qcid, qcid, email, userId, ref: qcid, firstName, lastName }
 }
 
 function markNotifAsRead(id: string, userIdentifier?: string) {
@@ -639,12 +641,20 @@ function ResidentHeader({
         const userQcId = prof.qcidNumber || prof.qcidNo || getLoggedInUserQcid() || "110000116932100"
         const userEmail = (prof.email || "").toLowerCase().trim()
         const userId = String(prof.id || "1")
+        const firstName = (prof.firstName || "").trim()
+        const lastName = (prof.lastName || "").trim()
+
+        const params = new URLSearchParams()
+        params.set("qcid", userQcId)
+        params.set("userId", userId)
+        params.set("email", userEmail)
+        params.set("ref", userQcId)
+        if (firstName) params.set("firstName", firstName)
+        if (lastName) params.set("lastName", lastName)
 
         // 1. Primary: Fetch real-time synchronized notifications from PostgreSQL backend
         try {
-          const notifRes = await fetch(
-            `${API_BASE}/api/notifications?qcid=${encodeURIComponent(userQcId)}&userId=${encodeURIComponent(userId)}&email=${encodeURIComponent(userEmail)}&ref=${encodeURIComponent(userQcId)}`
-          )
+          const notifRes = await fetch(`${API_BASE}/api/notifications?${params.toString()}`)
           if (notifRes.ok) {
             const notifData = await notifRes.json()
             if (Array.isArray(notifData.notifications)) {
