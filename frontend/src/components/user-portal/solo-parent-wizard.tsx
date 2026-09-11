@@ -933,7 +933,6 @@ export default function SoloParentApplicationWizard({
   const fetchAllSoloParentApps = async () => {
     const allApps: any[] = []
     const seenIds = new Set<string>()
-    let backendSuccess = false
 
     // 1. Fetch user applications from backend
     try {
@@ -1290,7 +1289,7 @@ export default function SoloParentApplicationWizard({
             Boolean(String(a.assigned_id_number || a.assignedIdNumber || "").includes("SP-"))
 
           const isUserMatch =
-            (userQcidClean && (aQcid.includes(userQcidClean) || userQcidClean.includes(aQcid) || aRef.includes(userQcidClean) || userQcidClean.includes(aRef))) ||
+            (userQcidClean && (aQcid.includes(userQcidClean) || userQcidClean.includes(aQcid) || aRef.includes(userQcidClean) || userQcidClean.includes(aRef) || (aAssigned && aAssigned.includes(userQcidClean)))) ||
             (userEmailClean && aEmail && userEmailClean === aEmail) ||
             (userLnClean && aLn && (userLnClean === aLn || (userFnClean && aFn && userLnClean.includes(aLn)))) ||
             (aRef && (aRef === "110000572516915" || aRef.includes("110000572516915")))
