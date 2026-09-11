@@ -242,11 +242,50 @@ interface SeniorCitizenApplicationWizardProps {
 
 export default function SeniorCitizenApplicationWizard({
   onBack,
-  userProfile = MOCK_USER_PROFILE,
+  userProfile: propUserProfile,
   initialIdStatus = "new",
   onStepChange,
 }: SeniorCitizenApplicationWizardProps) {
   const { t } = useLanguage()
+  const [profile, setProfile] = useState<UserProfile>(() => (propUserProfile || getCurrentUserProfile()) as any)
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const p = getCurrentUserProfile() as any
+      setProfile(p)
+      if (p) {
+        setFormData((prev) => ({
+          ...prev,
+          qcidNumber: p.qcidNo || p.qcidNumber || prev.qcidNumber,
+          firstName: p.firstName || prev.firstName,
+          middleName: p.middleName || prev.middleName,
+          lastName: p.lastName || prev.lastName,
+          suffix: p.suffix || prev.suffix,
+          nationality: p.nationality || prev.nationality || "FILIPINO",
+          dobMonth: p.dobMonth || prev.dobMonth,
+          dobDay: p.dobDay || prev.dobDay,
+          dobYear: p.dobYear || prev.dobYear,
+          age: String(p.age || prev.age || ""),
+          sex: p.sex || p.gender || prev.sex,
+          civilStatus: p.civilStatus || prev.civilStatus,
+          contactNo: String(p.contactNo || p.mobileNumber || prev.contactNo || "").replace(/\s+/g, ""),
+          houseNo: p.addressHouseNo || p.houseNo || prev.houseNo,
+          street: p.addressStreet || p.street || prev.street,
+          barangay: p.addressBarangay || p.barangay || prev.barangay,
+          city: p.addressCity || p.city || prev.city,
+          email: p.email || prev.email,
+        }))
+      }
+    }
+    window.addEventListener("user_profile_updated", handleProfileUpdate)
+    window.addEventListener("storage", handleProfileUpdate)
+    return () => {
+      window.removeEventListener("user_profile_updated", handleProfileUpdate)
+      window.removeEventListener("storage", handleProfileUpdate)
+    }
+  }, [])
+
+  const userProfile = propUserProfile || profile || (getCurrentUserProfile() as any)
   const appFlow = initialIdStatus || "new"
 
   const WIZARD_TABS = [
@@ -390,7 +429,7 @@ export default function SeniorCitizenApplicationWizard({
         setVerifyError(null)
         setExistingIdNumber(officialId)
 
-        const applicantFullAddress = matchedApp.address || `${matchedApp.houseNo || "11"} ${matchedApp.street || "OLD CABUYAO SAMPALOK ST"}, Brgy. ${matchedApp.barangay || "Sauyo"}, QUEZON CITY`.trim()
+        const applicantFullAddress = matchedApp.address || `${matchedApp.houseNo || ""} ${matchedApp.street || ""}, Brgy. ${matchedApp.barangay || "Sauyo"}, QUEZON CITY`.trim()
 
         const emPerson = matchedApp.emergencyContactPerson || matchedApp.emergencyName || matchedApp.emergencyContact || matchedApp.emergencyPerson || ""
         let emFirst = matchedApp.emergencyFirstName || ""
@@ -437,7 +476,7 @@ export default function SeniorCitizenApplicationWizard({
           dobMonth: birthMonth || prev.dobMonth,
           dobDay: birthDay || prev.dobDay,
           dobYear: birthYear || prev.dobYear,
-          age: computedAge || prev.age || "65",
+          age: computedAge || prev.age || "",
           sex: matchedApp.sex || matchedApp.gender || prev.sex,
           civilStatus: matchedApp.civilStatus || prev.civilStatus,
           bloodType: matchedApp.bloodType || prev.bloodType || "O+",
@@ -482,53 +521,55 @@ export default function SeniorCitizenApplicationWizard({
           (appFlow === "loss" && reasonForReplacement !== ""))))
 
   // Step 2: Personal Information state
-  const [formData, setFormData] = useState({
-    firstName: userProfile?.firstName || "CLARISA MAE",
-    middleName: userProfile?.middleName || "GALIAS",
-    lastName: userProfile?.lastName || "DIMAL",
-    suffix: userProfile?.suffix || "",
-    nationality: userProfile?.nationality || "FILIPINO",
-    dobMonth: userProfile?.dobMonth || "10",
-    dobDay: userProfile?.dobDay || "29",
-    dobYear: userProfile?.dobYear || "1960",
-    age: userProfile?.age || "65",
-    sex: userProfile?.sex || (userProfile as any)?.gender || "Male",
-    civilStatus: userProfile?.civilStatus || "Single",
-    contactNo: (userProfile?.contactNo || "09000000000").replace(/\s+/g, ""),
-    houseNo: userProfile?.addressHouseNo || "11",
-    street: userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST",
-    barangay: userProfile?.addressBarangay || "Sauyo",
-    city: userProfile?.addressCity || "QUEZON CITY",
-    email: userProfile?.email || "dimalmae@gmail.com",
-    bloodType: userProfile?.bloodType || "O+",
-    psaReference: "",
-    qcidNumber: userProfile?.qcidNo || "110000116932100",
-    // Emergency Contact (for myself) - auto-filled from profile, editable via Edit Information
-    emergencyFirstName: userProfile?.emergencyFirstName || "",
-    emergencyLastName: userProfile?.emergencyLastName || "",
-    emergencyContactNo: userProfile?.emergencyContactNo || "",
-    emergencyRelationship: userProfile?.emergencyRelationship || "",
-    emergencyAddress: userProfile?.emergencyAddress || "",
-    // Family member application fields
-    familyFirstName: "",
-    familyMiddleName: "",
-    familyLastName: "",
-    familySuffix: "",
-    familyDobMonth: "",
-    familyDobDay: "",
-    familyDobYear: "",
-    familyAge: "",
-    familySex: "",
-    familyCivilStatus: "",
-    familyContactNo: "",
-    familyAddressHouseNo: "",
-    familyAddressStreet: "",
-    familyAddressBarangay: "",
-    familyAddressCity: "QUEZON CITY",
-    familyEmergencyFirstName: "",
-    familyEmergencyLastName: "",
-    familyEmergencyContactNo: "",
-    familyEmergencyRelationship: "",
+  const [formData, setFormData] = useState(() => {
+    const prof: any = propUserProfile || getCurrentUserProfile() || {}
+    return {
+      firstName: prof.firstName || prof.first_name || "",
+      middleName: prof.middleName || prof.middle_name || "",
+      lastName: prof.lastName || prof.last_name || "",
+      suffix: prof.suffix || "",
+      nationality: prof.nationality || "FILIPINO",
+      dobMonth: prof.dobMonth || prof.birthMonth || "",
+      dobDay: prof.dobDay || prof.birthDay || "",
+      dobYear: prof.dobYear || prof.birthYear || "",
+      age: String(prof.age || ""),
+      sex: prof.sex || prof.gender || "Female",
+      civilStatus: prof.civilStatus || "Single",
+      contactNo: (prof.contactNo || prof.mobileNumber || "").replace(/\s+/g, ""),
+      houseNo: prof.addressHouseNo || prof.houseNo || "",
+      street: prof.addressStreet || prof.street || "",
+      barangay: prof.addressBarangay || prof.barangay || "Sauyo",
+      city: prof.addressCity || prof.city || "QUEZON CITY",
+      email: prof.email || "",
+      bloodType: prof.bloodType || "O+",
+      psaReference: "",
+      qcidNumber: prof.qcidNo || prof.qcidNumber || getLoggedInUserQcid(),
+      emergencyFirstName: prof.emergencyFirstName || "",
+      emergencyLastName: prof.emergencyLastName || "",
+      emergencyContactNo: prof.emergencyContactNo || "",
+      emergencyRelationship: prof.emergencyRelationship || "",
+      emergencyAddress: prof.emergencyAddress || "",
+      // Family member application fields
+      familyFirstName: "",
+      familyMiddleName: "",
+      familyLastName: "",
+      familySuffix: "",
+      familyDobMonth: "",
+      familyDobDay: "",
+      familyDobYear: "",
+      familyAge: "",
+      familySex: "",
+      familyCivilStatus: "",
+      familyContactNo: "",
+      familyAddressHouseNo: "",
+      familyAddressStreet: "",
+      familyAddressBarangay: "",
+      familyAddressCity: "QUEZON CITY",
+      familyEmergencyFirstName: "",
+      familyEmergencyLastName: "",
+      familyEmergencyContactNo: "",
+      familyEmergencyRelationship: "",
+    }
   })
 
   // Recalculate age on date of birth change (myself)
@@ -1487,7 +1528,7 @@ export default function SeniorCitizenApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("qcIdLabel") || "QC ID"} *</label>
                     <input
                       type="text"
-                      value={formData.qcidNumber || userProfile?.qcidNo || "110000116932100"}
+                      value={formData.qcidNumber || userProfile?.qcidNo || userProfile?.qcidNumber || getLoggedInUserQcid()}
                       readOnly
                       disabled
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1 font-mono"
@@ -1557,9 +1598,7 @@ export default function SeniorCitizenApplicationWizard({
                       value={
                         formData.dobMonth && formData.dobDay && formData.dobYear
                           ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
-                          : userProfile?.dobMonth && userProfile?.dobDay && userProfile?.dobYear
-                          ? `${userProfile.dobMonth}/${userProfile.dobDay}/${userProfile.dobYear}`
-                          : "10/29/1960"
+                          : (userProfile as any)?.birthDateDisplay || (userProfile as any)?.birthDate || (userProfile as any)?.birthDateIso || ""
                       }
                       readOnly
                       disabled
@@ -1570,7 +1609,7 @@ export default function SeniorCitizenApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("ageLabel") || "Age"} *</label>
                     <input
                       type="text"
-                      value={formData.age || userProfile?.age || "65"}
+                      value={formData.age || String(userProfile?.age || "")}
                       readOnly
                       disabled
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1"
@@ -1583,7 +1622,7 @@ export default function SeniorCitizenApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("genderLabel") || "Gender"} *</label>
                     <input
                       type="text"
-                      value={formData.sex || userProfile?.sex || "Male"}
+                      value={formData.sex || userProfile?.sex || (userProfile as any)?.gender || "Female"}
                       readOnly
                       disabled
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1"
@@ -1618,7 +1657,7 @@ export default function SeniorCitizenApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("houseNumberLabel") || "House/Building number"} *</label>
                     <input
                       type="text"
-                      value={formData.houseNo || userProfile?.addressHouseNo || "11"}
+                      value={formData.houseNo || userProfile?.addressHouseNo || (userProfile as any)?.houseNo || ""}
                       readOnly
                       disabled
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1"
@@ -1628,7 +1667,7 @@ export default function SeniorCitizenApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("streetNameLabel") || "Street name"} *</label>
                     <input
                       type="text"
-                      value={formData.street || userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST"}
+                      value={formData.street || userProfile?.addressStreet || (userProfile as any)?.street || ""}
                       readOnly
                       disabled
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1"
@@ -1638,7 +1677,7 @@ export default function SeniorCitizenApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("barangayLabel") || "Barangay"} *</label>
                     <input
                       type="text"
-                      value={formData.barangay || userProfile?.addressBarangay || "Sauyo"}
+                      value={formData.barangay || userProfile?.addressBarangay || (userProfile as any)?.barangay || "Sauyo"}
                       readOnly
                       disabled
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1"
@@ -1651,7 +1690,7 @@ export default function SeniorCitizenApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("phoneNumberLabel") || "Phone number"} *</label>
                     <input
                       type="text"
-                      value={formData.contactNo || userProfile?.contactNo || "09000000000"}
+                      value={formData.contactNo || userProfile?.contactNo || (userProfile as any)?.mobileNumber || ""}
                       readOnly
                       disabled
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1 font-mono"
@@ -1661,7 +1700,7 @@ export default function SeniorCitizenApplicationWizard({
                     <label className="text-xs font-semibold text-gray-700">{t("emailLabel") || "Email Address"} *</label>
                     <input
                       type="email"
-                      value={formData.email || userProfile?.email || "senior@quezoncity.gov.ph"}
+                      value={formData.email || userProfile?.email || ""}
                       readOnly
                       disabled
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-800 cursor-not-allowed mt-1"

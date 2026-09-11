@@ -171,17 +171,46 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
     }
   }
 
-  const rawBirthDate = u?.birthDate || u?.birth_date || ""
+  const rawBirthDate = u?.birthDate || u?.birth_date || u?.birthdate || ""
   let parsedMonth = (u?.birthMonth || u?.birth_month || "").toUpperCase()
   let parsedDay = String(u?.birthDay || u?.birth_day || "")
   let parsedYear = String(u?.birthYear || u?.birth_year || "")
 
-  if (rawBirthDate && (!parsedMonth || !parsedYear)) {
-    const parts = rawBirthDate.trim().split(/[\s,]+/)
-    if (parts.length >= 3) {
-      if (!parsedMonth) parsedMonth = parts[0].toUpperCase()
-      if (!parsedDay) parsedDay = parts[1].replace(/\D/g, "")
-      if (!parsedYear) parsedYear = parts[2].replace(/\D/g, "")
+  const MONTH_NAMES = [
+    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+  ]
+
+  if (rawBirthDate && (!parsedMonth || !parsedYear || !parsedDay)) {
+    const trimmed = String(rawBirthDate).trim()
+    // YYYY-MM-DD
+    const isoM = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+    if (isoM) {
+      const y = parseInt(isoM[1], 10)
+      const m = parseInt(isoM[2], 10)
+      const d = parseInt(isoM[3], 10)
+      parsedYear = String(y)
+      parsedDay = String(d)
+      parsedMonth = MONTH_NAMES[m - 1] || "JANUARY"
+    } else {
+      // MM/DD/YYYY
+      const slashM = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)
+      if (slashM) {
+        const m = parseInt(slashM[1], 10)
+        const d = parseInt(slashM[2], 10)
+        const y = parseInt(slashM[3], 10)
+        parsedYear = String(y)
+        parsedDay = String(d)
+        parsedMonth = MONTH_NAMES[m - 1] || "JANUARY"
+      } else {
+        // "Month DD, YYYY" or "JUNE 9 2005"
+        const parts = trimmed.split(/[\s,]+/)
+        if (parts.length >= 3) {
+          parsedMonth = parts[0].toUpperCase()
+          parsedDay = parts[1].replace(/\D/g, "")
+          parsedYear = parts[2].replace(/\D/g, "")
+        }
+      }
     }
   }
 
@@ -193,16 +222,27 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
   const birthYear = String(numYear)
   const calculatedAge = String(Math.max(1, currYear - numYear))
 
-  const finalBirthDate = rawBirthDate || (parsedMonth && parsedDay ? `${parsedMonth} ${parsedDay}, ${birthYear}` : `${birthYear}-01-01`)
-  const isoBirthDate = toISODateString(finalBirthDate)
+  const monthIdx = MONTH_NAMES.indexOf(parsedMonth) >= 0 ? MONTH_NAMES.indexOf(parsedMonth) + 1 : (parseInt(parsedMonth, 10) || 1)
+  const numericMonth = String(monthIdx).padStart(2, "0")
+  const numericDay = String(parsedDay || "1").padStart(2, "0")
+
+  const finalBirthDate = rawBirthDate || `${birthYear}-${numericMonth}-${numericDay}`
+  const isoBirthDate = toISODateString(finalBirthDate) || `${birthYear}-${numericMonth}-${numericDay}`
+  const displayBirthDate = parsedMonth && parsedDay ? `${parsedMonth} ${parsedDay}, ${birthYear}` : `${birthYear}-${numericMonth}-${numericDay}`
 
   const rawSex = String(u?.sex || u?.gender || "FEMALE").toUpperCase()
   const formattedSex = rawSex.includes("MALE") && !rawSex.includes("FEMALE") ? "Male" : "Female"
 
-  const fName = (u?.firstName || u?.first_name || "").trim().toUpperCase()
-  const mName = (u?.middleName || u?.middle_name || "").trim().toUpperCase()
-  const lName = (u?.lastName || u?.last_name || "").trim().toUpperCase()
-  const sfx = (u?.suffix || "").trim().toUpperCase()
+  const fName = (u?.firstName || u?.first_name || "").trim()
+  const mName = (u?.middleName || u?.middle_name || "").trim()
+  const lName = (u?.lastName || u?.last_name || "").trim()
+  const sfx = (u?.suffix || "").trim()
+
+  const house = u?.houseNo || u?.house_no || u?.addressHouseNo || ""
+  const street = u?.street || u?.addressStreet || ""
+  const brgy = u?.barangay || u?.addressBarangay || ""
+  const city = u?.city || u?.addressCity || u?.addressCityMunicipality || "QUEZON CITY"
+  const fullAddress = [house, street, brgy, city].filter(Boolean).join(", ")
 
   return {
     id: u?.id || u?.userId || u?._id || "",
@@ -213,21 +253,21 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
     birthMonth: parsedMonth || "JANUARY",
     birthDay: parsedDay || "1",
     birthYear: birthYear,
-    dobMonth: u?.dobMonth || parsedMonth || "1",
-    dobDay: u?.dobDay || parsedDay || "1",
-    dobYear: u?.dobYear || birthYear,
-    birthDate: isoBirthDate || `${birthYear}-01-01`,
-    birthDateIso: isoBirthDate || `${birthYear}-01-01`,
-    birthDateDisplay: parsedMonth && parsedDay ? `${parsedMonth} ${parsedDay}, ${birthYear}` : `${birthYear}-01-01`,
+    dobMonth: numericMonth,
+    dobDay: numericDay,
+    dobYear: birthYear,
+    birthDate: isoBirthDate,
+    birthDateIso: isoBirthDate,
+    birthDateDisplay: displayBirthDate,
     age: u?.age || calculatedAge,
-    city: (u?.city || u?.addressCity || u?.addressCityMunicipality || "QUEZON CITY").toUpperCase(),
-    barangay: (u?.barangay || u?.addressBarangay || "").toUpperCase(),
-    street: (u?.street || u?.addressStreet || "").toUpperCase(),
-    houseNo: u?.houseNo || u?.house_no || u?.addressHouseNo || "",
-    addressHouseNo: u?.addressHouseNo || u?.houseNo || u?.house_no || "",
-    addressStreet: u?.addressStreet || u?.street || "",
-    addressBarangay: u?.addressBarangay || u?.barangay || "",
-    addressCityMunicipality: u?.addressCityMunicipality || u?.city || "QUEZON CITY",
+    city: city.toUpperCase(),
+    barangay: brgy.toUpperCase(),
+    street: street.toUpperCase(),
+    houseNo: house,
+    addressHouseNo: house,
+    addressStreet: street,
+    addressBarangay: brgy,
+    addressCityMunicipality: city,
     workingInQC: u?.workingInQC || u?.working_in_qc || "No",
     occupation: (u?.occupation || "").toUpperCase(),
     sex: formattedSex,
@@ -240,6 +280,12 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
     qcidNumber: qcid,
     role: u?.role || "user",
     profilePhotoUrl: u?.profilePhotoUrl || u?.profile_photo_url || null,
+    nationality: u?.nationality || "FILIPINO",
+    emergencyFirstName: u?.emergencyFirstName || u?.emergency_first_name || "",
+    emergencyLastName: u?.emergencyLastName || u?.emergency_last_name || "",
+    emergencyContactNo: u?.emergencyContactNo || u?.emergency_contact_no || u?.emergency_phone || "",
+    emergencyRelationship: u?.emergencyRelationship || u?.emergency_relationship || "",
+    emergencyAddress: u?.emergencyAddress || u?.emergency_address || fullAddress,
   }
 }
 

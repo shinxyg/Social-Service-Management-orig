@@ -585,30 +585,36 @@ export default function ApplyPWDSenior() {
       )}
 
       {/* Background: Direct Form Wizard */}
-      {isSeniorMedicine ? (
-        <SeniorBookletWizard key="senior-medicine" bookletType="medicine" onStepChange={setCurrentStep} />
-      ) : isSeniorMovie ? (
-        <SeniorBookletWizard key="senior-movie" bookletType="movie" onStepChange={setCurrentStep} />
-      ) : isSeniorSocial ? (
-        <SeniorSocialAssistanceWizard key="senior-social" onStepChange={setCurrentStep} />
-      ) : isSenior ? (
-        <SeniorCitizenApplicationWizard
-          key={`senior-${urlType}`}
-          initialIdStatus={urlType as "new" | "renewal" | "loss"}
-          onStepChange={setCurrentStep}
-        />
-      ) : isAssistance ? (
-        <PWDSocialAssistanceWizard
-          key="pwd-assistance"
-          onStepChange={setCurrentStep}
-        />
-      ) : (
-        <PWDApplicationWizard
-          key={`pwd-${urlType}`}
-          initialIdStatus={urlType as "new" | "renewal" | "loss"}
-          onStepChange={setCurrentStep}
-        />
-      )}
+      {(() => {
+        const activeProfile = getCurrentUserProfile();
+        return isSeniorMedicine ? (
+          <SeniorBookletWizard key="senior-medicine" bookletType="medicine" userProfile={activeProfile as any} onStepChange={setCurrentStep} />
+        ) : isSeniorMovie ? (
+          <SeniorBookletWizard key="senior-movie" bookletType="movie" userProfile={activeProfile as any} onStepChange={setCurrentStep} />
+        ) : isSeniorSocial ? (
+          <SeniorSocialAssistanceWizard key="senior-social" userProfile={activeProfile as any} onStepChange={setCurrentStep} />
+        ) : isSenior ? (
+          <SeniorCitizenApplicationWizard
+            key={`senior-${urlType}`}
+            initialIdStatus={urlType as "new" | "renewal" | "loss"}
+            userProfile={activeProfile as any}
+            onStepChange={setCurrentStep}
+          />
+        ) : isAssistance ? (
+          <PWDSocialAssistanceWizard
+            key="pwd-assistance"
+            userProfile={activeProfile as any}
+            onStepChange={setCurrentStep}
+          />
+        ) : (
+          <PWDApplicationWizard
+            key={`pwd-${urlType}`}
+            initialIdStatus={urlType as "new" | "renewal" | "loss"}
+            userProfile={activeProfile as any}
+            onStepChange={setCurrentStep}
+          />
+        );
+      })()}
 
       {/* Requirements Dialog Modal appearing over the content */}
       {showModal && (

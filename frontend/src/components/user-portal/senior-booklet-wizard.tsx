@@ -84,10 +84,49 @@ function formatSeniorNumber(val: string): string {
 export default function SeniorBookletWizard({
   bookletType = "medicine",
   onBack,
-  userProfile = MOCK_USER_PROFILE,
+  userProfile: propUserProfile,
   onStepChange,
 }: SeniorBookletWizardProps) {
   const { t } = useLanguage()
+  const [profile, setProfile] = useState(() => (propUserProfile || getCurrentUserProfile()) as any)
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const p = getCurrentUserProfile() as any
+      setProfile(p)
+      if (p) {
+        setFormData((prev) => ({
+          ...prev,
+          qcidNo: p.qcidNo || p.qcidNumber || prev.qcidNo,
+          firstName: p.firstName || prev.firstName,
+          middleName: p.middleName || prev.middleName,
+          lastName: p.lastName || prev.lastName,
+          suffix: p.suffix || prev.suffix,
+          nationality: p.nationality || p.nationality || "FILIPINO",
+          dobMonth: p.dobMonth || prev.dobMonth,
+          dobDay: p.dobDay || prev.dobDay,
+          dobYear: p.dobYear || prev.dobYear,
+          age: String(p.age || prev.age || ""),
+          sex: p.sex || p.gender || prev.sex,
+          civilStatus: p.civilStatus || prev.civilStatus,
+          addressHouseNo: p.addressHouseNo || p.houseNo || prev.addressHouseNo,
+          addressStreet: p.addressStreet || p.street || prev.addressStreet,
+          addressBarangay: p.addressBarangay || p.barangay || prev.addressBarangay,
+          addressCity: p.addressCity || p.city || prev.addressCity,
+          contactNumber: String(p.contactNo || p.mobileNumber || prev.contactNumber || "").replace(/\s+/g, ""),
+          emailAddress: p.email || prev.emailAddress,
+        }))
+      }
+    }
+    window.addEventListener("user_profile_updated", handleProfileUpdate)
+    window.addEventListener("storage", handleProfileUpdate)
+    return () => {
+      window.removeEventListener("user_profile_updated", handleProfileUpdate)
+      window.removeEventListener("storage", handleProfileUpdate)
+    }
+  }, [])
+
+  const userProfile = propUserProfile || profile || (getCurrentUserProfile() as any)
   const isMedicine = bookletType === "medicine"
   const title = isMedicine ? (t("navSeniorMedicineBooklet") || "Medicine Discount Booklet") : (t("navSeniorMovieBooklet") || "Free Movie Booklet")
 
@@ -178,7 +217,7 @@ export default function SeniorBookletWizard({
 
   // Renewal / Replacement fields
   const [bookletNumber, setBookletNumber] = useState("")
-  const [renewalReason, setRenewalReason] = useState("Booklet pages are full")
+  const [renewalReason, setRenewalReason] = useState("Renewal due")
   const [replacementReason, setReplacementReason] = useState("Lost")
 
   const combinedRequestType =
@@ -186,7 +225,7 @@ export default function SeniorBookletWizard({
       ? renewalReason === "Renewal due"
         ? "renewal:due"
         : "renewal:full"
-      : replacementReason === "Damaged / Torn" || replacementReason === "Damaged"
+      : replacementReason === "Damaged / Torn"
       ? "replacement:damaged"
       : replacementReason === "Stolen"
       ? "replacement:stolen"
@@ -214,30 +253,33 @@ export default function SeniorBookletWizard({
 
   // STEP 2 Personal Information
   const [isEditingInfo, setIsEditingInfo] = useState(false)
-  const [formData, setFormData] = useState({
-    qcidNo: userProfile?.qcidNo || "110000116932100",
-    firstName: userProfile?.firstName || "CLARISA MAE",
-    middleName: userProfile?.middleName || "GALIAS",
-    lastName: userProfile?.lastName || "DIMAL",
-    suffix: userProfile?.suffix || "",
-    nationality: userProfile?.nationality || "FILIPINO",
-    dobMonth: userProfile?.dobMonth || "10",
-    dobDay: userProfile?.dobDay || "29",
-    dobYear: userProfile?.dobYear || "1960",
-    age: userProfile?.age || "65",
-    sex: userProfile?.sex || "Female",
-    civilStatus: userProfile?.civilStatus || "Single",
-    addressHouseNo: userProfile?.addressHouseNo || "11",
-    addressStreet: userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST",
-    addressBarangay: userProfile?.addressBarangay || "Sauyo",
-    addressCity: userProfile?.addressCity || "QUEZON CITY",
-    contactNumber: userProfile?.contactNo || "09000000000",
-    emailAddress: userProfile?.email || "dimalmae@gmail.com",
-    emergencyFirstName: userProfile?.emergencyFirstName || "JUAN",
-    emergencyLastName: userProfile?.emergencyLastName || "DIMAL",
-    emergencyContactNo: userProfile?.emergencyContactNo || "09123456789",
-    emergencyRelationship: userProfile?.emergencyRelationship || "Child",
-    certified: false,
+  const [formData, setFormData] = useState(() => {
+    const prof: any = propUserProfile || getCurrentUserProfile() || {}
+    return {
+      qcidNo: prof.qcidNo || prof.qcidNumber || getLoggedInUserQcid(),
+      firstName: prof.firstName || prof.first_name || "",
+      middleName: prof.middleName || prof.middle_name || "",
+      lastName: prof.lastName || prof.last_name || "",
+      suffix: prof.suffix || "",
+      nationality: prof.nationality || "FILIPINO",
+      dobMonth: prof.dobMonth || prof.birthMonth || "",
+      dobDay: prof.dobDay || prof.birthDay || "",
+      dobYear: prof.dobYear || prof.birthYear || "",
+      age: String(prof.age || ""),
+      sex: prof.sex || prof.gender || "Female",
+      civilStatus: prof.civilStatus || "Single",
+      addressHouseNo: prof.addressHouseNo || prof.houseNo || "",
+      addressStreet: prof.addressStreet || prof.street || "",
+      addressBarangay: prof.addressBarangay || prof.barangay || "Sauyo",
+      addressCity: prof.addressCity || prof.city || "QUEZON CITY",
+      contactNumber: String(prof.contactNo || prof.mobileNumber || "").replace(/\s+/g, ""),
+      emailAddress: prof.email || "",
+      emergencyFirstName: prof.emergencyFirstName || "",
+      emergencyLastName: prof.emergencyLastName || "",
+      emergencyContactNo: prof.emergencyContactNo || "",
+      emergencyRelationship: prof.emergencyRelationship || "",
+      certified: false,
+    }
   })
 
   // STEP 3 Uploaded Files

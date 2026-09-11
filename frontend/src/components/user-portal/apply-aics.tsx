@@ -294,21 +294,32 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [dBarangay, setDBarangay] = useState("")
 
   useEffect(() => {
-    const prof = getCurrentUserProfile()
-    setPFirstName(prof.firstName)
-    setPMiddleName(prof.middleName || "")
-    setPLastName(prof.lastName)
-    setPSuffix(prof.suffix || "")
-    setPNationality("FILIPINO")
-    setPBirthDate(toISODateString(prof.birthDate) || "2004-10-29")
-    setPAge(String(prof.age || "21"))
-    setPGender(prof.sex === "MALE" ? "Lalaki" : "Babae")
-    setPCivilStatus(prof.civilStatus || "Single")
-    setPHouseNumber(prof.houseNo || "")
-    setPStreetName(prof.street || "")
-    setPBarangay(prof.barangay || "Sauyo")
-    setPPhoneNumber(prof.mobileNumber || "09000000000")
-    setPEmail(prof.email || "resident@gmail.com")
+    const syncProfile = () => {
+      const prof = getCurrentUserProfile()
+      if (prof) {
+        setPFirstName(prof.firstName || "")
+        setPMiddleName(prof.middleName || "")
+        setPLastName(prof.lastName || "")
+        setPSuffix(prof.suffix || "")
+        setPNationality(prof.nationality || "FILIPINO")
+        setPBirthDate(prof.birthDateIso || prof.birthDate || toISODateString(prof.birthDate) || "")
+        setPAge(String(prof.age || ""))
+        setPGender(prof.sex === "Male" || prof.sex === "MALE" ? "Lalaki" : "Babae")
+        setPCivilStatus(prof.civilStatus || "Single")
+        setPHouseNumber(prof.addressHouseNo || prof.houseNo || "")
+        setPStreetName(prof.addressStreet || prof.street || "")
+        setPBarangay(prof.addressBarangay || prof.barangay || "Sauyo")
+        setPPhoneNumber(String(prof.contactNo || prof.mobileNumber || "").replace(/\s+/g, ""))
+        setPEmail(prof.email || "")
+      }
+    }
+    syncProfile()
+    window.addEventListener("user_profile_updated", syncProfile)
+    window.addEventListener("storage", syncProfile)
+    return () => {
+      window.removeEventListener("user_profile_updated", syncProfile)
+      window.removeEventListener("storage", syncProfile)
+    }
   }, [qcId])
 
   useEffect(() => {

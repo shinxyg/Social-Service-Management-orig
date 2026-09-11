@@ -797,7 +797,7 @@ function ReviewSection({
 // ============================================================================
 export default function SoloParentApplicationWizard({
   onBack,
-  userProfile = MOCK_USER_PROFILE,
+  userProfile: propUserProfile,
   initialCategoryId = null,
   initialType = "new",
   isModalOpen = false,
@@ -805,6 +805,45 @@ export default function SoloParentApplicationWizard({
   onStepChange,
 }: SoloParentApplicationWizardProps) {
   const { t, language } = useLanguage()
+  const [profile, setProfile] = useState(() => (propUserProfile || getCurrentUserProfile()) as any)
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const p = getCurrentUserProfile() as any
+      setProfile(p)
+      if (p) {
+        setFormData((prev) => ({
+          ...prev,
+          firstName: p.firstName || prev.firstName,
+          middleName: p.middleName || prev.middleName,
+          lastName: p.lastName || prev.lastName,
+          suffix: p.suffix || prev.suffix,
+          citizenship: p.nationality || prev.citizenship || "FILIPINO",
+          dobMonth: p.dobMonth || prev.dobMonth,
+          dobDay: p.dobDay || prev.dobDay,
+          dobYear: p.dobYear || prev.dobYear,
+          age: p.age ? String(p.age) : prev.age,
+          sex: p.sex || p.gender || prev.sex,
+          civilStatus: p.civilStatus || prev.civilStatus,
+          contactNo: String(p.contactNo || p.mobileNumber || prev.contactNo || "").replace(/\s+/g, ""),
+          addressHouseNo: p.addressHouseNo || p.houseNo || prev.addressHouseNo,
+          addressStreet: p.addressStreet || p.street || prev.addressStreet,
+          addressBarangay: p.addressBarangay || p.barangay || prev.addressBarangay,
+          addressCityMunicipality: p.addressCityMunicipality || p.city || prev.addressCityMunicipality,
+          qcidNumber: p.qcidNo || p.qcidNumber || prev.qcidNumber,
+          email: p.email || prev.email,
+        }))
+      }
+    }
+    window.addEventListener("user_profile_updated", handleProfileUpdate)
+    window.addEventListener("storage", handleProfileUpdate)
+    return () => {
+      window.removeEventListener("user_profile_updated", handleProfileUpdate)
+      window.removeEventListener("storage", handleProfileUpdate)
+    }
+  }, [])
+
+  const userProfile = propUserProfile || profile || (getCurrentUserProfile() as any)
   const [idStatus, setIdStatus] = useState<IdStatus>(initialType)
   const lastInitialTypeRef = useRef<string | null>(null)
 

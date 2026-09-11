@@ -677,13 +677,52 @@ const MOCK_USER_PROFILE: UserProfile = {
 
 export default function ChildWelfareApplicationWizard({
   onBack,
-  userProfile = MOCK_USER_PROFILE,
+  userProfile: propUserProfile,
   initialProgramId,
   initialProgramKey,
   onStepChange,
   onSubmissionStageChange,
 }: ChildWelfareWizardProps) {
   const { t, language } = useLanguage()
+  const [profile, setProfile] = useState(() => (propUserProfile || getCurrentUserProfile()) as any)
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const p = getCurrentUserProfile() as any
+      setProfile(p)
+      if (p) {
+        const d = getProfileData(p)
+        setFormData((prev) => ({
+          ...prev,
+          qcidNumber: d.qcidNumber || prev.qcidNumber,
+          firstName: d.firstName || prev.firstName,
+          middleName: d.middleName || prev.middleName,
+          lastName: d.lastName || prev.lastName,
+          suffix: d.suffix || prev.suffix,
+          nationality: d.nationality || prev.nationality || "FILIPINO",
+          dobMonth: d.dobMonth || prev.dobMonth,
+          dobDay: d.dobDay || prev.dobDay,
+          dobYear: d.dobYear || prev.dobYear,
+          age: d.age || prev.age,
+          sex: d.sex || prev.sex,
+          civilStatus: d.civilStatus || prev.civilStatus,
+          addressHouseNo: d.addressHouseNo || prev.addressHouseNo,
+          addressStreet: d.addressStreet || prev.addressStreet,
+          barangay: d.barangay || prev.barangay,
+          city: d.city || prev.city,
+          contactNo: d.contactNo || prev.contactNo,
+        }))
+      }
+    }
+    window.addEventListener("user_profile_updated", handleProfileUpdate)
+    window.addEventListener("storage", handleProfileUpdate)
+    return () => {
+      window.removeEventListener("user_profile_updated", handleProfileUpdate)
+      window.removeEventListener("storage", handleProfileUpdate)
+    }
+  }, [])
+
+  const userProfile = propUserProfile || profile || (getCurrentUserProfile() as any)
 
   const STEPS = [
     { id: 1, label: t("cwStepChecklist") || (language === "tl" ? "KUMPLETUHIN ANG CHECKLIST" : language === "bis" ? "KUMPLETOHA ANG CHECKLIST" : "COMPLETE CHECKLIST") },

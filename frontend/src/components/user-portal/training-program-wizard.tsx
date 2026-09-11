@@ -13,7 +13,7 @@ import { useLanguage } from "../ui/language-context"
 
 function generateReference(qcid?: string) {
   if (qcid && qcid.trim()) return qcid.trim()
-  return "110000116932100"
+  return getLoggedInUserQcid()
 }
 
 const COURSE_OPTIONS = [
@@ -333,12 +333,50 @@ function DocumentUploadRow({
   )
 }
 
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+
 interface TrainingProgramWizardProps {
   onBack?: () => void
 }
 
 export default function TrainingProgramWizard({ onBack }: TrainingProgramWizardProps) {
-  const [formData, setFormData] = useState<FormData>(EMPTY_FORM)
+  const [formData, setFormData] = useState<FormData>(() => {
+    const prof = getCurrentUserProfile()
+    const fullName = `${prof.firstName || ""} ${prof.lastName || ""}`.trim()
+    const address = [prof.addressHouseNo, prof.addressStreet, prof.addressBarangay, prof.addressCityMunicipality].filter(Boolean).join(", ")
+    return {
+      desiredCourse: "",
+      desiredCourseOther: "",
+      fullName: fullName,
+      yearsResident: "5",
+      address: address || "Sauyo, Quezon City",
+      contactNumber: String(prof.contactNo || prof.mobileNumber || "").replace(/\s+/g, ""),
+      email: prof.email || "",
+    }
+  })
+
+  useEffect(() => {
+    const syncProfile = () => {
+      const prof = getCurrentUserProfile()
+      if (prof) {
+        const fullName = `${prof.firstName || ""} ${prof.lastName || ""}`.trim()
+        const address = [prof.addressHouseNo, prof.addressStreet, prof.addressBarangay, prof.addressCityMunicipality].filter(Boolean).join(", ")
+        setFormData((prev) => ({
+          ...prev,
+          fullName: prev.fullName || fullName,
+          address: prev.address || address,
+          contactNumber: prev.contactNumber || String(prof.contactNo || prof.mobileNumber || "").replace(/\s+/g, ""),
+          email: prev.email || prof.email || "",
+        }))
+      }
+    }
+    window.addEventListener("user_profile_updated", syncProfile)
+    window.addEventListener("storage", syncProfile)
+    return () => {
+      window.removeEventListener("user_profile_updated", syncProfile)
+      window.removeEventListener("storage", syncProfile)
+    }
+  }, [])
   const [attempted, setAttempted] = useState(false)
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
   const [stage, setStage] = useState<"form" | "submitting" | "pending">("form")

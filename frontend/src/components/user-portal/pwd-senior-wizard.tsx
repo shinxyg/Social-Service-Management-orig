@@ -611,8 +611,46 @@ function generateReferenceNumber(qcid?: string) {
   return getLoggedInUserQcid()
 }
 
-export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_PROFILE, initialIdStatus, onStepChange }: PWDApplicationWizardProps) {
+export default function PWDApplicationWizard({ onBack, userProfile: propUserProfile, initialIdStatus, onStepChange }: PWDApplicationWizardProps) {
   const { t } = useLanguage()
+  const [profile, setProfile] = useState<UserProfile>(() => (propUserProfile || getCurrentUserProfile()) as any)
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const p = getCurrentUserProfile() as any
+      setProfile(p)
+      if (p) {
+        setFormData((prev) => ({
+          ...prev,
+          firstName: p.firstName || prev.firstName,
+          middleName: p.middleName || prev.middleName,
+          lastName: p.lastName || prev.lastName,
+          suffix: p.suffix || prev.suffix,
+          citizenship: p.nationality || prev.citizenship || "FILIPINO",
+          dobMonth: p.dobMonth || prev.dobMonth,
+          dobDay: p.dobDay || prev.dobDay,
+          dobYear: p.dobYear || prev.dobYear,
+          age: String(p.age || prev.age || ""),
+          sex: p.sex || p.gender || prev.sex,
+          civilStatus: p.civilStatus || prev.civilStatus,
+          addressCity: p.addressCity || p.city || prev.addressCity,
+          addressHouseNo: p.addressHouseNo || p.houseNo || prev.addressHouseNo,
+          addressStreet: p.addressStreet || p.street || prev.addressStreet,
+          addressBarangay: p.addressBarangay || p.barangay || prev.addressBarangay,
+          contactNo: String(p.contactNo || p.mobileNumber || prev.contactNo || "").replace(/\s+/g, ""),
+          email: p.email || prev.email,
+        }))
+      }
+    }
+    window.addEventListener("user_profile_updated", handleProfileUpdate)
+    window.addEventListener("storage", handleProfileUpdate)
+    return () => {
+      window.removeEventListener("user_profile_updated", handleProfileUpdate)
+      window.removeEventListener("storage", handleProfileUpdate)
+    }
+  }, [])
+
+  const userProfile = propUserProfile || profile || getCurrentUserProfile()
 
   const STEPS = [
     { id: 1, label: t("pwdStepChecklist").toUpperCase() },
@@ -672,7 +710,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
   const [disabilityClass, setDisabilityClass] = useState<DisabilityClass>(null)
 
   const [formData, setFormData] = useState<FormData>(() => {
-    const prof: any = userProfile || {}
+    const prof: any = propUserProfile || getCurrentUserProfile() || {}
     return {
       ...EMPTY_FORM_DATA,
       firstName: prof.firstName || prof.first_name || "",
@@ -2448,7 +2486,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label={`${t("qcIdLabel")} *`}>
-                    <LockedField value={userProfile?.qcidNo || "110000116932100"} />
+                    <LockedField value={userProfile?.qcidNo || userProfile?.qcidNumber || getLoggedInUserQcid()} />
                   </Field>
                   <Field label={`${t("firstNameLabel")} *`}>
                     <LockedField value={formData.firstName || userProfile?.firstName || ""} />
@@ -2476,7 +2514,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
                       value={
                         formData.dobMonth && formData.dobDay && formData.dobYear
                           ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
-                          : (userProfile as any)?.birthDateDisplay || "—"
+                          : (userProfile as any)?.birthDateDisplay || (userProfile as any)?.birthDate || (userProfile as any)?.birthDateIso || ""
                       }
                     />
                   </Field>
@@ -2487,7 +2525,7 @@ export default function PWDApplicationWizard({ onBack, userProfile = MOCK_USER_P
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label={`${t("genderLabel")} *`}>
-                    <LockedField value={formData.sex || userProfile?.sex || "Female"} />
+                    <LockedField value={formData.sex || userProfile?.sex || userProfile?.gender || "Female"} />
                   </Field>
                   <Field label={`${t("civilStatusLabel")} *`}>
                     <LockedField value={formData.civilStatus || userProfile?.civilStatus || "Single"} />

@@ -165,8 +165,47 @@ function ReviewField({ label, value }: { label: string; value: string }) {
   )
 }
 
-export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOCK_USER_PROFILE, onStepChange }: SeniorAssistanceWizardProps) {
+export default function SeniorSocialAssistanceWizard({ onBack, userProfile: propUserProfile, onStepChange }: SeniorAssistanceWizardProps) {
   const { language, t } = useLanguage()
+  const [profile, setProfile] = useState(() => (propUserProfile || getCurrentUserProfile()) as any)
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const p = getCurrentUserProfile() as any
+      setProfile(p)
+      if (p) {
+        setFormData((prev) => ({
+          ...prev,
+          qcidNumber: p.qcidNo || p.qcidNumber || prev.qcidNumber,
+          firstName: p.firstName || prev.firstName,
+          middleName: p.middleName || prev.middleName,
+          lastName: p.lastName || prev.lastName,
+          suffix: p.suffix || prev.suffix,
+          nationality: p.nationality || prev.nationality || "FILIPINO",
+          dobMonth: p.dobMonth || prev.dobMonth,
+          dobDay: p.dobDay || prev.dobDay,
+          dobYear: p.dobYear || prev.dobYear,
+          age: String(p.age || prev.age || ""),
+          sex: p.sex || p.gender || prev.sex,
+          civilStatus: p.civilStatus || prev.civilStatus,
+          addressHouseNo: p.addressHouseNo || p.houseNo || prev.addressHouseNo,
+          addressStreet: p.addressStreet || p.street || prev.addressStreet,
+          barangay: p.addressBarangay || p.barangay || prev.barangay,
+          contactNumber: String(p.contactNo || p.mobileNumber || prev.contactNumber || "").replace(/\s+/g, ""),
+          emailAddress: p.email || prev.emailAddress,
+          signatureName: `${p.firstName || ""} ${p.lastName || ""}`.trim(),
+        }))
+      }
+    }
+    window.addEventListener("user_profile_updated", handleProfileUpdate)
+    window.addEventListener("storage", handleProfileUpdate)
+    return () => {
+      window.removeEventListener("user_profile_updated", handleProfileUpdate)
+      window.removeEventListener("storage", handleProfileUpdate)
+    }
+  }, [])
+
+  const userProfile = propUserProfile || profile || (getCurrentUserProfile() as any)
 
   const STEPS = [
     { id: 1, label: t("wizardChecklist").toUpperCase() },
@@ -195,41 +234,45 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile = MOC
   const [isIndigentOrInNeed, setIsIndigentOrInNeed] = useState(false)
 
   // Form Data (Step 1 & Step 2)
-  const [formData, setFormData] = useState({
-    seniorIdNumber: "",
+  const [formData, setFormData] = useState(() => {
+    const prof: any = propUserProfile || getCurrentUserProfile() || {}
+    const fullName = `${prof.firstName || ""} ${prof.lastName || ""}`.trim()
+    return {
+      seniorIdNumber: "",
 
-    // Step 2: Personal (from QCID profile)
-    qcidNumber: userProfile?.qcidNo || "110000116932100",
-    firstName: userProfile?.firstName || "CLARISA MAE",
-    middleName: userProfile?.middleName || "GALIAS",
-    lastName: userProfile?.lastName || "DIMAL",
-    suffix: userProfile?.suffix || "",
-    nationality: userProfile?.nationality || "FILIPINO",
-    dobMonth: userProfile?.dobMonth || "10",
-    dobDay: userProfile?.dobDay || "29",
-    dobYear: userProfile?.dobYear || "1960",
-    age: userProfile?.age || "65",
-    sex: userProfile?.sex || (userProfile as any)?.gender || "Male",
-    civilStatus: userProfile?.civilStatus || "Single",
-    addressHouseNo: userProfile?.addressHouseNo || "11",
-    addressStreet: userProfile?.addressStreet || "OLD CABUYAO SAMPALOK ST",
-    barangay: userProfile?.addressBarangay || "Sauyo",
-    contactNumber: userProfile?.contactNo || "09000000000",
-    emailAddress: userProfile?.email || "dimalmae@gmail.com",
+      // Step 2: Personal (from QCID profile)
+      qcidNumber: prof.qcidNo || prof.qcidNumber || getLoggedInUserQcid(),
+      firstName: prof.firstName || prof.first_name || "",
+      middleName: prof.middleName || prof.middle_name || "",
+      lastName: prof.lastName || prof.last_name || "",
+      suffix: prof.suffix || "",
+      nationality: prof.nationality || "FILIPINO",
+      dobMonth: prof.dobMonth || prof.birthMonth || "",
+      dobDay: prof.dobDay || prof.birthDay || "",
+      dobYear: prof.dobYear || prof.birthYear || "",
+      age: String(prof.age || ""),
+      sex: prof.sex || prof.gender || "Female",
+      civilStatus: prof.civilStatus || "Single",
+      addressHouseNo: prof.addressHouseNo || prof.houseNo || "",
+      addressStreet: prof.addressStreet || prof.street || "",
+      barangay: prof.addressBarangay || prof.barangay || "Sauyo",
+      contactNumber: String(prof.contactNo || prof.mobileNumber || "").replace(/\s+/g, ""),
+      emailAddress: prof.email || "",
 
-    // Step 2: Household & Need
-    livingArrangement: "Alone",
-    familyMembersCount: "1",
-    monthlyIncome: "Below ₱5,000",
-    employmentStatus: "Retired / Pensioner",
-    sourceOfIncome: "",
-    purposeOfAssistance: "",
-    needDescription: "Living independently and requesting financial assistance for maintenance medicine.",
+      // Step 2: Household & Need
+      livingArrangement: "Alone",
+      familyMembersCount: "1",
+      monthlyIncome: "Below ₱5,000",
+      employmentStatus: "Retired / Pensioner",
+      sourceOfIncome: "",
+      purposeOfAssistance: "",
+      needDescription: "Living independently and requesting financial assistance for maintenance medicine.",
 
-    // Step 4 & 5
-    signatureName: "Clarisa Mae G. Dimal",
-    agreedToCertification: false,
-    districtOffice: "main",
+      // Step 4 & 5
+      signatureName: fullName,
+      agreedToCertification: false,
+      districtOffice: "main",
+    }
   })
 
   // Reload / Navigation warning protection — only active starting Step 2

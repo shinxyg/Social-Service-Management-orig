@@ -50,22 +50,22 @@ export interface UserProfileData {
 }
 
 export const DEFAULT_USER_PROFILE: UserProfileData = {
-  qcid: "110000116932100",
-  firstName: "CLARISA MAE",
-  middleName: "GALIAS",
-  lastName: "DIMAL",
+  qcid: "",
+  firstName: "",
+  middleName: "",
+  lastName: "",
   suffix: "",
   nationality: "FILIPINO",
-  dateOfBirth: "10/29/1960",
-  age: "65",
+  dateOfBirth: "",
+  age: "",
   gender: "Female",
   civilStatus: "Single",
   bloodType: "O+",
-  houseBuildingNo: "11",
-  streetName: "OLD CABUYAO SAMPALOK ST",
+  houseBuildingNo: "",
+  streetName: "",
   barangay: "Sauyo",
-  phoneNumber: "09000000000",
-  email: "dimalmae@gmail.com",
+  phoneNumber: "",
+  email: "",
 }
 
 export interface UploadedDocItem {
@@ -151,6 +151,38 @@ export default function LivelihoodApplicationWizard({
   const [isEditingInfo, setIsEditingInfo] = useState(false)
 
   useEffect(() => {
+    const handleProfileUpdate = () => {
+      const prof = getCurrentUserProfile()
+      if (prof) {
+        setFormData((prev) => ({
+          ...prev,
+          qcid: prof.qcidNo || prof.qcidNumber || prev.qcid,
+          firstName: prof.firstName || prev.firstName,
+          middleName: prof.middleName || prev.middleName,
+          lastName: prof.lastName || prev.lastName,
+          suffix: prof.suffix || prev.suffix,
+          nationality: prof.nationality || prev.nationality || "FILIPINO",
+          dateOfBirth: prof.birthDateDisplay || prof.birthDate || prev.dateOfBirth,
+          age: String(prof.age || prev.age || ""),
+          gender: prof.sex || prof.gender || prev.gender,
+          civilStatus: prof.civilStatus || prev.civilStatus,
+          houseBuildingNo: prof.addressHouseNo || prof.houseNo || prev.houseBuildingNo,
+          streetName: prof.addressStreet || prof.street || prev.streetName,
+          barangay: prof.addressBarangay || prof.barangay || prev.barangay,
+          phoneNumber: String(prof.contactNo || prof.mobileNumber || prev.phoneNumber || "").replace(/\s+/g, ""),
+          email: prof.email || prev.email,
+        }))
+      }
+    }
+    window.addEventListener("user_profile_updated", handleProfileUpdate)
+    window.addEventListener("storage", handleProfileUpdate)
+    return () => {
+      window.removeEventListener("user_profile_updated", handleProfileUpdate)
+      window.removeEventListener("storage", handleProfileUpdate)
+    }
+  }, [])
+
+  useEffect(() => {
     onStepChange?.(step)
   }, [step, onStepChange])
 
@@ -170,29 +202,29 @@ export default function LivelihoodApplicationWizard({
   // Form State initialized with Profile data
   const [formData, setFormData] = useState<LivelihoodFormData>(() => {
     let prof: any = {}
-    let loggedQcid = DEFAULT_USER_PROFILE.qcid
+    let loggedQcid = ""
     try {
       prof = getCurrentUserProfile() || {}
-      loggedQcid = getLoggedInUserQcid() || prof.qcidNo || DEFAULT_USER_PROFILE.qcid
+      loggedQcid = getLoggedInUserQcid() || prof.qcidNo || ""
     } catch (_) {}
 
     return {
       qcid: initialData?.qcid || loggedQcid,
-      firstName: initialData?.firstName || (prof.firstName && prof.firstName !== "RESIDENT" ? prof.firstName : DEFAULT_USER_PROFILE.firstName),
-      middleName: initialData?.middleName || prof.middleName || DEFAULT_USER_PROFILE.middleName || "",
-      lastName: initialData?.lastName || (prof.lastName && prof.lastName !== "RESIDENT" ? prof.lastName : DEFAULT_USER_PROFILE.lastName),
-      suffix: initialData?.suffix || prof.suffix || DEFAULT_USER_PROFILE.suffix || "",
-      nationality: initialData?.nationality || "FILIPINO",
-      dateOfBirth: initialData?.dateOfBirth || prof.birthDate || DEFAULT_USER_PROFILE.dateOfBirth,
-      age: String(initialData?.age || prof.age || DEFAULT_USER_PROFILE.age),
-      gender: initialData?.gender || prof.gender || DEFAULT_USER_PROFILE.gender,
-      civilStatus: initialData?.civilStatus || prof.civilStatus || DEFAULT_USER_PROFILE.civilStatus,
-      bloodType: (initialData as any)?.bloodType || "O+",
-      houseBuildingNo: initialData?.houseBuildingNo || prof.houseNo || DEFAULT_USER_PROFILE.houseBuildingNo,
-      streetName: initialData?.streetName || prof.street || DEFAULT_USER_PROFILE.streetName,
-      barangay: initialData?.barangay || prof.barangay || DEFAULT_USER_PROFILE.barangay,
-      phoneNumber: initialData?.phoneNumber || prof.contactNo || DEFAULT_USER_PROFILE.phoneNumber,
-      email: initialData?.email || prof.email || DEFAULT_USER_PROFILE.email,
+      firstName: initialData?.firstName || prof.firstName || "",
+      middleName: initialData?.middleName || prof.middleName || "",
+      lastName: initialData?.lastName || prof.lastName || "",
+      suffix: initialData?.suffix || prof.suffix || "",
+      nationality: initialData?.nationality || prof.nationality || "FILIPINO",
+      dateOfBirth: initialData?.dateOfBirth || prof.birthDateDisplay || prof.birthDate || "",
+      age: String(initialData?.age || prof.age || ""),
+      gender: initialData?.gender || prof.sex || prof.gender || "Female",
+      civilStatus: initialData?.civilStatus || prof.civilStatus || "Single",
+      bloodType: (initialData as any)?.bloodType || prof.bloodType || "O+",
+      houseBuildingNo: initialData?.houseBuildingNo || prof.addressHouseNo || prof.houseNo || "",
+      streetName: initialData?.streetName || prof.addressStreet || prof.street || "",
+      barangay: initialData?.barangay || prof.addressBarangay || prof.barangay || "Sauyo",
+      phoneNumber: String(initialData?.phoneNumber || prof.contactNo || prof.mobileNumber || "").replace(/\s+/g, ""),
+      email: initialData?.email || prof.email || "",
 
       livelihoodType: initialData?.livelihoodType || "",
       livelihoodStatus: initialData?.livelihoodStatus || "",
