@@ -155,45 +155,6 @@ export default function TrainingProgramAdmin() {
     setRejectReason("")
   }
 
-  // Toggle Session Attendance
-  const handleToggleSession = async (app: TrainingApplicationRecord, dayNumber: number) => {
-    const sessions = (app.attendance?.sessions || []).map((s) => {
-      if (s.day === dayNumber) {
-        return { ...s, attended: !s.attended }
-      }
-      return s
-    })
-
-    const attendedCount = sessions.filter((s) => s.attended).length
-    const hoursCompleted = attendedCount * 3
-    const isComplete = attendedCount === sessions.length || hoursCompleted >= (app.attendance?.totalHours || 12)
-
-    const updated: TrainingApplicationRecord = {
-      ...app,
-      attendance: {
-        ...app.attendance,
-        totalHours: app.attendance?.totalHours || 12,
-        sessions,
-        hoursCompleted,
-        completed: isComplete,
-      },
-      schedule: {
-        ...app.schedule,
-        trainingStatus: isComplete ? "Completed" : attendedCount > 0 ? "Ongoing" : "Upcoming",
-      },
-      certificate: isComplete && !app.certificate ? {
-        certificateNo: `GOV-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`,
-        issueDate: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-        title: `Certificate of Completion in ${app.trainingName}`,
-        recipientName: app.applicantInfo?.fullName || "Beneficiary",
-        trainingName: app.trainingName,
-        hoursCompleted: 12,
-        status: "Issued",
-      } : app.certificate,
-    }
-
-    await persistAppUpdate(updated)
-  }
 
   // Reset all training applications (Testing)
   const handleResetTraining = async () => {
