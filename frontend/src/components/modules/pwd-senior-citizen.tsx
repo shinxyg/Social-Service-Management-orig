@@ -206,25 +206,45 @@ function isPWD(app: ApplicationSubmission): app is PWDApplicationSubmission {
 
 function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: ApplicationSubmission[]): string | null {
   const isPwdApp = isPWD(app)
-  const candidateFields = [
-    (app as any).existingIdNumber,
-    (app as any).existing_id_number,
-    (app as any).seniorIdNumber,
-    (app as any).existingPwdIdNumber,
-    (app as any).pwdIdNumber,
-    (app as any).oldPwdId,
-    (app as any).oldSeniorId,
-    (app as any).oscaId,
-    app.assignedIdNumber,
-    (app as any).assigned_id_number,
-    (app as any).idNumber,
-  ]
+  const candidateFields = isPwdApp
+    ? [
+        (app as any).existingPwdIdNumber,
+        (app as any).pwdIdNumber,
+        (app as any).oldPwdId,
+        (app as any).existingIdNumber,
+        (app as any).existing_id_number,
+        app.assignedIdNumber,
+        (app as any).assigned_id_number,
+        (app as any).idNumber,
+      ]
+    : [
+        (app as any).seniorIdNumber,
+        (app as any).oldSeniorId,
+        (app as any).oscaId,
+        (app as any).existingIdNumber,
+        (app as any).existing_id_number,
+        app.assignedIdNumber,
+        (app as any).assigned_id_number,
+        (app as any).idNumber,
+      ]
 
   for (const c of candidateFields) {
     if (c && typeof c === "string") {
       const s = c.trim()
-      if (s && s !== "—" && !s.startsWith("110000") && (s.startsWith("PWD-") || s.startsWith("SENIOR-") || s.startsWith("OSCA-") || s.startsWith("137404-") || s.length > 5)) {
-        return s.replace("OSCA-", "SENIOR-")
+      if (s && s !== "—" && !s.startsWith("110000")) {
+        if (isPwdApp) {
+          if (s.toUpperCase().startsWith("PWD-")) return s.toUpperCase()
+          if (!s.toUpperCase().startsWith("SENIOR-") && !s.toUpperCase().startsWith("OSCA-") && (s.startsWith("137404-") || s.length > 5)) {
+            return `PWD-${s}`
+          }
+        } else {
+          if (s.toUpperCase().startsWith("SENIOR-") || s.toUpperCase().startsWith("OSCA-")) {
+            return s.toUpperCase().replace("OSCA-", "SENIOR-")
+          }
+          if (!s.toUpperCase().startsWith("PWD-") && (s.startsWith("137404-") || s.length > 5)) {
+            return `SENIOR-${s}`
+          }
+        }
       }
     }
   }
@@ -243,7 +263,7 @@ function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: Applic
   const appName = `${app.firstName || ""} ${app.lastName || ""}`.trim().toLowerCase()
 
   if (Array.isArray(pool)) {
-    // 1. First look for prior approved application belonging to the same person
+    // 1. First look for prior approved application belonging to the same person with matching category
     const priorApproved = pool.find((a) => {
       if (!a || a.id === app.id) return false
       const aIsPwd = isPWD(a)
@@ -266,10 +286,16 @@ function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: Applic
 
     if (priorApproved) {
       const assigned = priorApproved.assignedIdNumber || (priorApproved as any).assigned_id_number
-      if (assigned) return String(assigned).trim()
+      if (assigned) {
+        if (isPwdApp) {
+          return String(assigned).trim().replace(/^(SENIOR|OSCA)-/i, "PWD-")
+        } else {
+          return String(assigned).trim().replace(/^(PWD|OSCA)-/i, "SENIOR-")
+        }
+      }
     }
 
-    // 2. Look for any prior application of same user that had an existingIdNumber
+    // 2. Look for any prior application of same user that had an existingIdNumber with same category
     const priorWithId = pool.find((a) => {
       if (!a || a.id === app.id) return false
       const aIsPwd = isPWD(a)
@@ -290,12 +316,21 @@ function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: Applic
 
     if (priorWithId) {
       const existing = (priorWithId as any).existingIdNumber || (priorWithId as any).existing_id_number || (priorWithId as any).seniorIdNumber || (priorWithId as any).existingPwdIdNumber || (priorWithId as any).pwdIdNumber
-      if (existing) return String(existing).trim()
+      if (existing) {
+        if (isPwdApp) {
+          return String(existing).trim().replace(/^(SENIOR|OSCA)-/i, "PWD-")
+        } else {
+          return String(existing).trim().replace(/^(PWD|OSCA)-/i, "SENIOR-")
+        }
+      }
     }
   }
 
   // If user entered a reference number that starts with PWD- or SENIOR-
-  if (appRef.startsWith("pwd-") || appRef.startsWith("senior-") || appRef.startsWith("osca-")) {
+  if (isPwdApp && appRef.startsWith("pwd-")) {
+    return appRef.toUpperCase()
+  }
+  if (!isPwdApp && (appRef.startsWith("senior-") || appRef.startsWith("osca-"))) {
     return appRef.toUpperCase().replace("OSCA-", "SENIOR-")
   }
 
@@ -318,6 +353,7 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
   const rawService = String((app as any).service || "").toLowerCase()
   const year = new Date().getFullYear()
   const stableSeq = getStableSequence(app.referenceNumber || app.id || "110000")
+  const isPwdApp = isPWD(app)
 
   const isRenewalOrLoss =
     rawType.includes("renewal") ||
@@ -336,7 +372,7 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
   ) {
     const existingBooklet = (app as any).existingBookletNumber || (app as any).bookletNumber || (app as any).extra_data?.existingBookletNumber
     if (isRenewalOrLoss && existingBooklet && String(existingBooklet).trim()) {
-      return String(existingBooklet).trim()
+      return String(existingBooklet).trim().replace(/^(PWD|SENIOR|OSCA)-/i, "")
     }
     return `137404-${year}-${stableSeq}`
   }
@@ -352,7 +388,7 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
   ) {
     const existingBooklet = (app as any).existingBookletNumber || (app as any).bookletNumber || (app as any).extra_data?.existingBookletNumber
     if (isRenewalOrLoss && existingBooklet && String(existingBooklet).trim()) {
-      return String(existingBooklet).trim()
+      return String(existingBooklet).trim().replace(/^(PWD|SENIOR|OSCA)-/i, "")
     }
     return `137404-${year}-${stableSeq}`
   }
@@ -361,21 +397,29 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
   if (isRenewalOrLoss) {
     const existingId = findExistingIdForApplicant(app, allApps)
     if (existingId) {
-      return existingId
+      if (isPwdApp) {
+        return existingId.toUpperCase().startsWith("PWD-") ? existingId.toUpperCase() : `PWD-${existingId.replace(/^(SENIOR|OSCA)-/i, "")}`
+      } else {
+        return existingId.toUpperCase().startsWith("SENIOR-") ? existingId.toUpperCase() : `SENIOR-${existingId.replace(/^(PWD|OSCA)-/i, "")}`
+      }
     }
   }
 
   // 3. PWD ID
-  if (isPWD(app)) {
-    if (app.assignedIdNumber && app.assignedIdNumber.startsWith("PWD-")) {
-      return app.assignedIdNumber
+  if (isPwdApp) {
+    if (app.assignedIdNumber) {
+      const sanitized = app.assignedIdNumber.toUpperCase().replace(/^(SENIOR|OSCA)-/i, "PWD-")
+      if (sanitized.startsWith("PWD-")) return sanitized
+      return `PWD-${sanitized}`
     }
     return `PWD-137404-${year}-${stableSeq}`
   }
 
   // 4. Senior Citizen ID
-  if (app.assignedIdNumber && (app.assignedIdNumber.startsWith("SENIOR-") || app.assignedIdNumber.startsWith("OSCA-"))) {
-    return app.assignedIdNumber.replace("OSCA-", "SENIOR-")
+  if (app.assignedIdNumber) {
+    const sanitized = app.assignedIdNumber.toUpperCase().replace(/^(PWD|OSCA)-/i, "SENIOR-")
+    if (sanitized.startsWith("SENIOR-")) return sanitized
+    return `SENIOR-${sanitized}`
   }
   return `SENIOR-137404-${year}-${stableSeq}`
 }
@@ -1380,7 +1424,11 @@ function ApplicationCard({ app, onView, onShowCard, onDelete }: ApplicationCardP
             </span>
             {app.status === "approved" && app.assignedIdNumber && !isAssistance && (
               <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>
-                {isSeniorBooklet ? "Booklet " : "ID "}{app.assignedIdNumber}
+                {isSeniorBooklet
+                  ? `Booklet ${app.assignedIdNumber.replace(/^(PWD|SENIOR|OSCA)-/i, "")}`
+                  : isPWD(app)
+                  ? `ID ${app.assignedIdNumber.replace(/^(SENIOR|OSCA)-/i, "PWD-")}`
+                  : `ID ${app.assignedIdNumber.replace(/^(PWD|OSCA)-/i, "SENIOR-")}`}
               </span>
             )}
           </div>
@@ -1435,7 +1483,12 @@ interface DetailedViewProps {
 }
 
 function DetailedView({ app, onClose, onApprove, onReject, onShowCard, onDelete, allApplications }: DetailedViewProps) {
-  const idNumber = app.status === "approved" && app.assignedIdNumber ? app.assignedIdNumber : generateOfficialIdNumber(app, allApplications)
+  const rawIdNumber = app.status === "approved" && app.assignedIdNumber ? app.assignedIdNumber : generateOfficialIdNumber(app, allApplications)
+  const idNumber = isPWD(app)
+    ? rawIdNumber.replace(/^(SENIOR|OSCA)-/i, "PWD-")
+    : isSeniorBooklet
+    ? rawIdNumber.replace(/^(PWD|SENIOR|OSCA)-/i, "")
+    : rawIdNumber.replace(/^PWD-/i, "SENIOR-")
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
@@ -2265,6 +2318,28 @@ export default function PWDSeniorCitizen() {
             }
           } catch {}
         }
+
+        combined = combined.map((a: any) => {
+          if (!a) return a
+          const isPwd = isPWD(a)
+          const rawAssigned = a.assignedIdNumber || (a as any).assigned_id_number
+          if (rawAssigned && typeof rawAssigned === "string") {
+            if (isPwd && (rawAssigned.toUpperCase().startsWith("SENIOR-") || rawAssigned.toUpperCase().startsWith("OSCA-"))) {
+              return {
+                ...a,
+                assignedIdNumber: rawAssigned.replace(/^(SENIOR|OSCA)-/i, "PWD-"),
+                assigned_id_number: rawAssigned.replace(/^(SENIOR|OSCA)-/i, "PWD-"),
+              }
+            } else if (!isPwd && !String(a.type || "").includes("booklet") && rawAssigned.toUpperCase().startsWith("PWD-")) {
+              return {
+                ...a,
+                assignedIdNumber: rawAssigned.replace(/^PWD-/i, "SENIOR-"),
+                assigned_id_number: rawAssigned.replace(/^PWD-/i, "SENIOR-"),
+              }
+            }
+          }
+          return a
+        })
 
         if (isMounted) {
           setApplications(combined)

@@ -147,9 +147,19 @@ exports.getAllApplications = async (req, res) => {
         disabilityClass: row.disability_class || extra.disabilityClass || '',
         causeOfDisability: row.cause_of_disability || extra.causeOfDisability || '',
         applyingFor: row.applying_for || extra.applyingFor || 'myself',
-        documents: parsedDocs,
         status: row.status || 'pending',
-        assignedIdNumber: row.assigned_id_number || extra.assignedIdNumber,
+        assignedIdNumber: (() => {
+          const raw = row.assigned_id_number || extra.assignedIdNumber || null;
+          if (!raw || typeof raw !== 'string') return null;
+          const isRowPwd = String(row.category || '').toUpperCase().includes('PWD') || String(row.service || '').toLowerCase().includes('pwd');
+          if (isRowPwd) {
+            return raw.replace(/^(SENIOR|OSCA)-/i, 'PWD-');
+          }
+          if (!String(row.type || '').includes('booklet')) {
+            return raw.replace(/^PWD-/i, 'SENIOR-');
+          }
+          return raw;
+        })(),
         approvedBy: row.approved_by,
         approvedDate: row.approved_date,
         rejectionReason: row.rejection_reason,
@@ -440,12 +450,37 @@ exports.updateApplicationStatus = async (req, res) => {
       String(targetApp?.type || '').toLowerCase().includes('movie')
     );
 
-    // If approving a booklet application, ensure a brand new unique random booklet number format (137404-YYYY-XXXXXX)
-    if (status === 'approved' && isSeniorBooklet) {
-      if (!assignedIdNumber || (!assignedIdNumber.startsWith('137404-') && !assignedIdNumber.startsWith('MB-') && !assignedIdNumber.startsWith('MV-'))) {
-        const year = new Date().getFullYear();
-        const randomSeq = String(Math.floor(100000 + Math.random() * 900000));
-        assignedIdNumber = `137404-${year}-${randomSeq}`;
+    // Correct ID prefix based on category
+    if (status === 'approved') {
+      if (isPwd) {
+        if (assignedIdNumber) {
+          assignedIdNumber = assignedIdNumber.replace(/^(SENIOR|OSCA)-/i, 'PWD-');
+          if (!assignedIdNumber.startsWith('PWD-')) {
+            assignedIdNumber = `PWD-${assignedIdNumber}`;
+          }
+        } else {
+          const year = new Date().getFullYear();
+          const randomSeq = String(Math.floor(100000 + Math.random() * 900000));
+          assignedIdNumber = `PWD-137404-${year}-${randomSeq}`;
+        }
+      } else if (isSeniorBooklet) {
+        if (!assignedIdNumber || (!assignedIdNumber.startsWith('137404-') && !assignedIdNumber.startsWith('MB-') && !assignedIdNumber.startsWith('MV-'))) {
+          const year = new Date().getFullYear();
+          const randomSeq = String(Math.floor(100000 + Math.random() * 900000));
+          assignedIdNumber = `137404-${year}-${randomSeq}`;
+        }
+      } else {
+        // Senior Citizen ID
+        if (assignedIdNumber) {
+          assignedIdNumber = assignedIdNumber.replace(/^(PWD|OSCA)-/i, 'SENIOR-');
+          if (!assignedIdNumber.startsWith('SENIOR-')) {
+            assignedIdNumber = `SENIOR-${assignedIdNumber}`;
+          }
+        } else {
+          const year = new Date().getFullYear();
+          const randomSeq = String(Math.floor(100000 + Math.random() * 900000));
+          assignedIdNumber = `SENIOR-137404-${year}-${randomSeq}`;
+        }
       }
     }
 
