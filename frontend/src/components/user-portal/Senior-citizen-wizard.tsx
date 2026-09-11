@@ -589,7 +589,7 @@ export default function SeniorCitizenApplicationWizard({
       ? true
       : (formData.emergencyFirstName || "").trim() !== "" &&
         (formData.emergencyLastName || "").trim() !== "" &&
-        (formData.emergencyContactNo || "").trim().length >= 11 &&
+        (formData.emergencyContactNo || "").replace(/\D/g, "").length >= 10 &&
         (formData.emergencyRelationship || "").trim() !== "" &&
         (formData.emergencyAddress || "").trim() !== ""
 
@@ -1483,12 +1483,7 @@ export default function SeniorCitizenApplicationWizard({
                       setStep(2)
                     }
                   }}
-                  disabled={!step1Valid}
-                  className={`flex items-center justify-center px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
-                    step1Valid
-                      ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
+                  className="flex items-center justify-center px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
                 >
                   <span>{t("nextButton") ? t("nextButton").toUpperCase() : "NEXT"}</span>
                 </button>
@@ -1880,12 +1875,7 @@ export default function SeniorCitizenApplicationWizard({
                       setStep(3)
                     }
                   }}
-                  disabled={!step2Valid}
-                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center ${
-                    step2Valid
-                      ? "bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
+                  className="px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
                 >
                   <span>{t("nextButton") ? t("nextButton").toUpperCase() : "NEXT"}</span>
                 </button>
@@ -2037,12 +2027,7 @@ export default function SeniorCitizenApplicationWizard({
                     setStep(4)
                     setReturnToReview(false)
                   }}
-                  disabled={!step3Valid}
-                  className={`px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center ${
-                    step3Valid
-                      ? "bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
+                  className="px-7 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center bg-[#3b82f6] hover:bg-blue-600 text-white cursor-pointer shadow-xs"
                 >
                   <span>{t("nextButton") ? t("nextButton").toUpperCase() : "NEXT"}</span>
                 </button>

@@ -1290,12 +1290,12 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
     Boolean(formData.dobYear) &&
     (formData.addressHouseNo || "").trim() !== "" &&
     (formData.addressBarangay || "").trim() !== "" &&
-    (formData.contactNo || "").trim().length === 11 &&
+    (formData.contactNo || "").replace(/\D/g, "").length >= 10 &&
     (formData.bloodType || "").trim() !== "" &&
     (formData.permanentAddress || "").trim() !== "" &&
     (formData.emergencyLastName || "").trim() !== "" &&
     (formData.emergencyFirstName || "").trim() !== "" &&
-    (formData.emergencyContactNo || "").trim().length === 11 &&
+    (formData.emergencyContactNo || "").replace(/\D/g, "").length >= 10 &&
     (formData.emergencyRelationship || "").trim() !== "" &&
     (formData.emergencyAddress || "").trim() !== "" &&
     (formData.heightCm || "").trim() !== "" &&
@@ -2629,8 +2629,8 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                   <Field
                     label={t("pwdContactNoLabel")}
                     required
-                    invalid={attemptedNext && (formData.emergencyContactNo || "").trim().length !== 11}
-                    invalidNote="11 digits required (09XXXXXXXXX)"
+                    invalid={attemptedNext && (formData.emergencyContactNo || "").replace(/\D/g, "").length < 10}
+                    invalidNote="10-11 digits required (09XXXXXXXXX)"
                   >
                     <TextInput
                       value={formData.emergencyContactNo}
@@ -2638,7 +2638,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                       placeholder="09XXXXXXXXX"
                       numbersOnly
                       maxLength={11}
-                      invalid={attemptedNext && (formData.emergencyContactNo || "").trim().length !== 11}
+                      invalid={attemptedNext && (formData.emergencyContactNo || "").replace(/\D/g, "").length < 10}
                     />
                   </Field>
                   <Field
@@ -3085,28 +3085,31 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
 
         </div>
 
+        {/* Guidance banner when validation failed */}
+        {attemptedNext && !canGoNext && (
+          <div className="mx-6 mb-3 flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-semibold animate-in fade-in duration-150">
+            <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+            <span>Pakipunan ang lahat ng kinakailangang impormasyon na may pulang marka bago magpatuloy. / Please complete all required fields marked with * in red before proceeding.</span>
+          </div>
+        )}
+
         {/* Footer nav */}
-                <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-gray-50">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-gray-50">
           {step === 1 ? (
             <div />
           ) : (
             <button
               onClick={goBack}
-              className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+              className="text-sm font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
             >
               {t("backButton").toUpperCase()}
             </button>
-              )}
+          )}
 
           {step < 4 ? (
             <button
               onClick={goNext}
-              disabled={!canGoNext}
-              className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                canGoNext
-                  ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
+              className="flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
             >
               <span>{t("nextButton").toUpperCase()}</span>
             </button>
@@ -3117,12 +3120,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 if (!canGoNext) return
                 setShowConfirmModal(true)
               }}
-              disabled={!canGoNext}
-              className={`flex items-center gap-1.5 px-6 py-2.5 rounded-lg text-xs font-bold transition-colors ${
-                canGoNext
-                  ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
+              className="flex items-center gap-1.5 px-6 py-2.5 rounded-lg text-xs font-bold transition-colors bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
             >
               SUBMIT APPLICATION
             </button>
