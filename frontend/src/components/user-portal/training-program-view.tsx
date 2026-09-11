@@ -21,7 +21,6 @@ import {
   Info,
   ShieldCheck,
   RefreshCw,
-  Lock,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, type LoggedInUserProfile } from "../../utils/userProfile"
