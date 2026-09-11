@@ -216,10 +216,10 @@ export default function TrainingProgramAdmin() {
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             {isEn
-              ? "Evaluate resident applications, confirm training schedules, track live attendance, and issue official Certificates of Completion."
+              ? "Review resident applications, confirm training schedules, track live attendance, and monitor Certificates of Completion."
               : isBis
-              ? "Susiha ang mga aplikasyon sa residente, kumpirmaha ang iskedyul, subaya ang attendance, ug pag-isyu og opisyal nga Certificate of Completion."
-              : "Suriin ang mga aplikasyon ng residente, kumpirmahin ang mga iskedyul, subaybayan ang attendance, at mag-isyu ng opisyal na Certificate of Completion."}
+              ? "Susiha ang mga aplikasyon sa residente, kumpirmaha ang iskedyul, subaya ang attendance, ug bantayi ang Certificate of Completion."
+              : "Suriin ang mga aplikasyon ng residente, kumpirmahin ang mga iskedyul, subaybayan ang attendance, at subaybayan ang Certificate of Completion."}
           </p>
         </div>
 
@@ -262,7 +262,7 @@ export default function TrainingProgramAdmin() {
           </span>
           <p className="text-2xl font-bold text-amber-600 mt-1">{pendingCount}</p>
           <span className="text-[11px] text-muted-foreground">
-            {isEn ? "Needs evaluation" : isBis ? "Kinahanglan susihon" : "Kailangang suriin"}
+            {isEn ? "Needs review" : isBis ? "Kinahanglan susihon" : "Kailangang suriin"}
           </span>
         </div>
 
@@ -362,7 +362,7 @@ export default function TrainingProgramAdmin() {
                     )}
                     {app.status === "pending" && (
                       <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/15 text-blue-700 border border-blue-500/30">
-                        PENDING EVALUATION
+                        PENDING REVIEW
                       </span>
                     )}
                     {app.status === "rejected" && (
@@ -409,7 +409,7 @@ export default function TrainingProgramAdmin() {
                     </button>
                   )}
                   <span className="text-xs font-semibold text-purple-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                    <span>{isEn ? "Evaluate" : "Suriin"}</span>
+                    <span>{isEn ? "View Details" : isBis ? "Tan-awa ang Detalye" : "Tingnan ang Detalye"}</span>
                     <span>→</span>
                   </span>
                 </div>
@@ -420,7 +420,7 @@ export default function TrainingProgramAdmin() {
       )}
 
       {/* ============================================================ */}
-      {/* EVALUATION & MANAGEMENT MODAL                                */}
+      {/* TRAINING APPLICATION DETAILS & MANAGEMENT MODAL              */}
       {/* ============================================================ */}
       {selectedApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 overflow-y-auto">
@@ -432,7 +432,7 @@ export default function TrainingProgramAdmin() {
                   {selectedApp.referenceNumber}
                 </span>
                 <h3 className="text-xl font-bold text-foreground mt-1">
-                  Evaluate Training Application
+                  {isEn ? "Training Application Details" : isBis ? "Mga Detalye sa Aplikasyon sa Pagbansay" : "Mga Detalye ng Aplikasyon sa Pagsasanay"}
                 </h3>
                 <p className="text-xs text-muted-foreground">Course: <strong>{selectedApp.trainingName}</strong></p>
               </div>
@@ -635,10 +635,10 @@ export default function TrainingProgramAdmin() {
                     <button
                       type="button"
                       onClick={() => setPreviewCertApp(selectedApp)}
-                      className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                     >
                       <Award className="h-4 w-4" />
-                      <span>Print Certificate</span>
+                      <span>{isEn ? "View Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan ang Sertipiko"}</span>
                     </button>
                   )}
 
@@ -657,7 +657,7 @@ export default function TrainingProgramAdmin() {
       )}
 
       {/* ============================================================ */}
-      {/* CERTIFICATE PREVIEW MODAL                                    */}
+      {/* CERTIFICATE PREVIEW MODAL (ADMIN VIEW-ONLY)                 */}
       {/* ============================================================ */}
       {previewCertApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
@@ -665,7 +665,7 @@ export default function TrainingProgramAdmin() {
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <Award className="h-5 w-5 text-purple-600" />
-                <span className="font-bold text-sm text-foreground">Official Certificate Preview</span>
+                <span className="font-bold text-sm text-foreground">Official Certificate Preview (View Only)</span>
               </div>
               <button
                 type="button"
@@ -757,11 +757,10 @@ export default function TrainingProgramAdmin() {
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                onClick={() => setPreviewCertApp(null)}
+                className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
               >
-                <Printer className="h-4 w-4" />
-                <span>Print Certificate</span>
+                {isEn ? "Close" : isBis ? "Isira" : "Isara"}
               </button>
             </div>
           </div>

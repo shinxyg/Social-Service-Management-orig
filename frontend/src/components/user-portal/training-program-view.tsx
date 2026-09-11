@@ -22,6 +22,7 @@ import {
   Lock,
   Unlock,
   Target,
+  Printer,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, type LoggedInUserProfile } from "../../utils/userProfile"
@@ -1712,8 +1713,8 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       onClick={() => setCertificateModalApp(app)}
                       className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-2 cursor-pointer"
                     >
-                      <Award className="h-4 w-4" />
-                      <span>{isEn ? "View Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan ang Sertipiko"}</span>
+                      <Printer className="h-4 w-4" />
+                      <span>{isEn ? "View & Print Certificate" : isBis ? "Tan-awa ug I-print ang Sertipiko" : "Tingnan at I-print ang Sertipiko"}</span>
                     </button>
                   </div>
                 </div>
@@ -1935,9 +1936,17 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               <button
                 type="button"
                 onClick={() => setCertificateModalApp(null)}
-                className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 text-foreground text-xs font-semibold cursor-pointer"
               >
                 {isEn ? "Close" : isBis ? "Isira" : "Isara"}
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="h-4 w-4" />
+                <span>{isEn ? "Print Certificate" : isBis ? "I-print ang Sertipiko" : "I-print ang Sertipiko"}</span>
               </button>
             </div>
           </div>
