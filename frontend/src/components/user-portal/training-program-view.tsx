@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, type LoggedInUserProfile } from "../../utils/userProfile"
+import { useLanguage } from "../ui/language-context"
 
 export type TrainingProgramTab = "available" | "apply" | "schedule" | "history"
 
@@ -109,64 +110,64 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     id: "tr-sewing",
     title: "Sewing Training",
     category: "Livelihood & Skills Development",
-    description: "Matutunan ang pattern drafting, pananahi ng mga damit at kurtina, paggamit at pag-aalaga ng sewing machine, at paglikha ng mga produktong maaaring ibenta sa komunidad.",
+    description: "Learn pattern drafting, tailoring of garments and curtains, operating and maintaining sewing machines, and creating marketable products for the community.",
     date: "September 15, 2026 - September 18, 2026",
     time: "9:00 AM - 12:00 PM",
-    location: "Gov Service Skills Development Center, Batasan Hills",
-    landmark: "Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall",
+    location: "QC Skills Development Center, Batasan Hills",
+    landmark: "Beside Batasan Hills Barangay Hall / Across Puregold",
     totalSlots: 25,
     availableSlots: 18,
     durationHours: 16,
-    instructor: "Gng. Rosa Dimaculangan (Master Tailor)",
-    prerequisites: "Gov Service Resident (18 taong gulang pataas), may interes sa pananahi.",
+    instructor: "Mrs. Rosa Dimaculangan (Master Tailor)",
+    prerequisites: "QC Resident (18 years old and above), interest in garment making.",
     materialsProvided: "Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.",
   },
   {
     id: "tr-cooking",
     title: "Cooking Training",
     category: "Livelihood & Skills Development",
-    description: "Matutunan ang commercial cooking, food safety & sanitation, paghahanda ng merienda at lutong ulam na patok sa karenderya, at tamang costing at pagpepresyo.",
+    description: "Learn commercial cooking, food safety & sanitation, preparing popular snacks and dishes for eatery businesses, and proper food costing and pricing.",
     date: "September 20, 2026 - September 23, 2026",
     time: "1:00 PM - 4:00 PM",
-    location: "Gov Service Skills Development Center, Batasan Hills",
-    landmark: "3rd Floor Culinary Lab, malapit sa Batasan Hills Barangay Hall",
+    location: "QC Skills Development Center, Batasan Hills",
+    landmark: "3rd Floor Culinary Lab, near Batasan Hills Barangay Hall",
     totalSlots: 25,
     availableSlots: 12,
     durationHours: 16,
     instructor: "Chef Anthony Santos (Culinary Specialist)",
-    prerequisites: "Gov Service Resident, handang sumunod sa kitchen hygiene & food safety guidelines.",
+    prerequisites: "QC Resident, willing to follow kitchen hygiene & food safety guidelines.",
     materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
   },
   {
     id: "tr-beauty",
     title: "Beauty Services Training",
     category: "Livelihood & Skills Development",
-    description: "Pangunahing kasanayan sa haircutting at hairstyling, manicure/pedicure na may nail art, facial cleansing at basic cosmetology para sa salon o home-service livelihood.",
+    description: "Core skills in haircutting, hairstyling, manicure/pedicure with nail art, facial cleansing, and basic cosmetology for salon or home-service livelihood.",
     date: "September 24, 2026 - September 27, 2026",
     time: "9:00 AM - 12:00 PM",
-    location: "Gov Service Skills Development Center, Batasan Hills",
-    landmark: "Ground Floor Wellness Studio, tapat ng Puregold Batasan",
+    location: "QC Skills Development Center, Batasan Hills",
+    landmark: "Ground Floor Wellness Studio, across Puregold Batasan",
     totalSlots: 25,
     availableSlots: 15,
     durationHours: 16,
-    instructor: "Bb. Cheryl Mendez (Certified Cosmetologist)",
-    prerequisites: "Gov Service Resident (18 taong gulang pataas), masigasig matuto ng beauty care.",
+    instructor: "Ms. Cheryl Mendez (Certified Cosmetologist)",
+    prerequisites: "QC Resident (18 years old and above), enthusiastic to learn beauty care.",
     materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.",
   },
   {
     id: "tr-computer",
     title: "Basic Computer Training",
     category: "Livelihood & Skills Development",
-    description: "Pagsasanay sa computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, at online job preparation.",
+    description: "Practical training in computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, and online job preparation.",
     date: "September 28, 2026 - October 01, 2026",
     time: "1:00 PM - 4:00 PM",
-    location: "Gov Service Skills Development Center, Batasan Hills",
+    location: "QC Skills Development Center, Batasan Hills",
     landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
     totalSlots: 30,
     availableSlots: 22,
     durationHours: 16,
-    instructor: "G. Mark Villanueva (IT Skills Coordinator)",
-    prerequisites: "Gov Service Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.",
+    instructor: "Mr. Mark Villanueva (IT Skills Coordinator)",
+    prerequisites: "QC Resident seeking to learn practical computer skills from basic navigation to office tools.",
     materialsProvided: "Computer workstation with internet, digital handouts, practice USB drive.",
   },
 ]
@@ -176,10 +177,103 @@ interface TrainingProgramViewProps {
 }
 
 export default function TrainingProgramView({ initialTab = "available" }: TrainingProgramViewProps) {
+  const { language } = useLanguage()
+  const isEn = language === "en"
+  const isBis = language === "bis"
+
   const [activeTab, setActiveTab] = useState<TrainingProgramTab>(initialTab)
   const [courses, setCourses] = useState<TrainingCourse[]>(DEFAULT_COURSES)
   const [selectedCourse, setSelectedCourse] = useState<TrainingCourse | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+  // Localized course helper
+  const getLocalizedCourse = (course: TrainingCourse) => {
+    if (isBis) {
+      if (course.id.includes("sewing")) {
+        return {
+          ...course,
+          title: "Sewing Training (Panahi)",
+          description: "Pagkat-on sa pattern drafting, panahi sa mga sinina ug kurtina, paggamit ug pag-atiman sa sewing machine, ug paghimo og mga produkto nga mabaligya.",
+          prerequisites: "Residente sa QC (18 anyos pataas), interesado sa panahi.",
+          materialsProvided: "Panapton, thread kit, pattern paper, tracing wheel, measuring tape.",
+          landmark: "Tupad sa Batasan Hills Barangay Hall / Atbang sa Puregold",
+        }
+      }
+      if (course.id.includes("cooking")) {
+        return {
+          ...course,
+          title: "Cooking Training (Pagluto)",
+          description: "Pagkat-on sa commercial cooking, kalimpyo sa pagkaon, pag-andam og snacks ug pagkaon alang sa karenderya, ug hustong costing.",
+          prerequisites: "Residente sa QC, andam mosunod sa food safety guidelines.",
+          materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
+          landmark: "3rd Floor Culinary Lab, duol sa Batasan Hills Barangay Hall",
+        }
+      }
+      if (course.id.includes("beauty")) {
+        return {
+          ...course,
+          title: "Beauty Services Training",
+          description: "Kahanas sa pagtupi, hairstyling, manicure/pedicure nga may nail art, facial cleansing ug basic cosmetology alang sa salon livelihood.",
+          prerequisites: "Residente sa QC (18 anyos pataas), gusto makakat-on sa beauty care.",
+          materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer ug mga gamit sa manicure.",
+          landmark: "Ground Floor Wellness Studio, atbang sa Puregold Batasan",
+        }
+      }
+      if (course.id.includes("computer")) {
+        return {
+          ...course,
+          title: "Basic Computer Training",
+          description: "Pagbansay sa computer navigation, Microsoft Word typing, Excel spreadsheet budgeting, internet search, email, ug online job preparation.",
+          prerequisites: "Residente sa QC nga gustong makakat-on og computer skills.",
+          materialsProvided: "Computer workstation nga may internet, digital handouts, practice USB drive.",
+          landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
+        }
+      }
+    } else if (!isEn) {
+      // Tagalog
+      if (course.id.includes("sewing")) {
+        return {
+          ...course,
+          title: "Sewing Training (Pananahi)",
+          description: "Matutunan ang pattern drafting, pananahi ng mga damit at kurtina, paggamit at pag-aalaga ng sewing machine, at paglikha ng mga produktong maaaring ibenta sa komunidad.",
+          prerequisites: "QC Resident (18 taong gulang pataas), may interes sa pananahi.",
+          materialsProvided: "Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.",
+          landmark: "Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall",
+        }
+      }
+      if (course.id.includes("cooking")) {
+        return {
+          ...course,
+          title: "Cooking Training (Pagluluto)",
+          description: "Matutunan ang commercial cooking, food safety & sanitation, paghahanda ng merienda at lutong ulam na patok sa karenderya, at tamang costing at pagpepresyo.",
+          prerequisites: "QC Resident, handang sumunod sa kitchen hygiene & food safety guidelines.",
+          materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
+          landmark: "3rd Floor Culinary Lab, malapit sa Batasan Hills Barangay Hall",
+        }
+      }
+      if (course.id.includes("beauty")) {
+        return {
+          ...course,
+          title: "Beauty Services Training",
+          description: "Pangunahing kasanayan sa haircutting at hairstyling, manicure/pedicure na may nail art, facial cleansing at basic cosmetology para sa salon o home-service livelihood.",
+          prerequisites: "QC Resident (18 taong gulang pataas), masigasig matuto ng beauty care.",
+          materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.",
+          landmark: "Ground Floor Wellness Studio, tapat ng Puregold Batasan",
+        }
+      }
+      if (course.id.includes("computer")) {
+        return {
+          ...course,
+          title: "Basic Computer Training",
+          description: "Pagsasanay sa computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, at online job preparation.",
+          prerequisites: "QC Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.",
+          materialsProvided: "Computer workstation with internet, digital handouts, practice USB drive.",
+          landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
+        }
+      }
+    }
+    return course
+  }
 
   // Current active user application state
   const [activeApplication, setActiveApplication] = useState<TrainingApplicationRecord | null>(null)
@@ -287,12 +381,19 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   const handleSubmitApplication = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isAttested) {
-      alert("Paki-tsek ang kumpirmasyon bago isumite ang aplikasyon.")
+      alert(
+        isEn
+          ? "Please check the confirmation box before submitting your application."
+          : isBis
+          ? "Palihug i-tsek ang kumpirmasyon sa dili pa isumite ang aplikasyon."
+          : "Paki-tsek ang kumpirmasyon bago isumite ang aplikasyon."
+      )
       return
     }
 
     setIsSubmitting(true)
-    const matched = courses.find((c) => c.id === applyCourseId) || courses[0]
+    const rawMatched = courses.find((c) => c.id === applyCourseId) || courses[0]
+    const matched = getLocalizedCourse(rawMatched)
 
     const payload = {
       trainingId: matched.id,
@@ -385,28 +486,28 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-            APPROVED
+            {isEn ? "APPROVED" : isBis ? "NAAPROBAHAN" : "NAAPRUBAHAN"}
           </span>
         )
       case "rejected":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
             <XCircle className="h-3.5 w-3.5 text-rose-600" />
-            REJECTED
+            {isEn ? "REJECTED" : isBis ? "GIBALIBARAN" : "HINDI NAAPRUBAHAN"}
           </span>
         )
       case "needs_revision":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30">
             <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
-            NEEDS REVISION
+            {isEn ? "NEEDS REVISION" : isBis ? "KINAHANGLAN OG PAG-USAB" : "KAILANGAN NG PAG-EDIT"}
           </span>
         )
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
             <Clock3 className="h-3.5 w-3.5 text-blue-600" />
-            PENDING / UNDER REVIEW
+            {isEn ? "PENDING / UNDER REVIEW" : isBis ? "NAGPAABOT SA PAGSUSI" : "KASALUKUYANG SINUSURI"}
           </span>
         )
     }
@@ -423,16 +524,21 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-600 text-white tracking-wide uppercase">
-                Gov Service Skills Development
+                {isEn ? "QC Skills Development" : isBis ? "Pagpalambo sa Kahanas sa QC" : "Pagpapaunlad ng Kasanayan"}
               </span>
-              <span className="text-xs text-muted-foreground">Livelihood &amp; Training Program Sub-Module</span>
+              <span className="text-xs text-muted-foreground">
+                {isEn ? "Livelihood & Training Program Sub-Module" : isBis ? "Sub-Module sa Panginabuhi ug Pagsasanay" : "Sub-Module ng Kabuhayan at Pagsasanay"}
+              </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Gov Service Training Program
+              {isEn ? "QC Skills Training Program" : isBis ? "Programa sa Pagbansay sa Kahanas" : "Programa sa Pagsasanay at Kasanayan"}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-2xl">
-              Libreng skills training at sertipikasyon para sa mga residente ng Gov Service.
-              Kumuha ng NC II/Skills certificate para sa livelihood assistance at hanapbuhay.
+              {isEn
+                ? "Free skills training and certification for Quezon City residents. Gain NC II/Skills credentials for livelihood capital assistance and employment opportunities."
+                : isBis
+                ? "Libreng bansay sa kahanas ug sertipikasyon alang sa mga residente sa QC. Pagkuha og NC II/Skills certificate alang sa ayuda sa panginabuhi ug trabaho."
+                : "Libreng skills training at sertipikasyon para sa mga residente ng Quezon City. Kumuha ng NC II/Skills certificate para sa livelihood assistance at hanapbuhay."}
             </p>
           </div>
 
@@ -441,13 +547,15 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               type="button"
               onClick={fetchTrainingData}
               className="p-2 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-              title="I-refresh ang data"
+              title={isEn ? "Refresh data" : isBis ? "I-refresh ang datos" : "I-refresh ang data"}
             >
               <RefreshCw className="h-4 w-4" />
             </button>
             {activeApplication && (
               <div className="text-right">
-                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Current Application</p>
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                  {isEn ? "Current Application" : isBis ? "Kasamtangang Aplikasyon" : "Kasalukuyang Aplikasyon"}
+                </p>
                 <div className="mt-0.5">{renderStatusBadge(activeApplication.status)}</div>
               </div>
             )}
@@ -470,7 +578,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             }`}
           >
             <BookOpen className="h-4 w-4 shrink-0" />
-            <span>1. AVAILABLE TRAINING</span>
+            <span>{isEn ? "1. AVAILABLE TRAINING" : isBis ? "1. MGA BUKAS NGA PAGBANSAY" : "1. MGA BUKAS NA PAGSASANAY"}</span>
           </button>
 
           {/* Tab 2: Apply for Training */}
@@ -485,7 +593,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             }`}
           >
             <FileEdit className="h-4 w-4 shrink-0" />
-            <span>2. APPLY FOR TRAINING</span>
+            <span>{isEn ? "2. APPLY FOR TRAINING" : isBis ? "2. MAG-APPLY SA PAGBANSAY" : "2. MAG-APPLY SA PAGSASANAY"}</span>
           </button>
 
           {/* Tab 3: Training Schedule */}
@@ -500,7 +608,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             }`}
           >
             <Calendar className="h-4 w-4 shrink-0" />
-            <span>3. TRAINING SCHEDULE</span>
+            <span>{isEn ? "3. TRAINING SCHEDULE" : isBis ? "3. ISKEDYUL SA PAGBANSAY" : "3. ISKEDYUL NG PAGSASANAY"}</span>
           </button>
 
           {/* Tab 4: Training History */}
@@ -515,7 +623,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             }`}
           >
             <Award className="h-4 w-4 shrink-0" />
-            <span>4. TRAINING HISTORY</span>
+            <span>{isEn ? "4. TRAINING HISTORY" : isBis ? "4. KASAYSAYAN SA PAGBANSAY" : "4. KASAYSAYAN NG PAGSASANAY"}</span>
           </button>
         </div>
       </div>
@@ -528,19 +636,24 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-lg font-bold text-foreground">
-                Mga Bukas na Pagsasanay (Available Trainings)
+                {isEn ? "Available Training Programs" : isBis ? "Mga Bukas nga Pagbansay" : "Mga Bukas na Pagsasanay"}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Pumili ng training program na angkop sa iyong interes at schedule bago mag-apply.
+                {isEn
+                  ? "Choose a training program suited to your interest and schedule before applying."
+                  : isBis
+                  ? "Pilia ang programa sa pagbansay nga angay sa imong interes ug iskedyul sa dili pa mag-apply."
+                  : "Pumili ng training program na angkop sa iyong interes at schedule bago mag-apply."}
               </p>
             </div>
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 w-fit">
-              {courses.length} Open Programs
+              {courses.length} {isEn ? "Open Programs" : isBis ? "Bukas nga Programa" : "Bukas na Programa"}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {courses.map((course) => {
+            {courses.map((rawCourse) => {
+              const course = getLocalizedCourse(rawCourse)
               const slotPercent = Math.round(((course.totalSlots - course.availableSlots) / course.totalSlots) * 100)
               return (
                 <div
@@ -558,13 +671,13 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             {course.title}
                           </h4>
                           <span className="text-[11px] font-medium text-muted-foreground">
-                            {course.durationHours} Hours Intensive Training
+                            {course.durationHours} {isEn ? "Hours Intensive Training" : isBis ? "Oras nga Masinsinang Pagbansay" : "Oras ng Masinsinang Pagsasanay"}
                           </span>
                         </div>
                       </div>
 
                       <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 whitespace-nowrap">
-                        {course.availableSlots} slots left
+                        {course.availableSlots} {isEn ? "slots left" : isBis ? "slot nahabilin" : "slots natitira"}
                       </span>
                     </div>
 
@@ -591,8 +704,8 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     {/* Slots progress */}
                     <div className="pt-2">
                       <div className="flex justify-between text-[11px] font-medium text-muted-foreground mb-1">
-                        <span>Slots filled</span>
-                        <span>{course.totalSlots - course.availableSlots} / {course.totalSlots} slots ({slotPercent}%)</span>
+                        <span>{isEn ? "Slots filled" : isBis ? "Mga slot nga napuno" : "Mga slot na napuno"}</span>
+                        <span>{course.totalSlots - course.availableSlots} / {course.totalSlots} {isEn ? "slots" : "slots"} ({slotPercent}%)</span>
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-muted/60 overflow-hidden">
                         <div
@@ -610,14 +723,14 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       onClick={() => handleOpenDetails(course)}
                       className="px-3 py-2 rounded-xl border border-border bg-muted/20 hover:bg-muted/50 text-foreground text-xs font-semibold transition-all cursor-pointer text-center"
                     >
-                      View Details
+                      {isEn ? "View Details" : isBis ? "Tan-awa ang Detalye" : "Tingnan ang Detalye"}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleSelectToApply(course)}
                       className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      <span>Apply Now</span>
+                      <span>{isEn ? "Apply Now" : isBis ? "Mag-apply Karon" : "Mag-apply Ngayon"}</span>
                       <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -640,17 +753,17 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-bold text-foreground">
-                      Training Application Status
+                      {isEn ? "Training Application Status" : isBis ? "Status sa Aplikasyon sa Pagbansay" : "Status ng Aplikasyon sa Pagsasanay"}
                     </h3>
                     {renderStatusBadge(activeApplication.status)}
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Reference Number: <span className="font-mono font-bold text-foreground">{activeApplication.referenceNumber}</span>
+                    {isEn ? "Reference Number:" : "Reference Number:"} <span className="font-mono font-bold text-foreground">{activeApplication.referenceNumber}</span>
                   </p>
                 </div>
 
                 <div className="text-xs text-muted-foreground">
-                  Submitted: {new Date(activeApplication.submittedAt).toLocaleDateString()}
+                  {isEn ? "Submitted:" : isBis ? "Gisumite:" : "Naisumite:"} {new Date(activeApplication.submittedAt).toLocaleDateString()}
                 </div>
               </div>
 
@@ -659,11 +772,22 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 space-y-2">
                   <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300 font-bold text-sm">
                     <Clock3 className="h-4 w-4" />
-                    <span>PENDING / UNDER REVIEW</span>
+                    <span>{isEn ? "PENDING / UNDER REVIEW" : isBis ? "NAGPAABOT SA PAGSUSI" : "KASALUKUYANG SINUSURI"}</span>
                   </div>
                   <p className="text-xs text-blue-900/80 dark:text-blue-200 leading-relaxed">
-                    Ang inyong aplikasyon para sa <strong>{activeApplication.trainingName}</strong> ay kasalukuyang sinusuri ng QC Skills Development Coordinator.
-                    Maghintay ng 1-2 araw para sa beripikasyon at pinal na iskedyul.
+                    {isEn ? (
+                      <>
+                        Your application for <strong>{activeApplication.trainingName}</strong> is currently under review by the QC Skills Development Coordinator. Please allow 1-2 business days for schedule verification.
+                      </>
+                    ) : isBis ? (
+                      <>
+                        Ang imong aplikasyon alang sa <strong>{activeApplication.trainingName}</strong> kasamtangang gisusi sa QC Skills Development Coordinator. Palihug paghulat og 1-2 ka adlaw alang sa beripikasyon.
+                      </>
+                    ) : (
+                      <>
+                        Ang inyong aplikasyon para sa <strong>{activeApplication.trainingName}</strong> ay kasalukuyang sinusuri ng QC Skills Development Coordinator. Maghintay ng 1-2 araw para sa beripikasyon at pinal na iskedyul.
+                      </>
+                    )}
                   </p>
                 </div>
               )}
@@ -672,17 +796,35 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
                   <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-sm">
                     <CheckCircle2 className="h-4 w-4" />
-                    <span>APPROVED – Kumpirmado ang inyong Training Slot!</span>
+                    <span>
+                      {isEn
+                        ? "APPROVED – Your Training Slot is Confirmed!"
+                        : isBis
+                        ? "NAAPROBAHAN – Kumpirmado ang imong Training Slot!"
+                        : "APPROVED – Kumpirmado ang inyong Training Slot!"}
+                    </span>
                   </div>
                   <p className="text-xs text-emerald-900/80 dark:text-emerald-200 leading-relaxed">
-                    Maaari ka nang sumali sa <strong>{activeApplication.trainingName}</strong>. Nakatakda ang iyong schedule sa ibaba at maaari mong subaybayan ang iyong attendance sa Tab 3.
+                    {isEn ? (
+                      <>
+                        You may now attend <strong>{activeApplication.trainingName}</strong>. Your assigned schedule is below and you can track your live session attendance in Tab 3.
+                      </>
+                    ) : isBis ? (
+                      <>
+                        Mahimo ka nang moapil sa <strong>{activeApplication.trainingName}</strong>. Gitakda ang imong iskedyul sa ubos ug mahimo nimong subayon ang imong attendance sa Tab 3.
+                      </>
+                    ) : (
+                      <>
+                        Maaari ka nang sumali sa <strong>{activeApplication.trainingName}</strong>. Nakatakda ang iyong schedule sa ibaba at maaari mong subaybayan ang iyong attendance sa Tab 3.
+                      </>
+                    )}
                   </p>
                   <button
                     type="button"
                     onClick={() => setActiveTab("schedule")}
                     className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-2 cursor-pointer w-fit"
                   >
-                    <span>Pumunta sa Training Schedule</span>
+                    <span>{isEn ? "Go to Training Schedule" : isBis ? "Adto sa Iskedyul sa Pagbansay" : "Pumunta sa Training Schedule"}</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -692,10 +834,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-3">
                   <div className="flex items-center gap-2 text-rose-800 dark:text-rose-300 font-bold text-sm">
                     <XCircle className="h-4 w-4" />
-                    <span>APPLICATION REJECTED</span>
+                    <span>{isEn ? "APPLICATION REJECTED" : isBis ? "GIBALIBARAN ANG APLIKASYON" : "HINDI NAAPRUBAHAN ANG APLIKASYON"}</span>
                   </div>
                   <p className="text-xs text-rose-900/80 dark:text-rose-200 leading-relaxed">
-                    Dahilan: {activeApplication.rejectionReason || "Hindi pumasok sa residency validation o puno na ang slots sa naturang batch."}
+                    {isEn ? "Reason:" : isBis ? "Rason:" : "Dahilan:"} {activeApplication.rejectionReason || (isEn ? "Did not meet residency requirements or slots for this batch are full." : "Hindi pumasok sa residency validation o puno na ang slots sa naturang batch.")}
                   </p>
                   <button
                     type="button"
@@ -705,7 +847,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     }}
                     className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer w-fit"
                   >
-                    Mag-apply sa Ibang Kurso
+                    {isEn ? "Apply for Another Course" : isBis ? "Mag-apply sa Laing Kurso" : "Mag-apply sa Ibang Kurso"}
                   </button>
                 </div>
               )}
@@ -714,10 +856,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-3">
                   <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
                     <AlertCircle className="h-4 w-4" />
-                    <span>NEEDS REVISION – May kailangang i-edit sa inyong application</span>
+                    <span>{isEn ? "NEEDS REVISION – Some items require your update" : isBis ? "KINAHANGLAN OG PAG-USAB" : "NEEDS REVISION – May kailangang i-edit sa inyong application"}</span>
                   </div>
                   <p className="text-xs text-amber-900/80 dark:text-amber-200 leading-relaxed">
-                    Paalala mula sa Admin: <em>"{activeApplication.revisionNotes || "Paki-update ang inyong contact information o tirahan."}"</em>
+                    {isEn ? "Admin Note:" : isBis ? "Pahibalo gikan sa Admin:" : "Paalala mula sa Admin:"} <em>"{activeApplication.revisionNotes || (isEn ? "Please update your contact information or residency details." : "Paki-update ang inyong contact information o tirahan.")}"</em>
                   </p>
                   <button
                     type="button"
@@ -728,7 +870,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs flex items-center gap-2 cursor-pointer w-fit"
                   >
                     <FileEdit className="h-3.5 w-3.5" />
-                    <span>I-edit at I-resubmit ang Aplikasyon</span>
+                    <span>{isEn ? "Edit & Resubmit Application" : isBis ? "I-edit ug I-resubmit ang Aplikasyon" : "I-edit at I-resubmit ang Aplikasyon"}</span>
                   </button>
                 </div>
               )}
@@ -736,19 +878,19 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               {/* Application Summary details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-muted/20 p-4 rounded-xl border border-border">
                 <div>
-                  <span className="text-muted-foreground block text-[11px]">Selected Program:</span>
+                  <span className="text-muted-foreground block text-[11px]">{isEn ? "Selected Program:" : isBis ? "Napiling Programa:" : "Napiling Programa:"}</span>
                   <span className="font-bold text-foreground">{activeApplication.trainingName}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block text-[11px]">Applicant Name:</span>
+                  <span className="text-muted-foreground block text-[11px]">{isEn ? "Applicant Name:" : isBis ? "Ngalan sa Aplikante:" : "Pangalan ng Aplikante:"}</span>
                   <span className="font-bold text-foreground">{activeApplication.applicantInfo?.fullName}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block text-[11px]">QC ID Number:</span>
+                  <span className="text-muted-foreground block text-[11px]">{isEn ? "QC ID Number:" : "QC ID Number:"}</span>
                   <span className="font-mono font-bold text-foreground">{activeApplication.qcid}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block text-[11px]">Contact &amp; Barangay:</span>
+                  <span className="text-muted-foreground block text-[11px]">{isEn ? "Contact & Barangay:" : "Contact & Barangay:"}</span>
                   <span className="font-semibold text-foreground">{activeApplication.applicantInfo?.contactNo} • Brgy. {activeApplication.applicantInfo?.barangay}</span>
                 </div>
               </div>
@@ -761,23 +903,27 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-xl font-bold text-foreground">
-                    Apply for Training Program
+                    {isEn ? "Apply for Training Program" : isBis ? "Mag-apply sa Programa sa Pagbansay" : "Mag-apply sa Programa ng Pagsasanay"}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Mabilisang aplikasyon para sa mga programang pangkabuhayan at skills training ng Gov Service.
+                    {isEn
+                      ? "Fast-track application for Quezon City livelihood and skills training opportunities."
+                      : isBis
+                      ? "Paspas nga aplikasyon alang sa mga programa sa panginabuhi ug skills training sa QC."
+                      : "Mabilisang aplikasyon para sa mga programang pangkabuhayan at skills training ng Quezon City."}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 self-start sm:self-center">
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${formStep === "select" ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}>
-                    1. Kurso
+                    {isEn ? "1. Course" : isBis ? "1. Kurso" : "1. Kurso"}
                   </span>
                   <span className="text-muted-foreground text-xs">→</span>
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${formStep === "profile" ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}>
-                    2. Impormasyon
+                    {isEn ? "2. Profile" : isBis ? "2. Impormasyon" : "2. Impormasyon"}
                   </span>
                   <span className="text-muted-foreground text-xs">→</span>
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${formStep === "review" ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}>
-                    3. Kumpirmasyon
+                    {isEn ? "3. Confirm" : isBis ? "3. Kumpirmasyon" : "3. Kumpirmasyon"}
                   </span>
                 </div>
               </div>
@@ -786,19 +932,20 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
-                    Step 1. Napiling Kursong Pagsasanay (Selected Training)
+                    {isEn ? "Step 1. Selected Training Program" : isBis ? "Step 1. Napiling Kurso sa Pagbansay" : "Step 1. Napiling Kursong Pagsasanay"}
                   </label>
                   <button
                     type="button"
                     onClick={() => setActiveTab("available")}
                     className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                   >
-                    Palitan ang Kurso →
+                    {isEn ? "Change Course →" : isBis ? "Ilisi ang Kurso →" : "Palitan ang Kurso →"}
                   </button>
                 </div>
 
                 {(() => {
-                  const selectedCourse = courses.find((c) => c.id === applyCourseId) || courses[0]
+                  const rawCourse = courses.find((c) => c.id === applyCourseId) || courses[0]
+                  const selectedCourse = getLocalizedCourse(rawCourse)
                   return (
                     <div className="p-4 rounded-xl border border-blue-600 bg-blue-50/50 dark:bg-blue-950/20 shadow-xs flex items-center justify-between">
                       <div className="flex items-center gap-3.5">
@@ -809,11 +956,11 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-bold text-foreground">{selectedCourse.title}</p>
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white">
-                              Napili
+                              {isEn ? "Selected" : isBis ? "Napili" : "Napili"}
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {selectedCourse.durationHours} Hours Intensive Training • {selectedCourse.date} ({selectedCourse.time})
+                            {selectedCourse.durationHours} {isEn ? "Hours Intensive Training" : isBis ? "Oras nga Pagbansay" : "Oras ng Pagsasanay"} • {selectedCourse.date} ({selectedCourse.time})
                           </p>
                         </div>
                       </div>
@@ -827,25 +974,33 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               <div className="space-y-4 pt-4 border-t border-border">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
-                    Step 2. Impormasyon ng Aplikante (Auto-filled from User Profile)
+                    {isEn
+                      ? "Step 2. Applicant Profile (Auto-filled)"
+                      : isBis
+                      ? "Step 2. Impormasyon sa Aplikante (Auto-filled)"
+                      : "Step 2. Impormasyon ng Aplikante (Auto-filled)"}
                   </label>
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-md">
                     <ShieldCheck className="h-3.5 w-3.5" />
-                    Verified Gov Service Profile
+                    {isEn ? "Verified Resident Profile" : isBis ? "Beripikadong Profile" : "Beripikadong Profile"}
                   </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-muted/20 border border-border text-xs text-muted-foreground flex items-start gap-2.5">
                   <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                   <p>
-                    Ang sumusunod na impormasyon ay <strong>kusang kinuha mula sa iyong Gov Service User Profile</strong> upang hindi mo na kailangang mag-type muli.
+                    {isEn
+                      ? "The following verified information is automatically loaded from your resident account so you do not need to re-type it."
+                      : isBis
+                      ? "Ang mosunod nga impormasyon awtomatikong gikuha gikan sa imong account aron dili na kinahanglan mag-type pag-usab."
+                      : "Ang sumusunod na impormasyon ay kusang kinuha mula sa iyong account upang hindi mo na kailangang mag-type muli."}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
                     <label className="block font-semibold text-muted-foreground mb-1.5">
-                      Gov Service Reference Number
+                      QC ID / Reference Number
                     </label>
                     <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-mono font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
                       {userQcid}
@@ -854,7 +1009,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
                   <div>
                     <label className="block font-semibold text-muted-foreground mb-1.5">
-                      Buong Pangalan (Full Name)
+                      {isEn ? "Full Name" : isBis ? "Tibuok Ngalan" : "Buong Pangalan"}
                     </label>
                     <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs truncate">
                       {profile.firstName} {profile.middleName} {profile.lastName} {profile.suffix}
@@ -863,16 +1018,16 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
                   <div>
                     <label className="block font-semibold text-muted-foreground mb-1.5">
-                      Email Address
+                      {isEn ? "Email Address" : "Email Address"}
                     </label>
                     <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs truncate">
-                      {profile.email || "resident@govserve.gov.ph"}
+                      {profile.email || "resident@quezoncity.gov.ph"}
                     </div>
                   </div>
 
                   <div>
                     <label className="block font-semibold text-muted-foreground mb-1.5">
-                      Contact / Mobile Number
+                      {isEn ? "Contact / Mobile Number" : isBis ? "Numero sa Telepono" : "Numero ng Telepono"}
                     </label>
                     <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-semibold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
                       {profile.contactNo || profile.mobileNumber || "0917 234 5678"}
@@ -881,19 +1036,19 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
                   <div>
                     <label className="block font-semibold text-muted-foreground mb-1.5">
-                      Kasarian (Sex) &amp; Edad
+                      {isEn ? "Sex & Age" : isBis ? "Kinatawhan ug Edad" : "Kasarian at Edad"}
                     </label>
                     <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      {profile.sex || "Female"} • {profile.age || "24"} taong gulang
+                      {profile.sex || "Female"} • {profile.age || "24"} {isEn ? "years old" : isBis ? "anyos" : "taong gulang"}
                     </div>
                   </div>
 
                   <div>
                     <label className="block font-semibold text-muted-foreground mb-1.5">
-                      Barangay &amp; Lungsod
+                      {isEn ? "Barangay & City" : isBis ? "Barangay ug Dakbayan" : "Barangay at Lungsod"}
                     </label>
                     <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-medium text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs truncate">
-                      Brgy. {profile.barangay || "Sauyo"}, Gov Service
+                      Brgy. {profile.barangay || "Sauyo"}, Quezon City
                     </div>
                   </div>
                 </div>
@@ -902,18 +1057,19 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               {/* Step 3: Review Application */}
               <div className="space-y-3 pt-4 border-t border-border">
                 <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
-                  Step 3. Repasuhin ang Aplikasyon (Review Application)
+                  {isEn ? "Step 3. Review Application" : isBis ? "Step 3. Subaya ang Aplikasyon" : "Step 3. Repasuhin ang Aplikasyon"}
                 </label>
                 {(() => {
-                  const picked = courses.find((c) => c.id === applyCourseId) || courses[0]
+                  const rawPicked = courses.find((c) => c.id === applyCourseId) || courses[0]
+                  const picked = getLocalizedCourse(rawPicked)
                   return (
                     <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-2 text-xs">
                       <div className="flex justify-between font-bold text-sm text-foreground">
                         <span>{picked.title}</span>
-                        <span className="text-blue-600">{picked.durationHours} Hours</span>
+                        <span className="text-blue-600">{picked.durationHours} {isEn ? "Hours" : isBis ? "Oras" : "Oras"}</span>
                       </div>
-                      <p className="text-muted-foreground">Petsa: <strong className="text-foreground">{picked.date}</strong> ({picked.time})</p>
-                      <p className="text-muted-foreground">Lokasyon: <strong className="text-foreground">{picked.location}</strong></p>
+                      <p className="text-muted-foreground">{isEn ? "Date:" : isBis ? "Petsa:" : "Petsa:"} <strong className="text-foreground">{picked.date}</strong> ({picked.time})</p>
+                      <p className="text-muted-foreground">{isEn ? "Location:" : isBis ? "Lokasyon:" : "Lokasyon:"} <strong className="text-foreground">{picked.location}</strong></p>
                       <p className="text-muted-foreground italic">Landmark: {picked.landmark}</p>
                     </div>
                   )
@@ -927,7 +1083,11 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     className="mt-0.5 rounded border-border text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="text-xs text-muted-foreground">
-                    Pinatutunayan ko na totoo ang lahat ng impormasyong nakatala at ako ay tapat na dadalo sa buong takdang oras ng pagsasanay.
+                    {isEn
+                      ? "I hereby certify that all information provided is true and correct, and I commit to faithfully attend all 16 hours of the training program."
+                      : isBis
+                      ? "Gipamatud-an nako nga tinuod ang tanang impormasyon ug ako matinud-anong motambong sa tanang takdang oras sa pagbansay."
+                      : "Pinatutunayan ko na totoo ang lahat ng impormasyong nakatala at ako ay tapat na dadalo sa buong takdang oras ng pagsasanay."}
                   </span>
                 </label>
               </div>
@@ -940,7 +1100,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     onClick={() => setIsRevising(false)}
                     className="px-4 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-muted-foreground cursor-pointer"
                   >
-                    Kanselahin
+                    {isEn ? "Cancel" : isBis ? "Kanselaha" : "Kanselahin"}
                   </button>
                 )}
                 <button
@@ -951,11 +1111,11 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   {isSubmitting ? (
                     <>
                       <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span>Isinusumite...</span>
+                      <span>{isEn ? "Submitting..." : isBis ? "Gisumite..." : "Isinusumite..."}</span>
                     </>
                   ) : (
                     <>
-                      <span>Isumite ang Aplikasyon (Submit Application)</span>
+                      <span>{isEn ? "Submit Application" : isBis ? "Isumite ang Aplikasyon" : "Isumite ang Aplikasyon"}</span>
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
@@ -973,10 +1133,14 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         <div className="space-y-6 max-w-3xl mx-auto">
           <div>
             <h3 className="text-lg font-bold text-foreground">
-              Training Schedule &amp; Attendance Record
+              {isEn ? "Training Schedule & Attendance Tracker" : isBis ? "Iskedyul sa Pagbansay ug Attendance" : "Training Schedule & Attendance Record"}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Tingnan ang detalye ng takdang araw, oras, venue, at subaybayan ang iyong attendance.
+              {isEn
+                ? "View your confirmed date, time, venue, and track live session attendance."
+                : isBis
+                ? "Tan-awa ang mga detalye sa adlaw, oras, lugar, ug subaya ang imong attendance."
+                : "Tingnan ang detalye ng takdang araw, oras, venue, at subaybayan ang iyong attendance."}
             </p>
           </div>
 
@@ -986,17 +1150,25 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <Calendar className="h-6 w-6" />
               </div>
               <h4 className="text-base font-bold text-foreground">
-                Wala Pang Naaprubahang Training Schedule
+                {isEn ? "No Approved Training Schedule Yet" : isBis ? "Wala pay Naaprobahang Iskedyul" : "Wala Pang Naaprubahang Training Schedule"}
               </h4>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                Magiging aktibo ang seksyong ito kapag <strong>APPROVED</strong> na ang iyong Training Application mula sa QC Skills Development Division.
+                {isEn
+                  ? "This section will be activated once your application has been APPROVED by the Skills Development Division."
+                  : isBis
+                  ? "Mahimong aktibo kini nga seksyon kung APPROVED na ang imong aplikasyon gikan sa QC Skills Development Division."
+                  : "Magiging aktibo ang seksyong ito kapag APPROVED na ang iyong Training Application mula sa QC Skills Development Division."}
               </p>
               <button
                 type="button"
                 onClick={() => setActiveTab(activeApplication ? "apply" : "available")}
                 className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-2 mt-2"
               >
-                <span>{activeApplication ? "Tingnan ang Application Status" : "Tingnan ang Available Trainings"}</span>
+                <span>
+                  {activeApplication
+                    ? isEn ? "View Application Status" : isBis ? "Tan-awa ang Status" : "Tingnan ang Application Status"
+                    : isEn ? "View Available Trainings" : isBis ? "Tan-awa ang mga Pagbansay" : "Tingnan ang Available Trainings"}
+                </span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -1007,7 +1179,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
                   <div>
                     <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wide">
-                      Confirmed Batch Schedule
+                      {isEn ? "Confirmed Batch Schedule" : isBis ? "Kumpirmadong Iskedyul" : "Confirmed Batch Schedule"}
                     </span>
                     <h4 className="text-xl font-bold text-foreground mt-0.5">
                       {activeApplication.schedule?.trainingName || activeApplication.trainingName}
@@ -1022,7 +1194,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/20 border border-border">
                     <Calendar className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold text-muted-foreground block text-[11px]">Training Date</span>
+                      <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Training Date" : isBis ? "Petsa sa Pagbansay" : "Petsa ng Pagsasanay"}</span>
                       <span className="font-bold text-foreground text-sm">{activeApplication.schedule?.trainingDate}</span>
                     </div>
                   </div>
@@ -1030,7 +1202,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/20 border border-border">
                     <Clock className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold text-muted-foreground block text-[11px]">Training Time</span>
+                      <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Training Time" : isBis ? "Oras sa Pagbansay" : "Oras ng Pagsasanay"}</span>
                       <span className="font-bold text-foreground text-sm">{activeApplication.schedule?.trainingTime}</span>
                     </div>
                   </div>
@@ -1038,10 +1210,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/20 border border-border sm:col-span-2">
                     <MapPin className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold text-muted-foreground block text-[11px]">Training Location &amp; Landmark</span>
+                      <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Location & Venue" : isBis ? "Lugar ug Landmark" : "Lokasyon at Landmark"}</span>
                       <span className="font-bold text-foreground text-sm block">{activeApplication.schedule?.trainingLocation}</span>
                       <span className="text-muted-foreground text-xs mt-0.5 block italic">
-                        Landmark: {activeApplication.schedule?.landmark || "Tapat ng Puregold Batasan, Katabi ng Batasan Hills Barangay Hall"}
+                        Landmark: {activeApplication.schedule?.landmark || "Across Puregold Batasan, Beside Batasan Hills Barangay Hall"}
                       </span>
                     </div>
                   </div>
@@ -1053,15 +1225,19 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h4 className="text-base font-bold text-foreground">
-                      Attendance &amp; Completion Tracker
+                      {isEn ? "Attendance & Completion Tracker" : isBis ? "Attendance ug Pagkompleto" : "Attendance & Completion Tracker"}
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      Kailangang makumpleto ang 16 oras para ma-isyu ang Certificate of Completion.
+                      {isEn
+                        ? "Complete 16 total hours to automatically unlock your official Certificate of Completion."
+                        : isBis
+                        ? "Kinahanglang makompleto ang 16 ka oras aron ma-isyu ang Certificate of Completion."
+                        : "Kailangang makumpleto ang 16 oras para ma-isyu ang Certificate of Completion."}
                     </p>
                   </div>
                   <div className="text-right">
                     <span className="text-sm font-bold text-blue-600">
-                      {activeApplication.attendance?.hoursCompleted || 0} / {activeApplication.attendance?.totalHours || 16} Hours
+                      {activeApplication.attendance?.hoursCompleted || 0} / {activeApplication.attendance?.totalHours || 16} {isEn ? "Hours" : isBis ? "Oras" : "Oras"}
                     </span>
                   </div>
                 </div>
@@ -1096,7 +1272,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         </div>
                         <div>
                           <p className="font-semibold text-foreground">Day {sess.day}: {sess.topic}</p>
-                          <p className="text-[11px] text-muted-foreground">{sess.date || "Scheduled session"}</p>
+                          <p className="text-[11px] text-muted-foreground">{sess.date || (isEn ? "Scheduled session" : "Nakatakdang sesyon")}</p>
                         </div>
                       </div>
 
@@ -1107,7 +1283,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {sess.attended ? "Attended ✓" : "Pending"}
+                        {sess.attended ? (isEn ? "Attended ✓" : "Nakatambong ✓") : (isEn ? "Pending" : "Nagpaabot")}
                       </span>
                     </div>
                   ))}
@@ -1119,10 +1295,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       <Award className="h-6 w-6 text-emerald-600 shrink-0" />
                       <div>
                         <p className="font-bold text-emerald-900 dark:text-emerald-200 text-xs sm:text-sm">
-                          Binabati kita! Nakumpleto mo ang Training Program.
+                          {isEn ? "Congratulations! You completed the training program." : isBis ? "Pahalipay! Nakompleto nimo ang training program." : "Binabati kita! Nakumpleto mo ang Training Program."}
                         </p>
                         <p className="text-[11px] text-emerald-800 dark:text-emerald-300">
-                          Handa na ang iyong opisyal na Certificate of Completion.
+                          {isEn ? "Your official Certificate of Completion is now ready." : isBis ? "Andam na ang imong opisyal nga Certificate of Completion." : "Handa na ang iyong opisyal na Certificate of Completion."}
                         </p>
                       </div>
                     </div>
@@ -1134,7 +1310,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       }}
                       className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 cursor-pointer"
                     >
-                      View Certificate
+                      {isEn ? "View Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan ang Sertipiko"}
                     </button>
                   </div>
                 )}
@@ -1151,11 +1327,14 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         <div className="space-y-6 max-w-3xl mx-auto">
           <div>
             <h3 className="text-lg font-bold text-foreground">
-              Training History &amp; Official Certificates
+              {isEn ? "Training History & Official Certificates" : isBis ? "Kasaysayan sa Pagbansay ug Sertipiko" : "Kasaysayan ng Pagsasanay at Sertipiko"}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Talaan ng mga natapos mong training program at mga naisyung Certificate of Completion.
-              Magagamit ito bilang requirements sa Livelihood Capital Assistance at trabaho.
+              {isEn
+                ? "Registry of your completed skills training programs and official Certificates of Completion. You can use this for Livelihood Capital Assistance requirements."
+                : isBis
+                ? "Talaan sa mga nahuman nimong training ug na-isyu nga mga Certificate of Completion."
+                : "Talaan ng mga natapos mong training program at mga naisyung Certificate of Completion. Magagamit ito bilang requirements sa Livelihood Capital Assistance."}
             </p>
           </div>
 
@@ -1165,17 +1344,21 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 <Award className="h-6 w-6" />
               </div>
               <h4 className="text-base font-bold text-foreground">
-                Wala Pang Natapos na Training
+                {isEn ? "No Completed Training Records Yet" : isBis ? "Wala pay Nahuman nga Pagbansay" : "Wala Pang Natapos na Pagsasanay"}
               </h4>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                Kapag natapos mo ang iyong 16-hour skills training, dito mo makikita at mada-download ang iyong opisyal na sertipiko mula sa Gov Service.
+                {isEn
+                  ? "When you finish your 16-hour skills training, you can view and download your official Certificate of Completion here."
+                  : isBis
+                  ? "Kung mahuman nimo ang imong 16 ka oras nga skills training, dinhi nimo makita ug ma-download ang imong opisyal nga sertipiko."
+                  : "Kapag natapos mo ang iyong 16-hour skills training, dito mo makikita at mada-download ang iyong opisyal na sertipiko."}
               </p>
               <button
                 type="button"
                 onClick={() => setActiveTab("available")}
                 className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-2 mt-2"
               >
-                <span>Maghanap ng Training Program</span>
+                <span>{isEn ? "Explore Available Trainings" : isBis ? "Pangita og Pagbansay" : "Maghanap ng Training Program"}</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -1189,7 +1372,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30">
-                        COMPLETED (16 HOURS)
+                        {isEn ? "COMPLETED (16 HOURS)" : isBis ? "NAHUMAN (16 KA ORAS)" : "NAKUMPLETO (16 ORAS)"}
                       </span>
                       <span className="text-xs text-muted-foreground font-mono">REF {app.referenceNumber}</span>
                     </div>
@@ -1197,7 +1380,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       {app.trainingName}
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      Natapos noong: <strong>{app.schedule?.trainingDate || "Recent"}</strong> sa {app.schedule?.trainingLocation}
+                      {isEn ? "Completed on:" : isBis ? "Nahuman niadtong:" : "Natapos noong:"} <strong>{app.schedule?.trainingDate || "Recent"}</strong> {isEn ? "at" : "sa"} {app.schedule?.trainingLocation}
                     </p>
                   </div>
 
@@ -1208,7 +1391,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-2 cursor-pointer"
                     >
                       <Award className="h-4 w-4" />
-                      <span>Tingnan ang Sertipiko</span>
+                      <span>{isEn ? "View Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan ang Sertipiko"}</span>
                     </button>
                   </div>
                 </div>
@@ -1231,7 +1414,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-foreground">{selectedCourse.title}</h3>
-                  <p className="text-xs text-muted-foreground">{selectedCourse.durationHours} Hours Skills Development Program</p>
+                  <p className="text-xs text-muted-foreground">{selectedCourse.durationHours} {isEn ? "Hours Skills Development Program" : "Hours Skills Development Program"}</p>
                 </div>
               </div>
               <button
@@ -1245,31 +1428,31 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
             <div className="space-y-3 text-xs">
               <div>
-                <span className="font-semibold text-muted-foreground block text-[11px]">Ano ang Matututunan:</span>
+                <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "What You Will Learn:" : isBis ? "Unsay Imong Makat-onan:" : "Ano ang Matututunan:"}</span>
                 <p className="text-foreground leading-relaxed mt-0.5">{selectedCourse.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
                 <div>
-                  <span className="font-semibold text-muted-foreground block text-[11px]">Petsa (Date):</span>
+                  <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Date:" : isBis ? "Petsa:" : "Petsa:"}</span>
                   <span className="font-bold text-foreground">{selectedCourse.date}</span>
                 </div>
                 <div>
-                  <span className="font-semibold text-muted-foreground block text-[11px]">Oras (Time):</span>
+                  <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Time:" : isBis ? "Oras:" : "Oras:"}</span>
                   <span className="font-bold text-foreground">{selectedCourse.time}</span>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-border">
-                <span className="font-semibold text-muted-foreground block text-[11px]">Lokasyon at Landmark:</span>
+                <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Location & Landmark:" : isBis ? "Lugar ug Landmark:" : "Lokasyon at Landmark:"}</span>
                 <span className="font-bold text-foreground block">{selectedCourse.location}</span>
                 <span className="text-muted-foreground italic text-[11px] mt-0.5 block">{selectedCourse.landmark}</span>
               </div>
 
               <div className="pt-2 border-t border-border">
-                <span className="font-semibold text-muted-foreground block text-[11px]">Instructor &amp; Materials:</span>
+                <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Instructor & Materials:" : isBis ? "Tigtudlo ug Gamit:" : "Instructor & Materials:"}</span>
                 <p className="text-foreground font-medium">{selectedCourse.instructor}</p>
-                <p className="text-muted-foreground mt-0.5 text-[11px]">Libreng gamit: {selectedCourse.materialsProvided}</p>
+                <p className="text-muted-foreground mt-0.5 text-[11px]">{isEn ? "Provided materials:" : isBis ? "Libreng gamit:" : "Libreng gamit:"} {selectedCourse.materialsProvided}</p>
               </div>
             </div>
 
@@ -1279,14 +1462,14 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 onClick={() => setIsDetailModalOpen(false)}
                 className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                Isara
+                {isEn ? "Close" : isBis ? "Isira" : "Isara"}
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectToApply(selectedCourse)}
                 className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
-                <span>Mag-apply sa Training na Ito</span>
+                <span>{isEn ? "Apply for This Training" : isBis ? "Mag-apply niining Pagbansay" : "Mag-apply sa Training na Ito"}</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -1325,7 +1508,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               <div className="flex items-center justify-center gap-3">
                 <img
                   src="/samples/Government Service Integrity Seal.png"
-                  alt="Gov Service Seal"
+                  alt="QC Seal"
                   className="w-16 h-16 object-contain"
                   onError={(e) => {
                     (e.target as HTMLElement).style.display = "none"
@@ -1336,7 +1519,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     Republic of the Philippines
                   </h5>
                   <h4 className="text-base font-extrabold tracking-wide text-[#0F172A]">
-                    GOV SERVICE
+                    QUEZON CITY GOVERNMENT
                   </h4>
                   <p className="text-[10px] text-slate-600 tracking-wider uppercase">
                     Social Services Development Department • Skills Training Division
@@ -1350,27 +1533,45 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </span>
                 <div className="w-24 h-0.5 bg-amber-600 mx-auto mt-1 mb-3" />
                 <p className="text-xs text-slate-600 italic">
-                  Ipinagkakaloob ang katibayang ito kay
+                  {isEn
+                    ? "This certificate is proudly presented to"
+                    : isBis
+                    ? "Kini nga sertipiko mapasigarbohong gihatag kang"
+                    : "Ipinagkakaloob ang katibayang ito kay"}
                 </p>
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 underline decoration-amber-600 underline-offset-8 mt-1.5 mb-3">
                   {certificateModalApp.applicantInfo?.fullName || "CLARISA MAE GALIAS DIMAL"}
                 </h3>
                 <p className="text-xs text-slate-700 max-w-lg mx-auto leading-relaxed">
-                  para sa matagumpay na pagtatapos ng <strong>16 Oras ng Masinsinang Pagsasanay</strong> sa ilalim ng
-                  kursong <strong>{certificateModalApp.trainingName}</strong> na ginanap sa Gov Service Skills Development Center, Batasan Hills.
+                  {isEn ? (
+                    <>
+                      for the successful completion of <strong>16 Hours of Intensive Skills Training</strong> in the course of{" "}
+                      <strong>{certificateModalApp.trainingName}</strong> held at QC Skills Development Center, Batasan Hills, Quezon City.
+                    </>
+                  ) : isBis ? (
+                    <>
+                      alang sa malamposong paghuman sa <strong>16 ka Oras sa Pagsasanay</strong> sa ilalom sa{" "}
+                      kursong <strong>{certificateModalApp.trainingName}</strong> nga gipahigayon sa QC Skills Development Center, Batasan Hills, Quezon City.
+                    </>
+                  ) : (
+                    <>
+                      para sa matagumpay na pagtatapos ng <strong>16 Oras ng Masinsinang Pagsasanay</strong> sa ilalim ng{" "}
+                      kursong <strong>{certificateModalApp.trainingName}</strong> na ginanap sa QC Skills Development Center, Batasan Hills, Quezon City.
+                    </>
+                  )}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-6 text-left text-[10px] text-slate-600 border-t border-slate-200">
                 <div>
-                  <p>Certificate No: <strong className="font-mono text-slate-900">{certificateModalApp.certificate?.certificateNo || `GS-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`}</strong></p>
-                  <p>Petsa ng Pag-isyu: <strong className="text-slate-900">{certificateModalApp.certificate?.issueDate || new Date().toLocaleDateString()}</strong></p>
-                  <p>Reference ID: <strong className="font-mono text-slate-900">{certificateModalApp.qcid}</strong></p>
+                  <p>Certificate No: <strong className="font-mono text-slate-900">{certificateModalApp.certificate?.certificateNo || `QC-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`}</strong></p>
+                  <p>{isEn ? "Issue Date:" : isBis ? "Petsa sa Pag-isyu:" : "Petsa ng Pag-isyu:"} <strong className="text-slate-900">{certificateModalApp.certificate?.issueDate || new Date().toLocaleDateString()}</strong></p>
+                  <p>QC ID: <strong className="font-mono text-slate-900">{certificateModalApp.qcid}</strong></p>
                 </div>
 
                 <div className="text-right">
                   <div className="w-32 h-10 border-b border-slate-400 ml-auto mb-1 flex items-end justify-center">
-                    <span className="font-script text-xs text-slate-700 italic">Gov Service Director</span>
+                    <span className="font-script text-xs text-slate-700 italic">QC Skills Director</span>
                   </div>
                   <p className="font-bold text-slate-800">ATTY. MARIQUITA BELMONTE</p>
                   <p className="text-[9px] text-slate-500">SSDD Department Head</p>
@@ -1386,7 +1587,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 className="px-4 py-2 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted/40 flex items-center gap-1.5 cursor-pointer"
               >
                 <Printer className="h-4 w-4" />
-                <span>Print Certificate</span>
+                <span>{isEn ? "Print Certificate" : isBis ? "I-print ang Sertipiko" : "I-print ang Sertipiko"}</span>
               </button>
               <button
                 type="button"
@@ -1396,7 +1597,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Download className="h-4 w-4" />
-                <span>Download PDF</span>
+                <span>{isEn ? "Download PDF" : isBis ? "I-download ang PDF" : "I-download ang PDF"}</span>
               </button>
             </div>
           </div>

@@ -10,9 +10,14 @@ import {
   Eye,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
+import { useLanguage } from "../ui/language-context"
 import type { TrainingApplicationRecord } from "../user-portal/training-program-view"
 
 export default function TrainingProgramAdmin() {
+  const { language } = useLanguage()
+  const isEn = language === "en"
+  const isBis = language === "bis"
+
   const [applications, setApplications] = useState<TrainingApplicationRecord[]>([])
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState<string>("")
@@ -110,7 +115,13 @@ export default function TrainingProgramAdmin() {
   // Handle Reject
   const handleReject = async (app: TrainingApplicationRecord) => {
     if (!rejectReason.trim()) {
-      alert("Paki-lagay ang dahilan ng pag-reject.")
+      alert(
+        isEn
+          ? "Please provide a reason for rejecting this application."
+          : isBis
+          ? "Palihug paghatag og rason sa pag-reject niining aplikasyon."
+          : "Mangyaring magbigay ng dahilan para sa pag-reject ng aplikasyong ito."
+      )
       return
     }
     const updated: TrainingApplicationRecord = {
@@ -126,7 +137,13 @@ export default function TrainingProgramAdmin() {
   // Handle Request Revision
   const handleRequestRevision = async (app: TrainingApplicationRecord) => {
     if (!revisionNotes.trim()) {
-      alert("Paki-lagay ang mga detalye o impormasyong kailangang i-edit ng aplikante.")
+      alert(
+        isEn
+          ? "Please provide the revision notes or items the applicant needs to update."
+          : isBis
+          ? "Palihug paghatag og mga nota sa pag-usab nga kinahanglang i-update sa aplikante."
+          : "Mangyaring magbigay ng mga tala sa pag-edit na kailangang i-update ng aplikante."
+      )
       return
     }
     const updated: TrainingApplicationRecord = {
@@ -180,7 +197,13 @@ export default function TrainingProgramAdmin() {
 
   // Reset all training applications (Testing)
   const handleResetTraining = async () => {
-    if (!window.confirm("Sigurado ka bang nais mong i-reset ang lahat ng Training Program applications sa Admin?")) {
+    const confirmText = isEn
+      ? "Are you sure you want to reset all Training Program applications in Admin?"
+      : isBis
+      ? "Sigurado ba ka nga gusto nimong i-reset ang tanang Training Program applications sa Admin?"
+      : "Sigurado ka bang nais mong i-reset ang lahat ng Training Program applications sa Admin?"
+
+    if (!window.confirm(confirmText)) {
       return
     }
     setApplications([])
@@ -224,10 +247,18 @@ export default function TrainingProgramAdmin() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold text-foreground">
-            Training Program Administration &amp; Skills Registry
+            {isEn
+              ? "Training Program Administration & Skills Registry"
+              : isBis
+              ? "Administrasyon sa Training Program ug Skills Registry"
+              : "Pangasiwaan ng Training Program at Talaan ng Kasanayan"}
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Evaluate resident applications, confirm training schedules, track live attendance, and issue official Certificates of Completion.
+            {isEn
+              ? "Evaluate resident applications, confirm training schedules, track live attendance, and issue official Certificates of Completion."
+              : isBis
+              ? "Susiha ang mga aplikasyon sa residente, kumpirmaha ang iskedyul, subaya ang attendance, ug pag-isyu og opisyal nga Certificate of Completion."
+              : "Suriin ang mga aplikasyon ng residente, kumpirmahin ang mga iskedyul, subaybayan ang attendance, at mag-isyu ng opisyal na Certificate of Completion."}
           </p>
         </div>
 
@@ -237,7 +268,7 @@ export default function TrainingProgramAdmin() {
             onClick={fetchTrainingApplications}
             disabled={isLoading}
             className="p-2 rounded-xl border border-border bg-muted/20 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer disabled:opacity-50"
-            title="Refresh list"
+            title={isEn ? "Refresh list" : isBis ? "I-refresh ang lista" : "I-refresh ang listahan"}
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
@@ -247,7 +278,7 @@ export default function TrainingProgramAdmin() {
             className="px-3.5 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span>Reset Training Data</span>
+            <span>{isEn ? "Reset Training Data" : isBis ? "I-reset ang Datos sa Training" : "I-reset ang Datos ng Training"}</span>
           </button>
         </div>
       </div>
@@ -255,27 +286,43 @@ export default function TrainingProgramAdmin() {
       {/* Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20">
-          <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Total Applications</span>
+          <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+            {isEn ? "Total Applications" : isBis ? "Tanan nga Aplikasyon" : "Kabuuang Aplikasyon"}
+          </span>
           <p className="text-2xl font-bold text-foreground mt-1">{applications.length}</p>
-          <span className="text-[11px] text-muted-foreground">All time submissions</span>
+          <span className="text-[11px] text-muted-foreground">
+            {isEn ? "All time submissions" : isBis ? "Tanan nga na-submit" : "Lahat ng naisumite"}
+          </span>
         </div>
 
         <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20">
-          <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Pending Review</span>
+          <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide">
+            {isEn ? "Pending Review" : isBis ? "Nagpaabot og Pagsusi" : "Nangangailangan ng Pagsusuri"}
+          </span>
           <p className="text-2xl font-bold text-amber-600 mt-1">{pendingCount}</p>
-          <span className="text-[11px] text-muted-foreground">Needs evaluation</span>
+          <span className="text-[11px] text-muted-foreground">
+            {isEn ? "Needs evaluation" : isBis ? "Kinahanglan susihon" : "Kailangang suriin"}
+          </span>
         </div>
 
         <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-          <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Approved / Enrolled</span>
+          <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+            {isEn ? "Approved / Enrolled" : isBis ? "Naaprobahan / Na-enroll" : "Naaprubahan / Naka-enroll"}
+          </span>
           <p className="text-2xl font-bold text-emerald-600 mt-1">{approvedCount}</p>
-          <span className="text-[11px] text-muted-foreground">Active in training</span>
+          <span className="text-[11px] text-muted-foreground">
+            {isEn ? "Active in training" : isBis ? "Aktibo sa training" : "Aktibo sa pagsasanay"}
+          </span>
         </div>
 
         <div className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/20">
-          <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Certificates Issued</span>
+          <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">
+            {isEn ? "Certificates Issued" : isBis ? "Na-isyu nga Sertipiko" : "Naisyu na Sertipiko"}
+          </span>
           <p className="text-2xl font-bold text-purple-600 mt-1">{completedCount}</p>
-          <span className="text-[11px] text-muted-foreground">16 hours completed</span>
+          <span className="text-[11px] text-muted-foreground">
+            {isEn ? "16 hours completed" : isBis ? "16 ka oras nahuman" : "16 oras nakumpleto"}
+          </span>
         </div>
       </div>
 
@@ -527,13 +574,13 @@ export default function TrainingProgramAdmin() {
               {showRejectInput && (
                 <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-2">
                   <label className="block text-xs font-bold text-rose-700 dark:text-rose-300">
-                    Dahilan ng Pag-reject:
+                    Reason for Rejection:
                   </label>
                   <textarea
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
                     rows={2}
-                    placeholder="Ilagay ang dahilan kung bakit hindi pumasa..."
+                    placeholder="State the reason why this application cannot be approved..."
                     className="w-full p-2 text-xs rounded-lg border border-rose-300 bg-background focus:outline-none"
                   />
                   <div className="flex justify-end gap-2">
@@ -542,14 +589,14 @@ export default function TrainingProgramAdmin() {
                       onClick={() => setShowRejectInput(false)}
                       className="px-3 py-1 rounded-md text-xs text-muted-foreground hover:bg-muted/40 cursor-pointer"
                     >
-                      Kanselahin
+                      Cancel
                     </button>
                     <button
                       type="button"
                       onClick={() => handleReject(selectedApp)}
                       className="px-3 py-1 rounded-md bg-rose-600 text-white text-xs font-bold cursor-pointer"
                     >
-                      Kumpirmahin ang Reject
+                      Confirm Rejection
                     </button>
                   </div>
                 </div>
@@ -558,13 +605,13 @@ export default function TrainingProgramAdmin() {
               {showRevisionInput && (
                 <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
                   <label className="block text-xs font-bold text-amber-800 dark:text-amber-300">
-                    Paalala sa Pag-edit (Revision Notes):
+                    Revision Instructions / Notes:
                   </label>
                   <textarea
                     value={revisionNotes}
                     onChange={(e) => setRevisionNotes(e.target.value)}
                     rows={2}
-                    placeholder="Halimbawa: Paki-update ang iyong contact number..."
+                    placeholder="Example: Please update your contact number or proof of residency..."
                     className="w-full p-2 text-xs rounded-lg border border-amber-300 bg-background focus:outline-none"
                   />
                   <div className="flex justify-end gap-2">
@@ -573,14 +620,14 @@ export default function TrainingProgramAdmin() {
                       onClick={() => setShowRevisionInput(false)}
                       className="px-3 py-1 rounded-md text-xs text-muted-foreground hover:bg-muted/40 cursor-pointer"
                     >
-                      Kanselahin
+                      Cancel
                     </button>
                     <button
                       type="button"
                       onClick={() => handleRequestRevision(selectedApp)}
                       className="px-3 py-1 rounded-md bg-amber-600 text-white text-xs font-bold cursor-pointer"
                     >
-                      Ipadala sa Aplikante
+                      Send to Applicant
                     </button>
                   </div>
                 </div>
@@ -695,21 +742,39 @@ export default function TrainingProgramAdmin() {
                 </span>
                 <div className="w-24 h-0.5 bg-amber-600 mx-auto mt-1 mb-3" />
                 <p className="text-xs text-slate-600 italic">
-                  Ipinagkakaloob ang katibayang ito kay
+                  {isEn
+                    ? "This certificate is proudly presented to"
+                    : isBis
+                    ? "Kini nga sertipiko mapasigarbohong gihatag kang"
+                    : "Ipinagkakaloob ang katibayang ito kay"}
                 </p>
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 underline decoration-amber-600 underline-offset-8 mt-1.5 mb-3">
                   {previewCertApp.applicantInfo?.fullName}
                 </h3>
                 <p className="text-xs text-slate-700 max-w-lg mx-auto leading-relaxed">
-                  para sa matagumpay na pagtatapos ng <strong>16 Oras ng Masinsinang Pagsasanay</strong> sa ilalim ng
-                  kursong <strong>{previewCertApp.trainingName}</strong> na ginanap sa QC Skills Development Center, Batasan Hills, Quezon City.
+                  {isEn ? (
+                    <>
+                      for the successful completion of <strong>16 Hours of Intensive Training</strong> in{" "}
+                      <strong>{previewCertApp.trainingName}</strong> held at QC Skills Development Center, Batasan Hills, Quezon City.
+                    </>
+                  ) : isBis ? (
+                    <>
+                      alang sa malamposong paghuman sa <strong>16 ka Oras sa Pagsasanay</strong> sa ilalom sa{" "}
+                      kursong <strong>{previewCertApp.trainingName}</strong> nga gipahigayon sa QC Skills Development Center, Batasan Hills, Quezon City.
+                    </>
+                  ) : (
+                    <>
+                      para sa matagumpay na pagtatapos ng <strong>16 Oras ng Masinsinang Pagsasanay</strong> sa ilalim ng{" "}
+                      kursong <strong>{previewCertApp.trainingName}</strong> na ginanap sa QC Skills Development Center, Batasan Hills, Quezon City.
+                    </>
+                  )}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-6 text-left text-[10px] text-slate-600 border-t border-slate-200">
                 <div>
                   <p>Certificate No: <strong className="font-mono text-slate-900">{previewCertApp.certificate?.certificateNo || `QC-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`}</strong></p>
-                  <p>Petsa ng Pag-isyu: <strong className="text-slate-900">{previewCertApp.certificate?.issueDate || new Date().toLocaleDateString()}</strong></p>
+                  <p>{isEn ? "Issue Date:" : isBis ? "Petsa sa Pag-isyu:" : "Petsa ng Pag-isyu:"} <strong className="text-slate-900">{previewCertApp.certificate?.issueDate || new Date().toLocaleDateString()}</strong></p>
                   <p>QC ID: <strong className="font-mono text-slate-900">{previewCertApp.qcid}</strong></p>
                 </div>
 
