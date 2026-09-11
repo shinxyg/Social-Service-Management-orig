@@ -3,7 +3,6 @@ import {
   Award,
   Search,
   CheckCircle2,
-  Printer,
   Trash2,
   RefreshCw,
   Check,
