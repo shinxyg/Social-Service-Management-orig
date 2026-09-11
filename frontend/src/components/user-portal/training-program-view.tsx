@@ -1715,7 +1715,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-2 cursor-pointer"
                     >
                       <Award className="h-4 w-4" />
-                      <span>{isEn ? "View & Print Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan & I-print ang Sertipiko"}</span>
+                      <span>{isEn ? "View Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan ang Sertipiko"}</span>
                     </button>
                   </div>
                 </div>
@@ -1936,21 +1936,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="px-4 py-2 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted/40 flex items-center gap-1.5 cursor-pointer"
+                onClick={() => setCertificateModalApp(null)}
+                className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
               >
-                <Printer className="h-4 w-4" />
-                <span>{isEn ? "Print Certificate" : isBis ? "I-print ang Sertipiko" : "I-print ang Sertipiko"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  window.print()
-                }}
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <Download className="h-4 w-4" />
-                <span>{isEn ? "Download PDF" : isBis ? "I-download ang PDF" : "I-download ang PDF"}</span>
+                {isEn ? "Close" : isBis ? "Isira" : "Isara"}
               </button>
             </div>
           </div>

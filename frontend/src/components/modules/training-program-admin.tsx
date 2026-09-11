@@ -482,7 +482,14 @@ export default function TrainingProgramAdmin() {
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <p><strong>Date:</strong> {selectedApp.schedule?.trainingDate}</p>
                 <p><strong>Time:</strong> {selectedApp.schedule?.trainingTime}</p>
-                <p className="col-span-2"><strong>Venue:</strong> {selectedApp.schedule?.trainingLocation} (<em>{selectedApp.schedule?.landmark}</em>)</p>
+                <p className="col-span-2">
+                  <strong>Venue:</strong>{" "}
+                  {(selectedApp.schedule?.trainingLocation || "Gov Services Skills Development Center, Batasan Hills").replace(
+                    /QC Skills Development Center/gi,
+                    "Gov Services Skills Development Center"
+                  )}{" "}
+                  (<em>{selectedApp.schedule?.landmark}</em>)
+                </p>
               </div>
             </div>
 
@@ -495,7 +502,18 @@ export default function TrainingProgramAdmin() {
                     <span>Daily Attendance Tracker (Live Observe Only • 12 Hours Target)</span>
                   </div>
                   <span className="text-xs font-bold text-emerald-700 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                    {selectedApp.attendance?.hoursCompleted || 0} / 12 Hours ({Math.min(4, Math.floor((selectedApp.attendance?.hoursCompleted || 0) / 3))}/4 Days)
+                    {Math.min(
+                      12,
+                      (selectedApp.attendance?.sessions?.filter((s) => s.attended).length ||
+                        Math.min(4, Math.floor((selectedApp.attendance?.hoursCompleted || 0) / 3))) * 3
+                    )}{" "}
+                    / 12 Hours (
+                    {Math.min(
+                      4,
+                      selectedApp.attendance?.sessions?.filter((s) => s.attended).length ||
+                        Math.floor((selectedApp.attendance?.hoursCompleted || 0) / 3)
+                    )}
+                    /4 Days)
                   </span>
                 </div>
 
