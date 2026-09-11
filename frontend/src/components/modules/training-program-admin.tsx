@@ -408,10 +408,6 @@ export default function TrainingProgramAdmin() {
                       <span>{isEn ? "View Certificate" : "Tingnan ang Sertipiko"}</span>
                     </button>
                   )}
-                  <span className="text-xs font-semibold text-purple-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                    <span>{isEn ? "View Details" : isBis ? "Tan-awa ang Detalye" : "Tingnan ang Detalye"}</span>
-                    <span>→</span>
-                  </span>
                 </div>
               </div>
             )
