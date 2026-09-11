@@ -19,12 +19,14 @@ const DEFAULT_TRAINING_COURSES = [
     category: 'Livelihood & Skills Development',
     description: 'Matutunan ang pattern drafting, pananahi ng mga damit at kurtina, paggamit at pag-aalaga ng sewing machine, at paglikha ng mga produktong maaaring ibenta sa komunidad.',
     date: 'September 15, 2026 - September 18, 2026',
-    time: '9:00 AM - 12:00 PM',
+    time: '9:00 AM - 12:00 PM (3 Hours/Day)',
     location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: 'Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall',
     totalSlots: 25,
     availableSlots: 18,
-    durationHours: 16,
+    durationHours: 12,
+    dailyHours: 3,
+    totalDays: 4,
     instructor: 'Gng. Rosa Dimaculangan (Master Tailor)',
     prerequisites: 'Gov Services Resident (18 taong gulang pataas), may interes sa pananahi.',
     materialsProvided: 'Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.',
@@ -35,12 +37,14 @@ const DEFAULT_TRAINING_COURSES = [
     category: 'Livelihood & Skills Development',
     description: 'Matutunan ang commercial cooking, food safety & sanitation, paghahanda ng merienda at lutong ulam na patok sa karenderya, at tamang costing at pagpepresyo.',
     date: 'September 20, 2026 - September 23, 2026',
-    time: '1:00 PM - 4:00 PM',
+    time: '1:00 PM - 4:00 PM (3 Hours/Day)',
     location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: '3rd Floor Culinary Lab, malapit sa Batasan Hills Barangay Hall',
     totalSlots: 25,
     availableSlots: 12,
-    durationHours: 16,
+    durationHours: 12,
+    dailyHours: 3,
+    totalDays: 4,
     instructor: 'Chef Anthony Santos (Culinary Specialist)',
     prerequisites: 'Gov Services Resident, handang sumunod sa kitchen hygiene & food safety guidelines.',
     materialsProvided: 'Ingredients kit, cooking apron, hairnet, recipe guide booklet.',
@@ -51,12 +55,14 @@ const DEFAULT_TRAINING_COURSES = [
     category: 'Livelihood & Skills Development',
     description: 'Pangunahing kasanayan sa haircutting at hairstyling, manicure/pedicure na may nail art, facial cleansing at basic cosmetology para sa salon o home-service livelihood.',
     date: 'September 24, 2026 - September 27, 2026',
-    time: '9:00 AM - 12:00 PM',
+    time: '9:00 AM - 12:00 PM (3 Hours/Day)',
     location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: 'Ground Floor Wellness Studio, tapat ng Puregold Batasan',
     totalSlots: 25,
     availableSlots: 15,
-    durationHours: 16,
+    durationHours: 12,
+    dailyHours: 3,
+    totalDays: 4,
     instructor: 'Bb. Cheryl Mendez (Certified Cosmetologist)',
     prerequisites: 'Gov Services Resident (18 taong gulang pataas), masigasig matuto ng beauty care.',
     materialsProvided: 'Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.',
@@ -67,12 +73,14 @@ const DEFAULT_TRAINING_COURSES = [
     category: 'Livelihood & Skills Development',
     description: 'Pagsasanay sa computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, at online job preparation.',
     date: 'September 28, 2026 - October 01, 2026',
-    time: '1:00 PM - 4:00 PM',
+    time: '1:00 PM - 4:00 PM (3 Hours/Day)',
     location: 'Gov Services Skills Development Center, Batasan Hills',
     landmark: '2nd Floor Computer Laboratory, Batasan Hills Center',
     totalSlots: 30,
     availableSlots: 22,
-    durationHours: 16,
+    durationHours: 12,
+    dailyHours: 3,
+    totalDays: 4,
     instructor: 'G. Mark Villanueva (IT Skills Coordinator)',
     prerequisites: 'Gov Services Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.',
     materialsProvided: 'Computer workstation with internet, digital handouts, practice USB drive.',
@@ -280,14 +288,16 @@ exports.applyForTraining = async (req, res) => {
     };
 
     const attendanceData = {
-      totalHours: matchedCourse.durationHours || 16,
+      totalHours: matchedCourse.durationHours || 12,
       hoursCompleted: 0,
       completed: false,
+      dailyHours: 3,
+      totalDays: 4,
       sessions: [
-        { day: 1, topic: 'Orientation & Fundamental Skills', attended: false, date: matchedCourse.date.split('-')[0]?.trim() },
-        { day: 2, topic: 'Hands-on Application & Laboratory Work', attended: false, date: '' },
-        { day: 3, topic: 'Specialized Techniques & Practical Assessment', attended: false, date: '' },
-        { day: 4, topic: 'Final Evaluation, Livelihood Integration & Completion', attended: false, date: matchedCourse.date.split('-')[1]?.trim() },
+        { day: 1, topic: 'Orientation & Fundamental Skills', hours: 3, attended: false, date: matchedCourse.date.split('-')[0]?.trim() || 'Day 1' },
+        { day: 2, topic: 'Hands-on Application & Practical Work', hours: 3, attended: false, date: 'Day 2' },
+        { day: 3, topic: 'Specialized Techniques & Daily Assessment', hours: 3, attended: false, date: 'Day 3' },
+        { day: 4, topic: 'Final Output, Evaluation & Certificate Grant', hours: 3, attended: false, date: matchedCourse.date.split('-')[1]?.trim() || 'Day 4' },
       ],
     };
 
@@ -406,8 +416,13 @@ exports.updateApplicationStatus = async (req, res) => {
 
         if (attendance) {
           newAttendance = { ...newAttendance, ...attendance };
-          if (newAttendance.hoursCompleted >= newAttendance.totalHours || newAttendance.completed) {
+          const attendedCount = (newAttendance.sessions || []).filter((s) => s.attended).length;
+          newAttendance.hoursCompleted = attendedCount * (newAttendance.dailyHours || 3);
+          const isFullyAttended = (newAttendance.sessions || []).length > 0 && attendedCount === (newAttendance.sessions || []).length;
+
+          if (isFullyAttended || newAttendance.hoursCompleted >= (newAttendance.totalHours || 12) || newAttendance.completed) {
             newAttendance.completed = true;
+            newAttendance.hoursCompleted = newAttendance.totalHours || 12;
             if (newSchedule) newSchedule.trainingStatus = 'Completed';
 
             if (!newCertificate) {
@@ -417,9 +432,14 @@ exports.updateApplicationStatus = async (req, res) => {
                 title: `Certificate of Completion in ${row.training_name}`,
                 recipientName: row.applicant_info?.fullName || 'Resident Beneficiary',
                 trainingName: row.training_name,
-                hoursCompleted: newAttendance.totalHours || 16,
+                hoursCompleted: newAttendance.totalHours || 12,
                 status: 'Issued',
               };
+            }
+          } else {
+            newAttendance.completed = false;
+            if (newSchedule && newSchedule.trainingStatus === 'Completed') {
+              newSchedule.trainingStatus = attendedCount > 0 ? 'Ongoing' : 'Upcoming';
             }
           }
         }

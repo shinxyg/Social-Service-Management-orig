@@ -146,13 +146,14 @@ export default function TrainingProgramAdmin() {
     })
 
     const attendedCount = sessions.filter((s) => s.attended).length
-    const hoursCompleted = attendedCount * 4
-    const isComplete = hoursCompleted >= 16
+    const hoursCompleted = attendedCount * 3
+    const isComplete = attendedCount === sessions.length || hoursCompleted >= (app.attendance?.totalHours || 12)
 
     const updated: TrainingApplicationRecord = {
       ...app,
       attendance: {
         ...app.attendance,
+        totalHours: app.attendance?.totalHours || 12,
         sessions,
         hoursCompleted,
         completed: isComplete,
@@ -162,12 +163,12 @@ export default function TrainingProgramAdmin() {
         trainingStatus: isComplete ? "Completed" : attendedCount > 0 ? "Ongoing" : "Upcoming",
       },
       certificate: isComplete && !app.certificate ? {
-        certificateNo: `QC-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+        certificateNo: `GOV-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`,
         issueDate: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
         title: `Certificate of Completion in ${app.trainingName}`,
         recipientName: app.applicantInfo?.fullName || "Beneficiary",
         trainingName: app.trainingName,
-        hoursCompleted: 16,
+        hoursCompleted: 12,
         status: "Issued",
       } : app.certificate,
     }
@@ -511,10 +512,10 @@ export default function TrainingProgramAdmin() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
                     <CheckCircle2 className="h-4 w-4" />
-                    <span>Attendance &amp; Session Check-in (16 Hours Target)</span>
+                    <span>Daily Attendance &amp; Goal Tracker (3 Hours/Day • 12 Hours Target)</span>
                   </div>
                   <span className="text-xs font-bold text-emerald-700">
-                    {selectedApp.attendance?.hoursCompleted || 0} / 16 Hours
+                    {selectedApp.attendance?.hoursCompleted || 0} / 12 Hours ({Math.min(4, Math.floor((selectedApp.attendance?.hoursCompleted || 0) / 3))}/4 Days)
                   </span>
                 </div>
 
@@ -537,9 +538,9 @@ export default function TrainingProgramAdmin() {
                         >
                           {sess.attended && <Check className="h-3 w-3" />}
                         </div>
-                        <span>Day {sess.day}: {sess.topic}</span>
+                        <span>Day {sess.day}: {sess.topic} (3 hrs)</span>
                       </div>
-                      <span className="text-[11px]">{sess.attended ? "Attended (4h)" : "Mark Present"}</span>
+                      <span className="text-[11px] font-semibold">{sess.attended ? "Attended (3h) ✓" : "Click to Mark Present"}</span>
                     </div>
                   ))}
                 </div>

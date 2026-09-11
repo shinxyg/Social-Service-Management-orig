@@ -21,9 +21,13 @@ import {
   Info,
   ShieldCheck,
   RefreshCw,
+  Lock,
+  Unlock,
+  Target,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, type LoggedInUserProfile } from "../../utils/userProfile"
+import { notifyApplicationChange } from "../../utils/realtimeSync"
 import { useLanguage } from "../ui/language-context"
 
 export type TrainingProgramTab = "available" | "apply" | "schedule" | "history"
@@ -477,6 +481,81 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
       setIsRevising(false)
       setActiveTab("apply")
     }
+  }
+
+  // User interactive daily attendance check-in (3 hours per day)
+  const handleUserCheckin = async (dayNumber: number) => {
+    if (!activeApplication) return
+    const currentSessions = activeApplication.attendance?.sessions || [
+      { day: 1, topic: "Orientation & Fundamental Skills", hours: 3, attended: false, date: "Day 1" },
+      { day: 2, topic: "Hands-on Application & Practical Work", hours: 3, attended: false, date: "Day 2" },
+      { day: 3, topic: "Specialized Techniques & Daily Assessment", hours: 3, attended: false, date: "Day 3" },
+      { day: 4, topic: "Final Output, Evaluation & Certificate Grant", hours: 3, attended: false, date: "Day 4" },
+    ]
+
+    const updatedSessions = currentSessions.map((s) => {
+      if (s.day === dayNumber) {
+        return { ...s, attended: !s.attended }
+      }
+      return s
+    })
+
+    const attendedCount = updatedSessions.filter((s) => s.attended).length
+    const hoursCompleted = attendedCount * 3
+    const isComplete = attendedCount === updatedSessions.length || hoursCompleted >= (activeApplication.attendance?.totalHours || 12)
+
+    const updated: TrainingApplicationRecord = {
+      ...activeApplication,
+      attendance: {
+        ...activeApplication.attendance,
+        totalHours: activeApplication.attendance?.totalHours || 12,
+        sessions: updatedSessions,
+        hoursCompleted,
+        completed: isComplete,
+      },
+      schedule: {
+        ...activeApplication.schedule,
+        trainingStatus: isComplete ? "Completed" : attendedCount > 0 ? "Ongoing" : "Upcoming",
+      },
+      certificate: isComplete
+        ? activeApplication.certificate || {
+            certificateNo: `GOV-CERT-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+            issueDate: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+            title: `Certificate of Completion in ${activeApplication.trainingName}`,
+            recipientName: activeApplication.applicantInfo?.fullName || "Resident Beneficiary",
+            trainingName: activeApplication.trainingName,
+            hoursCompleted: 12,
+            status: "Issued",
+          }
+        : null,
+    }
+
+    setActiveApplication(updated)
+    const updatedList = allUserApplications.map((a) => (a.id === updated.id ? updated : a))
+    if (!updatedList.some((a) => a.id === updated.id)) {
+      updatedList.unshift(updated)
+    }
+    setAllUserApplications(updatedList)
+
+    try {
+      localStorage.setItem("training_applications", JSON.stringify(updatedList))
+      window.dispatchEvent(new Event("storage"))
+    } catch (_) {}
+
+    try {
+      await fetch(`${API_BASE}/api/training/applications/${updated.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: updated.status,
+          attendance: updated.attendance,
+          trainingStatus: updated.schedule?.trainingStatus,
+          approvedBy: updated.approvedBy || "Gov Services Skills Development Division",
+        }),
+      })
+    } catch (_) {}
+
+    notifyApplicationChange(isComplete ? "APPLICATION_APPROVED" : "STATUS_CHANGED", "livelihood", updated.referenceNumber)
   }
 
   // Active status badge helper
@@ -1197,85 +1276,144 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
               </div>
 
-              {/* Attendance / Completion Record Card */}
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <h4 className="text-base font-bold text-foreground">
-                      {isEn ? "Attendance & Completion Tracker" : isBis ? "Attendance ug Pagkompleto" : "Attendance & Completion Tracker"}
-                    </h4>
+              {/* Daily Attendance & Goal Progress Card */}
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-5 w-5 text-blue-600" />
+                      <h4 className="text-base font-bold text-foreground">
+                        {isEn ? "Daily Attendance & 3-Hour Goal Tracker" : isBis ? "Adlaw-adlaw nga Attendance & 3-Oras nga Tumong" : "Araw-araw na Attendance & 3-Oras na Goal Tracker"}
+                      </h4>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {isEn
-                        ? "Complete 16 total hours to automatically unlock your official Certificate of Completion."
+                        ? "Attend 3 hours per day for 4 days (12 hours total). Complete all 4 daily sessions to unlock your official Certificate of Completion."
                         : isBis
-                        ? "Kinahanglang makompleto ang 16 ka oras aron ma-isyu ang Certificate of Completion."
-                        : "Kailangang makumpleto ang 16 oras para ma-isyu ang Certificate of Completion."}
+                        ? "Tambong og 3 ka oras kada adlaw sulod sa 4 ka adlaw (12 ka oras tanan). Humanon ang tanang 4 ka adlaw aron ma-unlock ang imong Sertipiko."
+                        : "Dumalo ng 3 oras bawat araw sa loob ng 4 na araw (12 oras kabuuan). Kumpletuhin ang lahat ng 4 araw para ma-unlock ang iyong Certificate of Completion."}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold text-blue-600">
-                      {activeApplication.attendance?.hoursCompleted || 0} / {activeApplication.attendance?.totalHours || 16} {isEn ? "Hours" : isBis ? "Oras" : "Oras"}
+                  <div className="text-right shrink-0 bg-blue-500/10 border border-blue-500/20 px-3.5 py-2 rounded-xl">
+                    <span className="text-xs font-bold text-blue-700 dark:text-blue-300 block">
+                      {activeApplication.attendance?.hoursCompleted || 0} / {activeApplication.attendance?.totalHours || 12} {isEn ? "Hours" : "Oras"}
+                    </span>
+                    <span className="text-[11px] font-semibold text-muted-foreground">
+                      {Math.min(4, Math.floor((activeApplication.attendance?.hoursCompleted || 0) / 3))} of 4 Days Completed
                     </span>
                   </div>
                 </div>
 
-                {/* Progress bar */}
-                <div className="w-full h-2 rounded-full bg-muted/60 overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full transition-all"
-                    style={{
-                      width: `${Math.min(
+                {/* Progress bar with percentage */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+                    <span>{isEn ? "Training Progress" : "Progreso sa Pagsasanay"}</span>
+                    <span className="text-blue-600 font-mono">
+                      {Math.min(
                         100,
-                        Math.round(((activeApplication.attendance?.hoursCompleted || 0) / (activeApplication.attendance?.totalHours || 16)) * 100)
-                      )}%`,
-                    }}
-                  />
+                        Math.round(((activeApplication.attendance?.hoursCompleted || 0) / (activeApplication.attendance?.totalHours || 12)) * 100)
+                      )}%
+                    </span>
+                  </div>
+                  <div className="w-full h-3 rounded-full bg-muted/60 overflow-hidden p-0.5 border border-border">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full transition-all duration-300 shadow-xs"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(
+                            4,
+                            Math.round(((activeApplication.attendance?.hoursCompleted || 0) / (activeApplication.attendance?.totalHours || 12)) * 100)
+                          )
+                        )}%`,
+                      }}
+                    />
+                  </div>
                 </div>
 
-                {/* Sessions list */}
-                <div className="space-y-2 pt-2">
-                  {activeApplication.attendance?.sessions?.map((sess) => (
+                {/* Interactive Daily Sessions Checklist */}
+                <div className="space-y-2.5 pt-2">
+                  {(activeApplication.attendance?.sessions || [
+                    { day: 1, topic: "Orientation & Fundamental Skills", hours: 3, attended: false, date: "Day 1" },
+                    { day: 2, topic: "Hands-on Application & Practical Work", hours: 3, attended: false, date: "Day 2" },
+                    { day: 3, topic: "Specialized Techniques & Daily Assessment", hours: 3, attended: false, date: "Day 3" },
+                    { day: 4, topic: "Final Output, Evaluation & Certificate Grant", hours: 3, attended: false, date: "Day 4" },
+                  ]).map((sess) => (
                     <div
                       key={sess.day}
-                      className="p-3 rounded-xl border border-border bg-muted/10 flex items-center justify-between text-xs"
+                      className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-all ${
+                        sess.attended
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-950 dark:text-emerald-200 shadow-2xs"
+                          : "bg-muted/15 border-border hover:bg-muted/30"
+                      }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-                            sess.attended ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
+                        <button
+                          type="button"
+                          onClick={() => handleUserCheckin(sess.day)}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 cursor-pointer transition-transform hover:scale-105 shadow-xs ${
+                            sess.attended
+                              ? "bg-emerald-600 text-white ring-2 ring-emerald-500/30"
+                              : "bg-muted border border-border text-muted-foreground hover:border-blue-400"
                           }`}
+                          title={sess.attended ? "Click to unmark attendance" : "Click to mark 3 hours attended"}
                         >
-                          {sess.attended ? <Check className="h-4 w-4" /> : sess.day}
-                        </div>
+                          {sess.attended ? <Check className="h-4 w-4 stroke-[3]" /> : `D${sess.day}`}
+                        </button>
                         <div>
-                          <p className="font-semibold text-foreground">Day {sess.day}: {sess.topic}</p>
-                          <p className="text-[11px] text-muted-foreground">{sess.date || (isEn ? "Scheduled session" : "Nakatakdang sesyon")}</p>
+                          <p className="font-bold text-sm text-foreground">
+                            Day {sess.day}: {sess.topic}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                            <Clock className="h-3 w-3 text-blue-500" />
+                            <span><strong>3 Hours Daily Goal</strong> • {activeApplication.schedule?.trainingTime || "9:00 AM - 12:00 PM"}</span>
+                          </p>
                         </div>
                       </div>
 
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                          sess.attended
-                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {sess.attended ? (isEn ? "Attended ✓" : "Nakatambong ✓") : (isEn ? "Pending" : "Nagpaabot")}
-                      </span>
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <button
+                          type="button"
+                          onClick={() => handleUserCheckin(sess.day)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            sess.attended
+                              ? "bg-emerald-600 text-white shadow-xs hover:bg-emerald-700"
+                              : "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+                          }`}
+                        >
+                          {sess.attended ? (
+                            <>
+                              <Check className="h-3.5 w-3.5" />
+                              <span>{isEn ? "Attended (3h) ✓" : isBis ? "Nakatambong (3h) ✓" : "Nakatambong (3h) ✓"}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>{isEn ? "Check-in Day " + sess.day + " (3h)" : isBis ? "I-check-in Adlaw " + sess.day + " (3h)" : "I-check-in Araw " + sess.day + " (3h)"}</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
 
-                {activeApplication.attendance?.completed && (
-                  <div className="p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <Award className="h-6 w-6 text-emerald-600 shrink-0" />
-                      <div>
-                        <p className="font-bold text-emerald-900 dark:text-emerald-200 text-xs sm:text-sm">
-                          {isEn ? "Congratulations! You completed the training program." : isBis ? "Pahalipay! Nakompleto nimo ang training program." : "Binabati kita! Nakumpleto mo ang Training Program."}
+                {/* Certificate Lock / Unlock Status Card */}
+                {activeApplication.attendance?.completed ? (
+                  <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-3 rounded-xl bg-emerald-600 text-white shadow-xs">
+                        <Award className="h-6 w-6" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase tracking-wide">
+                          <Unlock className="h-3.5 w-3.5" />
+                          <span>{isEn ? "Certificate Unlocked!" : isBis ? "Na-unlock ang Sertipiko!" : "Na-unlock ang Sertipiko!"}</span>
+                        </div>
+                        <p className="font-extrabold text-foreground text-sm sm:text-base">
+                          {isEn ? "Congratulations! 100% Training Goal Completed." : isBis ? "Pahalipay! 100% Nakompleto ang Pagbansay." : "Binabati kita! 100% Nakumpleto ang Training Goal."}
                         </p>
-                        <p className="text-[11px] text-emerald-800 dark:text-emerald-300">
-                          {isEn ? "Your official Certificate of Completion is now ready." : isBis ? "Andam na ang imong opisyal nga Certificate of Completion." : "Handa na ang iyong opisyal na Certificate of Completion."}
+                        <p className="text-xs text-muted-foreground">
+                          {isEn ? "You have completed all 4 days (12 hours). Your official Certificate of Completion is ready to view and print." : isBis ? "Nahuman nimo ang tanang 4 ka adlaw (12 ka oras). Andam na ang imong opisyal nga sertipiko." : "Natapos mo ang lahat ng 4 na araw (12 oras). Handa na ang iyong opisyal na Certificate of Completion."}
                         </p>
                       </div>
                     </div>
@@ -1285,10 +1423,34 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         setActiveTab("history")
                         setCertificateModalApp(activeApplication)
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 cursor-pointer"
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 cursor-pointer shadow-sm flex items-center justify-center gap-2"
                     >
-                      {isEn ? "View Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan ang Sertipiko"}
+                      <Award className="h-4 w-4" />
+                      <span>{isEn ? "View & Print Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan & I-print ang Sertipiko"}</span>
                     </button>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
+                        <Lock className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-amber-900 dark:text-amber-200">
+                          {isEn ? "Official Certificate is Locked" : isBis ? "Naka-lock ang Opisyal nga Sertipiko" : "Naka-lock ang Opisyal na Sertipiko"}
+                        </p>
+                        <p className="text-[11px] text-amber-800 dark:text-amber-300">
+                          {isEn
+                            ? `Complete all 4 daily sessions (${12 - (activeApplication.attendance?.hoursCompleted || 0)} hours remaining) to unlock and receive your official Certificate.`
+                            : isBis
+                            ? `Kumpletuhon ang tanang 4 ka adlaw (${12 - (activeApplication.attendance?.hoursCompleted || 0)} ka oras ang nahabilin) aron makuha ang sertipiko.`
+                            : `Kumpletuhin ang lahat ng 4 araw (${12 - (activeApplication.attendance?.hoursCompleted || 0)} oras ang natitira) para ma-unlock at makuha ang iyong Certificate of Completion.`}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold text-[11px] shrink-0 border border-amber-500/40 w-fit">
+                      {Math.min(4, Math.floor((activeApplication.attendance?.hoursCompleted || 0) / 3))}/4 Days Done
+                    </span>
                   </div>
                 )}
               </div>
@@ -1308,12 +1470,45 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             </h3>
             <p className="text-xs text-muted-foreground">
               {isEn
-                ? "Registry of your completed skills training programs and official Certificates of Completion. You can use this for Livelihood Capital Assistance requirements."
+                ? "Registry of your completed skills training programs and official Certificates of Completion. Certificates are unlocked only after finishing all 4 daily attendance sessions (3 hours/day)."
                 : isBis
-                ? "Talaan sa mga nahuman nimong training ug na-isyu nga mga Certificate of Completion."
-                : "Talaan ng mga natapos mong training program at mga naisyung Certificate of Completion. Magagamit ito bilang requirements sa Livelihood Capital Assistance."}
+                ? "Talaan sa mga nahuman nimong training ug na-isyu nga mga Certificate of Completion. Ma-unlock lang kini human sa 4 ka adlaw nga pagbansay."
+                : "Talaan ng mga natapos mong training program at mga naisyung Certificate of Completion. Mada-download o matitingnan lamang ang sertipiko kapag nakumpleto ang 4-Day Daily Attendance (3 oras bawat araw)."}
             </p>
           </div>
+
+          {/* Active In-Progress Training Banner (If not yet completed) */}
+          {activeApplication && activeApplication.status === "approved" && !activeApplication.attendance?.completed && (
+            <div className="bg-card border border-amber-500/30 bg-amber-500/5 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-800 dark:text-amber-200 border border-amber-500/30">
+                    {isEn ? "TRAINING IN PROGRESS" : "KASALUKUYANG PAGSASANAY"}
+                  </span>
+                  <h4 className="font-bold text-base text-foreground">
+                    {activeApplication.trainingName}
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    {isEn
+                      ? `Attendance Progress: ${Math.min(4, Math.floor((activeApplication.attendance?.hoursCompleted || 0) / 3))}/4 Days (${activeApplication.attendance?.hoursCompleted || 0}/12 Hours). Complete remaining sessions to unlock Certificate.`
+                      : `Progreso: ${Math.min(4, Math.floor((activeApplication.attendance?.hoursCompleted || 0) / 3))}/4 Araw (${activeApplication.attendance?.hoursCompleted || 0}/12 Oras). Kumpletuhin ang mga natitirang araw para makuha ang Sertipiko.`}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("schedule")}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs shrink-0 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Target className="h-4 w-4" />
+                <span>{isEn ? "Go to Daily Attendance" : "Pumunta sa Daily Attendance"}</span>
+              </button>
+            </div>
+          )}
 
           {completedTrainings.length === 0 ? (
             <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-3">
@@ -1325,17 +1520,17 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               </h4>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
                 {isEn
-                  ? "When you finish your 16-hour skills training, you can view and download your official Certificate of Completion here."
+                  ? "When you finish all 4 days (3 hours per day • 12 hours total) of skills training, your official Certificate of Completion will automatically appear and unlock here."
                   : isBis
-                  ? "Kung mahuman nimo ang imong 16 ka oras nga skills training, dinhi nimo makita ug ma-download ang imong opisyal nga sertipiko."
-                  : "Kapag natapos mo ang iyong 16-hour skills training, dito mo makikita at mada-download ang iyong opisyal na sertipiko."}
+                  ? "Kung mahuman nimo ang tanang 4 ka adlaw (3 ka oras kada adlaw) nga skills training, dinhi nimo makita ug ma-download ang imong opisyal nga sertipiko."
+                  : "Kapag natapos mo ang lahat ng 4 na araw (3 oras bawat araw • 12 oras kabuuan) ng skills training, dito mo makikita at mada-download ang iyong opisyal na sertipiko."}
               </p>
               <button
                 type="button"
-                onClick={() => setActiveTab("available")}
+                onClick={() => setActiveTab(activeApplication ? "schedule" : "available")}
                 className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-2 mt-2"
               >
-                <span>{isEn ? "Explore Available Trainings" : isBis ? "Pangita og Pagbansay" : "Maghanap ng Training Program"}</span>
+                <span>{activeApplication ? (isEn ? "Complete Daily Attendance" : "Kumpletuhin ang Attendance") : (isEn ? "Explore Available Trainings" : "Maghanap ng Training Program")}</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -1344,12 +1539,12 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               {completedTrainings.map((app) => (
                 <div
                   key={app.id}
-                  className="bg-card border border-border rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="bg-card border border-emerald-500/30 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-emerald-500/5"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30">
-                        {isEn ? "COMPLETED (16 HOURS)" : isBis ? "NAHUMAN (16 KA ORAS)" : "NAKUMPLETO (16 ORAS)"}
+                        {isEn ? "COMPLETED (12 HOURS • 4 DAYS)" : isBis ? "NAHUMAN (12 KA ORAS • 4 KA ADLAW)" : "NAKUMPLETO (12 ORAS • 4 NA ARAW)"}
                       </span>
                       <span className="text-xs text-muted-foreground font-mono">REF {app.referenceNumber}</span>
                     </div>
@@ -1368,7 +1563,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-2 cursor-pointer"
                     >
                       <Award className="h-4 w-4" />
-                      <span>{isEn ? "View Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan ang Sertipiko"}</span>
+                      <span>{isEn ? "View & Print Certificate" : isBis ? "Tan-awa ang Sertipiko" : "Tingnan & I-print ang Sertipiko"}</span>
                     </button>
                   </div>
                 </div>
