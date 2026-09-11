@@ -42,6 +42,7 @@ export interface LoggedInUserProfile {
   emergencyLastName?: string
   emergencyContactNo?: string
   emergencyRelationship?: string
+  emergencyAddress?: string
 }
 
 export function getCurrentUser(): any {

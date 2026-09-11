@@ -266,24 +266,44 @@ const EMPTY_FORM_DATA: FormData = {
 
 
 interface UserProfile {
-  qcidNo: string
+  id?: string | number
+  qcid?: string
+  qcidNo?: string
+  qcidNumber?: string
   firstName: string
   middleName?: string
   lastName: string
   suffix?: string
   nationality?: string
-  dobMonth: string
-  dobDay: string
-  dobYear: string
-  age?: string
+  dobMonth?: string
+  dobDay?: string
+  dobYear?: string
+  birthMonth?: string
+  birthDay?: string
+  birthYear?: string
+  birthDate?: string
+  birthDateIso?: string
+  birthDateDisplay?: string
+  age?: string | number
   sex?: string
+  gender?: string
   civilStatus?: string
+  houseNo?: string
+  street?: string
+  barangay?: string
+  city?: string
   addressHouseNo?: string
-  addressStreet: string
-  addressBarangay: string
-  addressCity: string
+  addressStreet?: string
+  addressBarangay?: string
+  addressCity?: string
+  addressCityMunicipality?: string
+  workingInQC?: string
+  occupation?: string
+  mobileNumber?: string
   contactNo?: string
   email?: string
+  role?: string
+  profilePhotoUrl?: string | null
   emergencyFirstName?: string
   emergencyLastName?: string
   emergencyMiddleName?: string
@@ -299,15 +319,6 @@ interface PWDApplicationWizardProps {
   initialIdStatus?: "new" | "renewal" | "loss"
   onStepChange?: (step: number) => void
 }
-
-const MOCK_USER_PROFILE: UserProfile = {
-  qcid: "110000116932100",
-  firstName: "Resident",
-  lastName: "User",
-  addressStreet: "",
-  addressBarangay: "SAUYO",
-  addressCityMunicipality: "QUEZON CITY",
-} as any
 
 // real uploaded file + generated preview URL, instead of a plain boolean
 interface UploadedDoc {

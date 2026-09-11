@@ -7,7 +7,6 @@ import {
   Trash2,
   RefreshCw,
   Check,
-  Eye,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { useLanguage } from "../ui/language-context"
