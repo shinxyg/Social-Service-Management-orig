@@ -26,9 +26,7 @@ export default function TrainingProgramAdmin() {
 
   // Review modal form state
   const [rejectReason, setRejectReason] = useState("")
-  const [revisionNotes, setRevisionNotes] = useState("")
   const [showRejectInput, setShowRejectInput] = useState(false)
-  const [showRevisionInput, setShowRevisionInput] = useState(false)
   const [previewCertApp, setPreviewCertApp] = useState<TrainingApplicationRecord | null>(null)
 
   const fetchTrainingApplications = async () => {
@@ -86,7 +84,6 @@ export default function TrainingProgramAdmin() {
         body: JSON.stringify({
           status: updated.status,
           rejectionReason: updated.rejectionReason,
-          revisionNotes: updated.revisionNotes,
           attendance: updated.attendance,
           trainingStatus: updated.schedule?.trainingStatus,
           approvedBy: updated.approvedBy || "QC Skills Development Division",
@@ -132,28 +129,6 @@ export default function TrainingProgramAdmin() {
     await persistAppUpdate(updated)
     setShowRejectInput(false)
     setRejectReason("")
-  }
-
-  // Handle Request Revision
-  const handleRequestRevision = async (app: TrainingApplicationRecord) => {
-    if (!revisionNotes.trim()) {
-      alert(
-        isEn
-          ? "Please provide the revision notes or items the applicant needs to update."
-          : isBis
-          ? "Palihug paghatag og mga nota sa pag-usab nga kinahanglang i-update sa aplikante."
-          : "Mangyaring magbigay ng mga tala sa pag-edit na kailangang i-update ng aplikante."
-      )
-      return
-    }
-    const updated: TrainingApplicationRecord = {
-      ...app,
-      status: "needs_revision",
-      revisionNotes: revisionNotes,
-    }
-    await persistAppUpdate(updated)
-    setShowRevisionInput(false)
-    setRevisionNotes("")
   }
 
   // Toggle Session Attendance
@@ -331,12 +306,11 @@ export default function TrainingProgramAdmin() {
         {/* Status Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {[
-            { id: "all", label: "All" },
-            { id: "pending", label: `Pending (${pendingCount})` },
-            { id: "approved", label: `Approved (${approvedCount})` },
-            { id: "completed", label: `Completed (${completedCount})` },
-            { id: "needs_revision", label: "Needs Revision" },
-            { id: "rejected", label: `Rejected (${rejectedCount})` },
+            { id: "all", label: isEn ? "All" : isBis ? "Tanan" : "Lahat" },
+            { id: "pending", label: `${isEn ? "Pending" : "Pending"} (${pendingCount})` },
+            { id: "approved", label: `${isEn ? "Approved" : "Approved"} (${approvedCount})` },
+            { id: "completed", label: `${isEn ? "Completed" : "Completed"} (${completedCount})` },
+            { id: "rejected", label: `${isEn ? "Rejected" : "Rejected"} (${rejectedCount})` },
           ].map((f) => (
             <button
               key={f.id}
@@ -360,7 +334,7 @@ export default function TrainingProgramAdmin() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name or ref..."
+            placeholder={isEn ? "Search by name or ref..." : "Maghanap sa pangalan o ref..."}
             className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
@@ -370,8 +344,12 @@ export default function TrainingProgramAdmin() {
       {filteredApps.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-2">
           <Award className="h-8 w-8 text-muted-foreground mx-auto" />
-          <p className="text-sm font-bold text-foreground">No Training Applications Found</p>
-          <p className="text-xs text-muted-foreground">No matching records found for this filter or search term.</p>
+          <p className="text-sm font-bold text-foreground">
+            {isEn ? "No Training Applications Found" : "Walang Nahanap na Aplikasyon"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {isEn ? "No matching records found for this filter or search term." : "Walang rekord na tumutugma sa filter o search term na ito."}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -395,11 +373,6 @@ export default function TrainingProgramAdmin() {
                     {app.status === "pending" && (
                       <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/15 text-blue-700 border border-blue-500/30">
                         PENDING EVALUATION
-                      </span>
-                    )}
-                    {app.status === "needs_revision" && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-800 border border-amber-500/30">
-                        NEEDS REVISION
                       </span>
                     )}
                     {app.status === "rejected" && (
@@ -439,7 +412,7 @@ export default function TrainingProgramAdmin() {
                       className="px-3.5 py-2 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                     >
                       <Award className="h-4 w-4" />
-                      <span>View Certificate</span>
+                      <span>{isEn ? "View Certificate" : "Tingnan ang Sertipiko"}</span>
                     </button>
                   )}
                   <button
@@ -447,12 +420,11 @@ export default function TrainingProgramAdmin() {
                     onClick={() => {
                       setSelectedApp(app)
                       setShowRejectInput(false)
-                      setShowRevisionInput(false)
                     }}
                     className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
                   >
                     <Eye className="h-4 w-4" />
-                    <span>Manage / Evaluate</span>
+                    <span>{isEn ? "Evaluate Application" : "Suriin ang Aplikasyon"}</span>
                   </button>
                 </div>
               </div>
@@ -602,61 +574,15 @@ export default function TrainingProgramAdmin() {
                 </div>
               )}
 
-              {showRevisionInput && (
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
-                  <label className="block text-xs font-bold text-amber-800 dark:text-amber-300">
-                    Revision Instructions / Notes:
-                  </label>
-                  <textarea
-                    value={revisionNotes}
-                    onChange={(e) => setRevisionNotes(e.target.value)}
-                    rows={2}
-                    placeholder="Example: Please update your contact number or proof of residency..."
-                    className="w-full p-2 text-xs rounded-lg border border-amber-300 bg-background focus:outline-none"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowRevisionInput(false)}
-                      className="px-3 py-1 rounded-md text-xs text-muted-foreground hover:bg-muted/40 cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRequestRevision(selectedApp)}
-                      className="px-3 py-1 rounded-md bg-amber-600 text-white text-xs font-bold cursor-pointer"
-                    >
-                      Send to Applicant
-                    </button>
-                  </div>
-                </div>
-              )}
-
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   {selectedApp.status !== "rejected" && !showRejectInput && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowRejectInput(true)
-                        setShowRevisionInput(false)
-                      }}
-                      className="px-3 py-1.5 rounded-xl border border-rose-500/30 text-rose-600 hover:bg-rose-500/10 text-xs font-semibold cursor-pointer"
+                      onClick={() => setShowRejectInput(true)}
+                      className="px-4 py-2 rounded-xl border border-rose-500/30 text-rose-600 hover:bg-rose-500/10 text-xs font-semibold cursor-pointer"
                     >
-                      Reject
-                    </button>
-                  )}
-                  {selectedApp.status !== "needs_revision" && !showRevisionInput && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowRevisionInput(true)
-                        setShowRejectInput(false)
-                      }}
-                      className="px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 text-xs font-semibold cursor-pointer"
-                    >
-                      Request Revision
+                      Reject Application
                     </button>
                   )}
                 </div>

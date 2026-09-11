@@ -852,29 +852,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
               )}
 
-              {activeApplication.status === "needs_revision" && (
-                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-3">
-                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
-                    <AlertCircle className="h-4 w-4" />
-                    <span>{isEn ? "NEEDS REVISION – Some items require your update" : isBis ? "KINAHANGLAN OG PAG-USAB" : "NEEDS REVISION – May kailangang i-edit sa inyong application"}</span>
-                  </div>
-                  <p className="text-xs text-amber-900/80 dark:text-amber-200 leading-relaxed">
-                    {isEn ? "Admin Note:" : isBis ? "Pahibalo gikan sa Admin:" : "Paalala mula sa Admin:"} <em>"{activeApplication.revisionNotes || (isEn ? "Please update your contact information or residency details." : "Paki-update ang inyong contact information o tirahan.")}"</em>
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRevising(true)
-                      setFormStep("profile")
-                    }}
-                    className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs flex items-center gap-2 cursor-pointer w-fit"
-                  >
-                    <FileEdit className="h-3.5 w-3.5" />
-                    <span>{isEn ? "Edit & Resubmit Application" : isBis ? "I-edit ug I-resubmit ang Aplikasyon" : "I-edit at I-resubmit ang Aplikasyon"}</span>
-                  </button>
-                </div>
-              )}
-
               {/* Application Summary details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-muted/20 p-4 rounded-xl border border-border">
                 <div>
