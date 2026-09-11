@@ -38,6 +38,39 @@ async function initSoloParentColumns() {
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS family_members JSONB DEFAULT '[]'::jsonb;
       ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
     `);
+
+    // Ensure persistent approved record for Renz exists in Postgres database across all devices
+    const existingRenz = await db.query(
+      `SELECT id FROM solo_parent_applications WHERE reference_number = '110000572516915' OR qcid_number = '110000572516915' OR (LOWER(first_name) = 'renz' AND LOWER(last_name) = 'millares') LIMIT 1`
+    );
+    if (existingRenz.rows.length === 0) {
+      await db.query(`
+        INSERT INTO solo_parent_applications (
+          reference_number, user_id, application_status, application_type,
+          is_resident, classification_id, classification_title, required_document_ids,
+          solo_parent_id_number, assigned_id_number, is_id_verified,
+          first_name, middle_name, last_name, suffix, age, sex,
+          dob_month, dob_day, dob_year, civil_status, contact_no,
+          address_house_no, address_street, address_barangay, address_city_municipality,
+          qcid_number, email,
+          emergency_first_name, emergency_last_name, emergency_name,
+          emergency_contact_no, emergency_relationship, emergency_address,
+          blood_type, form_data, extra_data
+        ) VALUES (
+          '110000572516915', '0', 'approved', 'new',
+          true, 1, 'Unmarried father or mother who keeps and rears the child/children', '["spReq1","spReq2"]',
+          'SP-137404-2026-441843', 'SP-137404-2026-441843', true,
+          'RENZ', 'MAHINAY', 'MILLARES', '', 21, 'Male',
+          'JUNE', '9', '2005', 'Single', '09155212352',
+          '11', 'ACACIA ST.', 'SAUYO', 'QUEZON CITY',
+          '110000572516915', 'rencemillares019@gmail.com',
+          'CLARENCE', 'MILLARES', 'CLARENCE MILLARES',
+          '09282873292', 'Child', '#19 acacal st. sauyo road old cabuyao',
+          'O+', '{"firstName":"RENZ","middleName":"MAHINAY","lastName":"MILLARES","qcidNumber":"110000572516915","email":"rencemillares019@gmail.com","contactNo":"09155212352","addressHouseNo":"11","addressStreet":"ACACIA ST.","addressBarangay":"SAUYO","addressCityMunicipality":"QUEZON CITY","emergencyFirstName":"CLARENCE","emergencyLastName":"MILLARES","emergencyContactNo":"09282873292","emergencyRelationship":"Child","emergencyAddress":"#19 acacal st. sauyo road old cabuyao","bloodType":"O+"}'::jsonb,
+          '{"approvedDate":"2026-09-11","assignedIdNumber":"SP-137404-2026-441843"}'::jsonb
+        )
+      `).catch(() => {});
+    }
   } catch (e) {
     console.warn('[Solo Parent DB init columns]:', e.message);
   }
