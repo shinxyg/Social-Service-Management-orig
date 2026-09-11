@@ -336,15 +336,6 @@ interface SoloParentApplicationWizardProps {
   onStepChange?: (step: number) => void
 }
 
-const MOCK_USER_PROFILE: UserProfile = {
-  qcid: "110000116932100",
-  firstName: "Resident",
-  lastName: "User",
-  addressStreet: "",
-  addressBarangay: "SAUYO",
-  addressCityMunicipality: "QUEZON CITY",
-} as any
-
 interface FamilyMember {
   id: string
   name: string
