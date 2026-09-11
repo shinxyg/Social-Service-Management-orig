@@ -33,6 +33,8 @@ interface FormData {
   mobileNumber: string
 }
 
+import { getCurrentUserProfile, getCurrentUser } from "../../utils/userProfile"
+
 export function ProfileModal({
   open,
   onClose,
@@ -42,39 +44,39 @@ export function ProfileModal({
   registeredVia = "Email / Password",
   user,
 }: ProfileModalProps) {
-  // Load current registered user from props or localStorage
+  // Load current registered user from props or storage
   const getStoredUser = () => {
     if (user) return user;
     try {
-      const stored = localStorage.getItem("currentUser");
-      return stored ? JSON.parse(stored) : null;
+      const u = getCurrentUserProfile() || getCurrentUser();
+      return u;
     } catch {
       return null;
     }
   };
 
   const currentUser = getStoredUser();
-  const resolvedEmail = email || currentUser?.email || "resident@gmail.com";
-  const resolvedQcid = qcidNo || currentUser?.qcidNumber || currentUser?.qcid_number || "110000116932100";
+  const resolvedEmail = email || currentUser?.email || "";
+  const resolvedQcid = qcidNo || currentUser?.qcidNumber || currentUser?.qcid_number || currentUser?.qcidNo || "110000116932100";
 
-  const buildInitialData = (): FormData => {
-    const u = currentUser;
+  const buildInitialData = (uParam?: any): FormData => {
+    const u = uParam || currentUser || getCurrentUserProfile();
     return {
-      firstName: (u?.firstName || u?.first_name || name || "CLARISA MAE").toUpperCase(),
+      firstName: (u?.firstName || u?.first_name || "").toUpperCase(),
       middleName: (u?.middleName || u?.middle_name || "").toUpperCase(),
       lastName: (u?.lastName || u?.last_name || "").toUpperCase(),
       suffix: (u?.suffix || "").toUpperCase(),
-      birthMonth: (u?.birthMonth || u?.birth_month || "OCTOBER").toUpperCase(),
-      birthDay: u?.birthDay || u?.birth_day || "29",
-      birthYear: u?.birthYear || u?.birth_year || "2004",
-      city: (u?.city || "QUEZON CITY").toUpperCase(),
-      houseNo: u?.houseNo || u?.house_no || "",
-      street: (u?.street || "").toUpperCase(),
-      barangay: (u?.barangay || "SAUYO").toUpperCase(),
-      workingInCity: u?.workingInQC === "Yes" || u?.working_in_qc === "Yes" || false,
+      birthMonth: (u?.birthMonth || u?.birth_month || (u?.birthDate ? u.birthDate.split(" ")[0] : "") || "JANUARY").toUpperCase(),
+      birthDay: String(u?.birthDay || u?.birth_day || (u?.birthDate ? u.birthDate.split(" ")[1]?.replace(",", "") : "1") || "1"),
+      birthYear: String(u?.birthYear || u?.birth_year || (u?.birthDate ? u.birthDate.split(",")[1]?.trim() : "2000") || "2000"),
+      city: (u?.city || u?.addressCity || "QUEZON CITY").toUpperCase(),
+      houseNo: u?.houseNo || u?.house_no || u?.addressHouseNo || "",
+      street: (u?.street || u?.addressStreet || "").toUpperCase(),
+      barangay: (u?.barangay || u?.addressBarangay || "").toUpperCase(),
+      workingInCity: u?.workingInQC === "Yes" || u?.working_in_qc === "Yes" || u?.workingInCity === true || false,
       occupation: (u?.occupation || "").toUpperCase(),
-      sex: (u?.sex || "FEMALE").toUpperCase(),
-      mobileNumber: u?.mobileNumber || u?.mobile_number || "09000000000",
+      sex: (u?.sex || u?.gender || "FEMALE").toUpperCase(),
+      mobileNumber: u?.mobileNumber || u?.mobile_number || u?.contactNo || "",
     };
   };
 
@@ -89,13 +91,32 @@ export function ProfileModal({
 
   useEffect(() => {
     if (open) {
-      const data = buildInitialData();
-      setFormData(data);
-      setSavedFormData(data);
+      const liveProf = getCurrentUserProfile();
+      const initial = buildInitialData(user || liveProf);
+      setFormData(initial);
+      setSavedFormData(initial);
       setPhotoUrl(getSavedProfilePhoto(resolvedQcid));
       setIsEditing(false);
+
+      const targetEmail = resolvedEmail || liveProf?.email;
+      if (targetEmail && targetEmail !== "resident@gmail.com") {
+        fetch(`${API_BASE}/api/users/profile?email=${encodeURIComponent(targetEmail)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.user) {
+              const dbData = buildInitialData(data.user);
+              setFormData(dbData);
+              setSavedFormData(dbData);
+              try {
+                localStorage.setItem("currentUser", JSON.stringify(data.user));
+                sessionStorage.setItem("currentUser", JSON.stringify(data.user));
+              } catch {}
+            }
+          })
+          .catch(() => {});
+      }
     }
-  }, [open, user]);
+  }, [open, user, resolvedEmail]);
 
   const languageOptions: { value: Language; label: string }[] = [
     { value: "en", label: t("english") },

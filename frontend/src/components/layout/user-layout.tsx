@@ -921,6 +921,9 @@ function ResidentHeader({
       open={profileOpen}
       onClose={() => setProfileOpen(false)}
       role="Resident"
+      user={getCurrentUserProfile()}
+      email={getCurrentUserProfile().email}
+      qcidNo={getCurrentUserProfile().qcidNo}
     />
     {selectedNotif && (
   <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-sm">

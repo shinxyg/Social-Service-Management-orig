@@ -56,9 +56,9 @@ export const Login = () => {
           sessionStorage.setItem('userRole', detectedRole);
           if (data.user) {
             sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            localStorage.setItem('user_profile', JSON.stringify(data.user));
           }
-          localStorage.removeItem('isAuthenticated');
-          localStorage.removeItem('userRole');
 
           setTimeout(() => {
             if (detectedRole === 'super_admin') {

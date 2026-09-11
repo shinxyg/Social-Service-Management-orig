@@ -46,10 +46,12 @@ export interface LoggedInUserProfile {
 
 export function getCurrentUser(): any {
   try {
-    const isAuth = sessionStorage.getItem("isAuthenticated") === "true"
-    if (!isAuth) return null
-    const raw = sessionStorage.getItem("currentUser") || localStorage.getItem("currentUser")
-    return raw ? JSON.parse(raw) : null
+    const raw =
+      sessionStorage.getItem("currentUser") ||
+      localStorage.getItem("currentUser") ||
+      localStorage.getItem("user_profile")
+    if (!raw) return null
+    return JSON.parse(raw)
   } catch {
     return null
   }
@@ -57,7 +59,6 @@ export function getCurrentUser(): any {
 
 /**
  * Clamps year, month, and day to a real, valid date in the Gregorian calendar.
- * (e.g. Feb 32 in 1932 becomes Feb 29, 1932; Feb 32 in 2023 becomes Feb 28, 2023; Apr 31 becomes Apr 30)
  */
 export function clampValidDate(year: number, month: number, day: number): string {
   const currYear = new Date().getFullYear()
@@ -83,9 +84,7 @@ export function clampValidDate(year: number, month: number, day: number): string
 }
 
 /**
- * Normalizes any date string (ISO "YYYY-MM-DD", "Month DD, YYYY", "MM/DD/YYYY", etc.)
- * into a valid HTML5 "YYYY-MM-DD" format suitable for <input type="date">.
- * Ensures the date is valid on the Gregorian calendar (e.g. prevents Feb 32).
+ * Normalizes any date string into YYYY-MM-DD.
  */
 export function toISODateString(val?: string | null): string {
   if (!val) return ""
@@ -154,78 +153,93 @@ export function generateUniqueQcid(): string {
 
 /**
  * Returns the currently authenticated user's profile.
- * Automatically ensures a unique, persistent QCID is attached to the user.
  */
 export function getCurrentUserProfile(): LoggedInUserProfile {
   const currentUser = getCurrentUser()
   const u = currentUser || {}
 
   let qcid = u?.qcidNumber || u?.qcid_number || u?.qcidNo || u?.qcid
-  if (!qcid || qcid === "110000116932100" || qcid === "11000015952309" || qcid === "110000572516915") {
-    // If QCID is missing or hardcoded sample, generate a unique one and persist it
+  if (!qcid) {
     qcid = generateUniqueQcid()
     if (currentUser) {
       currentUser.qcidNumber = qcid
       currentUser.qcidNo = qcid
-      sessionStorage.setItem("currentUser", JSON.stringify(currentUser))
+      try {
+        sessionStorage.setItem("currentUser", JSON.stringify(currentUser))
+        localStorage.setItem("currentUser", JSON.stringify(currentUser))
+      } catch {}
+    }
+  }
+
+  const rawBirthDate = u?.birthDate || u?.birth_date || ""
+  let parsedMonth = (u?.birthMonth || u?.birth_month || "").toUpperCase()
+  let parsedDay = String(u?.birthDay || u?.birth_day || "")
+  let parsedYear = String(u?.birthYear || u?.birth_year || "")
+
+  if (rawBirthDate && (!parsedMonth || !parsedYear)) {
+    const parts = rawBirthDate.trim().split(/[\s,]+/)
+    if (parts.length >= 3) {
+      if (!parsedMonth) parsedMonth = parts[0].toUpperCase()
+      if (!parsedDay) parsedDay = parts[1].replace(/\D/g, "")
+      if (!parsedYear) parsedYear = parts[2].replace(/\D/g, "")
     }
   }
 
   const currYear = new Date().getFullYear()
-  const rawYear = u?.birthYear || u?.birth_year || (u?.birthDate ? u.birthDate.split(',')[1]?.trim() : '') || '2000'
-  let parsedYear = parseInt(rawYear, 10)
-  if (isNaN(parsedYear) || parsedYear < 1900 || parsedYear > currYear) {
-    if (!isNaN(parsedYear) && parsedYear > 0 && parsedYear < 100) {
-      parsedYear = parsedYear <= (currYear % 100) ? 2000 + parsedYear : 1900 + parsedYear
-    } else {
-      parsedYear = 2000
-    }
+  let numYear = parseInt(parsedYear, 10)
+  if (isNaN(numYear) || numYear < 1900 || numYear > currYear) {
+    numYear = 2000
   }
-  const birthYear = String(parsedYear)
-  const calculatedAge = String(Math.max(1, currYear - parsedYear))
+  const birthYear = String(numYear)
+  const calculatedAge = String(Math.max(1, currYear - numYear))
 
-  const rawBirthDate = u?.birthDate || u?.birth_date || `${u?.birthMonth || 'JANUARY'} ${u?.birthDay || '1'}, ${birthYear}`
-  const isoBirthDate = toISODateString(rawBirthDate)
+  const finalBirthDate = rawBirthDate || (parsedMonth && parsedDay ? `${parsedMonth} ${parsedDay}, ${birthYear}` : `${birthYear}-01-01`)
+  const isoBirthDate = toISODateString(finalBirthDate)
 
-  const rawSex = String(u?.sex || u?.gender || 'MALE').toUpperCase()
-  const formattedSex = rawSex.includes('FEMALE') ? 'Female' : 'Male'
+  const rawSex = String(u?.sex || u?.gender || "FEMALE").toUpperCase()
+  const formattedSex = rawSex.includes("MALE") && !rawSex.includes("FEMALE") ? "Male" : "Female"
+
+  const fName = (u?.firstName || u?.first_name || "").trim().toUpperCase()
+  const mName = (u?.middleName || u?.middle_name || "").trim().toUpperCase()
+  const lName = (u?.lastName || u?.last_name || "").trim().toUpperCase()
+  const sfx = (u?.suffix || "").trim().toUpperCase()
 
   return {
-    id: u?.id || u?.userId || u?._id || '',
-    firstName: String(u?.firstName || u?.first_name || 'Resident').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 50).toUpperCase(),
-    middleName: String(u?.middleName || u?.middle_name || '').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 30).toUpperCase(),
-    lastName: String(u?.lastName || u?.last_name || '').replace(/[^a-zA-ZñÑ\s'-]/g, '').slice(0, 50).toUpperCase(),
-    suffix: (u?.suffix || '').toUpperCase(),
-    birthMonth: (u?.birthMonth || u?.birth_month || 'JANUARY').toUpperCase(),
-    birthDay: u?.birthDay || u?.birth_day || '1',
+    id: u?.id || u?.userId || u?._id || "",
+    firstName: fName,
+    middleName: mName,
+    lastName: lName,
+    suffix: sfx,
+    birthMonth: parsedMonth || "JANUARY",
+    birthDay: parsedDay || "1",
     birthYear: birthYear,
-    dobMonth: u?.dobMonth || (u?.birthMonth || u?.birth_month || '10'),
-    dobDay: u?.dobDay || u?.birthDay || u?.birth_day || '29',
+    dobMonth: u?.dobMonth || parsedMonth || "1",
+    dobDay: u?.dobDay || parsedDay || "1",
     dobYear: u?.dobYear || birthYear,
     birthDate: isoBirthDate || `${birthYear}-01-01`,
     birthDateIso: isoBirthDate || `${birthYear}-01-01`,
-    birthDateDisplay: `${u?.birthMonth || 'JANUARY'} ${u?.birthDay || '1'}, ${birthYear}`,
-    age: calculatedAge,
-    city: (u?.city || 'QUEZON CITY').toUpperCase(),
-    barangay: (u?.barangay || 'SAUYO').toUpperCase(),
-    street: (u?.street || '').toUpperCase(),
-    houseNo: u?.houseNo || u?.house_no || '',
-    addressHouseNo: u?.addressHouseNo || u?.houseNo || u?.house_no || '',
-    addressStreet: u?.addressStreet || u?.street || '',
-    addressBarangay: u?.addressBarangay || u?.barangay || 'SAUYO',
-    addressCityMunicipality: u?.addressCityMunicipality || u?.city || 'QUEZON CITY',
-    workingInQC: u?.workingInQC || u?.working_in_qc || 'No',
-    occupation: (u?.occupation || '').toUpperCase(),
+    birthDateDisplay: parsedMonth && parsedDay ? `${parsedMonth} ${parsedDay}, ${birthYear}` : `${birthYear}-01-01`,
+    age: u?.age || calculatedAge,
+    city: (u?.city || u?.addressCity || u?.addressCityMunicipality || "QUEZON CITY").toUpperCase(),
+    barangay: (u?.barangay || u?.addressBarangay || "").toUpperCase(),
+    street: (u?.street || u?.addressStreet || "").toUpperCase(),
+    houseNo: u?.houseNo || u?.house_no || u?.addressHouseNo || "",
+    addressHouseNo: u?.addressHouseNo || u?.houseNo || u?.house_no || "",
+    addressStreet: u?.addressStreet || u?.street || "",
+    addressBarangay: u?.addressBarangay || u?.barangay || "",
+    addressCityMunicipality: u?.addressCityMunicipality || u?.city || "QUEZON CITY",
+    workingInQC: u?.workingInQC || u?.working_in_qc || "No",
+    occupation: (u?.occupation || "").toUpperCase(),
     sex: formattedSex,
     gender: formattedSex,
-    civilStatus: u?.civilStatus || 'Single',
-    mobileNumber: u?.mobileNumber || u?.mobile_number || u?.contactNo || '09000000000',
-    contactNo: u?.mobileNumber || u?.mobile_number || u?.contactNo || '09000000000',
-    email: u?.email || '',
+    civilStatus: u?.civilStatus || "Single",
+    mobileNumber: u?.mobileNumber || u?.mobile_number || u?.contactNo || "",
+    contactNo: u?.mobileNumber || u?.mobile_number || u?.contactNo || "",
+    email: u?.email || "",
     qcidNo: qcid,
     qcidNumber: qcid,
-    role: u?.role || 'user',
-    profilePhotoUrl: u?.profilePhotoUrl || null,
+    role: u?.role || "user",
+    profilePhotoUrl: u?.profilePhotoUrl || u?.profile_photo_url || null,
   }
 }
 
