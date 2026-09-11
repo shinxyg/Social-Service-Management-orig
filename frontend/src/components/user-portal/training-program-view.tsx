@@ -783,38 +783,45 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
               </div>
 
-              {/* Step 1: Select Training */}
+              {/* Step 1: Selected Training */}
               <div className="space-y-3">
-                <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
-                  Step 1. Pumili ng Kursong Nais Salihan (Select Training) *
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {courses.map((c) => {
-                    const isSelected = applyCourseId === c.id
-                    return (
-                      <div
-                        key={c.id}
-                        onClick={() => setApplyCourseId(c.id)}
-                        className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                          isSelected
-                            ? "border-blue-600 bg-blue-500/10 text-foreground ring-2 ring-blue-500/20"
-                            : "border-border bg-muted/20 hover:bg-muted/40 text-muted-foreground"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-background border border-border">
-                            {getCourseIcon(c.id)}
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-foreground">{c.title}</p>
-                            <p className="text-[11px] text-muted-foreground">{c.durationHours} Hours • {c.availableSlots} slots</p>
-                          </div>
-                        </div>
-                        {isSelected && <CheckCircle2 className="h-5 w-5 text-blue-600 shrink-0" />}
-                      </div>
-                    )
-                  })}
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
+                    Step 1. Napiling Kursong Pagsasanay (Selected Training)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("available")}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                  >
+                    Palitan ang Kurso →
+                  </button>
                 </div>
+
+                {(() => {
+                  const selectedCourse = courses.find((c) => c.id === applyCourseId) || courses[0]
+                  return (
+                    <div className="p-4 rounded-xl border border-blue-600 bg-blue-50/50 dark:bg-blue-950/20 shadow-xs flex items-center justify-between">
+                      <div className="flex items-center gap-3.5">
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 shadow-xs">
+                          {getCourseIcon(selectedCourse.id)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-bold text-foreground">{selectedCourse.title}</p>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white">
+                              Napili
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {selectedCourse.durationHours} Hours Intensive Training • {selectedCourse.date} ({selectedCourse.time})
+                          </p>
+                        </div>
+                      </div>
+                      <CheckCircle2 className="h-6 w-6 text-blue-600 shrink-0" />
+                    </div>
+                  )
+                })()}
               </div>
 
               {/* Step 2: Auto-filled Applicant Information from User Profile */}
@@ -838,80 +845,56 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
-                      <span>Gov Service Reference Number</span>
-                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
-                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
-                      </span>
+                    <label className="block font-semibold text-muted-foreground mb-1.5">
+                      Gov Service Reference Number
                     </label>
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-mono font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      <span>{userQcid}</span>
-                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
+                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-mono font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
+                      {userQcid}
                     </div>
                   </div>
 
                   <div>
-                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
-                      <span>Buong Pangalan (Full Name)</span>
-                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
-                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
-                      </span>
+                    <label className="block font-semibold text-muted-foreground mb-1.5">
+                      Buong Pangalan (Full Name)
                     </label>
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      <span className="truncate">{profile.firstName} {profile.middleName} {profile.lastName} {profile.suffix}</span>
-                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0 ml-2" />
+                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs truncate">
+                      {profile.firstName} {profile.middleName} {profile.lastName} {profile.suffix}
                     </div>
                   </div>
 
                   <div>
-                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
-                      <span>Email Address</span>
-                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
-                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
-                      </span>
+                    <label className="block font-semibold text-muted-foreground mb-1.5">
+                      Email Address
                     </label>
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      <span className="truncate">{profile.email || "resident@govserve.gov.ph"}</span>
-                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0 ml-2" />
+                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs truncate">
+                      {profile.email || "resident@govserve.gov.ph"}
                     </div>
                   </div>
 
                   <div>
-                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
-                      <span>Contact / Mobile Number</span>
-                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
-                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
-                      </span>
+                    <label className="block font-semibold text-muted-foreground mb-1.5">
+                      Contact / Mobile Number
                     </label>
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-semibold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      <span>{profile.contactNo || profile.mobileNumber || "0917 234 5678"}</span>
-                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
+                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-semibold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
+                      {profile.contactNo || profile.mobileNumber || "0917 234 5678"}
                     </div>
                   </div>
 
                   <div>
-                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
-                      <span>Kasarian (Sex) &amp; Edad</span>
-                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
-                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
-                      </span>
+                    <label className="block font-semibold text-muted-foreground mb-1.5">
+                      Kasarian (Sex) &amp; Edad
                     </label>
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      <span>{profile.sex || "Female"} • {profile.age || "24"} taong gulang</span>
-                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
+                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
+                      {profile.sex || "Female"} • {profile.age || "24"} taong gulang
                     </div>
                   </div>
 
                   <div>
-                    <label className="flex items-center justify-between font-semibold text-muted-foreground mb-1.5">
-                      <span>Barangay &amp; Lungsod</span>
-                      <span className="text-[10px] text-muted-foreground/80 font-normal flex items-center gap-1">
-                        <Lock className="h-3 w-3 text-muted-foreground/60" /> Naka-lock
-                      </span>
+                    <label className="block font-semibold text-muted-foreground mb-1.5">
+                      Barangay &amp; Lungsod
                     </label>
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-medium text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      <span className="truncate">Brgy. {profile.barangay || "Sauyo"}, Gov Service</span>
-                      <Lock className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0 ml-2" />
+                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-medium text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs truncate">
+                      Brgy. {profile.barangay || "Sauyo"}, Gov Service
                     </div>
                   </div>
                 </div>
