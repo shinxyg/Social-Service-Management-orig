@@ -39,6 +39,8 @@ export type ApplicationStatus =
   | "Approved"
   | "For Release"
   | "Released"
+  | "Rejected"
+  | "Needs Revision"
 
 export interface ApplicationRecord {
   applicationNo: string
@@ -1001,6 +1003,18 @@ export default function MyApplications() {
           bg: "bg-teal-50 text-teal-800 border-teal-200",
           icon: <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />,
           label: "Released",
+        }
+      case "Rejected":
+        return {
+          bg: "bg-red-50 text-red-800 border-red-200",
+          icon: <AlertTriangle className="w-3.5 h-3.5 text-red-600" />,
+          label: "Rejected",
+        }
+      case "Needs Revision":
+        return {
+          bg: "bg-amber-50 text-amber-800 border-amber-200",
+          icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />,
+          label: "Needs Revision",
         }
       case "Pending":
       default:
