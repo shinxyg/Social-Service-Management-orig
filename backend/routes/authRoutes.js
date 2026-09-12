@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const { sendOtpLimiter, loginRateLimiter } = require('../middleware/rateLimiter');
 
-// POST /api/auth/send-otp
-router.post('/send-otp', authController.sendOtp);
+// POST /api/auth/send-otp (Rate limit: 3 requests per 5 minutes)
+router.post('/send-otp', sendOtpLimiter, authController.sendOtp);
 
 // POST /api/auth/verify-otp
 router.post('/verify-otp', authController.verifyOtp);
@@ -11,8 +12,8 @@ router.post('/verify-otp', authController.verifyOtp);
 // POST /api/auth/register
 router.post('/register', authController.register);
 
-// POST /api/auth/login
-router.post('/login', authController.login);
+// POST /api/auth/login (Rate limit & brute-force protection)
+router.post('/login', loginRateLimiter, authController.login);
 
 // POST /api/auth/forgot-password
 router.post('/forgot-password', authController.forgotPassword);

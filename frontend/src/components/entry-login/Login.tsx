@@ -27,6 +27,21 @@ export const Login = () => {
 
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = useState<number>(0);
+
+  useEffect(() => {
+    if (lockoutRemaining <= 0) return;
+    const interval = setInterval(() => {
+      setLockoutRemaining((prev) => {
+        if (prev <= 1) {
+          setError('');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutRemaining]);
 
   // Inactive Account Reactivation state
   const [inactiveUserPrompt, setInactiveUserPrompt] = useState<{
@@ -141,7 +156,17 @@ export const Login = () => {
         });
         const data = await res.json();
 
+        if (res.status === 429 || data.isRateLimited) {
+          setIsLoginLoading(false);
+          if (data.remainingSeconds) {
+            setLockoutRemaining(data.remainingSeconds);
+          }
+          setError(data.message || 'Too many failed login attempts. Please wait before trying again.');
+          return;
+        }
+
         if (res.ok && data.success) {
+          setLockoutRemaining(0);
           const detectedRole = data.role || (email.toLowerCase().includes('super') ? 'super_admin' : email.toLowerCase().includes('admin') || email.toLowerCase().includes('staff') ? 'staff' : 'user');
           const cleanEmail = (data.user?.email || email).trim().toLowerCase();
           sessionStorage.setItem('isAuthenticated', 'true');
@@ -434,10 +459,14 @@ export const Login = () => {
 
             <button
                 type="submit"
-                disabled={isLoginLoading}
-                className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] disabled:opacity-60 disabled:cursor-wait text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 cursor-pointer mt-2"
+                disabled={isLoginLoading || lockoutRemaining > 0}
+                className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 cursor-pointer mt-2"
               >
-                {isLoginLoading ? 'Signing in...' : 'Login'}
+                {lockoutRemaining > 0
+                  ? `Locked (${lockoutRemaining}s)`
+                  : isLoginLoading
+                  ? 'Signing in...'
+                  : 'Login'}
             </button>
           </form>
 

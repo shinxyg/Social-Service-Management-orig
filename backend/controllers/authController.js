@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { sendOtpEmail, sendPasswordResetEmail } = require('../services/emailService');
+const { checkLoginLockout, recordFailedLogin, clearFailedLogins } = require('../middleware/rateLimiter');
 const bcrypt = require('bcryptjs');
 
 // In-memory fallback stores
@@ -469,6 +470,41 @@ exports.login = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
 
+    // 0. Check Progressive Rate Limiting & Lockout
+    const lockout = checkLoginLockout(req, cleanEmail);
+    if (lockout.isLocked) {
+      return res.status(429).json({
+        success: false,
+        isRateLimited: true,
+        remainingSeconds: lockout.remainingSeconds,
+        message: lockout.message,
+      });
+    }
+
+    // Helper for password failure response with attempt counter
+    const handlePasswordFailure = (userEmail) => {
+      const record = recordFailedLogin(req, userEmail);
+      if (record.count >= 5) {
+        return res.status(429).json({
+          success: false,
+          isRateLimited: true,
+          remainingSeconds: 300,
+          message: 'Too many failed login attempts (5/5). Your login is locked for 5 minutes for security.',
+        });
+      } else if (record.count >= 3) {
+        return res.status(429).json({
+          success: false,
+          isRateLimited: true,
+          remainingSeconds: 60,
+          message: 'Too many failed login attempts (3/3). Please wait 1 minute before trying again.',
+        });
+      }
+      return res.status(401).json({
+        success: false,
+        message: `Incorrect password. Please verify your password and try again. (${record.count}/5 failed attempts)`,
+      });
+    };
+
     // 1. Check for Predefined System Administrator / Staff accounts
     const isPredefinedAdmin =
       cleanEmail === 'admin' ||
@@ -498,12 +534,10 @@ exports.login = async (req, res) => {
         : (cleanPassword === 'admin123' || cleanPassword === 'admin');
 
       if (!isPassValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Incorrect password. Please verify your password and try again.',
-        });
+        return handlePasswordFailure(cleanEmail);
       }
 
+      clearFailedLogins(req, cleanEmail);
       const sessionToken = generateSessionToken();
       try {
         await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('admin@quezoncity.gov.ph', 'admin')", [sessionToken]);
@@ -536,12 +570,10 @@ exports.login = async (req, res) => {
         : (cleanPassword === 'superadmin123' || cleanPassword === 'superadmin');
 
       if (!isPassValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Incorrect password. Please verify your password and try again.',
-        });
+        return handlePasswordFailure(cleanEmail);
       }
 
+      clearFailedLogins(req, cleanEmail);
       const sessionToken = generateSessionToken();
       try {
         await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('superadmin@quezoncity.gov.ph', 'superadmin')", [sessionToken]);
@@ -574,12 +606,10 @@ exports.login = async (req, res) => {
         : (cleanPassword === 'staff123' || cleanPassword === 'staff');
 
       if (!isPassValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Incorrect password. Please verify your password and try again.',
-        });
+        return handlePasswordFailure(cleanEmail);
       }
 
+      clearFailedLogins(req, cleanEmail);
       const sessionToken = generateSessionToken();
       try {
         await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('staff@quezoncity.gov.ph', 'staff', 'socialworker@gov.ph')", [sessionToken]);
@@ -609,10 +639,7 @@ exports.login = async (req, res) => {
         // Check password using bcrypt
         const isPasswordValid = await verifyPassword(cleanPassword, dbUser.password);
         if (!isPasswordValid) {
-          return res.status(401).json({
-            success: false,
-            message: 'Incorrect password. Please verify your password and try again.',
-          });
+          return handlePasswordFailure(cleanEmail);
         }
 
         // Check account active/inactive status
@@ -632,6 +659,9 @@ exports.login = async (req, res) => {
           const upgradedHash = await hashPassword(cleanPassword);
           await db.query('UPDATE users SET password = $1 WHERE id = $2', [upgradedHash, dbUser.id]).catch(() => {});
         }
+
+        // Login succeeded -> clear failed attempts
+        clearFailedLogins(req, cleanEmail);
 
         // Generate unique single active session token
         const sessionToken = generateSessionToken();
@@ -684,10 +714,7 @@ exports.login = async (req, res) => {
     if (memUser) {
       const isMemPasswordValid = await verifyPassword(cleanPassword, memUser.password);
       if (!isMemPasswordValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Incorrect password. Please verify your password and try again.',
-        });
+        return handlePasswordFailure(cleanEmail);
       }
 
       const memStatus = String(memUser.status || 'active').toLowerCase();
@@ -704,6 +731,8 @@ exports.login = async (req, res) => {
       if (memUser.password && !memUser.password.startsWith('$2')) {
         memUser.password = await hashPassword(cleanPassword);
       }
+
+      clearFailedLogins(req, cleanEmail);
 
       const sessionToken = generateSessionToken();
       memUser.lastLogin = new Date().toISOString();
