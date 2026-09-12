@@ -226,6 +226,76 @@ main {
   color: #c084fc !important;
 }
 
+/* GovServe Module Tokens (.gw-root, .gw-card, .gw-stat, etc.) Dark Mode Override */
+.dark .gw-root,
+html.dark .gw-root,
+body.dark .gw-root {
+  --ink: #f1f5f9 !important;
+  --ink-soft: #94a3b8 !important;
+  --ink-faint: #64748b !important;
+  --paper: hsl(222, 47%, 8%) !important;
+  --surface: hsl(222, 40%, 12%) !important;
+  --surface-sunk: hsl(222, 35%, 16%) !important;
+  --line: hsl(222, 30%, 20%) !important;
+  --line-soft: hsl(222, 30%, 24%) !important;
+  --plum-soft: rgba(37, 99, 235, 0.25) !important;
+  --plum-line: rgba(37, 99, 235, 0.4) !important;
+  --brick-soft: rgba(2, 132, 199, 0.25) !important;
+  --brick-line: rgba(2, 132, 199, 0.4) !important;
+  --gold-soft: rgba(245, 158, 11, 0.25) !important;
+  --gold-line: rgba(245, 158, 11, 0.4) !important;
+  --forest-soft: rgba(34, 197, 94, 0.25) !important;
+  --forest-line: rgba(34, 197, 94, 0.4) !important;
+  --redwood-soft: rgba(239, 68, 68, 0.25) !important;
+  --redwood-line: rgba(239, 68, 68, 0.4) !important;
+  color: var(--ink) !important;
+  background: var(--paper) !important;
+}
+
+.dark .gw-card {
+  background-color: hsl(222, 40%, 12%) !important;
+  border-color: hsl(222, 30%, 20%) !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .gw-stat {
+  background-color: hsl(222, 40%, 12%) !important;
+  border-color: hsl(222, 30%, 20%) !important;
+}
+
+.dark .gw-tag--ghost {
+  background-color: hsl(222, 35%, 16%) !important;
+  border-color: hsl(222, 30%, 20%) !important;
+  color: #94a3b8 !important;
+}
+
+.dark .gw-tag--ghost:hover {
+  color: #f1f5f9 !important;
+  border-color: hsl(222, 30%, 30%) !important;
+}
+
+.dark .gw-tag--ghost.is-active {
+  background-color: hsl(221, 83%, 53%) !important;
+  color: #ffffff !important;
+  border-color: hsl(221, 83%, 53%) !important;
+}
+
+.dark .gw-btn-ghost {
+  background-color: hsl(222, 40%, 12%) !important;
+  border-color: hsl(222, 30%, 20%) !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .gw-btn-ghost:hover {
+  background-color: hsl(222, 35%, 16%) !important;
+}
+
+.dark .gw-input {
+  background-color: hsl(222, 35%, 16%) !important;
+  border-color: hsl(222, 30%, 20%) !important;
+  color: #f1f5f9 !important;
+}
+
 @layer base {
   body {
     background-color: var(--color-background);

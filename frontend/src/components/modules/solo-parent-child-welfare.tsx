@@ -692,6 +692,21 @@ const Tokens = React.memo(function Tokens() {
         --shadow-soft:0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
         --shadow-medium:0 4px 6px rgba(15,23,42,.05), 0 10px 15px rgba(15,23,42,.08);
         font-family:'Inter',sans-serif; color:var(--ink); background:var(--paper);
+        min-height: 100%;
+      }
+
+      .dark .gw-root,
+      html.dark .gw-root,
+      body.dark .gw-root {
+        --ink: #f1f5f9; --ink-soft: #94a3b8; --ink-faint: #64748b;
+        --paper: hsl(222, 47%, 8%); --surface: hsl(222, 40%, 12%); --surface-sunk: hsl(222, 35%, 16%);
+        --line: hsl(222, 30%, 20%); --line-soft: hsl(222, 30%, 24%);
+        --plum-soft: rgba(37, 99, 235, 0.25); --plum-line: rgba(37, 99, 235, 0.4);
+        --brick-soft: rgba(2, 132, 199, 0.25); --brick-line: rgba(2, 132, 199, 0.4);
+        --gold-soft: rgba(245, 158, 11, 0.25); --gold-line: rgba(245, 158, 11, 0.4);
+        --forest-soft: rgba(34, 197, 94, 0.25); --forest-line: rgba(34, 197, 94, 0.4);
+        --redwood-soft: rgba(239, 68, 68, 0.25); --redwood-line: rgba(239, 68, 68, 0.4);
+        color: var(--ink); background: var(--paper);
       }
       .gw-serif{ font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; letter-spacing:-0.01em; }
       .gw-mono{ font-family:'Inter',sans-serif; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
