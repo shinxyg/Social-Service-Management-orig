@@ -40,6 +40,7 @@ export type ApplicationStatus =
   | "Approved"
   | "For Release"
   | "Released"
+  | "Completed"
   | "Rejected"
   | "Needs Revision"
 

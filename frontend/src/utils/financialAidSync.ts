@@ -325,6 +325,7 @@ export function pushUserNotification(notif: {
       assistanceType: notif.assistanceType,
       amount: notif.amount,
     }
+    localStorage.setItem("all_user_notifications", JSON.stringify([newNotif, ...existing]))
     try {
       let qcidNo: string | null = null
       let userEmail: string | null = null
