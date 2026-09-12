@@ -944,6 +944,85 @@ exports.resetPassword = async (req, res) => {
 };
 
 /**
+ * POST /api/auth/change-password
+ * Changes the authenticated user's password directly
+ */
+exports.changePassword = async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Email and new password are required.' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Check user in DB
+    let userFound = false;
+    let storedPassword = null;
+
+    try {
+      const userRes = await db.query('SELECT * FROM users WHERE LOWER(email) = $1', [cleanEmail]);
+      if (userRes.rows.length > 0) {
+        userFound = true;
+        storedPassword = userRes.rows[0].password;
+      }
+    } catch (dbErr) {
+      console.warn('[DB Error] changePassword user lookup failed:', dbErr.message);
+    }
+
+    if (!userFound) {
+      const memUser = memoryUsers.find(u => u.email.toLowerCase() === cleanEmail);
+      if (memUser) {
+        userFound = true;
+        storedPassword = memUser.password;
+      }
+    }
+
+    if (!userFound) {
+      return res.status(404).json({ success: false, message: 'User account not found.' });
+    }
+
+    // Verify current password if provided
+    if (currentPassword && storedPassword) {
+      const isCurrentValid = await verifyPassword(currentPassword, storedPassword);
+      if (!isCurrentValid) {
+        return res.status(401).json({ success: false, message: 'Incorrect current password. Please try again.' });
+      }
+    }
+
+    // Hash new password
+    const hashedNewPassword = await hashPassword(newPassword);
+
+    // Update in DB
+    try {
+      await db.query('UPDATE users SET password = $1, updated_at = NOW() WHERE LOWER(email) = $2', [hashedNewPassword, cleanEmail]);
+    } catch (dbErr) {
+      console.warn('[DB Error] changePassword DB update failed:', dbErr.message);
+    }
+
+    // Update in memory
+    const memIdx = memoryUsers.findIndex(u => u.email.toLowerCase() === cleanEmail);
+    if (memIdx !== -1) {
+      memoryUsers[memIdx].password = hashedNewPassword;
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password successfully changed! Your new password is now active.',
+    });
+  } catch (err) {
+    console.error('Error in changePassword controller:', err);
+    return res.status(500).json({ success: false, message: 'Server error during password change', error: err.message });
+  }
+};
+
+
+/**
  * GET /api/users or GET /api/auth/users
  * Returns all real registered user records directly from the central database
  */

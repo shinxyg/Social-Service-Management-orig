@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
-import { X, User, AlertTriangle, IdCard, Eye, EyeOff, Languages, Check, Camera, Trash2 } from "lucide-react"
+import { X, User, AlertTriangle, IdCard, Eye, EyeOff, Languages, Check, Camera, Trash2, KeyRound } from "lucide-react"
+
 import { useLanguage, type Language } from "./language-context"
 import { getSavedProfilePhoto, saveProfilePhoto, removeProfilePhoto } from "../../utils/profilePhoto"
 import { API_BASE } from "../../config/api"
@@ -89,6 +90,63 @@ export function ProfileModal({
   const [isUpdating, setIsUpdating] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
+  // Change Password state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordMsg(null);
+
+    if (!newPassword) {
+      setPasswordMsg({ type: "error", text: "Paki-lagay ang iyong bagong password." });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordMsg({ type: "error", text: "Dapat hindi bababa sa 8 characters ang password." });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg({ type: "error", text: "Hindi magkatugma ang bagong password at confirmation." });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: resolvedEmail,
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPasswordMsg({ type: "success", text: data.message || "Matagumpay na napalitan ang iyong password!" });
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        setPasswordMsg({ type: "error", text: data.message || "Bigo sa pagpalit ng password. Pakisuri muli." });
+      }
+    } catch (err: any) {
+      setPasswordMsg({ type: "error", text: "May problema sa koneksyon. Pakisubukan muli." });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   useEffect(() => {
     if (open) {
       const liveProf = getCurrentUserProfile();
@@ -97,6 +155,10 @@ export function ProfileModal({
       setSavedFormData(initial);
       setPhotoUrl(getSavedProfilePhoto(resolvedQcid));
       setIsEditing(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordMsg(null);
 
       const targetEmail = resolvedEmail || liveProf?.email;
       if (targetEmail && targetEmail !== "resident@gmail.com") {
@@ -117,6 +179,7 @@ export function ProfileModal({
       }
     }
   }, [open, user, resolvedEmail]);
+
 
   const languageOptions: { value: Language; label: string }[] = [
     { value: "en", label: t("english") },
@@ -493,19 +556,113 @@ export function ProfileModal({
           {tab === "account" && (
             <div className="space-y-5">
               <div>
-                <label className="text-sm text-gray-700 mb-2 block">
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
                   {t("emailAddress")}
                 </label>
-                <div className="w-full rounded-lg bg-gray-100 px-4 py-3 text-sm text-gray-800">
+                <div className="w-full rounded-lg bg-gray-100 px-4 py-3 text-sm text-gray-800 font-mono">
                   {resolvedEmail}
                 </div>
               </div>
 
-              <div>
-                <label className="text-sm text-gray-700 mb-1 block">
-                  {t("registrationBy")}
-                </label>
-                <div className="text-sm text-gray-500">{registeredVia}</div>
+              {/* Change Password Section */}
+              <div className="rounded-xl border border-gray-200 bg-slate-50/70 p-5 space-y-4 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-blue-600" />
+                  <h4 className="text-sm font-bold text-gray-900">{t("changePassword")}</h4>
+                </div>
+
+                {passwordMsg && (
+                  <div
+                    className={`p-3 rounded-lg text-xs font-medium ${
+                      passwordMsg.type === "success"
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                        : "bg-red-50 text-red-700 border border-red-200"
+                    }`}
+                  >
+                    {passwordMsg.text}
+                  </div>
+                )}
+
+                <form onSubmit={handleChangePassword} className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                      {t("currentPassword")}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showCurrentPassword ? "text" : "password"}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder={t("enterCurrentPassword")}
+                        className="w-full h-10 px-3 pr-10 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      >
+                        {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                        {t("newPassword")}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder={t("enterNewPassword")}
+                          className="w-full h-10 px-3 pr-10 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        >
+                          {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                        {t("confirmNewPassword")}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder={t("repeatNewPassword")}
+                          className="w-full h-10 px-3 pr-10 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isChangingPassword || !newPassword}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      <span>{isChangingPassword ? "Updating..." : t("saveNewPassword")}</span>
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}
