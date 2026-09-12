@@ -79,6 +79,16 @@ export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
   if (!serviceOrConcern) return false
   const lower = serviceOrConcern.toLowerCase()
   if (
+    lower.includes("training") ||
+    lower.includes("skills") ||
+    lower.includes("sewing") ||
+    lower.includes("cooking") ||
+    lower.includes("beauty services") ||
+    lower.includes("computer training")
+  ) {
+    return true
+  }
+  if (
     lower.includes("social assistance") ||
     lower.includes("financial assistance") ||
     lower.includes("cash assistance") ||
