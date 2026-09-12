@@ -846,91 +846,77 @@ exports.verifySession = async (req, res) => {
       return res.status(200).json({ success: true, active: true });
     }
 
-    // 1. Check user_login_sessions table for this exact session token status
+    // 1. Query user_login_sessions for currently active session of this email
     try {
-      const sessRes = await db.query(
-        `SELECT id, is_active, logout_reason FROM user_login_sessions 
-         WHERE LOWER(email) = $1 AND session_token = $2 
+      const activeRes = await db.query(
+        `SELECT id, session_token, device_name, device_type, browser, os, ip_address, login_at 
+         FROM user_login_sessions 
+         WHERE LOWER(email) = $1 AND is_active = true 
          ORDER BY id DESC LIMIT 1`,
-        [email, sessionToken]
+        [email]
       );
 
-      if (sessRes.rows.length > 0) {
-        const mySession = sessRes.rows[0];
-        if (mySession.is_active === false) {
-          let newDev = null;
-          try {
-            const devRes = await db.query(
-              `SELECT device_name, device_type, browser, os, ip_address, login_at 
-               FROM user_login_sessions 
-               WHERE LOWER(email) = $1 AND is_active = true 
-               ORDER BY id DESC LIMIT 1`,
-              [email]
-            );
-            if (devRes.rows.length > 0) newDev = devRes.rows[0];
-          } catch {}
-
+      if (activeRes.rows.length > 0) {
+        const activeDev = activeRes.rows[0];
+        // If there is an active session in DB and its token does NOT match client's token -> TERMINATE
+        if (activeDev.session_token !== sessionToken) {
           return res.status(200).json({
             success: false,
             isSessionTerminated: true,
-            newDevice: newDev,
-            message: newDev
-              ? `Your account was accessed from ${newDev.device_name || newDev.device_type || 'another device'}. You have been logged out for security.`
-              : 'Your account was accessed from another device. You have been logged out for security.',
+            newDevice: activeDev,
+            message: `Your account was accessed from ${activeDev.device_name || activeDev.device_type || 'another device'}. You have been logged out for security.`,
+          });
+        }
+      } else {
+        // If no active session found in user_login_sessions, check if this specific token was explicitly deactivated
+        const mySessRes = await db.query(
+          `SELECT id, is_active FROM user_login_sessions 
+           WHERE LOWER(email) = $1 AND session_token = $2 
+           ORDER BY id DESC LIMIT 1`,
+          [email, sessionToken]
+        );
+        if (mySessRes.rows.length > 0 && mySessRes.rows[0].is_active === false) {
+          return res.status(200).json({
+            success: false,
+            isSessionTerminated: true,
+            message: 'Your session has expired or was logged out from another device.',
           });
         }
       }
 
-      // Also check users table active_session_token
+      // Also check users table active_session_token as additional check
       const userRes = await db.query('SELECT active_session_token, status FROM users WHERE LOWER(email) = $1', [email]);
       if (userRes.rows.length > 0) {
         const dbUser = userRes.rows[0];
         if (dbUser.active_session_token && dbUser.active_session_token !== sessionToken) {
-          let newDev = null;
-          try {
-            const devRes = await db.query(
-              `SELECT device_name, device_type, browser, os, ip_address, login_at 
-               FROM user_login_sessions 
-               WHERE LOWER(email) = $1 AND is_active = true 
-               ORDER BY id DESC LIMIT 1`,
-              [email]
-            );
-            if (devRes.rows.length > 0) newDev = devRes.rows[0];
-          } catch {}
-
           return res.status(200).json({
             success: false,
             isSessionTerminated: true,
-            newDevice: newDev,
-            message: newDev
-              ? `Your account was accessed from ${newDev.device_name || newDev.device_type || 'another device'}. You have been logged out for security.`
-              : 'Your account was accessed from another device. You have been logged out for security.',
+            message: 'Your account was accessed from another device. You have been logged out for security.',
           });
         }
-        return res.status(200).json({ success: true, active: true });
       }
     } catch (dbErr) {
       console.warn('[DB Error] verifySession failed:', dbErr.message);
     }
 
     // 2. Memory fallback
-    const memMySession = memorySessions.find(s => s.email.toLowerCase() === email && s.sessionToken === sessionToken);
-    if (memMySession && memMySession.isActive === false) {
-      const activeMem = memorySessions.find(s => s.email.toLowerCase() === email && s.isActive);
+    const activeMem = memorySessions.find(s => s.email.toLowerCase() === email && s.isActive);
+    if (activeMem && activeMem.sessionToken !== sessionToken) {
       return res.status(200).json({
         success: false,
         isSessionTerminated: true,
-        newDevice: activeMem || null,
-        message: 'Your account was accessed from another device. You have been logged out for security.',
+        newDevice: activeMem,
+        message: `Your account was accessed from ${activeMem.deviceName || 'another device'}. You have been logged out for security.`,
       });
     }
 
-    const memUser = memoryUsers.find(u => u.email.toLowerCase() === email);
-    if (memUser && memUser.activeSessionToken && memUser.activeSessionToken !== sessionToken) {
+    const memMySession = memorySessions.find(s => s.email.toLowerCase() === email && s.sessionToken === sessionToken);
+    if (memMySession && memMySession.isActive === false) {
       return res.status(200).json({
         success: false,
         isSessionTerminated: true,
-        message: 'Your account was accessed from another device. You have been logged out for security.',
+        message: 'Your session has been logged out.',
       });
     }
 
