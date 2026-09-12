@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('./db');
+const bcrypt = require('bcryptjs');
 
 async function initDb() {
   try {
@@ -151,50 +152,70 @@ async function initDb() {
         submitted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+    `);
 
-      -- Seed default administrator account
+    // Seed default administrator account with bcrypt hash
+    const adminHashed = bcrypt.hashSync('admin123', 10);
+    const defaultHashed = bcrypt.hashSync('default123', 10);
+
+    await db.query(`
       INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
       VALUES 
-        ('admin@quezoncity.gov.ph', 'admin123', 'System', 'Administrator', 'admin', 'active', true, '110000116932100'),
-        ('admin', 'admin123', 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
+        ('admin@quezoncity.gov.ph', $1, 'System', 'Administrator', 'admin', 'active', true, '110000116932100'),
+        ('admin', $1, 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
       ON CONFLICT (email) DO UPDATE SET role = 'admin', status = 'active';
 
       -- Auto-sync existing module applicants into users table
       INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
       SELECT DISTINCT ON (LOWER(email))
-        LOWER(email), 'default123', first_name, last_name, middle_name, suffix, phone, qc_id, 'user', 'active', true, created_at
+        LOWER(email), $2, first_name, last_name, middle_name, suffix, phone, qc_id, 'user', 'active', true, created_at
       FROM aics_applications
       WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
       ON CONFLICT (email) DO NOTHING;
 
       INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
       SELECT DISTINCT ON (LOWER(email))
-        LOWER(email), 'default123', first_name, last_name, middle_name, suffix, contact_no, COALESCE(assigned_id_number, reference_number), 'user', 'active', true, submitted_at
+        LOWER(email), $2, first_name, last_name, middle_name, suffix, contact_no, COALESCE(assigned_id_number, reference_number), 'user', 'active', true, submitted_at
       FROM pwd_senior_applications
       WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
       ON CONFLICT (email) DO NOTHING;
 
       INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
       SELECT DISTINCT ON (LOWER(email))
-        LOWER(email), 'default123', first_name, last_name, middle_name, suffix, contact_no, COALESCE(solo_parent_id_number, qcid_number), 'user', 'active', true, created_at
+        LOWER(email), $2, first_name, last_name, middle_name, suffix, contact_no, COALESCE(solo_parent_id_number, qcid_number), 'user', 'active', true, created_at
       FROM solo_parent_applications
       WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
       ON CONFLICT (email) DO NOTHING;
 
       INSERT INTO users (email, password, first_name, last_name, middle_name, mobile_number, role, status, is_email_verified, created_at)
       SELECT DISTINCT ON (LOWER(guardian_email))
-        LOWER(guardian_email), 'default123', guardian_first_name, guardian_last_name, guardian_middle_name, guardian_contact_no, 'user', 'active', true, created_at
+        LOWER(guardian_email), $2, guardian_first_name, guardian_last_name, guardian_middle_name, guardian_contact_no, 'user', 'active', true, created_at
       FROM child_welfare_applications
       WHERE guardian_email IS NOT NULL AND guardian_email != '' AND LOWER(guardian_email) NOT IN (SELECT LOWER(email) FROM users)
       ON CONFLICT (email) DO NOTHING;
 
       INSERT INTO users (email, password, first_name, last_name, mobile_number, qcid_number, role, status, is_email_verified, created_at)
       SELECT DISTINCT ON (LOWER(email))
-        LOWER(email), 'default123', first_name, last_name, contact_no, qcid_no, 'user', 'active', true, created_at
+        LOWER(email), $2, first_name, last_name, contact_no, qcid_no, 'user', 'active', true, created_at
       FROM livelihood_applications
       WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
       ON CONFLICT (email) DO NOTHING;
+    `, [adminHashed, defaultHashed]);
 
+    // Auto-migrate any existing unhashed plain-text passwords in DB to bcrypt
+    try {
+      const plainUsers = await db.query("SELECT id, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%' LIMIT 100");
+      for (const row of plainUsers.rows) {
+        if (row.password) {
+          const hashed = bcrypt.hashSync(row.password, 10);
+          await db.query("UPDATE users SET password = $1 WHERE id = $2", [hashed, row.id]);
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ [Init DB] Plaintext password auto-hash note:', e.message);
+    }
+
+    await db.query(`
       -- Archive column support for all application categories
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;

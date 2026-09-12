@@ -1,9 +1,29 @@
 const db = require('../config/db');
 const { sendOtpEmail, sendPasswordResetEmail } = require('../services/emailService');
+const bcrypt = require('bcryptjs');
 
 // In-memory fallback stores
 let memoryOtps = new Map(); // email -> { otpCode, expiresAt, isUsed }
 let memoryUsers = [];
+
+/**
+ * Hashes a plaintext password using bcrypt (salt rounds = 12)
+ */
+async function hashPassword(password) {
+  if (!password) return '';
+  return await bcrypt.hash(password, 12);
+}
+
+/**
+ * Validates a plaintext password against a hashed (or legacy plaintext) password.
+ */
+async function verifyPassword(plainPassword, storedPassword) {
+  if (!plainPassword || !storedPassword) return false;
+  if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$')) {
+    return await bcrypt.compare(plainPassword, storedPassword);
+  }
+  return plainPassword === storedPassword;
+}
 
 /**
  * Generates a standard 15-digit Quezon City Resident ID (QCID)
@@ -197,9 +217,12 @@ exports.register = async (req, res) => {
     const finalBirthDate = birthDate || (birthMonth && birthDay && birthYear ? `${birthMonth} ${birthDay}, ${birthYear}` : '');
     const qcidNumber = generateQcidNumber();
 
+    const rawPassword = password || 'default123';
+    const hashedPassword = await hashPassword(rawPassword);
+
     const newUser = {
       email: cleanEmail,
-      password: password || 'default123',
+      password: hashedPassword,
       firstName: (firstName || '').trim().toUpperCase(),
       lastName: (lastName || '').trim().toUpperCase(),
       middleName: (middleName || '').trim().toUpperCase(),
@@ -277,10 +300,13 @@ exports.register = async (req, res) => {
       memoryUsers.push(newUser);
     }
 
+    const safeUser = { ...newUser };
+    delete safeUser.password;
+
     return res.status(201).json({
       success: true,
       message: 'Account registered successfully.',
-      user: newUser,
+      user: safeUser,
     });
   } catch (err) {
     console.error('Error in register controller:', err);
@@ -320,6 +346,24 @@ exports.login = async (req, res) => {
       cleanEmail === 'staff@gmail.com';
 
     if (isPredefinedAdmin) {
+      // Check database first, or fallback to default admin credentials
+      let adminDbUser = null;
+      try {
+        const res = await db.query("SELECT * FROM users WHERE LOWER(email) IN ('admin@quezoncity.gov.ph', 'admin') LIMIT 1");
+        if (res.rows.length > 0) adminDbUser = res.rows[0];
+      } catch {}
+
+      const isPassValid = adminDbUser
+        ? await verifyPassword(cleanPassword, adminDbUser.password)
+        : (cleanPassword === 'admin123' || cleanPassword === 'admin');
+
+      if (!isPassValid) {
+        return res.status(401).json({
+          success: false,
+          message: 'Incorrect password. Please verify your password and try again.',
+        });
+      }
+
       return res.status(200).json({
         success: true,
         role: 'staff',
@@ -334,6 +378,23 @@ exports.login = async (req, res) => {
     }
 
     if (isPredefinedSuperAdmin) {
+      let superDbUser = null;
+      try {
+        const res = await db.query("SELECT * FROM users WHERE LOWER(email) IN ('superadmin@quezoncity.gov.ph', 'superadmin') LIMIT 1");
+        if (res.rows.length > 0) superDbUser = res.rows[0];
+      } catch {}
+
+      const isPassValid = superDbUser
+        ? await verifyPassword(cleanPassword, superDbUser.password)
+        : (cleanPassword === 'superadmin123' || cleanPassword === 'superadmin');
+
+      if (!isPassValid) {
+        return res.status(401).json({
+          success: false,
+          message: 'Incorrect password. Please verify your password and try again.',
+        });
+      }
+
       return res.status(200).json({
         success: true,
         role: 'super_admin',
@@ -348,6 +409,23 @@ exports.login = async (req, res) => {
     }
 
     if (isPredefinedStaff) {
+      let staffDbUser = null;
+      try {
+        const res = await db.query("SELECT * FROM users WHERE LOWER(email) IN ('staff@quezoncity.gov.ph', 'staff', 'socialworker@gov.ph') LIMIT 1");
+        if (res.rows.length > 0) staffDbUser = res.rows[0];
+      } catch {}
+
+      const isPassValid = staffDbUser
+        ? await verifyPassword(cleanPassword, staffDbUser.password)
+        : (cleanPassword === 'staff123' || cleanPassword === 'staff');
+
+      if (!isPassValid) {
+        return res.status(401).json({
+          success: false,
+          message: 'Incorrect password. Please verify your password and try again.',
+        });
+      }
+
       return res.status(200).json({
         success: true,
         role: 'staff',
@@ -376,12 +454,19 @@ exports.login = async (req, res) => {
           });
         }
 
-        // Check password
-        if (dbUser.password && dbUser.password !== cleanPassword) {
+        // Check password using bcrypt
+        const isPasswordValid = await verifyPassword(cleanPassword, dbUser.password);
+        if (!isPasswordValid) {
           return res.status(401).json({
             success: false,
             message: 'Incorrect password. Please verify your password and try again.',
           });
+        }
+
+        // Auto-upgrade legacy plain-text password to bcrypt hash in DB
+        if (dbUser.password && !dbUser.password.startsWith('$2')) {
+          const upgradedHash = await hashPassword(cleanPassword);
+          await db.query('UPDATE users SET password = $1 WHERE id = $2', [upgradedHash, dbUser.id]).catch(() => {});
         }
 
         // Record last login time
@@ -434,19 +519,27 @@ exports.login = async (req, res) => {
         });
       }
 
-      if (memUser.password && memUser.password !== cleanPassword) {
+      const isMemPasswordValid = await verifyPassword(cleanPassword, memUser.password);
+      if (!isMemPasswordValid) {
         return res.status(401).json({
           success: false,
           message: 'Incorrect password. Please verify your password and try again.',
         });
       }
 
+      if (memUser.password && !memUser.password.startsWith('$2')) {
+        memUser.password = await hashPassword(cleanPassword);
+      }
+
       memUser.lastLogin = new Date().toISOString();
+
+      const safeMemUser = { ...memUser };
+      delete safeMemUser.password;
 
       return res.status(200).json({
         success: true,
-        role: memUser.role || 'user',
-        user: memUser,
+        role: safeMemUser.role || 'user',
+        user: safeMemUser,
       });
     }
 
@@ -807,24 +900,26 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // Update user's password in Database
+    // Update user's password in Database with bcrypt hash
+    const hashedNewPassword = await hashPassword(newPassword);
+
     try {
       const updateRes = await db.query(
         `UPDATE users SET password = $1, updated_at = NOW() WHERE LOWER(email) = $2 RETURNING id, email, first_name, last_name, role`,
-        [newPassword, cleanEmail]
+        [hashedNewPassword, cleanEmail]
       );
 
       // If user wasn't found in DB, check memoryUsers or insert
       if (updateRes.rows.length === 0) {
         const memIdx = memoryUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
         if (memIdx !== -1) {
-          memoryUsers[memIdx].password = newPassword;
+          memoryUsers[memIdx].password = hashedNewPassword;
         } else {
           await db.query(
             `INSERT INTO users (email, password, first_name, role, is_email_verified, created_at, updated_at)
              VALUES ($1, $2, 'Resident', 'user', true, NOW(), NOW())
              ON CONFLICT (email) DO UPDATE SET password = $2, updated_at = NOW()`,
-            [cleanEmail, newPassword]
+            [cleanEmail, hashedNewPassword]
           );
         }
       }
@@ -832,7 +927,7 @@ exports.resetPassword = async (req, res) => {
       console.warn('[DB Error] Updating password failed:', dbErr.message);
       const memIdx = memoryUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
       if (memIdx !== -1) {
-        memoryUsers[memIdx].password = newPassword;
+        memoryUsers[memIdx].password = hashedNewPassword;
       }
     }
 
@@ -870,16 +965,19 @@ exports.getAllUsers = async (req, res) => {
 
     // 2. Auto-sync existing module applicants and ensure default admin account exists
     try {
+      const defaultHash = await hashPassword('default123');
+      const adminHash = await hashPassword('admin123');
+
       await db.query(`
         -- Ensure default administrator account exists
         INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
-        VALUES ('admin@quezoncity.gov.ph', 'admin123', 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
+        VALUES ('admin@quezoncity.gov.ph', $1, 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
         ON CONFLICT (email) DO UPDATE SET role = 'admin', status = 'active';
 
         -- Sync AICS applicants into users
         INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(email))
-          LOWER(email), 'default123', first_name, last_name, middle_name, suffix, phone, qc_id, 'user', 'active', true, created_at
+          LOWER(email), $2, first_name, last_name, middle_name, suffix, phone, qc_id, 'user', 'active', true, created_at
         FROM aics_applications
         WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
@@ -887,7 +985,7 @@ exports.getAllUsers = async (req, res) => {
         -- Sync PWD / Senior applicants into users
         INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(email))
-          LOWER(email), 'default123', first_name, last_name, middle_name, suffix, contact_no, COALESCE(assigned_id_number, reference_number), 'user', 'active', true, submitted_at
+          LOWER(email), $2, first_name, last_name, middle_name, suffix, contact_no, COALESCE(assigned_id_number, reference_number), 'user', 'active', true, submitted_at
         FROM pwd_senior_applications
         WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
@@ -895,7 +993,7 @@ exports.getAllUsers = async (req, res) => {
         -- Sync Solo Parent applicants into users
         INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(email))
-          LOWER(email), 'default123', first_name, last_name, middle_name, suffix, contact_no, COALESCE(solo_parent_id_number, qcid_number), 'user', 'active', true, created_at
+          LOWER(email), $2, first_name, last_name, middle_name, suffix, contact_no, COALESCE(solo_parent_id_number, qcid_number), 'user', 'active', true, created_at
         FROM solo_parent_applications
         WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
@@ -903,7 +1001,7 @@ exports.getAllUsers = async (req, res) => {
         -- Sync Child Welfare guardians into users
         INSERT INTO users (email, password, first_name, last_name, middle_name, mobile_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(guardian_email))
-          LOWER(guardian_email), 'default123', guardian_first_name, guardian_last_name, guardian_middle_name, guardian_contact_no, 'user', 'active', true, created_at
+          LOWER(guardian_email), $2, guardian_first_name, guardian_last_name, guardian_middle_name, guardian_contact_no, 'user', 'active', true, created_at
         FROM child_welfare_applications
         WHERE guardian_email IS NOT NULL AND guardian_email != '' AND LOWER(guardian_email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
@@ -911,11 +1009,20 @@ exports.getAllUsers = async (req, res) => {
         -- Sync Livelihood applicants into users
         INSERT INTO users (email, password, first_name, last_name, mobile_number, qcid_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(email))
-          LOWER(email), 'default123', first_name, last_name, contact_no, qcid_no, 'user', 'active', true, created_at
+          LOWER(email), $2, first_name, last_name, contact_no, qcid_no, 'user', 'active', true, created_at
         FROM livelihood_applications
         WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
-      `);
+      `, [adminHash, defaultHash]);
+
+      // Auto-migrate any existing unhashed plain-text passwords in DB to bcrypt
+      const plainUsers = await db.query("SELECT id, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%' LIMIT 100");
+      for (const row of plainUsers.rows) {
+        if (row.password) {
+          const hashed = await hashPassword(row.password);
+          await db.query("UPDATE users SET password = $1 WHERE id = $2", [hashed, row.id]).catch(() => {});
+        }
+      }
     } catch (syncErr) {
       console.warn('[DB Note] Auto-syncing applicants to users table:', syncErr.message);
     }
