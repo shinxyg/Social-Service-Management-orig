@@ -2643,14 +2643,14 @@ export default function LivelihoodApplicationsAdmin() {
           {/* Dashboard Metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: "Total Applications", value: applications.length, border: "border-blue-200 dark:border-blue-900", bg: "bg-blue-50/50 dark:bg-blue-950/20", text: "text-blue-700 dark:text-blue-300" },
-              { label: "Pending Review", value: pendingCount, border: "border-amber-200 dark:border-amber-900", bg: "bg-amber-50/50 dark:bg-amber-950/20", text: "text-amber-700 dark:text-amber-300" },
-              { label: "Approved", value: approvedCount, border: "border-emerald-200 dark:border-emerald-900", bg: "bg-emerald-50/50 dark:bg-emerald-950/20", text: "text-emerald-700 dark:text-emerald-300" },
-              { label: "Rejected", value: rejectedCount, border: "border-rose-200 dark:border-rose-900", bg: "bg-rose-50/50 dark:bg-rose-950/20", text: "text-rose-700 dark:text-rose-300" },
+              { label: "Total Applications", value: applications.length, text: "text-blue-600 dark:text-blue-400" },
+              { label: "Pending Review", value: pendingCount, text: "text-amber-600 dark:text-amber-400" },
+              { label: "Approved", value: approvedCount, text: "text-emerald-600 dark:text-emerald-400" },
+              { label: "Rejected", value: rejectedCount, text: "text-rose-600 dark:text-rose-400" },
             ].map((stat) => (
-              <div key={stat.label} className={`rounded-xl p-4 border ${stat.border} ${stat.bg} shadow-xs`}>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
-                <p className={`text-2xl sm:text-3xl font-extrabold ${stat.text} mt-1.5`}>{stat.value}</p>
+              <div key={stat.label} className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
+                <p className={`text-2xl sm:text-3xl font-extrabold ${stat.text} mt-2`}>{stat.value}</p>
               </div>
             ))}
           </div>
@@ -2770,14 +2770,14 @@ export default function LivelihoodApplicationsAdmin() {
           {/* Dashboard Metrics for Stage 2 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: "Total Approved Grants", value: capitalMaterialsList.length, border: "border-indigo-200 dark:border-indigo-900", bg: "bg-indigo-50/50 dark:bg-indigo-950/20", text: "text-indigo-700 dark:text-indigo-300" },
-              { label: "For Processing", value: forProcessingCount, border: "border-amber-200 dark:border-amber-900", bg: "bg-amber-50/50 dark:bg-amber-950/20", text: "text-amber-700 dark:text-amber-300" },
-              { label: "For Release", value: forReleaseCount, border: "border-blue-200 dark:border-blue-900", bg: "bg-blue-50/50 dark:bg-blue-950/20", text: "text-blue-700 dark:text-blue-300" },
-              { label: "Released", value: releasedCount, border: "border-emerald-200 dark:border-emerald-900", bg: "bg-emerald-50/50 dark:bg-emerald-950/20", text: "text-emerald-700 dark:text-emerald-300" },
+              { label: "Total Approved Grants", value: capitalMaterialsList.length, text: "text-indigo-600 dark:text-indigo-400" },
+              { label: "For Processing", value: forProcessingCount, text: "text-amber-600 dark:text-amber-400" },
+              { label: "For Release", value: forReleaseCount, text: "text-blue-600 dark:text-blue-400" },
+              { label: "Released", value: releasedCount, text: "text-emerald-600 dark:text-emerald-400" },
             ].map((stat) => (
-              <div key={stat.label} className={`rounded-xl p-4 border ${stat.border} ${stat.bg} shadow-xs`}>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
-                <p className={`text-2xl sm:text-3xl font-extrabold ${stat.text} mt-1.5`}>{stat.value}</p>
+              <div key={stat.label} className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
+                <p className={`text-2xl sm:text-3xl font-extrabold ${stat.text} mt-2`}>{stat.value}</p>
               </div>
             ))}
           </div>
@@ -2866,14 +2866,14 @@ export default function LivelihoodApplicationsAdmin() {
           {/* Dashboard Metrics for Stage 3 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: "Total Released", value: releasedCount, border: "border-emerald-200 dark:border-emerald-900", bg: "bg-emerald-50/50 dark:bg-emerald-950/20", text: "text-emerald-700 dark:text-emerald-300" },
-              { label: "Active Operations", value: releasedBeneficiaries.filter((a) => (a.monitoring[0]?.monitoring_status || "ACTIVE").includes("ACTIVE")).length, border: "border-teal-200 dark:border-teal-900", bg: "bg-teal-50/50 dark:bg-teal-950/20", text: "text-teal-700 dark:text-teal-300" },
-              { label: "Ongoing Follow-up", value: releasedBeneficiaries.filter((a) => (a.monitoring[0]?.monitoring_status || "").includes("ONGOING")).length, border: "border-blue-200 dark:border-blue-900", bg: "bg-blue-50/50 dark:bg-blue-950/20", text: "text-blue-700 dark:text-blue-300" },
-              { label: "Needs Follow-up", value: releasedBeneficiaries.filter((a) => (a.monitoring[0]?.monitoring_status || "").includes("NEEDS") || (a.monitoring[0]?.monitoring_status || "").includes("FOLLOW")).length, border: "border-amber-200 dark:border-amber-900", bg: "bg-amber-50/50 dark:bg-amber-950/20", text: "text-amber-700 dark:text-amber-300" },
+              { label: "Total Released", value: releasedCount, text: "text-emerald-600 dark:text-emerald-400" },
+              { label: "Active Operations", value: releasedBeneficiaries.filter((a) => (a.monitoring[0]?.monitoring_status || "ACTIVE").includes("ACTIVE")).length, text: "text-teal-600 dark:text-teal-400" },
+              { label: "Ongoing Follow-up", value: releasedBeneficiaries.filter((a) => (a.monitoring[0]?.monitoring_status || "").includes("ONGOING")).length, text: "text-blue-600 dark:text-blue-400" },
+              { label: "Needs Follow-up", value: releasedBeneficiaries.filter((a) => (a.monitoring[0]?.monitoring_status || "").includes("NEEDS") || (a.monitoring[0]?.monitoring_status || "").includes("FOLLOW")).length, text: "text-amber-600 dark:text-amber-400" },
             ].map((stat) => (
-              <div key={stat.label} className={`rounded-xl p-4 border ${stat.border} ${stat.bg} shadow-xs`}>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
-                <p className={`text-2xl sm:text-3xl font-extrabold ${stat.text} mt-1.5`}>{stat.value}</p>
+              <div key={stat.label} className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
+                <p className={`text-2xl sm:text-3xl font-extrabold ${stat.text} mt-2`}>{stat.value}</p>
               </div>
             ))}
           </div>
