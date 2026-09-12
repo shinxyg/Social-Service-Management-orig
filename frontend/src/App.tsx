@@ -30,6 +30,8 @@ import SystemSettings from "./components/Super-admin/SystemSettings"
 import StaffManagement from "./components/Super-admin/StaffManagement"
 
 import { LanguageProvider } from "./components/ui/language-context"
+import { SessionInactivityWatcher } from "./components/ui/session-inactivity-modal"
+
 
 export default function App() {
   // Clear legacy persistent auth from localStorage so site always opens logged out
@@ -51,7 +53,9 @@ export default function App() {
   return (
     <LanguageProvider>
       <BrowserRouter>
+        <SessionInactivityWatcher />
         <Routes>
+
           {/* Public Routes */}
           <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to={homePath} replace />} />
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to={homePath} replace />} />
