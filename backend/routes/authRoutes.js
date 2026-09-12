@@ -26,6 +26,10 @@ router.post('/change-password', authController.changePassword);
 // POST /api/auth/reactivate
 router.post('/reactivate', authController.reactivateAccount);
 
+// GET /api/auth/verify-session
+router.get('/verify-session', authController.verifySession);
+router.post('/verify-session', authController.verifySession);
+
 
 
 // GET /api/auth/migrate-passwords

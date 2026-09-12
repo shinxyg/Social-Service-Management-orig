@@ -35,6 +35,13 @@ function generateQcidNumber() {
 }
 
 /**
+ * Generates a unique active session token for single device login control
+ */
+function generateSessionToken() {
+  return 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 12);
+}
+
+/**
  * POST /api/auth/send-otp
  * Generates and emails a 6-digit OTP code to the applicant's Gmail address
  */
@@ -364,8 +371,14 @@ exports.login = async (req, res) => {
         });
       }
 
+      const sessionToken = generateSessionToken();
+      try {
+        await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('admin@quezoncity.gov.ph', 'admin')", [sessionToken]);
+      } catch {}
+
       return res.status(200).json({
         success: true,
+        sessionToken,
         role: 'staff',
         user: {
           email: cleanEmail.includes('@') ? cleanEmail : 'admin@quezoncity.gov.ph',
@@ -395,8 +408,14 @@ exports.login = async (req, res) => {
         });
       }
 
+      const sessionToken = generateSessionToken();
+      try {
+        await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('superadmin@quezoncity.gov.ph', 'superadmin')", [sessionToken]);
+      } catch {}
+
       return res.status(200).json({
         success: true,
+        sessionToken,
         role: 'super_admin',
         user: {
           email: cleanEmail.includes('@') ? cleanEmail : 'superadmin@quezoncity.gov.ph',
@@ -426,8 +445,14 @@ exports.login = async (req, res) => {
         });
       }
 
+      const sessionToken = generateSessionToken();
+      try {
+        await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('staff@quezoncity.gov.ph', 'staff', 'socialworker@gov.ph')", [sessionToken]);
+      } catch {}
+
       return res.status(200).json({
         success: true,
+        sessionToken,
         role: 'staff',
         user: {
           email: cleanEmail.includes('@') ? cleanEmail : 'staff@quezoncity.gov.ph',
@@ -472,8 +497,11 @@ exports.login = async (req, res) => {
           await db.query('UPDATE users SET password = $1 WHERE id = $2', [upgradedHash, dbUser.id]).catch(() => {});
         }
 
-        // Record last login time
-        await db.query('UPDATE users SET last_login = NOW() WHERE id = $1', [dbUser.id]).catch(() => {});
+        // Generate unique single active session token
+        const sessionToken = generateSessionToken();
+
+        // Record last login time & active session token in DB
+        await db.query('UPDATE users SET last_login = NOW(), active_session_token = $1 WHERE id = $2', [sessionToken, dbUser.id]).catch(() => {});
 
         const userPayload = {
           id: dbUser.id,
@@ -503,6 +531,7 @@ exports.login = async (req, res) => {
 
         return res.status(200).json({
           success: true,
+          sessionToken,
           role: userPayload.role,
           user: userPayload,
         });
@@ -537,13 +566,16 @@ exports.login = async (req, res) => {
         memUser.password = await hashPassword(cleanPassword);
       }
 
+      const sessionToken = generateSessionToken();
       memUser.lastLogin = new Date().toISOString();
+      memUser.activeSessionToken = sessionToken;
 
       const safeMemUser = { ...memUser };
       delete safeMemUser.password;
 
       return res.status(200).json({
         success: true,
+        sessionToken,
         role: safeMemUser.role || 'user',
         user: safeMemUser,
       });
@@ -586,7 +618,8 @@ exports.reactivateAccount = async (req, res) => {
           }
         }
 
-        await db.query(`UPDATE users SET status = 'active', last_login = NOW(), updated_at = NOW() WHERE id = $1`, [dbUser.id]);
+        const sessionToken = generateSessionToken();
+        await db.query(`UPDATE users SET status = 'active', last_login = NOW(), active_session_token = $1, updated_at = NOW() WHERE id = $2`, [sessionToken, dbUser.id]);
 
         const userPayload = {
           id: dbUser.id,
@@ -616,6 +649,7 @@ exports.reactivateAccount = async (req, res) => {
 
         return res.status(200).json({
           success: true,
+          sessionToken,
           message: 'Account successfully reactivated! Welcome back to GovServe.',
           role: userPayload.role,
           user: userPayload,
@@ -634,12 +668,15 @@ exports.reactivateAccount = async (req, res) => {
           return res.status(401).json({ success: false, message: 'Incorrect password. Reactivation cancelled.' });
         }
       }
+      const sessionToken = generateSessionToken();
       memUser.status = 'active';
       memUser.lastLogin = new Date().toISOString();
+      memUser.activeSessionToken = sessionToken;
       const safeUser = { ...memUser };
       delete safeUser.password;
       return res.status(200).json({
         success: true,
+        sessionToken,
         message: 'Account successfully reactivated! Welcome back to GovServe.',
         role: safeUser.role || 'user',
         user: safeUser,
@@ -650,6 +687,56 @@ exports.reactivateAccount = async (req, res) => {
   } catch (err) {
     console.error('Error in reactivateAccount controller:', err);
     return res.status(500).json({ success: false, message: 'Server error during account reactivation', error: err.message });
+  }
+};
+
+/**
+ * GET /api/auth/verify-session
+ * Validates if the client's current session token matches the single active session in DB
+ */
+exports.verifySession = async (req, res) => {
+  try {
+    const email = (req.query.email || req.headers['x-user-email'] || '').trim().toLowerCase();
+    const sessionToken = (req.query.token || req.headers['x-session-token'] || '').trim();
+
+    if (!email || !sessionToken) {
+      // If client didn't supply email/token, don't kick prematurely
+      return res.status(200).json({ success: true, active: true });
+    }
+
+    // 1. Query database
+    try {
+      const userRes = await db.query('SELECT active_session_token, status FROM users WHERE LOWER(email) = $1', [email]);
+      if (userRes.rows.length > 0) {
+        const dbUser = userRes.rows[0];
+        // If DB has an active_session_token recorded and it differs from client's token, the account was opened on another device
+        if (dbUser.active_session_token && dbUser.active_session_token !== sessionToken) {
+          return res.status(200).json({
+            success: false,
+            isSessionTerminated: true,
+            message: 'Your account was accessed from another device. You have been logged out for security.',
+          });
+        }
+        return res.status(200).json({ success: true, active: true });
+      }
+    } catch (dbErr) {
+      console.warn('[DB Error] verifySession failed:', dbErr.message);
+    }
+
+    // 2. Memory fallback
+    const memUser = memoryUsers.find(u => u.email.toLowerCase() === email);
+    if (memUser && memUser.activeSessionToken && memUser.activeSessionToken !== sessionToken) {
+      return res.status(200).json({
+        success: false,
+        isSessionTerminated: true,
+        message: 'Your account was accessed from another device. You have been logged out for security.',
+      });
+    }
+
+    return res.status(200).json({ success: true, active: true });
+  } catch (err) {
+    console.error('Error in verifySession controller:', err);
+    return res.status(500).json({ success: false, message: 'Server error during session verification' });
   }
 };
 

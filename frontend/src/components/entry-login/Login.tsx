@@ -49,6 +49,9 @@ export const Login = () => {
         const detectedRole = data.role || 'user';
         sessionStorage.setItem('isAuthenticated', 'true');
         sessionStorage.setItem('userRole', detectedRole);
+        if (data.sessionToken) {
+          sessionStorage.setItem('sessionToken', data.sessionToken);
+        }
         if (data.user) {
           sessionStorage.setItem('currentUser', JSON.stringify(data.user));
           localStorage.setItem('currentUser', JSON.stringify(data.user));
@@ -95,6 +98,9 @@ export const Login = () => {
           const detectedRole = data.role || (email.toLowerCase().includes('super') ? 'super_admin' : email.toLowerCase().includes('admin') || email.toLowerCase().includes('staff') ? 'staff' : 'user');
           sessionStorage.setItem('isAuthenticated', 'true');
           sessionStorage.setItem('userRole', detectedRole);
+          if (data.sessionToken) {
+            sessionStorage.setItem('sessionToken', data.sessionToken);
+          }
           if (data.user) {
             sessionStorage.setItem('currentUser', JSON.stringify(data.user));
             localStorage.setItem('currentUser', JSON.stringify(data.user));
