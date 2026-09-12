@@ -1016,7 +1016,7 @@ exports.getAllUsers = async (req, res) => {
       `, [adminHash, defaultHash]);
 
       // Auto-migrate any existing unhashed plain-text passwords in DB to bcrypt
-      const plainUsers = await db.query("SELECT id, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%' LIMIT 100");
+      const plainUsers = await db.query("SELECT id, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%'");
       for (const row of plainUsers.rows) {
         if (row.password) {
           const hashed = await hashPassword(row.password);
@@ -1438,5 +1438,32 @@ exports.deleteUser = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to delete user account', error: err.message });
   }
 };
+
+/**
+ * GET /api/auth/migrate-passwords
+ * Manually trigger password migration for all plaintext accounts in DB
+ */
+exports.migrateAllPasswords = async (req, res) => {
+  try {
+    const plainUsers = await db.query("SELECT id, email, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%'");
+    let count = 0;
+    for (const row of plainUsers.rows) {
+      if (row.password) {
+        const hashed = await hashPassword(row.password);
+        await db.query("UPDATE users SET password = $1 WHERE id = $2", [hashed, row.id]);
+        count++;
+      }
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Successfully migrated ${count} user password(s) to bcrypt.`,
+      migratedCount: count,
+    });
+  } catch (err) {
+    console.error('Error in migrateAllPasswords controller:', err);
+    return res.status(500).json({ success: false, message: 'Failed to migrate passwords', error: err.message });
+  }
+};
+
 
 

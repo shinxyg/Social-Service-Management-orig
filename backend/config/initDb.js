@@ -204,12 +204,16 @@ async function initDb() {
 
     // Auto-migrate any existing unhashed plain-text passwords in DB to bcrypt
     try {
-      const plainUsers = await db.query("SELECT id, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%' LIMIT 100");
-      for (const row of plainUsers.rows) {
-        if (row.password) {
-          const hashed = bcrypt.hashSync(row.password, 10);
-          await db.query("UPDATE users SET password = $1 WHERE id = $2", [hashed, row.id]);
+      const plainUsers = await db.query("SELECT id, email, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%'");
+      if (plainUsers.rows.length > 0) {
+        console.log(`🔐 [Init DB] Found ${plainUsers.rows.length} unhashed user password(s). Upgrading to bcrypt...`);
+        for (const row of plainUsers.rows) {
+          if (row.password) {
+            const hashed = bcrypt.hashSync(row.password, 12);
+            await db.query("UPDATE users SET password = $1 WHERE id = $2", [hashed, row.id]);
+          }
         }
+        console.log(`✅ [Init DB] Successfully upgraded ${plainUsers.rows.length} password(s) to bcrypt.`);
       }
     } catch (e) {
       console.warn('⚠️ [Init DB] Plaintext password auto-hash note:', e.message);

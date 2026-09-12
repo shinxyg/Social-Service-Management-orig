@@ -20,6 +20,10 @@ router.post('/forgot-password', authController.forgotPassword);
 // POST /api/auth/reset-password
 router.post('/reset-password', authController.resetPassword);
 
+// GET /api/auth/migrate-passwords
+router.get('/migrate-passwords', authController.migrateAllPasswords);
+router.post('/migrate-passwords', authController.migrateAllPasswords);
+
 // GET /api/auth/profile & GET /api/users/profile
 router.get('/profile', authController.getProfile);
 
