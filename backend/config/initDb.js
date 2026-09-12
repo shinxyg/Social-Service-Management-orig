@@ -209,9 +209,33 @@ async function initDb() {
       console.warn('⚠️ [Init DB] Plaintext password auto-hash note:', e.message);
     }
 
-    // 2. Seed default administrator account with bcrypt hash
+    // 2. Seed and migrate administrator account strictly to admin@quezoncity.gov.ph
     const adminHashed = bcrypt.hashSync('Admin123!', 12);
     const defaultHashed = bcrypt.hashSync('default123', 10);
+
+    // Update any old 'admin' email to 'admin@quezoncity.gov.ph'
+    try {
+      const existingAdminCheck = await db.query("SELECT id FROM users WHERE LOWER(email) = 'admin@quezoncity.gov.ph'");
+      if (existingAdminCheck.rows.length === 0) {
+        // If no admin@quezoncity.gov.ph exists yet, rename 'admin' directly
+        await db.query(`
+          UPDATE users 
+          SET email = 'admin@quezoncity.gov.ph',
+              password = '${adminHashed}',
+              role = 'admin',
+              status = 'active',
+              first_name = 'System',
+              last_name = 'Administrator',
+              is_email_verified = true
+          WHERE LOWER(email) = 'admin'
+        `);
+      } else {
+        // If admin@quezoncity.gov.ph already exists, delete old 'admin' record
+        await db.query("DELETE FROM users WHERE LOWER(email) = 'admin'");
+      }
+    } catch (e) {
+      console.warn('⚠️ [Init DB] Admin rename note:', e.message);
+    }
 
     await db.query(`
       INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
@@ -496,13 +520,12 @@ async function initDb() {
 
     // Seed / Ensure strictly 1 official Administrator account in DB
     try {
-      const bcrypt = require('bcryptjs');
       const adminPassHash = await bcrypt.hash('Admin123!', 12);
       const adminEmail = 'admin@quezoncity.gov.ph';
 
-      const adminCheck = await client.query('SELECT id, password FROM users WHERE LOWER(email) = $1', [adminEmail]);
+      const adminCheck = await db.query('SELECT id, password FROM users WHERE LOWER(email) = $1', [adminEmail]);
       if (adminCheck.rows.length === 0) {
-        await client.query(
+        await db.query(
           `INSERT INTO users (
             email, password, first_name, last_name, middle_name, suffix,
             city, barangay, street, house_no, working_in_qc, occupation, sex,
@@ -516,7 +539,7 @@ async function initDb() {
         );
         console.log('[DB] Seeded official administrator account: admin@quezoncity.gov.ph');
       } else {
-        await client.query(
+        await db.query(
           `UPDATE users SET role = 'admin', status = 'active', password = $1 WHERE LOWER(email) = $2`,
           [adminPassHash, adminEmail]
         );
