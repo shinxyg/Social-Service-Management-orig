@@ -79,6 +79,31 @@ export const Login = () => {
     }, 1500);
   };
 
+  const getClientDeviceInfo = () => {
+    const ua = navigator.userAgent || '';
+    const isMobile = /mobile/i.test(ua) || (window.innerWidth <= 768 && /android|iphone|ipad/i.test(ua));
+    const isTablet = /tablet|ipad/i.test(ua);
+    
+    let os = 'Windows';
+    if (/windows/i.test(ua)) os = 'Windows';
+    else if (/android/i.test(ua)) os = 'Android';
+    else if (/iphone/i.test(ua)) os = 'iOS (iPhone)';
+    else if (/ipad/i.test(ua)) os = 'iPadOS';
+    else if (/macintosh|mac os/i.test(ua)) os = 'macOS';
+    else if (/linux/i.test(ua)) os = 'Linux';
+
+    let browser = 'Google Chrome';
+    if (/edg/i.test(ua)) browser = 'Microsoft Edge';
+    else if (/opr|opera/i.test(ua)) browser = 'Opera';
+    else if (/firefox/i.test(ua)) browser = 'Mozilla Firefox';
+    else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Apple Safari';
+
+    const deviceType = isTablet ? 'Tablet' : isMobile ? 'Mobile (Phone)' : 'Desktop (PC)';
+    const deviceName = `${os} ${deviceType === 'Mobile (Phone)' ? 'Mobile' : deviceType === 'Tablet' ? 'Tablet' : 'PC'} • ${browser}`;
+
+    return { os, browser, deviceType, deviceName };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -87,17 +112,24 @@ export const Login = () => {
       setError('');
 
       try {
+        const clientDeviceInfo = getClientDeviceInfo();
         const res = await fetch(`${API_BASE}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, clientDeviceInfo }),
         });
         const data = await res.json();
 
         if (res.ok && data.success) {
           const detectedRole = data.role || (email.toLowerCase().includes('super') ? 'super_admin' : email.toLowerCase().includes('admin') || email.toLowerCase().includes('staff') ? 'staff' : 'user');
+          const cleanEmail = (data.user?.email || email).trim().toLowerCase();
           sessionStorage.setItem('isAuthenticated', 'true');
           sessionStorage.setItem('userRole', detectedRole);
+          sessionStorage.setItem('user_email', cleanEmail);
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('userRole', detectedRole);
+          localStorage.setItem('user_email', cleanEmail);
+
           if (data.sessionToken) {
             sessionStorage.setItem('sessionToken', data.sessionToken);
             localStorage.setItem('sessionToken', data.sessionToken);

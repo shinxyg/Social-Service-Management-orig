@@ -34,16 +34,7 @@ import { SessionInactivityWatcher } from "./components/ui/session-inactivity-mod
 
 
 export default function App() {
-  // Clear legacy persistent auth from localStorage so site always opens logged out
-  try {
-    if (localStorage.getItem('isAuthenticated')) {
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('currentUser');
-    }
-  } catch {}
-
-  const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+  const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true' || localStorage.getItem('isAuthenticated') === 'true';
   const userRole = sessionStorage.getItem('userRole'); // 'super_admin' | 'staff' | 'user'
   const isSuperAdmin = isAuthenticated && userRole === 'super_admin'
   const isStaff = isAuthenticated && userRole === 'staff';

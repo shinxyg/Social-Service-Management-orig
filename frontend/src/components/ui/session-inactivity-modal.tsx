@@ -24,11 +24,13 @@ export function SessionInactivityWatcher() {
   }, []);
 
   const getCurrentUserEmail = useCallback(() => {
+    const directEmail = sessionStorage.getItem("user_email") || localStorage.getItem("user_email");
+    if (directEmail) return directEmail.toLowerCase().trim();
     try {
       const rawUser = sessionStorage.getItem("currentUser") || localStorage.getItem("currentUser");
       if (rawUser) {
         const parsed = JSON.parse(rawUser);
-        return parsed.email || "";
+        return (parsed.email || "").toLowerCase().trim();
       }
     } catch {}
     return "";

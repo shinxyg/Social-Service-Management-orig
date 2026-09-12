@@ -108,7 +108,16 @@ function parseDeviceInfo(req) {
 }
 
 async function recordNewSession(userId, email, sessionToken, req) {
-  const devInfo = parseDeviceInfo(req);
+  const parsed = parseDeviceInfo(req);
+  const clientInfo = req?.body?.clientDeviceInfo || {};
+  const devInfo = {
+    deviceType: clientInfo.deviceType || parsed.deviceType,
+    deviceName: clientInfo.deviceName || parsed.deviceName,
+    browser: clientInfo.browser || parsed.browser,
+    os: clientInfo.os || parsed.os,
+    ipAddress: parsed.ipAddress,
+    location: parsed.location || 'Quezon City, PH',
+  };
   const cleanEmail = String(email).toLowerCase();
   try {
     // 1. Mark previous active sessions for this user as terminated
