@@ -115,10 +115,10 @@ export function ProfileModal({
 
   const getStrengthInfo = () => {
     if (!newPassword) return { label: "", score: 0, color: "bg-gray-200", textColor: "text-gray-400" };
-    if (passedCriteriaCount <= 1) return { label: "Mahina / Weak", score: 1, color: "bg-red-500", textColor: "text-red-600" };
-    if (passedCriteriaCount === 2) return { label: "Katamtaman / Fair", score: 2, color: "bg-amber-500", textColor: "text-amber-600" };
-    if (passedCriteriaCount === 3) return { label: "Maganda / Good", score: 3, color: "bg-blue-500", textColor: "text-blue-600" };
-    return { label: "Napakalakas / Strong & Secure", score: 4, color: "bg-emerald-500", textColor: "text-emerald-600" };
+    if (passedCriteriaCount <= 1) return { label: t("strengthWeak"), score: 1, color: "bg-red-500", textColor: "text-red-600" };
+    if (passedCriteriaCount === 2) return { label: t("strengthFair"), score: 2, color: "bg-amber-500", textColor: "text-amber-600" };
+    if (passedCriteriaCount === 3) return { label: t("strengthGood"), score: 3, color: "bg-blue-500", textColor: "text-blue-600" };
+    return { label: t("strengthStrong"), score: 4, color: "bg-emerald-500", textColor: "text-emerald-600" };
   };
 
   const strength = getStrengthInfo();
@@ -128,12 +128,12 @@ export function ProfileModal({
     setPasswordMsg(null);
 
     if (!newPassword) {
-      setPasswordMsg({ type: "error", text: "Paki-lagay ang iyong bagong password." });
+      setPasswordMsg({ type: "error", text: t("pleaseEnterNewPassword") });
       return;
     }
 
     if (!isAllValid) {
-      setPasswordMsg({ type: "error", text: "Pakisunod ang lahat ng mga kailangan sa password." });
+      setPasswordMsg({ type: "error", text: t("pleaseFollowRequirements") });
       return;
     }
 
@@ -151,19 +151,20 @@ export function ProfileModal({
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setPasswordMsg({ type: "success", text: data.message || "Matagumpay na napalitan ang iyong password!" });
+        setPasswordMsg({ type: "success", text: data.message || t("passwordChangeSuccess") });
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        setPasswordMsg({ type: "error", text: data.message || "Bigo sa pagpalit ng password. Pakisuri muli." });
+        setPasswordMsg({ type: "error", text: data.message || t("passwordChangeFailed") });
       }
     } catch (err: any) {
-      setPasswordMsg({ type: "error", text: "May problema sa koneksyon. Pakisubukan muli." });
+      setPasswordMsg({ type: "error", text: t("connectionError") });
     } finally {
       setIsChangingPassword(false);
     }
   };
+
 
   useEffect(() => {
     if (open && !prevOpenRef.current) {
@@ -680,7 +681,7 @@ export function ProfileModal({
                     <div className="space-y-2.5 pt-1">
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-center text-[11px]">
-                          <span className="font-semibold text-gray-600">Lakas ng Password (Strength):</span>
+                          <span className="font-semibold text-gray-600">{t("passwordStrengthLabel")}</span>
                           <span className={`font-bold ${strength.textColor}`}>{strength.label}</span>
                         </div>
                         <div className="grid grid-cols-4 gap-1.5 h-1.5 w-full">
@@ -692,22 +693,22 @@ export function ProfileModal({
                       </div>
 
                       <div className="p-3 bg-white border border-gray-200 rounded-lg text-[11px] space-y-1.5 shadow-2xs">
-                        <div className="font-bold text-gray-700 text-[10px] uppercase tracking-wider">Mga Kailangan sa Password:</div>
+                        <div className="font-bold text-gray-700 text-[10px] uppercase tracking-wider">{t("passwordRequirementsTitle")}</div>
                         <div className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
                           {hasMinLength ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <X className="w-3.5 h-3.5" />}
-                          <span>Hindi bababa sa 8 characters</span>
+                          <span>{t("reqMinLength")}</span>
                         </div>
                         <div className={`flex items-center gap-1.5 ${hasUpper ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
                           {hasUpper ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <X className="w-3.5 h-3.5" />}
-                          <span>May kahit 1 uppercase letter (A-Z)</span>
+                          <span>{t("reqUpper")}</span>
                         </div>
                         <div className={`flex items-center gap-1.5 ${hasNumber ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
                           {hasNumber ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <X className="w-3.5 h-3.5" />}
-                          <span>May kahit 1 number (0-9)</span>
+                          <span>{t("reqNumber")}</span>
                         </div>
                         <div className={`flex items-center gap-1.5 ${hasSpecialChar ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
                           {hasSpecialChar ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <X className="w-3.5 h-3.5" />}
-                          <span>May kahit 1 special character (e.g. @, #, $, !, %)</span>
+                          <span>{t("reqSpecial")}</span>
                         </div>
                       </div>
                     </div>
@@ -718,15 +719,16 @@ export function ProfileModal({
                     <div className="pt-0.5 text-[11px]">
                       {passwordsMatch ? (
                         <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" /> Magkatugma ang password (Passwords match)
+                          <Check className="w-3.5 h-3.5 stroke-[3]" /> {t("passwordsMatchMsg")}
                         </span>
                       ) : (
                         <span className="text-red-500 font-semibold flex items-center gap-1">
-                          <X className="w-3.5 h-3.5" /> Hindi magkatugma ang password (Passwords do not match)
+                          <X className="w-3.5 h-3.5" /> {t("passwordsMismatchMsg")}
                         </span>
                       )}
                     </div>
                   )}
+
 
                   <div className="pt-2 flex justify-end">
                     <button
