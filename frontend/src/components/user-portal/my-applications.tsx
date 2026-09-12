@@ -1137,8 +1137,8 @@ export default function MyApplications() {
             <div className="flex items-center gap-2">
               <span
                 className={`text-xs font-bold px-3 py-1.5 rounded-xl border ${
-                  isTrainingApplication(selectedApp)
-                    ? "bg-purple-100 text-purple-800 border-purple-200"
+                  isTrainingApplication(selectedApp) || selectedApp.assistanceCategory === "Livelihood"
+                    ? "bg-blue-100 text-blue-800 border-blue-200"
                     : "bg-gray-100 text-gray-700 border-gray-200"
                 }`}
               >
@@ -1218,25 +1218,25 @@ export default function MyApplications() {
               : "Enrolled & In Training"
 
             return (
-              <div className="bg-gradient-to-r from-purple-50/90 via-indigo-50/60 to-blue-50/90 border border-purple-200 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-purple-200/80 pb-3 flex-wrap gap-2">
-                  <h3 className="text-sm font-bold text-purple-950 flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-purple-600" />
+              <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-blue-200/80 pb-3 flex-wrap gap-2">
+                  <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-blue-600" />
                     {stageTitle}
                   </h3>
-                  <span className="text-[11px] font-bold text-purple-900 bg-purple-100 px-2.5 py-0.5 rounded-full border border-purple-300">
+                  <span className="text-[11px] font-bold text-blue-900 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-300">
                     {stageBadge}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-purple-100 space-y-1">
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
                     <span className="text-gray-500 block uppercase font-bold text-[10px]">Enrolled Vocational Course</span>
-                    <span className="text-sm font-extrabold text-purple-950 block">{selectedApp.assistance}</span>
+                    <span className="text-sm font-extrabold text-blue-950 block">{selectedApp.assistance}</span>
                     <p className="text-[10px] text-gray-500">Official Government Skills Program</p>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-purple-100 space-y-1">
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
                     <span className="text-gray-500 block uppercase font-bold text-[10px]">Program Tuition / Fee</span>
                     <span className="text-sm font-extrabold text-emerald-700 block flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> 100% Free / Full Scholarship
@@ -1244,7 +1244,7 @@ export default function MyApplications() {
                     <p className="text-[10px] text-gray-500">Libreng pagsasanay at learning materials</p>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-purple-100 space-y-1">
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
                     <span className="text-gray-500 block uppercase font-bold text-[10px]">Accreditation &amp; Certificate</span>
                     <span className="text-sm font-extrabold text-blue-900 block flex items-center gap-1.5">
                       <Award className="w-3.5 h-3.5 text-blue-600" /> Certificate of Completion
@@ -1253,14 +1253,14 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-purple-100/60 border border-purple-200 rounded-xl p-3.5 text-xs text-purple-950">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-blue-100/60 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-950">
                   <p className="leading-relaxed">
                     Maaari mong buksan ang <strong>Training Program</strong> module upang makita ang iyong class schedule, attendance record, at opisyal na Certificate of Completion.
                   </p>
                   <button
                     type="button"
                     onClick={() => navigate("/portal/apply-livelihood?category=training")}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shrink-0 shadow-xs transition-colors cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shrink-0 shadow-xs transition-colors cursor-pointer"
                   >
                     <span>Buksan ang Training Module</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -1354,25 +1354,25 @@ export default function MyApplications() {
               : "Under Review"
 
             return (
-              <div className="bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-emerald-50/90 border border-amber-200 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-amber-200/80 pb-3 flex-wrap gap-2">
-                  <h3 className="text-sm font-bold text-amber-950 flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-amber-600" />
+              <div className="bg-gradient-to-r from-blue-50/90 via-sky-50/60 to-slate-50/90 border border-blue-200 rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-blue-200/80 pb-3 flex-wrap gap-2">
+                  <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-blue-600" />
                     {stageTitle}
                   </h3>
-                  <span className="text-[11px] font-bold text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
+                  <span className="text-[11px] font-bold text-blue-900 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-300">
                     {stageBadge}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-amber-100 space-y-1">
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
                     <span className="text-gray-500 block uppercase font-bold text-[10px]">Approved Capital Seed Grant</span>
                     <span className="text-2xl font-black text-emerald-700 block">₱15,000.00</span>
                     <p className="text-[10px] text-gray-500">Financial assistance grant for business setup</p>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-amber-100 space-y-1">
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
                     <span className="text-gray-500 block uppercase font-bold text-[10px]">Approved Materials &amp; Supplies</span>
                     <span className="text-sm font-extrabold text-blue-900 block flex items-center gap-1.5">
                       <Package className="w-3.5 h-3.5 text-blue-600" /> Starter Supply Pack
@@ -1380,23 +1380,23 @@ export default function MyApplications() {
                     <p className="text-[10px] text-gray-500">Official business inventory package</p>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-amber-100 space-y-1">
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
                     <span className="text-gray-500 block uppercase font-bold text-[10px]">Approved Tools &amp; Equipment</span>
-                    <span className="text-sm font-extrabold text-indigo-900 block flex items-center gap-1.5">
-                      <Wrench className="w-3.5 h-3.5 text-indigo-600" /> Operational Kit / Equipment
+                    <span className="text-sm font-extrabold text-blue-900 block flex items-center gap-1.5">
+                      <Wrench className="w-3.5 h-3.5 text-blue-600" /> Operational Kit / Equipment
                     </span>
                     <p className="text-[10px] text-gray-500">Tools for daily business operations</p>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-amber-100/60 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-950">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-blue-100/60 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-950">
                   <p className="leading-relaxed">
                     Maaari mong buksan ang <strong>Livelihood Program</strong> module upang makita ang buong detalye ng iyong capital, appointment schedule, at monitoring progress.
                   </p>
                   <button
                     type="button"
                     onClick={() => navigate("/portal/apply-livelihood?category=livelihood")}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shrink-0 shadow-xs transition-colors cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shrink-0 shadow-xs transition-colors cursor-pointer"
                   >
                     <span>Buksan ang Livelihood Module</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -1623,8 +1623,8 @@ export default function MyApplications() {
                       </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded font-medium border ${
-                          isTrainingApplication(app)
-                            ? "bg-purple-100 text-purple-800 border-purple-200"
+                          isTrainingApplication(app) || app.assistanceCategory === "Livelihood"
+                            ? "bg-blue-100 text-blue-800 border-blue-200"
                             : "bg-gray-100 text-gray-600 border-transparent"
                         }`}
                       >
@@ -1679,25 +1679,25 @@ export default function MyApplications() {
                   if (isTrainingApp) {
                     const isCompleted = app.status === "Released" || app.status === "Approved" || app.status === "Completed"
                     return (
-                      <div className="bg-gradient-to-r from-purple-50/90 via-indigo-50/60 to-blue-50/90 border border-purple-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                         <div className="flex items-start gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                             <GraduationCap className="w-5 h-5" />
                           </div>
                           <div className="space-y-0.5 text-xs">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-extrabold uppercase text-purple-900 bg-purple-100 px-2 py-0.5 rounded border border-purple-300">
+                              <span className="text-[10px] font-extrabold uppercase text-blue-900 bg-blue-100 px-2 py-0.5 rounded border border-blue-300">
                                 Skills Training Program
                               </span>
-                              <span className="text-[11px] font-mono text-purple-900 font-bold">
+                              <span className="text-[11px] font-mono text-blue-900 font-bold">
                                 {app.applicationNo}
                               </span>
                             </div>
                             <p className="font-bold text-gray-900">
-                              Enrolled Course: <span className="text-purple-900 font-bold text-sm">{app.assistance}</span>
+                              Enrolled Course: <span className="text-blue-900 font-bold text-sm">{app.assistance}</span>
                             </p>
                             <p className="text-[11px] text-gray-600 flex items-center gap-1">
-                              <ShieldCheck className="w-3 h-3 text-purple-600" />
+                              <ShieldCheck className="w-3 h-3 text-blue-600" />
                               <span>
                                 {isCompleted
                                   ? "✓ Natapos ang Pagsasanay • May Opisyal na Certificate of Completion"
@@ -1709,7 +1709,7 @@ export default function MyApplications() {
 
                         <div className="sm:text-right shrink-0">
                           <span className="text-[10px] text-gray-400 font-bold uppercase block">Training Status</span>
-                          <span className="text-xs font-black text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full border border-purple-300 inline-block mt-0.5">
+                          <span className="text-xs font-black text-blue-800 bg-blue-100 px-2.5 py-1 rounded-full border border-blue-300 inline-block mt-0.5">
                             {isCompleted ? "✓ COMPLETED & CERTIFIED" : "ENROLLED / IN PROGRESS"}
                           </span>
                         </div>
@@ -1774,17 +1774,17 @@ export default function MyApplications() {
                   if (isLivelihoodApp) {
                     const isReleased = app.status === "Released"
                     return (
-                      <div className="bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-emerald-50/90 border border-amber-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div className="bg-gradient-to-r from-blue-50/90 via-sky-50/60 to-slate-50/90 border border-blue-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                         <div className="flex items-start gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                             <GraduationCap className="w-5 h-5" />
                           </div>
                           <div className="space-y-0.5 text-xs">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-extrabold uppercase text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                              <span className="text-[10px] font-extrabold uppercase text-blue-900 bg-blue-100 px-2 py-0.5 rounded border border-blue-300">
                                 Livelihood Grant Package
                               </span>
-                              <span className="text-[11px] font-mono text-amber-900 font-bold">
+                              <span className="text-[11px] font-mono text-blue-900 font-bold">
                                 {app.applicationNo}
                               </span>
                             </div>
@@ -1792,8 +1792,8 @@ export default function MyApplications() {
                               Approved Capital Grant: <span className="text-emerald-700 font-black text-sm">₱15,000</span> + Starter Pack &amp; Tools
                             </p>
                             <p className="text-[11px] text-gray-600 flex items-center gap-1">
-                              <Package className="w-3 h-3 text-amber-600" />
-                              <span>Package Inclusions: <strong className="text-amber-950">₱15,000 Seed Capital • Starter Pack • Equipment Kit</strong></span>
+                              <Package className="w-3 h-3 text-blue-600" />
+                              <span>Package Inclusions: <strong className="text-blue-950">₱15,000 Seed Capital • Starter Pack • Equipment Kit</strong></span>
                             </p>
                           </div>
                         </div>
@@ -1806,7 +1806,7 @@ export default function MyApplications() {
                               ✓ In Monitoring
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 block mt-0.5">
+                            <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-300 block mt-0.5">
                               Approved Package
                             </span>
                           )}
