@@ -471,7 +471,7 @@ exports.login = async (req, res) => {
     const cleanPassword = password.trim();
 
     // 0. Check Progressive Rate Limiting & Lockout
-    const lockout = checkLoginLockout(req, cleanEmail);
+    const lockout = await checkLoginLockout(req, cleanEmail);
     if (lockout.isLocked) {
       return res.status(429).json({
         success: false,
@@ -482,8 +482,8 @@ exports.login = async (req, res) => {
     }
 
     // Helper for password failure response with attempt counter
-    const handlePasswordFailure = (userEmail) => {
-      const record = recordFailedLogin(req, userEmail);
+    const handlePasswordFailure = async (userEmail) => {
+      const record = await recordFailedLogin(req, userEmail);
       if (record.count >= 5) {
         return res.status(429).json({
           success: false,
@@ -534,10 +534,10 @@ exports.login = async (req, res) => {
         : (cleanPassword === 'admin123' || cleanPassword === 'admin');
 
       if (!isPassValid) {
-        return handlePasswordFailure(cleanEmail);
+        return await handlePasswordFailure(cleanEmail);
       }
 
-      clearFailedLogins(req, cleanEmail);
+      await clearFailedLogins(req, cleanEmail);
       const sessionToken = generateSessionToken();
       try {
         await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('admin@quezoncity.gov.ph', 'admin')", [sessionToken]);
@@ -570,10 +570,10 @@ exports.login = async (req, res) => {
         : (cleanPassword === 'superadmin123' || cleanPassword === 'superadmin');
 
       if (!isPassValid) {
-        return handlePasswordFailure(cleanEmail);
+        return await handlePasswordFailure(cleanEmail);
       }
 
-      clearFailedLogins(req, cleanEmail);
+      await clearFailedLogins(req, cleanEmail);
       const sessionToken = generateSessionToken();
       try {
         await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('superadmin@quezoncity.gov.ph', 'superadmin')", [sessionToken]);
@@ -606,10 +606,10 @@ exports.login = async (req, res) => {
         : (cleanPassword === 'staff123' || cleanPassword === 'staff');
 
       if (!isPassValid) {
-        return handlePasswordFailure(cleanEmail);
+        return await handlePasswordFailure(cleanEmail);
       }
 
-      clearFailedLogins(req, cleanEmail);
+      await clearFailedLogins(req, cleanEmail);
       const sessionToken = generateSessionToken();
       try {
         await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('staff@quezoncity.gov.ph', 'staff', 'socialworker@gov.ph')", [sessionToken]);
@@ -639,7 +639,7 @@ exports.login = async (req, res) => {
         // Check password using bcrypt
         const isPasswordValid = await verifyPassword(cleanPassword, dbUser.password);
         if (!isPasswordValid) {
-          return handlePasswordFailure(cleanEmail);
+          return await handlePasswordFailure(cleanEmail);
         }
 
         // Check account active/inactive status
@@ -660,8 +660,8 @@ exports.login = async (req, res) => {
           await db.query('UPDATE users SET password = $1 WHERE id = $2', [upgradedHash, dbUser.id]).catch(() => {});
         }
 
-        // Login succeeded -> clear failed attempts
-        clearFailedLogins(req, cleanEmail);
+        // Login succeeded -> clear failed attempts from DB & memory
+        await clearFailedLogins(req, cleanEmail);
 
         // Generate unique single active session token
         const sessionToken = generateSessionToken();
@@ -714,7 +714,7 @@ exports.login = async (req, res) => {
     if (memUser) {
       const isMemPasswordValid = await verifyPassword(cleanPassword, memUser.password);
       if (!isMemPasswordValid) {
-        return handlePasswordFailure(cleanEmail);
+        return await handlePasswordFailure(cleanEmail);
       }
 
       const memStatus = String(memUser.status || 'active').toLowerCase();
@@ -732,7 +732,7 @@ exports.login = async (req, res) => {
         memUser.password = await hashPassword(cleanPassword);
       }
 
-      clearFailedLogins(req, cleanEmail);
+      await clearFailedLogins(req, cleanEmail);
 
       const sessionToken = generateSessionToken();
       memUser.lastLogin = new Date().toISOString();

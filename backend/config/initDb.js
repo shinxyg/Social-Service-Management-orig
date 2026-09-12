@@ -120,6 +120,8 @@ async function initDb() {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
       ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS active_session_token VARCHAR(255);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP WITH TIME ZONE;
 
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
@@ -145,6 +147,19 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_login_sessions_email ON user_login_sessions(email);
       CREATE INDEX IF NOT EXISTS idx_login_sessions_token ON user_login_sessions(session_token);
       CREATE INDEX IF NOT EXISTS idx_login_sessions_active ON user_login_sessions(is_active);
+
+      CREATE TABLE IF NOT EXISTS login_attempts (
+        id SERIAL PRIMARY KEY,
+        ip_address VARCHAR(100) NOT NULL,
+        email VARCHAR(150) NOT NULL,
+        attempt_count INTEGER DEFAULT 1,
+        first_attempt TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        last_attempt TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        locked_until TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_login_attempts_key ON login_attempts(ip_address, email);
 
       CREATE TABLE IF NOT EXISTS pwd_senior_applications (
         id VARCHAR(100) PRIMARY KEY,
