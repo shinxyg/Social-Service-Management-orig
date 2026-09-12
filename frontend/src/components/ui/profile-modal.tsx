@@ -277,23 +277,62 @@ export function ProfileModal({
         : "border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed"
     }`;
 
-  const handleDeactivate = () => {
+  const handleDeactivate = async () => {
     const confirmed = window.confirm(
-      "Deactivating your account is a permanent action. All your data will be removed and you will lose access to the portal. Continue?"
+      t("dangerZoneDesc") + "\n\n" + (language === "tl" ? "Sigurado ka bang nais mong i-deactivate ang iyong account?" : "Are you sure you want to deactivate your account?")
     );
-    if (confirmed) {
-      console.log("Account deactivated");
+    if (!confirmed) return;
+
+    try {
+      const target = resolvedEmail || currentUser?.email;
+      if (target) {
+        await fetch(`${API_BASE}/api/users/${encodeURIComponent(target)}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "inactive" }),
+        });
+      }
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("token");
+      sessionStorage.clear();
+      alert(language === "tl" ? "Na-deactivate na ang iyong account." : "Your account has been deactivated.");
+      window.location.href = "/login";
+    } catch (err) {
+      console.error("Deactivation error:", err);
+      localStorage.removeItem("currentUser");
+      sessionStorage.clear();
+      window.location.href = "/login";
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     const confirmed = window.confirm(
-      "Deleting your account cannot be undone. All your data will be permanently removed. Continue?"
+      language === "tl"
+        ? "Permanente nitong buburahin ang iyong account. Hindi na ito maibabalik. Nais mo bang magpatuloy?"
+        : "Deleting your account is irreversible. All your data will be permanently removed. Do you wish to continue?"
     );
-    if (confirmed) {
-      console.log("Account deleted");
+    if (!confirmed) return;
+
+    try {
+      const target = resolvedEmail || currentUser?.email;
+      if (target) {
+        await fetch(`${API_BASE}/api/users/${encodeURIComponent(target)}`, {
+          method: "DELETE",
+        });
+      }
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("token");
+      sessionStorage.clear();
+      alert(language === "tl" ? "Permanente nang nabura ang iyong account." : "Your account has been permanently deleted.");
+      window.location.href = "/login";
+    } catch (err) {
+      console.error("Deletion error:", err);
+      localStorage.removeItem("currentUser");
+      sessionStorage.clear();
+      window.location.href = "/login";
     }
   };
+
 
   const handleUpdateProfile = async () => {
     setIsUpdating(true);
