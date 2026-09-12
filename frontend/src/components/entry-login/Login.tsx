@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, X, Eye, EyeOff, ExternalLink, KeyRound, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { API_BASE } from '../../config/api';
