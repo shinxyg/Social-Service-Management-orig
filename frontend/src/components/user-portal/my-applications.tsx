@@ -30,6 +30,7 @@ import {
   getSavedDisbursements,
   checkAndAutoReleaseScheduledDisbursements,
   isIdOrDocumentService,
+  isTrainingService,
 } from "../../utils/financialAidSync"
 import { useLanguage } from "../ui/language-context"
 
@@ -59,7 +60,19 @@ export interface ApplicationRecord {
   deletedAt?: string
 }
 
-export function isIdOrDocumentApplication(app: { assistance?: string; assistanceCategory?: string }) {
+export function isTrainingApplication(app?: { assistance?: string; assistanceCategory?: string } | null) {
+  if (!app) return false
+  const cat = String(app.assistanceCategory || "").toLowerCase()
+  const ast = String(app.assistance || "").toLowerCase()
+  return (
+    cat.includes("training") ||
+    ast.includes("training") ||
+    isTrainingService(`${cat} ${ast}`)
+  )
+}
+
+export function isIdOrDocumentApplication(app?: { assistance?: string; assistanceCategory?: string } | null) {
+  if (!app || isTrainingApplication(app)) return false
   return isIdOrDocumentService(`${app.assistanceCategory || ""} ${app.assistance || ""}`)
 }
 
@@ -873,7 +886,7 @@ export default function MyApplications() {
               return {
                 applicationNo: t.referenceNumber || t.reference_number || t.qcid || qcId,
                 assistance: `Gov Services Training: ${courseName}`,
-                assistanceCategory: "Livelihood",
+                assistanceCategory: "Training Program",
                 dateApplied: new Date(t.submittedAt || t.submitted_at || t.created_at || Date.now()).toLocaleDateString("en-PH", {
                   year: "numeric",
                   month: "long",
@@ -1122,8 +1135,14 @@ export default function MyApplications() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 border border-gray-200">
-                {selectedApp.assistanceCategory}
+              <span
+                className={`text-xs font-bold px-3 py-1.5 rounded-xl border ${
+                  isTrainingApplication(selectedApp)
+                    ? "bg-purple-100 text-purple-800 border-purple-200"
+                    : "bg-gray-100 text-gray-700 border-gray-200"
+                }`}
+              >
+                {isTrainingApplication(selectedApp) ? "Training Program" : selectedApp.assistanceCategory}
               </span>
               <span className="text-xs text-gray-400">
                 Date Applied: <strong>{selectedApp.dateApplied}</strong>
@@ -1161,6 +1180,7 @@ export default function MyApplications() {
         {(() => {
           const isApprovedOrReleased =
             selectedApp.status === "Approved" || selectedApp.status === "For Release" || selectedApp.status === "Released"
+          const isTrainingApp = isTrainingApplication(selectedApp)
           const isIdApp = isIdOrDocumentApplication(selectedApp)
 
           if (!isApprovedOrReleased) {
@@ -1169,12 +1189,16 @@ export default function MyApplications() {
                 <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-0.5 text-xs text-amber-900">
                   <p className="font-bold text-sm text-amber-950">
-                    {isIdApp
+                    {isTrainingApp
+                      ? "Kasalukuyang Sinusuri ang Training Program Aplikasyon (Pending / Under Review)"
+                      : isIdApp
                       ? "Kasalukuyang Sinusuri ang ID Aplikasyon (Pending / Under Review)"
                       : "Kasalukuyang Sinusuri ang Aplikasyon (Pending / Under Review)"}
                   </p>
                   <p className="text-amber-800 leading-relaxed">
-                    {isIdApp
+                    {isTrainingApp
+                      ? "Ang inyong aplikasyon sa libreng pagsasanay ay sinusuri ng SSDD Skills Training Division. Awtomatikong magkakaroon ng Training Schedule at Module access kapag na-aprubahan."
+                      : isIdApp
                       ? "Ang inyong ID aplikasyon at mga isinumiteng dokumento ay pinoproseso at sinusuri pa ng Social Worker / Verification Officer. Awtomatikong magkakaroon ng Official ID Record at Digital ID kapag na-aprubahan na ito."
                       : "Ang inyong aplikasyon ay pinoproseso at sinusuri pa ng Social Worker. Awtomatikong magkakaroon ng Fixed Financial Aid record at appointment schedule para sa payout kapag na-aprubahan na ito."}
                   </p>
@@ -1182,72 +1206,6 @@ export default function MyApplications() {
               </div>
             )
           }
-
-          if (isIdApp) {
-            const isPwd =
-              selectedApp.assistanceCategory === "PWD" ||
-              selectedApp.assistance.toLowerCase().includes("pwd") ||
-              selectedApp.assistance.toLowerCase().includes("disability")
-            const isSenior =
-              selectedApp.assistanceCategory === "Senior Citizen" ||
-              selectedApp.assistance.toLowerCase().includes("senior")
-            const officeName = isPwd
-              ? "Persons with Disability Affairs Division (PDAO)"
-              : isSenior
-              ? "Office of Senior Citizens Affairs (OSCA)"
-              : "Solo Parent Welfare Division"
-
-            return (
-              <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-blue-200/80 pb-3">
-                  <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-blue-600" />
-                    OFFICIAL ID RECORD &amp; ISSUANCE DETAILS
-                  </h3>
-                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                    ✓ ID Active &amp; Valid
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Official ID / QCID Number</span>
-                    <span className="text-lg font-mono font-black text-blue-700 block">{selectedApp.applicationNo}</span>
-                    <p className="text-[10px] text-gray-500">Official identification record number</p>
-                  </div>
-
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Issuance Status</span>
-                    <span className="text-sm font-extrabold text-emerald-700 block">ACTIVE / VALID</span>
-                    <span className="text-xs font-medium text-gray-600 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Ready for Digital Use
-                    </span>
-                  </div>
-
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Issuing Office</span>
-                    <span className="text-sm font-bold text-gray-900 block">{officeName}</span>
-                    <span className="text-[10px] text-gray-500 flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-blue-600" /> SSDD Division Office
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-3 text-xs text-blue-900 leading-relaxed">
-                  <strong>Paunawa:</strong> Maaari nang ipakita ang inyong <strong>Digital ID</strong> sa User Portal o kunin ang opisyal na physical ID card sa kinauukulang tanggapan para sa inyong mga statutory privileges at discounts.
-                </div>
-              </div>
-            )
-          }
-
-          const isTrainingApp =
-            selectedApp.assistanceCategory === "Training" ||
-            selectedApp.assistance.toLowerCase().includes("training") ||
-            selectedApp.assistance.toLowerCase().includes("skills") ||
-            selectedApp.assistance.toLowerCase().includes("sewing") ||
-            selectedApp.assistance.toLowerCase().includes("cooking") ||
-            selectedApp.assistance.toLowerCase().includes("beauty") ||
-            selectedApp.assistance.toLowerCase().includes("computer")
 
           if (isTrainingApp) {
             const isCompleted = selectedApp.status === "Released" || selectedApp.status === "Approved" || selectedApp.status === "Completed"
@@ -1307,6 +1265,63 @@ export default function MyApplications() {
                     <span>Buksan ang Training Module</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </button>
+                </div>
+              </div>
+            )
+          }
+
+          if (isIdApp) {
+            const isPwd =
+              selectedApp.assistanceCategory === "PWD" ||
+              selectedApp.assistance.toLowerCase().includes("pwd") ||
+              selectedApp.assistance.toLowerCase().includes("disability")
+            const isSenior =
+              selectedApp.assistanceCategory === "Senior Citizen" ||
+              selectedApp.assistance.toLowerCase().includes("senior")
+            const officeName = isPwd
+              ? "Persons with Disability Affairs Division (PDAO)"
+              : isSenior
+              ? "Office of Senior Citizens Affairs (OSCA)"
+              : "Solo Parent Welfare Division"
+
+            return (
+              <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-blue-200/80 pb-3">
+                  <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-blue-600" />
+                    OFFICIAL ID RECORD &amp; ISSUANCE DETAILS
+                  </h3>
+                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                    ✓ ID Active &amp; Valid
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
+                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Official ID / QCID Number</span>
+                    <span className="text-lg font-mono font-black text-blue-700 block">{selectedApp.applicationNo}</span>
+                    <p className="text-[10px] text-gray-500">Official identification record number</p>
+                  </div>
+
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
+                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Issuance Status</span>
+                    <span className="text-sm font-extrabold text-emerald-700 block">ACTIVE / VALID</span>
+                    <span className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Ready for Digital Use
+                    </span>
+                  </div>
+
+                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
+                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Issuing Office</span>
+                    <span className="text-sm font-bold text-gray-900 block">{officeName}</span>
+                    <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-blue-600" /> SSDD Division Office
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-3 text-xs text-blue-900 leading-relaxed">
+                  <strong>Paunawa:</strong> Maaari nang ipakita ang inyong <strong>Digital ID</strong> sa User Portal o kunin ang opisyal na physical ID card sa kinauukulang tanggapan para sa inyong mga statutory privileges at discounts.
                 </div>
               </div>
             )
@@ -1606,8 +1621,14 @@ export default function MyApplications() {
                       <span className="font-mono text-sm font-bold text-blue-700">
                         {app.applicationNo}
                       </span>
-                      <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
-                        {app.assistanceCategory}
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded font-medium border ${
+                          isTrainingApplication(app)
+                            ? "bg-purple-100 text-purple-800 border-purple-200"
+                            : "bg-gray-100 text-gray-600 border-transparent"
+                        }`}
+                      >
+                        {isTrainingApplication(app) ? "Training Program" : app.assistanceCategory}
                       </span>
                       {isDeleted && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-bold border border-red-200">
@@ -1652,7 +1673,49 @@ export default function MyApplications() {
                     return null
                   }
 
+                  const isTrainingApp = isTrainingApplication(app)
                   const isIdApp = isIdOrDocumentApplication(app)
+
+                  if (isTrainingApp) {
+                    const isCompleted = app.status === "Released" || app.status === "Approved" || app.status === "Completed"
+                    return (
+                      <div className="bg-gradient-to-r from-purple-50/90 via-indigo-50/60 to-blue-50/90 border border-purple-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                            <GraduationCap className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-0.5 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-extrabold uppercase text-purple-900 bg-purple-100 px-2 py-0.5 rounded border border-purple-300">
+                                Skills Training Program
+                              </span>
+                              <span className="text-[11px] font-mono text-purple-900 font-bold">
+                                {app.applicationNo}
+                              </span>
+                            </div>
+                            <p className="font-bold text-gray-900">
+                              Enrolled Course: <span className="text-purple-900 font-bold text-sm">{app.assistance}</span>
+                            </p>
+                            <p className="text-[11px] text-gray-600 flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-purple-600" />
+                              <span>
+                                {isCompleted
+                                  ? "✓ Natapos ang Pagsasanay • May Opisyal na Certificate of Completion"
+                                  : "Libreng Vocational Training • Regular Attendance Record"}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="sm:text-right shrink-0">
+                          <span className="text-[10px] text-gray-400 font-bold uppercase block">Training Status</span>
+                          <span className="text-xs font-black text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full border border-purple-300 inline-block mt-0.5">
+                            {isCompleted ? "✓ COMPLETED & CERTIFIED" : "ENROLLED / IN PROGRESS"}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  }
 
                   if (isIdApp) {
                     const isPwd =
@@ -1697,56 +1760,6 @@ export default function MyApplications() {
                           <span className="text-[10px] text-gray-400 font-bold uppercase block">ID Status</span>
                           <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300 inline-block mt-0.5">
                             ✓ ACTIVE &amp; READY
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  }
-
-                  const isTrainingApp =
-                    app.assistanceCategory === "Training" ||
-                    app.assistance.toLowerCase().includes("training") ||
-                    app.assistance.toLowerCase().includes("skills") ||
-                    app.assistance.toLowerCase().includes("sewing") ||
-                    app.assistance.toLowerCase().includes("cooking") ||
-                    app.assistance.toLowerCase().includes("beauty") ||
-                    app.assistance.toLowerCase().includes("computer")
-
-                  if (isTrainingApp) {
-                    const isCompleted = app.status === "Released" || app.status === "Approved" || app.status === "Completed"
-                    return (
-                      <div className="bg-gradient-to-r from-purple-50/90 via-indigo-50/60 to-blue-50/90 border border-purple-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-                        <div className="flex items-start gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                            <GraduationCap className="w-5 h-5" />
-                          </div>
-                          <div className="space-y-0.5 text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-extrabold uppercase text-purple-900 bg-purple-100 px-2 py-0.5 rounded border border-purple-300">
-                                Skills Training Program
-                              </span>
-                              <span className="text-[11px] font-mono text-purple-900 font-bold">
-                                {app.applicationNo}
-                              </span>
-                            </div>
-                            <p className="font-bold text-gray-900">
-                              Enrolled Course: <span className="text-purple-900 font-bold text-sm">{app.assistance}</span>
-                            </p>
-                            <p className="text-[11px] text-gray-600 flex items-center gap-1">
-                              <ShieldCheck className="w-3 h-3 text-purple-600" />
-                              <span>
-                                {isCompleted
-                                  ? "✓ Natapos ang Pagsasanay • May Opisyal na Certificate of Completion"
-                                  : "Libreng Vocational Training • Regular Attendance Record"}
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="sm:text-right shrink-0">
-                          <span className="text-[10px] text-gray-400 font-bold uppercase block">Training Status</span>
-                          <span className="text-xs font-black text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full border border-purple-300 inline-block mt-0.5">
-                            {isCompleted ? "✓ COMPLETED & CERTIFIED" : "ENROLLED / IN PROGRESS"}
                           </span>
                         </div>
                       </div>

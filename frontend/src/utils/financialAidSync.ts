@@ -74,20 +74,27 @@ export interface UserNotificationItem {
 // ── INITIAL SEED DATA (Empty so only real applications appear) ──
 export const INITIAL_DISBURSEMENTS: SyncedDisbursementRecord[] = []
 
-// ── CHECK IF SERVICE IS PURELY AN ID / BOOKLET APPLICATION (NOT CASH AID) ──
-export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
+// ── CHECK IF SERVICE IS PURELY A TRAINING PROGRAM (NON-MONETARY) ──
+export function isTrainingService(serviceOrConcern?: string): boolean {
   if (!serviceOrConcern) return false
   const lower = serviceOrConcern.toLowerCase()
-  if (
+  return (
     lower.includes("training") ||
     lower.includes("skills") ||
     lower.includes("sewing") ||
     lower.includes("cooking") ||
     lower.includes("beauty services") ||
-    lower.includes("computer training")
-  ) {
-    return true
-  }
+    lower.includes("beauty care") ||
+    lower.includes("computer training") ||
+    lower.includes("training program")
+  )
+}
+
+// ── CHECK IF SERVICE IS PURELY AN ID / BOOKLET APPLICATION (NOT CASH AID) ──
+export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
+  if (!serviceOrConcern) return false
+  if (isTrainingService(serviceOrConcern)) return false
+  const lower = serviceOrConcern.toLowerCase()
   if (
     lower.includes("social assistance") ||
     lower.includes("financial assistance") ||
@@ -216,6 +223,7 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
             p &&
             !["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"].includes(p.id) &&
             !isIdOrDocumentService(p.assistanceType) &&
+            !isTrainingService(p.assistanceType) &&
             !deletedKeys.has(p.id) &&
             !deletedKeys.has(p.disbursementId) &&
             !deletedKeys.has(p.applicationRef)
@@ -369,8 +377,8 @@ export function syncAppointmentToFinancialAid(params: {
   location: string
   notes?: string
 }) {
-  // If the appointment concern is an ID application (PWD ID, Senior ID, Solo Parent ID), do not treat as cash payout
-  if (isIdOrDocumentService(params.concern)) {
+  // If the appointment concern is an ID application or Training Program, do not treat as cash payout
+  if (isIdOrDocumentService(params.concern) || isTrainingService(params.concern)) {
     return
   }
 
