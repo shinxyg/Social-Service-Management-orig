@@ -8,8 +8,12 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 type ExpiryReason = "inactivity" | "concurrent" | null;
 
 export function SessionInactivityWatcher() {
-  const [expiryReason, setExpiryReason] = useState<ExpiryReason>(null);
-  const [newDeviceInfo, setNewDeviceInfo] = useState<string>("");
+  const [expiryReason, setExpiryReason] = useState<ExpiryReason>(() => {
+    return (sessionStorage.getItem("session_terminated_reason") as ExpiryReason) || null;
+  });
+  const [newDeviceInfo, setNewDeviceInfo] = useState<string>(() => {
+    return sessionStorage.getItem("terminated_new_device") || "";
+  });
   const lastActivityRef = useRef<number>(Date.now());
   const timerRef = useRef<any>(null);
   const verifyIntervalRef = useRef<any>(null);
@@ -19,7 +23,8 @@ export function SessionInactivityWatcher() {
     return (
       sessionStorage.getItem("isAuthenticated") === "true" ||
       localStorage.getItem("isAuthenticated") === "true" ||
-      Boolean(sessionStorage.getItem("currentUser"))
+      Boolean(sessionStorage.getItem("currentUser")) ||
+      Boolean(localStorage.getItem("currentUser"))
     );
   }, []);
 
@@ -54,7 +59,9 @@ export function SessionInactivityWatcher() {
 
   const clearAuthSession = useCallback(() => {
     try {
-      sessionStorage.clear();
+      sessionStorage.removeItem("isAuthenticated");
+      sessionStorage.removeItem("userRole");
+      sessionStorage.removeItem("currentUser");
       localStorage.removeItem("isAuthenticated");
       localStorage.removeItem("userRole");
       localStorage.removeItem("currentUser");
@@ -65,7 +72,9 @@ export function SessionInactivityWatcher() {
 
   // Check if account was logged into on another device (Single Active Session rule)
   const verifyConcurrentSession = useCallback(async () => {
-    if (!checkIsAuth() || expiryReason) return;
+    if (!checkIsAuth() && !sessionStorage.getItem("session_terminated_reason")) return;
+    if (expiryReason) return;
+
     const email = getCurrentUserEmail();
     const token = getSessionToken();
 
@@ -82,11 +91,15 @@ export function SessionInactivityWatcher() {
       });
       const data = await res.json();
       if (data && data.isSessionTerminated) {
-        clearAuthSession();
+        let devStr = "";
         if (data.newDevice) {
           const dev = data.newDevice;
-          setNewDeviceInfo(`${dev.device_name || dev.device_type || 'Another Device'}${dev.os ? ` (${dev.os})` : ''}`);
+          devStr = `${dev.device_name || dev.device_type || 'Another Device'}${dev.os ? ` (${dev.os})` : ''}`;
+          setNewDeviceInfo(devStr);
+          sessionStorage.setItem("terminated_new_device", devStr);
         }
+        sessionStorage.setItem("session_terminated_reason", "concurrent");
+        clearAuthSession();
         setExpiryReason("concurrent");
       }
     } catch {
@@ -95,7 +108,7 @@ export function SessionInactivityWatcher() {
   }, [checkIsAuth, expiryReason, getCurrentUserEmail, getSessionToken, clearAuthSession]);
 
   useEffect(() => {
-    if (!checkIsAuth()) {
+    if (!checkIsAuth() && !sessionStorage.getItem("session_terminated_reason")) {
       return;
     }
 
@@ -112,6 +125,7 @@ export function SessionInactivityWatcher() {
       if (checkIsAuth()) {
         const elapsed = Date.now() - lastActivityRef.current;
         if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+          sessionStorage.setItem("session_terminated_reason", "inactivity");
           clearAuthSession();
           setExpiryReason("inactivity");
         }
@@ -121,18 +135,17 @@ export function SessionInactivityWatcher() {
     // Initial check for concurrent session immediately
     verifyConcurrentSession();
 
-    // Real-time periodic check every 1.5 seconds for concurrent device login
+    // Real-time periodic check every 1 second for concurrent device login
     verifyIntervalRef.current = setInterval(() => {
       verifyConcurrentSession();
-    }, 1500);
+    }, 1000);
 
     // Also check immediately when window gains focus or tab becomes visible
     const handleVisibilityOrFocus = () => {
-      if (document.visibilityState === "visible") {
-        verifyConcurrentSession();
-      }
+      verifyConcurrentSession();
     };
     window.addEventListener("focus", handleVisibilityOrFocus);
+    window.addEventListener("pageshow", handleVisibilityOrFocus);
     document.addEventListener("visibilitychange", handleVisibilityOrFocus);
 
     return () => {
@@ -140,6 +153,7 @@ export function SessionInactivityWatcher() {
         window.removeEventListener(evt, handleUserActivity);
       });
       window.removeEventListener("focus", handleVisibilityOrFocus);
+      window.removeEventListener("pageshow", handleVisibilityOrFocus);
       document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -155,6 +169,12 @@ export function SessionInactivityWatcher() {
   }
 
   const handleReLogin = () => {
+    sessionStorage.clear();
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("sessionToken");
     window.location.href = "/login";
   };
 

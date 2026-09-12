@@ -81,22 +81,43 @@ export const Login = () => {
 
   const getClientDeviceInfo = () => {
     const ua = navigator.userAgent || '';
-    const isMobile = /mobile/i.test(ua) || (window.innerWidth <= 768 && /android|iphone|ipad/i.test(ua));
-    const isTablet = /tablet|ipad/i.test(ua);
-    
+    const hasTouch = (navigator.maxTouchPoints || 0) > 0 || 'ontouchstart' in window;
+    const isSmallScreen = window.innerWidth <= 820;
+
+    let isMobile = /mobile|iphone|ipod|android/i.test(ua) || (hasTouch && isSmallScreen);
+    let isTablet = /tablet|ipad/i.test(ua) || (hasTouch && !isSmallScreen && /android|ipad/i.test(ua));
+
     let os = 'Windows';
-    if (/windows/i.test(ua)) os = 'Windows';
-    else if (/android/i.test(ua)) os = 'Android';
-    else if (/iphone/i.test(ua)) os = 'iOS (iPhone)';
-    else if (/ipad/i.test(ua)) os = 'iPadOS';
-    else if (/macintosh|mac os/i.test(ua)) os = 'macOS';
-    else if (/linux/i.test(ua)) os = 'Linux';
+    if (/android/i.test(ua)) {
+      os = 'Android';
+      isMobile = !isTablet;
+    } else if (/iphone|ipod/i.test(ua)) {
+      os = 'iOS (iPhone)';
+      isMobile = true;
+    } else if (/ipad/i.test(ua)) {
+      os = 'iPadOS';
+      isTablet = true;
+    } else if (/windows|win32|win64/i.test(ua)) {
+      os = 'Windows';
+      isMobile = false;
+      isTablet = false;
+    } else if (/macintosh|mac os/i.test(ua)) {
+      os = 'macOS';
+      isMobile = false;
+    } else if (/cros/i.test(ua)) {
+      os = 'ChromeOS';
+      isMobile = false;
+    } else if (/linux/i.test(ua)) {
+      os = hasTouch ? 'Android' : 'Linux';
+      if (hasTouch) isMobile = true;
+    }
 
     let browser = 'Google Chrome';
     if (/edg/i.test(ua)) browser = 'Microsoft Edge';
     else if (/opr|opera/i.test(ua)) browser = 'Opera';
     else if (/firefox/i.test(ua)) browser = 'Mozilla Firefox';
     else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Apple Safari';
+    else if (/chrome/i.test(ua)) browser = 'Google Chrome';
 
     const deviceType = isTablet ? 'Tablet' : isMobile ? 'Mobile (Phone)' : 'Desktop (PC)';
     const deviceName = `${os} ${deviceType === 'Mobile (Phone)' ? 'Mobile' : deviceType === 'Tablet' ? 'Tablet' : 'PC'} • ${browser}`;

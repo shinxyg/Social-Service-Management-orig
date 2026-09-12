@@ -49,45 +49,52 @@ function parseDeviceInfo(req) {
   const ua = req ? (req.headers['user-agent'] || '') : '';
   let deviceType = 'Desktop (PC)';
   let os = 'Windows';
-  let browser = 'Chrome';
+  let browser = 'Google Chrome';
+
+  const lowerUa = ua.toLowerCase();
 
   // Device & OS detection
-  if (/mobile/i.test(ua)) {
-    deviceType = 'Mobile (Phone)';
-  } else if (/tablet|ipad/i.test(ua)) {
+  if (/ipad|tablet/i.test(lowerUa)) {
     deviceType = 'Tablet';
+  } else if (/mobile|iphone|ipod|android/i.test(lowerUa)) {
+    deviceType = 'Mobile (Phone)';
   } else {
     deviceType = 'Desktop (PC)';
   }
 
-  if (/windows/i.test(ua)) {
-    os = 'Windows';
-  } else if (/android/i.test(ua)) {
+  if (/android/i.test(lowerUa)) {
     os = 'Android';
-    deviceType = 'Mobile (Phone)';
-  } else if (/iphone/i.test(ua)) {
+    if (!/tablet|ipad/i.test(lowerUa)) deviceType = 'Mobile (Phone)';
+  } else if (/iphone|ipod/i.test(lowerUa)) {
     os = 'iOS (iPhone)';
     deviceType = 'Mobile (Phone)';
-  } else if (/ipad/i.test(ua)) {
+  } else if (/ipad/i.test(lowerUa)) {
     os = 'iPadOS';
     deviceType = 'Tablet';
-  } else if (/macintosh|mac os/i.test(ua)) {
+  } else if (/windows|win32|win64/i.test(lowerUa)) {
+    os = 'Windows';
+    deviceType = 'Desktop (PC)';
+  } else if (/macintosh|mac os/i.test(lowerUa)) {
     os = 'macOS';
-  } else if (/linux/i.test(ua)) {
+    deviceType = 'Desktop (PC)';
+  } else if (/cros/i.test(lowerUa)) {
+    os = 'ChromeOS';
+    deviceType = 'Desktop (PC)';
+  } else if (/linux/i.test(lowerUa)) {
     os = 'Linux';
   }
 
   // Browser detection
-  if (/edg/i.test(ua)) {
+  if (/edg/i.test(lowerUa)) {
     browser = 'Microsoft Edge';
-  } else if (/opr|opera/i.test(ua)) {
+  } else if (/opr|opera/i.test(lowerUa)) {
     browser = 'Opera';
-  } else if (/chrome|crios/i.test(ua)) {
-    browser = 'Google Chrome';
-  } else if (/safari/i.test(ua)) {
-    browser = 'Apple Safari';
-  } else if (/firefox|fxios/i.test(ua)) {
+  } else if (/firefox|fxios/i.test(lowerUa)) {
     browser = 'Mozilla Firefox';
+  } else if (/chrome|crios/i.test(lowerUa)) {
+    browser = 'Google Chrome';
+  } else if (/safari/i.test(lowerUa)) {
+    browser = 'Apple Safari';
   }
 
   const deviceName = `${os} ${deviceType === 'Mobile (Phone)' ? 'Mobile' : deviceType === 'Tablet' ? 'Tablet' : 'PC'} • ${browser}`;
