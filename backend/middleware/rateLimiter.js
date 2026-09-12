@@ -1,7 +1,7 @@
 const rateLimit = require('express-rate-limit');
 const db = require('../config/db');
 
-// In-memory store fallback for progressive failed login attempts: key -> { count, lockedUntil, firstAttempt }
+// In-memory store fallback for failed login attempts: key -> { count, lockedUntil, firstAttempt }
 const loginAttempts = new Map();
 
 // Helper to get client IP cleanly
@@ -20,10 +20,9 @@ function getLoginKey(req, email) {
 }
 
 /**
- * Check if the user/IP is currently locked out from logging in due to failed attempts
- * Tier 1: 3 failed attempts -> 1 minute (60s) cooldown
- * Tier 2: 5 failed attempts -> 5 minutes (300s) lockout
- * Checks PostgreSQL database first, falls back to in-memory store.
+ * Check if the user/IP is currently locked out from logging in due to 3 failed attempts
+ * Maximum: 3 attempts -> 1 minute (60s) lockout
+ * Resets back to fresh 3 attempts after cooldown expires.
  */
 async function checkLoginLockout(req, email) {
   const ip = getClientIp(req);
@@ -34,7 +33,7 @@ async function checkLoginLockout(req, email) {
   // 1. Check in PostgreSQL Database
   try {
     const dbRes = await db.query(
-      `SELECT attempt_count, locked_until, first_attempt 
+      `SELECT id, attempt_count, locked_until, first_attempt 
        FROM login_attempts 
        WHERE ip_address = $1 AND email = $2 
        LIMIT 1`,
@@ -47,15 +46,15 @@ async function checkLoginLockout(req, email) {
         const lockTime = new Date(row.locked_until).getTime();
         if (lockTime > now) {
           const remainingSeconds = Math.ceil((lockTime - now) / 1000);
-          const minutes = Math.ceil(remainingSeconds / 60);
           return {
             isLocked: true,
             remainingSeconds,
-            minutes,
-            message: row.attempt_count >= 5
-              ? `Too many failed login attempts (5/5). Your login is locked for ${minutes} minute${minutes > 1 ? 's' : ''}. Please wait ${remainingSeconds}s before trying again.`
-              : `Too many failed login attempts (3/3). Please wait ${remainingSeconds}s before trying again.`,
+            message: `Too many failed login attempts (3/3). Your login is locked for ${remainingSeconds}s for security.`,
           };
+        } else {
+          // Lockout duration expired -> clean up row so they start fresh with 3 attempts
+          await db.query(`DELETE FROM login_attempts WHERE id = $1`, [row.id]).catch(() => {});
+          loginAttempts.delete(key);
         }
       }
     }
@@ -68,22 +67,15 @@ async function checkLoginLockout(req, email) {
   if (record) {
     if (record.lockedUntil && now < record.lockedUntil) {
       const remainingSeconds = Math.ceil((record.lockedUntil - now) / 1000);
-      const minutes = Math.ceil(remainingSeconds / 60);
       return {
         isLocked: true,
         remainingSeconds,
-        minutes,
-        message: record.count >= 5
-          ? `Too many failed login attempts (5/5). Your login is locked for ${minutes} minute${minutes > 1 ? 's' : ''}. Please wait ${remainingSeconds}s before trying again.`
-          : `Too many failed login attempts (3/3). Please wait ${remainingSeconds}s before trying again.`,
+        message: `Too many failed login attempts (3/3). Your login is locked for ${remainingSeconds}s for security.`,
       };
     }
 
     if (record.lockedUntil && now >= record.lockedUntil) {
-      record.lockedUntil = null;
-      if (now - record.firstAttempt > 15 * 60 * 1000) {
-        loginAttempts.delete(key);
-      }
+      loginAttempts.delete(key);
     }
   }
 
@@ -91,7 +83,9 @@ async function checkLoginLockout(req, email) {
 }
 
 /**
- * Record a failed login attempt and apply progressive lockout rules to Database & Memory
+ * Record a failed login attempt:
+ * - Attempt 1 & 2: Increments counter and returns remaining attempts
+ * - Attempt 3: Locks for 1 minute (60s)
  */
 async function recordFailedLogin(req, email) {
   const ip = getClientIp(req);
@@ -102,41 +96,22 @@ async function recordFailedLogin(req, email) {
   let count = 1;
   let lockedUntil = null;
 
-  // In-Memory store update
-  let record = loginAttempts.get(key);
-  if (!record || (now - record.firstAttempt > 15 * 60 * 1000)) {
-    record = { count: 1, firstAttempt: now, lockedUntil: null };
-  } else {
-    record.count += 1;
-  }
-
-  if (record.count >= 5) {
-    record.lockedUntil = now + 5 * 60 * 1000;
-  } else if (record.count >= 3) {
-    record.lockedUntil = now + 1 * 60 * 1000;
-  }
-  loginAttempts.set(key, record);
-  count = record.count;
-  lockedUntil = record.lockedUntil ? new Date(record.lockedUntil) : null;
-
   // PostgreSQL Database update
   try {
     const existing = await db.query(
-      `SELECT id, attempt_count, first_attempt FROM login_attempts WHERE ip_address = $1 AND email = $2 LIMIT 1`,
+      `SELECT id, attempt_count, first_attempt, locked_until FROM login_attempts WHERE ip_address = $1 AND email = $2 LIMIT 1`,
       [ip, cleanEmail]
     );
 
     if (existing.rows.length > 0) {
       const dbRow = existing.rows[0];
-      const firstTime = new Date(dbRow.first_attempt).getTime();
-      const isWindowExpired = (now - firstTime > 15 * 60 * 1000);
+      const lockTime = dbRow.locked_until ? new Date(dbRow.locked_until).getTime() : 0;
+      const isLockExpired = lockTime > 0 && now >= lockTime;
 
-      count = isWindowExpired ? 1 : dbRow.attempt_count + 1;
+      count = isLockExpired ? 1 : dbRow.attempt_count + 1;
       let dbLockUntil = null;
-      if (count >= 5) {
-        dbLockUntil = new Date(now + 5 * 60 * 1000);
-      } else if (count >= 3) {
-        dbLockUntil = new Date(now + 1 * 60 * 1000);
+      if (count >= 3) {
+        dbLockUntil = new Date(now + 1 * 60 * 1000); // 1 minute lockout
       }
 
       await db.query(
@@ -145,11 +120,10 @@ async function recordFailedLogin(req, email) {
          WHERE id = $3`,
         [count, dbLockUntil, dbRow.id]
       );
+      lockedUntil = dbLockUntil;
     } else {
       let dbLockUntil = null;
-      if (count >= 5) {
-        dbLockUntil = new Date(now + 5 * 60 * 1000);
-      } else if (count >= 3) {
+      if (count >= 3) {
         dbLockUntil = new Date(now + 1 * 60 * 1000);
       }
 
@@ -159,9 +133,9 @@ async function recordFailedLogin(req, email) {
          VALUES ($1, $2, $3, NOW(), NOW(), $4, NOW())`,
         [ip, cleanEmail, count, dbLockUntil]
       );
+      lockedUntil = dbLockUntil;
     }
 
-    // Also update users table if user exists
     if (cleanEmail) {
       await db.query(
         `UPDATE users 
@@ -174,11 +148,26 @@ async function recordFailedLogin(req, email) {
     console.warn('[DB Warning] Failed to update login_attempts table in DB:', err.message);
   }
 
+  // Memory store update
+  let record = loginAttempts.get(key);
+  if (!record || (record.lockedUntil && now >= record.lockedUntil)) {
+    record = { count: 1, firstAttempt: now, lockedUntil: null };
+  } else {
+    record.count += 1;
+  }
+
+  if (record.count >= 3) {
+    record.lockedUntil = now + 1 * 60 * 1000;
+  }
+  loginAttempts.set(key, record);
+  count = record.count;
+  lockedUntil = record.lockedUntil ? new Date(record.lockedUntil) : null;
+
   return { count, lockedUntil };
 }
 
 /**
- * Clear failed login attempts upon successful authentication from Database & Memory
+ * Clear failed login attempts upon successful authentication
  */
 async function clearFailedLogins(req, email) {
   const ip = getClientIp(req);
@@ -245,7 +234,7 @@ const loginRateLimiter = rateLimit({
     return res.status(429).json({
       success: false,
       isRateLimited: true,
-      message: 'Too many login requests from this device. Please wait 5 minutes before trying again.',
+      message: 'Too many login requests from this device. Please wait a few minutes before trying again.',
     });
   },
 });

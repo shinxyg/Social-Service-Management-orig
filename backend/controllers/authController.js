@@ -484,24 +484,17 @@ exports.login = async (req, res) => {
     // Helper for password failure response with attempt counter
     const handlePasswordFailure = async (userEmail) => {
       const record = await recordFailedLogin(req, userEmail);
-      if (record.count >= 5) {
-        return res.status(429).json({
-          success: false,
-          isRateLimited: true,
-          remainingSeconds: 300,
-          message: 'Too many failed login attempts (5/5). Your login is locked for 5 minutes for security.',
-        });
-      } else if (record.count >= 3) {
+      if (record.count >= 3) {
         return res.status(429).json({
           success: false,
           isRateLimited: true,
           remainingSeconds: 60,
-          message: 'Too many failed login attempts (3/3). Please wait 1 minute before trying again.',
+          message: 'Too many failed login attempts (3/3). Your login is locked for 1 minute for security.',
         });
       }
       return res.status(401).json({
         success: false,
-        message: `Incorrect password. Please verify your password and try again. (${record.count}/5 failed attempts)`,
+        message: `Incorrect password. Please verify your password and try again. (${record.count}/3 failed attempts)`,
       });
     };
 
