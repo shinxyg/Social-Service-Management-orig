@@ -30,6 +30,11 @@ router.post('/reactivate', authController.reactivateAccount);
 router.get('/verify-session', authController.verifySession);
 router.post('/verify-session', authController.verifySession);
 
+// Device Management / Login History
+router.get('/devices', authController.getUserDevices);
+router.post('/devices/logout-others', authController.terminateAllOtherDevices);
+router.delete('/devices/:id', authController.terminateDeviceSession);
+
 
 
 // GET /api/auth/migrate-passwords

@@ -124,6 +124,28 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
 
+      CREATE TABLE IF NOT EXISTS user_login_sessions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        email VARCHAR(150) NOT NULL,
+        session_token VARCHAR(255) NOT NULL,
+        device_type VARCHAR(50) DEFAULT 'Desktop (PC)',
+        device_name VARCHAR(150) DEFAULT 'Windows PC • Chrome',
+        browser VARCHAR(100) DEFAULT 'Chrome',
+        os VARCHAR(100) DEFAULT 'Windows',
+        ip_address VARCHAR(100) DEFAULT '127.0.0.1',
+        location VARCHAR(150) DEFAULT 'Quezon City, PH',
+        is_active BOOLEAN DEFAULT true,
+        login_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        last_active_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        logout_at TIMESTAMP WITH TIME ZONE,
+        logout_reason VARCHAR(150)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_login_sessions_email ON user_login_sessions(email);
+      CREATE INDEX IF NOT EXISTS idx_login_sessions_token ON user_login_sessions(session_token);
+      CREATE INDEX IF NOT EXISTS idx_login_sessions_active ON user_login_sessions(is_active);
+
       CREATE TABLE IF NOT EXISTS pwd_senior_applications (
         id VARCHAR(100) PRIMARY KEY,
         reference_number VARCHAR(100),

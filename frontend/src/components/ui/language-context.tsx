@@ -122,9 +122,21 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   pleaseFollowRequirements: { en: "Please fulfill all password requirements.", tl: "Pakisunod ang lahat ng mga kailangan sa password.", bis: "Palihug tumana ang tanang gikinahanglan sa password." },
   passwordChangeSuccess: { en: "Password changed successfully!", tl: "Matagumpay na napalitan ang iyong password!", bis: "Malamposong nailisan ang imong password!" },
   passwordChangeFailed: { en: "Failed to update password. Please check your inputs.", tl: "Bigo sa pagpalit ng password. Pakisuri muli.", bis: "Napakyas sa pag-ilis sa password. Palihug susiha pag-usab." },
-  connectionError: { en: "Connection error. Please try again.", tl: "May problema sa koneksyon. Pakisubukan muli.", bis: "Adunay problema sa koneksyon. Palihug sulayi pag-usab." },
   registrationBy: { en: "Registration by:", tl: "Paraan ng Pagpaparehistro:", bis: "Pamaagi sa Pagparehistro:" },
-
+  devicesTab: { en: "Devices & History", tl: "Mga Device", bis: "Mga Device" },
+  deviceManagement: { en: "Device Management & Login History", tl: "Pamamahala ng Device at Kasaysayan ng Pag-access", bis: "Pagdumala sa Device ug Kasaysayan" },
+  deviceManagementDesc: {
+    en: "Real-time list of devices (PC, Mobile, Tablet) that have accessed your account with exact login date and time.",
+    tl: "Real-time na talaan ng mga device (PC, Mobile, Tablet) na gumamit ng iyong account, may kasamang eksaktong petsa at oras.",
+    bis: "Talaan sa mga device (PC, Mobile, Tablet) nga migamit sa imong account uban ang eksaktong petsa ug oras."
+  },
+  currentDeviceBadge: { en: "Current Device (Active)", tl: "Kasalukuyang Device (Aktibo)", bis: "Karon nga Device (Aktibo)" },
+  activeNow: { en: "Active Now", tl: "Aktibo Ngayon", bis: "Aktibo Karon" },
+  terminatedStatus: { en: "Terminated / Logged Out", tl: "Nai-logout / Natapos", bis: "Naka-logout / Nahuman" },
+  logOutAllOtherDevices: { en: "Log Out All Other Devices", tl: "I-logout ang Lahat ng Ibang Device", bis: "I-logout ang Tanang Ubang Device" },
+  signedInAt: { en: "Signed in:", tl: "Nag-sign in noong:", bis: "Ni-sign in kaniadtong:" },
+  signedOutAt: { en: "Signed out:", tl: "Nag-sign out noong:", bis: "Ni-sign out kaniadtong:" },
+  noDevicesFound: { en: "No other login history recorded.", tl: "Walang ibang kasaysayan ng pag-login.", bis: "Walay ubang kasaysayan sa pag-login." },
 
   emailAddress: { en: "Email Address", tl: "Email Address", bis: "Email Address" },
   fullNameHeading: { en: "Full Name", tl: "Buong Pangalan", bis: "Tibuok Ngalan" },

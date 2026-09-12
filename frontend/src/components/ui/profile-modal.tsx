@@ -1,7 +1,26 @@
-import { useState, useEffect, useRef } from "react"
-import { X, User, AlertTriangle, IdCard, Eye, EyeOff, Languages, Check, Camera, Trash2, KeyRound } from "lucide-react"
-
-
+import { useState, useEffect, useRef, useCallback } from "react"
+import {
+  X,
+  User,
+  AlertTriangle,
+  IdCard,
+  Eye,
+  EyeOff,
+  Languages,
+  Check,
+  Camera,
+  Trash2,
+  KeyRound,
+  Laptop,
+  Smartphone,
+  Tablet,
+  Globe,
+  Shield,
+  RefreshCw,
+  LogOut,
+  Clock,
+  CheckCircle2,
+} from "lucide-react"
 
 import { useLanguage, type Language } from "./language-context"
 import { getSavedProfilePhoto, saveProfilePhoto, removeProfilePhoto } from "../../utils/profilePhoto"
@@ -15,6 +34,24 @@ interface ProfileModalProps {
   role?: string
   qcidNo?: string
   user?: any
+}
+
+interface DeviceSession {
+  id: number | string;
+  email: string;
+  sessionToken: string;
+  deviceType: string;
+  deviceName: string;
+  browser: string;
+  os: string;
+  ipAddress: string;
+  location: string;
+  isActive: boolean;
+  isCurrentDevice: boolean;
+  loginAt: string;
+  lastActiveAt?: string;
+  logoutAt?: string;
+  logoutReason?: string;
 }
 
 interface FormData {
@@ -36,6 +73,25 @@ interface FormData {
 }
 
 import { getCurrentUserProfile, getCurrentUser } from "../../utils/userProfile"
+
+function formatSessionDate(isoString?: string) {
+  if (!isoString) return "N/A";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return isoString;
+  }
+}
 
 export function ProfileModal({
   open,
@@ -83,13 +139,79 @@ export function ProfileModal({
   };
 
   const [photoUrl, setPhotoUrl] = useState<string | null>(() => getSavedProfilePhoto(resolvedQcid));
-  const [tab, setTab] = useState<"account" | "personal" | "preferences">("account");
+  const [tab, setTab] = useState<"account" | "personal" | "devices" | "preferences">("account");
   const [showQcid, setShowQcid] = useState(false);
   const [formData, setFormData] = useState<FormData>(buildInitialData);
   const [savedFormData, setSavedFormData] = useState<FormData>(buildInitialData);
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+
+  // Device management state
+  const [deviceSessions, setDeviceSessions] = useState<DeviceSession[]>([]);
+  const [isLoadingDevices, setIsLoadingDevices] = useState(false);
+  const [deviceActionMsg, setDeviceActionMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isLoggingOutOthers, setIsLoggingOutOthers] = useState(false);
+
+  const fetchDeviceSessions = useCallback(async () => {
+    if (!resolvedEmail) return;
+    setIsLoadingDevices(true);
+    setDeviceActionMsg(null);
+    try {
+      const currentToken = sessionStorage.getItem("sessionToken") || "";
+      const res = await fetch(
+        `${API_BASE}/api/auth/devices?email=${encodeURIComponent(resolvedEmail)}&token=${encodeURIComponent(currentToken)}`
+      );
+      const data = await res.json();
+      if (res.ok && data.success && Array.isArray(data.sessions)) {
+        setDeviceSessions(data.sessions);
+      }
+    } catch (err) {
+      console.error("Error fetching device sessions:", err);
+    } finally {
+      setIsLoadingDevices(false);
+    }
+  }, [resolvedEmail]);
+
+  useEffect(() => {
+    if (open && tab === "devices") {
+      fetchDeviceSessions();
+    }
+  }, [open, tab, fetchDeviceSessions]);
+
+  const handleLogoutAllOtherDevices = async () => {
+    if (!resolvedEmail) return;
+    setIsLoggingOutOthers(true);
+    setDeviceActionMsg(null);
+    try {
+      const currentToken = sessionStorage.getItem("sessionToken") || "";
+      const res = await fetch(`${API_BASE}/api/auth/devices/logout-others`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resolvedEmail, currentToken }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDeviceActionMsg({
+          type: "success",
+          text: language === "tl" ? "Na-logout na ang lahat ng ibang device." : "All other device sessions have been logged out.",
+        });
+        fetchDeviceSessions();
+      } else {
+        setDeviceActionMsg({
+          type: "error",
+          text: data.message || "Failed to log out other devices.",
+        });
+      }
+    } catch (err) {
+      setDeviceActionMsg({
+        type: "error",
+        text: "Network error logging out other devices.",
+      });
+    } finally {
+      setIsLoggingOutOthers(false);
+    }
+  };
 
   // Track open state so we ONLY reset on fresh modal open, preventing auto-erasing while typing
   const prevOpenRef = useRef(false);
@@ -579,10 +701,10 @@ export function ProfileModal({
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center gap-8 border-b border-gray-200 px-8 pt-0">
+        <div className="flex justify-center gap-6 sm:gap-8 border-b border-gray-200 px-6 sm:px-8 pt-0 overflow-x-auto">
           <button
             onClick={() => setTab("account")}
-            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
               tab === "account"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -592,7 +714,7 @@ export function ProfileModal({
           </button>
           <button
             onClick={() => setTab("personal")}
-            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
               tab === "personal"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -601,8 +723,18 @@ export function ProfileModal({
             {t("personalInformation")}
           </button>
           <button
+            onClick={() => setTab("devices")}
+            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
+              tab === "devices"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {t("devicesTab") || "Devices & History"}
+          </button>
+          <button
             onClick={() => setTab("preferences")}
-            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
               tab === "preferences"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -1144,6 +1276,211 @@ export function ProfileModal({
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {tab === "devices" && (
+            <div className="space-y-6">
+              {/* Header & Subtitle */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <Laptop className="h-4 w-4 text-blue-600" />
+                    {t("deviceManagement") || "Device Management & Login History"}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    {t("deviceManagementDesc") || "Real-time list of devices (PC, Mobile, Tablet) that have accessed your account with exact login date and time."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={fetchDeviceSessions}
+                    disabled={isLoadingDevices}
+                    className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-50"
+                    title="Refresh device list"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isLoadingDevices ? "animate-spin text-blue-600" : ""}`} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLogoutAllOtherDevices}
+                    disabled={isLoggingOutOthers}
+                    className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>{isLoggingOutOthers ? "Logging out..." : (t("logOutAllOtherDevices") || "Log Out Other Devices")}</span>
+                  </button>
+                </div>
+              </div>
+
+              {deviceActionMsg && (
+                <div
+                  className={`p-3 rounded-lg text-xs font-medium flex items-center gap-2 ${
+                    deviceActionMsg.type === "success"
+                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>{deviceActionMsg.text}</span>
+                </div>
+              )}
+
+              {/* Active / Current Device Card */}
+              {(() => {
+                const currentDev = deviceSessions.find((s) => s.isCurrentDevice) || deviceSessions.find((s) => s.isActive);
+                if (!currentDev) return null;
+                const isMobile = currentDev.deviceType?.toLowerCase().includes("mobile") || currentDev.os?.toLowerCase().includes("android") || currentDev.os?.toLowerCase().includes("ios");
+                const isTablet = currentDev.deviceType?.toLowerCase().includes("tablet") || currentDev.os?.toLowerCase().includes("ipad");
+
+                return (
+                  <div className="rounded-2xl border-2 border-blue-200 bg-linear-to-br from-blue-50/50 via-white to-slate-50 p-5 shadow-xs relative overflow-hidden">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                          {isTablet ? (
+                            <Tablet className="w-6 h-6" />
+                          ) : isMobile ? (
+                            <Smartphone className="w-6 h-6" />
+                          ) : (
+                            <Laptop className="w-6 h-6" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-extrabold text-slate-900">
+                              {currentDev.deviceName || "Current Device"}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                              {t("activeNow") || "Active Now (Current Device)"}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
+                            <span>OS: <strong className="text-slate-700">{currentDev.os}</strong></span>
+                            <span>•</span>
+                            <span>Browser: <strong className="text-slate-700">{currentDev.browser}</strong></span>
+                            <span>•</span>
+                            <span>IP: <strong className="text-slate-700">{currentDev.ipAddress}</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-blue-100/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-600 gap-1">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span>{t("signedInAt") || "Signed in:"} <strong className="text-slate-900">{formatSessionDate(currentDev.loginAt)}</strong></span>
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        Location: {currentDev.location || "Quezon City, PH"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Login History / Other Sessions List */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  {language === "tl" ? "Kasaysayan ng Pag-access ng Ibang Device" : "Other Devices & Login History"}
+                </h4>
+
+                {isLoadingDevices && (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-600" />
+                    Loading login records...
+                  </div>
+                )}
+
+                {!isLoadingDevices && deviceSessions.filter((s) => !s.isCurrentDevice).length === 0 && (
+                  <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400">
+                    {t("noDevicesFound") || "No other devices have logged in recently."}
+                  </div>
+                )}
+
+                {!isLoadingDevices &&
+                  deviceSessions
+                    .filter((s) => !s.isCurrentDevice)
+                    .map((session) => {
+                      const isMobile = session.deviceType?.toLowerCase().includes("mobile") || session.os?.toLowerCase().includes("android") || session.os?.toLowerCase().includes("ios");
+                      const isTablet = session.deviceType?.toLowerCase().includes("tablet") || session.os?.toLowerCase().includes("ipad");
+
+                      return (
+                        <div
+                          key={session.id}
+                          className={`rounded-xl border p-4 transition-all ${
+                            session.isActive
+                              ? "border-amber-200 bg-amber-50/40"
+                              : "border-slate-200 bg-white hover:bg-slate-50/70"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                                  session.isActive
+                                    ? "bg-amber-100 text-amber-700"
+                                    : "bg-slate-100 text-slate-500"
+                                }`}
+                              >
+                                {isTablet ? (
+                                  <Tablet className="w-5 h-5" />
+                                ) : isMobile ? (
+                                  <Smartphone className="w-5 h-5" />
+                                ) : (
+                                  <Laptop className="w-5 h-5" />
+                                )}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs sm:text-sm font-bold text-slate-800">
+                                    {session.deviceName || "Device Session"}
+                                  </span>
+                                  {session.isActive ? (
+                                    <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-300">
+                                      Active Session
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                      {t("terminatedStatus") || "Logged Out"}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
+                                  <span>OS: <strong>{session.os}</strong></span>
+                                  <span>•</span>
+                                  <span>Browser: <strong>{session.browser}</strong></span>
+                                  <span>•</span>
+                                  <span>IP: <strong>{session.ipAddress}</strong></span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>
+                                {t("signedInAt") || "Signed in:"}{" "}
+                                <strong className="text-slate-700 font-medium">
+                                  {formatSessionDate(session.loginAt)}
+                                </strong>
+                              </span>
+                            </div>
+                            {session.logoutAt && (
+                              <div className="text-slate-400">
+                                {t("signedOutAt") || "Signed out:"}{" "}
+                                <span className="text-slate-600 font-medium">{formatSessionDate(session.logoutAt)}</span>
+                                {session.logoutReason ? ` (${session.logoutReason})` : ""}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
               </div>
             </div>
           )}

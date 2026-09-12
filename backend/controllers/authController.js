@@ -42,6 +42,124 @@ function generateSessionToken() {
 }
 
 /**
+ * Parses User-Agent header to identify device type, OS, and Browser
+ */
+function parseDeviceInfo(req) {
+  const ua = req ? (req.headers['user-agent'] || '') : '';
+  let deviceType = 'Desktop (PC)';
+  let os = 'Windows';
+  let browser = 'Chrome';
+
+  // Device & OS detection
+  if (/mobile/i.test(ua)) {
+    deviceType = 'Mobile (Phone)';
+  } else if (/tablet|ipad/i.test(ua)) {
+    deviceType = 'Tablet';
+  } else {
+    deviceType = 'Desktop (PC)';
+  }
+
+  if (/windows/i.test(ua)) {
+    os = 'Windows';
+  } else if (/android/i.test(ua)) {
+    os = 'Android';
+    deviceType = 'Mobile (Phone)';
+  } else if (/iphone/i.test(ua)) {
+    os = 'iOS (iPhone)';
+    deviceType = 'Mobile (Phone)';
+  } else if (/ipad/i.test(ua)) {
+    os = 'iPadOS';
+    deviceType = 'Tablet';
+  } else if (/macintosh|mac os/i.test(ua)) {
+    os = 'macOS';
+  } else if (/linux/i.test(ua)) {
+    os = 'Linux';
+  }
+
+  // Browser detection
+  if (/edg/i.test(ua)) {
+    browser = 'Microsoft Edge';
+  } else if (/opr|opera/i.test(ua)) {
+    browser = 'Opera';
+  } else if (/chrome|crios/i.test(ua)) {
+    browser = 'Google Chrome';
+  } else if (/safari/i.test(ua)) {
+    browser = 'Apple Safari';
+  } else if (/firefox|fxios/i.test(ua)) {
+    browser = 'Mozilla Firefox';
+  }
+
+  const deviceName = `${os} ${deviceType === 'Mobile (Phone)' ? 'Mobile' : deviceType === 'Tablet' ? 'Tablet' : 'PC'} • ${browser}`;
+
+  // IP resolution
+  const forwarded = req?.headers ? req.headers['x-forwarded-for'] : null;
+  let ip = (forwarded ? forwarded.split(',')[0].trim() : req?.socket?.remoteAddress || '127.0.0.1');
+  if (ip === '::1' || ip === '::ffff:127.0.0.1') ip = '127.0.0.1';
+
+  return {
+    deviceType,
+    deviceName,
+    browser,
+    os,
+    ipAddress: ip,
+    location: 'Quezon City, PH',
+  };
+}
+
+let memorySessions = []; // Fallback memory store for device sessions
+
+async function recordNewSession(userId, email, sessionToken, req) {
+  const devInfo = parseDeviceInfo(req);
+  const cleanEmail = String(email).toLowerCase();
+  try {
+    // 1. Mark previous active sessions for this user as terminated
+    await db.query(
+      `UPDATE user_login_sessions 
+       SET is_active = false, logout_at = NOW(), logout_reason = $1 
+       WHERE LOWER(email) = $2 AND is_active = true`,
+      [`Overtaken by new login from ${devInfo.deviceName}`, cleanEmail]
+    );
+
+    // 2. Insert new session record
+    await db.query(
+      `INSERT INTO user_login_sessions 
+       (user_id, email, session_token, device_type, device_name, browser, os, ip_address, location, is_active, login_at, last_active_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW(), NOW())`,
+      [userId || null, cleanEmail, sessionToken, devInfo.deviceType, devInfo.deviceName, devInfo.browser, devInfo.os, devInfo.ipAddress, devInfo.location]
+    );
+  } catch (err) {
+    console.warn('[DB Error] Recording login session to DB failed, updating memorySessions fallback:', err.message);
+  }
+
+  // Memory store fallback
+  memorySessions.forEach((s) => {
+    if (s.email.toLowerCase() === cleanEmail && s.isActive) {
+      s.isActive = false;
+      s.logoutAt = new Date().toISOString();
+      s.logoutReason = `Overtaken by new login from ${devInfo.deviceName}`;
+    }
+  });
+
+  memorySessions.unshift({
+    id: Date.now(),
+    userId: userId || null,
+    email: cleanEmail,
+    sessionToken,
+    deviceType: devInfo.deviceType,
+    deviceName: devInfo.deviceName,
+    browser: devInfo.browser,
+    os: devInfo.os,
+    ipAddress: devInfo.ipAddress,
+    location: devInfo.location,
+    isActive: true,
+    loginAt: new Date().toISOString(),
+    lastActiveAt: new Date().toISOString(),
+    logoutAt: null,
+    logoutReason: null,
+  });
+}
+
+/**
  * POST /api/auth/send-otp
  * Generates and emails a 6-digit OTP code to the applicant's Gmail address
  */
@@ -375,6 +493,7 @@ exports.login = async (req, res) => {
       try {
         await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('admin@quezoncity.gov.ph', 'admin')", [sessionToken]);
       } catch {}
+      await recordNewSession(null, cleanEmail.includes('@') ? cleanEmail : 'admin@quezoncity.gov.ph', sessionToken, req);
 
       return res.status(200).json({
         success: true,
@@ -412,6 +531,7 @@ exports.login = async (req, res) => {
       try {
         await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('superadmin@quezoncity.gov.ph', 'superadmin')", [sessionToken]);
       } catch {}
+      await recordNewSession(null, cleanEmail.includes('@') ? cleanEmail : 'superadmin@quezoncity.gov.ph', sessionToken, req);
 
       return res.status(200).json({
         success: true,
@@ -449,6 +569,7 @@ exports.login = async (req, res) => {
       try {
         await db.query("UPDATE users SET active_session_token = $1 WHERE LOWER(email) IN ('staff@quezoncity.gov.ph', 'staff', 'socialworker@gov.ph')", [sessionToken]);
       } catch {}
+      await recordNewSession(null, cleanEmail.includes('@') ? cleanEmail : 'staff@quezoncity.gov.ph', sessionToken, req);
 
       return res.status(200).json({
         success: true,
@@ -502,6 +623,9 @@ exports.login = async (req, res) => {
 
         // Record last login time & active session token in DB
         await db.query('UPDATE users SET last_login = NOW(), active_session_token = $1 WHERE id = $2', [sessionToken, dbUser.id]).catch(() => {});
+
+        // Record device login session in audit logs
+        await recordNewSession(dbUser.id, dbUser.email, sessionToken, req);
 
         const userPayload = {
           id: dbUser.id,
@@ -570,6 +694,8 @@ exports.login = async (req, res) => {
       memUser.lastLogin = new Date().toISOString();
       memUser.activeSessionToken = sessionToken;
 
+      await recordNewSession(memUser.id, memUser.email, sessionToken, req);
+
       const safeMemUser = { ...memUser };
       delete safeMemUser.password;
 
@@ -620,6 +746,8 @@ exports.reactivateAccount = async (req, res) => {
 
         const sessionToken = generateSessionToken();
         await db.query(`UPDATE users SET status = 'active', last_login = NOW(), active_session_token = $1, updated_at = NOW() WHERE id = $2`, [sessionToken, dbUser.id]);
+
+        await recordNewSession(dbUser.id, dbUser.email, sessionToken, req);
 
         const userPayload = {
           id: dbUser.id,
@@ -737,6 +865,183 @@ exports.verifySession = async (req, res) => {
   } catch (err) {
     console.error('Error in verifySession controller:', err);
     return res.status(500).json({ success: false, message: 'Server error during session verification' });
+  }
+};
+
+/**
+ * GET /api/auth/devices
+ * Retrieves active device and login history for the user
+ */
+exports.getUserDevices = async (req, res) => {
+  try {
+    const email = (req.query.email || req.headers['x-user-email'] || '').trim().toLowerCase();
+    const currentToken = (req.query.token || req.headers['x-session-token'] || '').trim();
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    let sessions = [];
+    try {
+      const dbRes = await db.query(
+        `SELECT id, user_id, email, session_token, device_type, device_name, browser, os, ip_address, location, is_active, login_at, last_active_at, logout_at, logout_reason
+         FROM user_login_sessions
+         WHERE LOWER(email) = $1
+         ORDER BY id DESC
+         LIMIT 30`,
+        [email]
+      );
+      sessions = dbRes.rows.map(row => ({
+        id: row.id,
+        email: row.email,
+        sessionToken: row.session_token,
+        deviceType: row.device_type,
+        deviceName: row.device_name,
+        browser: row.browser,
+        os: row.os,
+        ipAddress: row.ip_address,
+        location: row.location,
+        isActive: row.is_active,
+        isCurrentDevice: currentToken ? (row.session_token === currentToken) : Boolean(row.is_active),
+        loginAt: row.login_at,
+        lastActiveAt: row.last_active_at,
+        logoutAt: row.logout_at,
+        logoutReason: row.logout_reason,
+      }));
+    } catch (dbErr) {
+      console.warn('[DB Error] Fetching login sessions failed, checking memory:', dbErr.message);
+    }
+
+    if (sessions.length === 0) {
+      sessions = memorySessions
+        .filter(s => s.email.toLowerCase() === email)
+        .map(s => ({
+          ...s,
+          isCurrentDevice: currentToken ? (s.sessionToken === currentToken) : Boolean(s.isActive),
+        }));
+    }
+
+    // If still empty (e.g. legacy session without record), synthesize current device entry
+    if (sessions.length === 0) {
+      const devInfo = parseDeviceInfo(req);
+      sessions = [{
+        id: 1,
+        email,
+        sessionToken: currentToken || 'sess_current',
+        deviceType: devInfo.deviceType,
+        deviceName: devInfo.deviceName,
+        browser: devInfo.browser,
+        os: devInfo.os,
+        ipAddress: devInfo.ipAddress,
+        location: devInfo.location,
+        isActive: true,
+        isCurrentDevice: true,
+        loginAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString(),
+        logoutAt: null,
+        logoutReason: null,
+      }];
+    }
+
+    return res.status(200).json({
+      success: true,
+      sessions,
+    });
+  } catch (err) {
+    console.error('Error in getUserDevices controller:', err);
+    return res.status(500).json({ success: false, message: 'Server error retrieving device sessions' });
+  }
+};
+
+/**
+ * POST /api/auth/devices/logout-others
+ * Terminates all other active sessions except the requesting client
+ */
+exports.terminateAllOtherDevices = async (req, res) => {
+  try {
+    const { email, currentToken } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+
+    try {
+      if (currentToken) {
+        await db.query(
+          `UPDATE user_login_sessions 
+           SET is_active = false, logout_at = NOW(), logout_reason = 'Manually terminated via Device Manager'
+           WHERE LOWER(email) = $1 AND session_token != $2 AND is_active = true`,
+          [cleanEmail, currentToken]
+        );
+        // Ensure user active_session_token is set to current token
+        await db.query(`UPDATE users SET active_session_token = $1 WHERE LOWER(email) = $2`, [currentToken, cleanEmail]);
+      } else {
+        await db.query(
+          `UPDATE user_login_sessions 
+           SET is_active = false, logout_at = NOW(), logout_reason = 'Manually terminated via Device Manager'
+           WHERE LOWER(email) = $1 AND is_active = true`,
+          [cleanEmail]
+        );
+      }
+    } catch (dbErr) {
+      console.warn('[DB Error] terminateAllOtherDevices failed:', dbErr.message);
+    }
+
+    memorySessions.forEach(s => {
+      if (s.email.toLowerCase() === cleanEmail && s.sessionToken !== currentToken) {
+        s.isActive = false;
+        s.logoutAt = new Date().toISOString();
+        s.logoutReason = 'Manually terminated via Device Manager';
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'All other device sessions have been logged out successfully.',
+    });
+  } catch (err) {
+    console.error('Error in terminateAllOtherDevices:', err);
+    return res.status(500).json({ success: false, message: 'Failed to logout other devices' });
+  }
+};
+
+/**
+ * DELETE /api/auth/devices/:id
+ * Terminates a specific device session
+ */
+exports.terminateDeviceSession = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.body;
+    const cleanId = String(id);
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    try {
+      await db.query(
+        `UPDATE user_login_sessions 
+         SET is_active = false, logout_at = NOW(), logout_reason = 'Manually terminated by user'
+         WHERE id = $1`,
+        [parseInt(cleanId, 10) || 0]
+      );
+    } catch (dbErr) {
+      console.warn('[DB Error] terminateDeviceSession failed:', dbErr.message);
+    }
+
+    memorySessions.forEach(s => {
+      if (String(s.id) === cleanId) {
+        s.isActive = false;
+        s.logoutAt = new Date().toISOString();
+        s.logoutReason = 'Manually terminated by user';
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Device session terminated successfully.',
+    });
+  } catch (err) {
+    console.error('Error in terminateDeviceSession:', err);
+    return res.status(500).json({ success: false, message: 'Failed to terminate device session' });
   }
 };
 
