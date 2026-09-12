@@ -445,21 +445,24 @@ exports.login = async (req, res) => {
       if (userRes.rows.length > 0) {
         const dbUser = userRes.rows[0];
 
-        // Check account active/inactive status
-        const userStatus = String(dbUser.status || 'active').toLowerCase();
-        if (userStatus === 'inactive' || userStatus === 'deactivated') {
-          return res.status(403).json({
-            success: false,
-            message: 'Your account is currently inactive. Please contact the administrator to reactivate your account.',
-          });
-        }
-
         // Check password using bcrypt
         const isPasswordValid = await verifyPassword(cleanPassword, dbUser.password);
         if (!isPasswordValid) {
           return res.status(401).json({
             success: false,
             message: 'Incorrect password. Please verify your password and try again.',
+          });
+        }
+
+        // Check account active/inactive status
+        const userStatus = String(dbUser.status || 'active').toLowerCase();
+        if (userStatus === 'inactive' || userStatus === 'deactivated') {
+          return res.status(403).json({
+            success: false,
+            isInactive: true,
+            email: dbUser.email,
+            name: `${dbUser.first_name || ''} ${dbUser.last_name || ''}`.trim() || 'Resident',
+            message: 'Your account is currently deactivated. Would you like to reactivate it?',
           });
         }
 
@@ -511,19 +514,22 @@ exports.login = async (req, res) => {
     // 3. Check memory store fallback
     const memUser = memoryUsers.find(u => u.email.toLowerCase() === cleanEmail);
     if (memUser) {
-      const memStatus = String(memUser.status || 'active').toLowerCase();
-      if (memStatus === 'inactive' || memStatus === 'deactivated') {
-        return res.status(403).json({
-          success: false,
-          message: 'Your account is currently inactive. Please contact the administrator to reactivate your account.',
-        });
-      }
-
       const isMemPasswordValid = await verifyPassword(cleanPassword, memUser.password);
       if (!isMemPasswordValid) {
         return res.status(401).json({
           success: false,
           message: 'Incorrect password. Please verify your password and try again.',
+        });
+      }
+
+      const memStatus = String(memUser.status || 'active').toLowerCase();
+      if (memStatus === 'inactive' || memStatus === 'deactivated') {
+        return res.status(403).json({
+          success: false,
+          isInactive: true,
+          email: memUser.email,
+          name: `${memUser.firstName || ''} ${memUser.lastName || ''}`.trim() || 'Resident',
+          message: 'Your account is currently deactivated. Would you like to reactivate it?',
         });
       }
 
@@ -553,6 +559,100 @@ exports.login = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error during login', error: err.message });
   }
 };
+
+/**
+ * POST /api/auth/reactivate
+ * Self-service account reactivation by resident user
+ */
+exports.reactivateAccount = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email address is required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Check in DB
+    try {
+      const userRes = await db.query('SELECT * FROM users WHERE LOWER(email) = $1', [cleanEmail]);
+      if (userRes.rows.length > 0) {
+        const dbUser = userRes.rows[0];
+
+        if (password) {
+          const isPasswordValid = await verifyPassword(password, dbUser.password);
+          if (!isPasswordValid) {
+            return res.status(401).json({ success: false, message: 'Incorrect password. Reactivation cancelled.' });
+          }
+        }
+
+        await db.query(`UPDATE users SET status = 'active', last_login = NOW(), updated_at = NOW() WHERE id = $1`, [dbUser.id]);
+
+        const userPayload = {
+          id: dbUser.id,
+          email: dbUser.email,
+          firstName: dbUser.first_name || '',
+          lastName: dbUser.last_name || '',
+          middleName: dbUser.middle_name || '',
+          suffix: dbUser.suffix || '',
+          birthDate: dbUser.birth_date || '',
+          birthMonth: dbUser.birth_month || '',
+          birthDay: dbUser.birth_day || '',
+          birthYear: dbUser.birth_year || '',
+          city: dbUser.city || 'QUEZON CITY',
+          barangay: dbUser.barangay || '',
+          street: dbUser.street || '',
+          houseNo: dbUser.house_no || '',
+          workingInQC: dbUser.working_in_qc || 'No',
+          occupation: dbUser.occupation || '',
+          sex: dbUser.sex || 'FEMALE',
+          mobileNumber: dbUser.mobile_number || '',
+          profilePhotoUrl: dbUser.profile_photo_url || null,
+          qcidNumber: dbUser.qcid_number || '110000116932100',
+          role: dbUser.role || 'user',
+          status: 'active',
+          lastLogin: new Date().toISOString(),
+        };
+
+        return res.status(200).json({
+          success: true,
+          message: 'Account successfully reactivated! Welcome back to GovServe.',
+          role: userPayload.role,
+          user: userPayload,
+        });
+      }
+    } catch (dbErr) {
+      console.warn('[DB Error] Reactivate account failed:', dbErr.message);
+    }
+
+    // 2. Memory store fallback
+    const memUser = memoryUsers.find(u => u.email.toLowerCase() === cleanEmail);
+    if (memUser) {
+      if (password) {
+        const isMemPasswordValid = await verifyPassword(password, memUser.password);
+        if (!isMemPasswordValid) {
+          return res.status(401).json({ success: false, message: 'Incorrect password. Reactivation cancelled.' });
+        }
+      }
+      memUser.status = 'active';
+      memUser.lastLogin = new Date().toISOString();
+      const safeUser = { ...memUser };
+      delete safeUser.password;
+      return res.status(200).json({
+        success: true,
+        message: 'Account successfully reactivated! Welcome back to GovServe.',
+        role: safeUser.role || 'user',
+        user: safeUser,
+      });
+    }
+
+    return res.status(404).json({ success: false, message: 'User account not found.' });
+  } catch (err) {
+    console.error('Error in reactivateAccount controller:', err);
+    return res.status(500).json({ success: false, message: 'Server error during account reactivation', error: err.message });
+  }
+};
+
 
 /**
  * GET /api/users/profile or GET /api/auth/profile

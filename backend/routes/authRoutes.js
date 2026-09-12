@@ -23,6 +23,10 @@ router.post('/reset-password', authController.resetPassword);
 // POST /api/auth/change-password
 router.post('/change-password', authController.changePassword);
 
+// POST /api/auth/reactivate
+router.post('/reactivate', authController.reactivateAccount);
+
+
 
 // GET /api/auth/migrate-passwords
 router.get('/migrate-passwords', authController.migrateAllPasswords);

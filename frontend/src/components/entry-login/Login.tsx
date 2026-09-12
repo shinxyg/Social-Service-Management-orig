@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, X, Eye, EyeOff, ExternalLink, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Lock, Mail, X, Eye, EyeOff, ExternalLink, KeyRound, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { API_BASE } from '../../config/api';
+
 import { RecaptchaModal } from '../ui/recaptcha-modal';
 
 export const Login = () => {
@@ -26,6 +27,46 @@ export const Login = () => {
 
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+
+  // Inactive Account Reactivation state
+  const [inactiveUserPrompt, setInactiveUserPrompt] = useState<{
+    email: string;
+    name: string;
+  } | null>(null);
+  const [isReactivating, setIsReactivating] = useState(false);
+
+  const handleReactivateAndLogin = async () => {
+    if (!inactiveUserPrompt) return;
+    setIsReactivating(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/reactivate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inactiveUserPrompt.email, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const detectedRole = data.role || 'user';
+        sessionStorage.setItem('isAuthenticated', 'true');
+        sessionStorage.setItem('userRole', detectedRole);
+        if (data.user) {
+          sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+          localStorage.setItem('currentUser', JSON.stringify(data.user));
+          localStorage.setItem('user_profile', JSON.stringify(data.user));
+        }
+        window.location.href = '/portal/overview';
+      } else {
+        setError(data.message || 'Failed to reactivate account.');
+        setInactiveUserPrompt(null);
+      }
+    } catch (err) {
+      setError('Connection error while reactivating account.');
+      setInactiveUserPrompt(null);
+    } finally {
+      setIsReactivating(false);
+    }
+  };
+
   const handleRegisterClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsRegisterLoading(true);
@@ -69,6 +110,13 @@ export const Login = () => {
               window.location.href = '/portal/overview';
             }
           }, 1200);
+        } else if (data.isInactive) {
+          setIsLoginLoading(false);
+          setInactiveUserPrompt({
+            email: data.email || email,
+            name: data.name || 'Resident',
+          });
+          return;
         } else {
           const lower = email.trim().toLowerCase();
           if (lower === 'admin' || lower === 'admin@quezoncity.gov.ph' || lower === 'admin@gmail.com') {
@@ -121,6 +169,7 @@ export const Login = () => {
           setError(data.message || 'Invalid credentials or account is not registered. Please register first.');
         }
       } catch (err) {
+
         const lower = email.trim().toLowerCase();
         if (lower === 'admin' || lower === 'admin@quezoncity.gov.ph' || lower === 'admin@gmail.com') {
           sessionStorage.setItem('isAuthenticated', 'true');
@@ -581,7 +630,54 @@ export const Login = () => {
           setResetError('');
         }}
       />
+
+      {/* Account Deactivated Reactivation Prompt Modal */}
+      {inactiveUserPrompt && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 text-center space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto shadow-xs">
+              <ShieldAlert className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                Account is Deactivated
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                Your account is currently deactivated. Would you like to reactivate it?
+              </p>
+            </div>
+
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-left space-y-1">
+              <div className="text-[11px] font-semibold text-slate-400 uppercase">Account Details:</div>
+              <div className="font-bold text-slate-900">{inactiveUserPrompt.name}</div>
+              <div className="font-mono text-slate-600 truncate">{inactiveUserPrompt.email}</div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setInactiveUserPrompt(null)}
+                disabled={isReactivating}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReactivateAndLogin}
+                disabled={isReactivating}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isReactivating ? 'Reactivating...' : 'Reactivate & Sign In'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 };
 
