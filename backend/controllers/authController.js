@@ -107,8 +107,6 @@ function parseDeviceInfo(req) {
   };
 }
 
-let memorySessions = []; // Fallback memory store for device sessions
-
 async function recordNewSession(userId, email, sessionToken, req) {
   const devInfo = parseDeviceInfo(req);
   const cleanEmail = String(email).toLowerCase();

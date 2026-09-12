@@ -250,36 +250,6 @@ export function ProfileModal({
     }
   };
 
-  const handleClearAllHistory = async () => {
-    if (!resolvedEmail) return;
-    try {
-      const currentToken = sessionStorage.getItem("sessionToken") || "";
-      const res = await fetch(`${API_BASE}/api/auth/devices/clear-history`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: resolvedEmail, currentToken }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setDeviceSessions((prev) => prev.filter((s) => s.isCurrentDevice));
-        setDeviceActionMsg({
-          type: "success",
-          text: language === "tl" ? "Naalis na ang lahat ng lumang kasaysayan ng device." : "All previous device history has been removed.",
-        });
-      } else {
-        setDeviceActionMsg({
-          type: "error",
-          text: data.message || "Failed to clear history.",
-        });
-      }
-    } catch {
-      setDeviceActionMsg({
-        type: "error",
-        text: "Network error clearing history.",
-      });
-    }
-  };
-
   // Track open state so we ONLY reset on fresh modal open, preventing auto-erasing while typing
   const prevOpenRef = useRef(false);
 
