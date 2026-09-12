@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 
-
 import UserLayout from "./components/layout/user-layout"
 import SocialServicesLayout from "./components/layout/layout"
 
@@ -32,14 +31,47 @@ import StaffManagement from "./components/Super-admin/StaffManagement"
 import { LanguageProvider } from "./components/ui/language-context"
 import { SessionInactivityWatcher } from "./components/ui/session-inactivity-modal"
 
+function getAuthContext() {
+  const isAuth =
+    sessionStorage.getItem('isAuthenticated') === 'true' ||
+    localStorage.getItem('isAuthenticated') === 'true';
+
+  let role = sessionStorage.getItem('userRole') || localStorage.getItem('userRole');
+  if (!role && isAuth) {
+    try {
+      const raw = sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        role = parsed.role;
+      }
+    } catch {}
+  }
+
+  const resolvedRole = role || (isAuth ? 'user' : null);
+  const isSuperAdmin = isAuth && resolvedRole === 'super_admin';
+  const isStaff = isAuth && (resolvedRole === 'staff' || resolvedRole === 'admin');
+  const isResident = isAuth && !isSuperAdmin && !isStaff;
+
+  const homePath = isSuperAdmin
+    ? "/super-admin"
+    : isStaff
+    ? defaultModulePath
+    : isResident
+    ? "/portal/overview"
+    : "/login";
+
+  return {
+    isAuthenticated: isAuth,
+    userRole: resolvedRole,
+    isSuperAdmin,
+    isStaff,
+    isResident,
+    homePath,
+  };
+}
 
 export default function App() {
-  const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true' || localStorage.getItem('isAuthenticated') === 'true';
-  const userRole = sessionStorage.getItem('userRole'); // 'super_admin' | 'staff' | 'user'
-  const isSuperAdmin = isAuthenticated && userRole === 'super_admin'
-  const isStaff = isAuthenticated && userRole === 'staff';
-  const isResident = isAuthenticated && userRole === 'user';
-  const homePath = isSuperAdmin ? "/super-admin" : isStaff ? defaultModulePath : "/portal/overview"
+  const auth = getAuthContext();
 
   return (
     <LanguageProvider>
@@ -48,59 +80,78 @@ export default function App() {
         <Routes>
 
           {/* Public Routes */}
-          <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to={homePath} replace />} />
-          <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to={homePath} replace />} />
-          <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to={homePath} replace />} />
+          <Route path="/" element={!auth.isAuthenticated ? <LandingPage /> : <Navigate to={auth.homePath} replace />} />
+          <Route path="/login" element={!auth.isAuthenticated ? <Login /> : <Navigate to={auth.homePath} replace />} />
+          <Route path="/register" element={!auth.isAuthenticated ? <Register /> : <Navigate to={auth.homePath} replace />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Super Admin Routes */}
-          <Route path="/super-admin/login" element={!isAuthenticated ? <SuperAdminLogin /> : <Navigate to={homePath} replace />} />
+          {/* Super Admin Login */}
+          <Route path="/super-admin/login" element={!auth.isAuthenticated ? <SuperAdminLogin /> : <Navigate to={auth.homePath} replace />} />
 
-          {isSuperAdmin && (
-            <Route path="/super-admin" element={<SuperAdminLayout />}>
-              <Route index element={<SuperAdminDashboard />} />
-              <Route path="user-management" element={<UserManagement />} />
-              <Route path="module-access-control" element={<ModuleAccessControl />} />
-              <Route path="reports" element={<Reports />} />
-              <Route path="activity-log" element={<ActivityLog />} />
-              <Route path="settings" element={<SystemSettings />} />
-              <Route path="staff-management" element={<StaffManagement />} />
-            </Route>
-          )}
+          {/* Super Admin Routes */}
+          <Route
+            path="/super-admin"
+            element={
+              auth.isSuperAdmin ? (
+                <SuperAdminLayout />
+              ) : (
+                <Navigate to={auth.isAuthenticated ? auth.homePath : "/super-admin/login"} replace />
+              )
+            }
+          >
+            <Route index element={<SuperAdminDashboard />} />
+            <Route path="user-management" element={<UserManagement />} />
+            <Route path="module-access-control" element={<ModuleAccessControl />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="activity-log" element={<ActivityLog />} />
+            <Route path="settings" element={<SystemSettings />} />
+            <Route path="staff-management" element={<StaffManagement />} />
+          </Route>
 
           {/* Staff Routes */}
-          {isStaff && (
-            <Route element={<SocialServicesLayout />}>
-              <Route index element={<Navigate to={defaultModulePath} replace />} />
-              {moduleRoutes.map((mod) => (
-                <Route
-                  key={mod.path}
-                  path={mod.path.slice(1)}
-                  element={<mod.Component />}
-                />
-              ))}
-            </Route>
-          )}
+          <Route
+            element={
+              auth.isStaff ? (
+                <SocialServicesLayout />
+              ) : (
+                <Navigate to={auth.isAuthenticated ? auth.homePath : "/login"} replace />
+              )
+            }
+          >
+            <Route index element={<Navigate to={defaultModulePath} replace />} />
+            {moduleRoutes.map((mod) => (
+              <Route
+                key={mod.path}
+                path={mod.path.slice(1)}
+                element={<mod.Component />}
+              />
+            ))}
+          </Route>
 
           {/* Resident Routes */}
-          {isResident && (
-            <Route element={<UserLayout />}>
-              <Route index element={<Navigate to="/portal/overview" replace />} />
-              <Route path="/portal" element={<Navigate to="/portal/overview" replace />} />
-              <Route path="/portal/overview" element={<CitizenGuideHub />} />
-              <Route path="/portal/guide" element={<CitizenGuideHub />} />
-              <Route path="/portal/aics" element={<AICSUser />} />
-              <Route path="/portal/apply-pwd-senior" element={<ApplyPWDSenior />} />
-              <Route path="/portal/apply-solo-parent" element={<ApplySoloParent />} />
-              <Route path="/portal/apply-livelihood" element={<ApplyLivelihood />} />
-              <Route path="/portal/apply-financial-aid" element={<ApplyFinancialAid />} />
-              <Route path="/portal/financial-aid" element={<ApplyFinancialAid />} />
-              <Route path="/portal/my-applications" element={<MyApplications />} />
-            </Route>
-          )}
+          <Route
+            element={
+              auth.isResident ? (
+                <UserLayout />
+              ) : (
+                <Navigate to={auth.isAuthenticated ? auth.homePath : "/login"} replace />
+              )
+            }
+          >
+            <Route path="/portal" element={<Navigate to="/portal/overview" replace />} />
+            <Route path="/portal/overview" element={<CitizenGuideHub />} />
+            <Route path="/portal/guide" element={<CitizenGuideHub />} />
+            <Route path="/portal/aics" element={<AICSUser />} />
+            <Route path="/portal/apply-pwd-senior" element={<ApplyPWDSenior />} />
+            <Route path="/portal/apply-solo-parent" element={<ApplySoloParent />} />
+            <Route path="/portal/apply-livelihood" element={<ApplyLivelihood />} />
+            <Route path="/portal/apply-financial-aid" element={<ApplyFinancialAid />} />
+            <Route path="/portal/financial-aid" element={<ApplyFinancialAid />} />
+            <Route path="/portal/my-applications" element={<MyApplications />} />
+          </Route>
 
-          {/* Catch all */}
-          <Route path="*" element={<Navigate to={isAuthenticated ? homePath : "/"} replace />} />
+          {/* Fallback / Catch All */}
+          <Route path="*" element={<Navigate to={auth.isAuthenticated ? auth.homePath : "/login"} replace />} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>
