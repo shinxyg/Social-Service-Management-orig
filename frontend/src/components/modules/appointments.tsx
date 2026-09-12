@@ -730,14 +730,14 @@ export default function Appointments() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Requests", value: stats.total, color: "blue" },
-          { label: "Pending", value: stats.pending, color: "yellow" },
-          { label: "Scheduled", value: stats.scheduled, color: "blue" },
-          { label: "Completed", value: stats.completed, color: "green" },
+          { label: "Total Requests", value: stats.total, text: "text-blue-600 dark:text-blue-400" },
+          { label: "Pending", value: stats.pending, text: "text-amber-600 dark:text-amber-400" },
+          { label: "Scheduled", value: stats.scheduled, text: "text-blue-600 dark:text-blue-400" },
+          { label: "Completed", value: stats.completed, text: "text-emerald-600 dark:text-emerald-400" },
         ].map((stat) => (
-          <div key={stat.label} className={`rounded-lg p-4 bg-${stat.color}-50 border border-${stat.color}-200`}>
-            <p className={`text-xs font-semibold text-${stat.color}-700 uppercase`}>{stat.label}</p>
-            <p className={`text-3xl font-bold text-${stat.color}-700 mt-2`}>{stat.value}</p>
+          <div key={stat.label} className="rounded-xl p-4 bg-card border border-border shadow-xs">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+            <p className={`text-3xl font-bold ${stat.text} mt-2`}>{stat.value}</p>
           </div>
         ))}
       </div>

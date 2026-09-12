@@ -910,21 +910,21 @@ export default function BeneficiaryManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl p-4 bg-blue-50/70 border border-blue-200 shadow-xs">
-          <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Total Beneficiaries</p>
-          <p className="text-3xl font-bold text-blue-800 mt-2">{stats.total}</p>
+        <div className="rounded-xl p-4 bg-card border border-border shadow-xs">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total Beneficiaries</p>
+          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{stats.total}</p>
         </div>
-        <div className="rounded-xl p-4 bg-emerald-50/70 border border-emerald-200 shadow-xs">
-          <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Verified</p>
-          <p className="text-3xl font-bold text-emerald-800 mt-2">{stats.verified}</p>
+        <div className="rounded-xl p-4 bg-card border border-border shadow-xs">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Verified</p>
+          <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{stats.verified}</p>
         </div>
-        <div className="rounded-xl p-4 bg-amber-50/70 border border-amber-200 shadow-xs">
-          <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Pending</p>
-          <p className="text-3xl font-bold text-amber-800 mt-2">{stats.pending}</p>
+        <div className="rounded-xl p-4 bg-card border border-border shadow-xs">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pending</p>
+          <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-2">{stats.pending}</p>
         </div>
-        <div className="rounded-xl p-4 bg-red-50/70 border border-red-200 shadow-xs">
-          <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Unverified</p>
-          <p className="text-3xl font-bold text-red-800 mt-2">{stats.unverified}</p>
+        <div className="rounded-xl p-4 bg-card border border-border shadow-xs">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Unverified</p>
+          <p className="text-3xl font-bold text-rose-600 dark:text-rose-400 mt-2">{stats.unverified}</p>
         </div>
       </div>
 
