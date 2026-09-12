@@ -154,58 +154,10 @@ async function initDb() {
       );
     `);
 
-    // Seed default administrator account with bcrypt hash
-    const adminHashed = bcrypt.hashSync('admin123', 10);
-    const defaultHashed = bcrypt.hashSync('default123', 10);
-
-    await db.query(`
-      INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
-      VALUES 
-        ('admin@quezoncity.gov.ph', $1, 'System', 'Administrator', 'admin', 'active', true, '110000116932100'),
-        ('admin', $1, 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
-      ON CONFLICT (email) DO UPDATE SET role = 'admin', status = 'active';
-
-      -- Auto-sync existing module applicants into users table
-      INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
-      SELECT DISTINCT ON (LOWER(email))
-        LOWER(email), $2, first_name, last_name, middle_name, suffix, phone, qc_id, 'user', 'active', true, created_at
-      FROM aics_applications
-      WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
-      ON CONFLICT (email) DO NOTHING;
-
-      INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
-      SELECT DISTINCT ON (LOWER(email))
-        LOWER(email), $2, first_name, last_name, middle_name, suffix, contact_no, COALESCE(assigned_id_number, reference_number), 'user', 'active', true, submitted_at
-      FROM pwd_senior_applications
-      WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
-      ON CONFLICT (email) DO NOTHING;
-
-      INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
-      SELECT DISTINCT ON (LOWER(email))
-        LOWER(email), $2, first_name, last_name, middle_name, suffix, contact_no, COALESCE(solo_parent_id_number, qcid_number), 'user', 'active', true, created_at
-      FROM solo_parent_applications
-      WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
-      ON CONFLICT (email) DO NOTHING;
-
-      INSERT INTO users (email, password, first_name, last_name, middle_name, mobile_number, role, status, is_email_verified, created_at)
-      SELECT DISTINCT ON (LOWER(guardian_email))
-        LOWER(guardian_email), $2, guardian_first_name, guardian_last_name, guardian_middle_name, guardian_contact_no, 'user', 'active', true, created_at
-      FROM child_welfare_applications
-      WHERE guardian_email IS NOT NULL AND guardian_email != '' AND LOWER(guardian_email) NOT IN (SELECT LOWER(email) FROM users)
-      ON CONFLICT (email) DO NOTHING;
-
-      INSERT INTO users (email, password, first_name, last_name, mobile_number, qcid_number, role, status, is_email_verified, created_at)
-      SELECT DISTINCT ON (LOWER(email))
-        LOWER(email), $2, first_name, last_name, contact_no, qcid_no, 'user', 'active', true, created_at
-      FROM livelihood_applications
-      WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
-      ON CONFLICT (email) DO NOTHING;
-    `, [adminHashed, defaultHashed]);
-
-    // Auto-migrate any existing unhashed plain-text passwords in DB to bcrypt
+    // 1. Auto-migrate any existing unhashed plain-text passwords in DB to bcrypt
     try {
       const plainUsers = await db.query("SELECT id, email, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%'");
-      if (plainUsers.rows.length > 0) {
+      if (plainUsers && plainUsers.rows && plainUsers.rows.length > 0) {
         console.log(`🔐 [Init DB] Found ${plainUsers.rows.length} unhashed user password(s). Upgrading to bcrypt...`);
         for (const row of plainUsers.rows) {
           if (row.password) {
@@ -218,6 +170,54 @@ async function initDb() {
     } catch (e) {
       console.warn('⚠️ [Init DB] Plaintext password auto-hash note:', e.message);
     }
+
+    // 2. Seed default administrator account with bcrypt hash
+    const adminHashed = bcrypt.hashSync('admin123', 10);
+    const defaultHashed = bcrypt.hashSync('default123', 10);
+
+    await db.query(`
+      INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
+      VALUES 
+        ('admin@quezoncity.gov.ph', '${adminHashed}', 'System', 'Administrator', 'admin', 'active', true, '110000116932100'),
+        ('admin', '${adminHashed}', 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
+      ON CONFLICT (email) DO UPDATE SET role = 'admin', status = 'active';
+
+      -- Auto-sync existing module applicants into users table
+      INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
+      SELECT DISTINCT ON (LOWER(email))
+        LOWER(email), '${defaultHashed}', first_name, last_name, middle_name, suffix, phone, qc_id, 'user', 'active', true, created_at
+      FROM aics_applications
+      WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
+      ON CONFLICT (email) DO NOTHING;
+
+      INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
+      SELECT DISTINCT ON (LOWER(email))
+        LOWER(email), '${defaultHashed}', first_name, last_name, middle_name, suffix, contact_no, COALESCE(assigned_id_number, reference_number), 'user', 'active', true, submitted_at
+      FROM pwd_senior_applications
+      WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
+      ON CONFLICT (email) DO NOTHING;
+
+      INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
+      SELECT DISTINCT ON (LOWER(email))
+        LOWER(email), '${defaultHashed}', first_name, last_name, middle_name, suffix, contact_no, COALESCE(solo_parent_id_number, qcid_number), 'user', 'active', true, created_at
+      FROM solo_parent_applications
+      WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
+      ON CONFLICT (email) DO NOTHING;
+
+      INSERT INTO users (email, password, first_name, last_name, middle_name, mobile_number, role, status, is_email_verified, created_at)
+      SELECT DISTINCT ON (LOWER(guardian_email))
+        LOWER(guardian_email), '${defaultHashed}', guardian_first_name, guardian_last_name, guardian_middle_name, guardian_contact_no, 'user', 'active', true, created_at
+      FROM child_welfare_applications
+      WHERE guardian_email IS NOT NULL AND guardian_email != '' AND LOWER(guardian_email) NOT IN (SELECT LOWER(email) FROM users)
+      ON CONFLICT (email) DO NOTHING;
+
+      INSERT INTO users (email, password, first_name, last_name, mobile_number, qcid_number, role, status, is_email_verified, created_at)
+      SELECT DISTINCT ON (LOWER(email))
+        LOWER(email), '${defaultHashed}', first_name, last_name, contact_no, qcid_no, 'user', 'active', true, created_at
+      FROM livelihood_applications
+      WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
+      ON CONFLICT (email) DO NOTHING;
+    `);
 
     await db.query(`
       -- Archive column support for all application categories

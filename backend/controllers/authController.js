@@ -968,16 +968,27 @@ exports.getAllUsers = async (req, res) => {
       const defaultHash = await hashPassword('default123');
       const adminHash = await hashPassword('admin123');
 
+      // Auto-migrate any existing unhashed plain-text passwords in DB to bcrypt
+      try {
+        const plainUsers = await db.query("SELECT id, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%'");
+        for (const row of plainUsers.rows) {
+          if (row.password) {
+            const hashed = await hashPassword(row.password);
+            await db.query("UPDATE users SET password = $1 WHERE id = $2", [hashed, row.id]).catch(() => {});
+          }
+        }
+      } catch (e) {}
+
       await db.query(`
         -- Ensure default administrator account exists
         INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
-        VALUES ('admin@quezoncity.gov.ph', $1, 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
+        VALUES ('admin@quezoncity.gov.ph', '${adminHash}', 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
         ON CONFLICT (email) DO UPDATE SET role = 'admin', status = 'active';
 
         -- Sync AICS applicants into users
         INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(email))
-          LOWER(email), $2, first_name, last_name, middle_name, suffix, phone, qc_id, 'user', 'active', true, created_at
+          LOWER(email), '${defaultHash}', first_name, last_name, middle_name, suffix, phone, qc_id, 'user', 'active', true, created_at
         FROM aics_applications
         WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
@@ -985,7 +996,7 @@ exports.getAllUsers = async (req, res) => {
         -- Sync PWD / Senior applicants into users
         INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(email))
-          LOWER(email), $2, first_name, last_name, middle_name, suffix, contact_no, COALESCE(assigned_id_number, reference_number), 'user', 'active', true, submitted_at
+          LOWER(email), '${defaultHash}', first_name, last_name, middle_name, suffix, contact_no, COALESCE(assigned_id_number, reference_number), 'user', 'active', true, submitted_at
         FROM pwd_senior_applications
         WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
@@ -993,7 +1004,7 @@ exports.getAllUsers = async (req, res) => {
         -- Sync Solo Parent applicants into users
         INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(email))
-          LOWER(email), $2, first_name, last_name, middle_name, suffix, contact_no, COALESCE(solo_parent_id_number, qcid_number), 'user', 'active', true, created_at
+          LOWER(email), '${defaultHash}', first_name, last_name, middle_name, suffix, contact_no, COALESCE(solo_parent_id_number, qcid_number), 'user', 'active', true, created_at
         FROM solo_parent_applications
         WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
@@ -1001,7 +1012,7 @@ exports.getAllUsers = async (req, res) => {
         -- Sync Child Welfare guardians into users
         INSERT INTO users (email, password, first_name, last_name, middle_name, mobile_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(guardian_email))
-          LOWER(guardian_email), $2, guardian_first_name, guardian_last_name, guardian_middle_name, guardian_contact_no, 'user', 'active', true, created_at
+          LOWER(guardian_email), '${defaultHash}', guardian_first_name, guardian_last_name, guardian_middle_name, guardian_contact_no, 'user', 'active', true, created_at
         FROM child_welfare_applications
         WHERE guardian_email IS NOT NULL AND guardian_email != '' AND LOWER(guardian_email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
@@ -1009,20 +1020,11 @@ exports.getAllUsers = async (req, res) => {
         -- Sync Livelihood applicants into users
         INSERT INTO users (email, password, first_name, last_name, mobile_number, qcid_number, role, status, is_email_verified, created_at)
         SELECT DISTINCT ON (LOWER(email))
-          LOWER(email), $2, first_name, last_name, contact_no, qcid_no, 'user', 'active', true, created_at
+          LOWER(email), '${defaultHash}', first_name, last_name, contact_no, qcid_no, 'user', 'active', true, created_at
         FROM livelihood_applications
         WHERE email IS NOT NULL AND email != '' AND LOWER(email) NOT IN (SELECT LOWER(email) FROM users)
         ON CONFLICT (email) DO NOTHING;
-      `, [adminHash, defaultHash]);
-
-      // Auto-migrate any existing unhashed plain-text passwords in DB to bcrypt
-      const plainUsers = await db.query("SELECT id, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%'");
-      for (const row of plainUsers.rows) {
-        if (row.password) {
-          const hashed = await hashPassword(row.password);
-          await db.query("UPDATE users SET password = $1 WHERE id = $2", [hashed, row.id]).catch(() => {});
-        }
-      }
+      `);
     } catch (syncErr) {
       console.warn('[DB Note] Auto-syncing applicants to users table:', syncErr.message);
     }
