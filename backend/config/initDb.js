@@ -420,6 +420,41 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_training_ref ON training_applications(reference_number);
       CREATE INDEX IF NOT EXISTS idx_training_qcid ON training_applications(qcid);
       CREATE INDEX IF NOT EXISTS idx_training_status ON training_applications(status);
+
+      -- Notifications Tables
+      CREATE TABLE IF NOT EXISTS user_notifications (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(100),
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT false,
+        is_dismissed BOOLEAN DEFAULT false,
+        application_ref VARCHAR(100),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      ALTER TABLE user_notifications ADD COLUMN IF NOT EXISTS user_id VARCHAR(100);
+      ALTER TABLE user_notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+      ALTER TABLE user_notifications ADD COLUMN IF NOT EXISTS is_dismissed BOOLEAN DEFAULT false;
+      ALTER TABLE user_notifications ADD COLUMN IF NOT EXISTS application_ref VARCHAR(100);
+      ALTER TABLE user_notifications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+      CREATE TABLE IF NOT EXISTS user_notification_state (
+        id SERIAL PRIMARY KEY,
+        user_identifier VARCHAR(150) NOT NULL,
+        notif_id VARCHAR(255) NOT NULL,
+        is_read BOOLEAN DEFAULT false,
+        is_dismissed BOOLEAN DEFAULT false,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      ALTER TABLE user_notification_state ADD COLUMN IF NOT EXISTS user_identifier VARCHAR(150);
+      ALTER TABLE user_notification_state ADD COLUMN IF NOT EXISTS notif_id VARCHAR(255);
+      ALTER TABLE user_notification_state ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+      ALTER TABLE user_notification_state ADD COLUMN IF NOT EXISTS is_dismissed BOOLEAN DEFAULT false;
+      ALTER TABLE user_notification_state ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_user_notif_state_user_notif ON user_notification_state(user_identifier, notif_id);
     `);
 
     console.log('✅ PostgreSQL database tables, indexes, and default admin accounts verified/initialized successfully.');
