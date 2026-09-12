@@ -89,7 +89,7 @@ export function SessionInactivityWatcher() {
         let devStr = "";
         if (data.newDevice) {
           const dev = data.newDevice;
-          devStr = `${dev.device_name || dev.device_type || 'Another Device'}${dev.os ? ` (${dev.os})` : ''}`;
+          devStr = `${dev.device_name || dev.device_type || 'Another Device'}`;
           setNewDeviceInfo(devStr);
           sessionStorage.setItem("terminated_new_device", devStr);
         }
@@ -216,24 +216,17 @@ export function SessionInactivityWatcher() {
               }`}
               style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}
             >
-              {isConcurrent ? "Na-access sa Ibang Device" : "Session Expired"}
+              {isConcurrent ? "Account Accessed Elsewhere" : "Session Expired"}
             </h3>
           </div>
           <p className="text-sm text-slate-600 leading-relaxed font-medium">
             {isConcurrent
               ? newDeviceInfo
-                ? `May nag-login sa iyong account gamit ang bagong device: ${newDeviceInfo}. Na-logout ang device na ito para sa iyong seguridad.`
-                : "May bagong device na nag-login sa iyong account. Para sa iyong seguridad, na-terminate ang session sa device na ito sa real-time."
-              : "Your session has timed out due to inactivity."}
+                ? `Your account was accessed from a new device: ${newDeviceInfo}. You have been logged out from this session for your security.`
+                : "Your account was accessed from another device. You have been logged out from this session for your security."
+              : "Your session has timed out due to inactivity. Please log in again to continue."}
           </p>
         </div>
-
-        {isConcurrent && (
-          <div className="p-3 bg-red-50/80 border border-red-200 rounded-xl text-xs text-red-700 font-medium flex items-center justify-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-            <span>Single active session rule: 1 device lamang kada account.</span>
-          </div>
-        )}
 
         {/* Re-login Button */}
         <div className="pt-2">
@@ -247,7 +240,7 @@ export function SessionInactivityWatcher() {
             }`}
           >
             <LogIn className="w-4 h-4" />
-            <span>OK / Mag-login Ulit</span>
+            <span>Log In Again</span>
           </button>
         </div>
       </div>

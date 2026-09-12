@@ -1468,7 +1468,7 @@ export function ProfileModal({
                     {!isStillActive && (
                       <div className="mt-3 p-2.5 bg-red-100/70 border border-red-200 rounded-xl text-xs text-red-800 font-medium flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-                        <span>Na-logout ang session sa device na ito dahil nag-login ang account sa ibang device.</span>
+                        <span>{language === "tl" ? "Na-logout ang session sa device na ito dahil nag-login ang account sa ibang device." : "This session was logged out because your account was accessed from another device."}</span>
                       </div>
                     )}
 
