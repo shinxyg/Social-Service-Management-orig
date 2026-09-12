@@ -9,13 +9,13 @@ const API_BASE = `${APP_API_BASE}/api/aics`
 
 const DESIGN = {
   colors: {
-    primary: 'hsl(221, 83%, 53%)',
-    canvas: 'hsl(220, 25%, 98%)',
-    foreground: 'hsl(222, 47%, 11%)',
-    card: '#ffffff',
-    sidebar: 'hsl(222, 47%, 11%)',
-    muted: 'hsl(220, 14%, 95%)',
-    border: 'hsl(220, 13%, 91%)',
+    primary: 'var(--color-primary, hsl(221, 83%, 53%))',
+    canvas: 'var(--color-background, hsl(220, 25%, 98%))',
+    foreground: 'var(--color-foreground, hsl(222, 47%, 11%))',
+    card: 'var(--color-card, #ffffff)',
+    sidebar: 'var(--color-sidebar, hsl(222, 47%, 11%))',
+    muted: 'var(--color-muted, hsl(220, 14%, 95%))',
+    border: 'var(--color-border, hsl(220, 13%, 91%))',
   },
   fonts: {
     body: '"Inter", system-ui, -apple-system, sans-serif',

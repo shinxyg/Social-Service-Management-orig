@@ -983,10 +983,21 @@ export default function UserLayout() {
   const { t } = useLanguage()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [dark, setDark] = useState(false)
+  const [dark, setDark] = useState(() => {
+    try {
+      const saved = localStorage.getItem("theme")
+      if (saved) return saved === "dark"
+      return document.documentElement.classList.contains("dark")
+    } catch {
+      return false
+    }
+  })
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark)
+    try {
+      localStorage.setItem("theme", dark ? "dark" : "light")
+    } catch {}
   }, [dark])
 
   useEffect(() => {
