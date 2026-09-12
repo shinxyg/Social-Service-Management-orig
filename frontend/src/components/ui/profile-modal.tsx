@@ -12,7 +12,6 @@ interface ProfileModalProps {
   email?: string
   role?: string
   qcidNo?: string
-  registeredVia?: string
   user?: any
 }
 
@@ -42,9 +41,9 @@ export function ProfileModal({
   name = "Resident",
   email,
   qcidNo,
-  registeredVia = "Email / Password",
   user,
 }: ProfileModalProps) {
+
   // Load current registered user from props or storage
   const getStoredUser = () => {
     if (user) return user;
