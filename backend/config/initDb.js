@@ -210,15 +210,14 @@ async function initDb() {
     }
 
     // 2. Seed default administrator account with bcrypt hash
-    const adminHashed = bcrypt.hashSync('admin123', 10);
+    const adminHashed = bcrypt.hashSync('Admin123!', 12);
     const defaultHashed = bcrypt.hashSync('default123', 10);
 
     await db.query(`
       INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
       VALUES 
-        ('admin@quezoncity.gov.ph', '${adminHashed}', 'System', 'Administrator', 'admin', 'active', true, '110000116932100'),
-        ('admin', '${adminHashed}', 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
-      ON CONFLICT (email) DO UPDATE SET role = 'admin', status = 'active';
+        ('admin@quezoncity.gov.ph', '${adminHashed}', 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
+      ON CONFLICT (email) DO UPDATE SET password = '${adminHashed}', role = 'admin', status = 'active';
 
       -- Auto-sync existing module applicants into users table
       INSERT INTO users (email, password, first_name, last_name, middle_name, suffix, mobile_number, qcid_number, role, status, is_email_verified, created_at)
@@ -495,7 +494,38 @@ async function initDb() {
       CREATE UNIQUE INDEX IF NOT EXISTS idx_user_notif_state_user_notif ON user_notification_state(user_identifier, notif_id);
     `);
 
-    console.log('✅ PostgreSQL database tables, indexes, and default admin accounts verified/initialized successfully.');
+    // Seed / Ensure strictly 1 official Administrator account in DB
+    try {
+      const bcrypt = require('bcryptjs');
+      const adminPassHash = await bcrypt.hash('Admin123!', 12);
+      const adminEmail = 'admin@quezoncity.gov.ph';
+
+      const adminCheck = await client.query('SELECT id, password FROM users WHERE LOWER(email) = $1', [adminEmail]);
+      if (adminCheck.rows.length === 0) {
+        await client.query(
+          `INSERT INTO users (
+            email, password, first_name, last_name, middle_name, suffix,
+            city, barangay, street, house_no, working_in_qc, occupation, sex,
+            mobile_number, qcid_number, role, status, is_email_verified, created_at, updated_at
+          ) VALUES (
+            $1, $2, 'System', 'Administrator', '', '',
+            'QUEZON CITY', 'Central', 'Elliptical Road', 'QC Hall', 'Yes', 'System Administrator', 'MALE',
+            '09171234567', '110000116932100', 'admin', 'active', true, NOW(), NOW()
+          )`,
+          [adminEmail, adminPassHash]
+        );
+        console.log('[DB] Seeded official administrator account: admin@quezoncity.gov.ph');
+      } else {
+        await client.query(
+          `UPDATE users SET role = 'admin', status = 'active', password = $1 WHERE LOWER(email) = $2`,
+          [adminPassHash, adminEmail]
+        );
+      }
+    } catch (adminSeedErr) {
+      console.warn('[DB] Warning during admin account seed:', adminSeedErr.message);
+    }
+
+    console.log('✅ PostgreSQL database tables, indexes, and official admin account verified/initialized successfully.');
   } catch (err) {
     console.warn('⚠️ Note during database auto-init:', err.message);
   }

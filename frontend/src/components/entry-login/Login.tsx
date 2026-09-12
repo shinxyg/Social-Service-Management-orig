@@ -229,7 +229,7 @@ export const Login = () => {
 
         if (res.ok && data.success) {
           setLockoutRemaining(0);
-          const detectedRole = data.role || (email.toLowerCase().includes('super') ? 'super_admin' : email.toLowerCase().includes('admin') || email.toLowerCase().includes('staff') ? 'staff' : 'user');
+          const detectedRole = (data.role || (data.user?.role) || 'user').toLowerCase();
           const cleanEmail = (data.user?.email || email).trim().toLowerCase();
           sessionStorage.setItem('isAuthenticated', 'true');
           sessionStorage.setItem('userRole', detectedRole);
@@ -249,9 +249,7 @@ export const Login = () => {
           }
 
           setTimeout(() => {
-            if (detectedRole === 'super_admin') {
-              window.location.href = '/super-admin';
-            } else if (detectedRole === 'staff') {
+            if (detectedRole === 'super_admin' || detectedRole === 'admin' || detectedRole === 'staff') {
               window.location.href = '/aics';
             } else {
               window.location.href = '/portal/overview';
@@ -265,90 +263,10 @@ export const Login = () => {
           });
           return;
         } else {
-          const lower = email.trim().toLowerCase();
-          if (lower === 'admin' || lower === 'admin@quezoncity.gov.ph' || lower === 'admin@gmail.com') {
-            sessionStorage.setItem('isAuthenticated', 'true');
-            sessionStorage.setItem('userRole', 'staff');
-            sessionStorage.setItem('currentUser', JSON.stringify({
-              email: 'admin@quezoncity.gov.ph',
-              firstName: 'System',
-              lastName: 'Administrator',
-              role: 'staff',
-              qcidNumber: '110000116932100',
-            }));
-            localStorage.removeItem('isAuthenticated');
-            localStorage.removeItem('userRole');
-            setTimeout(() => { window.location.href = '/aics'; }, 800);
-            return;
-          }
-          if (lower === 'staff' || lower === 'staff@quezoncity.gov.ph' || lower === 'staff@gmail.com') {
-            sessionStorage.setItem('isAuthenticated', 'true');
-            sessionStorage.setItem('userRole', 'staff');
-            sessionStorage.setItem('currentUser', JSON.stringify({
-              email: 'staff@quezoncity.gov.ph',
-              firstName: 'Social',
-              lastName: 'Worker',
-              role: 'staff',
-              qcidNumber: '110000116932101',
-            }));
-            localStorage.removeItem('isAuthenticated');
-            localStorage.removeItem('userRole');
-            setTimeout(() => { window.location.href = '/aics'; }, 800);
-            return;
-          }
-          if (lower === 'superadmin' || lower === 'superadmin@quezoncity.gov.ph') {
-            sessionStorage.setItem('isAuthenticated', 'true');
-            sessionStorage.setItem('userRole', 'super_admin');
-            sessionStorage.setItem('currentUser', JSON.stringify({
-              email: 'superadmin@quezoncity.gov.ph',
-              firstName: 'Super',
-              lastName: 'Admin',
-              role: 'super_admin',
-              qcidNumber: '110000116932102',
-            }));
-            localStorage.removeItem('isAuthenticated');
-            localStorage.removeItem('userRole');
-            setTimeout(() => { window.location.href = '/super-admin'; }, 800);
-            return;
-          }
-
           setIsLoginLoading(false);
           setError(data.message || 'Invalid credentials or account is not registered. Please register first.');
         }
       } catch (err) {
-
-        const lower = email.trim().toLowerCase();
-        if (lower === 'admin' || lower === 'admin@quezoncity.gov.ph' || lower === 'admin@gmail.com') {
-          sessionStorage.setItem('isAuthenticated', 'true');
-          sessionStorage.setItem('userRole', 'staff');
-          sessionStorage.setItem('currentUser', JSON.stringify({
-            email: 'admin@quezoncity.gov.ph',
-            firstName: 'System',
-            lastName: 'Administrator',
-            role: 'staff',
-            qcidNumber: '110000116932100',
-          }));
-          localStorage.removeItem('isAuthenticated');
-          localStorage.removeItem('userRole');
-          setTimeout(() => { window.location.href = '/aics'; }, 800);
-          return;
-        }
-        if (lower === 'staff' || lower === 'staff@quezoncity.gov.ph' || lower === 'staff@gmail.com') {
-          sessionStorage.setItem('isAuthenticated', 'true');
-          sessionStorage.setItem('userRole', 'staff');
-          sessionStorage.setItem('currentUser', JSON.stringify({
-            email: 'staff@quezoncity.gov.ph',
-            firstName: 'Social',
-            lastName: 'Worker',
-            role: 'staff',
-            qcidNumber: '110000116932101',
-          }));
-          localStorage.removeItem('isAuthenticated');
-          localStorage.removeItem('userRole');
-          setTimeout(() => { window.location.href = '/aics'; }, 800);
-          return;
-        }
-
         setIsLoginLoading(false);
         setError('Network error connecting to backend. Please check your connection and try again.');
       }
