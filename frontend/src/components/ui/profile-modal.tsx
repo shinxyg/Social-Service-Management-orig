@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react"
-import { X, User, AlertTriangle, IdCard, Eye, EyeOff, Languages, Check, Camera, Trash2, KeyRound, Lock, CheckCircle2 } from "lucide-react"
+import { X, User, AlertTriangle, IdCard, Eye, EyeOff, Languages, Check, Camera, Trash2, KeyRound } from "lucide-react"
+
 
 
 import { useLanguage, type Language } from "./language-context"
