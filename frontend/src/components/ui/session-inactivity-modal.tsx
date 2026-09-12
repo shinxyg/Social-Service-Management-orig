@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Clock, ShieldAlert, LogIn, AlertTriangle } from "lucide-react"
+import { API_BASE } from "../../config/api"
 
 // 15 Minutes Inactivity Timeout in milliseconds
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 type ExpiryReason = "inactivity" | "concurrent" | null;
 
@@ -15,6 +15,7 @@ export function SessionInactivityWatcher() {
     return sessionStorage.getItem("terminated_new_device") || "";
   });
   const lastActivityRef = useRef<number>(Date.now());
+  const lastVerifyTimeRef = useRef<number>(0);
   const timerRef = useRef<any>(null);
   const verifyIntervalRef = useRef<any>(null);
 
@@ -50,12 +51,6 @@ export function SessionInactivityWatcher() {
     }
     return token || "";
   }, [checkIsAuth]);
-
-  const handleUserActivity = useCallback(() => {
-    if (!expiryReason) {
-      lastActivityRef.current = Date.now();
-    }
-  }, [expiryReason]);
 
   const clearAuthSession = useCallback(() => {
     try {
@@ -102,10 +97,21 @@ export function SessionInactivityWatcher() {
         clearAuthSession();
         setExpiryReason("concurrent");
       }
-    } catch {
-      // Ignore transient network errors during background check
+    } catch (err) {
+      console.warn("Session verification network warning:", err);
     }
   }, [checkIsAuth, expiryReason, getCurrentUserEmail, getSessionToken, clearAuthSession]);
+
+  const handleUserActivity = useCallback(() => {
+    if (!expiryReason) {
+      lastActivityRef.current = Date.now();
+      const now = Date.now();
+      if (now - lastVerifyTimeRef.current >= 1500) {
+        lastVerifyTimeRef.current = now;
+        verifyConcurrentSession();
+      }
+    }
+  }, [expiryReason, verifyConcurrentSession]);
 
   useEffect(() => {
     if (!checkIsAuth() && !sessionStorage.getItem("session_terminated_reason")) {
@@ -114,8 +120,8 @@ export function SessionInactivityWatcher() {
 
     lastActivityRef.current = Date.now();
 
-    // Listen to user interaction events for 15-minute inactivity tracker
-    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"];
+    // Listen to user interaction events for 15-minute inactivity tracker and mobile gestures
+    const events = ["mousemove", "mousedown", "keydown", "touchstart", "touchend", "scroll", "click"];
     events.forEach((evt) => {
       window.addEventListener(evt, handleUserActivity, { passive: true });
     });

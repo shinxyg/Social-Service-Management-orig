@@ -1,5 +1,6 @@
 // src/components/Super-admin/SuperAdminLogin.tsx
 import { useState } from "react"
+import { API_BASE } from "../../config/api"
 
 export default function SuperAdminLogin() {
   const [username, setUsername] = useState("")
@@ -13,7 +14,6 @@ export default function SuperAdminLogin() {
     setError("")
     setLoading(true)
 
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
     try {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
