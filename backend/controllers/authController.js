@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 // In-memory fallback stores
 let memoryOtps = new Map(); // email -> { otpCode, expiresAt, isUsed }
 let memoryUsers = [];
+let memorySessions = [];
 
 /**
  * Hashes a plaintext password using bcrypt (salt rounds = 12)
@@ -967,19 +968,18 @@ exports.terminateAllOtherDevices = async (req, res) => {
 
     try {
       if (currentToken) {
+        // Automatically delete all other devices from database
         await db.query(
-          `UPDATE user_login_sessions 
-           SET is_active = false, logout_at = NOW(), logout_reason = 'Manually terminated via Device Manager'
-           WHERE LOWER(email) = $1 AND session_token != $2 AND is_active = true`,
+          `DELETE FROM user_login_sessions 
+           WHERE LOWER(email) = $1 AND session_token != $2`,
           [cleanEmail, currentToken]
         );
         // Ensure user active_session_token is set to current token
         await db.query(`UPDATE users SET active_session_token = $1 WHERE LOWER(email) = $2`, [currentToken, cleanEmail]);
       } else {
         await db.query(
-          `UPDATE user_login_sessions 
-           SET is_active = false, logout_at = NOW(), logout_reason = 'Manually terminated via Device Manager'
-           WHERE LOWER(email) = $1 AND is_active = true`,
+          `DELETE FROM user_login_sessions 
+           WHERE LOWER(email) = $1`,
           [cleanEmail]
         );
       }
@@ -987,17 +987,11 @@ exports.terminateAllOtherDevices = async (req, res) => {
       console.warn('[DB Error] terminateAllOtherDevices failed:', dbErr.message);
     }
 
-    memorySessions.forEach(s => {
-      if (s.email.toLowerCase() === cleanEmail && s.sessionToken !== currentToken) {
-        s.isActive = false;
-        s.logoutAt = new Date().toISOString();
-        s.logoutReason = 'Manually terminated via Device Manager';
-      }
-    });
+    memorySessions = memorySessions.filter(s => !(s.email.toLowerCase() === cleanEmail && s.sessionToken !== currentToken));
 
     return res.status(200).json({
       success: true,
-      message: 'All other device sessions have been logged out successfully.',
+      message: 'All other device sessions have been logged out and removed successfully.',
     });
   } catch (err) {
     console.error('Error in terminateAllOtherDevices:', err);

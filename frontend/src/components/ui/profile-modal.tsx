@@ -202,9 +202,10 @@ export function ProfileModal({
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        setDeviceSessions((prev) => prev.filter((s) => s.isCurrentDevice));
         setDeviceActionMsg({
           type: "success",
-          text: language === "tl" ? "Na-logout na ang lahat ng ibang device." : "All other device sessions have been logged out.",
+          text: language === "tl" ? "Na-logout at naalis na ang lahat ng ibang device." : "All other device sessions have been logged out and removed.",
         });
         fetchDeviceSessions();
       } else {
@@ -1354,36 +1355,15 @@ export function ProfileModal({
 
           {tab === "devices" && (
             <div className="space-y-6">
-              {/* Header & Subtitle */}
+              {/* Header & Log Out Other Devices Action */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                     <Laptop className="h-4 w-4 text-blue-600" />
                     {t("deviceManagement") || "Device Management & Login History"}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                    {t("deviceManagementDesc") || "Real-time list of devices (PC, Mobile, Tablet) that have accessed your account with exact login date and time."}
-                  </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={fetchDeviceSessions}
-                    disabled={isLoadingDevices}
-                    className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-50"
-                    title="Refresh device list"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isLoadingDevices ? "animate-spin text-blue-600" : ""}`} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleClearAllHistory}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-                    title="Clear all old device records"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>{language === "tl" ? "Alisin ang Kasaysayan" : "Clear History"}</span>
-                  </button>
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={handleLogoutAllOtherDevices}
