@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Lock, LogIn } from "lucide-react"
+
 
 // 15 Minutes Inactivity Timeout in milliseconds
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
@@ -91,7 +92,7 @@ export function SessionInactivityWatcher() {
             className="text-2xl font-black text-slate-900 tracking-tight"
             style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}
           >
-            🔒 Session Expired
+            Session Expired
           </h3>
           <p className="text-sm text-slate-600 leading-relaxed font-medium">
             Your session has timed out due to inactivity.
