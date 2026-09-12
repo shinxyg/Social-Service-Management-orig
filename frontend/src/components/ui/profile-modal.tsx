@@ -14,8 +14,6 @@ import {
   Laptop,
   Smartphone,
   Tablet,
-  Globe,
-  Shield,
   RefreshCw,
   LogOut,
   Clock,
