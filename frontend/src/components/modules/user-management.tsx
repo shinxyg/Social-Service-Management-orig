@@ -260,8 +260,33 @@ function ManageUserModal({
     }
   }, [user.id, user.numericId])
 
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false)
   const isActive = detailedUser.status === "ACTIVE"
   const isAdmin = detailedUser.role === "ADMINISTRATOR"
+
+  const handleToggleStatus = async () => {
+    const nextStatus = isActive ? "INACTIVE" : "ACTIVE"
+    setIsTogglingStatus(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${user.numericId || user.id}/status`, {
+        method: "PATCH",
+        headers: {
+          ...authHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: nextStatus.toLowerCase() }),
+      })
+      if (res.ok) {
+        setDetailedUser((prev) => ({ ...prev, status: nextStatus as any }))
+        window.dispatchEvent(new Event("user_updated"))
+      }
+    } catch (err) {
+      console.error("Failed to toggle status:", err)
+    } finally {
+      setIsTogglingStatus(false)
+    }
+  }
+
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
@@ -481,16 +506,35 @@ function ManageUserModal({
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors cursor-pointer"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={isTogglingStatus}
+              onClick={handleToggleStatus}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 ${
+                isActive
+                  ? "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
+                  : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs"
+              }`}
+            >
+              {isTogglingStatus
+                ? "Updating..."
+                : isActive
+                ? "Deactivate Account"
+                : "Reactivate Account"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
   )
 }
 
