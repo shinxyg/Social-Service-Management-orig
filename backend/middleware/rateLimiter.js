@@ -13,9 +13,11 @@ function getClientIp(req) {
 }
 
 /**
- * Check if the user/IP is currently locked out from logging in due to 3 failed attempts
- * Maximum: 3 attempts -> 1 minute (60s) lockout
- * Covers both IP device protection and targeted email protection.
+ * Check if the user/IP is currently locked out from logging in
+ * Progression:
+ * - Tier 1: 3 attempts -> 1 minute (60s) lock
+ * - Tier 2: 5 attempts -> 5 minutes (300s) lock
+ * - Tier 3: 6+ attempts -> 15 minutes (900s) strict lockout
  */
 async function checkLoginLockout(req, email) {
   const ip = getClientIp(req);
@@ -39,16 +41,25 @@ async function checkLoginLockout(req, email) {
         const lockTime = new Date(row.locked_until).getTime();
         if (lockTime > now) {
           const remainingSeconds = Math.ceil((lockTime - now) / 1000);
+          const minutes = Math.ceil(remainingSeconds / 60);
+          let lockMsg = '';
+          if (row.attempt_count >= 6) {
+            lockMsg = `Too many failed login attempts. Your account is locked for ${minutes} minute${minutes > 1 ? 's' : ''} for security.`;
+          } else if (row.attempt_count >= 5) {
+            lockMsg = `Too many failed login attempts (5/5). Your login is locked for ${minutes} minute${minutes > 1 ? 's' : ''} for security.`;
+          } else {
+            lockMsg = `Too many failed login attempts (3/3). Your login is locked for ${remainingSeconds}s for security.`;
+          }
+
           return {
             isLocked: true,
             remainingSeconds,
-            message: `Too many failed login attempts (3/3). Your login is locked for ${remainingSeconds}s for security.`,
+            minutes,
+            message: lockMsg,
           };
         } else {
-          // Lockout duration expired -> clean up so they start fresh with 3 attempts
-          await db.query(`DELETE FROM login_attempts WHERE id = $1`, [row.id]).catch(() => {});
-          loginAttempts.delete(ip);
-          if (cleanEmail) loginAttempts.delete(cleanEmail);
+          // Lockout duration expired -> clear locked_until so next attempt advances count
+          await db.query(`UPDATE login_attempts SET locked_until = NULL WHERE id = $1`, [row.id]).catch(() => {});
         }
       }
     }
@@ -61,16 +72,25 @@ async function checkLoginLockout(req, email) {
   if (memRecord) {
     if (memRecord.lockedUntil && now < memRecord.lockedUntil) {
       const remainingSeconds = Math.ceil((memRecord.lockedUntil - now) / 1000);
+      const minutes = Math.ceil(remainingSeconds / 60);
+      let lockMsg = '';
+      if (memRecord.count >= 6) {
+        lockMsg = `Too many failed login attempts. Your account is locked for ${minutes} minute${minutes > 1 ? 's' : ''} for security.`;
+      } else if (memRecord.count >= 5) {
+        lockMsg = `Too many failed login attempts (5/5). Your login is locked for ${minutes} minute${minutes > 1 ? 's' : ''} for security.`;
+      } else {
+        lockMsg = `Too many failed login attempts (3/3). Your login is locked for ${remainingSeconds}s for security.`;
+      }
       return {
         isLocked: true,
         remainingSeconds,
-        message: `Too many failed login attempts (3/3). Your login is locked for ${remainingSeconds}s for security.`,
+        minutes,
+        message: lockMsg,
       };
     }
 
     if (memRecord.lockedUntil && now >= memRecord.lockedUntil) {
-      loginAttempts.delete(ip);
-      if (cleanEmail) loginAttempts.delete(cleanEmail);
+      memRecord.lockedUntil = null;
     }
   }
 
@@ -78,9 +98,12 @@ async function checkLoginLockout(req, email) {
 }
 
 /**
- * Record a failed login attempt for any wrong password OR non-existent account
- * - Attempt 1 & 2: Increments counter and returns remaining attempts
- * - Attempt 3: Locks for 1 minute (60s)
+ * Record a failed login attempt with tiered progressive lockout:
+ * - Attempt 1 & 2 -> (1/3), (2/3)
+ * - Attempt 3 -> 1 minute (60s) lock
+ * - Attempt 4 -> (4/5)
+ * - Attempt 5 -> 5 minutes (300s) lock
+ * - Attempt 6+ -> 15 minutes (900s) lock
  */
 async function recordFailedLogin(req, email) {
   const ip = getClientIp(req);
@@ -103,13 +126,18 @@ async function recordFailedLogin(req, email) {
 
     if (existing.rows.length > 0) {
       const dbRow = existing.rows[0];
-      const lockTime = dbRow.locked_until ? new Date(dbRow.locked_until).getTime() : 0;
-      const isLockExpired = lockTime > 0 && now >= lockTime;
+      const firstTime = new Date(dbRow.first_attempt).getTime();
+      const isWindowExpired = (now - firstTime > 30 * 60 * 1000); // 30 mins idle resets
 
-      count = isLockExpired ? 1 : dbRow.attempt_count + 1;
+      count = isWindowExpired ? 1 : dbRow.attempt_count + 1;
       let dbLockUntil = null;
-      if (count >= 3) {
-        dbLockUntil = new Date(now + 1 * 60 * 1000); // 1 minute lockout
+
+      if (count >= 6) {
+        dbLockUntil = new Date(now + 15 * 60 * 1000); // Tier 3: 15 minutes
+      } else if (count === 5) {
+        dbLockUntil = new Date(now + 5 * 60 * 1000);  // Tier 2: 5 minutes
+      } else if (count === 3) {
+        dbLockUntil = new Date(now + 1 * 60 * 1000);  // Tier 1: 1 minute
       }
 
       await db.query(
@@ -148,13 +176,17 @@ async function recordFailedLogin(req, email) {
 
   // Memory store update
   let record = loginAttempts.get(ip) || (cleanEmail ? loginAttempts.get(cleanEmail) : null);
-  if (!record || (record.lockedUntil && now >= record.lockedUntil)) {
+  if (!record || (now - record.firstAttempt > 30 * 60 * 1000)) {
     record = { count: 1, firstAttempt: now, lockedUntil: null };
   } else {
     record.count += 1;
   }
 
-  if (record.count >= 3) {
+  if (record.count >= 6) {
+    record.lockedUntil = now + 15 * 60 * 1000;
+  } else if (record.count === 5) {
+    record.lockedUntil = now + 5 * 60 * 1000;
+  } else if (record.count === 3) {
     record.lockedUntil = now + 1 * 60 * 1000;
   }
 
@@ -219,11 +251,11 @@ const sendOtpLimiter = rateLimit({
 
 /**
  * Express Rate Limit Middleware for /api/auth/login
- * Standard burst protection: Maximum 10 total requests per 5 minutes
+ * Standard burst protection: Maximum 15 total requests per 5 minutes
  */
 const loginRateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 10, // 10 total HTTP attempts per window
+  max: 15, // 15 total HTTP attempts per window
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {

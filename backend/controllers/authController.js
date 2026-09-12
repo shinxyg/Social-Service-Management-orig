@@ -481,10 +481,24 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Helper for login failure response with attempt counter
+    // Helper for login failure response with tiered attempt counter
     const handleLoginFailure = async (userEmail, customMsg) => {
       const record = await recordFailedLogin(req, userEmail);
-      if (record.count >= 3) {
+      if (record.count >= 6) {
+        return res.status(429).json({
+          success: false,
+          isRateLimited: true,
+          remainingSeconds: 900,
+          message: 'Too many failed login attempts. Your account is locked for 15 minutes for security.',
+        });
+      } else if (record.count === 5) {
+        return res.status(429).json({
+          success: false,
+          isRateLimited: true,
+          remainingSeconds: 300,
+          message: 'Too many failed login attempts (5/5). Your login is locked for 5 minutes for security.',
+        });
+      } else if (record.count === 3) {
         return res.status(429).json({
           success: false,
           isRateLimited: true,
@@ -492,10 +506,12 @@ exports.login = async (req, res) => {
           message: 'Too many failed login attempts (3/3). Your login is locked for 1 minute for security.',
         });
       }
+
       const baseMsg = customMsg || 'Incorrect password. Please verify your password and try again.';
+      const tierMax = record.count >= 4 ? 5 : 3;
       return res.status(401).json({
         success: false,
-        message: `${baseMsg} (${record.count}/3 failed attempts)`,
+        message: `${baseMsg} (${record.count}/${tierMax} failed attempts)`,
       });
     };
 
