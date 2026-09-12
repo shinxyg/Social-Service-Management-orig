@@ -754,6 +754,24 @@ exports.login = async (req, res) => {
 };
 
 /**
+ * GET /api/auth/lockout-status
+ * Checks if client IP / email is currently in lockout state
+ */
+exports.getLockoutStatus = async (req, res) => {
+  try {
+    const email = (req.query.email || '').trim().toLowerCase();
+    const lockout = await checkLoginLockout(req, email);
+    return res.status(200).json({
+      isLocked: Boolean(lockout.isLocked),
+      remainingSeconds: lockout.remainingSeconds || 0,
+      message: lockout.message || null,
+    });
+  } catch (err) {
+    return res.status(200).json({ isLocked: false, remainingSeconds: 0 });
+  }
+};
+
+/**
  * POST /api/auth/reactivate
  * Self-service account reactivation by resident user
  */

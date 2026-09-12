@@ -14,7 +14,29 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [lockoutRemaining, setLockoutRemaining] = useState<number>(() => {
+    try {
+      const storedUntil = localStorage.getItem('login_lockout_until');
+      if (storedUntil) {
+        const remaining = Math.ceil((parseInt(storedUntil, 10) - Date.now()) / 1000);
+        return remaining > 0 ? remaining : 0;
+      }
+    } catch {}
+    return 0;
+  });
+
+  const [error, setError] = useState<string>(() => {
+    try {
+      const storedUntil = localStorage.getItem('login_lockout_until');
+      if (storedUntil) {
+        const remaining = Math.ceil((parseInt(storedUntil, 10) - Date.now()) / 1000);
+        if (remaining > 0) {
+          return localStorage.getItem('login_lockout_message') || `Too many failed login attempts (3/3). Your login is locked for ${remaining}s for security.`;
+        }
+      }
+    } catch {}
+    return '';
+  });
 
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -27,19 +49,59 @@ export const Login = () => {
 
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
-  const [lockoutRemaining, setLockoutRemaining] = useState<number>(0);
 
+  // Check lockout status from server on mount
   useEffect(() => {
-    if (lockoutRemaining <= 0) return;
-    const interval = setInterval(() => {
-      setLockoutRemaining((prev) => {
-        if (prev <= 1) {
-          setError('');
-          return 0;
+    const checkServerLockout = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/lockout-status`);
+        const data = await res.json();
+        if (data && data.isLocked && data.remainingSeconds > 0) {
+          const lockExpiry = Date.now() + data.remainingSeconds * 1000;
+          localStorage.setItem('login_lockout_until', lockExpiry.toString());
+          const lockMsg = data.message || `Too many failed login attempts (3/3). Your login is locked for ${data.remainingSeconds}s for security.`;
+          localStorage.setItem('login_lockout_message', lockMsg);
+          setLockoutRemaining(data.remainingSeconds);
+          setError(lockMsg);
         }
-        return prev - 1;
-      });
+      } catch {}
+    };
+    checkServerLockout();
+  }, []);
+
+  // Real-time countdown timer that survives page reloads
+  useEffect(() => {
+    if (lockoutRemaining <= 0) {
+      localStorage.removeItem('login_lockout_until');
+      localStorage.removeItem('login_lockout_message');
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const storedUntil = localStorage.getItem('login_lockout_until');
+      let remaining = 0;
+      if (storedUntil) {
+        remaining = Math.max(0, Math.ceil((parseInt(storedUntil, 10) - Date.now()) / 1000));
+      } else {
+        remaining = Math.max(0, lockoutRemaining - 1);
+      }
+
+      setLockoutRemaining(remaining);
+
+      if (remaining <= 0) {
+        localStorage.removeItem('login_lockout_until');
+        localStorage.removeItem('login_lockout_message');
+        setError('');
+      } else {
+        setError((prev) => {
+          if (prev && prev.includes('locked for')) {
+            return `Too many failed login attempts (3/3). Your login is locked for ${remaining}s for security.`;
+          }
+          return prev;
+        });
+      }
     }, 1000);
+
     return () => clearInterval(interval);
   }, [lockoutRemaining]);
 

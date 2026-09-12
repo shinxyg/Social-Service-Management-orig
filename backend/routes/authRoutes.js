@@ -15,6 +15,9 @@ router.post('/register', authController.register);
 // POST /api/auth/login (Rate limit & brute-force protection)
 router.post('/login', loginRateLimiter, authController.login);
 
+// GET /api/auth/lockout-status
+router.get('/lockout-status', authController.getLockoutStatus);
+
 // POST /api/auth/forgot-password
 router.post('/forgot-password', authController.forgotPassword);
 
