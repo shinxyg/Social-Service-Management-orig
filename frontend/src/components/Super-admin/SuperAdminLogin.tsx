@@ -26,6 +26,7 @@ export default function SuperAdminLogin() {
         sessionStorage.setItem("userRole", data.role || "super_admin")
         if (data.sessionToken) {
           sessionStorage.setItem("sessionToken", data.sessionToken)
+          localStorage.setItem("sessionToken", data.sessionToken)
         }
         if (data.user) {
           sessionStorage.setItem("currentUser", JSON.stringify(data.user))

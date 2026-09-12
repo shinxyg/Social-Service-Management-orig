@@ -100,6 +100,7 @@ export const Login = () => {
           sessionStorage.setItem('userRole', detectedRole);
           if (data.sessionToken) {
             sessionStorage.setItem('sessionToken', data.sessionToken);
+            localStorage.setItem('sessionToken', data.sessionToken);
           }
           if (data.user) {
             sessionStorage.setItem('currentUser', JSON.stringify(data.user));

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Clock, Smartphone, LogIn } from "lucide-react"
+import { Clock, ShieldAlert, LogIn, AlertTriangle } from "lucide-react"
 
 // 15 Minutes Inactivity Timeout in milliseconds
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
@@ -9,6 +9,7 @@ type ExpiryReason = "inactivity" | "concurrent" | null;
 
 export function SessionInactivityWatcher() {
   const [expiryReason, setExpiryReason] = useState<ExpiryReason>(null);
+  const [newDeviceInfo, setNewDeviceInfo] = useState<string>("");
   const lastActivityRef = useRef<number>(Date.now());
   const timerRef = useRef<any>(null);
   const verifyIntervalRef = useRef<any>(null);
@@ -34,8 +35,14 @@ export function SessionInactivityWatcher() {
   }, []);
 
   const getSessionToken = useCallback(() => {
-    return sessionStorage.getItem("sessionToken") || "";
-  }, []);
+    let token = sessionStorage.getItem("sessionToken") || localStorage.getItem("sessionToken");
+    if (!token && checkIsAuth()) {
+      token = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      sessionStorage.setItem("sessionToken", token);
+      localStorage.setItem("sessionToken", token);
+    }
+    return token || "";
+  }, [checkIsAuth]);
 
   const handleUserActivity = useCallback(() => {
     if (!expiryReason) {
@@ -74,6 +81,10 @@ export function SessionInactivityWatcher() {
       const data = await res.json();
       if (data && data.isSessionTerminated) {
         clearAuthSession();
+        if (data.newDevice) {
+          const dev = data.newDevice;
+          setNewDeviceInfo(`${dev.device_name || dev.device_type || 'Another Device'}${dev.os ? ` (${dev.os})` : ''}`);
+        }
         setExpiryReason("concurrent");
       }
     } catch {
@@ -105,13 +116,13 @@ export function SessionInactivityWatcher() {
       }
     }, 5000);
 
-    // Initial check for concurrent session
+    // Initial check for concurrent session immediately
     verifyConcurrentSession();
 
-    // Periodic check every 5 seconds for concurrent device login
+    // Real-time periodic check every 1.5 seconds for concurrent device login
     verifyIntervalRef.current = setInterval(() => {
       verifyConcurrentSession();
-    }, 5000);
+    }, 1500);
 
     // Also check immediately when window gains focus or tab becomes visible
     const handleVisibilityOrFocus = () => {
@@ -148,18 +159,20 @@ export function SessionInactivityWatcher() {
   const isConcurrent = expiryReason === "concurrent";
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 border border-slate-200 text-center space-y-5 animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className={`bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 border text-center space-y-5 animate-in zoom-in-95 duration-150 ${
+        isConcurrent ? "border-red-200" : "border-slate-200"
+      }`}>
         {/* Header Icon */}
         <div
-          className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-xs border ${
+          className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-sm border ${
             isConcurrent
-              ? "bg-blue-50 border-blue-200 text-blue-600"
+              ? "bg-red-50 border-red-200 text-red-600 animate-pulse"
               : "bg-amber-50 border-amber-200 text-amber-600"
           }`}
         >
           {isConcurrent ? (
-            <Smartphone className="w-8 h-8 stroke-[2.2]" />
+            <ShieldAlert className="w-8 h-8 stroke-[2.2]" />
           ) : (
             <Clock className="w-8 h-8 stroke-[2.2]" />
           )}
@@ -167,28 +180,46 @@ export function SessionInactivityWatcher() {
 
         {/* Title & Message */}
         <div className="space-y-2">
-          <h3
-            className="text-2xl font-black text-slate-900 tracking-tight"
-            style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}
-          >
-            {isConcurrent ? "Session Terminated" : "Session Expired"}
-          </h3>
+          <div className="flex items-center justify-center gap-1.5">
+            {isConcurrent && <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />}
+            <h3
+              className={`text-2xl font-black tracking-tight ${
+                isConcurrent ? "text-red-700" : "text-slate-900"
+              }`}
+              style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}
+            >
+              {isConcurrent ? "Na-access sa Ibang Device" : "Session Expired"}
+            </h3>
+          </div>
           <p className="text-sm text-slate-600 leading-relaxed font-medium">
             {isConcurrent
-              ? "Your account was accessed from another device. You have been logged out for security."
+              ? newDeviceInfo
+                ? `May nag-login sa iyong account gamit ang bagong device: ${newDeviceInfo}. Na-logout ang device na ito para sa iyong seguridad.`
+                : "May bagong device na nag-login sa iyong account. Para sa iyong seguridad, na-terminate ang session sa device na ito sa real-time."
               : "Your session has timed out due to inactivity."}
           </p>
         </div>
+
+        {isConcurrent && (
+          <div className="p-3 bg-red-50/80 border border-red-200 rounded-xl text-xs text-red-700 font-medium flex items-center justify-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+            <span>Single active session rule: 1 device lamang kada account.</span>
+          </div>
+        )}
 
         {/* Re-login Button */}
         <div className="pt-2">
           <button
             type="button"
             onClick={handleReLogin}
-            className="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 hover:scale-[1.01]"
+            className={`w-full py-3.5 px-6 rounded-xl text-white text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 hover:scale-[1.01] ${
+              isConcurrent
+                ? "bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-red-200"
+                : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-blue-200"
+            }`}
           >
             <LogIn className="w-4 h-4" />
-            <span>OK / Re-login</span>
+            <span>OK / Mag-login Ulit</span>
           </button>
         </div>
       </div>

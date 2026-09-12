@@ -838,10 +838,25 @@ exports.verifySession = async (req, res) => {
         const dbUser = userRes.rows[0];
         // If DB has an active_session_token recorded and it differs from client's token, the account was opened on another device
         if (dbUser.active_session_token && dbUser.active_session_token !== sessionToken) {
+          let newDev = null;
+          try {
+            const devRes = await db.query(
+              `SELECT device_name, device_type, browser, os, ip_address, login_at 
+               FROM user_login_sessions 
+               WHERE LOWER(email) = $1 AND is_active = true 
+               ORDER BY id DESC LIMIT 1`,
+              [email]
+            );
+            if (devRes.rows.length > 0) newDev = devRes.rows[0];
+          } catch {}
+
           return res.status(200).json({
             success: false,
             isSessionTerminated: true,
-            message: 'Your account was accessed from another device. You have been logged out for security.',
+            newDevice: newDev,
+            message: newDev
+              ? `Your account was accessed from ${newDev.device_name || newDev.device_type || 'another device'}. You have been logged out for security.`
+              : 'Your account was accessed from another device. You have been logged out for security.',
           });
         }
         return res.status(200).json({ success: true, active: true });

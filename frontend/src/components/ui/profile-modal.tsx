@@ -168,7 +168,12 @@ export function ProfileModal({
     setIsLoadingDevices(true);
     setDeviceActionMsg(null);
     try {
-      const currentToken = sessionStorage.getItem("sessionToken") || "";
+      let currentToken = sessionStorage.getItem("sessionToken") || localStorage.getItem("sessionToken");
+      if (!currentToken) {
+        currentToken = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+        sessionStorage.setItem("sessionToken", currentToken);
+        localStorage.setItem("sessionToken", currentToken);
+      }
       const res = await fetch(
         `${API_BASE}/api/auth/devices?email=${encodeURIComponent(resolvedEmail)}&token=${encodeURIComponent(currentToken)}`
       );
@@ -186,6 +191,8 @@ export function ProfileModal({
   useEffect(() => {
     if (open && tab === "devices") {
       fetchDeviceSessions();
+      const interval = setInterval(fetchDeviceSessions, 2500);
+      return () => clearInterval(interval);
     }
   }, [open, tab, fetchDeviceSessions]);
 
@@ -1361,16 +1368,23 @@ export function ProfileModal({
 
               {/* Active / Current Device Card */}
               {(() => {
-                const currentDev = deviceSessions.find((s) => s.isCurrentDevice) || deviceSessions.find((s) => s.isActive);
+                const currentDev = deviceSessions.find((s) => s.isCurrentDevice);
                 if (!currentDev) return null;
                 const isMobile = currentDev.deviceType?.toLowerCase().includes("mobile") || currentDev.os?.toLowerCase().includes("android") || currentDev.os?.toLowerCase().includes("ios");
                 const isTablet = currentDev.deviceType?.toLowerCase().includes("tablet") || currentDev.os?.toLowerCase().includes("ipad");
+                const isStillActive = currentDev.isActive;
 
                 return (
-                  <div className="rounded-2xl border-2 border-blue-200 bg-linear-to-br from-blue-50/50 via-white to-slate-50 p-5 shadow-xs relative overflow-hidden">
+                  <div className={`rounded-2xl border-2 p-5 shadow-xs relative overflow-hidden transition-all ${
+                    isStillActive
+                      ? "border-blue-200 bg-linear-to-br from-blue-50/50 via-white to-slate-50"
+                      : "border-red-300 bg-red-50/40 ring-1 ring-red-200"
+                  }`}>
                     <div className="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
                       <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                        <div className={`w-12 h-12 rounded-xl text-white flex items-center justify-center shadow-xs shrink-0 ${
+                          isStillActive ? "bg-blue-600" : "bg-red-600"
+                        }`}>
                           {isTablet ? (
                             <Tablet className="w-6 h-6" />
                           ) : isMobile ? (
@@ -1382,12 +1396,19 @@ export function ProfileModal({
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-extrabold text-slate-900">
-                              {currentDev.deviceName || "Current Device"}
+                              {currentDev.deviceName || "This Device"}
                             </span>
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                              {t("activeNow") || "Active Now (Current Device)"}
-                            </span>
+                            {isStillActive ? (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                                {t("activeNow") || "Active Now (This Device)"}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-red-100 text-red-800 border border-red-300 px-2.5 py-0.5 rounded-full animate-pulse">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                                🔴 Session Logged Out (New Device Logged In)
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
                             <span>OS: <strong className="text-slate-700">{currentDev.os}</strong></span>
@@ -1426,6 +1447,13 @@ export function ProfileModal({
                         <span>{language === "tl" ? "I-logout ang Device" : "Log Out Device"}</span>
                       </button>
                     </div>
+
+                    {!isStillActive && (
+                      <div className="mt-3 p-2.5 bg-red-100/70 border border-red-200 rounded-xl text-xs text-red-800 font-medium flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+                        <span>Na-logout ang session sa device na ito dahil nag-login ang account sa ibang device.</span>
+                      </div>
+                    )}
 
                     <div className="mt-4 pt-3 border-t border-blue-100/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-600 gap-1">
                       <div className="flex items-center gap-1.5 font-medium">
@@ -1471,7 +1499,7 @@ export function ProfileModal({
                           key={session.id}
                           className={`rounded-xl border p-4 transition-all ${
                             session.isActive
-                              ? "border-amber-200 bg-amber-50/40"
+                              ? "border-red-300 bg-red-50/60 shadow-xs ring-1 ring-red-200"
                               : "border-slate-200 bg-white hover:bg-slate-50/70"
                           }`}
                         >
@@ -1480,7 +1508,7 @@ export function ProfileModal({
                               <div
                                 className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                                   session.isActive
-                                    ? "bg-amber-100 text-amber-700"
+                                    ? "bg-red-100 text-red-700"
                                     : "bg-slate-100 text-slate-500"
                                 }`}
                               >
@@ -1498,8 +1526,9 @@ export function ProfileModal({
                                     {session.deviceName || "Device Session"}
                                   </span>
                                   {session.isActive ? (
-                                    <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-300">
-                                      Active Session
+                                    <span className="text-[10px] font-extrabold bg-red-100 text-red-800 px-2.5 py-0.5 rounded-full border border-red-300 flex items-center gap-1 animate-pulse">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                                      🔴 Active (New Logged-In Device)
                                     </span>
                                   ) : (
                                     <span className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
