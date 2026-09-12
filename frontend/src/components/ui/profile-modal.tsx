@@ -137,7 +137,19 @@ export function ProfileModal({
   };
 
   const [photoUrl, setPhotoUrl] = useState<string | null>(() => getSavedProfilePhoto(resolvedQcid));
-  const [tab, setTab] = useState<"account" | "personal" | "devices" | "preferences">("account");
+  const [tab, setTabState] = useState<"account" | "personal" | "devices" | "preferences">(() => {
+    const saved = localStorage.getItem("profile_modal_tab") || sessionStorage.getItem("profile_modal_tab");
+    if (saved === "personal" || saved === "devices" || saved === "preferences" || saved === "account") {
+      return saved;
+    }
+    return "account";
+  });
+
+  const setTab = (newTab: "account" | "personal" | "devices" | "preferences") => {
+    localStorage.setItem("profile_modal_tab", newTab);
+    sessionStorage.setItem("profile_modal_tab", newTab);
+    setTabState(newTab);
+  };
   const [showQcid, setShowQcid] = useState(false);
   const [formData, setFormData] = useState<FormData>(buildInitialData);
   const [savedFormData, setSavedFormData] = useState<FormData>(buildInitialData);
@@ -643,10 +655,16 @@ export function ProfileModal({
       .filter((part) => part && part.trim().length > 0)
       .join(" ") || name;
 
+  const handleModalClose = () => {
+    localStorage.removeItem("is_profile_modal_open");
+    sessionStorage.removeItem("is_profile_modal_open");
+    onClose();
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-      onClick={onClose}
+      onClick={handleModalClose}
     >
       <div
         className="bg-white w-full max-w-4xl rounded-2xl shadow-xl relative overflow-hidden"
@@ -654,7 +672,7 @@ export function ProfileModal({
       >
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={handleModalClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors z-10 cursor-pointer"
           aria-label="Close"
         >
@@ -1400,7 +1418,7 @@ export function ProfileModal({
 
                 return (
                   <div className="rounded-2xl border-2 border-blue-200 bg-linear-to-br from-blue-50/50 via-white to-slate-50 p-5 shadow-xs relative overflow-hidden">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
                       <div className="flex items-center gap-3.5">
                         <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
                           {isTablet ? (
@@ -1430,6 +1448,33 @@ export function ProfileModal({
                           </div>
                         </div>
                       </div>
+
+                      {/* Log Out Current Device Action Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              language === "tl"
+                                ? "Sigurado ka bang nais mong mag-sign out sa kasalukuyang device na ito?"
+                                : "Are you sure you want to log out of this current device?"
+                            )
+                          ) {
+                            sessionStorage.clear();
+                            localStorage.removeItem("currentUser");
+                            localStorage.removeItem("isAuthenticated");
+                            localStorage.removeItem("userRole");
+                            localStorage.removeItem("is_profile_modal_open");
+                            sessionStorage.removeItem("is_profile_modal_open");
+                            window.location.href = "/login";
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-xs mt-2 sm:mt-0"
+                        title={language === "tl" ? "I-logout ang kasalukuyang device na ito" : "Log out of this current device"}
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>{language === "tl" ? "I-logout ang Device" : "Log Out Device"}</span>
+                      </button>
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-blue-100/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-600 gap-1">

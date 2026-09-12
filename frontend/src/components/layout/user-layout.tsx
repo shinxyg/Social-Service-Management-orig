@@ -594,7 +594,24 @@ function ResidentHeader({
     }
   }
   const [menuOpen, setMenuOpen] = useState(false)
-  const [profileOpen, setProfileOpen] = useState(false)
+  const [profileOpen, setProfileOpenState] = useState(() => {
+    return (
+      localStorage.getItem("is_profile_modal_open") === "true" ||
+      sessionStorage.getItem("is_profile_modal_open") === "true"
+    )
+  })
+
+  const setProfileOpen = (open: boolean) => {
+    if (open) {
+      localStorage.setItem("is_profile_modal_open", "true")
+      sessionStorage.setItem("is_profile_modal_open", "true")
+    } else {
+      localStorage.removeItem("is_profile_modal_open")
+      sessionStorage.removeItem("is_profile_modal_open")
+    }
+    setProfileOpenState(open)
+  }
+
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifications, setNotifications] = useState<AicsNotification[]>([])
   const [selectedNotif, setSelectedNotif] = useState<AicsNotification | null>(null)
