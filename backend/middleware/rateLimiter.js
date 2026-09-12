@@ -12,30 +12,23 @@ function getClientIp(req) {
   return ip;
 }
 
-// Generate key based on IP and lowercase email
-function getLoginKey(req, email) {
-  const ip = getClientIp(req);
-  const cleanEmail = (email || '').trim().toLowerCase();
-  return `${ip}_${cleanEmail || 'unknown'}`;
-}
-
 /**
  * Check if the user/IP is currently locked out from logging in due to 3 failed attempts
  * Maximum: 3 attempts -> 1 minute (60s) lockout
- * Resets back to fresh 3 attempts after cooldown expires.
+ * Covers both IP device protection and targeted email protection.
  */
 async function checkLoginLockout(req, email) {
   const ip = getClientIp(req);
   const cleanEmail = (email || '').trim().toLowerCase();
-  const key = `${ip}_${cleanEmail || 'unknown'}`;
   const now = Date.now();
 
-  // 1. Check in PostgreSQL Database
+  // 1. Check in PostgreSQL Database by IP or Email
   try {
     const dbRes = await db.query(
       `SELECT id, attempt_count, locked_until, first_attempt 
        FROM login_attempts 
-       WHERE ip_address = $1 AND email = $2 
+       WHERE ip_address = $1 OR ($2 != '' AND email = $2)
+       ORDER BY attempt_count DESC 
        LIMIT 1`,
       [ip, cleanEmail]
     );
@@ -52,9 +45,10 @@ async function checkLoginLockout(req, email) {
             message: `Too many failed login attempts (3/3). Your login is locked for ${remainingSeconds}s for security.`,
           };
         } else {
-          // Lockout duration expired -> clean up row so they start fresh with 3 attempts
+          // Lockout duration expired -> clean up so they start fresh with 3 attempts
           await db.query(`DELETE FROM login_attempts WHERE id = $1`, [row.id]).catch(() => {});
-          loginAttempts.delete(key);
+          loginAttempts.delete(ip);
+          if (cleanEmail) loginAttempts.delete(cleanEmail);
         }
       }
     }
@@ -63,10 +57,10 @@ async function checkLoginLockout(req, email) {
   }
 
   // 2. Check in-memory store fallback
-  const record = loginAttempts.get(key);
-  if (record) {
-    if (record.lockedUntil && now < record.lockedUntil) {
-      const remainingSeconds = Math.ceil((record.lockedUntil - now) / 1000);
+  const memRecord = loginAttempts.get(ip) || (cleanEmail ? loginAttempts.get(cleanEmail) : null);
+  if (memRecord) {
+    if (memRecord.lockedUntil && now < memRecord.lockedUntil) {
+      const remainingSeconds = Math.ceil((memRecord.lockedUntil - now) / 1000);
       return {
         isLocked: true,
         remainingSeconds,
@@ -74,8 +68,9 @@ async function checkLoginLockout(req, email) {
       };
     }
 
-    if (record.lockedUntil && now >= record.lockedUntil) {
-      loginAttempts.delete(key);
+    if (memRecord.lockedUntil && now >= memRecord.lockedUntil) {
+      loginAttempts.delete(ip);
+      if (cleanEmail) loginAttempts.delete(cleanEmail);
     }
   }
 
@@ -83,14 +78,13 @@ async function checkLoginLockout(req, email) {
 }
 
 /**
- * Record a failed login attempt:
+ * Record a failed login attempt for any wrong password OR non-existent account
  * - Attempt 1 & 2: Increments counter and returns remaining attempts
  * - Attempt 3: Locks for 1 minute (60s)
  */
 async function recordFailedLogin(req, email) {
   const ip = getClientIp(req);
   const cleanEmail = (email || '').trim().toLowerCase();
-  const key = `${ip}_${cleanEmail || 'unknown'}`;
   const now = Date.now();
 
   let count = 1;
@@ -99,7 +93,11 @@ async function recordFailedLogin(req, email) {
   // PostgreSQL Database update
   try {
     const existing = await db.query(
-      `SELECT id, attempt_count, first_attempt, locked_until FROM login_attempts WHERE ip_address = $1 AND email = $2 LIMIT 1`,
+      `SELECT id, attempt_count, first_attempt, locked_until 
+       FROM login_attempts 
+       WHERE ip_address = $1 OR ($2 != '' AND email = $2)
+       ORDER BY id DESC 
+       LIMIT 1`,
       [ip, cleanEmail]
     );
 
@@ -116,9 +114,9 @@ async function recordFailedLogin(req, email) {
 
       await db.query(
         `UPDATE login_attempts 
-         SET attempt_count = $1, last_attempt = NOW(), locked_until = $2 
-         WHERE id = $3`,
-        [count, dbLockUntil, dbRow.id]
+         SET attempt_count = $1, email = $2, ip_address = $3, last_attempt = NOW(), locked_until = $4 
+         WHERE id = $5`,
+        [count, cleanEmail || dbRow.email || 'unknown', ip, dbLockUntil, dbRow.id]
       );
       lockedUntil = dbLockUntil;
     } else {
@@ -131,7 +129,7 @@ async function recordFailedLogin(req, email) {
         `INSERT INTO login_attempts 
          (ip_address, email, attempt_count, first_attempt, last_attempt, locked_until, created_at)
          VALUES ($1, $2, $3, NOW(), NOW(), $4, NOW())`,
-        [ip, cleanEmail, count, dbLockUntil]
+        [ip, cleanEmail || 'unknown', count, dbLockUntil]
       );
       lockedUntil = dbLockUntil;
     }
@@ -149,7 +147,7 @@ async function recordFailedLogin(req, email) {
   }
 
   // Memory store update
-  let record = loginAttempts.get(key);
+  let record = loginAttempts.get(ip) || (cleanEmail ? loginAttempts.get(cleanEmail) : null);
   if (!record || (record.lockedUntil && now >= record.lockedUntil)) {
     record = { count: 1, firstAttempt: now, lockedUntil: null };
   } else {
@@ -159,7 +157,10 @@ async function recordFailedLogin(req, email) {
   if (record.count >= 3) {
     record.lockedUntil = now + 1 * 60 * 1000;
   }
-  loginAttempts.set(key, record);
+
+  loginAttempts.set(ip, record);
+  if (cleanEmail) loginAttempts.set(cleanEmail, record);
+
   count = record.count;
   lockedUntil = record.lockedUntil ? new Date(record.lockedUntil) : null;
 
@@ -172,13 +173,13 @@ async function recordFailedLogin(req, email) {
 async function clearFailedLogins(req, email) {
   const ip = getClientIp(req);
   const cleanEmail = (email || '').trim().toLowerCase();
-  const key = `${ip}_${cleanEmail || 'unknown'}`;
 
-  loginAttempts.delete(key);
+  loginAttempts.delete(ip);
+  if (cleanEmail) loginAttempts.delete(cleanEmail);
 
   try {
     await db.query(
-      `DELETE FROM login_attempts WHERE ip_address = $1 AND email = $2`,
+      `DELETE FROM login_attempts WHERE ip_address = $1 OR ($2 != '' AND email = $2)`,
       [ip, cleanEmail]
     );
     if (cleanEmail) {

@@ -481,8 +481,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Helper for password failure response with attempt counter
-    const handlePasswordFailure = async (userEmail) => {
+    // Helper for login failure response with attempt counter
+    const handleLoginFailure = async (userEmail, customMsg) => {
       const record = await recordFailedLogin(req, userEmail);
       if (record.count >= 3) {
         return res.status(429).json({
@@ -492,9 +492,10 @@ exports.login = async (req, res) => {
           message: 'Too many failed login attempts (3/3). Your login is locked for 1 minute for security.',
         });
       }
+      const baseMsg = customMsg || 'Incorrect password. Please verify your password and try again.';
       return res.status(401).json({
         success: false,
-        message: `Incorrect password. Please verify your password and try again. (${record.count}/3 failed attempts)`,
+        message: `${baseMsg} (${record.count}/3 failed attempts)`,
       });
     };
 
@@ -527,7 +528,7 @@ exports.login = async (req, res) => {
         : (cleanPassword === 'admin123' || cleanPassword === 'admin');
 
       if (!isPassValid) {
-        return await handlePasswordFailure(cleanEmail);
+        return await handleLoginFailure(cleanEmail);
       }
 
       await clearFailedLogins(req, cleanEmail);
@@ -563,7 +564,7 @@ exports.login = async (req, res) => {
         : (cleanPassword === 'superadmin123' || cleanPassword === 'superadmin');
 
       if (!isPassValid) {
-        return await handlePasswordFailure(cleanEmail);
+        return await handleLoginFailure(cleanEmail);
       }
 
       await clearFailedLogins(req, cleanEmail);
@@ -599,7 +600,7 @@ exports.login = async (req, res) => {
         : (cleanPassword === 'staff123' || cleanPassword === 'staff');
 
       if (!isPassValid) {
-        return await handlePasswordFailure(cleanEmail);
+        return await handleLoginFailure(cleanEmail);
       }
 
       await clearFailedLogins(req, cleanEmail);
@@ -632,7 +633,7 @@ exports.login = async (req, res) => {
         // Check password using bcrypt
         const isPasswordValid = await verifyPassword(cleanPassword, dbUser.password);
         if (!isPasswordValid) {
-          return await handlePasswordFailure(cleanEmail);
+          return await handleLoginFailure(cleanEmail);
         }
 
         // Check account active/inactive status
@@ -707,7 +708,7 @@ exports.login = async (req, res) => {
     if (memUser) {
       const isMemPasswordValid = await verifyPassword(cleanPassword, memUser.password);
       if (!isMemPasswordValid) {
-        return await handlePasswordFailure(cleanEmail);
+        return await handleLoginFailure(cleanEmail);
       }
 
       const memStatus = String(memUser.status || 'active').toLowerCase();
@@ -744,11 +745,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 4. User is NOT found in database or memory store
-    return res.status(401).json({
-      success: false,
-      message: 'Account not found. Please register first before logging in.',
-    });
+    // 4. User is NOT found in database or memory store -> Record failed attempt for random names
+    return await handleLoginFailure(cleanEmail, 'Account not found or invalid credentials.');
   } catch (err) {
     console.error('Error in login controller:', err);
     return res.status(500).json({ success: false, message: 'Server error during login', error: err.message });
