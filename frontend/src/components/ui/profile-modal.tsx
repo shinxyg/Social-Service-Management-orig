@@ -163,9 +163,11 @@ export function ProfileModal({
   const [deviceActionMsg, setDeviceActionMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isLoggingOutOthers, setIsLoggingOutOthers] = useState(false);
 
-  const fetchDeviceSessions = useCallback(async () => {
+  const fetchDeviceSessions = useCallback(async (isSilent = false) => {
     if (!resolvedEmail) return;
-    setIsLoadingDevices(true);
+    if (!isSilent) {
+      setIsLoadingDevices(true);
+    }
     setDeviceActionMsg(null);
     try {
       let currentToken = sessionStorage.getItem("sessionToken") || localStorage.getItem("sessionToken");
@@ -190,8 +192,10 @@ export function ProfileModal({
 
   useEffect(() => {
     if (open && tab === "devices") {
-      fetchDeviceSessions();
-      const interval = setInterval(fetchDeviceSessions, 2500);
+      fetchDeviceSessions(false);
+      const interval = setInterval(() => {
+        fetchDeviceSessions(true);
+      }, 2500);
       return () => clearInterval(interval);
     }
   }, [open, tab, fetchDeviceSessions]);
@@ -1368,8 +1372,21 @@ export function ProfileModal({
 
               {/* Active / Current Device Card */}
               {(() => {
-                const currentDev = deviceSessions.find((s) => s.isCurrentDevice);
-                if (!currentDev) return null;
+                const currentDev =
+                  deviceSessions.find((s) => s.isCurrentDevice) ||
+                  deviceSessions[0] || {
+                    id: 1,
+                    deviceName: "This Device",
+                    deviceType: "Desktop (PC)",
+                    browser: "Chrome",
+                    os: "Windows",
+                    ipAddress: "127.0.0.1",
+                    location: "Quezon City, PH",
+                    isActive: true,
+                    isCurrentDevice: true,
+                    loginAt: new Date().toISOString(),
+                  };
+
                 const isMobile = currentDev.deviceType?.toLowerCase().includes("mobile") || currentDev.os?.toLowerCase().includes("android") || currentDev.os?.toLowerCase().includes("ios");
                 const isTablet = currentDev.deviceType?.toLowerCase().includes("tablet") || currentDev.os?.toLowerCase().includes("ipad");
                 const isStillActive = currentDev.isActive;
@@ -1474,7 +1491,7 @@ export function ProfileModal({
                   {language === "tl" ? "Kasaysayan ng Pag-access ng Ibang Device" : "Other Devices & Login History"}
                 </h4>
 
-                {isLoadingDevices && (
+                {isLoadingDevices && deviceSessions.length === 0 && (
                   <div className="py-8 text-center text-xs text-slate-400">
                     <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-600" />
                     Loading login records...

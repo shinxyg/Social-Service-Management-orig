@@ -827,16 +827,48 @@ exports.verifySession = async (req, res) => {
     const sessionToken = (req.query.token || req.headers['x-session-token'] || '').trim();
 
     if (!email || !sessionToken) {
-      // If client didn't supply email/token, don't kick prematurely
       return res.status(200).json({ success: true, active: true });
     }
 
-    // 1. Query database
+    // 1. Check user_login_sessions table for this exact session token status
     try {
+      const sessRes = await db.query(
+        `SELECT id, is_active, logout_reason FROM user_login_sessions 
+         WHERE LOWER(email) = $1 AND session_token = $2 
+         ORDER BY id DESC LIMIT 1`,
+        [email, sessionToken]
+      );
+
+      if (sessRes.rows.length > 0) {
+        const mySession = sessRes.rows[0];
+        if (mySession.is_active === false) {
+          let newDev = null;
+          try {
+            const devRes = await db.query(
+              `SELECT device_name, device_type, browser, os, ip_address, login_at 
+               FROM user_login_sessions 
+               WHERE LOWER(email) = $1 AND is_active = true 
+               ORDER BY id DESC LIMIT 1`,
+              [email]
+            );
+            if (devRes.rows.length > 0) newDev = devRes.rows[0];
+          } catch {}
+
+          return res.status(200).json({
+            success: false,
+            isSessionTerminated: true,
+            newDevice: newDev,
+            message: newDev
+              ? `Your account was accessed from ${newDev.device_name || newDev.device_type || 'another device'}. You have been logged out for security.`
+              : 'Your account was accessed from another device. You have been logged out for security.',
+          });
+        }
+      }
+
+      // Also check users table active_session_token
       const userRes = await db.query('SELECT active_session_token, status FROM users WHERE LOWER(email) = $1', [email]);
       if (userRes.rows.length > 0) {
         const dbUser = userRes.rows[0];
-        // If DB has an active_session_token recorded and it differs from client's token, the account was opened on another device
         if (dbUser.active_session_token && dbUser.active_session_token !== sessionToken) {
           let newDev = null;
           try {
@@ -866,6 +898,17 @@ exports.verifySession = async (req, res) => {
     }
 
     // 2. Memory fallback
+    const memMySession = memorySessions.find(s => s.email.toLowerCase() === email && s.sessionToken === sessionToken);
+    if (memMySession && memMySession.isActive === false) {
+      const activeMem = memorySessions.find(s => s.email.toLowerCase() === email && s.isActive);
+      return res.status(200).json({
+        success: false,
+        isSessionTerminated: true,
+        newDevice: activeMem || null,
+        message: 'Your account was accessed from another device. You have been logged out for security.',
+      });
+    }
+
     const memUser = memoryUsers.find(u => u.email.toLowerCase() === email);
     if (memUser && memUser.activeSessionToken && memUser.activeSessionToken !== sessionToken) {
       return res.status(200).json({
