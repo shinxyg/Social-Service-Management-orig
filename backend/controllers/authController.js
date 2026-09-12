@@ -1007,41 +1007,71 @@ exports.terminateAllOtherDevices = async (req, res) => {
 
 /**
  * DELETE /api/auth/devices/:id
- * Terminates a specific device session
+ * Removes and deletes a specific device session record
  */
-exports.terminateDeviceSession = async (req, res) => {
+exports.removeDeviceSession = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email } = req.body;
     const cleanId = String(id);
-    const cleanEmail = (email || '').trim().toLowerCase();
 
     try {
-      await db.query(
-        `UPDATE user_login_sessions 
-         SET is_active = false, logout_at = NOW(), logout_reason = 'Manually terminated by user'
-         WHERE id = $1`,
-        [parseInt(cleanId, 10) || 0]
-      );
+      await db.query(`DELETE FROM user_login_sessions WHERE id = $1`, [parseInt(cleanId, 10) || 0]);
     } catch (dbErr) {
-      console.warn('[DB Error] terminateDeviceSession failed:', dbErr.message);
+      console.warn('[DB Error] removeDeviceSession failed:', dbErr.message);
     }
 
-    memorySessions.forEach(s => {
-      if (String(s.id) === cleanId) {
-        s.isActive = false;
-        s.logoutAt = new Date().toISOString();
-        s.logoutReason = 'Manually terminated by user';
-      }
-    });
+    memorySessions = memorySessions.filter(s => String(s.id) !== cleanId);
 
     return res.status(200).json({
       success: true,
-      message: 'Device session terminated successfully.',
+      message: 'Device session removed successfully.',
     });
   } catch (err) {
-    console.error('Error in terminateDeviceSession:', err);
-    return res.status(500).json({ success: false, message: 'Failed to terminate device session' });
+    console.error('Error in removeDeviceSession:', err);
+    return res.status(500).json({ success: false, message: 'Failed to remove device session' });
+  }
+};
+
+/**
+ * POST or DELETE /api/auth/devices/clear-history
+ * Completely clears all previous device login sessions for this account
+ */
+exports.clearAllDeviceHistory = async (req, res) => {
+  try {
+    const email = (req.body?.email || req.query?.email || '').trim().toLowerCase();
+    const currentToken = (req.body?.currentToken || req.query?.token || '').trim();
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    try {
+      if (currentToken) {
+        await db.query(
+          `DELETE FROM user_login_sessions WHERE LOWER(email) = $1 AND session_token != $2`,
+          [email, currentToken]
+        );
+      } else {
+        await db.query(
+          `DELETE FROM user_login_sessions WHERE LOWER(email) = $1 AND is_active = false`,
+          [email]
+        );
+      }
+    } catch (dbErr) {
+      console.warn('[DB Error] clearAllDeviceHistory failed:', dbErr.message);
+    }
+
+    memorySessions = memorySessions.filter(
+      s => s.email.toLowerCase() !== email || (currentToken ? s.sessionToken === currentToken : s.isActive)
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'All previous device history has been removed.',
+    });
+  } catch (err) {
+    console.error('Error in clearAllDeviceHistory:', err);
+    return res.status(500).json({ success: false, message: 'Failed to clear device history' });
   }
 };
 

@@ -33,7 +33,9 @@ router.post('/verify-session', authController.verifySession);
 // Device Management / Login History
 router.get('/devices', authController.getUserDevices);
 router.post('/devices/logout-others', authController.terminateAllOtherDevices);
-router.delete('/devices/:id', authController.terminateDeviceSession);
+router.delete('/devices/clear-history', authController.clearAllDeviceHistory);
+router.post('/devices/clear-history', authController.clearAllDeviceHistory);
+router.delete('/devices/:id', authController.removeDeviceSession);
 
 
 

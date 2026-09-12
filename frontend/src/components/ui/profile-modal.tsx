@@ -211,6 +211,62 @@ export function ProfileModal({
     }
   };
 
+  const handleRemoveDevice = async (sessionId: number | string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/devices/${sessionId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDeviceSessions((prev) => prev.filter((s) => String(s.id) !== String(sessionId)));
+        setDeviceActionMsg({
+          type: "success",
+          text: language === "tl" ? "Naalis na ang device sa talaan." : "Device removed from history.",
+        });
+      } else {
+        setDeviceActionMsg({
+          type: "error",
+          text: data.message || "Failed to remove device.",
+        });
+      }
+    } catch {
+      setDeviceActionMsg({
+        type: "error",
+        text: "Network error removing device.",
+      });
+    }
+  };
+
+  const handleClearAllHistory = async () => {
+    if (!resolvedEmail) return;
+    try {
+      const currentToken = sessionStorage.getItem("sessionToken") || "";
+      const res = await fetch(`${API_BASE}/api/auth/devices/clear-history`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resolvedEmail, currentToken }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDeviceSessions((prev) => prev.filter((s) => s.isCurrentDevice));
+        setDeviceActionMsg({
+          type: "success",
+          text: language === "tl" ? "Naalis na ang lahat ng lumang kasaysayan ng device." : "All previous device history has been removed.",
+        });
+      } else {
+        setDeviceActionMsg({
+          type: "error",
+          text: data.message || "Failed to clear history.",
+        });
+      }
+    } catch {
+      setDeviceActionMsg({
+        type: "error",
+        text: "Network error clearing history.",
+      });
+    }
+  };
+
   // Track open state so we ONLY reset on fresh modal open, preventing auto-erasing while typing
   const prevOpenRef = useRef(false);
 
@@ -1291,7 +1347,7 @@ export function ProfileModal({
                     {t("deviceManagementDesc") || "Real-time list of devices (PC, Mobile, Tablet) that have accessed your account with exact login date and time."}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
                   <button
                     type="button"
                     onClick={fetchDeviceSessions}
@@ -1300,6 +1356,15 @@ export function ProfileModal({
                     title="Refresh device list"
                   >
                     <RefreshCw className={`w-4 h-4 ${isLoadingDevices ? "animate-spin text-blue-600" : ""}`} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearAllHistory}
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Clear all old device records"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{language === "tl" ? "Alisin ang Kasaysayan" : "Clear History"}</span>
                   </button>
                   <button
                     type="button"
@@ -1456,6 +1521,17 @@ export function ProfileModal({
                                 </div>
                               </div>
                             </div>
+
+                            {/* Remove Single Device Record Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveDevice(session.id)}
+                              className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50/70 hover:bg-red-100 text-red-600 hover:text-red-700 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                              title={language === "tl" ? "Alisin ang device na ito sa listahan" : "Remove this device record"}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>{language === "tl" ? "Alisin" : "Remove"}</span>
+                            </button>
                           </div>
 
                           <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
