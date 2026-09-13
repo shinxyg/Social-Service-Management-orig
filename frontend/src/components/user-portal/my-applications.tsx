@@ -1218,42 +1218,42 @@ export default function MyApplications() {
               : "Enrolled & In Training"
 
             return (
-              <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-blue-200/80 pb-3 flex-wrap gap-2">
-                  <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-blue-600" />
+              <div className="bg-slate-50 dark:bg-slate-900 border border-blue-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-blue-200/80 dark:border-slate-800 pb-3 flex-wrap gap-2">
+                  <h3 className="text-sm font-bold text-blue-950 dark:text-white flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     {stageTitle}
                   </h3>
-                  <span className="text-[11px] font-bold text-blue-900 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-300">
+                  <span className="text-[11px] font-bold text-blue-900 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full border border-blue-300 dark:border-blue-800">
                     {stageBadge}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Enrolled Vocational Course</span>
-                    <span className="text-sm font-extrabold text-blue-950 block">{selectedApp.assistance}</span>
-                    <p className="text-[10px] text-gray-500">Official Government Skills Program</p>
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Enrolled Vocational Course</span>
+                    <span className="text-sm font-extrabold text-blue-950 dark:text-white block">{selectedApp.assistance}</span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Official Government Skills Program</p>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Program Tuition / Fee</span>
-                    <span className="text-sm font-extrabold text-emerald-700 block flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> 100% Free / Full Scholarship
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Program Tuition / Fee</span>
+                    <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> 100% Free / Full Scholarship
                     </span>
-                    <p className="text-[10px] text-gray-500">Libreng pagsasanay at learning materials</p>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Libreng pagsasanay at learning materials</p>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Accreditation &amp; Certificate</span>
-                    <span className="text-sm font-extrabold text-blue-900 block flex items-center gap-1.5">
-                      <Award className="w-3.5 h-3.5 text-blue-600" /> Certificate of Completion
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Accreditation &amp; Certificate</span>
+                    <span className="text-sm font-extrabold text-blue-900 dark:text-white block flex items-center gap-1.5">
+                      <Award className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Certificate of Completion
                     </span>
-                    <p className="text-[10px] text-gray-500">Accredited ng Quezon City SSDD</p>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Accredited ng Quezon City SSDD</p>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-blue-100/60 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-950">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-blue-100/60 dark:bg-slate-800/60 border border-blue-200 dark:border-slate-700 rounded-xl p-3.5 text-xs text-blue-950 dark:text-slate-200">
                   <p className="leading-relaxed">
                     Maaari mong buksan ang <strong>Training Program</strong> module upang makita ang iyong class schedule, attendance record, at opisyal na Certificate of Completion.
                   </p>
@@ -1285,43 +1285,43 @@ export default function MyApplications() {
               : "Solo Parent Welfare Division"
 
             return (
-              <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-blue-200/80 pb-3">
-                  <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-blue-600" />
+              <div className="bg-slate-50 dark:bg-slate-900 border border-blue-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-blue-200/80 dark:border-slate-800 pb-3">
+                  <h3 className="text-sm font-bold text-blue-950 dark:text-white flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     OFFICIAL ID RECORD &amp; ISSUANCE DETAILS
                   </h3>
-                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
                     ✓ ID Active &amp; Valid
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Official ID / QCID Number</span>
-                    <span className="text-lg font-mono font-black text-blue-700 block">{selectedApp.applicationNo}</span>
-                    <p className="text-[10px] text-gray-500">Official identification record number</p>
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Official ID / QCID Number</span>
+                    <span className="text-lg font-mono font-black text-blue-600 dark:text-blue-400 block">{selectedApp.applicationNo}</span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Official identification record number</p>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Issuance Status</span>
-                    <span className="text-sm font-extrabold text-emerald-700 block">ACTIVE / VALID</span>
-                    <span className="text-xs font-medium text-gray-600 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Ready for Digital Use
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Issuance Status</span>
+                    <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block">ACTIVE / VALID</span>
+                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Ready for Digital Use
                     </span>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Issuing Office</span>
-                    <span className="text-sm font-bold text-gray-900 block">{officeName}</span>
-                    <span className="text-[10px] text-gray-500 flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-blue-600" /> SSDD Division Office
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Issuing Office</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white block">{officeName}</span>
+                    <span className="text-[10px] text-gray-500 dark:text-slate-400 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-blue-600 dark:text-blue-400" /> SSDD Division Office
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-3 text-xs text-blue-900 leading-relaxed">
-                  <strong>Paunawa:</strong> Maaari nang ipakita ang inyong <strong>Digital ID</strong> sa User Portal o kunin ang opisyal na physical ID card sa kinauukulang tanggapan para sa inyong mga statutory privileges at discounts.
+                <div className="bg-blue-50/80 dark:bg-slate-800/60 border border-blue-200 dark:border-slate-700 rounded-xl p-3 text-xs text-blue-900 dark:text-slate-200 leading-relaxed">
+                  <strong className="text-gray-900 dark:text-white">Paunawa:</strong> Maaari nang ipakita ang inyong <strong className="text-gray-900 dark:text-white">Digital ID</strong> sa User Portal o kunin ang opisyal na physical ID card sa kinauukulang tanggapan para sa inyong mga statutory privileges at discounts.
                 </div>
               </div>
             )
@@ -1354,42 +1354,42 @@ export default function MyApplications() {
               : "Under Review"
 
             return (
-              <div className="bg-gradient-to-r from-blue-50/90 via-sky-50/60 to-slate-50/90 border border-blue-200 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-blue-200/80 pb-3 flex-wrap gap-2">
-                  <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-blue-600" />
+              <div className="bg-slate-50 dark:bg-slate-900 border border-blue-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-blue-200/80 dark:border-slate-800 pb-3 flex-wrap gap-2">
+                  <h3 className="text-sm font-bold text-blue-950 dark:text-white flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     {stageTitle}
                   </h3>
-                  <span className="text-[11px] font-bold text-blue-900 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-300">
+                  <span className="text-[11px] font-bold text-blue-900 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full border border-blue-300 dark:border-blue-800">
                     {stageBadge}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Approved Capital Seed Grant</span>
-                    <span className="text-2xl font-black text-emerald-700 block">₱15,000.00</span>
-                    <p className="text-[10px] text-gray-500">Financial assistance grant for business setup</p>
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Approved Capital Seed Grant</span>
+                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 block">₱15,000.00</span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Financial assistance grant for business setup</p>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Approved Materials &amp; Supplies</span>
-                    <span className="text-sm font-extrabold text-blue-900 block flex items-center gap-1.5">
-                      <Package className="w-3.5 h-3.5 text-blue-600" /> Starter Supply Pack
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Approved Materials &amp; Supplies</span>
+                    <span className="text-sm font-extrabold text-blue-900 dark:text-white block flex items-center gap-1.5">
+                      <Package className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Starter Supply Pack
                     </span>
-                    <p className="text-[10px] text-gray-500">Official business inventory package</p>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Official business inventory package</p>
                   </div>
 
-                  <div className="bg-white/80 rounded-xl p-3.5 border border-blue-100 space-y-1">
-                    <span className="text-gray-500 block uppercase font-bold text-[10px]">Approved Tools &amp; Equipment</span>
-                    <span className="text-sm font-extrabold text-blue-900 block flex items-center gap-1.5">
-                      <Wrench className="w-3.5 h-3.5 text-blue-600" /> Operational Kit / Equipment
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Approved Tools &amp; Equipment</span>
+                    <span className="text-sm font-extrabold text-blue-900 dark:text-white block flex items-center gap-1.5">
+                      <Wrench className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Operational Kit / Equipment
                     </span>
-                    <p className="text-[10px] text-gray-500">Tools for daily business operations</p>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Tools for daily business operations</p>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-blue-100/60 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-950">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-blue-100/60 dark:bg-slate-800/60 border border-blue-200 dark:border-slate-700 rounded-xl p-3.5 text-xs text-blue-950 dark:text-slate-200">
                   <p className="leading-relaxed">
                     Maaari mong buksan ang <strong>Livelihood Program</strong> module upang makita ang buong detalye ng iyong capital, appointment schedule, at monitoring progress.
                   </p>
@@ -1422,36 +1422,36 @@ export default function MyApplications() {
           const payoutVenue = matchDisb?.venue || "Quezon City Hall"
 
           return (
-            <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-blue-50/90 border border-emerald-200 rounded-2xl p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-emerald-200/80 pb-3">
-                <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
-                  <Banknote className="w-4 h-4 text-emerald-600" />
+            <div className="bg-slate-50 dark:bg-slate-900 border border-emerald-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-emerald-200/80 dark:border-slate-800 pb-3">
+                <h3 className="text-sm font-bold text-emerald-950 dark:text-white flex items-center gap-2">
+                  <Banknote className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   FINANCIAL AID &amp; PAYOUT APPOINTMENT
                 </h3>
-                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
                   Automatically Linked
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div className="bg-white/80 rounded-xl p-3.5 border border-emerald-100 space-y-1">
-                  <span className="text-gray-500 block uppercase font-bold text-[10px]">Approved Fixed Amount</span>
-                  <span className="text-2xl font-black text-emerald-700">₱{fixedAmt.toLocaleString()}</span>
-                  <p className="text-[10px] text-gray-500">Standard rate based on assistance category</p>
+                <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-emerald-100 dark:border-slate-700 space-y-1">
+                  <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Approved Fixed Amount</span>
+                  <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">₱{fixedAmt.toLocaleString()}</span>
+                  <p className="text-[10px] text-gray-500 dark:text-slate-400">Standard rate based on assistance category</p>
                 </div>
 
-                <div className="bg-white/80 rounded-xl p-3.5 border border-emerald-100 space-y-1">
-                  <span className="text-gray-500 block uppercase font-bold text-[10px]">Appointment Schedule</span>
-                  <span className="text-sm font-extrabold text-blue-950 block">{apptDate}</span>
-                  <span className="text-xs font-bold text-blue-700 flex items-center gap-1">
+                <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-emerald-100 dark:border-slate-700 space-y-1">
+                  <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Appointment Schedule</span>
+                  <span className="text-sm font-extrabold text-gray-900 dark:text-white block">{apptDate}</span>
+                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
                     <Clock className="w-3 h-3" /> {apptTime}
                   </span>
                 </div>
 
-                <div className="bg-white/80 rounded-xl p-3.5 border border-emerald-100 space-y-1">
-                  <span className="text-gray-500 block uppercase font-bold text-[10px]">Payout Location</span>
-                  <span className="text-sm font-bold text-gray-900 block">{payoutVenue}</span>
-                  <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-emerald-100 dark:border-slate-700 space-y-1">
+                  <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Payout Location</span>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white block">{payoutVenue}</span>
+                  <span className="text-[10px] text-gray-500 dark:text-slate-400 flex items-center gap-1">
                     <MapPin className="w-3 h-3 text-red-500" /> SSDD Payout Counter
                   </span>
                 </div>
@@ -1611,32 +1611,32 @@ export default function MyApplications() {
             return (
               <div
                 key={app.applicationNo + app.assistance}
-                className={`bg-white border rounded-2xl p-5 sm:p-6 shadow-xs transition-all space-y-4 ${
-                  isDeleted ? "border-red-200/80 hover:border-red-300 bg-red-50/10" : "border-gray-200 hover:border-blue-300 hover:shadow-md"
+                className={`bg-white dark:bg-slate-900 border rounded-2xl p-5 sm:p-6 shadow-xs transition-all space-y-4 ${
+                  isDeleted ? "border-red-200/80 dark:border-red-900/60 hover:border-red-300 bg-red-50/10 dark:bg-red-950/10" : "border-gray-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-600/50 hover:shadow-md"
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-slate-800 pb-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-sm font-bold text-blue-700">
+                      <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
                         {app.applicationNo}
                       </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded font-medium border ${
                           isTrainingApplication(app) || app.assistanceCategory === "Livelihood"
-                            ? "bg-blue-100 text-blue-800 border-blue-200"
-                            : "bg-gray-100 text-gray-600 border-transparent"
+                            ? "bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                            : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700"
                         }`}
                       >
                         {isTrainingApplication(app) ? "Training Program" : app.assistanceCategory}
                       </span>
                       {isDeleted && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-bold border border-red-200">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 font-bold border border-red-200 dark:border-red-800">
                           Deleted on: {app.deletedAt || "Recently"}
                         </span>
                       )}
                     </div>
-                    <h3 className="text-base font-bold text-gray-900">{app.assistance}</h3>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">{app.assistance}</h3>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -1649,18 +1649,18 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-600">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-600 dark:text-slate-300">
                   <div>
-                    <span className="text-gray-400 block">Applicant:</span>
-                    <span className="font-semibold text-gray-900 uppercase">{app.applicantName}</span>
+                    <span className="text-gray-400 dark:text-slate-400 block">Applicant:</span>
+                    <span className="font-semibold text-gray-900 dark:text-white uppercase">{app.applicantName}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 block">Date Applied:</span>
-                    <span className="font-medium text-gray-900">{app.dateApplied}</span>
+                    <span className="text-gray-400 dark:text-slate-400 block">Date Applied:</span>
+                    <span className="font-medium text-gray-800 dark:text-slate-200">{app.dateApplied}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 block">Contact Number:</span>
-                    <span className="font-mono text-gray-900">{app.contactNumber}</span>
+                    <span className="text-gray-400 dark:text-slate-400 block">Contact Number:</span>
+                    <span className="font-mono text-gray-800 dark:text-slate-200">{app.contactNumber}</span>
                   </div>
                 </div>
 
@@ -1679,25 +1679,25 @@ export default function MyApplications() {
                   if (isTrainingApp) {
                     const isCompleted = app.status === "Released" || app.status === "Approved" || app.status === "Completed"
                     return (
-                      <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                         <div className="flex items-start gap-3">
                           <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                             <GraduationCap className="w-5 h-5" />
                           </div>
                           <div className="space-y-0.5 text-xs">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-extrabold uppercase text-blue-900 bg-blue-100 px-2 py-0.5 rounded border border-blue-300">
+                              <span className="text-[10px] font-extrabold uppercase text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-300 dark:border-blue-800/80">
                                 Skills Training Program
                               </span>
-                              <span className="text-[11px] font-mono text-blue-900 font-bold">
+                              <span className="text-[11px] font-mono text-blue-700 dark:text-blue-300 font-bold">
                                 {app.applicationNo}
                               </span>
                             </div>
-                            <p className="font-bold text-gray-900">
-                              Enrolled Course: <span className="text-blue-900 font-bold text-sm">{app.assistance}</span>
+                            <p className="font-bold text-gray-900 dark:text-white">
+                              Enrolled Course: <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">{app.assistance}</span>
                             </p>
-                            <p className="text-[11px] text-gray-600 flex items-center gap-1">
-                              <ShieldCheck className="w-3 h-3 text-blue-600" />
+                            <p className="text-[11px] text-gray-600 dark:text-slate-300 flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                               <span>
                                 {isCompleted
                                   ? "✓ Natapos ang Pagsasanay • May Opisyal na Certificate of Completion"
@@ -1708,8 +1708,8 @@ export default function MyApplications() {
                         </div>
 
                         <div className="sm:text-right shrink-0">
-                          <span className="text-[10px] text-gray-400 font-bold uppercase block">Training Status</span>
-                          <span className="text-xs font-black text-blue-800 bg-blue-100 px-2.5 py-1 rounded-full border border-blue-300 inline-block mt-0.5">
+                          <span className="text-[10px] text-gray-400 dark:text-slate-400 font-bold uppercase block">Training Status</span>
+                          <span className="text-xs font-black text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/60 px-2.5 py-1 rounded-full border border-blue-300 dark:border-blue-800/80 inline-block mt-0.5">
                             {isCompleted ? "✓ COMPLETED & CERTIFIED" : "ENROLLED / IN PROGRESS"}
                           </span>
                         </div>
@@ -1732,33 +1732,33 @@ export default function MyApplications() {
                       : "Solo Parent Welfare Division"
 
                     return (
-                      <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50/90 border border-blue-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                         <div className="flex items-start gap-3">
                           <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                             <CreditCard className="w-5 h-5" />
                           </div>
                           <div className="space-y-0.5 text-xs">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-extrabold uppercase text-blue-800 bg-blue-100 px-2 py-0.5 rounded border border-blue-300">
+                              <span className="text-[10px] font-extrabold uppercase text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-300 dark:border-blue-800/80">
                                 Official ID Record
                               </span>
-                              <span className="text-[11px] font-mono text-blue-900 font-bold">
+                              <span className="text-[11px] font-mono text-blue-700 dark:text-blue-300 font-bold">
                                 {app.applicationNo}
                               </span>
                             </div>
-                            <p className="font-bold text-gray-900">
-                              Assigned ID Number: <span className="text-blue-700 font-mono font-black text-sm">{app.applicationNo}</span>
+                            <p className="font-bold text-gray-900 dark:text-white">
+                              Assigned ID Number: <span className="text-blue-600 dark:text-blue-400 font-mono font-black text-sm">{app.applicationNo}</span>
                             </p>
-                            <p className="text-[11px] text-gray-600 flex items-center gap-1">
-                              <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                              <span>Issuing Office: <strong className="text-blue-950">{officeName}</strong></span>
+                            <p className="text-[11px] text-gray-600 dark:text-slate-300 flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              <span>Issuing Office: <strong className="text-gray-900 dark:text-white">{officeName}</strong></span>
                             </p>
                           </div>
                         </div>
 
                         <div className="sm:text-right shrink-0">
-                          <span className="text-[10px] text-gray-400 font-bold uppercase block">ID Status</span>
-                          <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300 inline-block mt-0.5">
+                          <span className="text-[10px] text-gray-400 dark:text-slate-400 font-bold uppercase block">ID Status</span>
+                          <span className="text-xs font-black text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-300 dark:border-emerald-700/80 inline-block mt-0.5">
                             ✓ ACTIVE &amp; READY
                           </span>
                         </div>
@@ -1774,39 +1774,39 @@ export default function MyApplications() {
                   if (isLivelihoodApp) {
                     const isReleased = app.status === "Released"
                     return (
-                      <div className="bg-gradient-to-r from-blue-50/90 via-sky-50/60 to-slate-50/90 border border-blue-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                         <div className="flex items-start gap-3">
                           <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                             <GraduationCap className="w-5 h-5" />
                           </div>
                           <div className="space-y-0.5 text-xs">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-extrabold uppercase text-blue-900 bg-blue-100 px-2 py-0.5 rounded border border-blue-300">
+                              <span className="text-[10px] font-extrabold uppercase text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-300 dark:border-blue-800/80">
                                 Livelihood Grant Package
                               </span>
-                              <span className="text-[11px] font-mono text-blue-900 font-bold">
+                              <span className="text-[11px] font-mono text-blue-700 dark:text-blue-300 font-bold">
                                 {app.applicationNo}
                               </span>
                             </div>
-                            <p className="font-bold text-gray-900">
-                              Approved Capital Grant: <span className="text-emerald-700 font-black text-sm">₱15,000</span> + Starter Pack &amp; Tools
+                            <p className="font-bold text-gray-900 dark:text-white">
+                              Approved Capital Grant: <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">₱15,000</span> + Starter Pack &amp; Tools
                             </p>
-                            <p className="text-[11px] text-gray-600 flex items-center gap-1">
-                              <Package className="w-3 h-3 text-blue-600" />
-                              <span>Package Inclusions: <strong className="text-blue-950">₱15,000 Seed Capital • Starter Pack • Equipment Kit</strong></span>
+                            <p className="text-[11px] text-gray-600 dark:text-slate-300 flex items-center gap-1">
+                              <Package className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                              <span>Package Inclusions: <strong className="text-gray-900 dark:text-white">₱15,000 Seed Capital • Starter Pack • Equipment Kit</strong></span>
                             </p>
                           </div>
                         </div>
 
                         <div className="sm:text-right shrink-0">
-                          <span className="text-[10px] text-gray-400 font-bold uppercase block">{isReleased ? "Grant Status" : "Capital Seed"}</span>
-                          <span className="text-lg font-black text-emerald-700">₱15,000</span>
+                          <span className="text-[10px] text-gray-400 dark:text-slate-400 font-bold uppercase block">{isReleased ? "Grant Status" : "Capital Seed"}</span>
+                          <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">₱15,000</span>
                           {isReleased ? (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300 block mt-0.5">
+                            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700/80 block mt-0.5">
                               ✓ In Monitoring
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-300 block mt-0.5">
+                            <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-300 dark:border-blue-800/80 block mt-0.5">
                               Approved Package
                             </span>
                           )}
@@ -1829,41 +1829,41 @@ export default function MyApplications() {
                   const payoutVenue = matchDisb?.venue || "Quezon City Hall"
 
                   return (
-                    <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-blue-50/90 border border-emerald-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                    <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                       <div className="flex items-start gap-3">
                         <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                           <Banknote className="w-5 h-5" />
                         </div>
                         <div className="space-y-0.5 text-xs">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-extrabold uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
+                            <span className="text-[10px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700/80">
                               Financial Aid Record
                             </span>
-                            <span className="text-[11px] font-mono text-blue-700 font-bold">
+                            <span className="text-[11px] font-mono text-blue-700 dark:text-blue-300 font-bold">
                               {matchDisb?.disbursementId || `DISB-${app.applicationNo.slice(-4)}`}
                             </span>
                           </div>
-                          <p className="font-bold text-gray-900">
-                            Approved Fixed Amount: <span className="text-emerald-700 font-black text-sm">₱{fixedAmt.toLocaleString()}</span>
+                          <p className="font-bold text-gray-900 dark:text-white">
+                            Approved Fixed Amount: <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">₱{fixedAmt.toLocaleString()}</span>
                           </p>
-                          <p className="text-[11px] text-gray-600 flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-blue-600" />
-                            <span>Payout Appointment: <strong className="text-blue-950">{apptDate} – {apptTime}</strong> ({payoutVenue})</span>
+                          <p className="text-[11px] text-gray-600 dark:text-slate-300 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                            <span>Payout Appointment: <strong className="text-gray-900 dark:text-white">{apptDate} – {apptTime}</strong> ({payoutVenue})</span>
                           </p>
                         </div>
                       </div>
 
                       <div className="sm:text-right shrink-0">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Fixed Amount</span>
-                        <span className="text-lg font-black text-emerald-700">₱{fixedAmt.toLocaleString()}</span>
+                        <span className="text-[10px] text-gray-400 dark:text-slate-400 font-bold uppercase block">Fixed Amount</span>
+                        <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">₱{fixedAmt.toLocaleString()}</span>
                       </div>
                     </div>
                   )
                 })()}
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-100">
-                  <div className="text-[11px] text-gray-500 flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-100 dark:border-slate-800">
+                  <div className="text-[11px] text-gray-500 dark:text-slate-400 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>Official record of Quezon City Social Services</span>
                   </div>
 
