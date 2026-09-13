@@ -100,10 +100,34 @@ main {
 .dark .bg-gray-50:not(#official-id-card-print-area):not(#official-id-card-print-area *),
 .dark .bg-slate-100:not(#official-id-card-print-area):not(#official-id-card-print-area *),
 .dark .bg-gray-100:not(#official-id-card-print-area):not(#official-id-card-print-area *),
+.dark .bg-slate-50\/40,
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/60,
+.dark .bg-slate-50\/70,
+.dark .bg-slate-50\/80,
+.dark .bg-slate-50\/90,
+.dark .bg-slate-100\/40,
 .dark .bg-slate-100\/50,
 .dark .bg-slate-100\/60,
-.dark .bg-slate-100\/80 {
+.dark .bg-slate-100\/70,
+.dark .bg-slate-100\/80,
+.dark .bg-slate-100\/90,
+.dark .bg-gray-50\/50,
+.dark .bg-gray-50\/70,
+.dark .bg-gray-100\/50,
+.dark .bg-gray-100\/80 {
   background-color: var(--color-muted) !important;
+}
+
+.dark .from-white {
+  --tw-gradient-from: var(--color-card) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.dark .to-slate-50\/50,
+.dark .to-slate-100 {
+  --tw-gradient-to: var(--color-muted) var(--tw-gradient-to-position) !important;
 }
 
 .dark .bg-slate-200,

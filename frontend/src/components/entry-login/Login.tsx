@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, X, ExternalLink, KeyRound, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Mail, X, Eye, EyeOff, ExternalLink, KeyRound, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { API_BASE } from '../../config/api';
 
 import { RecaptchaModal } from '../ui/recaptcha-modal';
@@ -437,15 +437,16 @@ export const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full px-4 py-3 pr-16 text-xs sm:text-sm bg-[#EEF2F6] hover:bg-[#E8EDF3] border border-transparent focus:border-blue-500 focus:bg-white rounded-xl outline-none transition-all text-slate-800 placeholder:text-slate-400 font-medium"
+                  className="w-full px-4 py-3 pr-12 text-xs sm:text-sm bg-[#EEF2F6] hover:bg-[#E8EDF3] border border-transparent focus:border-blue-500 focus:bg-white rounded-xl outline-none transition-all text-slate-800 placeholder:text-slate-400 font-medium"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-4 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors cursor-pointer select-none"
+                  className="absolute right-3.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer select-none p-1 rounded-lg hover:bg-slate-200/50"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>

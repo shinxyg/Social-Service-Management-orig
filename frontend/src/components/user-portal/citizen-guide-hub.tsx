@@ -526,7 +526,7 @@ export default function CitizenGuideHub() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)..."
-              className="w-full pl-12 pr-10 py-3.5 bg-white text-gray-900 placeholder-gray-400 rounded-2xl shadow-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 border-0"
+              className="w-full pl-12 pr-10 py-3.5 bg-white text-gray-900 placeholder-gray-400 dark:bg-slate-800/90 dark:text-white dark:placeholder-slate-400 rounded-2xl shadow-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 border-0"
             />
             {hasSearch && (
               <button
@@ -834,7 +834,7 @@ export default function CitizenGuideHub() {
                     return (
                       <div
                         key={idx}
-                        className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs hover:bg-slate-100/80 transition-colors"
+                        className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/50 dark:border-slate-700/60 flex items-center justify-between text-xs hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors"
                       >
                         <div className="space-y-0.5 truncate pr-2">
                           <div className="font-bold text-gray-800 truncate">{app.program}</div>
@@ -878,39 +878,39 @@ export default function CitizenGuideHub() {
                     title: "Select Service & Requirements",
                     desc: "Choose the service you need (AICS, PWD, Senior, Solo Parent) and prepare the required digital files (Indigency, Medical Abstract, IDs).",
                     icon: FileCheck,
-                    color: "text-blue-600 bg-blue-50 border-blue-200"
+                    color: "text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-400"
                   },
                   {
                     step: "02",
                     title: "Fill Online Form & Upload",
                     desc: "Provide your citizen details, address, and upload legible photos or scanned copies of supporting documents.",
                     icon: FileText,
-                    color: "text-indigo-600 bg-indigo-50 border-indigo-200"
+                    color: "text-indigo-600 bg-indigo-50 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-400"
                   },
                   {
                     step: "03",
                     title: "Social Worker Assessment",
                     desc: "Assigned City Social Workers review your case, evaluate eligibility, and approve the assistance amount or ID card request.",
                     icon: Building2,
-                    color: "text-purple-600 bg-purple-50 border-purple-200"
+                    color: "text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-500/10 dark:border-purple-500/30 dark:text-purple-400"
                   },
                   {
                     step: "04",
                     title: "Approval & Payout / ID Claim",
                     desc: "Receive real-time notification, QR Claim Voucher for financial payout, or notification to claim your official ID card.",
                     icon: CreditCard,
-                    color: "text-emerald-600 bg-emerald-50 border-emerald-200"
+                    color: "text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-400"
                   }
                 ].map((st, i) => (
                   <div
                     key={i}
-                    className="relative p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 flex flex-col items-start gap-3 text-left hover:bg-white hover:shadow-md transition-all group"
+                    className="relative p-5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/60 flex flex-col items-start gap-3 text-left hover:bg-white dark:hover:bg-slate-800/80 hover:shadow-md transition-all group"
                   >
                     <div className="w-full flex items-center justify-between">
                       <div className={`p-2.5 rounded-xl border ${st.color}`}>
                         <st.icon className="h-5 w-5" />
                       </div>
-                      <span className="text-xl font-black text-gray-300 group-hover:text-blue-500 transition-colors">
+                      <span className="text-xl font-black text-gray-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors">
                         {st.step}
                       </span>
                     </div>
@@ -1130,7 +1130,7 @@ export default function CitizenGuideHub() {
                   <button
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    className="w-full p-4 text-left font-bold text-sm text-gray-900 flex items-center justify-between gap-4 bg-slate-50/50 hover:bg-slate-100/80 transition-colors cursor-pointer"
+                    className="w-full p-4 text-left font-bold text-sm text-gray-900 dark:text-white flex items-center justify-between gap-4 bg-slate-50/50 hover:bg-slate-100/80 dark:bg-slate-800/40 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                   >
                     <span>{faq.q}</span>
                     {isOpen ? (
@@ -1140,7 +1140,7 @@ export default function CitizenGuideHub() {
                     )}
                   </button>
                   {isOpen && (
-                    <div className="p-4 text-xs sm:text-sm text-gray-600 bg-white leading-relaxed border-t border-gray-100">
+                    <div className="p-4 text-xs sm:text-sm text-gray-600 dark:text-slate-300 bg-white dark:bg-slate-900/60 leading-relaxed border-t border-gray-100 dark:border-slate-800">
                       {faq.a}
                     </div>
                   )}
@@ -1151,7 +1151,7 @@ export default function CitizenGuideHub() {
         </div>
 
         {/* 8. FOOTER CONTACT / HOTLINES */}
-        <div className="bg-slate-100 border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <div className="bg-slate-100 border border-slate-200 dark:bg-slate-900/80 dark:border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="space-y-1">
             <div className="font-bold text-gray-900 text-sm flex items-center justify-center sm:justify-start gap-2">
               <PhoneCall className="h-4 w-4 text-blue-600" />
