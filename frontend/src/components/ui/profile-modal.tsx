@@ -443,8 +443,8 @@ export function ProfileModal({
   const fieldClass = (extra = "") =>
     `w-full border rounded-lg px-3 py-2.5 text-sm transition-colors ${
       isEditing
-        ? `border-gray-300 bg-white text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${extra}`
-        : "border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed"
+        ? `border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${extra}`
+        : "border-gray-200 dark:border-slate-800 bg-gray-100 dark:bg-slate-800/50 text-gray-500 dark:text-slate-400 cursor-not-allowed"
     }`;
 
   const handleDeactivate = async () => {
@@ -649,13 +649,13 @@ export function ProfileModal({
       onClick={handleModalClose}
     >
       <div
-        className="bg-white w-full max-w-4xl rounded-2xl shadow-xl relative overflow-hidden"
+        className="bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 w-full max-w-4xl rounded-2xl shadow-xl relative overflow-hidden text-gray-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={handleModalClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors z-10 cursor-pointer"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors z-10 cursor-pointer"
           aria-label="Close"
         >
           <X className="h-6 w-6" />
@@ -663,18 +663,18 @@ export function ProfileModal({
 
         {/* Greeting + QCID Section */}
         <div className="px-8 pt-6 pb-4">
-          <h2 className="text-xl font-bold text-gray-900">{t("hiUser", { name: displayName })}</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t("hiUser", { name: displayName })}</h2>
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            <IdCard className="h-4 w-4 text-gray-500 shrink-0" />
-            <span className="text-sm text-gray-600">
+            <IdCard className="h-4 w-4 text-gray-500 dark:text-slate-400 shrink-0" />
+            <span className="text-sm text-gray-600 dark:text-slate-400">
               QCID No:{" "}
-              <span className="font-semibold text-gray-800 tracking-wide">
+              <span className="font-semibold text-gray-800 dark:text-slate-200 tracking-wide">
                 {showQcid ? resolvedQcid : maskQcid(resolvedQcid)}
               </span>
             </span>
             <button
               onClick={() => setShowQcid((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
             >
               {showQcid ? (
                 <EyeOff className="h-3.5 w-3.5" />
@@ -687,10 +687,10 @@ export function ProfileModal({
         </div>
 
         {/* Header Banner */}
-        <div className="bg-slate-900 px-8 py-5 flex items-center justify-between gap-4 flex-wrap">
+        <div className="bg-slate-900 px-8 py-5 flex items-center justify-between gap-4 flex-wrap border-y border-slate-800">
           <div className="flex items-center gap-4 min-w-0">
             <div className="relative h-14 w-14 shrink-0 group">
-              <div className="h-14 w-14 rounded-full bg-white flex items-center justify-center overflow-hidden border-2 border-slate-700 shadow-xs">
+              <div className="h-14 w-14 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-slate-700 shadow-xs">
                 {photoUrl ? (
                   <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
@@ -755,13 +755,13 @@ export function ProfileModal({
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center gap-6 sm:gap-8 border-b border-gray-200 px-6 sm:px-8 pt-0 overflow-x-auto">
+        <div className="flex justify-center gap-6 sm:gap-8 border-b border-gray-200 dark:border-slate-800 px-6 sm:px-8 pt-0 overflow-x-auto">
           <button
             onClick={() => setTab("account")}
             className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
               tab === "account"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
+                : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
             }`}
           >
             {t("accountInformation")}
@@ -770,8 +770,8 @@ export function ProfileModal({
             onClick={() => setTab("personal")}
             className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
               tab === "personal"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
+                : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
             }`}
           >
             {t("personalInformation")}
@@ -780,8 +780,8 @@ export function ProfileModal({
             onClick={() => setTab("devices")}
             className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
               tab === "devices"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
+                : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
             }`}
           >
             {t("devicesTab") || "Devices & History"}
@@ -790,8 +790,8 @@ export function ProfileModal({
             onClick={() => setTab("preferences")}
             className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
               tab === "preferences"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
+                : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
             }`}
           >
             {t("languageTab")}
@@ -803,27 +803,27 @@ export function ProfileModal({
           {tab === "account" && (
             <div className="space-y-5">
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                <label className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 block">
                   {t("emailAddress")}
                 </label>
-                <div className="w-full rounded-lg bg-gray-100 px-4 py-3 text-sm text-gray-800 font-mono">
+                <div className="w-full rounded-lg bg-gray-100 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 px-4 py-3 text-sm text-gray-800 dark:text-slate-200 font-mono">
                   {resolvedEmail}
                 </div>
               </div>
 
               {/* Change Password Section */}
-              <div className="rounded-xl border border-gray-200 bg-slate-50/70 p-5 space-y-4 shadow-2xs">
+              <div className="rounded-xl border border-gray-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-5 space-y-4 shadow-2xs">
                 <div className="flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-blue-600" />
-                  <h4 className="text-sm font-bold text-gray-900">{t("changePassword")}</h4>
+                  <KeyRound className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white">{t("changePassword")}</h4>
                 </div>
 
                 {passwordMsg && (
                   <div
                     className={`p-3 rounded-lg text-xs font-medium ${
                       passwordMsg.type === "success"
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                        : "bg-red-50 text-red-700 border border-red-200"
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                        : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
                     }`}
                   >
                     {passwordMsg.text}
@@ -832,7 +832,7 @@ export function ProfileModal({
 
                 <form onSubmit={handleChangePassword} className="space-y-3.5">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5 block">
                       {t("currentPassword")}
                     </label>
                     <div className="relative">
@@ -842,12 +842,12 @@ export function ProfileModal({
                         autoComplete="current-password"
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         placeholder={t("enterCurrentPassword")}
-                        className="w-full h-10 px-3 pr-10 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
+                        className="w-full h-10 px-3 pr-10 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 dark:focus:border-blue-500 transition-all"
                       />
                       <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
                       >
                         {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -856,7 +856,7 @@ export function ProfileModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                      <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5 block">
                         {t("newPassword")}
                       </label>
                       <div className="relative">
@@ -866,12 +866,12 @@ export function ProfileModal({
                           autoComplete="new-password"
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder={t("enterNewPassword")}
-                          className="w-full h-10 px-3 pr-10 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
+                          className="w-full h-10 px-3 pr-10 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 dark:focus:border-blue-500 transition-all"
                         />
                         <button
                           type="button"
                           onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
                         >
                           {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -879,7 +879,7 @@ export function ProfileModal({
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                      <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5 block">
                         {t("confirmNewPassword")}
                       </label>
                       <div className="relative">
@@ -889,12 +889,12 @@ export function ProfileModal({
                           autoComplete="new-password"
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           placeholder={t("repeatNewPassword")}
-                          className="w-full h-10 px-3 pr-10 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
+                          className="w-full h-10 px-3 pr-10 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 dark:focus:border-blue-500 transition-all"
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
                         >
                           {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -907,32 +907,32 @@ export function ProfileModal({
                     <div className="space-y-2.5 pt-1">
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-center text-[11px]">
-                          <span className="font-semibold text-gray-600">{t("passwordStrengthLabel")}</span>
+                          <span className="font-semibold text-gray-600 dark:text-slate-300">{t("passwordStrengthLabel")}</span>
                           <span className={`font-bold ${strength.textColor}`}>{strength.label}</span>
                         </div>
                         <div className="grid grid-cols-4 gap-1.5 h-1.5 w-full">
-                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 1 ? strength.color : 'bg-gray-200'}`} />
-                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 2 ? strength.color : 'bg-gray-200'}`} />
-                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 3 ? strength.color : 'bg-gray-200'}`} />
-                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 4 ? strength.color : 'bg-gray-200'}`} />
+                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 1 ? strength.color : 'bg-gray-200 dark:bg-slate-700'}`} />
+                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 2 ? strength.color : 'bg-gray-200 dark:bg-slate-700'}`} />
+                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 3 ? strength.color : 'bg-gray-200 dark:bg-slate-700'}`} />
+                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 4 ? strength.color : 'bg-gray-200 dark:bg-slate-700'}`} />
                         </div>
                       </div>
 
-                      <div className="p-3 bg-white border border-gray-200 rounded-lg text-[11px] space-y-1.5 shadow-2xs">
-                        <div className="font-bold text-gray-700 text-[10px] uppercase tracking-wider">{t("passwordRequirementsTitle")}</div>
-                        <div className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
+                      <div className="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-[11px] space-y-1.5 shadow-2xs">
+                        <div className="font-bold text-gray-700 dark:text-slate-200 text-[10px] uppercase tracking-wider">{t("passwordRequirementsTitle")}</div>
+                        <div className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-gray-400 dark:text-slate-500'}`}>
                           {hasMinLength ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <X className="w-3.5 h-3.5" />}
                           <span>{t("reqMinLength")}</span>
                         </div>
-                        <div className={`flex items-center gap-1.5 ${hasUpper ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
+                        <div className={`flex items-center gap-1.5 ${hasUpper ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-gray-400 dark:text-slate-500'}`}>
                           {hasUpper ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <X className="w-3.5 h-3.5" />}
                           <span>{t("reqUpper")}</span>
                         </div>
-                        <div className={`flex items-center gap-1.5 ${hasNumber ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
+                        <div className={`flex items-center gap-1.5 ${hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-gray-400 dark:text-slate-500'}`}>
                           {hasNumber ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <X className="w-3.5 h-3.5" />}
                           <span>{t("reqNumber")}</span>
                         </div>
-                        <div className={`flex items-center gap-1.5 ${hasSpecialChar ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
+                        <div className={`flex items-center gap-1.5 ${hasSpecialChar ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-gray-400 dark:text-slate-500'}`}>
                           {hasSpecialChar ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <X className="w-3.5 h-3.5" />}
                           <span>{t("reqSpecial")}</span>
                         </div>
@@ -944,17 +944,16 @@ export function ProfileModal({
                   {confirmPassword.length > 0 && (
                     <div className="pt-0.5 text-[11px]">
                       {passwordsMatch ? (
-                        <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                           <Check className="w-3.5 h-3.5 stroke-[3]" /> {t("passwordsMatchMsg")}
                         </span>
                       ) : (
-                        <span className="text-red-500 font-semibold flex items-center gap-1">
+                        <span className="text-red-500 dark:text-red-400 font-semibold flex items-center gap-1">
                           <X className="w-3.5 h-3.5" /> {t("passwordsMismatchMsg")}
                         </span>
                       )}
                     </div>
                   )}
-
 
                   <div className="pt-2 flex justify-end">
                     <button
@@ -975,10 +974,10 @@ export function ProfileModal({
             <div className="space-y-6">
               {/* Full Name */}
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-4">{t("fullNameHeading")}</h3>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">{t("fullNameHeading")}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("firstName")}
                     </label>
                     <div className="relative">
@@ -997,7 +996,7 @@ export function ProfileModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("middleNameOptional")}
                     </label>
                     <div className="relative">
@@ -1016,7 +1015,7 @@ export function ProfileModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("lastName")}
                     </label>
                     <div className="relative">
@@ -1035,7 +1034,7 @@ export function ProfileModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("suffix")}
                     </label>
                     <div className="relative">
@@ -1056,10 +1055,10 @@ export function ProfileModal({
 
               {/* Birth Date */}
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-4">{t("birthDateHeading")}</h3>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">{t("birthDateHeading")}</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("month")}
                     </label>
                     <div className="relative">
@@ -1081,7 +1080,7 @@ export function ProfileModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("day")}
                     </label>
                     <div className="relative">
@@ -1101,7 +1100,7 @@ export function ProfileModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("year")}
                     </label>
                     <div className="relative">
@@ -1126,10 +1125,10 @@ export function ProfileModal({
 
               {/* Address */}
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-4">{t("addressHeading")}</h3>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">{t("addressHeading")}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("city")}
                     </label>
                     <div className="relative">
@@ -1147,7 +1146,7 @@ export function ProfileModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("houseNoOptional")}
                     </label>
                     <div className="relative">
@@ -1165,7 +1164,7 @@ export function ProfileModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("street")}
                     </label>
                     <div className="relative">
@@ -1183,7 +1182,7 @@ export function ProfileModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("barangay")}
                     </label>
                     <div className="relative">
@@ -1204,12 +1203,12 @@ export function ProfileModal({
 
               {/* Employment Details */}
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-4">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">
                   {t("employmentDetails")}
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-3 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-3 block">
                       {t("workingInQcQuestion")}
                     </label>
                     <div className="flex gap-6">
@@ -1225,7 +1224,7 @@ export function ProfileModal({
                           }
                           className="w-4 h-4 disabled:cursor-not-allowed cursor-pointer"
                         />
-                        <span className="text-sm text-gray-700">{t("yes")}</span>
+                        <span className="text-sm text-gray-700 dark:text-slate-300">{t("yes")}</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
@@ -1239,13 +1238,13 @@ export function ProfileModal({
                           }
                           className="w-4 h-4 disabled:cursor-not-allowed cursor-pointer"
                         />
-                        <span className="text-sm text-gray-700">{t("no")}</span>
+                        <span className="text-sm text-gray-700 dark:text-slate-300">{t("no")}</span>
                       </label>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                       {t("occupation")}
                     </label>
                     <input
@@ -1265,7 +1264,7 @@ export function ProfileModal({
 
               {/* Sex */}
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                   {t("sex")}
                 </label>
                 <div className="relative">
@@ -1284,7 +1283,7 @@ export function ProfileModal({
 
               {/* Mobile Number */}
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                   {t("mobileNumber")}
                 </label>
                 <div className="relative">
@@ -1302,20 +1301,20 @@ export function ProfileModal({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-slate-800">
                 {isEditing ? (
                   <>
                     <button
                       onClick={handleCancelEdit}
                       disabled={isUpdating}
-                      className="flex-1 h-11 rounded-lg border-2 border-blue-600 text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors cursor-pointer disabled:opacity-50"
+                      className="flex-1 h-11 rounded-lg border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer disabled:opacity-50"
                     >
                       {t("cancelBtn")}
                     </button>
                     <button
                       onClick={handleUpdateProfile}
                       disabled={isUpdating}
-                      className="flex-1 h-11 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50"
+                      className="flex-1 h-11 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
                     >
                       {isUpdating ? "Saving..." : t("updateProfile")}
                     </button>
@@ -1324,7 +1323,7 @@ export function ProfileModal({
                   <div className="w-full flex justify-center">
                     <button
                       onClick={handleStartEdit}
-                      className="rounded-xl bg-blue-600 text-white text-sm font-semibold px-8 py-3 hover:bg-blue-700 transition-colors cursor-pointer"
+                      className="rounded-xl bg-blue-600 text-white text-sm font-semibold px-8 py-3 hover:bg-blue-700 transition-colors cursor-pointer shadow-xs"
                     >
                       {t("editProfile")}
                     </button>
@@ -1337,10 +1336,10 @@ export function ProfileModal({
           {tab === "devices" && (
             <div className="space-y-6">
               {/* Header & Log Out Other Devices Action */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-slate-800 pb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                    <Laptop className="h-4 w-4 text-blue-600" />
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Laptop className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     {t("deviceManagement") || "Device Management & Login History"}
                   </h3>
                 </div>
@@ -1349,7 +1348,7 @@ export function ProfileModal({
                     type="button"
                     onClick={handleLogoutAllOtherDevices}
                     disabled={isLoggingOutOthers}
-                    className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>{isLoggingOutOthers ? "Logging out..." : (t("logOutAllOtherDevices") || "Log Out Other Devices")}</span>
@@ -1361,8 +1360,8 @@ export function ProfileModal({
                 <div
                   className={`p-3 rounded-lg text-xs font-medium flex items-center gap-2 ${
                     deviceActionMsg.type === "success"
-                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                      : "bg-red-50 text-red-700 border border-red-200"
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                      : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
                   }`}
                 >
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -1394,8 +1393,8 @@ export function ProfileModal({
                 return (
                   <div className={`rounded-2xl border-2 p-5 shadow-xs relative overflow-hidden transition-all ${
                     isStillActive
-                      ? "border-blue-200 bg-linear-to-br from-blue-50/50 via-white to-slate-50"
-                      : "border-red-300 bg-red-50/40 ring-1 ring-red-200"
+                      ? "border-blue-200 dark:border-blue-900/60 bg-linear-to-br from-blue-50/50 via-white to-slate-50 dark:from-slate-800/95 dark:via-slate-800/80 dark:to-slate-900"
+                      : "border-red-300 dark:border-red-900/60 bg-red-50/40 dark:bg-red-950/30 ring-1 ring-red-200 dark:ring-red-900/50"
                   }`}>
                     <div className="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
                       <div className="flex items-center gap-3.5">
@@ -1412,27 +1411,27 @@ export function ProfileModal({
                         </div>
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-extrabold text-slate-900">
+                            <span className="text-sm font-extrabold text-slate-900 dark:text-white">
                               {currentDev.deviceName || "This Device"}
                             </span>
                             {isStillActive ? (
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 animate-pulse" />
                                 {t("activeNow") || "Active Now (This Device)"}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-red-100 text-red-800 border border-red-300 px-2.5 py-0.5 rounded-full animate-pulse">
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-800 px-2.5 py-0.5 rounded-full animate-pulse">
                                 <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
                                 🔴 Session Logged Out (New Device Logged In)
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
-                            <span>OS: <strong className="text-slate-700">{currentDev.os}</strong></span>
+                          <div className="text-xs text-slate-500 dark:text-slate-300 mt-1 flex items-center gap-2 flex-wrap">
+                            <span>OS: <strong className="text-slate-700 dark:text-white font-semibold">{currentDev.os}</strong></span>
                             <span>•</span>
-                            <span>Browser: <strong className="text-slate-700">{currentDev.browser}</strong></span>
+                            <span>Browser: <strong className="text-slate-700 dark:text-white font-semibold">{currentDev.browser}</strong></span>
                             <span>•</span>
-                            <span>IP: <strong className="text-slate-700">{currentDev.ipAddress}</strong></span>
+                            <span>IP: <strong className="text-slate-700 dark:text-white font-semibold">{currentDev.ipAddress}</strong></span>
                           </div>
                         </div>
                       </div>
@@ -1457,7 +1456,7 @@ export function ProfileModal({
                             window.location.href = "/login";
                           }
                         }}
-                        className="px-3 py-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-xs mt-2 sm:mt-0"
+                        className="px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-300 hover:text-red-700 dark:hover:text-red-200 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-xs mt-2 sm:mt-0"
                         title={language === "tl" ? "I-logout ang kasalukuyang device na ito" : "Log out of this current device"}
                       >
                         <LogOut className="w-3.5 h-3.5" />
@@ -1466,18 +1465,18 @@ export function ProfileModal({
                     </div>
 
                     {!isStillActive && (
-                      <div className="mt-3 p-2.5 bg-red-100/70 border border-red-200 rounded-xl text-xs text-red-800 font-medium flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+                      <div className="mt-3 p-2.5 bg-red-100/70 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-800 dark:text-red-300 font-medium flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" />
                         <span>{language === "tl" ? "Na-logout ang session sa device na ito dahil nag-login ang account sa ibang device." : "This session was logged out because your account was accessed from another device."}</span>
                       </div>
                     )}
 
-                    <div className="mt-4 pt-3 border-t border-blue-100/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-600 gap-1">
+                    <div className="mt-4 pt-3 border-t border-blue-100/80 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-600 dark:text-slate-300 gap-1">
                       <div className="flex items-center gap-1.5 font-medium">
-                        <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span>{t("signedInAt") || "Signed in:"} <strong className="text-slate-900">{formatSessionDate(currentDev.loginAt)}</strong></span>
+                        <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span>{t("signedInAt") || "Signed in:"} <strong className="text-slate-900 dark:text-white font-semibold">{formatSessionDate(currentDev.loginAt)}</strong></span>
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-slate-400 dark:text-slate-400">
                         Location: {currentDev.location || "Quezon City, PH"}
                       </div>
                     </div>
@@ -1487,19 +1486,19 @@ export function ProfileModal({
 
               {/* Login History / Other Sessions List */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {language === "tl" ? "Kasaysayan ng Pag-access ng Ibang Device" : "Other Devices & Login History"}
                 </h4>
 
                 {isLoadingDevices && deviceSessions.length === 0 && (
-                  <div className="py-8 text-center text-xs text-slate-400">
-                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-600" />
+                  <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-600 dark:text-blue-400" />
                     Loading login records...
                   </div>
                 )}
 
                 {!isLoadingDevices && deviceSessions.filter((s) => !s.isCurrentDevice).length === 0 && (
-                  <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400">
+                  <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-6 text-center text-xs text-slate-400 dark:text-slate-500">
                     {t("noDevicesFound") || "No other devices have logged in recently."}
                   </div>
                 )}
@@ -1516,8 +1515,8 @@ export function ProfileModal({
                           key={session.id}
                           className={`rounded-xl border p-4 transition-all ${
                             session.isActive
-                              ? "border-red-300 bg-red-50/60 shadow-xs ring-1 ring-red-200"
-                              : "border-slate-200 bg-white hover:bg-slate-50/70"
+                              ? "border-red-300 dark:border-red-900/70 bg-red-50/60 dark:bg-red-950/30 shadow-xs ring-1 ring-red-200 dark:ring-red-900/50"
+                              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/70 hover:bg-slate-50/70 dark:hover:bg-slate-800"
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -1525,8 +1524,8 @@ export function ProfileModal({
                               <div
                                 className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                                   session.isActive
-                                    ? "bg-red-100 text-red-700"
-                                    : "bg-slate-100 text-slate-500"
+                                    ? "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300"
+                                    : "bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-300"
                                 }`}
                               >
                                 {isTablet ? (
@@ -1539,26 +1538,26 @@ export function ProfileModal({
                               </div>
                               <div>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-xs sm:text-sm font-bold text-slate-800">
+                                  <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white">
                                     {session.deviceName || "Device Session"}
                                   </span>
                                   {session.isActive ? (
-                                    <span className="text-[10px] font-extrabold bg-red-100 text-red-800 px-2.5 py-0.5 rounded-full border border-red-300 flex items-center gap-1 animate-pulse">
+                                    <span className="text-[10px] font-extrabold bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 px-2.5 py-0.5 rounded-full border border-red-300 dark:border-red-800 flex items-center gap-1 animate-pulse">
                                       <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
                                       🔴 Active (New Logged-In Device)
                                     </span>
                                   ) : (
-                                    <span className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                    <span className="text-[10px] font-medium bg-slate-100 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
                                       {t("terminatedStatus") || "Logged Out"}
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
-                                  <span>OS: <strong>{session.os}</strong></span>
+                                <div className="text-[11px] text-slate-500 dark:text-slate-300 mt-0.5 flex items-center gap-2 flex-wrap">
+                                  <span>OS: <strong className="text-slate-700 dark:text-white font-semibold">{session.os}</strong></span>
                                   <span>•</span>
-                                  <span>Browser: <strong>{session.browser}</strong></span>
+                                  <span>Browser: <strong className="text-slate-700 dark:text-white font-semibold">{session.browser}</strong></span>
                                   <span>•</span>
-                                  <span>IP: <strong>{session.ipAddress}</strong></span>
+                                  <span>IP: <strong className="text-slate-700 dark:text-white font-semibold">{session.ipAddress}</strong></span>
                                 </div>
                               </div>
                             </div>
@@ -1567,7 +1566,7 @@ export function ProfileModal({
                             <button
                               type="button"
                               onClick={() => handleRemoveDevice(session.id)}
-                              className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50/70 hover:bg-red-100 text-red-600 hover:text-red-700 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                              className="px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-800 bg-red-50/70 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-300 hover:text-red-700 dark:hover:text-red-200 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer shrink-0"
                               title={language === "tl" ? "Alisin ang device na ito sa listahan" : "Remove this device record"}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1575,20 +1574,20 @@ export function ProfileModal({
                             </button>
                           </div>
 
-                          <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                          <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-700/60 text-[11px] text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                             <div className="flex items-center gap-1.5">
-                              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 shrink-0" />
                               <span>
                                 {t("signedInAt") || "Signed in:"}{" "}
-                                <strong className="text-slate-700 font-medium">
+                                <strong className="text-slate-700 dark:text-slate-200 font-medium">
                                   {formatSessionDate(session.loginAt)}
                                 </strong>
                               </span>
                             </div>
                             {session.logoutAt && (
-                              <div className="text-slate-400">
+                              <div className="text-slate-400 dark:text-slate-400">
                                 {t("signedOutAt") || "Signed out:"}{" "}
-                                <span className="text-slate-600 font-medium">{formatSessionDate(session.logoutAt)}</span>
+                                <span className="text-slate-600 dark:text-slate-300 font-medium">{formatSessionDate(session.logoutAt)}</span>
                                 {session.logoutReason ? ` (${session.logoutReason})` : ""}
                               </div>
                             )}
@@ -1603,11 +1602,11 @@ export function ProfileModal({
           {tab === "preferences" && (
             <div className="space-y-5">
               <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
-                  <Languages className="h-4 w-4 text-gray-500" />
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                  <Languages className="h-4 w-4 text-gray-500 dark:text-slate-400" />
                   {t("languageTab")}
                 </h3>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
                   {t("chooseLanguageDesc")}
                 </p>
                 <div className="space-y-2">
@@ -1617,13 +1616,13 @@ export function ProfileModal({
                       onClick={() => setLanguage(option.value)}
                       className={`w-full flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-colors cursor-pointer ${
                         language === option.value
-                          ? "border-blue-600 bg-blue-50 text-blue-700"
-                          : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                          ? "border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+                          : "border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800"
                       }`}
                     >
                       {option.label}
                       {language === option.value && (
-                        <Check className="h-4 w-4 text-blue-600" />
+                        <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       )}
                     </button>
                   ))}
@@ -1633,24 +1632,24 @@ export function ProfileModal({
           )}
 
           {/* Danger Zone */}
-          <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6 space-y-4">
+          <div className="mt-8 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20 p-6 space-y-4">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              <h3 className="text-sm font-bold text-red-700">{t("dangerZone")}</h3>
+              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <h3 className="text-sm font-bold text-red-700 dark:text-red-400">{t("dangerZone")}</h3>
             </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
               {t("dangerZoneDesc")}
             </p>
             <div className="flex gap-3 pt-2">
               <button
                 onClick={handleDeactivate}
-                className="flex-1 h-11 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors active:scale-95 cursor-pointer"
+                className="flex-1 h-11 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors active:scale-95 cursor-pointer shadow-xs"
               >
                 {t("deactivateAccount")}
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 h-11 rounded-lg border-2 border-red-600 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors active:scale-95 cursor-pointer"
+                className="flex-1 h-11 rounded-lg border-2 border-red-600 text-red-600 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors active:scale-95 cursor-pointer"
               >
                 {t("deleteAccount")}
               </button>
