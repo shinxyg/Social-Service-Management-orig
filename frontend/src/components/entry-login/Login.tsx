@@ -238,6 +238,10 @@ export const Login = () => {
           localStorage.setItem('userRole', detectedRole);
           localStorage.setItem('user_email', cleanEmail);
 
+          if (data.token) {
+            sessionStorage.setItem('token', data.token);
+            localStorage.setItem('token', data.token);
+          }
           if (data.sessionToken) {
             sessionStorage.setItem('sessionToken', data.sessionToken);
             localStorage.setItem('sessionToken', data.sessionToken);

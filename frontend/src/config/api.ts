@@ -35,3 +35,35 @@ export function getApiBase(): string {
 }
 
 export const API_BASE = getApiBase();
+
+/**
+ * Retrieves the stored JWT authentication token from localStorage or sessionStorage
+ */
+export function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return (
+    sessionStorage.getItem("token") ||
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("sessionToken") ||
+    localStorage.getItem("sessionToken") ||
+    null
+  );
+}
+
+/**
+ * Returns common HTTP headers including Authorization: Bearer <token> if available
+ */
+export function getAuthHeaders(customHeaders: Record<string, string> = {}): Record<string, string> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...customHeaders,
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+    headers["x-access-token"] = token;
+  }
+
+  return headers;
+}

@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const { sendOtpEmail, sendPasswordResetEmail } = require('../services/emailService');
 const { checkLoginLockout, recordFailedLogin, clearFailedLogins } = require('../middleware/rateLimiter');
+const { generateToken, verifyToken } = require('../config/jwt');
 const bcrypt = require('bcryptjs');
 
 // In-memory fallback stores
@@ -444,9 +445,17 @@ exports.register = async (req, res) => {
     const safeUser = { ...newUser };
     delete safeUser.password;
 
+    const token = generateToken({
+      id: safeUser.id || 1,
+      email: safeUser.email,
+      role: safeUser.role || 'user',
+      qcidNo: safeUser.qcidNumber,
+    });
+
     return res.status(201).json({
       success: true,
       message: 'Account registered successfully.',
+      token,
       user: safeUser,
     });
   } catch (err) {
@@ -583,8 +592,18 @@ exports.login = async (req, res) => {
           lastLogin: new Date().toISOString(),
         };
 
+        // Generate signed JSON Web Token (JWT) with 8-hour expiration
+        const token = generateToken({
+          id: userPayload.id,
+          email: userPayload.email,
+          role: userPayload.role,
+          qcidNo: userPayload.qcidNumber,
+          sessionToken: sessionToken,
+        });
+
         return res.status(200).json({
           success: true,
+          token,
           sessionToken,
           role: userPayload.role,
           user: userPayload,
@@ -628,8 +647,18 @@ exports.login = async (req, res) => {
       const safeMemUser = { ...memUser };
       delete safeMemUser.password;
 
+      // Generate signed JSON Web Token (JWT) for memory user
+      const token = generateToken({
+        id: safeMemUser.id || 1,
+        email: safeMemUser.email,
+        role: safeMemUser.role || 'user',
+        qcidNo: safeMemUser.qcidNumber,
+        sessionToken: sessionToken,
+      });
+
       return res.status(200).json({
         success: true,
+        token,
         sessionToken,
         role: safeMemUser.role || 'user',
         user: safeMemUser,
