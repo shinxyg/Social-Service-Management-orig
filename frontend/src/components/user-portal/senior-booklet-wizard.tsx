@@ -18,6 +18,7 @@ import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
 import { readFileAsDataUrl } from "../../utils/fileUpload"
+import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
 export interface UserProfile {
   qcidNo?: string
@@ -43,15 +44,6 @@ export interface UserProfile {
   emergencyContactNo?: string
   emergencyRelationship?: string
 }
-
-const MOCK_USER_PROFILE: UserProfile = {
-  qcid: "110000116932100",
-  firstName: "Resident",
-  lastName: "User",
-  addressStreet: "",
-  addressBarangay: "SAUYO",
-  addressCityMunicipality: "QUEZON CITY",
-} as any
 
 export interface SeniorBookletWizardProps {
   bookletType?: "medicine" | "movie"
