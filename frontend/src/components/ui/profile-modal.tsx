@@ -362,10 +362,10 @@ export function ProfileModal({
               try {
                 localStorage.setItem("currentUser", JSON.stringify(data.user));
                 sessionStorage.setItem("currentUser", JSON.stringify(data.user));
-              } catch {}
+              } catch { }
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     }
     prevOpenRef.current = open;
@@ -441,10 +441,9 @@ export function ProfileModal({
   };
 
   const fieldClass = (extra = "") =>
-    `w-full border rounded-lg px-3 py-2.5 text-sm transition-colors ${
-      isEditing
-        ? `border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${extra}`
-        : "border-gray-200 dark:border-slate-800 bg-gray-100 dark:bg-slate-800/50 text-gray-500 dark:text-slate-400 cursor-not-allowed"
+    `w-full border rounded-lg px-3 py-2.5 text-sm transition-colors ${isEditing
+      ? `border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${extra}`
+      : "border-gray-200 dark:border-slate-800 bg-gray-100 dark:bg-slate-800/50 text-gray-500 dark:text-slate-400 cursor-not-allowed"
     }`;
 
   const handleDeactivate = async () => {
@@ -758,41 +757,37 @@ export function ProfileModal({
         <div className="flex justify-center gap-6 sm:gap-8 border-b border-gray-200 dark:border-slate-800 px-6 sm:px-8 pt-0 overflow-x-auto">
           <button
             onClick={() => setTab("account")}
-            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-              tab === "account"
+            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${tab === "account"
                 ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
                 : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
-            }`}
+              }`}
           >
             {t("accountInformation")}
           </button>
           <button
             onClick={() => setTab("personal")}
-            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-              tab === "personal"
+            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${tab === "personal"
                 ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
                 : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
-            }`}
+              }`}
           >
             {t("personalInformation")}
           </button>
           <button
             onClick={() => setTab("devices")}
-            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-              tab === "devices"
+            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${tab === "devices"
                 ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
                 : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
-            }`}
+              }`}
           >
             {t("devicesTab") || "Devices & History"}
           </button>
           <button
             onClick={() => setTab("preferences")}
-            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-              tab === "preferences"
+            className={`py-4 px-0 text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${tab === "preferences"
                 ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
                 : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
-            }`}
+              }`}
           >
             {t("languageTab")}
           </button>
@@ -820,11 +815,10 @@ export function ProfileModal({
 
                 {passwordMsg && (
                   <div
-                    className={`p-3 rounded-lg text-xs font-medium ${
-                      passwordMsg.type === "success"
+                    className={`p-3 rounded-lg text-xs font-medium ${passwordMsg.type === "success"
                         ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                         : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
-                    }`}
+                      }`}
                   >
                     {passwordMsg.text}
                   </div>
@@ -1358,11 +1352,10 @@ export function ProfileModal({
 
               {deviceActionMsg && (
                 <div
-                  className={`p-3 rounded-lg text-xs font-medium flex items-center gap-2 ${
-                    deviceActionMsg.type === "success"
+                  className={`p-3 rounded-lg text-xs font-medium flex items-center gap-2 ${deviceActionMsg.type === "success"
                       ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                       : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
-                  }`}
+                    }`}
                 >
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   <span>{deviceActionMsg.text}</span>
@@ -1391,16 +1384,14 @@ export function ProfileModal({
                 const isStillActive = currentDev.isActive;
 
                 return (
-                  <div className={`rounded-2xl border-2 p-5 shadow-xs relative overflow-hidden transition-all ${
-                    isStillActive
+                  <div className={`rounded-2xl border-2 p-5 shadow-xs relative overflow-hidden transition-all ${isStillActive
                       ? "border-blue-200 dark:border-blue-900/60 bg-linear-to-br from-blue-50/50 via-white to-slate-50 dark:from-slate-800/95 dark:via-slate-800/80 dark:to-slate-900"
                       : "border-red-300 dark:border-red-900/60 bg-red-50/40 dark:bg-red-950/30 ring-1 ring-red-200 dark:ring-red-900/50"
-                  }`}>
+                    }`}>
                     <div className="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
                       <div className="flex items-center gap-3.5">
-                        <div className={`w-12 h-12 rounded-xl text-white flex items-center justify-center shadow-xs shrink-0 ${
-                          isStillActive ? "bg-blue-600" : "bg-red-600"
-                        }`}>
+                        <div className={`w-12 h-12 rounded-xl text-white flex items-center justify-center shadow-xs shrink-0 ${isStillActive ? "bg-blue-600" : "bg-red-600"
+                          }`}>
                           {isTablet ? (
                             <Tablet className="w-6 h-6" />
                           ) : isMobile ? (
@@ -1513,20 +1504,18 @@ export function ProfileModal({
                       return (
                         <div
                           key={session.id}
-                          className={`rounded-xl border p-4 transition-all ${
-                            session.isActive
+                          className={`rounded-xl border p-4 transition-all ${session.isActive
                               ? "border-red-300 dark:border-red-900/70 bg-red-50/60 dark:bg-red-950/30 shadow-xs ring-1 ring-red-200 dark:ring-red-900/50"
                               : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/70 hover:bg-slate-50/70 dark:hover:bg-slate-800"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3">
                               <div
-                                className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                                  session.isActive
+                                className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${session.isActive
                                     ? "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300"
                                     : "bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-300"
-                                }`}
+                                  }`}
                               >
                                 {isTablet ? (
                                   <Tablet className="w-5 h-5" />
@@ -1614,11 +1603,10 @@ export function ProfileModal({
                     <button
                       key={option.value}
                       onClick={() => setLanguage(option.value)}
-                      className={`w-full flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-colors cursor-pointer ${
-                        language === option.value
+                      className={`w-full flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-colors cursor-pointer ${language === option.value
                           ? "border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
                           : "border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800"
-                      }`}
+                        }`}
                     >
                       {option.label}
                       {language === option.value && (

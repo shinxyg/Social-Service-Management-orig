@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-background: hsl(220 25% 98%);
   --color-foreground: hsl(222 47% 11%);
@@ -115,7 +117,11 @@ main {
 .dark .bg-gray-50\/50,
 .dark .bg-gray-50\/70,
 .dark .bg-gray-100\/50,
-.dark .bg-gray-100\/80 {
+.dark .bg-gray-100\/80,
+.dark .bg-blue-50\/40,
+.dark .bg-blue-50\/50,
+.dark .bg-blue-50\/60,
+.dark .bg-blue-50 {
   background-color: var(--color-muted) !important;
 }
 
@@ -165,6 +171,9 @@ main {
 .dark .border-gray-300,
 .dark .border-slate-100,
 .dark .border-gray-100,
+.dark .border-blue-100,
+.dark .border-blue-200,
+.dark .border-blue-300,
 .dark .border-zinc-200,
 .dark .border-zinc-300 {
   border-color: var(--color-border) !important;
