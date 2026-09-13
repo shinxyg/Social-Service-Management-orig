@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, X, Eye, EyeOff, ExternalLink, KeyRound, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Mail, X, ExternalLink, KeyRound, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { API_BASE } from '../../config/api';
 
 import { RecaptchaModal } from '../ui/recaptcha-modal';
@@ -331,14 +331,14 @@ export const Login = () => {
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#F8FAFC] font-sans text-sm relative" style={{ fontFamily: 'Inter, sans-serif' }}>
 
-      {/* Left Hero Section — UNTOUCHED */}
+      {/* Left Hero Section */}
       <div
-        className="w-full md:w-1/2 text-white p-4 sm:p-6 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden text-center md:text-center items-center md:items-center"
-        style={{ backgroundColor: '#0F172A' }}
+        className="w-full md:w-1/2 text-white p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden text-center items-center"
+        style={{ backgroundColor: '#0B132B' }}
       >
-        {/* Centered Government Seal Watermark - 1080x1080 1:1 Aspect Ratio */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden p-4">
-          <div className="w-full max-w-[480px] sm:max-w-[560px] lg:max-w-[640px] aspect-square flex items-center justify-center shrink-0 opacity-[0.12] md:opacity-[0.15]">
+        {/* Centered Government Seal Watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden p-6">
+          <div className="w-full max-w-[340px] sm:max-w-[400px] md:max-w-[440px] lg:max-w-[480px] aspect-square flex items-center justify-center shrink-0 opacity-[0.22] md:opacity-[0.25]">
             <img
               src={governmentSealImage}
               alt="Government Seal"
@@ -346,8 +346,8 @@ export const Login = () => {
               height={1080}
               className="w-full h-full object-contain aspect-square shrink-0 select-none"
               style={{
-                filter: 'brightness(2.2) contrast(1.8) saturate(0.9)',
-                mixBlendMode: 'overlay',
+                filter: 'brightness(1.8) contrast(1.4) saturate(0.8)',
+                mixBlendMode: 'screen',
               }}
             />
           </div>
@@ -356,17 +356,17 @@ export const Login = () => {
         <div className="flex items-center justify-between z-10 w-full">
           <Link
             to="/"
-            className="inline-flex items-center gap-1 text-xs text-slate-300 hover:text-white font-medium transition-colors shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white font-medium transition-colors shrink-0"
           >
             ← Back to Home
           </Link>
         </div>
 
-        <div className="my-auto py-6 sm:py-8 z-10 max-w-lg text-center flex flex-col items-center">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight mb-3 leading-tight text-white text-center" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+        <div className="my-auto py-8 sm:py-12 z-10 max-w-lg text-center flex flex-col items-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight mb-3 sm:mb-4 leading-tight text-white text-center" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             Social Services Management Portal
           </h1>
-          <p className="text-slate-300 text-xs sm:text-sm md:text-base mb-6 leading-relaxed font-medium text-center">
+          <p className="text-slate-300/90 text-xs sm:text-sm md:text-base leading-relaxed font-normal text-center max-w-md">
             Streamlining community welfare, financial aid, and support programs for residents in need.
           </p>
         </div>
@@ -376,106 +376,104 @@ export const Login = () => {
         </div>
       </div>
 
-      {/* Right Login Form Section — REDESIGNED */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-[#F8FAFC]">
-        <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl">
+      {/* Right Login Form Section */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-10 lg:p-12 bg-[#F3F4F8]">
+        <div className="w-full max-w-[440px] bg-white p-7 sm:p-10 rounded-3xl shadow-2xl shadow-slate-200/80 border border-slate-100">
 
-          <div className="text-center mb-6">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              Welcome Back!
+          <div className="text-left mb-7">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+              Welcome Back
             </h2>
-            <p className="text-xs text-slate-500 mt-1.5">
-              Sign in to access your Social Services dashboard
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
+              Sign in to access your social service dashboard
             </p>
           </div>
 
           {error && (
-            <div className="p-2.5 mb-4 text-xs text-red-600 bg-red-50 rounded-lg border border-red-200 text-center">
-              {error}
+            <div className="p-3 mb-5 text-xs text-red-600 bg-red-50 rounded-xl border border-red-200 text-left font-medium flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 shrink-0 text-red-500" />
+              <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4 text-left">
-
             <div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Username or Email (e.g. user123, admin123)"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs md:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-slate-700 text-left"
-                  required
-                />
-              </div>
+              <label className="block text-[11px] font-bold tracking-wider text-slate-600 uppercase mb-2">
+                EMAIL ADDRESS
+              </label>
+              <input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@email.com"
+                className="w-full px-4 py-3 text-xs sm:text-sm bg-[#EEF2F6] hover:bg-[#E8EDF3] border border-transparent focus:border-blue-500 focus:bg-white rounded-xl outline-none transition-all text-slate-800 placeholder:text-slate-400 font-medium"
+                required
+              />
             </div>
 
             <div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="w-4 h-4" />
-                </div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[11px] font-bold tracking-wider text-slate-600 uppercase">
+                  PASSWORD
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPasswordOpen(true);
+                    setResetSuccess(false);
+                    setResetEmail('');
+                    setIsNotRobot(false);
+                    setResetError('');
+                    setIsConfirmModalOpen(false);
+                  }}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline bg-transparent border-none cursor-pointer p-0"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+              <div className="relative flex items-center">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  className="w-full pl-9 pr-9 py-2.5 text-xs md:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-slate-700 text-left"
+                  placeholder="••••••••••••"
+                  className="w-full px-4 py-3 pr-16 text-xs sm:text-sm bg-[#EEF2F6] hover:bg-[#E8EDF3] border border-transparent focus:border-blue-500 focus:bg-white rounded-xl outline-none transition-all text-slate-800 placeholder:text-slate-400 font-medium"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-4 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors cursor-pointer select-none"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
             </div>
 
-            <button
+            <div className="pt-2">
+              <button
                 type="submit"
                 disabled={isLoginLoading || lockoutRemaining > 0}
-                className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-xs md:text-sm rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 cursor-pointer mt-2"
+                className="w-full py-3.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 cursor-pointer"
               >
                 {lockoutRemaining > 0
                   ? `Locked (${lockoutRemaining}s)`
                   : isLoginLoading
                   ? 'Signing in...'
                   : 'Login'}
-            </button>
+              </button>
+            </div>
           </form>
 
-          <div className="mt-5 flex items-center justify-between text-xs sm:text-[13px]">
-            <button
-              type="button"
-              onClick={() => {
-                setIsForgotPasswordOpen(true);
-                setResetSuccess(false);
-                setResetEmail('');
-                setIsNotRobot(false);
-                setResetError('');
-                setIsConfirmModalOpen(false);
-              }}
-              className="text-blue-600 hover:underline font-medium bg-transparent border-none cursor-pointer p-0 whitespace-nowrap"
+          <div className="mt-8 text-center text-xs sm:text-[13px] text-slate-500 font-medium">
+            Don't have an account?{' '}
+            <a
+              href="/register"
+              onClick={handleRegisterClick}
+              className="text-blue-600 hover:text-blue-700 font-bold hover:underline cursor-pointer"
             >
-              Forgot password?
-            </button>
-
-            <span className="text-slate-500 whitespace-nowrap">
-              Don't have an account?{' '}
-              <a
-                href="/register"
-                onClick={handleRegisterClick}
-                className="text-blue-600 hover:underline font-semibold cursor-pointer whitespace-nowrap"
-              >
-                Register here
-              </a>
-            </span>
+              Register here
+            </a>
           </div>
         </div>
       </div>
