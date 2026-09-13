@@ -763,19 +763,19 @@ export default function ApplyPWDSenior() {
               {isAssistance && (
                 <>
                   <div className="space-y-3">
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                    <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm font-semibold text-blue-900">{t("importantReminder")}</p>
-                        <p className="text-sm text-blue-800 mt-1">
+                        <p className="text-sm font-semibold text-blue-900 dark:text-white">{t("importantReminder")}</p>
+                        <p className="text-sm text-blue-800 dark:text-slate-200 mt-1">
                           {t("pwdAssistanceReminderDesc")}
                         </p>
                       </div>
                     </div>
 
-                    <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-                      <HeartHandshake className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                      <p className="text-sm font-semibold text-blue-950">
+                    <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
+                      <HeartHandshake className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                      <p className="text-sm font-semibold text-blue-950 dark:text-white">
                         {t("pwdAssistanceBanner")}
                       </p>
                     </div>
@@ -787,8 +787,8 @@ export default function ApplyPWDSenior() {
                     </h3>
                     <ul className="space-y-2 mb-4">
                       {pwdSocialAssistanceRequirements.map((req, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground bg-gray-50 border border-border/80 rounded-xl p-3">
-                          <span className="text-blue-600 font-bold mt-0.5">☑</span>
+                        <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground bg-gray-50 dark:bg-slate-900/60 border border-border/80 rounded-xl p-3">
+                          <span className="text-blue-600 dark:text-blue-400 font-bold mt-0.5">☑</span>
                           <div>
                             <span className="font-bold text-foreground">{req.title}</span>
                             {req.desc && <p className="text-muted-foreground text-xs mt-0.5">{req.desc}</p>}

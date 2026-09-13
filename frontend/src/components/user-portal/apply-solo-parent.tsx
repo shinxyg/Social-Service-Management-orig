@@ -461,11 +461,11 @@ export default function ApplySoloParent() {
             {/* Modal Content */}
             <div className="p-6 space-y-5 flex-1 overflow-y-auto">
               {/* Important Reminder (Blue Box) */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+              <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-blue-900">{t("importantReminder") || "Important reminder"}</p>
-                  <p className="text-sm text-blue-800 mt-0.5">
+                  <p className="text-sm font-semibold text-blue-900 dark:text-white">{t("importantReminder") || "Important reminder"}</p>
+                  <p className="text-sm text-blue-800 dark:text-slate-200 mt-0.5">
                     {language === "en"
                       ? "Please scroll and read all requirements below."
                       : language === "bis"
@@ -477,9 +477,9 @@ export default function ApplySoloParent() {
 
               {/* Status / Category Alert Box */}
               {isChildWelfare ? (
-                <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-                  <HeartHandshake className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                  <p className="text-sm font-semibold text-blue-950">
+                <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
+                  <HeartHandshake className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                  <p className="text-sm font-semibold text-blue-950 dark:text-white">
                     {language === "en"
                       ? "CHILD & YOUTH WELFARE — Official program for the welfare, protection, and development of children in Quezon City."
                       : language === "bis"
@@ -488,9 +488,9 @@ export default function ApplySoloParent() {
                   </p>
                 </div>
               ) : isRenewal ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                  <RefreshCw className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-sm font-semibold text-amber-900">
+                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 flex items-start gap-3">
+                  <RefreshCw className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
                     {language === "en"
                       ? "RENEWAL — Please prepare your current Solo Parent ID Number before proceeding."
                       : language === "bis"
@@ -499,9 +499,9 @@ export default function ApplySoloParent() {
                   </p>
                 </div>
               ) : isLoss ? (
-                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
-                  <RefreshCw className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
-                  <p className="text-sm font-semibold text-orange-900">
+                <div className="bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 rounded-xl p-4 flex items-start gap-3">
+                  <RefreshCw className="h-5 w-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                  <p className="text-sm font-semibold text-orange-900 dark:text-orange-200">
                     {language === "en"
                       ? "REPLACEMENT — Please prepare your Notarized Affidavit of Loss before proceeding."
                       : language === "bis"
@@ -510,9 +510,9 @@ export default function ApplySoloParent() {
                   </p>
                 </div>
               ) : (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
-                  <RefreshCw className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
-                  <p className="text-sm font-semibold text-green-900">
+                <div className="bg-green-50 dark:bg-emerald-950/40 border border-green-200 dark:border-emerald-800/60 rounded-xl p-4 flex items-start gap-3">
+                  <RefreshCw className="h-5 w-5 text-green-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <p className="text-sm font-semibold text-green-900 dark:text-emerald-200">
                     {language === "en"
                       ? "NEW APPLICATION — Ensure all original or certified true copies of documentary requirements are prepared before proceeding."
                       : language === "bis"
