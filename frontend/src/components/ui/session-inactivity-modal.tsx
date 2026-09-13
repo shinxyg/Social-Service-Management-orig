@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Clock, ShieldAlert, LogIn, AlertTriangle } from "lucide-react"
+import { Clock, ShieldAlert, LogIn } from "lucide-react"
 import { API_BASE } from "../../config/api"
 
 // 15 Minutes Inactivity Timeout in milliseconds
