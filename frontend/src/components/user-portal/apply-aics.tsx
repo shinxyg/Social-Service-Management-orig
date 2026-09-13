@@ -953,29 +953,29 @@ const handleFinalSubmit = async () => {
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
         {renderTopRequirementsBanner()}
 
-        <div className="border border-gray-200 rounded-xl overflow-hidden bg-white relative">
+        <div className="border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 relative">
           <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
               <div key={i} className="flex items-center flex-1 last:flex-none">
                 <div
                   className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                     i === 0
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-500"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
                   }`}
                 >
                   {i + 1}
                 </div>
-                {i < WIZARD_TABS.length - 1 && <div className="flex-1 h-px bg-gray-200 mx-2" />}
+                {i < WIZARD_TABS.length - 1 && <div className="flex-1 h-px bg-gray-200 dark:bg-slate-800 mx-2" />}
               </div>
             ))}
           </div>
-          <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
+          <div className="flex gap-2 border-b border-border dark:border-slate-800 bg-gray-50 dark:bg-slate-950/60 p-2 overflow-x-auto">
             {WIZARD_TABS.map((label, i) => (
               <div
                 key={label}
                 className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
-                  i === 0 ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500"
+                  i === 0 ? "bg-blue-600 text-white shadow-xs" : "bg-gray-100 dark:bg-slate-800/80 text-gray-600 dark:text-slate-200"
                 }`}
               >
                 {label}
@@ -985,13 +985,13 @@ const handleFinalSubmit = async () => {
 
           <div className="p-6 sm:p-8 space-y-7">
             {/* Blue Info Alert Banner */}
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
               <div>
-                <p className="text-sm font-semibold text-blue-900">
+                <p className="text-sm font-semibold text-blue-900 dark:text-white">
                   {t("primaryReqAlertTitle").replace("{type}", type.toUpperCase())}
                 </p>
-                <p className="text-xs text-blue-700 mt-0.5">
+                <p className="text-xs text-blue-700 dark:text-slate-200 mt-0.5">
                   {t("primaryReqAlertDesc")}
                 </p>
               </div>
@@ -1000,7 +1000,7 @@ const handleFinalSubmit = async () => {
             {isEducationalAssistance ? (
               <>
                 <div>
-                  <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">{t("eligibility")}</h2>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white tracking-wide uppercase">{t("eligibility")}</h2>
                 </div>
 
                 <div className="space-y-3">
@@ -1029,13 +1029,13 @@ const handleFinalSubmit = async () => {
             ) : isFuneralAssistance ? (
               <>
                 <div>
-                  <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">{t("eligibility")}</h2>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white tracking-wide uppercase">{t("eligibility")}</h2>
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-800 mb-3">{t("deceasedResidentQuestion")} *</p>
+                  <p className="text-sm text-gray-800 dark:text-white mb-3">{t("deceasedResidentQuestion")} *</p>
                   <div className="flex items-center gap-8">
-                    <label className="flex items-center gap-2 text-sm text-[#3b82f6] cursor-pointer select-none">
+                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-white cursor-pointer select-none">
                       <input
                         type="radio"
                         name="deceasedResident"
@@ -1045,7 +1045,7 @@ const handleFinalSubmit = async () => {
                       />
                       {t("yes")}
                     </label>
-                    <label className="flex items-center gap-2 text-sm text-[#3b82f6] cursor-pointer select-none">
+                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-white cursor-pointer select-none">
                       <input
                         type="radio"
                         name="deceasedResident"
@@ -1059,7 +1059,7 @@ const handleFinalSubmit = async () => {
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-800 mb-3">{t("relationToDeceasedQuestion")} *</p>
+                  <p className="text-sm text-gray-800 dark:text-white mb-3">{t("relationToDeceasedQuestion")} *</p>
                   <div className="space-y-3">
                     {[
                       { key: "relationChild", value: "Anak" },
@@ -1068,7 +1068,7 @@ const handleFinalSubmit = async () => {
                       { key: "relationSpouse", value: "Asawa" },
                       { key: "otherOption", value: "Iba pa" },
                     ].map((rel) => (
-                      <label key={rel.value} className="flex items-center gap-2.5 text-sm text-[#3b82f6] cursor-pointer select-none">
+                      <label key={rel.value} className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-white cursor-pointer select-none">
                         <input
                           type="radio"
                           name="relationToDeceased"
@@ -1083,13 +1083,13 @@ const handleFinalSubmit = async () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1.5">
                     {t("funeralHomeQuestion")} *
                   </label>
                   <select
                     value={checklistFuneralHome}
                     onChange={(e) => setChecklistFuneralHome(e.target.value)}
-                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                    className="w-full h-11 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                   >
                    <option value="" disabled>{t("chooseFuneralHome")}</option>
                     <option value="Nieto Funeral Services">Nieto Funeral Services</option>
@@ -1118,7 +1118,7 @@ const handleFinalSubmit = async () => {
                     <option value="Elcielo Funeral">Elcielo Funeral</option>
                     <option value="Iba pa">{t("otherOption")}</option>
                   </select>
-                  <p className="text-xs text-gray-500 mt-1.5">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-1.5">
                     {t("funeralHomeHint")}
                   </p>
                 </div>
@@ -1126,7 +1126,7 @@ const handleFinalSubmit = async () => {
             ) : (
               <>
                 <div>
-                  <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">{t("medicalRequirementsTitle")}</h2>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white tracking-wide uppercase">{t("medicalRequirementsTitle")}</h2>
                 </div>
 
                 <div className="space-y-4">
@@ -1143,11 +1143,11 @@ const handleFinalSubmit = async () => {
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-800 mb-3">
+                  <p className="text-sm text-gray-800 dark:text-white mb-3">
                     {t("priorAidQuestion")} *
                   </p>
                   <div className="flex items-center gap-8">
-                    <label className="flex items-center gap-2 text-sm text-[#3b82f6] cursor-pointer select-none">
+                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-white cursor-pointer select-none">
                       <input
                         type="radio"
                         name="priorAid"
@@ -1157,7 +1157,7 @@ const handleFinalSubmit = async () => {
                       />
                       {t("priorAidYes")}
                     </label>
-                    <label className="flex items-center gap-2 text-sm text-[#3b82f6] cursor-pointer select-none">
+                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-white cursor-pointer select-none">
                       <input
                         type="radio"
                         name="priorAid"
@@ -2870,7 +2870,7 @@ function CustomCheckbox({
   label: React.ReactNode
 }) {
   return (
-    <label className="flex items-start gap-2.5 text-sm text-[#3b82f6] cursor-pointer select-none group">
+    <label className="flex items-start gap-2.5 text-sm cursor-pointer select-none group">
       <input
         type="checkbox"
         checked={checked}
@@ -2879,12 +2879,12 @@ function CustomCheckbox({
       />
       <span
         className={`flex items-center justify-center h-4.5 w-4.5 mt-0.5 rounded-[3px] shrink-0 border-2 transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 ${
-        checked ? "bg-[#3b82f6] border-[#3b82f6]" : "bg-white border-gray-300 group-hover:border-blue-400"
+        checked ? "bg-[#3b82f6] border-[#3b82f6]" : "bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 group-hover:border-blue-400"
         }`}
       >
         {checked && <Check className="h-3 w-3 text-white" strokeWidth={3.5} />}
       </span>
-      <span className="leading-snug text-blue-700 font-medium text-sm">{label}</span>
+      <span className="leading-snug text-slate-800 dark:text-white font-medium text-sm">{label}</span>
     </label>
   )
 }
