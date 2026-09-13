@@ -2534,42 +2534,42 @@ const handleFinalSubmit = async () => {
     if (appStatus === "rejected") {
       return (
         <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-red-50 flex items-center justify-center text-red-500">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-2xl bg-red-50 dark:bg-red-500/15 flex items-center justify-center text-red-500 ring-8 ring-red-50/50 dark:ring-red-500/10">
               <X className="h-7 w-7" strokeWidth={2.5} />
             </div>
-            <h2 className="text-lg font-bold text-gray-900">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
               {language === "en"
                 ? "Application Disapproved"
                 : language === "bis"
                 ? "Wala Na-aprobahan ang Aplikasyon"
                 : "Hindi Na-approve ang Application"}
             </h2>
-            <p className="text-xs text-gray-600 max-w-sm">
+            <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm">
               {language === "en"
                 ? `We regret to inform you that your application for ${type} was not approved. You may contact the Quezon City Social Welfare Office for more details or submit a new application.`
                 : language === "bis"
                 ? `Gikasubo namo nga wala na-aprobahan ang imong aplikasyon para sa ${type}. Mahimo kang makig-alayon sa Quezon City Social Welfare Office o mag-apply pag-usab.`
                 : `Paumanhin, hindi na-approve ang iyong aplikasyon para sa ${type.toLowerCase()}. Maaari kang makipag-ugnayan sa Quezon City Social Welfare Office para sa karagdagang detalye o mag-apply muli kung may mga dokumentong kailangang ayusin.`}
             </p>
-            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
-              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                <span className="text-gray-500">
+            <div className="mt-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-slate-200 dark:border-slate-700/60">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700/60">
+                <span className="text-slate-500 dark:text-slate-400">
                   {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
                 </span>
-                <span className="font-mono font-bold text-gray-900 text-sm">{reference}</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-sm">{reference}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">
+                <span className="text-slate-500 dark:text-slate-400">
                   {language === "en" ? "Service" : language === "bis" ? "Serbisyo" : "Serbisyo"}
                 </span>
-                <span className="font-semibold text-gray-900">{type}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{type}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">
+                <span className="text-slate-500 dark:text-slate-400">
                   {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
                 </span>
-                <span className="font-semibold text-gray-900">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
               </div>
             </div>
 
@@ -2591,9 +2591,9 @@ const handleFinalSubmit = async () => {
               <button
                 type="button"
                 onClick={handleReapply}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
               >
-                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                 <span>
                   {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
                 </span>
@@ -2617,54 +2617,54 @@ const handleFinalSubmit = async () => {
     if (appStatus === "approved" || appStatus === "completed") {
       return (
         <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 ring-8 ring-emerald-50/50">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 ring-8 ring-emerald-50/50 dark:ring-emerald-500/10">
               <Check className="h-7 w-7" strokeWidth={3} />
             </div>
-            <h2 className="text-lg font-bold text-gray-900">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
               {language === "en"
                 ? "Application Approved!"
                 : language === "bis"
                 ? "Na-aprobahan ang Aplikasyon!"
                 : "Na-approve ang Application!"}
             </h2>
-            <p className="text-xs text-gray-600 max-w-sm">
+            <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm">
               {language === "en"
                 ? `Your application for ${type} has been officially approved by the Quezon City Social Services Development Department.`
                 : language === "bis"
                 ? `Ang imong aplikasyon para sa ${type} opisyal nga na-aprobahan sa Quezon City Social Services Development Department.`
                 : `Ang inyong aplikasyon para sa ${type} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.`}
             </p>
-            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
-              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                <span className="text-gray-500">
+            <div className="mt-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-slate-200 dark:border-slate-700/60">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700/60">
+                <span className="text-slate-500 dark:text-slate-400">
                   {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
                 </span>
-                <span className="font-mono font-bold text-blue-700 text-sm">{reference}</span>
+                <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-sm">{reference}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">
+                <span className="text-slate-500 dark:text-slate-400">
                   {language === "en" ? "Service" : language === "bis" ? "Serbisyo" : "Serbisyo"}
                 </span>
-                <span className="font-semibold text-gray-900">{type}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{type}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">
+                <span className="text-slate-500 dark:text-slate-400">
                   {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
                 </span>
-                <span className="font-semibold text-gray-900">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">
+                <span className="text-slate-500 dark:text-slate-400">
                   {language === "en" ? "Date" : language === "bis" ? "Petsa" : "Petsa"}
                 </span>
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
                   {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-blue-600 font-medium">
+            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
               {language === "en"
                 ? "You may check your release schedule, appointment, or claim instructions in your Application History."
                 : language === "bis"
@@ -2690,9 +2690,9 @@ const handleFinalSubmit = async () => {
               <button
                 type="button"
                 onClick={handleReapply}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
               >
-                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                 <span>
                   {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
                 </span>
@@ -2715,53 +2715,53 @@ const handleFinalSubmit = async () => {
     // NASA "PENDING" PA RIN (habang sinusuri ng Social Worker)
     return (
       <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
-        <div className="bg-white border border-border rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
-          <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-50/60 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
+          <div className="w-16 h-16 bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-50/60 dark:ring-amber-500/10 shadow-xs">
             <Clock className="w-8 h-8" />
           </div>
 
           <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-              <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending Review
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
+              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Pending Review
             </span>
-            <h2 className="text-2xl font-bold text-foreground">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Application Under Review
             </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
               Your application for {type} has been submitted and is currently being evaluated by a Social Worker.
             </p>
           </div>
 
           {/* Reference Card */}
-          <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
-            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-              <span className="font-semibold text-muted-foreground">{t("appRefNoLabel")}</span>
-              <span className="font-mono font-bold text-blue-700 text-sm">{reference}</span>
+          <div className="border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-slate-50/90 dark:bg-slate-800/60">
+            <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-slate-700/60">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">{t("appRefNoLabel")}</span>
+              <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-sm">{reference}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">{t("serviceLabel")}</span>
-              <span className="font-semibold text-foreground">{type}</span>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 dark:text-slate-400">{t("serviceLabel")}</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{type}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">{t("applicantLabel")}</span>
-              <span className="font-semibold text-foreground">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 dark:text-slate-400">{t("applicantLabel")}</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-              <span className="text-muted-foreground">{t("dateLabel")}</span>
-              <span className="text-foreground">
+            <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-slate-700/60">
+              <span className="text-slate-500 dark:text-slate-400">{t("dateLabel")}</span>
+              <span className="text-slate-800 dark:text-slate-200 font-medium">
                 {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
               </span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground pt-0.5">
-              <span className="text-muted-foreground">Status</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+            <div className="flex justify-between items-center text-xs pt-0.5">
+              <span className="text-slate-500 dark:text-slate-400">Status</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
                 Pending Review
               </span>
             </div>
           </div>
 
-          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
-            <Info className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="bg-amber-50/70 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/25 dark:text-amber-200 rounded-xl p-4 text-xs text-amber-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
+            <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <p>
               Please wait for the social worker's evaluation. You will receive updates in your Application History and Notifications.
             </p>

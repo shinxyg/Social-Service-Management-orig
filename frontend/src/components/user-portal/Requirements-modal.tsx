@@ -459,8 +459,8 @@ export default function RequirementsModal({
                 </h4>
                 <div className="space-y-3">
                   {requirements.faqs.map((faq, i) => (
-                    <div key={i} className="bg-gray-50 border border-border/80 rounded-xl p-3.5">
-                      <p className="font-semibold text-xs text-blue-900">{faq.question}</p>
+                    <div key={i} className="bg-slate-50 dark:bg-slate-900/60 border border-border/80 dark:border-slate-800 rounded-xl p-3.5">
+                      <p className="font-semibold text-xs text-blue-900 dark:text-blue-300">{faq.question}</p>
                       <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{faq.answer}</p>
                     </div>
                   ))}
@@ -471,7 +471,7 @@ export default function RequirementsModal({
         </div>
 
         {/* Modal Footer (Matches Pic 2) */}
-        <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex items-center justify-between gap-4 shrink-0">
+        <div className="sticky bottom-0 bg-white dark:bg-slate-900 border-t border-border dark:border-slate-800 px-6 py-4 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-start gap-2.5 flex-1">
             <input
               type="checkbox"

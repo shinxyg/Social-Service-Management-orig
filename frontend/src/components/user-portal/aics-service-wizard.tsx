@@ -888,18 +888,18 @@ export default function AICSServiceWizard({
                 ? `Ang imong aplikasyon para sa ${serviceTitle} opisyal nga na-aprobahan sa Quezon City Social Services Development Department.`
                 : `Ang inyong aplikasyon para sa ${serviceTitle} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.`}
             </p>
-            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
-              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                <span className="text-gray-500">Reference Number</span>
-                <span className="font-mono font-bold text-blue-700 text-sm">{referenceNo || blockedApp?.reference_no || blockedApp?.qc_id}</span>
+            <div className="mt-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-slate-200 dark:border-slate-700/60">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700/60">
+                <span className="text-slate-500 dark:text-slate-400">Reference Number</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-sm">{referenceNo || blockedApp?.reference_no || blockedApp?.qc_id}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">Service</span>
-                <span className="font-semibold text-gray-900">{serviceTitle}</span>
+                <span className="text-slate-500 dark:text-slate-400">Service</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{serviceTitle}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">Applicant Name</span>
-                <span className="font-semibold text-gray-900">{applicantFullName}</span>
+                <span className="text-slate-500 dark:text-slate-400">Applicant Name</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{applicantFullName}</span>
               </div>
             </div>
 
@@ -921,9 +921,9 @@ export default function AICSServiceWizard({
               <button
                 type="button"
                 onClick={handleReapply}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
               >
-                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
+                <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                 <span>
                   {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
                 </span>
@@ -937,53 +937,53 @@ export default function AICSServiceWizard({
     // Default: Pending Review / Under Review
     return (
       <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
-        <div className="bg-white border border-border rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
-          <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-50/60 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
+          <div className="w-16 h-16 bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-50/60 dark:ring-amber-500/10 shadow-xs">
             <Clock className="w-8 h-8" />
           </div>
 
           <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-              <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending Review
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
+              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Pending Review
             </span>
-            <h2 className="text-2xl font-bold text-foreground">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Application Under Review
             </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
               Your application for {serviceTitle} has been submitted and is currently being evaluated by a Social Worker.
             </p>
           </div>
 
           {/* Reference Card */}
-          <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
-            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-              <span className="font-semibold text-muted-foreground">{t("appRefNoLabel")}</span>
-              <span className="font-mono font-bold text-blue-700 text-sm">{referenceNo || blockedApp?.reference_no || blockedApp?.qc_id}</span>
+          <div className="border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-slate-50/90 dark:bg-slate-800/60">
+            <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-slate-700/60">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">{t("appRefNoLabel")}</span>
+              <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-sm">{referenceNo || blockedApp?.reference_no || blockedApp?.qc_id}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">{t("serviceLabel")}</span>
-              <span className="font-semibold text-foreground">{serviceTitle}</span>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 dark:text-slate-400">{t("serviceLabel")}</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{serviceTitle}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">{t("applicantLabel")}</span>
-              <span className="font-semibold text-foreground">{applicantFullName}</span>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 dark:text-slate-400">{t("applicantLabel")}</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{applicantFullName}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-              <span className="text-muted-foreground">{t("dateLabel")}</span>
-              <span className="text-foreground">
+            <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-slate-700/60">
+              <span className="text-slate-500 dark:text-slate-400">{t("dateLabel")}</span>
+              <span className="text-slate-800 dark:text-slate-200 font-medium">
                 {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
               </span>
             </div>
-            <div className="flex justify-between items-center text-xs text-foreground pt-0.5">
-              <span className="text-muted-foreground">Status</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+            <div className="flex justify-between items-center text-xs pt-0.5">
+              <span className="text-slate-500 dark:text-slate-400">Status</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
                 Pending Review
               </span>
             </div>
           </div>
 
-          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
-            <Info className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="bg-amber-50/70 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/25 dark:text-amber-200 rounded-xl p-4 text-xs text-amber-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
+            <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <p>
               Please wait for the social worker's evaluation. You will receive updates in your Application History and Notifications.
             </p>
@@ -1025,49 +1025,49 @@ export default function AICSServiceWizard({
   if (currentStep === 5) {
     return (
       <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-emerald-50">
-            <Check className="w-8 h-8 text-emerald-600" strokeWidth={3} />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
+          <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-500/15 rounded-full flex items-center justify-center mx-auto ring-8 ring-emerald-50/60 dark:ring-emerald-500/10 shadow-xs">
+            <Check className="w-8 h-8 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
           </div>
 
           <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
               <Sparkles className="w-3.5 h-3.5" /> {t("applicationSubmittedBadge")}
             </span>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               {t("submittedWelcomeTitle")}
             </h2>
-            <p className="text-sm text-gray-500 max-w-md mx-auto">
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
               {t("submittedSubtitle").replace("{type}", serviceTitle)}
             </p>
           </div>
 
           {/* Reference Card */}
-          <div className="border border-gray-200 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
-            <div className="flex justify-between items-center text-xs text-gray-900 border-b border-gray-200 pb-2">
-              <span className="font-semibold text-gray-500">{t("appRefNoLabel")}</span>
-              <span className="font-mono font-bold text-blue-700 text-sm">{referenceNo}</span>
+          <div className="border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-slate-50/90 dark:bg-slate-800/60">
+            <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-slate-700/60">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">{t("appRefNoLabel")}</span>
+              <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-sm">{referenceNo}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">{t("serviceLabel")}</span>
-              <span className="font-semibold text-gray-900">{serviceTitle}</span>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 dark:text-slate-400">{t("serviceLabel")}</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{serviceTitle}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">{t("applicantLabel")}</span>
-              <span className="font-semibold text-gray-900">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 dark:text-slate-400">{t("applicantLabel")}</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
                 {[firstName, middleName, lastName, suffix].filter(Boolean).join(" ")}
               </span>
             </div>
-            <div className="flex justify-between items-center text-xs text-gray-900">
-              <span className="text-gray-500">{t("dateLabel")}</span>
-              <span className="text-gray-900">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 dark:text-slate-400">{t("dateLabel")}</span>
+              <span className="text-slate-800 dark:text-slate-200 font-medium">
                 {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
               </span>
             </div>
           </div>
 
-          <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
-            <Info className="w-4 h-4 text-blue-600 shrink-0" />
+          <div className="bg-blue-50/70 border border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/25 dark:text-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
+            <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
             <p>
               {t("notifCheckNote")}
             </p>
