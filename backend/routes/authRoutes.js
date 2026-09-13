@@ -2,27 +2,28 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const { sendOtpLimiter, loginRateLimiter } = require('../middleware/rateLimiter');
+const botProtection = require('../middleware/botProtection');
 
-// POST /api/auth/send-otp (Rate limit: 3 requests per 5 minutes)
-router.post('/send-otp', sendOtpLimiter, authController.sendOtp);
+// POST /api/auth/send-otp (Rate limit: 3 requests per 5 minutes + Bot Protection)
+router.post('/send-otp', sendOtpLimiter, botProtection, authController.sendOtp);
 
 // POST /api/auth/verify-otp
-router.post('/verify-otp', authController.verifyOtp);
+router.post('/verify-otp', botProtection, authController.verifyOtp);
 
-// POST /api/auth/register
-router.post('/register', authController.register);
+// POST /api/auth/register (Bot Protection + Honeypot verification)
+router.post('/register', botProtection, authController.register);
 
-// POST /api/auth/login (Rate limit & brute-force protection)
-router.post('/login', loginRateLimiter, authController.login);
+// POST /api/auth/login (Rate limit & brute-force + Bot Protection)
+router.post('/login', loginRateLimiter, botProtection, authController.login);
 
 // GET /api/auth/lockout-status
 router.get('/lockout-status', authController.getLockoutStatus);
 
 // POST /api/auth/forgot-password
-router.post('/forgot-password', authController.forgotPassword);
+router.post('/forgot-password', botProtection, authController.forgotPassword);
 
 // POST /api/auth/reset-password
-router.post('/reset-password', authController.resetPassword);
+router.post('/reset-password', botProtection, authController.resetPassword);
 
 // POST /api/auth/change-password
 router.post('/change-password', authController.changePassword);

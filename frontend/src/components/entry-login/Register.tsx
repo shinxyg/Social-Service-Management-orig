@@ -104,6 +104,8 @@ export const Register = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigatingToLogin, setIsNavigatingToLogin] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const [formStartTime] = useState(() => Date.now());
 
   const currentYear = new Date().getFullYear();
   const minBirthYear = currentYear - 110;
@@ -274,6 +276,8 @@ export const Register = () => {
         body: JSON.stringify({
           email: trimmedEmail,
           recipientName: googleProfile ? `${googleProfile.firstName} ${googleProfile.lastName}`.trim() : 'Resident',
+          website_url_hp: honeypot,
+          interactionTimeMs: Date.now() - formStartTime,
         }),
       });
       const data = await res.json();
@@ -494,6 +498,8 @@ export const Register = () => {
           occupation,
           sex,
           mobileNumber,
+          website_url_hp: honeypot,
+          interactionTimeMs: Date.now() - formStartTime,
         }),
       });
       const data = await res.json();
@@ -603,7 +609,19 @@ export const Register = () => {
         </div>
 
         {/* Card */}
-        <div className="border border-slate-200 rounded-2xl bg-white p-6 sm:p-10 min-h-105 flex flex-col items-center justify-center">
+        <div className="border border-slate-200 rounded-2xl bg-white p-6 sm:p-10 min-h-105 flex flex-col items-center justify-center relative">
+
+          {/* Invisible Honeypot Trap for Automated Bots */}
+          <input
+            type="text"
+            name="website_url_hp"
+            tabIndex={-1}
+            autoComplete="off"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+            aria-hidden="true"
+            className="opacity-0 absolute -z-50 pointer-events-none h-0 w-0"
+          />
 
           {error && (
             <div className="w-full max-w-sm p-2.5 mb-5 text-xs text-red-600 bg-red-50 rounded-lg border border-red-200 text-center">

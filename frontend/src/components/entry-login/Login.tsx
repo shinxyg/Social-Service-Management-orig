@@ -49,6 +49,8 @@ export const Login = () => {
 
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const [formStartTime] = useState(() => Date.now());
 
   // Check lockout status from server on mount
   useEffect(() => {
@@ -214,7 +216,13 @@ export const Login = () => {
         const res = await fetch(`${API_BASE}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, clientDeviceInfo }),
+          body: JSON.stringify({
+            email,
+            password,
+            clientDeviceInfo,
+            website_url_hp: honeypot,
+            interactionTimeMs: Date.now() - formStartTime,
+          }),
         });
         const data = await res.json();
 
@@ -400,7 +408,18 @@ export const Login = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4 text-left">
+          <form onSubmit={handleSubmit} className="space-y-4 text-left relative">
+            {/* Invisible Honeypot Trap for Automated Bots */}
+            <input
+              type="text"
+              name="website_url_hp"
+              tabIndex={-1}
+              autoComplete="off"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              aria-hidden="true"
+              className="opacity-0 absolute -z-50 pointer-events-none h-0 w-0"
+            />
             <div>
               <label className="block text-[11px] font-bold tracking-wider text-slate-600 uppercase mb-2">
                 EMAIL ADDRESS
