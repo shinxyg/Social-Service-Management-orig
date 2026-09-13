@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react"
-import { X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, Sparkles, AlertCircle, RotateCcw, Clock } from "lucide-react"
+import { X, Loader2, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, AlertCircle, RotateCcw, Clock } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
