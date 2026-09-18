@@ -26,6 +26,7 @@ router.get('/reference/:referenceNumber', childWelfareController.getApplicationB
 router.post('/:applicationId/cancel', childWelfareController.cancelApplication);
 
 router.get('/admin/all', childWelfareController.getAllApplications);
+router.get('/applications', childWelfareController.getAllApplications);
 router.get('/admin/:applicationId', childWelfareController.getApplicationById);
 router.patch('/:applicationId/admin/update-status', childWelfareController.updateApplicationStatus);
 router.delete('/clear-all', childWelfareController.clearApplications);

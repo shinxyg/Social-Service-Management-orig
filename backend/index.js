@@ -166,6 +166,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/livelihood', livelihoodRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/pwd-senior', pwdSeniorRoutes);
+app.use('/api/applications', pwdSeniorRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', authRoutes);
 app.use('/api/training', trainingRoutes);

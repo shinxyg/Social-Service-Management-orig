@@ -940,7 +940,7 @@ export default function CitizenGuideHub() {
         } catch {}
 
         try {
-          const data2 = await cachedApiFetch(`${API_BASE}/api/applications?qcid=${encodeURIComponent(qcid)}`, { headers: authHeaders }, 4000).catch(() => null)
+          const data2 = await cachedApiFetch(`${API_BASE}/api/pwd-senior/applications`, { headers: authHeaders }, 4000).catch(() => null)
           if (data2) {
             const list2 = Array.isArray(data2) ? data2 : data2.applications || []
             const matched2 = list2.filter(isUserMatch).map((a: any) => {
@@ -959,7 +959,11 @@ export default function CitizenGuideHub() {
         } catch {}
 
         try {
-          const data3 = await cachedApiFetch(`${API_BASE}/api/solo-parent/applications`, { headers: authHeaders }, 4000).catch(() => null)
+          const data3 = await (
+            cachedApiFetch(`${API_BASE}/api/solo-parent/user/${userId}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(userEmail)}&firstName=${encodeURIComponent(userFirstName)}&lastName=${encodeURIComponent(userLastName)}`, { headers: authHeaders }, 4000)
+              .catch(() => null)
+            || cachedApiFetch(`${API_BASE}/api/solo-parent/applications`, { headers: authHeaders }, 4000).catch(() => null)
+          )
           if (data3) {
             const list3 = Array.isArray(data3) ? data3 : data3.applications || []
             const matched3 = list3.filter(isUserMatch).map((a: any) => {
@@ -978,7 +982,11 @@ export default function CitizenGuideHub() {
         } catch {}
 
         try {
-          const data4 = await cachedApiFetch(`${API_BASE}/api/child-welfare/applications`, { headers: authHeaders }, 4000).catch(() => null)
+          const data4 = await (
+            cachedApiFetch(`${API_BASE}/api/child-welfare/user/${userId}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(userEmail)}&firstName=${encodeURIComponent(userFirstName)}&lastName=${encodeURIComponent(userLastName)}`, { headers: authHeaders }, 4000)
+              .catch(() => null)
+            || cachedApiFetch(`${API_BASE}/api/child-welfare/applications`, { headers: authHeaders }, 4000).catch(() => null)
+          )
           if (data4) {
             const list4 = Array.isArray(data4) ? data4 : data4.applications || []
             const matched4 = list4.filter(isUserMatch).map((a: any) => {
