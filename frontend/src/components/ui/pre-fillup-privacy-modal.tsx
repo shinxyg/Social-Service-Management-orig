@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { createPortal } from "react-dom"
-import { ShieldCheck, Lock, FileText, CheckCircle2, AlertCircle, X, ChevronDown, ChevronUp, ArrowRight } from "lucide-react"
+import { ShieldCheck, Lock, FileText, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, ArrowRight } from "lucide-react"
 import { useLanguage } from "./language-context"
 
 interface PreFillupPrivacyModalProps {
