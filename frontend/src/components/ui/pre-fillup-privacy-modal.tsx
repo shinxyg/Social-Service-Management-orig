@@ -59,15 +59,6 @@ export function PreFillupPrivacyModal({
               </p>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={onCancel}
-            className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
-            title={isEn ? "Cancel & Return" : isBis ? "Kanselaha ug Balik" : "Kanselahin at Bumalik"}
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
         <div className="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
