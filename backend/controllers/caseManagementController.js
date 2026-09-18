@@ -1385,7 +1385,7 @@ exports.getAllCases = async (req, res) => {
           info.name ||
           profile.fullName ||
           row.applicant_name ||
-          'RENZ MAHINAY MILLARES'
+          'Beneficiary'
         ).toUpperCase();
 
         const courseTitle = row.training_name || row.course_title || info.course_title || info.trainingName || 'Vocational Skills Training';
@@ -1607,12 +1607,33 @@ exports.getAllCases = async (req, res) => {
       }
     });
 
-    cases.sort((a, b) => new Date(b.dateOpened).getTime() - new Date(a.dateOpened).getTime());
+    const cleanCases = cases.filter((c) => {
+      const name = String(c.beneficiaryName || '').toLowerCase();
+      const qcid = String(c.beneficiaryId || '').toLowerCase();
+      const ref = String(c.applicationId || '').toLowerCase();
+      const email = String(c.email || '').toLowerCase();
+      if (
+        name.includes('renz') ||
+        name.includes('millares') ||
+        name.includes('topher') ||
+        name.includes('kris') ||
+        qcid.includes('110000572516915') ||
+        qcid.includes('110000872276939') ||
+        ref.includes('110000572516915') ||
+        ref.includes('110000872276939') ||
+        email.includes('renzoe')
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    cleanCases.sort((a, b) => new Date(b.dateOpened).getTime() - new Date(a.dateOpened).getTime());
 
     res.status(200).json({
       success: true,
-      count: cases.length,
-      cases,
+      count: cleanCases.length,
+      cases: cleanCases,
     });
   } catch (err) {
     console.error('Error in getAllCases:', err);

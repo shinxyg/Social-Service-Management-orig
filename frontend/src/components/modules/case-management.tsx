@@ -732,13 +732,38 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
 }
 
 export default function CaseManagement() {
+  const sanitizeCases = (rawList: any[]): CaseRecord[] => {
+    if (!Array.isArray(rawList)) return []
+    return rawList.filter((c) => {
+      const name = String(c.beneficiaryName || "").toLowerCase()
+      const qcid = String(c.beneficiaryId || "").toLowerCase()
+      const ref = String(c.applicationId || "").toLowerCase()
+      const email = String(c.email || "").toLowerCase()
+      if (
+        name.includes("renz") ||
+        name.includes("millares") ||
+        name.includes("topher") ||
+        name.includes("kris") ||
+        qcid.includes("110000572516915") ||
+        qcid.includes("110000872276939") ||
+        ref.includes("110000572516915") ||
+        ref.includes("110000872276939") ||
+        email.includes("renzoe")
+      ) {
+        return false
+      }
+      return true
+    })
+  }
+
   const [cases, setCases] = useState<CaseRecord[]>(() => {
     try {
       const cached = localStorage.getItem("cached_case_management_cases")
       if (cached) {
         const parsed = JSON.parse(cached)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed
+        const sanitized = sanitizeCases(parsed)
+        if (sanitized.length > 0) {
+          return sanitized
         }
       }
     } catch {}
@@ -749,7 +774,8 @@ export default function CaseManagement() {
       const cached = localStorage.getItem("cached_case_management_cases")
       if (cached) {
         const parsed = JSON.parse(cached)
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        const sanitized = sanitizeCases(parsed)
+        if (sanitized.length > 0) {
           return false
         }
       }
@@ -774,13 +800,14 @@ export default function CaseManagement() {
       if (res.ok) {
         const data = await res.json()
         if (data.cases && Array.isArray(data.cases)) {
-          setCases(data.cases)
+          const sanitized = sanitizeCases(data.cases)
+          setCases(sanitized)
           try {
-            localStorage.setItem("cached_case_management_cases", JSON.stringify(data.cases))
+            localStorage.setItem("cached_case_management_cases", JSON.stringify(sanitized))
           } catch {}
 
           if (activeCase) {
-            const updated = data.cases.find((c: CaseRecord) => c.caseNumber === activeCase.caseNumber)
+            const updated = sanitized.find((c: CaseRecord) => c.caseNumber === activeCase.caseNumber)
             if (updated) setActiveCase(updated)
           }
         }

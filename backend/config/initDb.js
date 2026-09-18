@@ -812,6 +812,10 @@ async function initDb() {
       await db.query(
         `DELETE FROM case_records
          WHERE qcid_number = ANY($1::text[])
+            OR application_ref = ANY($1::text[])
+            OR application_ref ILIKE '%110000572516915%'
+            OR application_ref ILIKE '%110000872276939%'
+            OR case_number ILIKE '%6915%'
             OR client_name ILIKE '%kris%'
             OR client_name ILIKE '%topher%'
             OR client_name ILIKE '%renz%'
