@@ -24,7 +24,7 @@ import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, toISODateString } from "../../utils/userProfile"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
 
-export default function ApplyAICS({ initialType, initialTypeKey }: ApplyAICSProps) {
+export default function ApplyAICS({ initialType, initialTypeKey, onBack }: ApplyAICSProps) {
   const { t, language } = useLanguage()
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
