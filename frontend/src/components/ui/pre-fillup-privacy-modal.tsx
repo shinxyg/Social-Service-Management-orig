@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { createPortal } from "react-dom"
 import { ShieldCheck, Lock, FileText, CheckCircle2, AlertCircle, X, ChevronDown, ChevronUp, ArrowRight } from "lucide-react"
 import { useLanguage } from "./language-context"
 
@@ -33,8 +34,8 @@ export function PreFillupPrivacyModal({
     onAccept()
   }
 
-  return (
-    <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+  const modalContent = (
+    <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
       <div
         className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-xl my-6 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -282,6 +283,11 @@ export function PreFillupPrivacyModal({
       </div>
     </div>
   )
+
+  if (typeof document !== "undefined") {
+    return createPortal(modalContent, document.body)
+  }
+  return modalContent
 }
 
 export default PreFillupPrivacyModal

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { createPortal } from "react-dom"
 import { useNavigate } from "react-router-dom"
 import {
   Sparkles,
@@ -1091,8 +1092,8 @@ export default function AIAssistanceFinderModal({
 
   if (!isOpen) return null
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
+  const modalContent = (
+    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-2 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-blue-100 dark:border-slate-800 overflow-hidden">
         {}
         {}
@@ -2226,4 +2227,9 @@ export default function AIAssistanceFinderModal({
       </div>
     </div>
   )
+
+  if (typeof document !== "undefined") {
+    return createPortal(modalContent, document.body)
+  }
+  return modalContent
 }
