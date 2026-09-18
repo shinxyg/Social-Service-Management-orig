@@ -16,6 +16,7 @@ import {
   RotateCcw,
 } from "lucide-react"
 import DocumentCameraModal from "../ui/document-camera-modal"
+import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
 import { API_BASE } from "../../config/api"
 import { useLanguage } from "../ui/language-context"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
@@ -2371,50 +2372,19 @@ export default function SeniorCitizenApplicationWizard({
         </div>
       </div>
 
-      {/* ── SUBMIT CONFIRMATION MODAL ── */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-gray-200">
-            <div className="w-12 h-12 rounded-full bg-blue-50 text-[#3b82f6] flex items-center justify-center mx-auto">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-
-            <div className="text-center space-y-1.5">
-              <h3 className="text-base font-bold text-gray-900">{t("reviewBeforeSubmission") || "Review Before Submission"}</h3>
-              <p className="text-sm font-semibold text-gray-900">
-                {t("areYouSureSubmit") || "Are you sure you want to submit your application?"}
-              </p>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                {t("checkAllInfoNotice") || "Please check all information and uploaded documents before submitting. You can still go back and make changes."}
-              </p>
-            </div>
-
-            <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowConfirmModal(false)
-                  setStep(4)
-                }}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                {t("goBackEditBtn") || "← GO BACK & EDIT"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowConfirmModal(false)
-                  handleFinalSubmit()
-                }}
-                disabled={isSubmitting}
-                className="px-5 py-2 rounded-lg bg-[#3b82f6] hover:bg-blue-600 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-              >
-                {isSubmitting ? (t("submittingUpper") || "Submitting...") : (t("yesSubmitBtn") || "YES, SUBMIT APPLICATION")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── SUBMIT CONFIRMATION & PRIVACY CONSENT MODAL ── */}
+      <SubmitPrivacyOverlayModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={() => {
+          setShowConfirmModal(false)
+          handleFinalSubmit()
+        }}
+        isSubmitting={isSubmitting}
+        title={t("reviewBeforeSubmission") || "Review Before Submission & Data Privacy Notice"}
+        description={t("checkAllInfoNotice") || "Please review your details and accept our Data Privacy Policy (RA 10173) before submitting your application."}
+        confirmText={t("yesSubmitBtn") || "YES, SUBMIT APPLICATION"}
+      />
 
       {/* ── CAMERA MODAL ── */}
       {cameraDoc && (

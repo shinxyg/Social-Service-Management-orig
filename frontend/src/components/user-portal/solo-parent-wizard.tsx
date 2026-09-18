@@ -20,6 +20,7 @@ import {
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { DataPrivacyConsent } from "../ui/data-privacy-consent"
+import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
 import { API_BASE, getAuthHeaders, getAuthToken } from "../../config/api"
 import { cachedApiFetch } from "../../utils/cachedApiFetch"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
@@ -3521,74 +3522,16 @@ export default function SoloParentApplicationWizard({
         </div>
       </div>
 
-      {/* 🔔 CONFIRMATION DIALOG / MODAL BEFORE SUBMIT */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col border border-border"
-          >
-            {/* Modal Header */}
-            <div className="p-6 pb-5 flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-foreground">
-                  {language === "en"
-                    ? "Review Before Submission"
-                    : language === "bis"
-                    ? "Susiha sa Dili Pa Isumite"
-                    : "Suriin Bago Isumite"}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                  {language === "en"
-                    ? "Please make sure that all information and uploaded documents are correct. You can still go back and make changes before submitting."
-                    : language === "bis"
-                    ? "Palihug siguroha nga husto ang tanang impormasyon ug gi-upload nga mga dokumento. Mahimo pa nimong balikon ug usbon sa dili pa isumite."
-                    : "Pakisigurong tama ang lahat ng impormasyon at mga nai-upload na dokumento. Maaari ka pang bumalik at magbago bago tuluyang isumite."}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowConfirmModal(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
-                aria-label="Isara"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Footer Buttons */}
-            <div className="p-4 bg-gray-50 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowConfirmModal(false)
-                  setStep(4)
-                }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-white transition-colors cursor-pointer"
-              >
-                {language === "en" ? "← GO BACK & EDIT" : language === "bis" ? "← BALIK UG BAG-OHA" : "← BUMALIK AT I-EDIT"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowConfirmModal(false)
-                  handleFinalSubmit()
-                }}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2"
-              >
-                <span>
-                  {language === "en"
-                    ? "YES, SUBMIT APPLICATION"
-                    : language === "bis"
-                    ? "OO, ISUMITE ANG APLIKASYON"
-                    : "OO, ISUMITE ANG APLIKASYON"}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 🔔 DATA PRIVACY CONSENT OVERLAY MODAL BEFORE SUBMIT */}
+      <SubmitPrivacyOverlayModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        moduleName="Solo Parent Assistance Program"
+        onConfirmSubmit={() => {
+          setShowConfirmModal(false)
+          handleFinalSubmit()
+        }}
+      />
 
       {/* Sample Document Modal */}
       <DocumentSampleModal

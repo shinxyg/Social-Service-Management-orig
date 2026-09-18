@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
+import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
 import { API_BASE } from "../../config/api"
 import { fetchPwdSeniorApplications } from "../../utils/cachedApiFetch"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
@@ -1732,58 +1733,18 @@ export default function PWDSocialAssistanceWizard({
         </div>
       </div>
 
-      {/* 🔔 CONFIRMATION DIALOG / MODAL BEFORE SUBMIT */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col border border-border"
-          >
-            {/* Modal Header */}
-            <div className="p-6 pb-5 flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-foreground">Review Before Submission</h3>
-                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                  Please make sure that all information and uploaded documents are correct. You can still go back and make changes before submitting.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowConfirmModal(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
-                aria-label="Isara"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Footer Buttons */}
-            <div className="p-4 bg-gray-50 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowConfirmModal(false)
-                  setStep(4)
-                }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-white transition-colors cursor-pointer"
-              >
-                ← GO BACK &amp; EDIT
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowConfirmModal(false)
-                  handleFinalSubmit()
-                }}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2"
-              >
-                <span>YES, SUBMIT APPLICATION</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 🔔 CONFIRMATION & PRIVACY CONSENT DIALOG / MODAL BEFORE SUBMIT */}
+      <SubmitPrivacyOverlayModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={() => {
+          setShowConfirmModal(false)
+          handleFinalSubmit()
+        }}
+        title="Review Before Submission & Data Privacy Notice"
+        description="Please check all details and accept our Data Privacy Policy (RA 10173) before submitting your PWD assistance application."
+        confirmText="YES, SUBMIT APPLICATION"
+      />
 
       {/* 📸 Document Camera Capture Modal */}
       <DocumentCameraModal

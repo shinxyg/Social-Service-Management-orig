@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import { DataPrivacyConsent } from "../ui/data-privacy-consent"
+import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
 import { getCurrentUserProfile } from "../../utils/userProfile"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { API_BASE, getAuthHeaders, getAuthToken } from "../../config/api"
@@ -2643,36 +2644,16 @@ export default function ChildWelfareApplicationWizard({
         />
       )}
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-gray-200 text-center">
-            <div className="h-12 w-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
-              <Baby className="h-6 w-6" />
-            </div>
-            <h4 className="text-base font-bold text-gray-900">{t("submitAppTitle") || "Isumite ang Aplikasyon?"}</h4>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              {t("submitAppDesc", { program: selectedProgram.title, type: selectedAssistanceType }) || `Sigurado ka bang nais mong isumite ang inyong aplikasyon para sa ${selectedProgram.title} (${selectedAssistanceType})?`}
-            </p>
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowConfirmModal(false)}
-                className="flex-1 py-2.5 border border-gray-300 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50"
-              >
-                {t("cancel") || "CANCEL"}
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 shadow-xs"
-              >
-                {t("yesSubmitBtn") || "YES, SUBMIT"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 🔔 DATA PRIVACY CONSENT OVERLAY MODAL BEFORE SUBMIT */}
+      <SubmitPrivacyOverlayModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        moduleName="Child Welfare Assistance Program"
+        onConfirmSubmit={() => {
+          setShowConfirmModal(false)
+          handleSubmit()
+        }}
+      />
     </div>
   )
 }
