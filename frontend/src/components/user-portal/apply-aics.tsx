@@ -86,6 +86,28 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
     type?.toLowerCase().includes("educational") ||
     type?.toLowerCase().includes("aral")
 
+  const currentAssistanceTitle = (() => {
+    if (isFuneralAssistance) {
+      return language === "en"
+        ? "AICS - Funeral Assistance"
+        : language === "bis"
+        ? "AICS - Tabang sa Paglubong (Funeral Assistance)"
+        : "AICS - Tulong sa Pagpapalibing (Funeral Assistance)"
+    }
+    if (isEducationalAssistance) {
+      return language === "en"
+        ? "AICS - Educational Assistance"
+        : language === "bis"
+        ? "AICS - Tabang sa Edukasyon (Educational Assistance)"
+        : "AICS - Tulong Pang-Edukasyon (Educational Assistance)"
+    }
+    return language === "en"
+      ? "AICS - Medical Assistance"
+      : language === "bis"
+      ? "AICS - Tabang Medikal (Medical Assistance)"
+      : "AICS - Tulong Medikal (Medical Assistance)"
+  })()
+
   const resolvedTypeKey =
     initialTypeKey ||
     (isFuneralAssistance
@@ -864,13 +886,7 @@ const handleFinalSubmit = async () => {
           if (onBack) onBack()
           else window.location.href = "/portal/overview"
         }}
-        moduleName={
-          isFuneralAssistance
-            ? "AICS - Tulong sa Pagpapalibing (Funeral Assistance)"
-            : isEducationalAssistance
-            ? "AICS - Tulong Pang-Edukasyon (Educational Assistance)"
-            : "AICS - Tulong Medikal (Medical Assistance)"
-        }
+        moduleName={currentAssistanceTitle}
       />
 
       <div className="mb-4">
@@ -1222,13 +1238,7 @@ const handleFinalSubmit = async () => {
             if (onBack) onBack()
             else window.location.href = "/portal/overview"
           }}
-          moduleName={
-            isFuneralAssistance
-              ? "AICS - Tulong sa Pagpapalibing (Funeral Assistance)"
-              : isEducationalAssistance
-              ? "AICS - Tulong Pang-Edukasyon (Educational Assistance)"
-              : "AICS - Tulong Medikal (Medical Assistance)"
-          }
+          moduleName={currentAssistanceTitle}
         />
         <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
           <div className="flex items-center px-6 pt-6 pb-4">
@@ -1944,13 +1954,7 @@ const handleFinalSubmit = async () => {
             if (onBack) onBack()
             else window.location.href = "/portal/overview"
           }}
-          moduleName={
-            isFuneralAssistance
-              ? "AICS - Tulong sa Pagpapalibing (Funeral Assistance)"
-              : isEducationalAssistance
-              ? "AICS - Tulong Pang-Edukasyon (Educational Assistance)"
-              : "AICS - Tulong Medikal (Medical Assistance)"
-          }
+          moduleName={currentAssistanceTitle}
         />
         <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
           <div className="flex items-center px-6 pt-6 pb-4">
@@ -2465,9 +2469,10 @@ const handleFinalSubmit = async () => {
           isOpen={showPrePrivacyModal}
           onAccept={() => setShowPrePrivacyModal(false)}
           onCancel={() => {
-            window.location.href = "/portal/overview"
+            if (onBack) onBack()
+            else window.location.href = "/portal/overview"
           }}
-          moduleName={type ? `AICS - ${type}` : "AICS Financial Assistance"}
+          moduleName={currentAssistanceTitle}
         />
       </div>
     )

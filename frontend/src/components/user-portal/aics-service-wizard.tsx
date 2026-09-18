@@ -2328,7 +2328,19 @@ export default function AICSServiceWizard({
             else window.history.back()
           }}
           moduleName={
-            serviceType === "material"
+            language === "en"
+              ? serviceType === "material"
+                ? "AICS - Material Assistance"
+                : serviceType === "food"
+                ? "AICS - Food Assistance"
+                : "AICS - Transportation Assistance"
+              : language === "bis"
+              ? serviceType === "material"
+                ? "AICS - Tabang Pang-Materyal"
+                : serviceType === "food"
+                ? "AICS - Tabang sa Pagkaon"
+                : "AICS - Tabang sa Plete / Transportasyon"
+              : serviceType === "material"
               ? "AICS - Tulong Pang-Materyal"
               : serviceType === "food"
               ? "AICS - Tulong sa Pagkain"
