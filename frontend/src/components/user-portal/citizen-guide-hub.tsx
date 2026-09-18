@@ -31,6 +31,7 @@ import { API_BASE } from "../../config/api"
 import { cachedApiFetch } from "../../utils/cachedApiFetch"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
+import { useLanguage, type Language } from "../ui/language-context"
 import AIAssistanceFinderModal from "./ai-assistance-finder-modal"
 
 function WheelchairIcon({ className, ...props }: React.ComponentProps<"svg">) {
@@ -55,276 +56,375 @@ function WheelchairIcon({ className, ...props }: React.ComponentProps<"svg">) {
   )
 }
 
-export default function CitizenGuideHub() {
-  const navigate = useNavigate()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const [recentApps, setRecentApps] = useState<any[]>([])
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false)
+const GUIDE_I18N = {
+  en: {
+    portalBadge: "Gov Serves Social Services Portal • Help & Service Guide",
+    welcome: (name: string) => `Welcome, ${name}!`,
+    heroDesc: "Learn about available financial aid programs (AICS), special sector benefits (PWD, Senior Citizen, Solo Parent), child welfare, livelihood grants, and document requirements before applying.",
+    trackAppsBtn: "Track My Applications",
+    searchPlaceholder: "Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)...",
+    clearSearch: "✕ Clear",
+    catAll: "All Services",
+    catAics: "AICS Crisis Aid (6 Types)",
+    catPwdSenior: "PWD & Senior Citizens",
+    catFamily: "Solo Parent & Child Welfare",
+    catLivelihood: "Livelihood & Payouts",
+    assistanceFinderBtn: "Assistance & Eligibility Finder",
+    assistanceFinderTitle: "Click to assess eligibility and get personalized assistance recommendations",
 
-  const profile = getCurrentUserProfile()
-  const qcid = getLoggedInUserQcid() || profile?.qcidNo || profile?.qcidNumber || ""
-  const userId = profile?.id || localStorage.getItem("userId") || "1"
-  const userName = profile?.firstName ? `${profile.firstName} ${profile.lastName || ""}` : "Resident"
+    searchResultsFor: "Search Results for",
+    found: "found",
+    resetSearch: "Reset Search",
+    noMatching: "No matching social service or requirement found.",
+    noMatchingHint: 'Try searching for keywords like "Medical", "PWD", "Senior", "Solo Parent", "Funeral", or "Livelihood".',
 
-  useEffect(() => {
-    let isMounted = true
+    filteredServices: "Filtered Services",
+    showingCategoryCount: (count: number) => `Showing ${count} available programs in this category.`,
+    viewAllServicesBtn: "✕ View All Services",
 
-    const fetchUserStatus = async () => {
-      try {
-        const found: any[] = []
-        const currentQcid = (qcid || "").toLowerCase().trim()
-        const userEmail = (profile?.email || "").toLowerCase().trim()
-        const userLastName = (profile?.lastName || "").toLowerCase().trim()
-        const userFirstName = (profile?.firstName || "").toLowerCase().trim()
+    recentTitle: "Your Active & Recent Applications Status",
+    viewHistory: "View History",
+    statusApproved: "Approved",
+    statusUnderReview: "Under Review",
 
-        const deletedSet = new Set<string>()
-        try {
-          const localDel = JSON.parse(localStorage.getItem("deleted_user_applications") || "[]")
-          if (Array.isArray(localDel)) {
-            localDel.forEach((d: any) => {
-              if (d.applicationNo) deletedSet.add(String(d.applicationNo).toLowerCase().trim())
-              if (d.referenceNo) deletedSet.add(String(d.referenceNo).toLowerCase().trim())
-              if (d.id) deletedSet.add(String(d.id).toLowerCase().trim())
-            })
-          }
-        } catch {}
+    howItWorksTitle: "How the Social Services Application Works",
+    howItWorksSubtitle: "Four simple steps from application filing to official payout and ID releasing.",
 
-        const token = sessionStorage.getItem("token") || localStorage.getItem("token") || ""
-        const sessionToken = sessionStorage.getItem("sessionToken") || localStorage.getItem("sessionToken") || ""
-        const authHeaders: Record<string, string> = {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          ...(sessionToken ? { "x-session-token": sessionToken } : {}),
-          ...(userEmail ? { "x-user-email": userEmail } : {}),
-        }
+    steps: [
+      {
+        step: "01",
+        title: "Select Service & Requirements",
+        desc: "Choose the service you need (AICS, PWD, Senior, Solo Parent) and prepare the required digital files (Indigency, Medical Abstract, IDs).",
+      },
+      {
+        step: "02",
+        title: "Fill Online Form & Upload",
+        desc: "Provide your citizen details, address, and upload legible photos or scanned copies of supporting documents.",
+      },
+      {
+        step: "03",
+        title: "Social Worker Assessment",
+        desc: "Assigned City Social Workers review your case, evaluate eligibility, and approve the assistance amount or ID card request.",
+      },
+      {
+        step: "04",
+        title: "Approval & Payout / ID Claim",
+        desc: "Receive real-time notification, QR Claim Voucher for financial payout, or notification to claim your official ID card.",
+      },
+    ],
 
-        try {
-          const delData = await cachedApiFetch(
-            `${API_BASE}/api/user-applications/deleted?email=${encodeURIComponent(userEmail)}&qcid=${encodeURIComponent(
-              qcid
-            )}&name=${encodeURIComponent(userFirstName + " " + userLastName)}`,
-            { headers: authHeaders },
-            4000
-          ).catch(() => null)
-          if (delData && delData.applications && Array.isArray(delData.applications)) {
-            delData.applications.forEach((d: any) => {
-              if (d.referenceNo) deletedSet.add(String(d.referenceNo).toLowerCase().trim())
-              if (d.applicationId) deletedSet.add(String(d.applicationId).toLowerCase().trim())
-              if (d.id) deletedSet.add(String(d.id).toLowerCase().trim())
-            })
-          }
-        } catch {}
+    aicsSectionTitle: "AICS Assistance Types & Document Checklist",
+    aicsSectionDesc: "Direct financial and material assistance for indigent individuals in crisis situations.",
+    openAicsAppBtn: "Open AICS Application",
+    crisisFinancialAid: "Crisis Financial Aid",
+    keyRequirements: "Key Requirements:",
+    applyFor: (title: string) => `Apply for ${title}`,
 
-        const isUserMatch = (a: any) => {
-          if (!a) return false
-          if (a.is_archived === true) return false
-          const aRef = String(a.reference_no || a.referenceNumber || a.reference_number || a.qc_id || a.qcid || a.applicationNo || a.assignedIdNumber || a.assigned_id_number || a.solo_parent_id_number || a.id || "").toLowerCase().trim()
-          const aEmail = String(a.email || a.guardian_email || a.guardianEmail || a.applicantInfo?.email || a.applicant_info?.email || "").toLowerCase().trim()
-          const aFirst = String(a.firstName || a.first_name || a.guardian_first_name || a.applicantInfo?.firstName || "").toLowerCase().trim()
-          const aLast = String(a.lastName || a.last_name || a.guardian_last_name || a.applicantInfo?.lastName || "").toLowerCase().trim()
-          const aName = String(a.full_name || a.applicantName || a.child_name || a.applicantInfo?.fullName || `${aFirst} ${aLast}`).toLowerCase().trim()
+    exploreModulesTitle: "Explore All Social Welfare Modules & Services",
+    showingModulesCount: (count: number) => `Showing ${count} programs`,
 
-          if (deletedSet.has(aRef) || (a.id && deletedSet.has(String(a.id).toLowerCase().trim()))) {
-            return false
-          }
+    generalReqsTitle: "General Qualification & Document Requirements",
+    generalReqsSubtitle: "Before submitting any application, make sure your digital copies are clear, legible, and uncropped.",
+    reqProofTitle: "Proof of Identity & Residency",
+    reqProofDesc: "Official QCID Card, PhilSys National ID, Voter's Certification, or Barangay Certificate of Residency with at least 6 months residency.",
+    reqIndigencyTitle: "Certificate of Indigency",
+    reqIndigencyDesc: "Issued by your Barangay Captain or authorized barangay official stating the family is indigent and specifying the purpose of assistance.",
+    reqSpecificTitle: "Program-Specific Documents",
+    reqSpecificDesc: "Medical abstract/prescriptions for Medical aid; Death certificate & funeral contract for Burial aid; School Certificate for Education; Doctor's assessment for PWD.",
 
-          if (userEmail && aEmail && userEmail === aEmail) return true
-          if (currentQcid && aRef && currentQcid.length >= 10 && aRef === currentQcid) return true
+    faqTitle: "Frequently Asked Questions (FAQs) & Help",
+    faqSubtitle: "Got questions about social services? Find quick answers below.",
 
-          if (userFirstName && userLastName && aFirst && aLast) {
-            if (userFirstName === aFirst && userLastName === aLast) return true
-          }
-          if (userFirstName && userLastName && aName) {
-            const combined = `${userFirstName} ${userLastName}`.trim()
-            if (aName === combined || (aName.startsWith(userFirstName + " ") && aName.endsWith(" " + userLastName))) return true
-          }
+    hotlineTitle: "Need Personal Assistance or Inquiries?",
+    hotlineDesc: "Social Services Development Department (SSDD) Hotline: (02) 8988-4242 loc. 8701 / 8702",
+    startAppBtn: "Start an Application",
+  },
+  tl: {
+    portalBadge: "Gov Serves Portal ng Serbisyong Panlipunan • Tulong at Gabay",
+    welcome: (name: string) => `Maligayang pagdating, ${name}!`,
+    heroDesc: "Alamin ang mga magagamit na programa ng tulong pinansyal (AICS), mga benepisyo ng espesyal na sektor (PWD, Senior Citizen, Solo Parent), kapakanan ng bata, ayuda sa kabuhayan, at mga kailangang dokumento bago mag-apply.",
+    trackAppsBtn: "Subaybayan ang Aking mga Aplikasyon",
+    searchPlaceholder: "Maghanap ng serbisyo, rekisitos, o benepisyo (hal. Medikal, Senior Booklet, PWD ID, Libing, Kabuhayan)...",
+    clearSearch: "✕ Burahin",
+    catAll: "Lahat ng Serbisyo",
+    catAics: "AICS Crisis Aid (6 na Uri)",
+    catPwdSenior: "PWD at Senior Citizens",
+    catFamily: "Solo Parent at Kapakanan ng Bata",
+    catLivelihood: "Kabuhayan at Payouts",
+    assistanceFinderBtn: "Gabay sa Kwalipikasyon at Ayuda",
+    assistanceFinderTitle: "Pindutin para masuri ang kwalipikasyon at makakuha ng angkop na rekomendasyon",
 
-          return false
-        }
+    searchResultsFor: "Mga Resulta ng Paghahanap para sa",
+    found: "nahanap",
+    resetSearch: "I-reset ang Paghahanap",
+    noMatching: "Walang nahanap na serbisyong panlipunan o rekisitos.",
+    noMatchingHint: 'Subukang maghanap gamit ang mga salitang "Medikal", "PWD", "Senior", "Solo Parent", "Libing", o "Kabuhayan".',
 
-        try {
-          const data = await cachedApiFetch(`${API_BASE}/api/aics/applications?qcId=${encodeURIComponent(qcid)}`, { headers: authHeaders }, 4000).catch(() => null)
-          if (data) {
-            const list = Array.isArray(data) ? data : data.applications || []
-            const matched = list.filter(isUserMatch).map((a: any) => {
-              const rawType = (a.assistance_type || a.assistanceType || a.type || "AICS").replace(/\s*assistance/gi, "").trim()
-              const cleanType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
-              const refNum = a.qc_id || a.reference_no || a.reference_number || a.referenceNumber || a.id
-              return {
-                id: a.id || refNum,
-                program: cleanType,
-                category: "AICS",
-                status: a.status || "pending",
-                date: a.created_at || a.dateSubmitted || new Date().toISOString(),
-                ref: refNum
-              }
-            })
-            found.push(...matched)
-          }
-        } catch {}
+    filteredServices: "Sinalang mga Serbisyo",
+    showingCategoryCount: (count: number) => `Ipinapakita ang ${count} programa sa kategoryang ito.`,
+    viewAllServicesBtn: "✕ Tingnan Lahat ng Serbisyo",
 
-        try {
-          const list2 = await cachedApiFetch(`${API_BASE}/api/pwd-senior/applications`, { headers: authHeaders }, 4000).catch(() => null)
-          if (Array.isArray(list2)) {
-            const matched2 = list2.filter(isUserMatch).map((a: any) => {
-              const refNum = a.assignedIdNumber || a.referenceNumber || a.reference_no || a.id
-              return {
-                id: a.id || refNum,
-                program: `${a.category || "Social Service"} - ${a.type ? String(a.type).toUpperCase() : "Application"}`,
-                category: a.category || "PWD / Senior",
-                status: a.status || "pending",
-                date: a.created_at || a.dateSubmitted || new Date().toISOString(),
-                ref: refNum
-              }
-            })
-            found.push(...matched2)
-          }
-        } catch {}
+    recentTitle: "Katayuan ng Iyong mga Kasalukuyang Aplikasyon",
+    viewHistory: "Tingnan ang Kasaysayan",
+    statusApproved: "Aprubado",
+    statusUnderReview: "Kasalukuyang Sinusuri",
 
-        try {
-          const data3 = await cachedApiFetch(`${API_BASE}/api/solo-parent/user/${userId}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(userEmail)}`, { headers: authHeaders }, 4000).catch(() => null)
-          if (data3) {
-            const list3 = data3.applications || (Array.isArray(data3) ? data3 : [])
-            const matched3 = list3.filter(isUserMatch).map((a: any) => {
-              const refNum = a.assigned_id_number || a.solo_parent_id_number || a.reference_number || a.referenceNumber || a.id
-              return {
-                id: a.id || refNum,
-                program: "Solo Parent ID",
-                category: "Solo Parent",
-                status: a.application_status || a.status || "pending",
-                date: a.created_at || a.submitted_at || new Date().toISOString(),
-                ref: refNum
-              }
-            })
-            found.push(...matched3)
-          }
-        } catch {}
+    howItWorksTitle: "Paano Gumagana ang Aplikasyon sa Serbisyong Panlipunan",
+    howItWorksSubtitle: "Apat na simpleng hakbang mula sa pagsumite ng aplikasyon hanggang sa opisyal na payout at paglabas ng ID.",
 
-        try {
-          const data4 = await cachedApiFetch(`${API_BASE}/api/child-welfare/user/${userId}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(userEmail)}`, { headers: authHeaders }, 4000).catch(() => null)
-          if (data4) {
-            const list4 = data4.applications || (Array.isArray(data4) ? data4 : [])
-            const matched4 = list4.filter(isUserMatch).map((a: any) => {
-              const refNum = a.reference_number || a.referenceNumber || a.id
-              return {
-                id: a.id || refNum,
-                program: a.category_title || a.classification_title || "Child Welfare Assistance",
-                category: "Child Welfare",
-                status: a.application_status || a.status || "pending",
-                date: a.created_at || new Date().toISOString(),
-                ref: refNum
-              }
-            })
-            found.push(...matched4)
-          }
-        } catch {}
+    steps: [
+      {
+        step: "01",
+        title: "Pumili ng Serbisyo at Rekisitos",
+        desc: "Piliin ang serbisyong kailangan (AICS, PWD, Senior, Solo Parent) at ihanda ang mga kaukulang dokumento (Indigency, Medical Abstract, IDs).",
+      },
+      {
+        step: "02",
+        title: "Punan ang Online Form at Mag-upload",
+        desc: "Ilagay ang inyong mga detalye, tirahan, at mag-upload ng malinaw na kopya o litrato ng mga sumusuportang dokumento.",
+      },
+      {
+        step: "03",
+        title: "Ebalwasyon ng Social Worker",
+        desc: "Susuriin ng nakatalagang Social Worker ang inyong kaso upang aprubahan ang halaga ng tulong o kahilingan sa ID card.",
+      },
+      {
+        step: "04",
+        title: "Pag-apruba at Payout / Pagkuha ng ID",
+        desc: "Makatanggap ng real-time na abiso, QR Claim Voucher para sa payout, o paunawa para makuha ang inyong opisyal na ID card.",
+      },
+    ],
 
-        try {
-          const data5 = await cachedApiFetch(`${API_BASE}/api/livelihood/applications`, { headers: authHeaders }, 4000).catch(() => null)
-          if (data5) {
-            const list5 = data5.applications || (Array.isArray(data5) ? data5 : [])
-            const matched5 = list5.filter(isUserMatch).map((a: any) => {
-              const refNum = a.reference_number || a.referenceNumber || a.qcid || a.id
-              return {
-                id: a.id || refNum,
-                program: a.proposed_business_name ? `Livelihood: ${a.proposed_business_name}` : a.livelihood_type || "Livelihood Assistance",
-                category: "Livelihood",
-                status: a.application_status || a.status || "pending",
-                date: a.created_at || new Date().toISOString(),
-                ref: refNum
-              }
-            })
-            found.push(...matched5)
-          }
-        } catch {}
+    aicsSectionTitle: "Mga Uri ng Tulong sa AICS at Talaan ng mga Dokumento",
+    aicsSectionDesc: "Direktang tulong-pinansyal at materyal para sa mga mamamayang nasa krisis.",
+    openAicsAppBtn: "Buksan ang Aplikasyon sa AICS",
+    crisisFinancialAid: "Tulong Pinansyal sa Krisis",
+    keyRequirements: "Pangunahing Rekisitos:",
+    applyFor: (title: string) => `Mag-apply para sa ${title}`,
 
-        try {
-          const data6 = await cachedApiFetch(`${API_BASE}/api/training/applications`, { headers: authHeaders }, 4000).catch(() => null)
-          if (data6) {
-            const list6 = Array.isArray(data6) ? data6 : data6.applications || []
-            const matched6 = list6.filter(isUserMatch).map((a: any) => {
-              const refNum = a.reference_number || a.referenceNumber || a.qcid || a.id
-              return {
-                id: a.id || refNum,
-                program: a.training_name || "Skills Training Program",
-                category: "Training",
-                status: a.status || "pending",
-                date: a.created_at || new Date().toISOString(),
-                ref: refNum
-              }
-            })
-            found.push(...matched6)
-          }
-        } catch {}
+    exploreModulesTitle: "Tuklasin ang Lahat ng Module at Serbisyong Panlipunan",
+    showingModulesCount: (count: number) => `Ipinapakita ang ${count} programa`,
 
-        const localKeys = ["pwd_senior_applications", "aics_applications", "all_user_applications", "applications", "livelihood_applications", "training_applications", "child_welfare_applications", "solo_parent_applications"]
-        for (const k of localKeys) {
-          try {
-            const local = JSON.parse(localStorage.getItem(k) || "[]")
-            if (Array.isArray(local)) {
-              const cleaned = local.filter((item: any) => {
-                const itemRef = String(item.referenceNumber || item.reference_no || item.applicationNo || item.id || "").toLowerCase().trim()
-                return !deletedSet.has(itemRef)
-              })
-              if (cleaned.length !== local.length) {
-                localStorage.setItem(k, JSON.stringify(cleaned))
-              }
-            }
-          } catch {}
-        }
+    generalReqsTitle: "Pangkalahatang Kwalipikasyon at Rekisitos ng Dokumento",
+    generalReqsSubtitle: "Bago magsumite ng aplikasyon, tiyaking malinaw, nababasa, at kumpleto ang mga ini-upload na digital na kopya.",
+    reqProofTitle: "Katibayan ng Pagkakakilanlan at Tirahan",
+    reqProofDesc: "Opisyal na QCID Card, PhilSys National ID, Voter's Certification, o Barangay Certificate of Residency na may hindi bababa sa 6 na buwang paninirahan.",
+    reqIndigencyTitle: "Barangay Certificate of Indigency",
+    reqIndigencyDesc: "Ibinigay ng Punong Barangay na nagpapatunay na ang pamilya ay kapos-palad at nagsasaad ng layunin ng tulong.",
+    reqSpecificTitle: "Mga Partikular na Dokumento ng Programa",
+    reqSpecificDesc: "Medical abstract/reseta para sa Medikal; Death certificate at kontrata sa punerarya para sa Libing; Enrollment Certificate para sa Edukasyon; Pagsusuri ng doktor para sa PWD.",
 
-        const uniqueFound: any[] = []
-        const seenRefs = new Set<string>()
-        for (const item of found) {
-          const r = String(item.ref || item.id || "").toLowerCase().trim()
-          if (!seenRefs.has(r)) {
-            seenRefs.add(r)
-            uniqueFound.push(item)
-          }
-        }
+    faqTitle: "Mga Madalas Itanong (FAQs) at Gabay",
+    faqSubtitle: "May katanungan tungkol sa mga serbisyong panlipunan? Basahin ang mga sagot sa ibaba.",
 
-        if (isMounted) {
-          setRecentApps(uniqueFound)
-        }
-      } catch {
+    hotlineTitle: "Kailangan ng Personal na Tulong o May Katanungan?",
+    hotlineDesc: "Linya ng Tulong sa Social Services Development Department (SSDD): (02) 8988-4242 loc. 8701 / 8702",
+    startAppBtn: "Magsimula ng Aplikasyon",
+  },
+  bis: {
+    portalBadge: "Gov Serves Portal sa Serbisyo Sosyal • Tabang ug Giya",
+    welcome: (name: string) => `Maayong pag-abot, ${name}!`,
+    heroDesc: "Hibal-i ang mga programa sa tabang pinansyal (AICS), benepisyo sa sektor (PWD, Senior Citizen, Solo Parent), kaayohan sa bata, tabang sa panginabuhi, ug mga gikinahanglang dokumento sa dili pa mag-apply.",
+    trackAppsBtn: "Subaya ang Akong mga Aplikasyon",
+    searchPlaceholder: "Pangita og serbisyo, rekisitos, o benepisyo (pan. Medikal, Senior Booklet, PWD ID, Lubong, Panginabuhi)...",
+    clearSearch: "✕ Papasa",
+    catAll: "Tanang Serbisyo",
+    catAics: "AICS Crisis Aid (6 ka Uri)",
+    catPwdSenior: "PWD ug Senior Citizens",
+    catFamily: "Solo Parent ug Kaayohan sa Bata",
+    catLivelihood: "Panginabuhi ug Payouts",
+    assistanceFinderBtn: "Giya sa Kwalipikasyon ug Tabang",
+    assistanceFinderTitle: "Pindota aron masusi ang kwalipikasyon ug makadawat og haom nga rekomendasyon",
 
+    searchResultsFor: "Mga Resulta sa Pagpangita alang sa",
+    found: "nakit-an",
+    resetSearch: "I-reset ang Pagpangita",
+    noMatching: "Walay nakit-an nga serbisyo sosyal o rekisitos.",
+    noMatchingHint: 'Sulayi pagpangita gamit ang mga pulong sama sa "Medikal", "PWD", "Senior", "Solo Parent", "Lubong", o "Panginabuhi".',
+
+    filteredServices: "Gipili nga mga Serbisyo",
+    showingCategoryCount: (count: number) => `Gipakita ang ${count} ka programa sa kini nga kategorya.`,
+    viewAllServicesBtn: "✕ Tan-awa Tanang Serbisyo",
+
+    recentTitle: "Kahimtang sa Imong mga Kasamtangang Aplikasyon",
+    viewHistory: "Tan-awa ang Kasaysayan",
+    statusApproved: "Gi-aprobahan",
+    statusUnderReview: "Gisusi Pa",
+
+    howItWorksTitle: "Giunsa Paglihok ang Aplikasyon sa Serbisyo Sosyal",
+    howItWorksSubtitle: "Upat ka sayon nga lakang gikan sa pagsumite hangtod sa opisyal nga payout ug pagkuha sa ID.",
+
+    steps: [
+      {
+        step: "01",
+        title: "Pilia ang Serbisyo ug Rekisitos",
+        desc: "Pilia ang serbisyong gikinahanglan (AICS, PWD, Senior, Solo Parent) ug i-andam ang mga gikinahanglang dokumento (Indigency, Medical Abstract, IDs).",
+      },
+      {
+        step: "02",
+        title: "Tubaga ang Online Form ug Pag-upload",
+        desc: "Ihatag ang imong mga detalye, adres, ug pag-upload og klarong litrato o kopya sa mga gikinahanglang dokumento.",
+      },
+      {
+        step: "03",
+        title: "Ebalwasyon sa Social Worker",
+        desc: "Susiha sa nakadestino nga Social Worker ang imong aplikasyon aron aprobahan ang kantidad sa tabang o ID card.",
+      },
+      {
+        step: "04",
+        title: "Pag-aproba ug Payout / Pagkuha sa ID",
+        desc: "Makadawat og tinuod-oras nga pahibalo, QR Claim Voucher para sa payout, o pahibalo sa pagkuha sa imong opisyal nga ID card.",
+      },
+    ],
+
+    aicsSectionTitle: "Mga Uri sa Tabang sa AICS ug Listahan sa mga Dokumento",
+    aicsSectionDesc: "Direktang tabang pinansyal ug materyal para sa mga lungsuranon nga anaa sa krisis.",
+    openAicsAppBtn: "Ablihi ang Aplikasyon sa AICS",
+    crisisFinancialAid: "Tabang Pinansyal sa Krisis",
+    keyRequirements: "Pangunang mga Rekisitos:",
+    applyFor: (title: string) => `Mag-apply para sa ${title}`,
+
+    exploreModulesTitle: "Susiha ang Tanang Module ug Serbisyo Sosyal",
+    showingModulesCount: (count: number) => `Gipakita ang ${count} ka programa`,
+
+    generalReqsTitle: "Kinatibuk-ang Kwalipikasyon ug Rekisitos sa Dokumento",
+    generalReqsSubtitle: "Sa dili pa magsumite, siguroha nga klaro, mabasa, ug kompleto ang mga gi-upload nga kopya.",
+    reqProofTitle: "Pamatuod sa Pagkatawo ug Puy-anan",
+    reqProofDesc: "Opisyal nga QCID Card, PhilSys National ID, Voter's Certification, o Barangay Certificate of Residency nga dili moubos sa 6 ka bulan nga pagpuyo.",
+    reqIndigencyTitle: "Barangay Certificate of Indigency",
+    reqIndigencyDesc: "Gi-isyu sa Punong Barangay nga nagpamatuod nga kabus ang pamilya ug nagtumbok sa katuyoan sa tabang.",
+    reqSpecificTitle: "Mga Partikular nga Dokumento sa Programa",
+    reqSpecificDesc: "Medical abstract/reseta sa tambal para sa Medikal; Death certificate ug kontrata sa lubong para sa Lubong; School Certificate para sa Edukasyon; Pagsusi sa doktor para sa PWD.",
+
+    faqTitle: "Mga Kanunayng Gipangutana (FAQs) ug Tabang",
+    faqSubtitle: "Naay mga pangutana bahin sa serbisyo sosyal? Basaha ang mga tubag sa ubos.",
+
+    hotlineTitle: "Nagkinahanglan og Personal nga Tabang o Pangutana?",
+    hotlineDesc: "Linya sa Tabang sa Social Services Development Department (SSDD): (02) 8988-4242 loc. 8701 / 8702",
+    startAppBtn: "Magsugod og Aplikasyon",
+  },
+}
+
+function getAicsServices(lang: Language) {
+  if (lang === "tl") {
+    return [
+      {
+        type: "medical",
+        title: "Tulong Medikal (Medical Assistance)",
+        icon: Stethoscope,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=medical",
+        desc: "Tulong-pinansyal para sa bayarin sa ospital, chemotherapy, dialysis, reseta ng gamot, at mga pagsusuri sa laboratoryo.",
+        requirements: ["Medical Abstract / Certificate", "Hospital Bill / Statement of Account o Pharmacy Quotation", "Barangay Certificate of Indigency", "Valid QCID / Government ID"]
+      },
+      {
+        type: "funeral",
+        title: "Tulong sa Libing (Funeral & Burial)",
+        icon: Heart,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=funeral",
+        desc: "Agarang suporta sa gastusin sa punerarya, kabaong, cremation, at pagpapalibing para sa namatayang kapamilya.",
+        requirements: ["Rehistradong Death Certificate", "Kontrata sa Punerarya / Statement of Account", "Barangay Certificate of Indigency", "Valid QCID / Gov ID ng Claimant"]
+      },
+      {
+        type: "educational",
+        title: "Tulong Pang-Edukasyon (Educational)",
+        icon: GraduationCap,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=educational",
+        desc: "Tulong-pinansyal para sa matrikula, gamit sa eskwela, learning materials, at allowance para sa kapus-palad na mag-aaral.",
+        requirements: ["Certificate of Enrollment / Registration", "School ID / Student Assessment Form", "Barangay Indigency", "Valid ID ng Magulang/Tagapag-alaga"]
+      },
+      {
+        type: "material",
+        title: "Tulong Materyal (Material Assistance)",
+        icon: Package,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=material",
+        desc: "Direktang pamamahagi ng kagamitang pantulong, emergency hygiene packs, at materyal na ayuda para sa mga nasalanta.",
+        requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Pagsusuri ng Social Worker"]
+      },
+      {
+        type: "food",
+        title: "Tulong sa Pagkain (Food Assistance)",
+        icon: Utensils,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=food",
+        desc: "Agarang tulong sa pagkain at subsistence vouchers para sa mga pamilyang nahaharap sa biglaang krisis sa kabuhayan.",
+        requirements: ["Barangay Certificate of Indigency", "Valid QCID / Government ID", "Patunay ng Bilang ng Pamilya"]
+      },
+      {
+        type: "transportation",
+        title: "Tulong sa Pamasahe (Transportation)",
+        icon: Bus,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=transportation",
+        desc: "Ayuda sa pamasahe para sa mga na-stranded o residenteng kailangang bumalik sa kanilang probinsya sa oras ng emergency.",
+        requirements: ["Barangay Certificate / Police Blotter Report kung stranded", "Valid QCID / Gov ID", "Patunay ng Pangangailangan sa Pagbiyahe"]
       }
-    }
+    ]
+  }
 
-    fetchUserStatus()
+  if (lang === "bis") {
+    return [
+      {
+        type: "medical",
+        title: "Tabang Medikal (Medical Assistance)",
+        icon: Stethoscope,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=medical",
+        desc: "Tabang pinansyal para sa bayad sa ospital, chemotherapy, dialysis, reseta sa tambal, ug laboratory diagnostic procedures.",
+        requirements: ["Medical Abstract / Certificate", "Hospital Bill / Statement of Account o Pharmacy Quotation", "Barangay Certificate of Indigency", "Valid QCID / Government ID"]
+      },
+      {
+        type: "funeral",
+        title: "Tabang sa Lubong (Funeral & Burial)",
+        icon: Heart,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=funeral",
+        desc: "Dinalian nga tabang para sa punerarya, lungon, cremation, ug gasto sa paglubong sa namatyan nga pamilya.",
+        requirements: ["Rehistradong Death Certificate", "Kontrata sa Punerarya / Statement of Account", "Barangay Certificate of Indigency", "Valid QCID / Gov ID sa Claimant"]
+      },
+      {
+        type: "educational",
+        title: "Tabang sa Edukasyon (Educational)",
+        icon: GraduationCap,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=educational",
+        desc: "Tabang pinansyal sa matrikula, gamit sa eskwelahan, learning materials, ug allowance para sa kabus nga estudyante.",
+        requirements: ["Certificate of Enrollment / Registration", "School ID / Student Assessment Form", "Barangay Indigency", "Valid ID sa Ginikanan/Guardian"]
+      },
+      {
+        type: "material",
+        title: "Tabang Materyal (Material Assistance)",
+        icon: Package,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=material",
+        desc: "Direktang paghatag og gamit, emergency hygiene packs, ug materyal nga hinabang para sa mga biktima sa kalamidad.",
+        requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Pagsusi sa Social Worker"]
+      },
+      {
+        type: "food",
+        title: "Tabang sa Pagkaon (Food Assistance)",
+        icon: Utensils,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=food",
+        desc: "Dinalian nga ayuda sa pagkaon ug subsistence vouchers para sa mga pamilya nga kalit nawad-an og kita.",
+        requirements: ["Barangay Certificate of Indigency", "Valid QCID / Government ID", "Pamatuod sa Dependents sa Pamilya"]
+      },
+      {
+        type: "transportation",
+        title: "Tabang sa Plete (Transportation)",
+        icon: Bus,
+        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
+        path: "/portal/aics?type=transportation",
+        desc: "Plete para sa mga na-stranded o lungsuranon nga kinahanglang mouli sa ilang probinsya sa panahon sa emerhensya.",
+        requirements: ["Barangay Certificate / Police Blotter Report kung stranded", "Valid QCID / Gov ID", "Pamatuod sa Katuyoan sa Pagbiyahe"]
+      }
+    ]
+  }
 
-    const handleUpdate = () => {
-      fetchUserStatus()
-    }
-
-    const unsubscribe = subscribeToRealtimeChanges(() => {
-      fetchUserStatus()
-    })
-
-    window.addEventListener("applications_updated", handleUpdate)
-    window.addEventListener("solo_parent_applications_updated", handleUpdate)
-    window.addEventListener("pwd_senior_applications_updated", handleUpdate)
-    window.addEventListener("child_welfare_applications_updated", handleUpdate)
-    window.addEventListener("financial_disbursements_updated", handleUpdate)
-    window.addEventListener("storage", handleUpdate)
-
-    const interval = setInterval(fetchUserStatus, 3500)
-
-    return () => {
-      isMounted = false
-      clearInterval(interval)
-      unsubscribe()
-      window.removeEventListener("applications_updated", handleUpdate)
-      window.removeEventListener("solo_parent_applications_updated", handleUpdate)
-      window.removeEventListener("pwd_senior_applications_updated", handleUpdate)
-      window.removeEventListener("child_welfare_applications_updated", handleUpdate)
-      window.removeEventListener("financial_disbursements_updated", handleUpdate)
-      window.removeEventListener("storage", handleUpdate)
-    }
-  }, [qcid, profile?.email, profile?.lastName, profile?.firstName, userId])
-
-  const aicsServices = [
+  return [
     {
       type: "medical",
       title: "Medical Assistance",
@@ -380,8 +480,188 @@ export default function CitizenGuideHub() {
       requirements: ["Barangay Certificate / Police or Blotter Report if stranded", "Valid QCID / Gov ID", "Proof of Travel Necessity"]
     }
   ]
+}
 
-  const modulesList = [
+function getModulesList(lang: Language) {
+  if (lang === "tl") {
+    return [
+      {
+        id: "aics",
+        title: "AICS Crisis Assistance",
+        badge: "Tulong Pinansyal at Materyal",
+        icon: ShieldAlert,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Agarang tulong at ayuda para sa mga indibidwal at pamilyang nasa krisis (Medikal, Libing, Edukasyon, Pagkain, Pamasahe, Materyal).",
+        features: ["Emergency Cash Aid", "Suporta sa Ospital at Gamot", "Direktang Payout", "Mabilis na Pagproseso"],
+        primaryAction: { label: "Tuklasin ang AICS", path: "/portal/aics?type=medical" },
+        secondaryAction: { label: "Tingnan ang 6 na Uri", path: "#aics-breakdown" }
+      },
+      {
+        id: "pwd",
+        title: "Serbisyo para sa PWD (Persons with Disability)",
+        badge: "Benepisyo sa Ilalim ng PDAO",
+        icon: WheelchairIcon,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Komprehensibong serbisyo kabilang ang Bagong PWD ID, pag-renew bawat 3 taon, pagpapalit ng nawalang ID, at tulong pinansyal.",
+        features: ["20% Diskwento sa Bilihin", "12% VAT Exemption", "Libreng Sine", "PWD Social Pension"],
+        primaryAction: { label: "Mag-apply ng PWD ID", path: "/portal/apply-pwd-senior?category=pwd&type=new" },
+        secondaryAction: { label: "I-renew o Palitan ang ID", path: "/portal/apply-pwd-senior?category=pwd&type=renewal" }
+      },
+      {
+        id: "senior",
+        title: "Serbisyo para sa Senior Citizen",
+        badge: "Benepisyo sa Ilalim ng OSCA",
+        icon: Users,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Mga programa para sa edad 60 pataas, kabilang ang Opisyal na Senior ID, Medicine Discount Booklet, Libreng Sine, at Social Pension.",
+        features: ["20% Senior Discount", "Medicine Purchase Booklet", "Free Movie Booklet", "Social Pension Program"],
+        primaryAction: { label: "Mag-apply ng Senior ID", path: "/portal/apply-pwd-senior?category=senior&type=new" },
+        secondaryAction: { label: "Kumuha ng Booklet", path: "/portal/apply-pwd-senior?category=senior&type=medicine-booklet" }
+      },
+      {
+        id: "soloParent",
+        title: "Serbisyo sa Solo Parent",
+        badge: "Benepisyo ng RA 11861",
+        icon: Baby,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Pagpapalakas sa solong magulang sa pamamagitan ng Solo Parent ID, 7-araw na parental leave, scholarship, at buwanang ayuda.",
+        features: ["Solo Parent ID", "7-Araw na Karagdagang Leave", "10% Diskwento sa Gatas/Bilihin", "Buwanang Ayuda"],
+        primaryAction: { label: "Mag-apply ng Solo Parent ID", path: "/portal/apply-solo-parent?category=solo-parent&type=new" },
+        secondaryAction: { label: "I-renew ang Solo Parent ID", path: "/portal/apply-solo-parent?category=solo-parent&type=renewal" }
+      },
+      {
+        id: "childWelfare",
+        title: "Kapakanan ng Bata (Child Welfare)",
+        badge: "Proteksyon at Nutrisyon",
+        icon: HeartHandshake,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Proteksyon para sa mga menor de edad, supplemental feeding, emerhensiyang kapakanan ng bata, at suportang psychosocial.",
+        features: ["Tulong sa Nutrisyon", "Proteksyon sa Bata", "Psychosocial Support", "Pansamantalang Silungan"],
+        primaryAction: { label: "Serbisyo sa Bata", path: "/portal/apply-solo-parent?category=child-welfare&program=nutritional-assistance" },
+        secondaryAction: { label: "Proteksyon sa Bata", path: "/portal/apply-solo-parent?category=child-welfare&program=child-protection" }
+      },
+      {
+        id: "livelihood",
+        title: "Kabuhayan at Pagsasanay (Livelihood)",
+        badge: "Pagpapaunlad ng Kabuhayan",
+        icon: GraduationCap,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Puhunan sa negosyo, pamamahagi ng gamit/toolkits sa paghahanapbuhay, at libreng kursong bokasyonal ng TESDA.",
+        features: ["Puhunan sa Negosyo", "Livelihood Toolkits", "Libreng Pagsasanay", "Mentorship at Gabay"],
+        primaryAction: { label: "Mag-apply ng Puhunan", path: "/portal/apply-livelihood?category=livelihood" },
+        secondaryAction: { label: "Mag-enroll sa Pagsasanay", path: "/portal/apply-livelihood?category=training" }
+      },
+      {
+        id: "disbursement",
+        title: "Tagasubaybay ng Ayuda at Payout",
+        badge: "Disbursement at Payouts",
+        icon: Wallet,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Suriin at subaybayan ang inyong aprubadong payout, iskedyul ng appointment, opisyal na QR claim voucher, at pamamahagi ng ayuda.",
+        features: ["Real-time Payout Status", "Opisyal na QR Claim Code", "Nakatakdang Lugar at Oras", "Direktang Payout"],
+        primaryAction: { label: "Buksan ang Payout Tracker", path: "/portal/financial-aid" },
+        secondaryAction: { label: "Kasaysayan ng Aplikasyon", path: "/portal/my-applications" }
+      }
+    ]
+  }
+
+  if (lang === "bis") {
+    return [
+      {
+        id: "aics",
+        title: "AICS Crisis Assistance",
+        badge: "Tabang Pinansyal ug Materyal",
+        icon: ShieldAlert,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Dinalian nga tabang ug ayuda para sa mga indibidwal ug pamilya nga anaa sa krisis (Medikal, Lubong, Edukasyon, Pagkaon, Plete, Materyal).",
+        features: ["Emergency Cash Aid", "Suporta sa Ospital ug Tambal", "Direktang Payout", "Dali nga Pagproseso"],
+        primaryAction: { label: "Susiha ang AICS", path: "/portal/aics?type=medical" },
+        secondaryAction: { label: "Tan-awa ang 6 ka Uri", path: "#aics-breakdown" }
+      },
+      {
+        id: "pwd",
+        title: "Serbisyo para sa PWD (Persons with Disability)",
+        badge: "Benepisyo ubos sa PDAO",
+        icon: WheelchairIcon,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Komprehensibong serbisyo lakip ang Bag-ong PWD ID, pag-renew kada 3 ka tuig, pag-ilis sa nawala nga ID, ug tabang pinansyal.",
+        features: ["20% Diskwento sa Palaliton", "12% VAT Exemption", "Libreng Sine", "PWD Social Pension"],
+        primaryAction: { label: "Mag-apply og PWD ID", path: "/portal/apply-pwd-senior?category=pwd&type=new" },
+        secondaryAction: { label: "I-renew o Ilisi ang ID", path: "/portal/apply-pwd-senior?category=pwd&type=renewal" }
+      },
+      {
+        id: "senior",
+        title: "Serbisyo para sa Senior Citizen",
+        badge: "Benepisyo ubos sa OSCA",
+        icon: Users,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Mga programa para sa edad 60 pataas, lakip ang Opisyal nga Senior ID, Medicine Discount Booklet, Libreng Sine, ug Social Pension.",
+        features: ["20% Senior Discount", "Medicine Purchase Booklet", "Free Movie Booklet", "Social Pension Program"],
+        primaryAction: { label: "Mag-apply og Senior ID", path: "/portal/apply-pwd-senior?category=senior&type=new" },
+        secondaryAction: { label: "Kuha og Booklet", path: "/portal/apply-pwd-senior?category=senior&type=medicine-booklet" }
+      },
+      {
+        id: "soloParent",
+        title: "Serbisyo sa Solo Parent",
+        badge: "Benepisyo sa RA 11861",
+        icon: Baby,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Pagtabang sa solo nga ginikanan pinaagi sa Solo Parent ID, 7-adlaw nga parental leave, scholarship, ug binuwan nga ayuda.",
+        features: ["Solo Parent ID", "7-Adlaw nga Dugang Leave", "10% Diskwento sa Gatas/Palaliton", "Binuwan nga Ayuda"],
+        primaryAction: { label: "Mag-apply og Solo Parent ID", path: "/portal/apply-solo-parent?category=solo-parent&type=new" },
+        secondaryAction: { label: "I-renew ang Solo Parent ID", path: "/portal/apply-solo-parent?category=solo-parent&type=renewal" }
+      },
+      {
+        id: "childWelfare",
+        title: "Kaayohan sa Bata (Child Welfare)",
+        badge: "Proteksyon ug Nutrisyon",
+        icon: HeartHandshake,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Proteksyon para sa mga menor de edad, supplemental feeding, emerhensiyang tabang sa bata, ug suportang psychosocial.",
+        features: ["Tabang sa Nutrisyon", "Proteksyon sa Bata", "Psychosocial Support", "Temporaryong Puy-anan"],
+        primaryAction: { label: "Serbisyo sa Bata", path: "/portal/apply-solo-parent?category=child-welfare&program=nutritional-assistance" },
+        secondaryAction: { label: "Proteksyon sa Bata", path: "/portal/apply-solo-parent?category=child-welfare&program=child-protection" }
+      },
+      {
+        id: "livelihood",
+        title: "Panginabuhi ug Pagbansay (Livelihood)",
+        badge: "Pagpalambo sa Panginabuhian",
+        icon: GraduationCap,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Puhunan sa negosyo, paghatag og kagamitan/toolkits sa panginabuhian, ug libreng kurso sa TESDA.",
+        features: ["Puhunan sa Negosyo", "Livelihood Toolkits", "Libreng Pagbansay", "Mentorship ug Giya"],
+        primaryAction: { label: "Mag-apply og Puhunan", path: "/portal/apply-livelihood?category=livelihood" },
+        secondaryAction: { label: "Mag-enroll sa Pagbansay", path: "/portal/apply-livelihood?category=training" }
+      },
+      {
+        id: "disbursement",
+        title: "Tagasubay sa Ayuda ug Payout",
+        badge: "Disbursement ug Payouts",
+        icon: Wallet,
+        color: "bg-blue-50 text-blue-600 border-blue-200",
+        btnColor: "bg-blue-600 hover:bg-blue-700",
+        desc: "Susiha ug subaya ang imong gi-aprobahang payout, eskedyul sa appointment, opisyal nga QR claim voucher, ug pag-apod-apod sa ayuda.",
+        features: ["Real-time Payout Status", "Opisyal nga QR Claim Code", "Gitakdang Lugar ug Oras", "Direktang Payout"],
+        primaryAction: { label: "Ablihi ang Payout Tracker", path: "/portal/financial-aid" },
+        secondaryAction: { label: "Kasaysayan sa Aplikasyon", path: "/portal/my-applications" }
+      }
+    ]
+  }
+
+  return [
     {
       id: "aics",
       title: "AICS Crisis Assistance",
@@ -467,8 +747,60 @@ export default function CitizenGuideHub() {
       secondaryAction: { label: "View Application History", path: "/portal/my-applications" }
     }
   ]
+}
 
-  const faqs = [
+function getFaqs(lang: Language) {
+  if (lang === "tl") {
+    return [
+      {
+        q: "Ano ang AICS at sino ang kwalipikadong mag-apply?",
+        a: "Ang AICS (Assistance to Individuals in Crisis Situations) ay isang programang pang-emergency ng Serbisyong Panlipunan na nagbibigay ng tulong-pinansyal at materyal sa mga mamamayang dumaranas ng biglaang krisis tulad ng pagkakaospital, pagkamatay ng kapamilya, pagkawala ng kita, o kalamidad. Ang sinumang residente na may wastong ID o Barangay Certificate of Indigency ay maaaring mag-apply."
+      },
+      {
+        q: "Paano ko i-renew o papalitan ang nawalang PWD o Senior Citizen ID?",
+        a: "Madali itong magagawa online! Pumunta sa Serbisyo para sa PWD o Senior Citizen sa portal, piliin ang 'Pag-renew' (kung magpapaso o expired na) o 'Nawalang ID / Pagpapalit'. Ilagay ang inyong 16-digit ID number para sa awtomatikong pagsusuri sa talaan at i-upload ang Affidavit of Loss."
+      },
+      {
+        q: "Gaano katagal bago maaprubahan ang isang aplikasyon?",
+        a: "Ang mga emergency AICS application (tulad ng Medikal at Libing) ay karaniwang sinusuri ng mga nakatalagang Social Worker sa loob ng 24 hanggang 72 oras. Ang mga aplikasyon sa ID (PWD, Senior Citizen, Solo Parent) ay tumatagal ng 3 hanggang 5 araw ng trabaho para sa beripikasyon at paggawa ng kard."
+      },
+      {
+        q: "Paano ko matatanggap ang aking aprubadong payout ng tulong-pinansyal?",
+        a: "Kapag naaprubahan, makakatanggap kayo ng abiso sa seksyon ng 'Financial Aid Disbursement' kung saan makikita ang iskedyul ng payout, itinalagang payout center, at opisyal na Digital Claim Voucher na may QR code."
+      },
+      {
+        q: "Maaari ba akong mag-apply sa higit sa isang programa ng tulong?",
+        a: "Oo. Maaari kayong mag-apply sa iba't ibang serbisyo (hal. Senior ID + Medicine Booklet + AICS Tulong Medikal) batay sa inyong pangangailangan, basta't natutugunan ang mga kwalipikasyon at naisusumite ang mga kaukulang dokumento."
+      }
+    ]
+  }
+
+  if (lang === "bis") {
+    return [
+      {
+        q: "Unsa ang AICS ug kinsa ang kwalipikadong mag-apply?",
+        a: "Ang AICS (Assistance to Individuals in Crisis Situations) usa ka programa sa tabang sa gobyerno nga naghatag og tabang pinansyal ug materyal sa mga lungsuranon nga anaa sa krisis sama sa pagka-ospital, pagkamatay sa kabanay, pagkawala sa panginabuhi, o kalamidad. Ang bisan kinsang residente nga dunay balidong ID o Barangay Certificate of Indigency mahimong mag-apply."
+      },
+      {
+        q: "Unsaon nako pag-renew o pag-ilis sa nawala nga PWD o Senior Citizen ID?",
+        a: "Sayon ra kini buhaton online! Adto sa Serbisyo sa PWD o Senior Citizen sa portal, pilia ang 'Pag-renew' o 'Nawala nga ID / Pag-ilis'. Isulod ang imong 16-digit ID number para sa awtomatikong validation ug i-upload ang Affidavit of Loss."
+      },
+      {
+        q: "Unsa kadugay una ma-aprobahan ang usa ka aplikasyon?",
+        a: "Ang mga dinalian nga aplikasyon sa AICS (sama sa Medikal ug Lubong) susihon sa mga Social Worker sulod sa 24 hangtod 72 ka oras. Ang mga aplikasyon sa ID (PWD, Senior Citizen, Solo Parent) nagkinahanglan og 3 hangtod 5 ka adlaw sa trabaho para sa beripikasyon."
+      },
+      {
+        q: "Unsaon nako pagdawat sa akong naaprobahang ayuda o payout?",
+        a: "Sa higayon nga maaprobahan, makadawat ka og pahibalo sa 'Financial Aid Disbursement' diin makita ang imong eskedyul sa payout, dapit sa payout center, ug opisyal nga Digital Claim Voucher nga may QR code."
+      },
+      {
+        q: "Pwede ba kong mag-apply og kapin sa usa ka programa sa tabang?",
+        a: "Oo. Mahimo kang mag-apply og lain-laing serbisyo (pan. Senior ID + Medicine Booklet + AICS Tabang Medikal) subay sa imong panginahanglan, basta masumite ang mga gikinahanglang dokumento."
+      }
+    ]
+  }
+
+  return [
     {
       q: "What is AICS and who is eligible to apply?",
       a: "AICS (Assistance to Individuals in Crisis Situations) is an emergency social welfare program by Gov Service providing financial and material assistance to residents facing unexpected crisis such as hospitalization, death of a family member, sudden loss of income, or natural calamities. Any bona fide Gov Service resident with a valid Gov Service ID or Barangay Indigency can apply."
@@ -490,6 +822,281 @@ export default function CitizenGuideHub() {
       a: "Yes. You can apply for different services (e.g. Senior ID + Medicine Booklet + AICS Medical Assistance) based on your needs, provided you meet the specific qualifications and submit the required documentation for each program."
     }
   ]
+}
+
+export default function CitizenGuideHub() {
+  const navigate = useNavigate()
+  const { language: currentLang } = useLanguage()
+  const lang: Language = currentLang === "tl" || currentLang === "bis" ? currentLang : "en"
+  const t = GUIDE_I18N[lang] || GUIDE_I18N.en
+
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [recentApps, setRecentApps] = useState<any[]>([])
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false)
+
+  const profile = getCurrentUserProfile()
+  const qcid = getLoggedInUserQcid() || profile?.qcidNo || profile?.qcidNumber || ""
+  const userId = profile?.id || localStorage.getItem("userId") || "1"
+  const userName = profile?.firstName ? `${profile.firstName} ${profile.lastName || ""}` : (lang === "tl" ? "Mamamayan" : lang === "bis" ? "Lungsuranon" : "Resident")
+
+  const aicsServices = getAicsServices(lang)
+  const modulesList = getModulesList(lang)
+  const faqs = getFaqs(lang)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchUserStatus = async () => {
+      try {
+        const found: any[] = []
+        const currentQcid = (qcid || "").toLowerCase().trim()
+        const userEmail = (profile?.email || "").toLowerCase().trim()
+        const userLastName = (profile?.lastName || "").toLowerCase().trim()
+        const userFirstName = (profile?.firstName || "").toLowerCase().trim()
+
+        const deletedSet = new Set<string>()
+        try {
+          const localDel = JSON.parse(localStorage.getItem("deleted_user_applications") || "[]")
+          if (Array.isArray(localDel)) {
+            localDel.forEach((d: any) => {
+              if (d.applicationNo) deletedSet.add(String(d.applicationNo).toLowerCase().trim())
+              if (d.referenceNo) deletedSet.add(String(d.referenceNo).toLowerCase().trim())
+              if (d.id) deletedSet.add(String(d.id).toLowerCase().trim())
+            })
+          }
+        } catch {}
+
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token") || ""
+        const sessionToken = sessionStorage.getItem("sessionToken") || localStorage.getItem("sessionToken") || ""
+        const authHeaders: Record<string, string> = {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(sessionToken ? { "x-session-token": sessionToken } : {}),
+          ...(userEmail ? { "x-user-email": userEmail } : {}),
+        }
+
+        try {
+          const delData = await cachedApiFetch(
+            `${API_BASE}/api/user-applications/deleted?email=${encodeURIComponent(userEmail)}&qcid=${encodeURIComponent(
+              qcid
+            )}&name=${encodeURIComponent(userFirstName + " " + userLastName)}`,
+            { headers: authHeaders },
+            4000
+          ).catch(() => null)
+          if (delData && delData.applications && Array.isArray(delData.applications)) {
+            delData.applications.forEach((d: any) => {
+              if (d.referenceNo) deletedSet.add(String(d.referenceNo).toLowerCase().trim())
+              if (d.applicationId) deletedSet.add(String(d.applicationId).toLowerCase().trim())
+              if (d.id) deletedSet.add(String(d.id).toLowerCase().trim())
+            })
+          }
+        } catch {}
+
+        const isUserMatch = (a: any) => {
+          if (!a) return false
+          if (a.is_archived === true) return false
+          const aRef = String(a.reference_no || a.referenceNumber || a.reference_number || a.qc_id || a.qcid || a.applicationNo || a.assignedIdNumber || a.assigned_id_number || a.solo_parent_id_number || a.id || "").toLowerCase().trim()
+          const aEmail = String(a.email || a.guardian_email || a.guardianEmail || a.applicantInfo?.email || a.applicant_info?.email || "").toLowerCase().trim()
+          const aFirst = String(a.firstName || a.first_name || a.guardian_first_name || a.applicantInfo?.firstName || "").toLowerCase().trim()
+          const aLast = String(a.lastName || a.last_name || a.guardian_last_name || a.applicantInfo?.lastName || "").toLowerCase().trim()
+          const aName = String(a.full_name || a.applicantName || a.child_name || a.applicantInfo?.fullName || `${aFirst} ${aLast}`).toLowerCase().trim()
+
+          if (deletedSet.has(aRef) || (a.id && deletedSet.has(String(a.id).toLowerCase().trim()))) {
+            return false
+          }
+
+          if (userEmail && aEmail && userEmail === aEmail) return true
+          if (currentQcid && aRef && currentQcid.length >= 10 && aRef === currentQcid) return true
+
+          if (userFirstName && userLastName && aFirst && aLast) {
+            if (userFirstName === aFirst && userLastName === aLast) return true
+          }
+          if (userFirstName && userLastName && aName) {
+            const combined = `${userFirstName} ${userLastName}`.trim()
+            if (aName === combined || (aName.startsWith(userFirstName + " ") && aName.endsWith(" " + userLastName))) return true
+          }
+
+          return false
+        }
+
+        try {
+          const data = await cachedApiFetch(`${API_BASE}/api/aics/applications?qcId=${encodeURIComponent(qcid)}`, { headers: authHeaders }, 4000).catch(() => null)
+          if (data) {
+            const list = Array.isArray(data) ? data : data.applications || []
+            const matched = list.filter(isUserMatch).map((a: any) => {
+              const refNum = a.reference_number || a.referenceNumber || a.qc_id || a.qcid || a.id
+              return {
+                id: a.id || refNum,
+                program: a.assistance_type ? `AICS - ${a.assistance_type}` : "AICS Financial Assistance",
+                category: "AICS",
+                status: a.status || "pending",
+                date: a.created_at || new Date().toISOString(),
+                ref: refNum
+              }
+            })
+            found.push(...matched)
+          }
+        } catch {}
+
+        try {
+          const data2 = await cachedApiFetch(`${API_BASE}/api/applications?qcid=${encodeURIComponent(qcid)}`, { headers: authHeaders }, 4000).catch(() => null)
+          if (data2) {
+            const list2 = Array.isArray(data2) ? data2 : data2.applications || []
+            const matched2 = list2.filter(isUserMatch).map((a: any) => {
+              const refNum = a.applicationNo || a.assignedIdNumber || a.id
+              return {
+                id: a.id || refNum,
+                program: `${a.type?.toUpperCase() || "PWD/SENIOR"} Application (${a.category?.toUpperCase() || "NEW"})`,
+                category: a.type || "PWD/Senior",
+                status: a.status || "pending",
+                date: a.createdAt || new Date().toISOString(),
+                ref: refNum
+              }
+            })
+            found.push(...matched2)
+          }
+        } catch {}
+
+        try {
+          const data3 = await cachedApiFetch(`${API_BASE}/api/solo-parent/applications`, { headers: authHeaders }, 4000).catch(() => null)
+          if (data3) {
+            const list3 = Array.isArray(data3) ? data3 : data3.applications || []
+            const matched3 = list3.filter(isUserMatch).map((a: any) => {
+              const refNum = a.reference_number || a.solo_parent_id_number || a.id
+              return {
+                id: a.id || refNum,
+                program: "Solo Parent ID Application",
+                category: "Solo Parent",
+                status: a.status || "pending",
+                date: a.created_at || new Date().toISOString(),
+                ref: refNum
+              }
+            })
+            found.push(...matched3)
+          }
+        } catch {}
+
+        try {
+          const data4 = await cachedApiFetch(`${API_BASE}/api/child-welfare/applications`, { headers: authHeaders }, 4000).catch(() => null)
+          if (data4) {
+            const list4 = Array.isArray(data4) ? data4 : data4.applications || []
+            const matched4 = list4.filter(isUserMatch).map((a: any) => {
+              const refNum = a.reference_number || a.referenceNumber || a.id
+              return {
+                id: a.id || refNum,
+                program: a.program_title || "Child Welfare Assistance",
+                category: "Child Welfare",
+                status: a.status || "pending",
+                date: a.created_at || new Date().toISOString(),
+                ref: refNum
+              }
+            })
+            found.push(...matched4)
+          }
+        } catch {}
+
+        try {
+          const data5 = await cachedApiFetch(`${API_BASE}/api/livelihood/applications`, { headers: authHeaders }, 4000).catch(() => null)
+          if (data5) {
+            const list5 = Array.isArray(data5) ? data5 : data5.applications || []
+            const matched5 = list5.filter(isUserMatch).map((a: any) => {
+              const refNum = a.reference_number || a.referenceNumber || a.qcid || a.id
+              return {
+                id: a.id || refNum,
+                program: a.program_title || "Livelihood Assistance Grant",
+                category: "Livelihood",
+                status: a.status || "pending",
+                date: a.created_at || new Date().toISOString(),
+                ref: refNum
+              }
+            })
+            found.push(...matched5)
+          }
+        } catch {}
+
+        try {
+          const data6 = await cachedApiFetch(`${API_BASE}/api/training/applications`, { headers: authHeaders }, 4000).catch(() => null)
+          if (data6) {
+            const list6 = Array.isArray(data6) ? data6 : data6.applications || []
+            const matched6 = list6.filter(isUserMatch).map((a: any) => {
+              const refNum = a.reference_number || a.referenceNumber || a.qcid || a.id
+              return {
+                id: a.id || refNum,
+                program: a.training_name || "Skills Training Program",
+                category: "Training",
+                status: a.status || "pending",
+                date: a.created_at || new Date().toISOString(),
+                ref: refNum
+              }
+            })
+            found.push(...matched6)
+          }
+        } catch {}
+
+        const localKeys = ["pwd_senior_applications", "aics_applications", "all_user_applications", "applications", "livelihood_applications", "training_applications", "child_welfare_applications", "solo_parent_applications"]
+        for (const k of localKeys) {
+          try {
+            const local = JSON.parse(localStorage.getItem(k) || "[]")
+            if (Array.isArray(local)) {
+              const cleaned = local.filter((item: any) => {
+                const itemRef = String(item.referenceNumber || item.reference_no || item.applicationNo || item.id || "").toLowerCase().trim()
+                return !deletedSet.has(itemRef)
+              })
+              if (cleaned.length !== local.length) {
+                localStorage.setItem(k, JSON.stringify(cleaned))
+              }
+            }
+          } catch {}
+        }
+
+        const uniqueFound: any[] = []
+        const seenRefs = new Set<string>()
+        for (const item of found) {
+          const r = String(item.ref || item.id || "").toLowerCase().trim()
+          if (!seenRefs.has(r)) {
+            seenRefs.add(r)
+            uniqueFound.push(item)
+          }
+        }
+
+        if (isMounted) {
+          setRecentApps(uniqueFound)
+        }
+      } catch {}
+    }
+
+    fetchUserStatus()
+
+    const handleUpdate = () => {
+      fetchUserStatus()
+    }
+
+    const unsubscribe = subscribeToRealtimeChanges(() => {
+      fetchUserStatus()
+    })
+
+    window.addEventListener("applications_updated", handleUpdate)
+    window.addEventListener("solo_parent_applications_updated", handleUpdate)
+    window.addEventListener("pwd_senior_applications_updated", handleUpdate)
+    window.addEventListener("child_welfare_applications_updated", handleUpdate)
+    window.addEventListener("financial_disbursements_updated", handleUpdate)
+    window.addEventListener("storage", handleUpdate)
+
+    const interval = setInterval(fetchUserStatus, 3500)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      unsubscribe()
+      window.removeEventListener("applications_updated", handleUpdate)
+      window.removeEventListener("solo_parent_applications_updated", handleUpdate)
+      window.removeEventListener("pwd_senior_applications_updated", handleUpdate)
+      window.removeEventListener("child_welfare_applications_updated", handleUpdate)
+      window.removeEventListener("financial_disbursements_updated", handleUpdate)
+      window.removeEventListener("storage", handleUpdate)
+    }
+  }, [qcid, profile?.email, profile?.lastName, profile?.firstName, userId])
 
   const hasSearch = searchTerm.trim().length > 0
 
@@ -519,11 +1126,18 @@ export default function CitizenGuideHub() {
 
   const totalResultsCount = (hasSearch ? filteredAics.length : 0) + filteredModules.length
 
+  const categories = [
+    { id: "all", label: t.catAll },
+    { id: "aics", label: t.catAics },
+    { id: "pwd-senior", label: t.catPwdSenior },
+    { id: "family", label: t.catFamily },
+    { id: "livelihood", label: t.catLivelihood },
+  ]
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-16">
-      {}
+      {/* Hero Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white pt-8 pb-12 px-4 sm:px-6 lg:px-8 shadow-sm">
-        {}
         <div className="absolute -right-12 sm:-right-6 md:right-0 lg:right-4 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0">
           <img
             src="/gov-serves-seal.png"
@@ -537,13 +1151,13 @@ export default function CitizenGuideHub() {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-semibold backdrop-blur-sm">
                 <Sparkles className="h-3.5 w-3.5 text-blue-300" />
-                Gov Serves Social Services Portal • Help & Service Guide
+                {t.portalBadge}
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
-                Welcome, {userName}!
+                {t.welcome(userName)}
               </h1>
               <p className="text-sm sm:text-base text-blue-100/80 max-w-2xl leading-relaxed">
-                Learn about available financial aid programs (AICS), special sector benefits (PWD, Senior Citizen, Solo Parent), child welfare, livelihood grants, and document requirements before applying.
+                {t.heroDesc}
               </p>
             </div>
 
@@ -554,19 +1168,19 @@ export default function CitizenGuideHub() {
                 className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold backdrop-blur-sm border border-white/20 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
               >
                 <FileText className="h-4 w-4" />
-                Track My Applications
+                {t.trackAppsBtn}
               </button>
             </div>
           </div>
 
-          {}
+          {/* Search Box */}
           <div className="mt-8 relative max-w-2xl">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)..."
+              placeholder={t.searchPlaceholder}
               className="w-full pl-12 pr-10 py-3.5 bg-white text-gray-900 placeholder-gray-400 dark:bg-slate-800/90 dark:text-white dark:placeholder-slate-400 rounded-2xl shadow-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 border-0"
             />
             {hasSearch && (
@@ -575,20 +1189,14 @@ export default function CitizenGuideHub() {
                 onClick={() => setSearchTerm("")}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg font-bold cursor-pointer transition-colors"
               >
-                ✕ Clear
+                {t.clearSearch}
               </button>
             )}
           </div>
 
-          {}
+          {/* Category Filter Pills */}
           <div className="mt-4 flex flex-wrap items-center gap-2 pt-1">
-            {[
-              { id: "all", label: "All Services" },
-              { id: "aics", label: "AICS Crisis Aid (6 Types)" },
-              { id: "pwd-senior", label: "PWD & Senior Citizens" },
-              { id: "family", label: "Solo Parent & Child Welfare" },
-              { id: "livelihood", label: "Livelihood & Payouts" },
-            ].map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
@@ -608,27 +1216,27 @@ export default function CitizenGuideHub() {
               type="button"
               onClick={() => setIsAiModalOpen(true)}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-900/40 border border-blue-400/40 backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer animate-in fade-in"
-              title="Click to assess eligibility and get personalized assistance recommendations"
+              title={t.assistanceFinderTitle}
             >
               <HeartHandshake className="h-4 w-4 text-blue-200" />
-              <span>Assistance &amp; Eligibility Finder</span>
+              <span>{t.assistanceFinderBtn}</span>
             </button>
           </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 space-y-8">
-        {}
+        {/* Search Results */}
         {hasSearch && (
           <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-md space-y-4 animate-in fade-in duration-200">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div className="flex items-center gap-2">
                 <Search className="h-5 w-5 text-blue-600" />
                 <h2 className="text-base sm:text-lg font-bold text-gray-900">
-                  Search Results for <span className="text-blue-600">"{searchTerm}"</span>
+                  {t.searchResultsFor} <span className="text-blue-600">"{searchTerm}"</span>
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
-                  {totalResultsCount} found
+                  {totalResultsCount} {t.found}
                 </span>
               </div>
               <button
@@ -636,18 +1244,17 @@ export default function CitizenGuideHub() {
                 onClick={() => setSearchTerm("")}
                 className="text-xs font-bold text-gray-500 hover:text-gray-800 cursor-pointer"
               >
-                Reset Search
+                {t.resetSearch}
               </button>
             </div>
 
             {totalResultsCount === 0 ? (
               <div className="py-8 text-center space-y-2">
-                <p className="text-sm font-bold text-gray-700">No matching social service or requirement found.</p>
-                <p className="text-xs text-gray-500">Try searching for keywords like "Medical", "PWD", "Senior", "Solo Parent", "Funeral", or "Livelihood".</p>
+                <p className="text-sm font-bold text-gray-700">{t.noMatching}</p>
+                <p className="text-xs text-gray-500">{t.noMatchingHint}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {}
                 {filteredModules.map((mod) => (
                   <div
                     key={mod.id}
@@ -672,7 +1279,6 @@ export default function CitizenGuideHub() {
                   </div>
                 ))}
 
-                {}
                 {filteredAics.map((svc) => (
                   <div
                     key={svc.type}
@@ -684,7 +1290,7 @@ export default function CitizenGuideHub() {
                           <svc.icon className="h-4 w-4" />
                         </div>
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">
-                          AICS Crisis Aid
+                          {t.crisisFinancialAid}
                         </span>
                         <h3 className="font-bold text-gray-900 text-sm">{svc.title}</h3>
                       </div>
@@ -695,7 +1301,7 @@ export default function CitizenGuideHub() {
                       onClick={() => navigate(svc.path)}
                       className="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
                     >
-                      Apply for {svc.title} <ArrowRight className="h-3.5 w-3.5" />
+                      {t.applyFor(svc.title)} <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ))}
@@ -704,25 +1310,25 @@ export default function CitizenGuideHub() {
           </div>
         )}
 
-        {}
+        {/* Filtered View */}
         {!hasSearch && selectedCategory !== "all" && (
           <div className="space-y-6 animate-in fade-in duration-150">
             <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="space-y-0.5">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wide">
-                  Filtered Services
+                  {t.filteredServices}
                 </div>
                 <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
                   {selectedCategory === "pwd-senior"
-                    ? "PWD & Senior Citizen Welfare Services"
+                    ? (lang === "tl" ? "Mga Serbisyong Panlipunan para sa PWD at Senior Citizen" : lang === "bis" ? "Mga Serbisyo Sosyal para sa PWD ug Senior Citizen" : "PWD & Senior Citizen Welfare Services")
                     : selectedCategory === "family"
-                    ? "Solo Parent & Child Welfare Services"
+                    ? (lang === "tl" ? "Mga Serbisyo para sa Solo Parent at Kapakanan ng Bata" : lang === "bis" ? "Mga Serbisyo para sa Solo Parent ug Kaayohan sa Bata" : "Solo Parent & Child Welfare Services")
                     : selectedCategory === "livelihood"
-                    ? "Livelihood, Training & Financial Aid Services"
-                    : "AICS Crisis Intervention Programs"}
+                    ? (lang === "tl" ? "Mga Serbisyo sa Kabuhayan, Pagsasanay at Ayuda" : lang === "bis" ? "Mga Serbisyo sa Panginabuhi, Pagbansay ug Tabang Pinansyal" : "Livelihood, Training & Financial Aid Services")
+                    : (lang === "tl" ? "Mga Programa ng AICS Crisis Intervention" : lang === "bis" ? "Mga Programa sa AICS Crisis Intervention" : "AICS Crisis Intervention Programs")}
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Showing {filteredModules.length + (selectedCategory === "aics" ? aicsServices.length : 0)} available programs in this category.
+                  {t.showingCategoryCount(filteredModules.length + (selectedCategory === "aics" ? aicsServices.length : 0))}
                 </p>
               </div>
 
@@ -731,21 +1337,20 @@ export default function CitizenGuideHub() {
                 onClick={() => setSelectedCategory("all")}
                 className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-gray-700 text-xs font-bold transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
               >
-                ✕ View All Services
+                {t.viewAllServicesBtn}
               </button>
             </div>
 
-            {}
             {selectedCategory === "aics" && (
               <div className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
                   <div className="space-y-1">
                     <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wide">
                       <ShieldAlert className="h-4 w-4" />
-                      Crisis Intervention Program
+                      {t.crisisFinancialAid}
                     </div>
                     <h3 className="text-xl font-extrabold text-gray-900">
-                      AICS 6 Assistance Types &amp; Document Checklist
+                      {t.aicsSectionTitle}
                     </h3>
                   </div>
                   <button
@@ -753,7 +1358,7 @@ export default function CitizenGuideHub() {
                     onClick={() => navigate("/portal/aics?type=medical")}
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                   >
-                    Open AICS Application <ArrowRight className="h-3.5 w-3.5" />
+                    {t.openAicsAppBtn} <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
 
@@ -770,14 +1375,14 @@ export default function CitizenGuideHub() {
                           </div>
                           <div>
                             <h4 className="font-bold text-gray-900 text-sm">{svc.title}</h4>
-                            <span className="text-[11px] text-blue-600 font-semibold">Crisis Financial Aid</span>
+                            <span className="text-[11px] text-blue-600 font-semibold">{t.crisisFinancialAid}</span>
                           </div>
                         </div>
                         <p className="text-xs text-gray-600 leading-relaxed">{svc.desc}</p>
 
                         <div className="bg-slate-100/80 rounded-xl p-3 space-y-1.5">
                           <div className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">
-                            Key Requirements:
+                            {t.keyRequirements}
                           </div>
                           <ul className="text-[11px] text-gray-600 space-y-1 list-disc list-inside">
                             {svc.requirements.map((req, rIdx) => (
@@ -792,7 +1397,7 @@ export default function CitizenGuideHub() {
                         onClick={() => navigate(svc.path)}
                         className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        Apply for {svc.title} <ArrowRight className="h-3.5 w-3.5" />
+                        {t.applyFor(svc.title)} <ArrowRight className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   ))}
@@ -800,7 +1405,6 @@ export default function CitizenGuideHub() {
               </div>
             )}
 
-            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {filteredModules.map((mod) => (
                 <div
@@ -861,23 +1465,23 @@ export default function CitizenGuideHub() {
           </div>
         )}
 
-        {}
+        {/* Default View */}
         {!hasSearch && selectedCategory === "all" && (
           <>
-            {}
+            {/* Active Applications Status */}
             {recentApps.length > 0 && (
               <div className="bg-white border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-blue-900 font-bold text-sm">
                     <Clock className="h-4 w-4 text-blue-600" />
-                    <span>Your Active & Recent Applications Status</span>
+                    <span>{t.recentTitle}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => navigate("/portal/my-applications")}
                     className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
                   >
-                    View History <ArrowRight className="h-3.5 w-3.5" />
+                    {t.viewHistory} <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -896,12 +1500,12 @@ export default function CitizenGuideHub() {
                           {isApproved ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300">
                               <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                              Approved
+                              {t.statusApproved}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[10px] bg-amber-100 text-amber-800 border border-amber-300">
                               <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                              Under Review
+                              {t.statusUnderReview}
                             </span>
                           )}
                         </div>
@@ -912,44 +1516,36 @@ export default function CitizenGuideHub() {
               </div>
             )}
 
-            {}
+            {/* How It Works Steps */}
             <div className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs">
               <div className="text-center max-w-2xl mx-auto mb-8 space-y-1">
                 <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-                  How the Social Services Application Works
+                  {t.howItWorksTitle}
                 </h2>
                 <p className="text-sm text-gray-500">
-                  Four simple steps from application filing to official payout and ID releasing.
+                  {t.howItWorksSubtitle}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
                 {[
                   {
-                    step: "01",
-                    title: "Select Service & Requirements",
-                    desc: "Choose the service you need (AICS, PWD, Senior, Solo Parent) and prepare the required digital files (Indigency, Medical Abstract, IDs).",
+                    ...t.steps[0],
                     icon: FileCheck,
                     color: "text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-400"
                   },
                   {
-                    step: "02",
-                    title: "Fill Online Form & Upload",
-                    desc: "Provide your citizen details, address, and upload legible photos or scanned copies of supporting documents.",
+                    ...t.steps[1],
                     icon: FileText,
                     color: "text-indigo-600 bg-indigo-50 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-400"
                   },
                   {
-                    step: "03",
-                    title: "Social Worker Assessment",
-                    desc: "Assigned City Social Workers review your case, evaluate eligibility, and approve the assistance amount or ID card request.",
+                    ...t.steps[2],
                     icon: Building2,
                     color: "text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-500/10 dark:border-purple-500/30 dark:text-purple-400"
                   },
                   {
-                    step: "04",
-                    title: "Approval & Payout / ID Claim",
-                    desc: "Receive real-time notification, QR Claim Voucher for financial payout, or notification to claim your official ID card.",
+                    ...t.steps[3],
                     icon: CreditCard,
                     color: "text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-400"
                   }
@@ -973,19 +1569,19 @@ export default function CitizenGuideHub() {
               </div>
             </div>
 
-            {}
+            {/* AICS Breakdown */}
             <div id="aics-breakdown" className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
                 <div className="space-y-1">
                   <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wide">
                     <ShieldAlert className="h-4 w-4" />
-                    Crisis Intervention Program
+                    {t.crisisFinancialAid}
                   </div>
                   <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-                    AICS Assistance Types &amp; Document Checklist
+                    {t.aicsSectionTitle}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    Direct financial and material assistance for indigent individuals in crisis situations.
+                    {t.aicsSectionDesc}
                   </p>
                 </div>
                 <button
@@ -993,7 +1589,7 @@ export default function CitizenGuideHub() {
                   onClick={() => navigate("/portal/aics?type=medical")}
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer self-start md:self-auto"
                 >
-                  Open AICS Application <ArrowRight className="h-3.5 w-3.5" />
+                  {t.openAicsAppBtn} <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
 
@@ -1010,14 +1606,14 @@ export default function CitizenGuideHub() {
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 text-sm">{svc.title}</h3>
-                          <span className="text-[11px] text-blue-600 font-semibold">Crisis Financial Aid</span>
+                          <span className="text-[11px] text-blue-600 font-semibold">{t.crisisFinancialAid}</span>
                         </div>
                       </div>
                       <p className="text-xs text-gray-600 leading-relaxed">{svc.desc}</p>
 
                       <div className="bg-slate-100/80 rounded-xl p-3 space-y-1.5">
                         <div className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">
-                          Key Requirements:
+                          {t.keyRequirements}
                         </div>
                         <ul className="text-[11px] text-gray-600 space-y-1 list-disc list-inside">
                           {svc.requirements.map((req, rIdx) => (
@@ -1032,21 +1628,21 @@ export default function CitizenGuideHub() {
                       onClick={() => navigate(svc.path)}
                       className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      Apply for {svc.title} <ArrowRight className="h-3.5 w-3.5" />
+                      {t.applyFor(svc.title)} <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            {}
+            {/* Modules Grid */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-                  Explore All Social Welfare Modules & Services
+                  {t.exploreModulesTitle}
                 </h2>
                 <span className="text-xs font-bold text-gray-500">
-                  Showing {filteredModules.length} programs
+                  {t.showingModulesCount(filteredModules.length)}
                 </span>
               </div>
 
@@ -1111,14 +1707,14 @@ export default function CitizenGuideHub() {
           </>
         )}
 
-        {}
+        {/* General Qualifications */}
         <div className="bg-gradient-to-br from-blue-900 to-indigo-950 text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
           <div className="max-w-2xl space-y-2">
             <h2 className="text-xl sm:text-2xl font-extrabold text-white">
-              General Qualification & Document Requirements
+              {t.generalReqsTitle}
             </h2>
             <p className="text-xs sm:text-sm text-blue-200 leading-relaxed">
-              Before submitting any application, make sure your digital copies are clear, legible, and uncropped.
+              {t.generalReqsSubtitle}
             </p>
           </div>
 
@@ -1126,36 +1722,36 @@ export default function CitizenGuideHub() {
             <div className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-4 space-y-2">
               <div className="font-bold text-sm text-blue-100 flex items-center gap-2">
                 <Info className="h-4 w-4 text-blue-300" />
-                Proof of Identity & Residency
+                {t.reqProofTitle}
               </div>
               <p className="text-xs text-blue-200/90 leading-relaxed">
-                Official QCID Card, PhilSys National ID, Voter's Certification, or Barangay Certificate of Residency with at least 6 months residency.
+                {t.reqProofDesc}
               </p>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-4 space-y-2">
               <div className="font-bold text-sm text-blue-100 flex items-center gap-2">
                 <Info className="h-4 w-4 text-blue-300" />
-                Certificate of Indigency
+                {t.reqIndigencyTitle}
               </div>
               <p className="text-xs text-blue-200/90 leading-relaxed">
-                Issued by your Barangay Captain or authorized barangay official stating the family is indigent and specifying the purpose of assistance.
+                {t.reqIndigencyDesc}
               </p>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-4 space-y-2">
               <div className="font-bold text-sm text-blue-100 flex items-center gap-2">
                 <Info className="h-4 w-4 text-blue-300" />
-                Program-Specific Documents
+                {t.reqSpecificTitle}
               </div>
               <p className="text-xs text-blue-200/90 leading-relaxed">
-                Medical abstract/prescriptions for Medical aid; Death certificate & funeral contract for Burial aid; School Certificate for Education; Doctor's assessment for PWD.
+                {t.reqSpecificDesc}
               </p>
             </div>
           </div>
         </div>
 
-        {}
+        {/* FAQs */}
         <div className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200">
@@ -1163,10 +1759,10 @@ export default function CitizenGuideHub() {
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-gray-900">
-                Frequently Asked Questions (FAQs) & Help
+                {t.faqTitle}
               </h2>
               <p className="text-xs sm:text-sm text-gray-500">
-                Got questions about social services? Find quick answers below.
+                {t.faqSubtitle}
               </p>
             </div>
           </div>
@@ -1202,15 +1798,15 @@ export default function CitizenGuideHub() {
           </div>
         </div>
 
-        {}
+        {/* Support Hotline Footer */}
         <div className="bg-slate-100 border border-slate-200 dark:bg-slate-900/80 dark:border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="space-y-1">
             <div className="font-bold text-gray-900 text-sm flex items-center justify-center sm:justify-start gap-2">
               <PhoneCall className="h-4 w-4 text-blue-600" />
-              Need Personal Assistance or Inquiries?
+              {t.hotlineTitle}
             </div>
             <p className="text-xs text-gray-500">
-              Quezon City Social Services Development Department (SSDD) Hotline: (02) 8988-4242 loc. 8701 / 8702
+              {t.hotlineDesc}
             </p>
           </div>
           <button
@@ -1218,12 +1814,12 @@ export default function CitizenGuideHub() {
             onClick={() => navigate("/portal/aics?type=medical")}
             className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap"
           >
-            Start an Application
+            {t.startAppBtn}
           </button>
         </div>
       </div>
 
-      {}
+      {/* Assistance Finder Modal */}
       <AIAssistanceFinderModal
         isOpen={isAiModalOpen}
         onClose={() => setIsAiModalOpen(false)}
