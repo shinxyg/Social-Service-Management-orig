@@ -40,12 +40,11 @@ interface AIAssistanceFinderModalProps {
 const I18N = {
   en: {
     modalTitle: "MSWDO Smart Social Assistance Intake Interview",
-    modalBadge: "AI POWERED",
     modalSubtitle: "Complete this guided intake survey to identify all municipal social welfare programs you are eligible for.",
     step1Tab: "1. Household & Demographics",
     step2Tab: "2. Current Hardships & Crisis",
     step3Tab: "3. Narrative Statement",
-    step4Tab: "4. AI Assessment & Recommendations",
+    step4Tab: "4. Assessment & Recommendations",
 
     s1Title: "Household Profile & Socio-Economic Demographics",
     s1Subtitle: "Please provide baseline demographic and living conditions to ensure precise MSWDO policy evaluation.",
@@ -185,12 +184,11 @@ const I18N = {
 
   tl: {
     modalTitle: "MSWDO Matalinong Panayam at Gabay sa Tulong Panlipunan",
-    modalBadge: "AI POWERED",
     modalSubtitle: "Kumpletuhin ang gabay na panayam na ito upang matukoy ang lahat ng programa ng pamahalaan kung saan ka kwalipikado.",
     step1Tab: "1. Pamilya at Demograpiko",
     step2Tab: "2. Mga Hamon at Sitwasyon",
     step3Tab: "3. Sitwasyon at Kwento",
-    step4Tab: "4. Rekomendasyon ng AI",
+    step4Tab: "4. Rekomendasyon sa Tulong Panlipunan",
 
     s1Title: "Profile ng Sambahayan at Katayuang Sosyo-Ekonomiko",
     s1Subtitle: "Magbigay ng detalyadong impormasyon tungkol sa iyong pamilya at kalagayan sa buhay para sa tumpak na ebalwasyon.",
@@ -330,12 +328,11 @@ const I18N = {
 
   bis: {
     modalTitle: "MSWDO Maalamon nga Interbyu ug Giya sa Tabang Sosyal",
-    modalBadge: "AI POWERED",
     modalSubtitle: "Kompletuha kining giya nga interbyu aron mahibal-an ang tanang programa sa gobyerno nga angayan nimong madawat.",
     step1Tab: "1. Pamilya ug Demograpiko",
     step2Tab: "2. Mga Kalisod ug Kahimtang",
     step3Tab: "3. Sitwasyon ug Sugilanon",
-    step4Tab: "4. Rekomendasyon sa AI",
+    step4Tab: "4. Rekomendasyon sa Tabang Sosyal",
 
     s1Title: "Profile sa Panimalay ug Panginabuhian",
     s1Subtitle: "Palihog paghatag og detalyadong kasayuran bahin sa imong pamilya ug kahimtang sa kinabuhi.",
@@ -481,14 +478,10 @@ export default function AIAssistanceFinderModal({
   const navigate = useNavigate()
   const { language: contextLang, setLanguage } = useLanguage()
 
-  const [selectedLang, setSelectedLang] = useState<Language>(() => {
-    return contextLang === "tl" || contextLang === "bis" ? contextLang : "en"
-  })
-
+  const selectedLang: Language = contextLang === "tl" || contextLang === "bis" ? contextLang : "en"
   const t = I18N[selectedLang] || I18N.en
 
   const handleLanguageChange = (lang: Language) => {
-    setSelectedLang(lang)
     setLanguage(lang)
   }
 
@@ -1110,17 +1103,14 @@ export default function AIAssistanceFinderModal({
         {}
         <div className="relative px-5 sm:px-7 py-4 sm:py-5 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-amber-300 shadow-inner shrink-0">
-              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
+            <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-blue-300 shadow-inner shrink-0">
+              <HeartHandshake className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm sm:text-base md:text-lg font-extrabold text-white tracking-tight">
                   {t.modalTitle}
                 </h3>
-                <span className="text-[9px] sm:text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-xs">
-                  {t.modalBadge}
-                </span>
               </div>
               <p className="text-[11px] sm:text-xs text-blue-200/90 leading-tight line-clamp-1">
                 {t.modalSubtitle}
@@ -1238,11 +1228,11 @@ export default function AIAssistanceFinderModal({
               }}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
                 currentStep === 4
-                  ? "bg-gradient-to-r from-amber-500 to-rose-600 text-white shadow-xs font-black"
+                  ? "bg-blue-600 text-white shadow-xs font-bold"
                   : "text-gray-500 hover:text-gray-800 dark:text-slate-400"
               }`}
             >
-              <Sparkles className="h-3 w-3" />
+              <CheckCircle2 className="h-3.5 w-3.5" />
               <span>{t.step4Tab}</span>
             </button>
           </div>

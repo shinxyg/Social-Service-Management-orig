@@ -603,15 +603,15 @@ export default function CitizenGuideHub() {
               </button>
             ))}
 
-            {}
+            {/* Assistance Finder Pill Button */}
             <button
               type="button"
               onClick={() => setIsAiModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-400 hover:via-rose-400 hover:to-indigo-500 shadow-md shadow-indigo-900/30 border border-white/30 backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer animate-in fade-in"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-900/40 border border-blue-400/40 backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer animate-in fade-in"
               title="Click to assess eligibility and get personalized assistance recommendations"
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-200 animate-spin-slow" />
-              <span>✨ AI Assistance &amp; Eligibility Finder</span>
+              <HeartHandshake className="h-4 w-4 text-blue-200" />
+              <span>Assistance &amp; Eligibility Finder</span>
             </button>
           </div>
         </div>
