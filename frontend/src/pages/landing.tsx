@@ -128,11 +128,10 @@ export function LandingPage() {
 
           {}
           <h1 className="font-heading text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:text-6xl tracking-tight">
-            <span className="block">Social Services</span>
-            <span className="block bg-linear-to-r from-primary via-blue-500 to-indigo-600 bg-clip-text text-transparent my-1.5 pb-1">
-              Management
+            <span className="block bg-linear-to-r from-primary via-blue-500 to-indigo-600 bg-clip-text text-transparent pb-1">
+              Social Services Management
             </span>
-            <span className="block">Made Simple</span>
+            <span className="block mt-2">Made Simple</span>
           </h1>
 
           {}
