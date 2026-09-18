@@ -34,38 +34,6 @@ const stats = [
   { value: 'Real-Time', label: 'Status Updates', desc: 'Instant Tracking' },
 ];
 
-const TYPEWRITER_WORDS = ['AICS', 'PWD & Senior Citizen', 'Solo Parent & Child Welfare', 'Livelihood & Training Program', 'Financial Aid'];
-
-function useTypewriter(words: string[], typingMs = 90, pauseMs = 1400, deletingMs = 45) {
-  const [wordIndex, setWordIndex] = useState(0);
-  const [text, setText] = useState('');
-  const [phase, setPhase] = useState<'typing' | 'pausing' | 'deleting'>('typing');
-
-  useEffect(() => {
-    const current = words[wordIndex];
-    if (phase === 'typing') {
-      if (text.length < current.length) {
-        const t = setTimeout(() => setText(current.slice(0, text.length + 1)), typingMs);
-        return () => clearTimeout(t);
-      }
-      const t = setTimeout(() => setPhase('pausing'), pauseMs);
-      return () => clearTimeout(t);
-    }
-    if (phase === 'pausing') {
-      const t = setTimeout(() => setPhase('deleting'), pauseMs);
-      return () => clearTimeout(t);
-    }
-    if (text.length > 0) {
-      const t = setTimeout(() => setText(current.slice(0, text.length - 1)), deletingMs);
-      return () => clearTimeout(t);
-    }
-    setWordIndex((i) => (i + 1) % words.length);
-    setPhase('typing');
-  }, [text, phase, wordIndex, words, typingMs, pauseMs, deletingMs]);
-
-  return text;
-}
-
 const FLOATING = [
   { Icon: Home, top: '10%', left: '5%', color: 'text-emerald-500/20', size: 26, delay: '0s' },
   { Icon: MapPin, top: '78%', left: '92%', color: 'text-sky-500/20', size: 20, delay: '-2s' },
@@ -73,7 +41,6 @@ const FLOATING = [
 ];
 
 export function LandingPage() {
-  const typewriterText = useTypewriter(TYPEWRITER_WORDS);
   const [dark, setDark] = useState(() => getInitialTheme());
 
   useEffect(() => {
@@ -162,12 +129,9 @@ export function LandingPage() {
           {}
           <h1 className="font-heading text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:text-6xl tracking-tight">
             <span className="block">Social Services</span>
-            <div className="h-[1.35em] flex items-center justify-center my-1.5 overflow-hidden">
-              <span className="inline-flex items-center justify-center whitespace-nowrap bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent px-2">
-                <span>{typewriterText || '\u00A0'}</span>
-                <span className="inline-block h-[0.82em] w-0.75 sm:w-1 bg-primary/70 animate-pulse ml-1 shrink-0" aria-hidden="true" />
-              </span>
-            </div>
+            <span className="block bg-linear-to-r from-primary via-blue-500 to-indigo-600 bg-clip-text text-transparent my-1.5 pb-1">
+              Management
+            </span>
             <span className="block">Made Simple</span>
           </h1>
 
