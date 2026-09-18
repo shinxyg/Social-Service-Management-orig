@@ -108,7 +108,7 @@ export function LandingPage() {
               className="h-8 w-8 md:h-9 md:w-9 object-contain shrink-0"
             />
             <span className="font-heading text-xs md:text-base font-bold whitespace-nowrap">
-              Social Services <br className="md:hidden" /> Management
+              Gov Service
             </span>
           </div>
           <button
