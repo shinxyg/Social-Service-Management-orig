@@ -1,10 +1,5 @@
 import type { ReactNode } from "react"
 
-// Shared input styling + small form primitives used across the admin
-// wizards (application-wizard.tsx, pwd-senior-wizard.tsx, solo-parent-wizard.tsx,
-// livelihood-wizard.tsx) and the resident-facing apply forms in user-portal/.
-// Centralized here so all wizards/forms stay visually consistent.
-
 export const inputCls =
   "w-full rounded-lg bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground border-0 outline-none focus:ring-2 focus:ring-primary/40"
 

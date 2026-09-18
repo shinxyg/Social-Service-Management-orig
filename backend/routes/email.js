@@ -7,7 +7,6 @@ const {
   sendSoloParentApprovalEmail,
 } = require('../services/emailService');
 
-// POST /api/email/send-pwd-id
 router.post('/send-pwd-id', async (req, res) => {
   try {
     const {
@@ -45,7 +44,6 @@ router.post('/send-pwd-id', async (req, res) => {
   }
 });
 
-// POST /api/email/send-senior-id
 router.post('/send-senior-id', async (req, res) => {
   try {
     const {
@@ -83,7 +81,6 @@ router.post('/send-senior-id', async (req, res) => {
   }
 });
 
-// POST /api/email/send-solo-parent-id
 router.post('/send-solo-parent-id', async (req, res) => {
   try {
     const {
@@ -121,7 +118,6 @@ router.post('/send-solo-parent-id', async (req, res) => {
   }
 });
 
-// POST /api/email/send-senior-booklet
 router.post('/send-senior-booklet', async (req, res) => {
   try {
     const {

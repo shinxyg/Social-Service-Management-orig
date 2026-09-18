@@ -48,7 +48,6 @@ interface MonthlyData {
   disbursed: number
 }
 
-// Initial baseline stats matching the system's active records
 const BASELINE_MODULE_STATS: ModuleStat[] = [
   { module: "AICS", total: 184, pending: 37, approved: 129, rejected: 18 },
   { module: "PWD & Senior Citizen", total: 96, pending: 21, approved: 68, rejected: 7 },
@@ -132,12 +131,10 @@ export default function Reports() {
     setTimeout(() => setBarsAnimated(true), 80)
   }
 
-  // Real-time dynamic stats
   const [moduleStats, setModuleStats] = useState<ModuleStat[]>(BASELINE_MODULE_STATS)
   const [disbursementSources, setDisbursementSources] = useState<DisbursementSource[]>(BASELINE_DISBURSEMENTS)
   const [recentMonths, setRecentMonths] = useState<MonthlyData[]>(BASELINE_MONTHS)
 
-  // Helper to avoid unnecessary re-renders when data hasn't changed
   const updateIfChanged = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, nextVal: T) => {
     setter((prev) => {
       if (JSON.stringify(prev) === JSON.stringify(nextVal)) return prev
@@ -145,10 +142,9 @@ export default function Reports() {
     })
   }
 
-  // Calculate live analytics from database endpoints and local live state
   const fetchLiveAnalytics = useCallback(async () => {
     try {
-      // 1. Try fetching directly from the backend analytics endpoint
+
       let backendSuccess = false
       try {
         const res = await fetch(`${API_BASE}/api/analytics/overview?range=${encodeURIComponent(range)}`)
@@ -160,7 +156,6 @@ export default function Reports() {
             const apiDisb: DisbursementSource[] = resData.data.disbursementSources
             const apiMonths: MonthlyData[] = resData.data.recentMonths
 
-            // Merge with any local storage data (e.g. freshly submitted in-browser applications)
             const localPwd = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
             const localLivelihood = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
             const localDisb = JSON.parse(localStorage.getItem("all_financial_disbursements") || "[]")
@@ -181,7 +176,6 @@ export default function Reports() {
               return s
             })
 
-            // Calculate total disbursements from API or local fallback
             let finalDisb = apiDisb
             if (localDisb.length > 0) {
               let aicsAmt = 0, pensionAmt = 0, eduAmt = 0, liveAmt = 0
@@ -216,7 +210,6 @@ export default function Reports() {
         console.warn("Could not load /api/analytics/overview, trying individual modules:", err)
       }
 
-      // 2. If direct analytics API did not return, fetch across modules in parallel
       if (!backendSuccess) {
         const [aicsRes, pwdRes, liveRes, disbRes] = await Promise.all([
           fetch(`${API_BASE}/api/aics/applications`).catch(() => null),
@@ -249,7 +242,6 @@ export default function Reports() {
         const localDisb = JSON.parse(localStorage.getItem("all_financial_disbursements") || "[]")
         if (localDisb.length > disbList.length) disbList = localDisb
 
-        // Build live stats
         const isApp = (s: string) => ["approved", "completed", "for_release"].includes(String(s || "").toLowerCase())
         const isPen = (s: string) => ["pending", "under_review", "submitted"].includes(String(s || "").toLowerCase())
         const isRej = (s: string) => ["rejected", "denied"].includes(String(s || "").toLowerCase())
@@ -301,7 +293,6 @@ export default function Reports() {
     }
   }, [range])
 
-  // Computed Totals
   const totals = useMemo(() => {
     const total = moduleStats.reduce((s, m) => s + m.total, 0)
     const approved = moduleStats.reduce((s, m) => s + m.approved, 0)
@@ -313,7 +304,6 @@ export default function Reports() {
     return { total, approved, pending, rejected, disbursed, approvalRate }
   }, [moduleStats, disbursementSources])
 
-  // Doughnut share data
   const moduleShareData = useMemo(
     () =>
       moduleStats.map((m) => ({
@@ -325,7 +315,6 @@ export default function Reports() {
     [moduleStats, totals.total]
   )
 
-  // Disbursement bar chart data
   const disbursementData = useMemo(
     () =>
       disbursementSources.map((d) => ({
@@ -336,7 +325,6 @@ export default function Reports() {
     [disbursementSources, totals.disbursed]
   )
 
-  // Live polling and event listeners
   useEffect(() => {
     fetchLiveAnalytics()
     const interval = setInterval(() => fetchLiveAnalytics(), 8000)
@@ -365,7 +353,6 @@ export default function Reports() {
 
   const maskPiiExport = true
 
-  // Export Analytics to CSV
   const handleExport = () => {
     const lines = [
       ["QUEZON CITY SOCIAL SERVICES DEVELOPMENT DEPARTMENT"],
@@ -417,7 +404,7 @@ export default function Reports() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Reports &amp; Analytics</h1>
@@ -446,7 +433,7 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Top-level stat cards */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card border border-border rounded-2xl p-5 shadow-soft transition-transform hover:-translate-y-0.5 duration-200">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -487,11 +474,11 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Applications by module — doughnut chart + breakdown bars */}
+      {}
       <div className="bg-card border border-border rounded-2xl shadow-soft p-6">
         <h2 className="text-sm font-semibold text-foreground mb-4">Applications by program</h2>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
-          {/* Doughnut showing % share of total applications */}
+          {}
           <div className="lg:col-span-2 h-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -518,7 +505,7 @@ export default function Reports() {
             </ResponsiveContainer>
           </div>
 
-          {/* Per-program breakdown, showing pending/approved/rejected detail */}
+          {}
           <div className="lg:col-span-3 space-y-4">
             {moduleStats.map((m, idx) => {
               const colors = getModuleColors(m.module)
@@ -558,7 +545,7 @@ export default function Reports() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Disbursement breakdown — horizontal bar chart */}
+        {}
         <div className="bg-card border border-border rounded-2xl shadow-soft p-6">
           <h2 className="text-sm font-semibold text-foreground mb-4">Disbursement by funding source</h2>
           <div className="h-56">
@@ -637,7 +624,7 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Monthly trend — bars for applications, line for amount disbursed */}
+        {}
         <div className="bg-card border border-border rounded-2xl shadow-soft p-6">
           <h2 className="text-sm font-semibold text-foreground mb-4">Monthly application volume</h2>
           <div className="h-56">

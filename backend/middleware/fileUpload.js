@@ -2,7 +2,6 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure base upload directories exist
 const baseUploadDir = path.join(__dirname, '../uploads');
 const soloParentDir = path.join(baseUploadDir, 'solo-parent');
 const childWelfareDir = path.join(baseUploadDir, 'child-welfare');
@@ -15,7 +14,6 @@ const livelihoodDir = path.join(baseUploadDir, 'livelihood');
   }
 });
 
-// Configure dynamic storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let destDir = baseUploadDir;
@@ -45,7 +43,6 @@ const storage = multer.diskStorage({
   },
 });
 
-// File filter
 const fileFilter = (req, file, cb) => {
   const allowedMimes = [
     'image/jpeg',
@@ -72,7 +69,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB per file
+    fileSize: 10 * 1024 * 1024,
   },
 });
 

@@ -82,7 +82,6 @@ async function syncAndCleanAppointments() {
     const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
 
-    // Purge any appointments belonging to pending or rejected AICS applications
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND reference_no IN (
@@ -90,7 +89,6 @@ async function syncAndCleanAppointments() {
       )
     `).catch(() => {});
 
-    // Purge any appointments belonging to pending or rejected PWD / Senior applications
     await db.query(`
       DELETE FROM appointments
       WHERE module IN ('PWD', 'Senior Citizen') AND reference_no IN (
@@ -98,25 +96,22 @@ async function syncAndCleanAppointments() {
       )
     `).catch(() => {});
 
-    // Deduplicate appointments table by reference_no and concern
     await db.query(`
       DELETE FROM appointments a
       USING appointments b
       WHERE a.id < b.id AND a.reference_no = b.reference_no AND a.concern = b.concern
     `).catch(() => {});
 
-    // Purge any appointments that are purely ID or Booklet requests (non-assistance)
     await db.query(`
-      DELETE FROM appointments 
-      WHERE LOWER(COALESCE(concern, '')) LIKE '%id%' 
+      DELETE FROM appointments
+      WHERE LOWER(COALESCE(concern, '')) LIKE '%id%'
          OR LOWER(COALESCE(concern, '')) LIKE '%booklet%'
          OR (module IN ('PWD', 'Senior Citizen', 'Solo Parent') AND LOWER(COALESCE(concern, '')) NOT LIKE '%assist%')
     `).catch(() => {});
 
-    // Auto-populate appointments from approved AICS applications
     const approvedAics = await db.query(
-      `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix 
-       FROM aics_applications 
+      `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix
+       FROM aics_applications
        WHERE status IN ('approved', 'completed', 'for_release')`
     ).catch(() => ({ rows: [] }));
 
@@ -135,12 +130,11 @@ async function syncAndCleanAppointments() {
       ).catch(() => {});
     }
 
-    // Auto-populate appointments from approved livelihood applications
     const approvedLivelihood = await db.query(
-      `SELECT l.reference_number, l.first_name, l.last_name 
+      `SELECT l.reference_number, l.first_name, l.last_name
        FROM livelihood_applications l
        INNER JOIN livelihood_assistance la ON l.reference_number = la.reference_number
-       WHERE l.application_status = 'approved' 
+       WHERE l.application_status = 'approved'
          AND (la.assistance_status = 'for_release' OR la.assistance_status = 'released' OR la.assistance_status = 'FOR RELEASE' OR la.assistance_status = 'RELEASED')`
     ).catch(() => ({ rows: [] }));
 
@@ -157,11 +151,10 @@ async function syncAndCleanAppointments() {
       ).catch(() => {});
     }
 
-    // Auto-populate appointments from approved PWD & Senior Citizen Social Assistance
     const approvedPwdSenior = await db.query(
-      `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix 
-       FROM pwd_senior_applications 
-       WHERE status IN ('approved', 'completed', 'for_release') 
+      `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix
+       FROM pwd_senior_applications
+       WHERE status IN ('approved', 'completed', 'for_release')
          AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')`
     ).catch(() => ({ rows: [] }));
 
@@ -181,10 +174,9 @@ async function syncAndCleanAppointments() {
       ).catch(() => {});
     }
 
-    // Auto-populate appointments from approved Child Welfare / Solo Parent
     const approvedCw = await db.query(
-      `SELECT reference_number, category_title, guardian_first_name, guardian_last_name, child_name 
-       FROM child_welfare_applications 
+      `SELECT reference_number, category_title, guardian_first_name, guardian_last_name, child_name
+       FROM child_welfare_applications
        WHERE application_status IN ('approved', 'completed', 'for_release', 'released')`
     ).catch(() => ({ rows: [] }));
 
@@ -224,7 +216,6 @@ function triggerAppointmentSyncIfStale() {
     });
 }
 
-// GET /api/appointments
 exports.getAppointments = async (req, res) => {
   try {
     triggerAppointmentSyncIfStale();
@@ -248,7 +239,6 @@ exports.getAppointments = async (req, res) => {
   }
 };
 
-// POST /api/appointments
 exports.createAppointment = async (req, res) => {
   try {
     const referenceNo = req.body.referenceNo || req.body.reference_no;
@@ -287,7 +277,6 @@ exports.createAppointment = async (req, res) => {
 
     const appt = result.rows[0];
 
-    // If scheduled immediately, sync to financial aid and notify
     if (scheduledDate) {
       await syncAppointmentWithDisbursement(appt);
     }
@@ -299,7 +288,6 @@ exports.createAppointment = async (req, res) => {
   }
 };
 
-// PUT /api/appointments/:id/schedule
 exports.scheduleAppointment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -309,7 +297,6 @@ exports.scheduleAppointment = async (req, res) => {
       return res.status(400).json({ error: 'Date and time are required.' });
     }
 
-    // Format human readable date
     let formattedDate = scheduledDate;
     try {
       const d = new Date(scheduledDate);
@@ -335,7 +322,7 @@ exports.scheduleAppointment = async (req, res) => {
 
     let appt;
     if (result.rows.length === 0) {
-      // If not yet in appointments table, insert as scheduled!
+
       const insertRes = await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
@@ -356,7 +343,6 @@ exports.scheduleAppointment = async (req, res) => {
       appt = result.rows[0];
     }
 
-    // Auto-sync with Financial Aid Disbursement
     await syncAppointmentWithDisbursement(appt);
 
     res.json({ message: 'Appointment scheduled and synced with Financial Aid.', appointment: appt });
@@ -366,7 +352,6 @@ exports.scheduleAppointment = async (req, res) => {
   }
 };
 
-// Helper: sync appointment details directly to financial_aid_disbursements table
 async function syncAppointmentWithDisbursement(appt) {
   try {
     const cleanAssistance = appt.concern.includes('Assistance') ? appt.concern : `${appt.concern} Assistance`;
@@ -409,7 +394,6 @@ async function syncAppointmentWithDisbursement(appt) {
       );
     }
 
-    // Sync appointment date, time, and location to livelihood_assistance if LP-
     if (appt.reference_no && appt.reference_no.startsWith('LP-')) {
       await db.query(
         `UPDATE livelihood_assistance
@@ -423,7 +407,6 @@ async function syncAppointmentWithDisbursement(appt) {
       );
     }
 
-    // User Notification
     await db.query(
       `INSERT INTO user_notifications (title, description, application_ref)
        VALUES ($1, $2, $3)`,
@@ -434,7 +417,6 @@ async function syncAppointmentWithDisbursement(appt) {
       ]
     );
 
-    // Activity Log
     await logActivity({
       actor: 'Admin / Social Worker',
       actorRole: 'Appointment Officer',
@@ -449,7 +431,6 @@ async function syncAppointmentWithDisbursement(appt) {
   }
 }
 
-// PUT /api/appointments/:id/complete
 exports.completeAppointment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -459,7 +440,6 @@ exports.completeAppointment = async (req, res) => {
       [cleanId]
     );
 
-    // Deduplicate any duplicate appointment records with the exact same reference_no and concern
     try {
       await db.query(`
         DELETE FROM appointments a
@@ -478,17 +458,14 @@ exports.completeAppointment = async (req, res) => {
   }
 };
 
-// DELETE /api/appointments/:id
 exports.deleteAppointment = async (req, res) => {
   try {
     const { id } = req.params;
     const raw = String(id || '').trim();
     const cleanId = raw.replace(/^db-appt-/, '').replace(/^aics-appt-/, '').replace(/^pwd-senior-appt-/, '').replace(/^cw-appt-/, '').trim();
 
-    // 1. Delete from appointments table
     await db.query(`DELETE FROM appointments WHERE id::text = $1 OR reference_no = $1 OR id::text = $2 OR reference_no = $2`, [raw, cleanId]);
 
-    // 2. Track in deleted_appointments table
     if (cleanId) {
       await db.query(
         `INSERT INTO deleted_appointments (reference_no) VALUES ($1) ON CONFLICT (reference_no) DO NOTHING`,
@@ -502,7 +479,6 @@ exports.deleteAppointment = async (req, res) => {
       ).catch(() => {});
     }
 
-    // 3. Log Activity
     await logActivity({
       actor: 'Admin / Social Worker',
       actorRole: 'Appointment Officer',
@@ -520,14 +496,13 @@ exports.deleteAppointment = async (req, res) => {
   }
 };
 
-// DELETE /api/appointments/cleanup-user/:nameOrRef
 exports.deleteUserAppointments = async (req, res) => {
   try {
     const { nameOrRef } = req.params;
     const term = `%${nameOrRef}%`;
     const result = await db.query(
-      `DELETE FROM appointments 
-       WHERE applicant_name ILIKE $1 
+      `DELETE FROM appointments
+       WHERE applicant_name ILIKE $1
           OR reference_no ILIKE $1`,
       [term]
     );

@@ -1,10 +1,4 @@
-// frontend/src/utils/fileUpload.ts
 
-/**
- * Converts an uploaded File to a base64 Data URL.
- * Automatically compresses large image files to prevent memory & localStorage bloat
- * while preserving clear visual fidelity for admin and user verification.
- */
 export async function readFileAsDataUrl(
   file: File,
   maxDimension = 1200,
@@ -18,7 +12,6 @@ export async function readFileAsDataUrl(
 
     const reader = new FileReader()
 
-    // If it's a PDF or non-image format, read directly
     if (
       file.type === "application/pdf" ||
       (!file.type.startsWith("image/") && !/\.(jpe?g|png|webp|jfif|gif|bmp)$/i.test(file.name))
@@ -58,7 +51,7 @@ export async function readFileAsDataUrl(
             return
           }
         } catch {
-          // fallback to raw
+
         }
         resolve(rawDataUrl)
       }

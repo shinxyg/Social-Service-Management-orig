@@ -48,7 +48,7 @@ export default function DocumentCameraModal({
           audio: false,
         })
       } catch {
-        // Fallback if environment facingMode fails
+
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false,
@@ -151,7 +151,7 @@ export default function DocumentCameraModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col border border-border cursor-default"
       >
-        {/* Header */}
+        {}
         <div className="p-4 border-b border-border flex items-center justify-between bg-gray-50">
           <div className="flex items-center gap-2">
             <Camera className="w-5 h-5 text-blue-600" />
@@ -171,7 +171,7 @@ export default function DocumentCameraModal({
           </button>
         </div>
 
-        {/* Camera or Preview Viewport */}
+        {}
         <div className="relative bg-black aspect-4/3 flex items-center justify-center overflow-hidden">
           {capturedPhotoUrl ? (
             <img
@@ -189,10 +189,10 @@ export default function DocumentCameraModal({
             />
           )}
 
-          {/* Hidden Canvas for capture processing */}
+          {}
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Loading Indicator */}
+          {}
           {isLoadingCamera && (
             <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-xs gap-2">
               <RefreshCw className="w-6 h-6 animate-spin" />
@@ -200,7 +200,7 @@ export default function DocumentCameraModal({
             </div>
           )}
 
-          {/* Error Message */}
+          {}
           {cameraError && (
             <div className="absolute inset-x-4 top-4 bg-red-600/90 text-white text-xs p-3 rounded-xl flex items-start gap-2 backdrop-blur-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -208,7 +208,7 @@ export default function DocumentCameraModal({
             </div>
           )}
 
-          {/* Flip camera button */}
+          {}
           {!capturedPhotoUrl && !cameraError && (
             <button
               type="button"
@@ -221,7 +221,7 @@ export default function DocumentCameraModal({
           )}
         </div>
 
-        {/* Footer Actions */}
+        {}
         <div className="p-4 bg-gray-50 border-t border-border flex items-center justify-between gap-3">
           {capturedPhotoUrl ? (
             <>

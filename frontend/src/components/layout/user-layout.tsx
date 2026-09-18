@@ -142,7 +142,6 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
   ]
 }
 
-
 interface AicsNotification {
   id: string
   title: string
@@ -263,7 +262,6 @@ function Avatar({ size = 36 }: { size?: number }) {
 
     readProfileData()
 
-    // Basahin ulit kapag na-update ang profile o photo
     window.addEventListener("storage", readProfileData)
     window.addEventListener("user_profile_updated", readProfileData)
     return () => {
@@ -298,14 +296,12 @@ function Avatar({ size = 36 }: { size?: number }) {
   )
 }
 
-
 function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const { t } = useLanguage()
   const residentNav = getResidentNav(t)
   const location = useLocation()
   const currentFullUrl = location.pathname + location.search
 
-  // Determine which section contains the active route
   const getActiveGroupId = () => {
     for (const item of residentNav) {
       if (item.children) {
@@ -323,13 +319,11 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
     return null
   }
 
-  // Accordion state: by default only open the active group (or all closed)
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
     const activeId = getActiveGroupId()
     return activeId ? { [activeId]: true } : {}
   })
 
-  // Auto-sync accordion when user navigates
   useEffect(() => {
     const activeId = getActiveGroupId()
     if (activeId) {
@@ -341,10 +335,10 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
     setExpandedMenus((prev) => {
       const willBeOpen = !prev[id]
       if (willBeOpen) {
-        // Accordion behavior: open clicked group and collapse all other groups
+
         return { [id]: true }
       } else {
-        // Collapse clicked group
+
         return {}
       }
     })
@@ -373,7 +367,7 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
       }`}
     >
       <div className={`flex flex-col h-full ${open ? "w-64" : "w-16"}`}>
-        {/* Brand + Toggle */}
+        {}
         <div className={`p-5 flex items-center gap-3 ${!open ? "flex-col justify-center px-0" : "justify-between"}`}>
           <div className={`flex items-center gap-3 ${!open && "justify-center"}`}>
             <div className="h-11 w-11 flex items-center justify-center shrink-0">
@@ -451,7 +445,7 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
                         )}
                       </button>
 
-                      {/* Dropdown items */}
+                      {}
                       {open && isExpanded && (
                         <div className="flex flex-col gap-1 mt-1 pl-4 pr-1">
                           {item.children.map((child) => {
@@ -480,7 +474,6 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
                   return open ? groupHeader : <Tooltip key={item.id} label={item.label}>{groupHeader}</Tooltip>
                 }
 
-                // Standard single link
                 const path = item.path || ""
                 const link = (
                   <NavLink
@@ -513,7 +506,6 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
                 )
                 const rendered = open ? link : <Tooltip key={path} label={item.label}>{link}</Tooltip>
 
-                // Divider + section label bago ang My Applications (Histories)
                 if (item.id === "myApplications" || path === "/portal/my-applications") {
                   return (
                     <div key={`section-${item.id || path}`}>
@@ -551,7 +543,7 @@ function ResidentHeader({
   const currentFullUrl = location.pathname + location.search
 
   let currentTitle = "Welcome"
-  // 1. Search for exact full URL match (with search params) across ALL items
+
   for (const item of residentNav) {
     if (item.children) {
       const exactChild = item.children.find((c) => {
@@ -574,7 +566,6 @@ function ResidentHeader({
     }
   }
 
-  // 2. If no exact child matched, fall back to pathname matching
   if (currentTitle === "Welcome") {
     for (const item of residentNav) {
       if (item.path === location.pathname) {
@@ -652,7 +643,6 @@ function ResidentHeader({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Live clock — ticks every second
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(interval)
@@ -686,7 +676,6 @@ function ResidentHeader({
         if (firstName) params.set("firstName", firstName)
         if (lastName) params.set("lastName", lastName)
 
-        // 1. Primary: Fetch real-time synchronized notifications from PostgreSQL backend
         try {
           const notifRes = await fetch(`${API_BASE}/api/notifications?${params.toString()}`)
           if (notifRes.ok) {
@@ -739,14 +728,12 @@ function ResidentHeader({
           }
         } catch (_) {}
 
-        // Purge legacy dirty computer notifications cache if present
         try {
           if (localStorage.getItem("all_user_notifications")) {
             localStorage.removeItem("all_user_notifications")
           }
         } catch (_) {}
 
-        // Deduplicate and sort
         const uniqueMap = new Map<string, AicsNotification>()
         items.forEach((item) => {
           if (!uniqueMap.has(item.id)) {
@@ -841,7 +828,7 @@ function ResidentHeader({
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
-        {/* Live clock */}
+        {}
         <div className="hidden sm:flex flex-col items-end leading-tight mr-1 select-none">
           <span className="text-sm font-semibold text-foreground tabular-nums">{timeString}</span>
           <span className="text-[10px] text-muted-foreground">{dateString}</span>
@@ -949,7 +936,7 @@ function ResidentHeader({
               <p className="text-xs font-medium text-foreground leading-tight">{t("hiUserShort", { name: (() => {
                 const prof = getCurrentUserProfile();
                 return (prof.firstName || (prof as any).first_name || "Resident").toUpperCase();
-              })() })}</p>            
+              })() })}</p>
             </div>
             <Avatar />
           </button>

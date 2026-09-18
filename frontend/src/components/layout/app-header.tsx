@@ -57,7 +57,6 @@ export function AppHeader({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Live clock — ticks every second
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(interval)
@@ -85,7 +84,7 @@ export function AppHeader({
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
-        {/* Live clock */}
+        {}
         <div className="hidden sm:flex flex-col items-end leading-tight mr-1 select-none">
           <span className="text-sm font-semibold text-foreground tabular-nums">{timeString}</span>
           <span className="text-[10px] text-muted-foreground">{dateString}</span>
@@ -101,7 +100,7 @@ export function AppHeader({
           </button>
         </Tooltip>
 
-        {/* User menu with dropdown (Log Out included) */}
+        {}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}

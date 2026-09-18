@@ -31,7 +31,6 @@ interface DocumentItem {
   sampleImage?: string
 }
 
-// Requirements para sa NEW Application
 const NEW_DOCUMENTS: DocumentItem[] = [
   {
     id: "birthCertificate",
@@ -70,7 +69,6 @@ const NEW_DOCUMENTS: DocumentItem[] = [
   },
 ]
 
-// Requirements para sa RENEWAL Application
 const RENEWAL_DOCUMENTS: DocumentItem[] = [
   {
     id: "oldSeniorId",
@@ -102,7 +100,6 @@ const RENEWAL_DOCUMENTS: DocumentItem[] = [
   },
 ]
 
-// Requirements para sa REPLACEMENT / LOST ID
 const LOSS_DOCUMENTS: DocumentItem[] = [
   {
     id: "affidavitOfLoss",
@@ -228,7 +225,6 @@ export interface UserProfile {
   emergencyAddress?: string
 }
 
-
 interface SeniorCitizenApplicationWizardProps {
   onBack?: () => void
   userProfile?: UserProfile
@@ -307,7 +303,6 @@ export default function SeniorCitizenApplicationWizard({
     }
   }, [step, latestApprovedApp, isBlocked, appFlow, onStepChange])
 
-  // Reset wizard to Step 1 whenever flow/type changes or an application becomes approved
   useEffect(() => {
     setStep(1)
     setReturnToReview(false)
@@ -329,12 +324,10 @@ export default function SeniorCitizenApplicationWizard({
     }
   }, [latestApprovedApp?.id, latestApprovedApp?.status])
 
-  // Step 1: Checklist state
   const [isResidencyChecked, setIsResidencyChecked] = useState(false)
   const [isAgeChecked, setIsAgeChecked] = useState(false)
   const [isDeclarationChecked, setIsDeclarationChecked] = useState(false)
 
-  // Step 1: Existing ID / Verification state for Renewal & Lost ID
   const [existingIdNumber, setExistingIdNumber] = useState("")
   const [isIdVerified, setIsIdVerified] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
@@ -389,7 +382,6 @@ export default function SeniorCitizenApplicationWizard({
     try {
       const apps = await fetchAllSeniorApps()
 
-      // Look for matching registered Senior Citizen record with EXACT 16 digits
       const matchedApp = apps.find((a) => {
         if (!a) return false
         const cat = String(a.category || a.service || "").trim().toUpperCase()
@@ -407,7 +399,6 @@ export default function SeniorCitizenApplicationWizard({
         const refDigits = String(a.referenceNumber || a.reference_no || a.reference_number || "").replace(/\D/g, "")
         const existingDigits = String(a.existingIdNumber || a.existing_id_number || a.seniorIdNumber || "").replace(/\D/g, "")
 
-        // STRICT EXACT MATCH: All characters or full sequence must match exactly
         const matchExactClean = (aAssignedClean && aAssignedClean === cleanTyped) ||
           (aRefClean && aRefClean === cleanTyped) ||
           (aExistingClean && aExistingClean === cleanTyped) ||
@@ -519,7 +510,6 @@ export default function SeniorCitizenApplicationWizard({
         ((appFlow === "renewal" && reasonForRenewal !== "") ||
           (appFlow === "loss" && reasonForReplacement !== ""))))
 
-  // Step 2: Personal Information state
   const [formData, setFormData] = useState(() => {
     const prof: any = propUserProfile || getCurrentUserProfile() || {}
     return {
@@ -548,7 +538,7 @@ export default function SeniorCitizenApplicationWizard({
       emergencyContactNo: prof.emergencyContactNo || "",
       emergencyRelationship: prof.emergencyRelationship || "",
       emergencyAddress: prof.emergencyAddress || "",
-      // Family member application fields
+
       familyFirstName: "",
       familyMiddleName: "",
       familyLastName: "",
@@ -571,7 +561,6 @@ export default function SeniorCitizenApplicationWizard({
     }
   })
 
-  // Recalculate age on date of birth change (myself)
   useEffect(() => {
     if (formData.dobMonth && formData.dobDay && formData.dobYear.length === 4) {
       const computedAge = calculateAge(formData.dobMonth, formData.dobDay, formData.dobYear)
@@ -593,7 +582,6 @@ export default function SeniorCitizenApplicationWizard({
         (formData.emergencyRelationship || "").trim() !== "" &&
         (formData.emergencyAddress || "").trim() !== ""
 
-  // Step 3: Documents state
   const currentRequirements =
     appFlow === "renewal"
       ? RENEWAL_DOCUMENTS
@@ -605,7 +593,6 @@ export default function SeniorCitizenApplicationWizard({
   const [cameraDoc, setCameraDoc] = useState<DocumentItem | null>(null)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
-  // Reload / Navigation warning protection — active from Step 2 onwards
   const isFormDirty = !isSubmitted && step > 1
 
   useEffect(() => {
@@ -619,7 +606,6 @@ export default function SeniorCitizenApplicationWizard({
     }
   }, [isFormDirty])
 
-  // Check if there is an active application for this user (Real-time syncing)
   useEffect(() => {
     let isMounted = true
 
@@ -653,10 +639,8 @@ export default function SeniorCitizenApplicationWizard({
         const isSeniorCategory = aCat.includes("SENIOR") || aCat === "SENIOR CITIZEN" || String(a.service || "").toLowerCase().includes("senior")
         if (!isSeniorCategory) return false
 
-        // 1. User ID match
         if (currentUid && aUid && currentUid === aUid && currentUid !== "0") return true
 
-        // 2. QCID / Reference match
         if (loggedQcid) {
           if (aRef === loggedQcid || aAssigned === loggedQcid || aRef.includes(loggedQcid) || loggedQcid.includes(aRef)) return true
           const userDigits = loggedQcid.replace(/\D/g, "")
@@ -664,10 +648,8 @@ export default function SeniorCitizenApplicationWizard({
           if (userDigits.length >= 8 && (appRefDigits === userDigits || appRefDigits.includes(userDigits) || userDigits.includes(appRefDigits))) return true
         }
 
-        // 3. Email match
         if (email && aEmail && aEmail === email) return true
 
-        // 4. Name match (Last name matches + First name matches or contains)
         if (userLastName && aLastName) {
           const lastNameMatch = userLastName === aLastName || aLastName.includes(userLastName) || userLastName.includes(aLastName)
           if (lastNameMatch) {
@@ -678,7 +660,6 @@ export default function SeniorCitizenApplicationWizard({
           }
         }
 
-        // 5. Full name match
         if (userFullName && aFullName && (userFullName === aFullName || aFullName.includes(userLastName) && aFullName.includes(userFirstName))) {
           return true
         }
@@ -697,7 +678,6 @@ export default function SeniorCitizenApplicationWizard({
         }
       } catch {}
 
-      // 2. Check localStorage fallback
       if (allUserSeniorApps.length === 0 && isMounted) {
         const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
         for (const k of localKeys) {
@@ -727,7 +707,6 @@ export default function SeniorCitizenApplicationWizard({
 
       if (!isMounted) return
 
-      // Prioritized Match Resolvers
       const pendingFlow = allUserSeniorApps.find((a) => {
         if (a.status !== "pending" && a.status !== "under_review") return false
         if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
@@ -739,7 +718,6 @@ export default function SeniorCitizenApplicationWizard({
         (a) => a.status === "approved" || a.status === "completed" || a.status === "for_release"
       )
 
-      // If user is on "new" application flow:
       if (expectedType === "new") {
         if (approvedAny) {
           setBlockedApp(approvedAny)
@@ -755,9 +733,9 @@ export default function SeniorCitizenApplicationWizard({
           setIsBlocked(false)
         }
       }
-      // If user is on "renewal", "replacement", or "booklet" flow:
+
       else {
-        // Only block if there is currently an ongoing PENDING application for THIS exact flow
+
         if (pendingFlow) {
           setBlockedApp(pendingFlow)
           setLatestApprovedApp(null)
@@ -785,7 +763,6 @@ export default function SeniorCitizenApplicationWizard({
     }
   }, [userProfile?.qcidNo, userProfile?.email, appFlow])
 
-  // Set blocked on submit
   useEffect(() => {
     if (!isSubmitted) return
     setIsBlocked(true)
@@ -818,12 +795,10 @@ export default function SeniorCitizenApplicationWizard({
     })
   }
 
-  // All mandatory documents must have at least 1 file
   const step3Valid = currentRequirements.filter((d) => d.required).every(
     (d) => (uploadedFiles[d.id]?.length ?? 0) > 0
   )
 
-  // Step 4: Review & Submission
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [referenceNo, setReferenceNo] = useState("")
@@ -888,7 +863,6 @@ export default function SeniorCitizenApplicationWizard({
         status: "pending",
       }
 
-      // 1. Send to backend first
       try {
         await fetch(`${API_BASE}/api/pwd-senior/applications`, {
           method: "POST",
@@ -899,7 +873,6 @@ export default function SeniorCitizenApplicationWizard({
         console.warn("Backend sync failed, saved locally:", err)
       }
 
-      // 2. Safe localStorage save
       try {
         const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
         localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing.slice(0, 5)]))
@@ -914,7 +887,6 @@ export default function SeniorCitizenApplicationWizard({
         } catch {}
       }
 
-      // Dispatch real-time event to Admin dashboard
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     } catch (e) {
       console.error("Failed submitting senior application:", e)
@@ -948,7 +920,6 @@ export default function SeniorCitizenApplicationWizard({
       ? "Renewal Application"
       : "Replacement / Lost ID"
 
-  // Auto-redirect submitted state to blocked/active status card
   useEffect(() => {
     if (!isSubmitted) return
     const timer = setTimeout(() => {
@@ -958,7 +929,6 @@ export default function SeniorCitizenApplicationWizard({
     return () => clearTimeout(timer)
   }, [isSubmitted])
 
-  // ---- BLOCKED / APPROVED state ----
   const targetApp = blockedApp || latestApprovedApp
   const isAppApproved =
     String(targetApp?.status || "").toLowerCase() === "approved" ||
@@ -971,7 +941,6 @@ export default function SeniorCitizenApplicationWizard({
 
   const rejectionReason = targetApp?.rejection_reason || targetApp?.rejectionReason || targetApp?.admin_notes || targetApp?.remarks || ""
 
-  // ---- PENDING OR REJECTED STATE ----
   if (isBlocked && !isAppApproved) {
     const serviceTitle =
       appFlow === "renewal"
@@ -1115,7 +1084,6 @@ export default function SeniorCitizenApplicationWizard({
     )
   }
 
-  // ---- APPROVED state ----
   if (isAppApproved || (latestApprovedApp && appFlow === "new")) {
 
     const serviceTitle =
@@ -1134,7 +1102,6 @@ export default function SeniorCitizenApplicationWizard({
       formData.qcidNumber ||
       existingIdNumber ||
       "110000572516915"
-
 
     const rawDate2 = targetApp?.submittedAt || targetApp?.submitted_at || targetApp?.created_at || targetApp?.dateSubmitted
     const displayDate = formatAppDate(rawDate2, targetApp)
@@ -1257,7 +1224,6 @@ export default function SeniorCitizenApplicationWizard({
     )
   }
 
-  // ── SUBMISSION SUCCESS / PENDING SCREEN ──
   if (isSubmitted) {
     const serviceTitle =
       appFlow === "renewal"
@@ -1320,9 +1286,9 @@ export default function SeniorCitizenApplicationWizard({
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
-      {/* ── MAIN AICS-STYLE WHITE BOX ── */}
+      {}
       <div className="border border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-xs">
-        {/* ── STEPPER CONNECTED NUMBERED CIRCLES ── */}
+        {}
         <div className="flex items-center px-6 pt-6 pb-4">
           {WIZARD_TABS.map((_, i) => {
             const stepNum = i + 1
@@ -1354,7 +1320,7 @@ export default function SeniorCitizenApplicationWizard({
           })}
         </div>
 
-        {/* ── STEPPER TABS BAR ── */}
+        {}
         <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {WIZARD_TABS.map((label, i) => {
             const stepNum = i + 1
@@ -1378,9 +1344,9 @@ export default function SeniorCitizenApplicationWizard({
           })}
         </div>
 
-        {/* ── STEP BODY CONTAINER ── */}
+        {}
         <div className="p-6 sm:p-8 space-y-7 border-t border-gray-100">
-          {/* ──────────────── STEP 1: COMPLETE CHECKLIST ──────────────── */}
+          {}
           {step === 1 && (
             <div className="space-y-6">
               <div>
@@ -1419,10 +1385,10 @@ export default function SeniorCitizenApplicationWizard({
                 />
               </div>
 
-              {/* ID Verification Field para sa Renewal at Lost ID */}
+              {}
               {appFlow !== "new" && (
                 <div className="p-5 rounded-xl border border-gray-200 bg-gray-50/70 space-y-4">
-                  {/* 1. Reason for Renewal or Replacement (Top) */}
+                  {}
                   <div className="space-y-2.5">
                     <label className="block text-xs font-bold uppercase text-gray-800 tracking-wide">
                       {appFlow === "renewal" ? "Reason for Renewal *" : "Reason for Replacement *"}
@@ -1482,7 +1448,7 @@ export default function SeniorCitizenApplicationWizard({
                     </div>
                   </div>
 
-                  {/* 2. ID input and Verify */}
+                  {}
                   <div className="pt-3 border-t border-gray-200 space-y-2">
                     <label className="text-xs font-bold uppercase text-gray-800 tracking-wide flex items-center gap-1.5">
                       <IdCard className="w-4 h-4 text-[#3b82f6]" />
@@ -1575,7 +1541,7 @@ export default function SeniorCitizenApplicationWizard({
                 </div>
               )}
 
-              {/* Information Box */}
+              {}
               <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 sm:p-5 flex items-start gap-3.5">
                 <Info className="w-5 h-5 text-[#3b82f6] shrink-0 mt-0.5" />
                 <div className="space-y-1">
@@ -1604,7 +1570,7 @@ export default function SeniorCitizenApplicationWizard({
                 </p>
               )}
 
-              {/* Footer Action */}
+              {}
               <div className="flex justify-end pt-4 border-t border-gray-100">
                 <button
                   type="button"
@@ -1629,7 +1595,7 @@ export default function SeniorCitizenApplicationWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 2: PERSONAL INFORMATION ──────────────── */}
+          {}
           {step === 2 && (
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-3">
@@ -1643,7 +1609,7 @@ export default function SeniorCitizenApplicationWizard({
                 </p>
               </div>
 
-              {/* IMPORTANT REMINDER BOX */}
+              {}
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -1654,7 +1620,7 @@ export default function SeniorCitizenApplicationWizard({
                 </div>
               </div>
 
-              {/* Applicant QCID Profile Information Grid */}
+              {}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -1839,7 +1805,7 @@ export default function SeniorCitizenApplicationWizard({
                   </div>
                 </div>
 
-                {/* Existing Senior Citizen ID for Renewal & Lost ID */}
+                {}
                 {appFlow !== "new" && (
                   <div className="pt-4 border-t border-gray-200 space-y-1">
                     <label className="text-xs font-semibold text-gray-700">
@@ -1855,7 +1821,7 @@ export default function SeniorCitizenApplicationWizard({
                   </div>
                 )}
 
-                {/* EMERGENCY CONTACT */}
+                {}
                 <div className="pt-4 border-t border-gray-200 space-y-3">
                   <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5">
                     <User className="w-4 h-4 text-[#3b82f6]" />
@@ -1964,7 +1930,7 @@ export default function SeniorCitizenApplicationWizard({
                 </p>
               )}
 
-              {/* Footer Actions */}
+              {}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <button
                   type="button"
@@ -1997,7 +1963,7 @@ export default function SeniorCitizenApplicationWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 3: SUBMIT DOCUMENTS / FILE UPLOAD ──────────────── */}
+          {}
           {step === 3 && (
             <div className="space-y-4">
               <h3 className="text-base font-bold text-foreground">{t("fileUploadHeader") || "File upload"}</h3>
@@ -2107,7 +2073,7 @@ export default function SeniorCitizenApplicationWizard({
                 })}
               </div>
 
-              {/* Footer Actions */}
+              {}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <button
                   type="button"
@@ -2136,7 +2102,7 @@ export default function SeniorCitizenApplicationWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 4: REVIEW & SUBMIT ──────────────── */}
+          {}
           {step === 4 && (
             <div className="space-y-5">
               <div>
@@ -2144,7 +2110,7 @@ export default function SeniorCitizenApplicationWizard({
                 <p className="text-sm text-muted-foreground">{t("pwdReviewDesc") || "Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon."}</p>
               </div>
 
-              {/* Card 1: Application Details */}
+              {}
               <div className="border border-gray-200 rounded-xl p-5 bg-gray-50/70 space-y-2.5">
                 <div className="flex items-center justify-between border-b border-gray-200 pb-2">
                   <h3 className="text-xs font-bold uppercase text-gray-700 tracking-wide">
@@ -2188,7 +2154,7 @@ export default function SeniorCitizenApplicationWizard({
                 </div>
               </div>
 
-              {/* Card 2: Personal Information */}
+              {}
               <div className="border border-gray-200 rounded-xl p-5 space-y-4 bg-white">
                 <div className="flex items-center justify-between border-b border-gray-200 pb-2">
                   <h3 className="text-xs font-bold uppercase text-gray-800 tracking-wide flex items-center gap-1.5">
@@ -2284,7 +2250,7 @@ export default function SeniorCitizenApplicationWizard({
                   </div>
               </div>
 
-              {/* Card 3: Documents */}
+              {}
               <div className="border border-gray-200 rounded-xl p-5 space-y-3 bg-white">
                 <div className="flex items-center justify-between border-b border-gray-200 pb-2">
                   <h3 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5">
@@ -2349,7 +2315,7 @@ export default function SeniorCitizenApplicationWizard({
                 </div>
               </div>
 
-              {/* Footer Actions */}
+              {}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <button
                   type="button"
@@ -2372,7 +2338,7 @@ export default function SeniorCitizenApplicationWizard({
         </div>
       </div>
 
-      {/* ── SUBMIT CONFIRMATION & PRIVACY CONSENT MODAL ── */}
+      {}
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -2386,7 +2352,7 @@ export default function SeniorCitizenApplicationWizard({
         confirmText={t("yesSubmitBtn") || "YES, SUBMIT APPLICATION"}
       />
 
-      {/* ── CAMERA MODAL ── */}
+      {}
       {cameraDoc && (
         <DocumentCameraModal
           isOpen={Boolean(cameraDoc)}
@@ -2399,7 +2365,7 @@ export default function SeniorCitizenApplicationWizard({
         />
       )}
 
-      {/* ── UPLOADED DOCUMENT FULL PREVIEW MODAL ── */}
+      {}
       {previewDocModal && (
         <UploadedDocPreviewModal
           title={previewDocModal.title}

@@ -2,15 +2,10 @@ const db = require('../config/db');
 const fs = require('fs');
 const path = require('path');
 
-// In-memory fallback if database query fails or tables are initializing
 let memoryBeneficiaries = [];
 let memoryVerifications = [];
 let memoryHistory = [];
 
-/**
- * Automatically synchronize real users and applicants from all service tables into beneficiaries table
- * and purge any obsolete mock/dummy records.
- */
 async function insertBeneficiaryIfMissing(applicantData) {
   try {
     const {
@@ -140,21 +135,18 @@ function triggerBackgroundSyncIfStale() {
 
 async function syncRealUsersAndApplicantsToBeneficiaries() {
   try {
-    // 1. Ensure existing names are uppercase and civil_status is defaulted
+
     await db.query(`UPDATE beneficiaries SET full_name = UPPER(full_name)`).catch(() => {});
     await db.query(`UPDATE beneficiaries SET civil_status = 'Single' WHERE civil_status IS NULL OR civil_status = '' OR civil_status = '—'`).catch(() => {});
-    
-    // Ensure all registered accounts require social worker verification (not auto-verified)
+
     await db.query(`
-      UPDATE beneficiaries 
+      UPDATE beneficiaries
       SET verification_status = 'pending', verified_by = NULL, verification_date = NULL, verification_remarks = 'Pending identity verification by Social Worker.'
       WHERE verified_by = 'System Auto-Verification' OR verified_by IS NULL OR verification_status IS NULL
     `).catch(() => {});
 
-    // Remove synthetic auto-verification history events
     await db.query(`DELETE FROM beneficiary_history WHERE performed_by = 'System Auto-Verification'`).catch(() => {});
 
-    // 1.5 Deduplicate & merge any duplicate beneficiary profiles with matching full_name or (first_name + last_name)
     const allBnf = await db.query(`SELECT id, full_name, first_name, last_name, user_id, qcid_number, email FROM beneficiaries ORDER BY id ASC`).catch(() => ({ rows: [] }));
     const seenNames = new Map();
     for (const row of allBnf.rows || []) {
@@ -169,7 +161,6 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
       }
     }
 
-    // 2. Fetch all real users from users table
     const usersRes = await db.query(`SELECT * FROM users ORDER BY id ASC`).catch(() => ({ rows: [] }));
     const users = usersRes.rows || [];
 
@@ -207,7 +198,6 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
       });
     }
 
-    // 3. Sync applicants from AICS applications
     const aicsRes = await db.query(`SELECT * FROM aics_applications ORDER BY id ASC`).catch(() => ({ rows: [] }));
     for (const a of aicsRes.rows || []) {
       await insertBeneficiaryIfMissing({
@@ -226,7 +216,6 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
       });
     }
 
-    // 4. Sync applicants from PWD / Senior applications
     const pwdRes = await db.query(`SELECT * FROM pwd_senior_applications ORDER BY id ASC`).catch(() => ({ rows: [] }));
     for (const p of pwdRes.rows || []) {
       await insertBeneficiaryIfMissing({
@@ -245,7 +234,6 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
       });
     }
 
-    // 5. Sync applicants from Solo Parent applications
     const soloRes = await db.query(`SELECT * FROM solo_parent_child_welfare_applications ORDER BY id ASC`).catch(() => ({ rows: [] }));
     for (const s of soloRes.rows || []) {
       await insertBeneficiaryIfMissing({
@@ -264,7 +252,6 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
       });
     }
 
-    // 6. Sync applicants from Child Welfare applications
     const childRes = await db.query(`SELECT * FROM solo_parent_child_welfare_applications WHERE module_type = 'CHILD_WELFARE' ORDER BY id ASC`).catch(() => ({ rows: [] }));
     for (const c of childRes.rows || []) {
       await insertBeneficiaryIfMissing({
@@ -279,7 +266,6 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
       });
     }
 
-    // 7. Sync applicants from Livelihood applications
     const livRes = await db.query(`SELECT * FROM livelihood_applications ORDER BY id ASC`).catch(() => ({ rows: [] }));
     for (const l of livRes.rows || []) {
       await insertBeneficiaryIfMissing({
@@ -298,7 +284,6 @@ async function syncRealUsersAndApplicantsToBeneficiaries() {
       });
     }
 
-    // 8. Sync applicants from Training Program applications
     let trainingList = [];
     try {
       const trRes = await db.query(`SELECT * FROM training_applications ORDER BY id ASC`).catch(() => ({ rows: [] }));
@@ -347,9 +332,6 @@ function formatProgramStatus(rawStatus) {
   return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ');
 }
 
-/**
- * Match helper to link an application record with a beneficiary profile
- */
 function matchesApplicant(b, app) {
   if (!b || !app) return false;
   let info = {};
@@ -410,26 +392,20 @@ function matchesApplicant(b, app) {
     app.guardian_contact_no || info.contactNo || formData.contactNo || ''
   ).replace(/[^0-9]/g, '');
 
-  // 1. User ID match
   if (bUserId && appUserId && bUserId === appUserId) return true;
 
-  // 2. Email match
   if (bEmail && appEmail && bEmail === appEmail) return true;
 
-  // 3. QCID match
   if (bQcid && appQc && bQcid.length >= 5 && appQc.length >= 5) {
     if (bQcid === appQc || bQcid.includes(appQc) || appQc.includes(bQcid)) return true;
   }
 
-  // 4. Contact match (at least 10 digits)
   if (bContact.length >= 10 && appContact.length >= 10 && (bContact.includes(appContact) || appContact.includes(bContact))) {
     return true;
   }
 
-  // 5. Exact first and last name match
   if (bFirst && bLast && appFirst && appLast && bFirst === appFirst && bLast === appLast) return true;
 
-  // 6. Full name match
   if (bName && appFullName && (bName === appFullName || bName.includes(appFullName) || appFullName.includes(bName))) return true;
   if (bName && appFirstLast && (bName === appFirstLast || bName.includes(appFirstLast) || appFirstLast.includes(bName))) return true;
   if (bName && appFirst && appLast && bName.includes(appFirst) && bName.includes(appLast)) return true;
@@ -437,9 +413,6 @@ function matchesApplicant(b, app) {
   return false;
 }
 
-/**
- * Generate unique Beneficiary Number (e.g. BNF-2026-0001)
- */
 async function generateBeneficiaryNumber() {
   const year = new Date().getFullYear();
   try {
@@ -452,9 +425,6 @@ async function generateBeneficiaryNumber() {
   }
 }
 
-/**
- * AUTOMATION HELPER: Ensure a citizen beneficiary record exists and link application
- */
 async function ensureBeneficiaryForUser(data) {
   const {
     userId,
@@ -496,7 +466,7 @@ async function ensureBeneficiaryForUser(data) {
   let beneficiary = null;
 
   try {
-    // 1. Check if beneficiary already exists in DB
+
     const searchConditions = [];
     const searchParams = [];
     let paramIdx = 1;
@@ -530,7 +500,6 @@ async function ensureBeneficiaryForUser(data) {
       }
     }
 
-    // 2. If not found, create new Beneficiary record
     if (!beneficiary) {
       const bnfNumber = await generateBeneficiaryNumber();
       const insertQuery = `
@@ -565,7 +534,6 @@ async function ensureBeneficiaryForUser(data) {
 
       beneficiary = insertRes.rows[0];
 
-      // Auto-log Beneficiary Record Creation
       await db.query(
         `INSERT INTO beneficiary_history (beneficiary_id, program, action, performed_by, status, detail, created_at)
          VALUES ($1, 'System', 'Beneficiary Record Created', 'System Automation', 'Active', 'Official beneficiary profile automatically generated.', NOW())`,
@@ -573,7 +541,6 @@ async function ensureBeneficiaryForUser(data) {
       ).catch(() => {});
     }
 
-    // 3. Log Application Submission / Linkage Event
     if (beneficiary && program) {
       await db.query(
         `INSERT INTO beneficiary_history (beneficiary_id, application_id, program, action, performed_by, status, detail, remarks, created_at)
@@ -594,7 +561,6 @@ async function ensureBeneficiaryForUser(data) {
   } catch (err) {
     console.warn('⚠️ Warning in ensureBeneficiaryForUser (DB fallback):', err.message);
 
-    // In-memory fallback
     beneficiary = memoryBeneficiaries.find(
       (b) =>
         (parsedUserId && b.user_id === parsedUserId) ||
@@ -658,9 +624,6 @@ async function ensureBeneficiaryForUser(data) {
   }
 }
 
-/**
- * AUTOMATION HELPER: Log status updates (Approved, Rejected, Released, Scheduled)
- */
 async function logBeneficiaryEvent(eventData) {
   const {
     beneficiaryId,
@@ -695,16 +658,11 @@ async function logBeneficiaryEvent(eventData) {
   }
 }
 
-/**
- * GET /api/beneficiaries
- * Fetch all beneficiaries with aggregated enrolled programs, verification records, and timeline history
- */
 async function getAllBeneficiaries(req, res) {
   try {
-    // 1. Trigger background sync non-blocking (does not delay response)
+
     triggerBackgroundSyncIfStale();
 
-    // 2. Fetch all service tables concurrently in parallel
     const [
       bRes,
       hRes,
@@ -752,7 +710,6 @@ async function getAllBeneficiaries(req, res) {
 
       const enrolledPrograms = [];
 
-      // 1. Check AICS
       aicsList.forEach((app) => {
         if (matchesApplicant(b, app)) {
           const dateStr = app.submitted_at || app.created_at || new Date().toISOString();
@@ -767,7 +724,6 @@ async function getAllBeneficiaries(req, res) {
         }
       });
 
-      // 2. Check PWD / Senior Citizen
       pwdList.forEach((app) => {
         if (matchesApplicant(b, app)) {
           const progName = (app.category || '').toLowerCase().includes('senior') ? 'Senior Citizen' : 'PWD';
@@ -784,7 +740,6 @@ async function getAllBeneficiaries(req, res) {
         }
       });
 
-      // 3. Check Solo Parent
       soloList.forEach((app) => {
         if (matchesApplicant(b, app)) {
           let typeLabel = "Solo Parent ID";
@@ -807,7 +762,6 @@ async function getAllBeneficiaries(req, res) {
         }
       });
 
-      // 4. Check Child Welfare
       childList.forEach((app) => {
         if (matchesApplicant(b, app)) {
           const dateStr = app.submitted_at || app.created_at || new Date().toISOString();
@@ -822,7 +776,6 @@ async function getAllBeneficiaries(req, res) {
         }
       });
 
-      // 5. Check Livelihood
       livList.forEach((app) => {
         if (matchesApplicant(b, app)) {
           const dateStr = app.submitted_at || app.created_at || new Date().toISOString();
@@ -837,7 +790,6 @@ async function getAllBeneficiaries(req, res) {
         }
       });
 
-      // 6. Check Training Program
       const trainingSeen = new Set();
       trainingList.forEach((app) => {
         if (matchesApplicant(b, app)) {
@@ -859,13 +811,10 @@ async function getAllBeneficiaries(req, res) {
         }
       });
 
-      // Sort enrolled programs with newest first
       enrolledPrograms.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
 
-      // Beneficiary timeline history: combine explicit DB history + automatic application submissions + verification events + profile registration
       const historyList = [];
 
-      // 1. Explicit DB history
       allHistory
         .filter((h) => String(h.beneficiary_id) === String(bId))
         .forEach((h) => {
@@ -881,7 +830,6 @@ async function getAllBeneficiaries(req, res) {
           });
         });
 
-      // 2. Automatic history from all enrolled programs
       enrolledPrograms.forEach((p, idx) => {
         const actionLabel = String(p.status).toLowerCase().includes('approv') || String(p.status).toLowerCase().includes('release')
           ? `${p.program} Application Approved`
@@ -901,7 +849,6 @@ async function getAllBeneficiaries(req, res) {
         });
       });
 
-      // 3. Verification Event
       if (b.verification_status === 'verified' || b.verified_by) {
         historyList.push({
           id: `H-VERIF-${bId}`,
@@ -915,7 +862,6 @@ async function getAllBeneficiaries(req, res) {
         });
       }
 
-      // 4. Registration Event
       historyList.push({
         id: `H-REG-${bId}`,
         date: new Date(b.created_at || Date.now()).toISOString().split('T')[0],
@@ -927,7 +873,6 @@ async function getAllBeneficiaries(req, res) {
         status: "Registered",
       });
 
-      // Sort history chronologically descending (newest first) and remove duplicate event keys
       const historySeen = new Set();
       const history = historyList
         .sort((a, b) => b.rawTimestamp - a.rawTimestamp)
@@ -939,7 +884,6 @@ async function getAllBeneficiaries(req, res) {
         })
         .map(({ rawTimestamp, ...item }) => item);
 
-      // Resolve Civil Status from beneficiary record or linked application forms
       let resolvedCivilStatus = (b.civil_status && b.civil_status !== '—' && b.civil_status.trim() !== '') ? b.civil_status : null;
       if (!resolvedCivilStatus) {
         const pwdMatch = pwdList.find(app => (bQcid && String(app.reference_number || app.id || '').toLowerCase().includes(bQcid)) || (bEmail && String(app.email || '').toLowerCase() === bEmail));
@@ -961,7 +905,6 @@ async function getAllBeneficiaries(req, res) {
         resolvedCivilStatus = 'Single';
       }
 
-      // Resolve photo from user profile or application documents (2x2 / ID Photo)
       let resolvedPhotoUrl = b.profile_photo_url || b.photo_url || null;
       if (!resolvedPhotoUrl) {
         const pwdMatch = pwdList.find(app => (bQcid && String(app.reference_number || app.id || '').toLowerCase().includes(bQcid)) || (bEmail && String(app.email || '').toLowerCase() === bEmail));
@@ -996,7 +939,6 @@ async function getAllBeneficiaries(req, res) {
         }
       }
 
-      // Automatic Verification Status derived directly from Module Applications
       let autoVerificationStatus = b.verification_status || 'pending';
       let autoVerifiedBy = b.verified_by || null;
       let autoVerifiedDate = b.verification_date ? new Date(b.verification_date).toISOString().split('T')[0] : null;
@@ -1068,9 +1010,6 @@ async function getAllBeneficiaries(req, res) {
   }
 }
 
-/**
- * GET /api/beneficiaries/:id
- */
 async function getBeneficiaryById(req, res) {
   try {
     const { id } = req.params;
@@ -1094,15 +1033,11 @@ async function getBeneficiaryById(req, res) {
   }
 }
 
-/**
- * PUT /api/beneficiaries/:id/verify
- * Admin action to verify, unverify, or set pending
- */
 async function verifyBeneficiary(req, res) {
   try {
     const { id } = req.params;
     const {
-      status, // 'verified', 'unverified', 'pending'
+      status,
       verified_by = "Admin Social Worker",
       remarks = "",
       reason = "",
@@ -1139,14 +1074,12 @@ async function verifyBeneficiary(req, res) {
       if (updateRes.rows.length > 0) {
         updatedBeneficiary = updateRes.rows[0];
 
-        // 1. Record in verification audit table
         await db.query(
           `INSERT INTO beneficiary_verifications (beneficiary_id, status, reviewed_by, reviewed_at, reason, remarks, created_at)
            VALUES ($1, $2, $3, NOW(), $4, $5, NOW())`,
           [updatedBeneficiary.id, cleanStatus, verified_by, reason || null, noteText]
         ).catch(() => {});
 
-        // 2. Record in beneficiary history timeline
         const actionLabel =
           cleanStatus === "verified"
             ? "Beneficiary Verified"
@@ -1160,7 +1093,6 @@ async function verifyBeneficiary(req, res) {
           [updatedBeneficiary.id, actionLabel, verified_by, cleanStatus, noteText, noteText]
         ).catch(() => {});
 
-        // 3. Record in system-wide activity log
         await db.query(
           `INSERT INTO activity_log (actor, actor_role, action, module, reference_no, subject, detail, created_at)
            VALUES ($1, 'Admin', 'VERIFIED_BENEFICIARY', 'Beneficiary Management', $2, $3, $4, NOW())`,
@@ -1219,10 +1151,6 @@ async function verifyBeneficiary(req, res) {
   }
 }
 
-/**
- * POST /api/beneficiaries/:id/history
- * Add custom case event/log to beneficiary history
- */
 async function addBeneficiaryHistory(req, res) {
   try {
     const { id } = req.params;
@@ -1272,9 +1200,6 @@ async function addBeneficiaryHistory(req, res) {
   }
 }
 
-/**
- * DELETE /api/beneficiaries/:id
- */
 async function deleteBeneficiary(req, res) {
   try {
     const { id } = req.params;

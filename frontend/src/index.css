@@ -26,23 +26,23 @@
   --color-info: hsl(199 89% 48%);
   --color-destructive: hsl(0 84% 60%);
 
-  /* Sidebar — dark navy palette, separate from the light app canvas */
+  
   --color-sidebar: hsl(222 47% 11%);
   --color-sidebar-end: hsl(222 55% 7%);
   --color-sidebar-foreground: hsl(220 14% 96%);
   --color-sidebar-primary: hsl(221 83% 60%);
   --color-sidebar-accent: hsl(222 40% 16%);
 
-  /* Fonts — docx §3 */
+  
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-heading: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif;
 
-  /* Radius — docx §6: global 1rem (16px) base */
+  
   --radius-lg: 0.75rem;
   --radius-xl: 0.875rem;
   --radius-2xl: 1rem;
 
-  /* Shadows — docx §6 */
+  
   --shadow-soft: 0 1px 2px 0 hsl(220 13% 10% / 0.04);
   --shadow-medium: 0 4px 12px -2px hsl(220 13% 10% / 0.08);
   --shadow-large: 0 12px 32px -8px hsl(220 13% 10% / 0.14);
@@ -85,9 +85,9 @@ main {
   color-scheme: dark;
 }
 
-/* ========================================================================= */
-/* Global Dark Mode Synchronization for Admin Dashboard Modules              */
-/* ========================================================================= */
+
+
+
 .dark main {
   background-color: var(--color-background);
   color: var(--color-foreground);
@@ -141,7 +141,7 @@ main {
   background-color: var(--color-border) !important;
 }
 
-/* Dark mode typography */
+
 .dark .text-slate-900,
 .dark .text-gray-900,
 .dark .text-slate-800,
@@ -164,7 +164,7 @@ main {
   color: var(--color-muted-foreground) !important;
 }
 
-/* Dark mode borders & dividers */
+
 .dark .border-slate-200,
 .dark .border-gray-200,
 .dark .border-slate-300,
@@ -186,7 +186,7 @@ main {
   border-color: var(--color-border) !important;
 }
 
-/* Form inputs & dropdowns */
+
 .dark input:not([type="checkbox"]):not([type="radio"]),
 .dark select,
 .dark textarea {
@@ -200,7 +200,7 @@ main {
   color: var(--color-muted-foreground) !important;
 }
 
-/* Tables in dark mode */
+
 .dark table {
   color: var(--color-foreground);
 }
@@ -222,7 +222,7 @@ main {
   background-color: hsl(222 35% 18%) !important;
 }
 
-/* Badges adjustments in dark mode for crisp readability */
+
 .dark .bg-emerald-50,
 .dark .bg-emerald-100 {
   background-color: rgba(16, 185, 129, 0.15) !important;
@@ -280,7 +280,7 @@ main {
   color: #c084fc !important;
 }
 
-/* GovServe Module Tokens (.gw-root, .gw-card, .gw-stat, etc.) Dark Mode Override */
+
 .dark .gw-root,
 html.dark .gw-root,
 body.dark .gw-root {
@@ -390,9 +390,9 @@ body.dark .gw-root {
   );
 }
 
-/* ========================================================================= */
-/* Official ID Card Print Styles                                             */
-/* ========================================================================= */
+
+
+
 @media print {
   @page {
     size: landscape;
@@ -414,7 +414,7 @@ body.dark .gw-root {
     text-shadow: none !important;
   }
 
-  /* When printing an ID card modal, isolate the print area and hide all other elements */
+  
   body:has(#official-id-card-print-area) {
     background: #ffffff !important;
   }
@@ -448,7 +448,7 @@ body.dark .gw-root {
     box-sizing: border-box !important;
   }
 
-  /* Hide normal web page chrome during print */
+  
   nav,
   aside,
   header,
@@ -459,9 +459,9 @@ body.dark .gw-root {
   }
 }
 
-/* ========================================================================= */
-/* Official ID Card Visual Preservation (Immune to Dark Mode Styles)          */
-/* ========================================================================= */
+
+
+
 .official-id-card-render {
   color-scheme: light !important;
 }

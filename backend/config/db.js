@@ -7,9 +7,7 @@ const connectionString = (process.env.DATABASE_URL || process.env.DATABASE_PUBLI
 let poolConfig;
 
 if (connectionString) {
-  // Railway internal: postgres.railway.internal — no SSL needed
-  // Local: localhost / 127.0.0.1 — no SSL needed
-  // Remote/Public: *.proxy.rlwy.net, *.railway.app — SSL needed
+
   const isInternalOrLocal =
     connectionString.includes('localhost') ||
     connectionString.includes('127.0.0.1') ||
@@ -47,7 +45,6 @@ pool.on('error', (err) => {
   console.error('Unexpected error on idle PostgreSQL client:', err.message);
 });
 
-// Non-blocking database connection test
 pool.connect((err, client, release) => {
   if (err) {
     console.warn('⚠️ Warning: Initial PostgreSQL connection attempt failed:', err.message);

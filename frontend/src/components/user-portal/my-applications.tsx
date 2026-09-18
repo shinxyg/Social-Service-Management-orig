@@ -89,16 +89,13 @@ export function parseAppDate(rawDate?: any): Date | null {
     return null
   }
 
-  // Standard date parse
   const d = new Date(str)
   if (!isNaN(d.getTime())) return d
 
-  // Clean hyphen-spaced time format: "9/15/2026 - 11:10 AM" -> "9/15/2026 11:10 AM"
   const cleanStr = str.replace(/\s*-\s*/g, " ").replace(/\s+at\s+/i, " ")
   const d2 = new Date(cleanStr)
   if (!isNaN(d2.getTime())) return d2
 
-  // Match "M/D/YYYY" or "YYYY-M-D"
   const parts = str.match(/^(\d{1,4})[\/\-](\d{1,2})[\/\-](\d{1,4})/)
   if (parts) {
     if (parts[1].length === 4) {
@@ -122,7 +119,6 @@ export function parseAppDate(rawDate?: any): Date | null {
 export function extractAnyDateFromApp(app: any): Date {
   if (!app) return new Date()
 
-  // 1. Try explicit date fields
   const candidates = [
     app.submittedAt,
     app.submitted_at,
@@ -160,7 +156,6 @@ export function extractAnyDateFromApp(app: any): Date {
     }
   }
 
-  // 2. Try documents uploadedAt
   const docs = app.documents || app.uploaded_documents || app.uploadedDocuments
   if (Array.isArray(docs)) {
     for (const d of docs) {
@@ -173,7 +168,6 @@ export function extractAnyDateFromApp(app: any): Date {
     }
   }
 
-  // 3. Try timestamp embedded in id or referenceNumber (e.g. APP-SNR-AST-1789438285863 or 1789438285863)
   const idStr = String(app.id || app.referenceNumber || app.reference_number || app.applicationNo || "")
   const match = idStr.match(/\b(1\d{11,12})\b/)
   if (match) {
@@ -184,7 +178,6 @@ export function extractAnyDateFromApp(app: any): Date {
     }
   }
 
-  // 4. Default to current date
   return new Date()
 }
 
@@ -252,7 +245,6 @@ export function getApplicantPhotoUrl(app: any): string {
     return `${API_BASE}/uploads/${direct}`
   }
 
-  // 1. Direct document list on app
   let docsList: any[] = []
   if (Array.isArray(app.documents)) docsList = app.documents
   else if (Array.isArray(app.uploaded_documents)) docsList = app.uploaded_documents
@@ -283,7 +275,6 @@ export function getApplicantPhotoUrl(app: any): string {
     }
   }
 
-  // 2. Search in local storage applications
   try {
     const pwdApps = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
     const match = pwdApps.find(
@@ -500,7 +491,6 @@ function getCardTheme(app: ApplicationRecord): CardTheme {
     }
   }
 
-  // Default: Senior Citizen (OSCA)
   return {
     isPwd: false,
     isSolo: false,
@@ -520,7 +510,6 @@ function getCardTheme(app: ApplicationRecord): CardTheme {
   }
 }
 
-// ── DRAW FRONT SIDE ON CANVAS (1000 x 630 px) ──
 function drawFrontCard(
   ctx: CanvasRenderingContext2D,
   app: ApplicationRecord,
@@ -551,7 +540,6 @@ function drawFrontCard(
   ctx.save()
   ctx.translate(ox, oy)
 
-  // 1. Card Background & Border
   ctx.fillStyle = "#ffffff"
   ctx.fillRect(0, 0, w, h)
 
@@ -572,14 +560,12 @@ function drawFrontCard(
   ctx.lineWidth = 2
   ctx.strokeRect(0, 0, w, h)
 
-  // 2. Top Header Gradient (Blue / Amber)
   const headGrad = ctx.createLinearGradient(0, 0, w, 0)
   headGrad.addColorStop(0, theme.headerStart)
   headGrad.addColorStop(1, theme.headerEnd)
   ctx.fillStyle = headGrad
   ctx.fillRect(0, 0, w, 88)
 
-  // Header QC Seal
   if (sealImg) {
     ctx.save()
     ctx.beginPath()
@@ -590,7 +576,6 @@ function drawFrontCard(
     ctx.restore()
   }
 
-  // Header Titles
   ctx.fillStyle = theme.isPwd ? "#1e293b" : "#dbeafe"
   ctx.font = "bold 13px sans-serif"
   ctx.fillText("REPUBLIC OF THE PHILIPPINES", 100, 36)
@@ -598,7 +583,6 @@ function drawFrontCard(
   ctx.font = "900 24px sans-serif"
   ctx.fillText("GOV SERVICES", 100, 68)
 
-  // Header Right Pill Badge
   const pillW = 180
   const pillH = 38
   const pillX = w - pillW - 30
@@ -621,7 +605,6 @@ function drawFrontCard(
   ctx.fillText(theme.pillText, pillX + pillW / 2, pillY + 24)
   ctx.textAlign = "left"
 
-  // 3. Sub-header (Yellow/Amber or Dark Bar)
   ctx.fillStyle = theme.isPwd ? "#0f172a" : "#f59e0b"
   ctx.fillRect(0, 88, w, 36)
   ctx.fillStyle = theme.isPwd ? "#fcd34d" : "#0f172a"
@@ -630,7 +613,6 @@ function drawFrontCard(
   ctx.fillText(theme.officeName, w / 2, 111)
   ctx.textAlign = "left"
 
-  // 4. 2x2 Photo Box (Left)
   const photoX = 35
   const photoY = 145
   const photoW = 190
@@ -652,7 +634,6 @@ function drawFrontCard(
     ctx.textAlign = "left"
   }
 
-  // Photo Tag at bottom
   ctx.fillStyle = theme.isPwd ? "#d97706" : "#1e3a8a"
   ctx.fillRect(photoX, photoY + photoH - 30, photoW, 30)
   ctx.fillStyle = "#ffffff"
@@ -661,11 +642,9 @@ function drawFrontCard(
   ctx.fillText(theme.photoTag, photoX + photoW / 2, photoY + photoH - 10)
   ctx.textAlign = "left"
 
-  // 5. Details Section (Center)
   const infoX = 250
   let currY = 168
 
-  // QC ID NUMBER
   ctx.fillStyle = "#94a3b8"
   ctx.font = "bold 12px sans-serif"
   ctx.fillText("QC ID NUMBER", infoX, currY)
@@ -673,7 +652,6 @@ function drawFrontCard(
   ctx.font = "900 24px monospace"
   ctx.fillText(app.applicationNo, infoX, currY + 26)
 
-  // CARDHOLDER FULL NAME
   currY += 66
   ctx.fillStyle = "#94a3b8"
   ctx.font = "bold 12px sans-serif"
@@ -682,7 +660,6 @@ function drawFrontCard(
   ctx.font = "900 21px sans-serif"
   ctx.fillText((app.applicantName || "RESIDENT").toUpperCase(), infoX, currY + 24)
 
-  // CLASSIFICATION
   currY += 58
   ctx.fillStyle = "#94a3b8"
   ctx.font = "bold 12px sans-serif"
@@ -691,20 +668,17 @@ function drawFrontCard(
   ctx.font = "900 16px sans-serif"
   ctx.fillText(theme.classification, infoX, currY + 22)
 
-  // BIRTHDATE & SEX / BLOOD
   currY += 54
   ctx.fillStyle = "#64748b"
   ctx.font = "bold 13px sans-serif"
   ctx.fillText(`BIRTHDATE: ${app.dateOfBirth || "—"}`, infoX, currY)
   ctx.fillText(`SEX / BLOOD: ${app.sex || "Male"} / O+`, infoX + 270, currY)
 
-  // ADDRESS
   currY += 34
   ctx.fillStyle = "#64748b"
   ctx.font = "bold 13px sans-serif"
   ctx.fillText(`ADDRESS: ${app.address || "11 ACACIA ST., SAUYO, QUEZON CITY"}`, infoX, currY, 520)
 
-  // 6. Right Side Authentic QC Seal
   if (sealImg) {
     ctx.drawImage(sealImg, 795, 175, 155, 155)
     ctx.fillStyle = "#475569"
@@ -714,7 +688,6 @@ function drawFrontCard(
     ctx.textAlign = "left"
   }
 
-  // 7. Bottom Bar (Barcode & Mayor Signature)
   const botY = h - 85
   ctx.fillStyle = "#f8fafc"
   ctx.fillRect(0, botY, w, 85)
@@ -725,12 +698,10 @@ function drawFrontCard(
   ctx.lineTo(w, botY)
   ctx.stroke()
 
-  // Barcode
   ctx.fillStyle = "#334155"
   ctx.font = "bold 20px monospace"
   ctx.fillText("|||| | || |||| | | ||| ||||", 35, botY + 36)
 
-  // Issue / Expiry
   ctx.fillStyle = "#64748b"
   ctx.font = "bold 12px sans-serif"
   ctx.fillText(`Issued: ${appDate}`, 35, botY + 62)
@@ -738,7 +709,6 @@ function drawFrontCard(
   ctx.font = "900 12px sans-serif"
   ctx.fillText(`• Expires: ${expiryDateStr}`, 220, botY + 62)
 
-  // Mayor Signature Line
   ctx.strokeStyle = "#94a3b8"
   ctx.lineWidth = 1.5
   ctx.beginPath()
@@ -758,7 +728,6 @@ function drawFrontCard(
   ctx.restore()
 }
 
-// ── DRAW BACK SIDE ON CANVAS (1000 x 630 px) ──
 function drawBackCard(
   ctx: CanvasRenderingContext2D,
   app: ApplicationRecord,
@@ -789,7 +758,6 @@ function drawBackCard(
   ctx.save()
   ctx.translate(ox, oy)
 
-  // 1. Background
   ctx.fillStyle = "#ffffff"
   ctx.fillRect(0, 0, w, h)
 
@@ -810,7 +778,6 @@ function drawBackCard(
   ctx.lineWidth = 2
   ctx.strokeRect(0, 0, w, h)
 
-  // Watermark Seal (Center Background)
   if (sealImg) {
     ctx.save()
     ctx.globalAlpha = 0.05
@@ -818,7 +785,6 @@ function drawBackCard(
     ctx.restore()
   }
 
-  // 2. Top Header
   const headGrad = ctx.createLinearGradient(0, 0, w, 0)
   headGrad.addColorStop(0, theme.headerStart)
   headGrad.addColorStop(1, theme.headerEnd)
@@ -839,7 +805,6 @@ function drawBackCard(
   ctx.font = "900 17px sans-serif"
   ctx.fillText(theme.legalAct, 75, 41)
 
-  // Right pill badge
   const pillW = 120
   const pillH = 34
   const pillX = w - pillW - 25
@@ -858,7 +823,6 @@ function drawBackCard(
   ctx.fillText(theme.photoTag, pillX + pillW / 2, pillY + 22)
   ctx.textAlign = "left"
 
-  // 3. Benefits Box
   const boxX = 35
   const boxY = 88
   const boxW = 930
@@ -877,7 +841,7 @@ function drawBackCard(
   ctx.stroke()
 
   let lineY = boxY + 45
-  // Benefit 1
+
   ctx.fillStyle = theme.isPwd ? "#b45309" : "#1d4ed8"
   ctx.font = "bold 20px sans-serif"
   ctx.fillText("✓", boxX + 25, lineY)
@@ -885,7 +849,6 @@ function drawBackCard(
   ctx.font = "bold 16px sans-serif"
   ctx.fillText("20% Discount & VAT Exemption on medicines, medical supplies, and dental services.", boxX + 55, lineY)
 
-  // Benefit 2
   lineY += 52
   ctx.fillStyle = theme.isPwd ? "#b45309" : "#1d4ed8"
   ctx.font = "bold 20px sans-serif"
@@ -894,7 +857,6 @@ function drawBackCard(
   ctx.font = "bold 16px sans-serif"
   ctx.fillText("20% Discount on public domestic transportation (air, sea, land, MRT/LRT), hotels, and restaurants.", boxX + 55, lineY)
 
-  // Benefit 3
   lineY += 52
   ctx.fillStyle = theme.isPwd ? "#b45309" : "#1d4ed8"
   ctx.font = "bold 20px sans-serif"
@@ -915,7 +877,6 @@ function drawBackCard(
   ctx.fillStyle = "#334155"
   ctx.fillText(" across all cities in the Philippines.", boxX + 455, lineY)
 
-  // 4. Divider Line
   ctx.strokeStyle = theme.isPwd ? "#fde68a" : "#bfdbfe"
   ctx.lineWidth = 1.5
   ctx.beginPath()
@@ -923,7 +884,6 @@ function drawBackCard(
   ctx.lineTo(w - 35, 318)
   ctx.stroke()
 
-  // 5. Emergency Notification Box
   const emY = 338
   ctx.fillStyle = "#0f172a"
   ctx.font = "900 14px sans-serif"
@@ -943,11 +903,9 @@ function drawBackCard(
   ctx.fill()
   ctx.stroke()
 
-  // 2x2 Grid inside Emergency card
   const col1X = boxX + 30
   const col2X = boxX + 480
 
-  // Row 1: Contact Person & Phone
   ctx.fillStyle = "#94a3b8"
   ctx.font = "bold 12px sans-serif"
   ctx.fillText("CONTACT PERSON:", col1X, cardY + 45)
@@ -962,7 +920,6 @@ function drawBackCard(
   ctx.font = "900 18px monospace"
   ctx.fillText(emergencyInfo.emergencyPhone, col2X + 65, cardY + 45)
 
-  // Row 2: Relation & Address
   ctx.fillStyle = "#94a3b8"
   ctx.font = "bold 12px sans-serif"
   ctx.fillText("RELATION:", col1X, cardY + 115)
@@ -980,9 +937,6 @@ function drawBackCard(
   ctx.restore()
 }
 
-/**
- * Generate and download a high-resolution authentic Quezon City Digital ID Card PNG
- */
 export async function downloadIdCardAsImage(
   app: ApplicationRecord,
   photoUrl?: string,
@@ -990,7 +944,6 @@ export async function downloadIdCardAsImage(
 ) {
   const theme = getCardTheme(app)
 
-  // Preload Images Safely
   const [sealImg, photoImg] = await Promise.all([
     loadImageSafely("/gov-serves-seal.png"),
     photoUrl ? loadImageSafely(photoUrl) : Promise.resolve(null),
@@ -1110,9 +1063,6 @@ function ApplicantPhotoDisplay({
   )
 }
 
-/**
- * Dedicated Official Digital ID Card Modal matching official QC OSCA & PDAO standards
- */
 function OfficialFrontCardView({
   app,
   theme,
@@ -1138,7 +1088,7 @@ function OfficialFrontCardView({
           : "linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0fdf4 100%)",
       }}
     >
-      {/* Top Header */}
+      {}
       <div>
         <div
           className={`px-3.5 py-2 flex items-center justify-between shadow-xs ${
@@ -1174,7 +1124,7 @@ function OfficialFrontCardView({
           </span>
         </div>
 
-        {/* Sub-header */}
+        {}
         <div
           className={`py-1 text-center text-[9.5px] font-black uppercase tracking-widest ${
             theme.isPwd
@@ -1186,16 +1136,16 @@ function OfficialFrontCardView({
         </div>
       </div>
 
-      {/* Middle Details with QC Logo on right side */}
+      {}
       <div className="px-3.5 py-2 flex gap-3 items-center relative flex-1">
-        {/* 2x2 Photo with error fallback */}
+        {}
         <ApplicantPhotoDisplay
           photoUrl={photoUrl}
           tag={theme.photoTag}
           isPwd={theme.isPwd}
         />
 
-        {/* Details text */}
+        {}
         <div className="flex-1 min-w-0 space-y-1 relative z-10">
           <div>
             <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC ID NUMBER</span>
@@ -1232,7 +1182,7 @@ function OfficialFrontCardView({
           </div>
         </div>
 
-        {/* QC Official Logo on the right side */}
+        {}
         <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
           <img
             src="/gov-serves-seal.png"
@@ -1244,7 +1194,7 @@ function OfficialFrontCardView({
         </div>
       </div>
 
-      {/* Bottom Signatures & Barcode */}
+      {}
       <div className="px-3.5 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]">
         <div>
           <p className="font-mono font-bold text-slate-700 tracking-widest text-[8.5px]">|||| | || |||| | | ||| ||||</p>
@@ -1287,12 +1237,12 @@ function OfficialBackCardView({
           : "linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0fdf4 100%)",
       }}
     >
-      {/* Background Watermark Seal */}
+      {}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
         <img src="/gov-serves-seal.png" alt="" crossOrigin="anonymous" className="w-48 h-48 object-contain" />
       </div>
 
-      {/* Back Header Strip */}
+      {}
       <div
         className={`px-3.5 py-1.5 flex items-center justify-between shadow-xs relative z-10 ${
           theme.isPwd
@@ -1323,7 +1273,7 @@ function OfficialBackCardView({
       </div>
 
       <div className="p-3 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
-        {/* Benefits / Rights List */}
+        {}
         <div
           className={`rounded-xl p-2.5 space-y-1 text-[7.5px] text-slate-800 leading-tight border ${
             theme.isPwd ? "bg-amber-50/80 border-amber-200/80" : "bg-blue-50/80 border-blue-200/80"
@@ -1343,7 +1293,7 @@ function OfficialBackCardView({
           </p>
         </div>
 
-        {/* Emergency Contact */}
+        {}
         <div className={`border-t pt-1.5 ${theme.isPwd ? "border-amber-200/70" : "border-blue-200/70"}`}>
           <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider mb-1">In case of emergency, please notify:</p>
           <div
@@ -1374,9 +1324,6 @@ function OfficialBackCardView({
   )
 }
 
-/**
- * Dedicated Official Digital ID Card Modal matching official QC OSCA & PDAO standards
- */
 function DigitalIdCardModal({
   app,
   onClose,
@@ -1413,7 +1360,7 @@ function DigitalIdCardModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200"
       >
-        {/* Modal Top Bar */}
+        {}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
@@ -1437,7 +1384,7 @@ function DigitalIdCardModal({
           </button>
         </div>
 
-        {/* ── UNDERLINE NAVIGATION TABS ── */}
+        {}
         <div className="border-b border-gray-200 px-6 flex gap-6 bg-white">
           <button
             type="button"
@@ -1463,7 +1410,7 @@ function DigitalIdCardModal({
           </button>
         </div>
 
-        {/* ── CARD LIVE PREVIEWS ── */}
+        {}
         <div className="p-6 bg-slate-100/70 flex items-center justify-center min-h-[380px] overflow-x-auto">
           {activeSide === "front" ? (
             <OfficialFrontCardView
@@ -1483,9 +1430,7 @@ function DigitalIdCardModal({
           )}
         </div>
 
-
-
-        {/* ── MODAL FOOTER ACTION BAR ── */}
+        {}
         <div className="p-4 border-t border-gray-200 bg-slate-50 flex items-center justify-end gap-3">
           <button
             type="button"
@@ -1532,7 +1477,6 @@ export default function MyApplications() {
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null)
   const [idCardApp, setIdCardApp] = useState<ApplicationRecord | null>(null)
 
-  // Dialog modal states
   const [appToDelete, setAppToDelete] = useState<ApplicationRecord | null>(null)
   const [appToPermanentDelete, setAppToPermanentDelete] = useState<ApplicationRecord | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -1543,7 +1487,6 @@ export default function MyApplications() {
     setTimeout(() => setToastMessage(null), 4000)
   }
 
-  // 1. SOFT DELETE (Move to Deleted)
   const handleConfirmDelete = async () => {
     if (!appToDelete) return
     setIsProcessing(true)
@@ -1581,7 +1524,6 @@ export default function MyApplications() {
         }),
       })
 
-      // Update LocalStorage deleted items
       try {
         const storedDeleted: ApplicationRecord[] = JSON.parse(
           localStorage.getItem("deleted_user_applications") || "[]"
@@ -1593,7 +1535,6 @@ export default function MyApplications() {
         localStorage.setItem("deleted_user_applications", JSON.stringify(updatedDeleted))
       } catch {}
 
-      // Update UI state immediately
       setApplications((prev) => prev.filter((a) => !(a.applicationNo === appNo && a.assistance === appAssistance)))
       setDeletedApplications((prev) => [
         deletedRecord,
@@ -1613,7 +1554,6 @@ export default function MyApplications() {
     }
   }
 
-  // 2. RESTORE APPLICATION
   const handleRestore = async (app: ApplicationRecord) => {
     setIsProcessing(true)
     const appNo = app.applicationNo
@@ -1632,7 +1572,6 @@ export default function MyApplications() {
         }),
       })
 
-      // Clean from LocalStorage deleted
       try {
         const storedDeleted: ApplicationRecord[] = JSON.parse(
           localStorage.getItem("deleted_user_applications") || "[]"
@@ -1643,7 +1582,6 @@ export default function MyApplications() {
         localStorage.setItem("deleted_user_applications", JSON.stringify(updatedDeleted))
       } catch {}
 
-      // Update UI state
       setDeletedApplications((prev) =>
         prev.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance))
       )
@@ -1664,7 +1602,6 @@ export default function MyApplications() {
     }
   }
 
-  // 3. PERMANENT DELETE (Hard Delete from Database)
   const handleConfirmPermanentDelete = async () => {
     if (!appToPermanentDelete) return
     setIsProcessing(true)
@@ -1684,7 +1621,6 @@ export default function MyApplications() {
         }),
       })
 
-      // Clean local storage caches completely
       try {
         const localPwd = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
         localStorage.setItem(
@@ -1721,7 +1657,6 @@ export default function MyApplications() {
         localStorage.setItem("deleted_user_applications", JSON.stringify(updatedDeleted))
       } catch {}
 
-      // Update UI state
       setDeletedApplications((prev) =>
         prev.filter((d) => !(d.applicationNo === appNo && d.assistance === appAssistance))
       )
@@ -1742,7 +1677,6 @@ export default function MyApplications() {
 
   const isFetchingUserAppsRef = useRef(false)
 
-  // Load active and deleted applications
   useEffect(() => {
     let isMounted = true
 
@@ -1765,7 +1699,6 @@ export default function MyApplications() {
           if (!app) return false
           if (app.is_archived === true || app.isArchived === true) return false
 
-          // 1. Strict Email Match (Primary identifier)
           const appEmail = String(
             app.email ||
             app.guardian_email ||
@@ -1780,7 +1713,6 @@ export default function MyApplications() {
             return userEmail === appEmail
           }
 
-          // 2. Strict QCID / Reference Number Match
           const cleanUserQcid = (qcId || "").replace(/\D/g, "")
           const appQc = String(
             app.qc_id ||
@@ -1800,13 +1732,11 @@ export default function MyApplications() {
             return true
           }
 
-          // 3. Strict User ID Match (Non-default, non-generic)
           const appUserId = String(app.user_id || app.userId || "").trim()
           if (userId && appUserId && !["0", "1", "null", "undefined", ""].includes(String(userId)) && String(userId) === appUserId) {
             return true
           }
 
-          // 4. Strict Exact First and Last Name match
           const appFirst = String(
             app.firstName ||
             app.first_name ||
@@ -1851,7 +1781,6 @@ export default function MyApplications() {
           return false
         }
 
-        // Fetch deleted list from backend & local storage
         let initialDeleted: ApplicationRecord[] = []
         try {
           const storedDel = localStorage.getItem("deleted_user_applications")
@@ -1889,7 +1818,6 @@ export default function MyApplications() {
               }
             })
 
-            // Merge unique
             const mapKeys = new Set(initialDeleted.map((i) => i.applicationNo + i.assistance))
             mappedDel.forEach((m) => {
               if (!mapKeys.has(m.applicationNo + m.assistance)) {
@@ -1911,7 +1839,6 @@ export default function MyApplications() {
 
         let allFoundApps: ApplicationRecord[] = []
 
-        // Fetch all application categories concurrently in parallel
         const [
           delSettled,
           aicsSettled,
@@ -1944,7 +1871,6 @@ export default function MyApplications() {
           cachedApiFetch<any>(`${API_BASE}/api/training/applications`, { headers: authHeaders }, 4000),
         ])
 
-        // Process deleted apps
         if (delSettled.status === "fulfilled" && delSettled.value?.applications && Array.isArray(delSettled.value.applications)) {
           const mappedDel: ApplicationRecord[] = delSettled.value.applications.map((d: any) => {
             const targetObj = d.payload || d
@@ -1981,7 +1907,6 @@ export default function MyApplications() {
         }
         const deletedKeySet = new Set(initialDeleted.map((d) => (d.applicationNo + "::" + d.assistance).toLowerCase()))
 
-        // 1. Process AICS
         if (aicsSettled.status === "fulfilled" && aicsSettled.value?.applications && Array.isArray(aicsSettled.value.applications)) {
           const mappedAics: ApplicationRecord[] = aicsSettled.value.applications
             .filter(isUserMatch)
@@ -2026,7 +1951,6 @@ export default function MyApplications() {
           allFoundApps.push(...mappedAics)
         }
 
-        // 2. Process PWD / Senior
         let apiPwdApps: any[] = []
         if (pwdSettled.status === "fulfilled") {
           const pwdData = pwdSettled.value
@@ -2128,7 +2052,6 @@ export default function MyApplications() {
           })
         allFoundApps.push(...mappedPwd)
 
-        // 3. Process Solo Parent
         let spApps: any[] = []
         if (spSettled.status === "fulfilled") {
           const spData = spSettled.value
@@ -2192,7 +2115,6 @@ export default function MyApplications() {
           allFoundApps.push(...mappedSp)
         }
 
-        // 4. Process Child Welfare
         let cwApps: any[] = []
         if (cwSettled.status === "fulfilled") {
           const cwData = cwSettled.value
@@ -2256,7 +2178,6 @@ export default function MyApplications() {
           allFoundApps.push(...mappedCw)
         }
 
-        // 5. Process Livelihood
         let livApps: any[] = []
         if (livSettled.status === "fulfilled") {
           const lData = livSettled.value
@@ -2368,7 +2289,6 @@ export default function MyApplications() {
           allFoundApps.push(...mappedLiv)
         }
 
-        // 6. Process Training
         let trnApps: any[] = []
         if (trnSettled.status === "fulfilled") {
           const tData = trnSettled.value
@@ -2454,14 +2374,12 @@ export default function MyApplications() {
           allFoundApps.push(...mappedTrn)
         }
 
-        // Sort newest applications first so latest submissions appear right at the top
         allFoundApps.sort((a, b) => {
           const timeA = a.rawTimestamp || parseAppDate(a.dateApplied)?.getTime() || 0
           const timeB = b.rawTimestamp || parseAppDate(b.dateApplied)?.getTime() || 0
           return timeB - timeA
         })
 
-        // Filter out any active applications that are already in deleted list
         const filteredActive = allFoundApps.filter(
           (app) => !deletedKeySet.has((app.applicationNo + "::" + app.assistance).toLowerCase())
         )
@@ -2479,7 +2397,6 @@ export default function MyApplications() {
 
     fetchUserApps()
 
-    // Balanced 20s interval with in-flight guard
     const interval = setInterval(fetchUserApps, 20000)
 
     let debounceTimer: any = null
@@ -2537,7 +2454,6 @@ export default function MyApplications() {
     )
   })
 
-  // STATUS HELPERS
   const getStatusBadge = (status: ApplicationStatus) => {
     switch (status) {
       case "Under Review":
@@ -2592,9 +2508,6 @@ export default function MyApplications() {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // ── VIEW APPLICATION PAGE (Detail Screen)
-  // ═══════════════════════════════════════════════════════════════════════
   if (selectedApp) {
     const currentStatus = selectedApp.status
     const isDeletedItem = deletedApplications.some(
@@ -2604,7 +2517,7 @@ export default function MyApplications() {
 
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-200">
-        {/* Top Back Navigation Bar */}
+        {}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-4">
           <button
             onClick={() => setSelectedApp(null)}
@@ -2658,7 +2571,7 @@ export default function MyApplications() {
           </div>
         </div>
 
-        {/* Page Title */}
+        {}
         <div className="space-y-1">
           <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
             {t("applicationDetailsTitle") || "View Application Details"}
@@ -2671,7 +2584,7 @@ export default function MyApplications() {
           </p>
         </div>
 
-        {/* Card 1: Overview & Ref No */}
+        {}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
             <div>
@@ -2701,7 +2614,7 @@ export default function MyApplications() {
             </div>
           </div>
 
-          {/* Applicant Summary */}
+          {}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs pt-2">
             <div>
               <span className="text-gray-400 block font-medium">Full Name:</span>
@@ -2733,7 +2646,7 @@ export default function MyApplications() {
           </div>
         </div>
 
-        {/* Card 2: Official ID Record OR Financial Aid & Payout Appointment */}
+        {}
         {(() => {
           const isApprovedOrReleased =
             selectedApp.status === "Approved" || selectedApp.status === "For Release" || selectedApp.status === "Released"
@@ -2826,8 +2739,6 @@ export default function MyApplications() {
               </div>
             )
           }
-
-
 
           const isLivelihoodApp =
             !isTrainingApp &&
@@ -2939,9 +2850,9 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                {/* Front & Back Preview Side-by-Side */}
+                {}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Front Side */}
+                  {}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
@@ -2950,7 +2861,7 @@ export default function MyApplications() {
                     </div>
 
                     <div className="border border-slate-300 dark:border-slate-700 rounded-2xl overflow-hidden shadow-sm bg-white select-none">
-                      {/* Header */}
+                      {}
                       <div
                         className="px-3.5 py-2 flex items-center justify-between text-white"
                         style={{ background: `linear-gradient(to right, ${theme.headerStart}, ${theme.headerEnd})` }}
@@ -2967,7 +2878,7 @@ export default function MyApplications() {
                         </span>
                       </div>
 
-                      {/* Subheader */}
+                      {}
                       <div
                         className="py-1 text-center text-[8.5px] font-black uppercase tracking-widest"
                         style={{ backgroundColor: theme.subheaderBg, color: theme.subheaderText }}
@@ -2975,7 +2886,7 @@ export default function MyApplications() {
                         {theme.idSubTitle}
                       </div>
 
-                      {/* Details & Photo */}
+                      {}
                       <div className="p-3 flex gap-2.5 items-start relative bg-gradient-to-br from-slate-50 via-white to-slate-50/50">
                         <div className="w-20 h-24 shrink-0 rounded-lg border-2 border-slate-300 bg-white overflow-hidden shadow-xs flex flex-col items-center justify-center relative z-10">
                           {photoUrl ? (
@@ -3016,14 +2927,14 @@ export default function MyApplications() {
                           </div>
                         </div>
 
-                        {/* QC Official Seal on right */}
+                        {}
                         <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
                           <img src="/gov-serves-seal.png" alt="QC Official Seal" className="w-12 h-12 object-contain drop-shadow-md" />
                           <span className="text-[5.5px] font-black uppercase text-slate-600 tracking-tighter mt-0.5">AUTHENTIC</span>
                         </div>
                       </div>
 
-                      {/* Bottom Barcode & Signature */}
+                      {}
                       <div className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7px]">
                         <div>
                           <p className="font-mono font-bold text-slate-700 tracking-widest text-[7.5px]">|||| | || |||| | | ||| ||||</p>
@@ -3038,7 +2949,7 @@ export default function MyApplications() {
                     </div>
                   </div>
 
-                  {/* Back Side */}
+                  {}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
@@ -3047,12 +2958,12 @@ export default function MyApplications() {
                     </div>
 
                     <div className="border border-slate-300 dark:border-slate-700 rounded-2xl overflow-hidden shadow-sm bg-white select-none relative">
-                      {/* Watermark */}
+                      {}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]">
                         <img src="/gov-serves-seal.png" alt="QC Watermark" className="w-36 h-36 object-contain" />
                       </div>
 
-                      {/* Header */}
+                      {}
                       <div
                         className="px-3.5 py-1.5 flex items-center justify-between text-white"
                         style={{ background: `linear-gradient(to right, ${theme.headerStart}, ${theme.headerEnd})` }}
@@ -3063,7 +2974,7 @@ export default function MyApplications() {
                         </div>
                       </div>
 
-                      {/* Back Body */}
+                      {}
                       <div className="p-3 grid grid-cols-2 gap-2 text-[7.5px] text-slate-800 relative z-10">
                         <div className="p-2 rounded-lg bg-slate-50/90 border border-slate-200 space-y-1">
                           <p className="text-[7px] font-black text-red-600 uppercase">🚨 EMERGENCY CONTACT</p>
@@ -3085,7 +2996,7 @@ export default function MyApplications() {
                         </div>
                       </div>
 
-                      {/* Bottom */}
+                      {}
                       <div className="px-3 py-1 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[6.5px]">
                         <p className="font-mono font-bold text-slate-700">QC-SSDD: {selectedApp.applicationNo}</p>
                         <p className="text-slate-400 uppercase">Official Document</p>
@@ -3094,7 +3005,7 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                {/* Action Bar */}
+                {}
                 <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-end">
                   <button
                     type="button"
@@ -3170,7 +3081,7 @@ export default function MyApplications() {
           )
         })()}
 
-        {/* Action Buttons */}
+        {}
         <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
           <button
             type="button"
@@ -3191,12 +3102,9 @@ export default function MyApplications() {
     )
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // ── MY APPLICATIONS LIST (Main View & Deleted View)
-  // ═══════════════════════════════════════════════════════════════════════
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
-      {/* ── TOP HEADER (Main View vs Deleted View) ── */}
+      {}
       {activeTab === "deleted" ? (
         <div className="space-y-4 border-b border-gray-200 pb-4">
           <div className="flex items-center justify-between">
@@ -3228,7 +3136,7 @@ export default function MyApplications() {
               </p>
             </div>
 
-            {/* Search Input for Deleted View */}
+            {}
             <div className="relative w-full sm:w-72 shrink-0">
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -3250,7 +3158,7 @@ export default function MyApplications() {
           </div>
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            {/* Search Input */}
+            {}
             <div className="relative w-full sm:w-64 shrink-0">
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -3262,7 +3170,7 @@ export default function MyApplications() {
               />
             </div>
 
-            {/* Deleted Applications Entry Button */}
+            {}
             <button
               type="button"
               onClick={() => setActiveTab("deleted")}
@@ -3279,7 +3187,7 @@ export default function MyApplications() {
         </div>
       )}
 
-      {/* ── APPLICATION CARDS LIST ── */}
+      {}
       <div className="space-y-4">
         <div className="flex items-center justify-between text-xs text-gray-500 px-1">
           <span>
@@ -3373,7 +3281,7 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                {/* ── CONNECTED ID RECORD OR FINANCIAL AID & PAYOUT BANNER (Only when Approved / For Release / Released) ── */}
+                {}
                 {(() => {
                   const isApprovedOrReleased =
                     app.status === "Approved" || app.status === "For Release" || app.status === "Released"
@@ -3588,7 +3496,7 @@ export default function MyApplications() {
 
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     {isDeleted ? (
-                      /* ── DELETED ACTIONS (RESTORE & PERMANENT DELETE) ── */
+
                       <>
                         <button
                           type="button"
@@ -3613,7 +3521,7 @@ export default function MyApplications() {
                         </button>
                       </>
                     ) : (
-                      /* ── ACTIVE ACTIONS (DELETE & VIEW) ── */
+
                       <>
                         <button
                           type="button"
@@ -3643,7 +3551,7 @@ export default function MyApplications() {
         )}
       </div>
 
-      {/* ── 1. SOFT DELETE CONFIRMATION MODAL ── */}
+      {}
       {appToDelete && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.7)" }}>
           <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-200 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
@@ -3691,7 +3599,7 @@ export default function MyApplications() {
         </div>
       )}
 
-      {/* ── 2. PERMANENT DELETE CONFIRMATION MODAL ── */}
+      {}
       {appToPermanentDelete && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.75)" }}>
           <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-red-300 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
@@ -3745,7 +3653,7 @@ export default function MyApplications() {
         </div>
       )}
 
-      {/* ── TOAST NOTIFICATION BANNER ── */}
+      {}
       {toastMessage && (
         <div
           className={`fixed bottom-6 right-6 z-50 p-4 rounded-xl text-white text-xs font-bold shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200 ${
@@ -3757,7 +3665,7 @@ export default function MyApplications() {
         </div>
       )}
 
-      {/* ── DIGITAL ID CARD PREVIEW & PRINT MODAL ── */}
+      {}
       {idCardApp && (
         <DigitalIdCardModal
           app={idCardApp}

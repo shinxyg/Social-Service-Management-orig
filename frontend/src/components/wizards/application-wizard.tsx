@@ -36,9 +36,6 @@ const requirementsByType: Record<string, string[]> = {
   ],
 }
 
-// Admin/staff process flow only. Application intake now happens on the
-// resident-facing portal (user-portal/apply-aics.tsx) — staff always start
-// here from an already-submitted case, at Verification.
 const steps = [
   { label: "Verification", icon: FileCheck2 },
   { label: "Interview", icon: MessageCircle },
@@ -54,8 +51,6 @@ export type AICSApplicationResult = {
   status: string
 }
 
-// Info submitted by the resident online. Required — the admin wizard only
-// ever processes an existing submission, it never creates one from scratch.
 export type AICSApplicantInfo = {
   name: string
   address: string
@@ -78,23 +73,18 @@ export function AICSApplicationWizard({
 
   const { name, type, address, contact, narrative } = applicant
 
-  // Step 1 — Verification (Supporting Documents input)
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({})
 
-  // Step 2 — Interview
   const [interviewDate, setInterviewDate] = useState("")
   const [interviewNotes, setInterviewNotes] = useState("")
 
-  // Step 3 — Assessment
   const [assessmentNotes, setAssessmentNotes] = useState("")
   const [recommendedAmount, setRecommendedAmount] = useState("")
   const [eligible, setEligible] = useState<"eligible" | "not-eligible">("eligible")
 
-  // Step 4 — Approval (output: Assistance Approval)
   const [officer, setOfficer] = useState("")
   const [approvalStatus, setApprovalStatus] = useState<"Approved" | "Disapproved">("Approved")
 
-  // Step 5 — Release Assistance (output: Financial Aid Record)
   const [releaseAmount, setReleaseAmount] = useState("")
   const [releaseDate, setReleaseDate] = useState("")
   const [remarks, setRemarks] = useState("")
@@ -157,7 +147,7 @@ export function AICSApplicationWizard({
 
   return (
     <div className="space-y-6">
-      {/* Stepper header */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-soft overflow-x-auto">
         <div className="flex items-center min-w-150">
           {steps.map((s, i) => {
@@ -195,7 +185,7 @@ export function AICSApplicationWizard({
         </div>
       </div>
 
-      {/* Applicant summary — read-only, submitted online by the resident */}
+      {}
       <div className="bg-muted/50 border border-border rounded-2xl p-4 text-sm">
         <p className="text-xs font-medium text-muted-foreground mb-1">Applicant (submitted online)</p>
         <p className="text-foreground font-medium">{name} — {type}</p>
@@ -203,7 +193,7 @@ export function AICSApplicationWizard({
         <p className="text-muted-foreground text-xs mt-2">{narrative}</p>
       </div>
 
-      {/* Step content */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-6 shadow-soft">
         {step === 0 && (
           <div className="space-y-4">
@@ -332,7 +322,7 @@ export function AICSApplicationWizard({
         )}
       </div>
 
-      {/* Nav buttons */}
+      {}
       <div className="flex items-center justify-between">
         <button
           onClick={handleBack}

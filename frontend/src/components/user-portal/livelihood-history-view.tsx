@@ -87,7 +87,6 @@ export default function LivelihoodHistoryView({
           }
         } catch (_) {}
 
-        // Fallback or augment with local storage records
         try {
           const local = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
           if (Array.isArray(local)) {
@@ -99,12 +98,10 @@ export default function LivelihoodHistoryView({
           }
         } catch (_) {}
 
-        // Also ensure current active application is present in list if exists
         if (currentApplication && !allLivApps.some((a) => a.reference_number === currentApplication.reference_number || (a.id && currentApplication.id && a.id === currentApplication.id))) {
           allLivApps.unshift(currentApplication)
         }
 
-        // Sort latest first
         allLivApps.sort((a, b) => {
           const timeA = new Date(a.created_at || a.approved_date || a.submitted_at || 0).getTime()
           const timeB = new Date(b.created_at || b.approved_date || b.submitted_at || 0).getTime()
@@ -190,7 +187,7 @@ export default function LivelihoodHistoryView({
 
   return (
     <div className="space-y-6">
-      {/* ── Top Hero Banner ── */}
+      {}
       <div className="bg-blue-600 rounded-2xl p-6 text-white shadow-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -236,7 +233,7 @@ export default function LivelihoodHistoryView({
         </div>
       </div>
 
-      {/* ── Summary Statistics Cards ── */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-card border border-border rounded-2xl p-4.5 shadow-xs flex items-center gap-3.5">
           <div className="h-11 w-11 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
@@ -281,7 +278,7 @@ export default function LivelihoodHistoryView({
         </div>
       </div>
 
-      {/* ── Applications History List ── */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2">
@@ -414,7 +411,7 @@ export default function LivelihoodHistoryView({
                     </div>
                   </div>
 
-                  {/* ── Card Action Buttons ── */}
+                  {}
                   <div className="flex items-center justify-between pt-1 border-t border-border flex-wrap gap-2">
                     <span className="text-[11px] text-muted-foreground">
                       {isEn ? "Evaluator: " : "Nagsuri: "}

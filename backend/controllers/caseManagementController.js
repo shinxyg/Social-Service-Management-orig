@@ -1,4 +1,4 @@
-// controllers/caseManagementController.js
+
 const db = require('../config/db');
 
 function formatCaseNumber(ref, id) {
@@ -74,7 +74,7 @@ initCaseManagementTables();
 
 exports.getAllCases = async (req, res) => {
   try {
-    // 1. Fetch Approved Applications from all modules and unified case records
+
     const [
       aicsRes,
       pwdSeniorRes,
@@ -108,7 +108,6 @@ exports.getAllCases = async (req, res) => {
     const monitoringMap = new Map();
     const userProfileMap = new Map();
 
-    // Map beneficiaries profiles
     (beneficiariesRes.rows || []).forEach((b) => {
       const name = b.full_name || [b.first_name, b.middle_name, b.last_name, b.suffix].filter(Boolean).join(' ').trim();
       const prof = {
@@ -126,7 +125,6 @@ exports.getAllCases = async (req, res) => {
       if (b.id) userProfileMap.set(String(b.id).trim().toLowerCase(), prof);
     });
 
-    // Map users profiles
     (usersRes.rows || []).forEach((u) => {
       const name = u.full_name || [u.first_name, u.middle_name, u.last_name, u.suffix].filter(Boolean).join(' ').trim();
       const prof = {
@@ -168,7 +166,7 @@ exports.getAllCases = async (req, res) => {
       const d = dateStr || new Date().toISOString().split('T')[0];
 
       if (mod.includes('child')) {
-        // 1. Child Protection Assistance
+
         if (type.includes('protection') || type.includes('abuse') || type.includes('neglect') || type.includes('custody') || type.includes('danger') || type.includes('threat')) {
           return [
             {
@@ -210,7 +208,6 @@ exports.getAllCases = async (req, res) => {
           ];
         }
 
-        // 2. Emergency Child Assistance
         if (type.includes('emergency') || type.includes('crisis') || type.includes('disaster') || type.includes('rescue')) {
           return [
             {
@@ -243,7 +240,6 @@ exports.getAllCases = async (req, res) => {
           ];
         }
 
-        // 3. Nutritional Assistance
         return [
           {
             id: `REF-AUTO-1-${ref}`,
@@ -372,7 +368,6 @@ exports.getAllCases = async (req, res) => {
         ];
       }
 
-      // AICS (Default - medical, funeral, education, financial, etc.)
       const isFuneral = type.includes('funeral') || type.includes('burial');
       const isEducation = type.includes('educ') || type.includes('school');
 
@@ -491,17 +486,14 @@ exports.getAllCases = async (req, res) => {
       return logs;
     }
 
-    // Check if an application is an actual Assistance case (not just ID / Booklet issuance)
     function isAssistanceCase(prog, type, category, assistanceType) {
       const p = String(prog || '').toUpperCase();
       const text = `${type || ''} ${category || ''} ${assistanceType || ''}`.toLowerCase();
 
-      // AICS, Child Welfare, Livelihood are always assistance
       if (p.includes('AICS') || p.includes('CHILD') || p.includes('LIVELIHOOD')) {
         return true;
       }
 
-      // Pure ID or Booklet services do NOT need appointment
       if (
         text.includes('booklet') ||
         text.includes('id card') ||
@@ -514,7 +506,6 @@ exports.getAllCases = async (req, res) => {
         return false;
       }
 
-      // If explicitly assistance / subsidy / pension / cash / devices
       if (
         text.includes('assist') ||
         text.includes('financial') ||
@@ -537,7 +528,6 @@ exports.getAllCases = async (req, res) => {
 
     const cases = [];
 
-    // Helper to match appointment strictly for the matching reference / assistance application
     function findAppointment(ref, qcid, email, moduleName) {
       const cleanRef = String(ref || '').trim().toLowerCase();
       const cleanQcid = String(qcid || '').trim().toLowerCase();
@@ -549,7 +539,6 @@ exports.getAllCases = async (req, res) => {
         const aMod = String(a.module || '').trim().toLowerCase();
         const aConcern = String(a.concern || '').trim().toLowerCase();
 
-        // Exclude ID and Booklet from appointments
         if (aConcern.includes('id') || aConcern.includes('booklet')) return false;
 
         if (cleanRef && aRef === cleanRef) return true;
@@ -558,7 +547,6 @@ exports.getAllCases = async (req, res) => {
       });
     }
 
-    // Helper to match financial aid
     function findFinancialAid(ref, qcid) {
       const cleanRef = String(ref || '').trim().toLowerCase();
       const cleanQcid = String(qcid || '').trim().toLowerCase();
@@ -569,7 +557,6 @@ exports.getAllCases = async (req, res) => {
       });
     }
 
-    // Helper for safe ISO date formatting
     function safeIsoDate(val, fallback = '2026-09-09') {
       if (!val) return fallback;
       try {
@@ -583,7 +570,6 @@ exports.getAllCases = async (req, res) => {
       }
     }
 
-    // Helper for safe age calculation from DOB
     function calculateAge(dobStr, fallbackAge) {
       if (fallbackAge && String(fallbackAge).trim() && String(fallbackAge).trim() !== '—' && !isNaN(Number(fallbackAge))) {
         return String(fallbackAge).trim();
@@ -604,7 +590,6 @@ exports.getAllCases = async (req, res) => {
       }
     }
 
-    // Helper for standardized sex display
     function formatSex(s) {
       if (!s) return '';
       const str = String(s).trim().toLowerCase();
@@ -613,26 +598,19 @@ exports.getAllCases = async (req, res) => {
       return String(s).trim();
     }
 
-    // FULL SYSTEM AUTOMATED CASE RESOLUTION HELPER
     function computeResolvedCaseStatus(override, fin, mons = [], refs = [], appt = null) {
       if (override && override.status) {
         return override.status.toLowerCase();
       }
 
-      // FULL SYSTEM AUTO-RESOLUTION RULES:
-      // Step 1: Application approved (verified)
-      // Step 2: Financial aid is released / claimed OR non-cash service fulfilled
-      // Step 4: Welfare Monitoring check-ins have been logged
       const hasReleasedAid = fin && String(fin.status).toUpperCase() === 'RELEASED';
       const hasMonitoringLogs = mons && mons.length > 0;
       const hasCompletedAppt = !appt || String(appt.status).toLowerCase() === 'completed' || String(appt.status).toLowerCase() === 'attended';
 
-      // 1. If financial aid is released AND monitoring check-ins are logged -> Automatically RESOLVED & CLOSED
       if (hasReleasedAid && hasMonitoringLogs) {
         return 'closed';
       }
 
-      // 2. If non-cash service with completed appointments and monitoring check-ins -> Automatically RESOLVED & CLOSED
       if (!fin && hasCompletedAppt && mons && mons.length >= 2) {
         return 'closed';
       }
@@ -643,7 +621,6 @@ exports.getAllCases = async (req, res) => {
       return 'open';
     }
 
-    // Process AICS
     aicsRes.rows.forEach((row, idx) => {
       try {
         const ref = row.reference_no || `AICS-${row.id}`;
@@ -667,10 +644,8 @@ exports.getAllCases = async (req, res) => {
           mons = generateAutoMonitoringLogs('AICS', row.assistance_type, dateApproved, ref, appt, fin, override.assigned_social_worker);
         }
 
-        // Automated status resolution
         const resolvedStatus = computeResolvedCaseStatus(override, fin, mons, refs, appt);
 
-        // Build real chronological timeline
         const timeline = [
           {
             id: `TL-SUB-${ref}`,
@@ -796,7 +771,6 @@ exports.getAllCases = async (req, res) => {
       }
     });
 
-    // Process PWD & Senior Citizen
     pwdSeniorRes.rows.forEach((row, idx) => {
       try {
         const ref = row.reference_number || row.id;
@@ -940,7 +914,6 @@ exports.getAllCases = async (req, res) => {
       }
     });
 
-    // Process Solo Parent
     soloRes.rows.forEach((row, idx) => {
       try {
         const ref = row.reference_number || `SP-${row.id}`;
@@ -1081,7 +1054,6 @@ exports.getAllCases = async (req, res) => {
       }
     });
 
-    // Process Child Welfare
     childRes.rows.forEach((row, idx) => {
       try {
         const ref = row.reference_number || `CW-${row.id}`;
@@ -1236,7 +1208,6 @@ exports.getAllCases = async (req, res) => {
       }
     });
 
-    // Process Livelihood
     livelihoodRes.rows.forEach((row, idx) => {
       try {
         const ref = row.reference_number || `LV-${row.id}`;
@@ -1376,7 +1347,6 @@ exports.getAllCases = async (req, res) => {
       }
     });
 
-    // Process Training
     trainingRes.rows.forEach((row, idx) => {
       try {
         const ref = row.reference_number || `TR-${row.id}`;
@@ -1534,7 +1504,6 @@ exports.getAllCases = async (req, res) => {
       }
     });
 
-    // Also include any appointments (e.g. from Child Welfare, Solo Parent, Livelihood, PWD, Senior) not yet represented in cases
     const existingAppRefs = new Set(cases.map((c) => String(c.applicationId || '').trim().toLowerCase()));
     const existingBeneficiaryIds = new Set(cases.map((c) => String(c.beneficiaryId || '').trim().toLowerCase()));
 
@@ -1638,7 +1607,6 @@ exports.getAllCases = async (req, res) => {
       }
     });
 
-    // Sort cases by latest opened date descending
     cases.sort((a, b) => new Date(b.dateOpened).getTime() - new Date(a.dateOpened).getTime());
 
     res.status(200).json({
@@ -1733,7 +1701,7 @@ exports.addReferral = async (req, res) => {
       `INSERT INTO case_records (case_number, application_ref, program, status, referrals, updated_at)
        VALUES ($1, $2, 'AICS', 'referred', jsonb_build_array($3::jsonb), NOW())
        ON CONFLICT (case_number)
-       DO UPDATE SET 
+       DO UPDATE SET
          referrals = COALESCE(case_records.referrals, '[]'::jsonb) || jsonb_build_array($3::jsonb),
          status = CASE WHEN case_records.status = 'open' THEN 'referred' ELSE case_records.status END,
          updated_at = NOW()`,
@@ -1777,7 +1745,7 @@ exports.addMonitoring = async (req, res) => {
       `INSERT INTO case_records (case_number, application_ref, program, status, monitoring_logs, updated_at)
        VALUES ($1, $2, 'AICS', 'monitoring', jsonb_build_array($3::jsonb), NOW())
        ON CONFLICT (case_number)
-       DO UPDATE SET 
+       DO UPDATE SET
          monitoring_logs = COALESCE(case_records.monitoring_logs, '[]'::jsonb) || jsonb_build_array($3::jsonb),
          status = CASE WHEN case_records.status = 'open' THEN 'monitoring' ELSE case_records.status END,
          updated_at = NOW()`,

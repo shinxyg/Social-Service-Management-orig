@@ -1,5 +1,3 @@
-// frontend/src/utils/realtimeSync.ts
-// Cross-tab and live server synchronization utility for GovServe applications
 
 import { clearApiCache } from "./cachedApiFetch"
 
@@ -33,22 +31,18 @@ export function notifyApplicationChange(
     timestamp: Date.now(),
   }
 
-  // Clear in-memory API cache immediately so fresh data is fetched
   clearApiCache()
 
-  // 1. BroadcastChannel (instant zero-latency multi-tab dispatch)
   try {
     if (channel) {
       channel.postMessage(msg)
     }
   } catch {}
 
-  // 2. localStorage sync trigger (ensures cross-tab storage event fires)
   try {
     localStorage.setItem("govserve_last_sync_ping", JSON.stringify(msg))
   } catch {}
 
-  // 3. Local window custom events (without redundant duplicates)
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("govserve_realtime_event", { detail: msg }))
     window.dispatchEvent(new Event("pwd_senior_applications_updated"))
@@ -69,19 +63,16 @@ export function subscribeToRealtimeChanges(callback: (msg?: SyncMessage) => void
     }, 250)
   }
 
-  // BroadcastChannel listener
   const onChannelMsg = (event: MessageEvent) => {
     clearApiCache()
     debouncedCallback(event.data)
   }
 
-  // Local custom event listener
   const onWindowEvent = (e: Event) => {
     const customEvt = e as CustomEvent<SyncMessage>
     debouncedCallback(customEvt.detail)
   }
 
-  // Storage listener for cross-tab ping
   const onStorage = (e: StorageEvent) => {
     if (e.key === "govserve_last_sync_ping" && e.newValue) {
       clearApiCache()
@@ -94,7 +85,6 @@ export function subscribeToRealtimeChanges(callback: (msg?: SyncMessage) => void
     }
   }
 
-  // Window focus & visibility change for immediate sync when user switches tabs/devices
   const onVisibilityOrFocus = () => {
     if (document.visibilityState === "visible") {
       clearApiCache()

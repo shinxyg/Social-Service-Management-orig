@@ -1,10 +1,6 @@
 const { verifyToken } = require('../config/jwt');
 const db = require('../config/db');
 
-/**
- * Middleware to authenticate requests via JWT Bearer token or active DB session
- * Checks Authorization header: `Bearer <token>`, `x-access-token`, `x-session-token`, or sessionToken query
- */
 module.exports = async function authMiddleware(req, res, next) {
   try {
     const authHeader = req.headers['authorization'] || req.headers['Authorization'];
@@ -20,7 +16,6 @@ module.exports = async function authMiddleware(req, res, next) {
       token = req.query.token || req.query.sessionToken;
     }
 
-    // 1. Try JWT Token Verification
     if (token) {
       const decoded = verifyToken(token);
       if (decoded) {
@@ -28,7 +23,6 @@ module.exports = async function authMiddleware(req, res, next) {
         return next();
       }
 
-      // 2. Fallback: check if token is an active DB sessionToken (uuid/hex)
       try {
         const sessionRes = await db.query(
           'SELECT id, email, first_name, last_name, role FROM users WHERE active_session_token = $1',
@@ -41,7 +35,6 @@ module.exports = async function authMiddleware(req, res, next) {
       } catch {}
     }
 
-    // 3. Graceful fallback for resident-scoped GET queries (e.g. user viewing own applications)
     const queryEmail = (req.query && req.query.email ? String(req.query.email).trim().toLowerCase() : null) ||
                        (req.headers['x-user-email'] ? String(req.headers['x-user-email']).trim().toLowerCase() : null);
 
@@ -58,7 +51,6 @@ module.exports = async function authMiddleware(req, res, next) {
       } catch {}
     }
 
-    // If still no valid token on mutating POST/PUT/DELETE requests or missing context
     if (req.method !== 'GET') {
       return res.status(401).json({
         success: false,
@@ -67,7 +59,6 @@ module.exports = async function authMiddleware(req, res, next) {
       });
     }
 
-    // For non-mutating GET requests with no user context, pass through with empty user or allow controller filter
     req.user = req.user || { role: 'guest' };
     next();
   } catch (err) {

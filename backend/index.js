@@ -28,7 +28,6 @@ const { autoReleaseScheduledDisbursements } = require('./controllers/financialAi
 
 const app = express();
 
-// Configure CORS
 const allowedOrigins = process.env.FRONTEND_URL
   ? [process.env.FRONTEND_URL.replace(/\/+$/, ''), 'http://localhost:5173', 'http://localhost:3000']
   : '*';
@@ -47,7 +46,6 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Ensure upload directories exist
 const uploadsDir = path.join(__dirname, 'uploads');
 const soloParentDir = path.join(uploadsDir, 'solo-parent');
 const childWelfareDir = path.join(uploadsDir, 'child-welfare');
@@ -61,23 +59,19 @@ const pwdSeniorDir = path.join(uploadsDir, 'pwd-senior');
   }
 });
 
-// Serve static uploads uniformly
 app.use('/uploads', express.static(uploadsDir));
 
-// Fallback search in upload subdirectories (solo-parent, child-welfare, aics, livelihood, etc.)
 app.use('/uploads', (req, res, next) => {
   try {
     const rawPath = decodeURIComponent(req.path || '').replace(/^\/+/, '');
     const filename = path.basename(rawPath);
     if (!filename) return next();
 
-    // Check root uploads directory
     const rootCandidate = path.join(uploadsDir, filename);
     if (fs.existsSync(rootCandidate)) {
       return res.sendFile(rootCandidate);
     }
 
-    // Check known subdirectories
     const subdirs = ['solo-parent', 'child-welfare', 'aics', 'livelihood', 'pwd', 'senior', 'pwd-senior', 'users', 'general'];
     for (const sub of subdirs) {
       const subCandidate = path.join(uploadsDir, sub, filename);
@@ -89,7 +83,6 @@ app.use('/uploads', (req, res, next) => {
         return res.sendFile(nestedCandidate);
       }
 
-      // Check prefix / pattern match in subfolder (e.g. originalName vs multer name)
       const subDir = path.join(uploadsDir, sub);
       if (fs.existsSync(subDir)) {
         try {
@@ -115,7 +108,6 @@ app.use('/uploads', (req, res, next) => {
   next();
 });
 
-// Health check endpoints
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime() }));
 app.get('/api/health', (req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime() }));
 
@@ -152,7 +144,6 @@ app.all('/api/admin/consolidate-cases', async (req, res) => {
   }
 });
 
-// Disable HTTP caching for dynamic API routes to prevent mobile browser stale caching
 app.use('/api', (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -160,7 +151,6 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// API Routes
 app.use('/api/aics', aicsRoutes);
 app.use('/api/activity-log', activityLogRoutes);
 app.use('/activity-log', activityLogRoutes);
@@ -186,17 +176,15 @@ app.use('/api/beneficiaries', beneficiaryRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/ai', aiRoutes);
 
-// Global user cleanup endpoint for test data & history deletion
 app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
   try {
     const { nameOrRef } = req.params;
     const term = `%${nameOrRef}%`;
     const summary = {};
 
-    // 1. AICS
     try {
       const aicsApps = await db.query(
-        `SELECT id FROM aics_applications 
+        `SELECT id FROM aics_applications
          WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
             OR LOWER(first_name || ' ' || middle_name || ' ' || last_name) LIKE LOWER($1)
             OR reference_no LIKE $1 OR qc_id LIKE $1`,
@@ -212,30 +200,27 @@ app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
       }
     } catch (e) { summary.aics_error = e.message; }
 
-    // 2. Financial Aid Disbursements
     try {
       const del = await db.query(
-        `DELETE FROM financial_aid_disbursements 
+        `DELETE FROM financial_aid_disbursements
          WHERE applicant_name ILIKE $1 OR application_ref ILIKE $1`,
         [term]
       );
       summary.financial_aid = del.rowCount;
     } catch (e) { summary.financial_aid_error = e.message; }
 
-    // 3. Appointments
     try {
       const del = await db.query(
-        `DELETE FROM appointments 
+        `DELETE FROM appointments
          WHERE applicant_name ILIKE $1 OR reference_no ILIKE $1`,
         [term]
       );
       summary.appointments = del.rowCount;
     } catch (e) { summary.appointments_error = e.message; }
 
-    // 4. PWD & Senior
     try {
       const del = await db.query(
-        `DELETE FROM pwd_senior_applications 
+        `DELETE FROM pwd_senior_applications
          WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
             OR LOWER(first_name || ' ' || middle_name || ' ' || last_name) LIKE LOWER($1)
             OR reference_number LIKE $1`,
@@ -244,10 +229,9 @@ app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
       summary.pwd_senior = del.rowCount;
     } catch (e) { summary.pwd_senior_error = e.message; }
 
-    // 5. Solo Parent
     try {
       const del = await db.query(
-        `DELETE FROM solo_parent_child_welfare_applications 
+        `DELETE FROM solo_parent_child_welfare_applications
          WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
             OR LOWER(guardian_first_name || ' ' || guardian_last_name) LIKE LOWER($1)
             OR user_id::text LIKE $1 OR reference_number LIKE $1 OR qcid_number LIKE $1 OR child_name ILIKE $1`,
@@ -256,10 +240,9 @@ app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
       summary.solo_parent_child_welfare = del.rowCount;
     } catch (e) { summary.solo_parent_error = e.message; }
 
-    // 7. Livelihood
     try {
       const lhApps = await db.query(
-        `SELECT id FROM livelihood_applications 
+        `SELECT id FROM livelihood_applications
          WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
             OR user_id::text LIKE $1 OR reference_number LIKE $1 OR qcid LIKE $1`,
         [term]
@@ -275,20 +258,18 @@ app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
       }
     } catch (e) { summary.livelihood_error = e.message; }
 
-    // 8. Notifications
     try {
       const del = await db.query(
-        `DELETE FROM user_notifications 
+        `DELETE FROM user_notifications
          WHERE user_id LIKE $1 OR application_ref LIKE $1`,
         [term]
       );
       summary.notifications = del.rowCount;
     } catch (e) { summary.notifications_error = e.message; }
 
-    // 9. Activity Log
     try {
       const del = await db.query(
-        `DELETE FROM activity_log 
+        `DELETE FROM activity_log
          WHERE actor ILIKE $1 OR reference_no LIKE $1 OR subject ILIKE $1`,
         [term]
       );
@@ -302,7 +283,6 @@ app.delete('/api/cleanup-user/:nameOrRef', async (req, res) => {
   }
 });
 
-// Optional: Serve frontend static build if running fullstack single-service mode
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
 if (fs.existsSync(frontendDistPath)) {
   app.use(express.static(frontendDistPath));
@@ -318,10 +298,9 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🚀 Backend server running on http://0.0.0.0:${PORT}`);
-  // Run schema migration / table check on startup
+
   await initDb();
 
-  // Run auto-release worker every 30 seconds with re-entrancy protection
   let isReleasing = false;
   setInterval(async () => {
     if (isReleasing) return;

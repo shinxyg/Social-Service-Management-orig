@@ -11,9 +11,6 @@ import {
 } from 'lucide-react';
 import { getInitialTheme, applyTheme, getThemePreference, getEffectiveTheme, setThemeMode } from '../utils/theme';
 
-// 5 capability cards — matches docx §8 "Landing Page Feature Cards".
-// Layout: row 1 = 3 cards, row 2 = 2 cards (centered), each card offset
-// vertically to create a zigzag rhythm down the grid (docx §7 "Feature grid").
 const features = [
   { icon: MapPin, title: 'AICS', description: 'Crisis assistance for medical, burial, and educational needs', tint: 'violet' },
   { icon: Home, title: 'PWD & Senior Citizen', description: 'ID issuance and social pension enrollment', tint: 'emerald' },
@@ -69,7 +66,6 @@ function useTypewriter(words: string[], typingMs = 90, pauseMs = 1400, deletingM
   return text;
 }
 
-// Scattered decorative icons — purely atmospheric, low-opacity.
 const FLOATING = [
   { Icon: Home, top: '10%', left: '5%', color: 'text-emerald-500/20', size: 26, delay: '0s' },
   { Icon: MapPin, top: '78%', left: '92%', color: 'text-sky-500/20', size: 20, delay: '-2s' },
@@ -108,7 +104,7 @@ export function LandingPage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background">
-      {/* Grid pattern overlay — docx §7 "grid pattern overlay" */}
+      {}
       <div
         className="pointer-events-none absolute inset-0 -z-20 opacity-[0.035]"
         style={{
@@ -120,13 +116,13 @@ export function LandingPage() {
         }}
       />
 
-      {/* Animated gradient background */}
+      {}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-1/4 h-80 w-80 rounded-full bg-primary/10 blur-3xl animate-float" />
         <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl animate-float" style={{ animationDelay: '-3s' }} />
       </div>
 
-      {/* Floating decorative icons */}
+      {}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         {FLOATING.map(({ Icon, top, left, color, size, delay }, i) => (
           <div key={i} className={`absolute ${color} animate-float`} style={{ top, left, animationDelay: delay }}>
@@ -135,7 +131,7 @@ export function LandingPage() {
         ))}
       </div>
 
-      {/* Top navigation — docx §7 "logo mark, wordmark, theme toggle", centered max-w-6xl */}
+      {}
       <header className="max-w-6xl mx-auto px-4 py-4">
         <nav className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -159,11 +155,11 @@ export function LandingPage() {
         </nav>
       </header>
 
-      {/* Hero */}
+      {}
       <section className="max-w-6xl mx-auto px-4 pt-10 pb-16 text-center">
         <div className="mx-auto max-w-4xl">
 
-          {/* H1 — responsive 30/36/48/60px (text-3xl -> sm:4xl -> md:5xl -> lg:6xl) */}
+          {}
           <h1 className="font-heading text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:text-6xl tracking-tight">
             <span className="block">Social Services</span>
             <div className="h-[1.35em] flex items-center justify-center my-1.5 overflow-hidden">
@@ -175,13 +171,13 @@ export function LandingPage() {
             <span className="block">Made Simple</span>
           </h1>
 
-          {/* Description — 16-20px muted centered */}
+          {}
           <p className="mx-auto mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
             A comprehensive digital platform for crisis assistance, PWD and senior citizen
             services, solo parent support, livelihood training, and financial aid disbursement.
           </p>
 
-          {/* Primary CTA — 48-56px height, rounded-2xl, blue shadow */}
+          {}
           <button
             onClick={() => {
               const isAuth = sessionStorage.getItem('isAuthenticated') === 'true' || localStorage.getItem('isAuthenticated') === 'true';
@@ -200,8 +196,7 @@ export function LandingPage() {
           </button>
         </div>
 
-        {/* Feature grid — single flex-wrap row; cards match a 1/2/3-col width so the
-            last row's 2 cards wrap naturally and center themselves (no manual offsets). */}
+        {}
         <div className="mt-14 flex flex-wrap justify-center gap-4 max-w-4xl mx-auto text-left">
           {features.map((f) => (
             <div
@@ -218,7 +213,7 @@ export function LandingPage() {
           ))}
         </div>
 
-        {/* Stats — Premium Glassmorphic Metric Strip */}
+        {}
         <div className="mt-16 max-w-4xl mx-auto rounded-3xl border border-border/70 bg-card/75 dark:bg-slate-900/70 backdrop-blur-xl shadow-lg shadow-black/5 overflow-hidden">
           <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border/60">
             {stats.map((stat) => (
@@ -243,7 +238,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Footer — thin top border, muted text */}
+      {}
       <footer className="border-t border-border">
         <div className="max-w-6xl mx-auto px-4 py-6 text-center">
           <p className="text-xs text-muted-foreground">

@@ -1,4 +1,4 @@
-// Centralized Profile Photo persistence across User Portal, Admin Modules, and Auth
+
 const GLOBAL_PHOTO_KEY = "user_profile_photo"
 
 export function getSavedProfilePhoto(qcid?: string): string | null {
@@ -27,7 +27,6 @@ export function saveProfilePhoto(dataUrl: string, qcid?: string) {
       localStorage.setItem(`profile_photo_${clean}`, dataUrl)
     }
 
-    // Broadcast change across tabs and components
     window.dispatchEvent(new Event("user_profile_updated"))
     window.dispatchEvent(new Event("storage"))
   } catch (e) {
@@ -47,7 +46,6 @@ export function removeProfilePhoto(qcid?: string) {
       localStorage.removeItem(`profile_photo_${clean}`)
     }
 
-    // Also remove from currentUser in localStorage if present
     try {
       const rawUser = localStorage.getItem("currentUser")
       if (rawUser) {
@@ -59,7 +57,6 @@ export function removeProfilePhoto(qcid?: string) {
       }
     } catch {}
 
-    // Broadcast change across tabs and components
     window.dispatchEvent(new Event("user_profile_updated"))
     window.dispatchEvent(new Event("storage"))
   } catch (e) {

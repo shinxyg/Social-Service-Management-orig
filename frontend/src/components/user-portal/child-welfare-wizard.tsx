@@ -739,7 +739,6 @@ export default function ChildWelfareApplicationWizard({
 
   const currentPrograms = getLocalizedChildWelfarePrograms(language)
 
-  // Step 1: Program selection & Checklist
   const [selectedProgramId, setSelectedProgramId] = useState<number>(() => {
     if (initialProgramId) return initialProgramId
     if (initialProgramKey) {
@@ -765,14 +764,12 @@ export default function ChildWelfareApplicationWizard({
   const [check3, setCheck3] = useState(false)
   const [selectedAssistanceType, setSelectedAssistanceType] = useState<string>("")
 
-  // Sync assistance type when program changes only if not matching
   useEffect(() => {
     if (selectedProgram && selectedAssistanceType && !selectedProgram.assistanceTypes.includes(selectedAssistanceType)) {
       setSelectedAssistanceType("")
     }
   }, [selectedProgramId, language])
 
-  // Step 2: Personal / Beneficiary Information
   const parseProfileDob = (prof: any) => {
     let month = prof?.dobMonth || ""
     let day = prof?.dobDay || prof?.birthDay || ""
@@ -861,7 +858,7 @@ export default function ChildWelfareApplicationWizard({
       barangay: p.addressBarangay || p.barangay || "Sauyo",
       city: p.addressCityMunicipality || p.city || "Quezon City",
       contactNo: p.contactNo || p.mobileNumber || "",
-      email: "", // User explicitly requested not to include email/gmail in applicant info
+      email: "",
     }
   }
 
@@ -869,7 +866,7 @@ export default function ChildWelfareApplicationWizard({
   const initialData = getProfileData(initialProfile)
 
   const [formData, setFormData] = useState({
-    // I. Applicant / Child Information (pre-filled from profile)
+
     qcidNumber: initialData.qcidNumber,
     firstName: initialData.firstName,
     middleName: initialData.middleName,
@@ -889,14 +886,12 @@ export default function ChildWelfareApplicationWizard({
     contactNo: initialData.contactNo,
     email: "",
 
-    // II. Parent / Guardian / Reporting Person
     parentFullName: "",
     parentRelationship: "",
     parentContactNo: "",
     isReportingPersonCurrentParent: "",
     specifiedRelationship: "",
 
-    // Specific concern / details
     reasonForRequest: "",
     briefDescription: "",
     isImmediateDanger: "No",
@@ -909,11 +904,9 @@ export default function ChildWelfareApplicationWizard({
     reportEmergencyPriority: true,
     currentLivingSituation: "",
 
-    // Certification
     certifiedCorrect: false,
   })
 
-  // Sync profile when userProfile changes or loads
   useEffect(() => {
     const prof: any = userProfile || getCurrentUserProfile()
     if (prof) {
@@ -945,7 +938,6 @@ export default function ChildWelfareApplicationWizard({
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  // Step 3: Documents
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>({})
   const [uploadedFilesBase64, setUploadedFilesBase64] = useState<Record<string, string>>({})
 
@@ -980,7 +972,6 @@ export default function ChildWelfareApplicationWizard({
     })
   }
 
-  // Submission State
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [appStatus, setAppStatus] = useState<"pending" | "approved" | "rejected">("pending")
   const [reference, setReference] = useState("")
@@ -999,7 +990,6 @@ export default function ChildWelfareApplicationWizard({
     }
   })
 
-  // Keep state synced with selectedProgram & localStorage
   useEffect(() => {
     try {
       const isLocal =
@@ -1032,7 +1022,6 @@ export default function ChildWelfareApplicationWizard({
     } catch {}
   }
 
-  // Reload / Navigation warning protection — active when user has entered form inputs or reached steps 2-4
   const isFormDirty =
     submissionStage === "form" &&
     (
@@ -1068,7 +1057,6 @@ export default function ChildWelfareApplicationWizard({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [isFormDirty])
 
-  // Listen to active user application status in Child Welfare
   useEffect(() => {
     if (isReapplying) return
     let active = true
@@ -1108,7 +1096,6 @@ export default function ChildWelfareApplicationWizard({
           return false
         }
 
-        // 1. Instant check from localStorage
         try {
           const stored = JSON.parse(localStorage.getItem("child_welfare_applications") || "[]")
           const localMatch = stored.find((a: any) => {
@@ -1129,7 +1116,6 @@ export default function ChildWelfareApplicationWizard({
           }
         } catch {}
 
-        // 2. Fetch fresh status from backend
         if (uid && uid !== "0" && uid !== "1") {
           const res = await fetch(`${API_BASE}/api/child-welfare/user/${uid}?qcid=${encodeURIComponent(cleanUserQcid)}&email=${encodeURIComponent(userEmail)}&firstName=${encodeURIComponent(userFirstName)}&lastName=${encodeURIComponent(userLastName)}`, { headers })
           if (res.ok) {
@@ -1187,7 +1173,6 @@ export default function ChildWelfareApplicationWizard({
     }
   }, [selectedProgram.id, selectedProgram.title, userProfile, isReapplying])
 
-  // Validations
   const step1Valid =
     check1 &&
     check2 &&
@@ -1277,7 +1262,6 @@ export default function ChildWelfareApplicationWizard({
       uploaded_documents: newDocItems,
     }
 
-    // Instant local cache sync so Admin & User portal immediately see submission and uploaded documents
     try {
       const stored = JSON.parse(localStorage.getItem("child_welfare_applications") || "[]")
       const localRecord = {
@@ -1356,7 +1340,6 @@ export default function ChildWelfareApplicationWizard({
           setReference(data.referenceNumber)
         }
 
-        // Upload all attached documents in parallel
         const token = getAuthToken()
         const uploadPromises = selectedProgram.documents.map(async (doc) => {
           const files = uploadedFiles[doc.id] || []
@@ -1375,7 +1358,6 @@ export default function ChildWelfareApplicationWizard({
 
         await Promise.all(uploadPromises)
 
-        // Submit application
         if (appId) {
           await fetch(`${API_BASE}/api/child-welfare/${appId}/submit`, {
             method: "POST",
@@ -1401,13 +1383,12 @@ export default function ChildWelfareApplicationWizard({
     setSubmissionStage("pending")
   }
 
-  // Notify parent of stage changes
   useEffect(() => {
     onSubmissionStageChange?.(submissionStage, appStatus)
   }, [submissionStage, appStatus, onSubmissionStageChange])
 
   if (submissionStage === "pending") {
-    // 1. REJECTED STATE (matching AICS)
+
     if (appStatus === "rejected") {
       return (
         <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
@@ -1489,7 +1470,6 @@ export default function ChildWelfareApplicationWizard({
       )
     }
 
-    // 2. APPROVED STATE (matching AICS Approved card)
     if (appStatus === "approved") {
       return (
         <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
@@ -1572,7 +1552,6 @@ export default function ChildWelfareApplicationWizard({
       )
     }
 
-    // 3. PENDING STATE (matching AICS Pending card)
     return (
       <div className="max-w-2xl mx-auto p-6 md:p-8 my-6 bg-white border border-border rounded-2xl shadow-sm text-center space-y-6 animate-in fade-in duration-300">
         <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-blue-50/50">
@@ -1669,7 +1648,7 @@ export default function ChildWelfareApplicationWizard({
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
       <div className="border border-gray-200 rounded-xl overflow-hidden bg-white relative">
-        {/* Step Indicator Badges and Tab Bars */}
+        {}
         <div className="flex items-center px-6 pt-6 pb-4">
           {STEPS.map((s, i) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
@@ -1691,7 +1670,7 @@ export default function ChildWelfareApplicationWizard({
           ))}
         </div>
 
-        {/* Tab labels */}
+        {}
         <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
@@ -1709,12 +1688,12 @@ export default function ChildWelfareApplicationWizard({
           ))}
         </div>
 
-        {/* Card Content */}
+        {}
         <div className="p-6 sm:p-8 space-y-7">
-          {/* ──────────────── STEP 1: PROGRAM & CHECKLIST ──────────────── */}
+          {}
           {step === 1 && (
             <div className="space-y-6">
-              {/* Blue Info Alert Banner */}
+              {}
               <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
                 <div>
@@ -1731,7 +1710,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </div>
 
-              {/* Section Title */}
+              {}
               <div>
                 <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
                   SERVICE AND PRIMARY REQUIREMENTS
@@ -1751,7 +1730,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               )}
 
-              {/* Checklist Questions */}
+              {}
               <div className="space-y-4">
                 <CustomCheckbox
                   checked={check1}
@@ -1772,7 +1751,7 @@ export default function ChildWelfareApplicationWizard({
                 )}
               </div>
 
-              {/* Assistance Category / Type Selection Dropdown */}
+              {}
               <div>
                 <h3 className="text-sm font-bold text-gray-900 mb-1.5 tracking-wide uppercase">
                   {language === "tl" ? "PUMILI NG URI NG TULONG" : language === "bis" ? "PAGPILI OG MATANG SA TABANG" : "CLICK THE TYPE OF ASSISTANCE"}
@@ -1804,7 +1783,7 @@ export default function ChildWelfareApplicationWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 2: PERSONAL INFORMATION ──────────────── */}
+          {}
           {step === 2 && (
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-3">
@@ -1826,14 +1805,14 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               )}
 
-              {/* I. IMPORMASYON NG BATA / APLIKANTE (DISABLED & PRE-FILLED FROM USER PROFILE) */}
+              {}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
                   <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   {language === "tl" ? "I. IMPORMASYON NG APLIKANTE / BATA" : language === "bis" ? "I. IMPORMASYON SA APLIKANTE / BATA" : "I. APPLICANT / CHILD INFORMATION"}
                 </h4>
 
-                {/* Row 1: QC ID & First Name */}
+                {}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "QC ID (Opsyonal / Kung mayroon)" : language === "bis" ? "QC ID (Opsyonal / Kung anaa)" : "QC ID (Optional / If available)"}</label>
@@ -1845,7 +1824,7 @@ export default function ChildWelfareApplicationWizard({
                   </div>
                 </div>
 
-                {/* Row 2: Middle Name, Last Name, Suffix */}
+                {}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Gitnang Pangalan (Middle Name)" : language === "bis" ? "Tunga nga Ngalan (Middle Name)" : "Middle Name"}</label>
@@ -1861,7 +1840,7 @@ export default function ChildWelfareApplicationWizard({
                   </div>
                 </div>
 
-                {/* Row 3: Nationality, Date of Birth, Age */}
+                {}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Nasyonalidad *" : language === "bis" ? "Nasyonalidad *" : "Nationality *"}</label>
@@ -1886,7 +1865,7 @@ export default function ChildWelfareApplicationWizard({
                   </div>
                 </div>
 
-                {/* Row 4: Gender / Sex, Civil Status, Contact Number */}
+                {}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Kasarian *" : language === "bis" ? "Kasarian *" : "Gender / Sex *"}</label>
@@ -1902,7 +1881,7 @@ export default function ChildWelfareApplicationWizard({
                   </div>
                 </div>
 
-                {/* Row 5: House / Building Number, Street, Barangay */}
+                {}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Numero ng Bahay / Gusali" : language === "bis" ? "Numero sa Balay / Edipisyo" : "House / Building Number"}</label>
@@ -1919,13 +1898,13 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </div>
 
-              {/* II. PARENT / GUARDIAN / REPORTING PERSON INFORMATION */}
+              {}
               <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
                 <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
                   <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   {t("parentGuardianTitle") || (language === "tl" ? "II. IMPORMASYON NG MAGULANG / GUARDIAN / NAG-UULAT" : language === "bis" ? "II. IMPORMASYON SA GINIKANAN / GUARDIAN / TIG-REPORT" : "II. PARENT / GUARDIAN / REPORTING PERSON INFORMATION")}
                 </h4>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.parentFullName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
@@ -1982,7 +1961,7 @@ export default function ChildWelfareApplicationWizard({
                   </div>
                 </div>
 
-                {/* Additional Information */}
+                {}
                 <div className={`mt-4 pt-3 border-t p-4 rounded-xl space-y-3 transition-colors ${
                   attemptedNext && !formData.isReportingPersonCurrentParent
                     ? "border-red-400 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800"
@@ -2050,7 +2029,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </div>
 
-              {/* SPECIFIC PROGRAM DETAILS */}
+              {}
               {selectedProgram.hasProtectionConcern && (
                 <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
                   <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
@@ -2163,7 +2142,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               )}
 
-              {/* 2. Emergency Assistance Specific */}
+              {}
               {selectedProgram.hasEmergencyInfo && (
                 <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
                   <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
@@ -2243,7 +2222,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               )}
 
-              {/* 3. Psychosocial Support Specific */}
+              {}
               {selectedProgram.hasPsychosocialReason && (
                 <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
                   <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
@@ -2274,7 +2253,7 @@ export default function ChildWelfareApplicationWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 3: SAMPLE DOCUMENTS & UPLOADS ──────────────── */}
+          {}
           {step === 3 && (
             <div className="space-y-5">
               <div className="border-b border-gray-200 pb-3">
@@ -2409,7 +2388,7 @@ export default function ChildWelfareApplicationWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 4: REVIEW & SUBMIT ──────────────── */}
+          {}
           {step === 4 && (
             <div className="space-y-5">
               <div>
@@ -2421,7 +2400,7 @@ export default function ChildWelfareApplicationWizard({
                 </p>
               </div>
 
-              {/* 1. Program & Assistance Details */}
+              {}
               <ReviewSection title={language === "tl" ? "Mga Detalye ng Aplikasyon" : language === "bis" ? "Mga Detalye sa Aplikasyon" : "Application Details"} onEdit={() => { setReturnToReview(true); setStep(1) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField
@@ -2475,7 +2454,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </ReviewSection>
 
-              {/* 2. Applicant / Child Information */}
+              {}
               <ReviewSection title={language === "tl" ? "Impormasyon ng Aplikante / Bata" : language === "bis" ? "Impormasyon sa Aplikante / Bata" : "Applicant / Child Information"} onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField label="QC ID Number" value={formData.qcidNumber} />
@@ -2493,7 +2472,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </ReviewSection>
 
-              {/* 3. Parent / Guardian / Reporting Person */}
+              {}
               <ReviewSection title={language === "tl" ? "Impormasyon ng Magulang / Guardian / Nag-uulat" : language === "bis" ? "Impormasyon sa Ginikanan / Guardian / Tig-report" : "Parent / Guardian / Reporting Person Information"} onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField label={language === "tl" ? "Buong Pangalan" : language === "bis" ? "Tibuok Ngalan" : "Full Name"} value={formData.parentFullName} />
@@ -2506,7 +2485,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </ReviewSection>
 
-              {/* 4. Uploaded Documents */}
+              {}
               <ReviewSection title={language === "tl" ? "Mga Na-upload na Dokumento" : language === "bis" ? "Mga Na-upload nga Dokumento" : "Uploaded Documents"} onEdit={() => { setReturnToReview(true); setStep(3) }}>
                 <div className="p-4 space-y-4">
                   {selectedProgram.documents.map((doc) => {
@@ -2552,7 +2531,7 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </ReviewSection>
 
-              {/* Disclaimer Note (Pic 2 style) */}
+              {}
               <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <p className="text-xs sm:text-sm text-blue-700 leading-relaxed">
@@ -2576,7 +2555,7 @@ export default function ChildWelfareApplicationWizard({
           )}
         </div>
 
-        {/* Footer Navigation */}
+        {}
         <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
           {step > 1 ? (
             <button
@@ -2623,7 +2602,7 @@ export default function ChildWelfareApplicationWizard({
         </div>
       </div>
 
-      {/* 📸 Document Camera Capture Modal */}
+      {}
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}
         onClose={() => setCameraDoc(null)}
@@ -2635,7 +2614,7 @@ export default function ChildWelfareApplicationWizard({
         }}
       />
 
-      {/* 👁️ UPLOADED DOCUMENT FULL PREVIEW MODAL */}
+      {}
       {previewDocModal && (
         <UploadedDocPreviewModal
           title={previewDocModal.title}
@@ -2644,7 +2623,7 @@ export default function ChildWelfareApplicationWizard({
         />
       )}
 
-      {/* 🔔 DATA PRIVACY CONSENT OVERLAY MODAL BEFORE SUBMIT */}
+      {}
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}

@@ -68,10 +68,8 @@ function evaluateActiveAppBlockedState(
     const appFullName = String(a.applicantName || a.applicant_name || `${appFirstName} ${appLastName}`).toLowerCase().trim()
     const appUid = String(a.userId || a.user_id || "").trim()
 
-    // 1. User ID match
     if (currentUid && appUid && currentUid === appUid && currentUid !== "0") return true
 
-    // 2. QCID / Reference match
     const qcidClean = currentQcid.toLowerCase().trim()
     if (qcidClean) {
       if (appRef === qcidClean || appQcid === qcidClean || appAssigned === qcidClean) return true
@@ -83,15 +81,12 @@ function evaluateActiveAppBlockedState(
       if (userDigits.length >= 8 && (appRefDigits === userDigits || appQcidDigits === userDigits || appRefDigits.includes(userDigits) || userDigits.includes(appRefDigits))) return true
     }
 
-    // 3. Email match
     if (currentEmail && appEmail && currentEmail === appEmail) return true
 
-    // 4. Exact Name match
     if (currentLastName && appLastName && currentFirstName && appFirstName) {
       if (currentLastName === appLastName && currentFirstName === appFirstName) return true
     }
 
-    // 5. Full name match
     if (currentFullName && appFullName) {
       const combined = `${currentFirstName} ${currentLastName}`.trim()
       if (appFullName === combined || (appFullName.startsWith(currentFirstName + " ") && appFullName.endsWith(" " + currentLastName))) {
@@ -180,7 +175,6 @@ function evaluateActiveAppBlockedState(
     return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
   }
 
-  // ID Cards (Senior Citizen ID or PWD ID)
   const idApps = relevantApps.filter((a) => {
     const t = String(a.type || a.service || "").toLowerCase()
     const isSub = t.includes("booklet") || t.includes("medicine") || t.includes("movie") || t.includes("assistance")
@@ -265,7 +259,7 @@ export default function ApplyPWDSenior() {
   const { t, language } = useLanguage()
   const [searchParams] = useSearchParams()
 
-  const urlCategory = searchParams.get("category")?.toLowerCase() // "pwd" | "senior"
+  const urlCategory = searchParams.get("category")?.toLowerCase()
   const rawType = searchParams.get("type")?.toLowerCase() || "new"
   const urlType = rawType as "new" | "renewal" | "loss" | "assistance" | "medicine-booklet" | "movie-booklet" | "social-assistance"
 
@@ -276,7 +270,6 @@ export default function ApplyPWDSenior() {
   const isSeniorId = isSenior && !isSeniorMedicine && !isSeniorMovie && !isSeniorSocial
   const isAssistance = !isSenior && urlType === "assistance"
 
-  // Fast synchronous evaluation of local cached applications so blocked screen renders in 0ms
   const [initialBlockedState] = useState(() => {
     try {
       const currentQcid = getLoggedInUserQcid() || "110000572516915"
@@ -308,7 +301,6 @@ export default function ApplyPWDSenior() {
   })
   const bypassedBlockRef = useRef(bypassedBlock)
 
-  // Check for existing pending/active applications for this category & service
   useEffect(() => {
     let isMounted = true
 
@@ -317,7 +309,6 @@ export default function ApplyPWDSenior() {
         const currentQcid = getLoggedInUserQcid() || "110000572516915"
         const userProf = getCurrentUserProfile()
 
-        // 1. Immediately apply local cached records (0ms)
         const localApps = getLocalApplications()
         const localRes = evaluateActiveAppBlockedState(localApps, urlCategory, urlType, userProf, currentQcid)
         if (isMounted && localRes.isBlocked) {
@@ -326,7 +317,6 @@ export default function ApplyPWDSenior() {
           setHasApprovedApp(localRes.hasApprovedApp)
         }
 
-        // 2. Fresh background sync with backend
         const backendApps = await fetchPwdSeniorApplications()
 
         let allApps = [...backendApps]
@@ -374,7 +364,6 @@ export default function ApplyPWDSenior() {
     }
   }, [urlCategory, urlType, isSenior, isAssistance, isSeniorSocial, isSeniorMedicine, isSeniorMovie, isSeniorId])
 
-  // Keep modal closed on navigation so user can see and access the form UI directly
   useEffect(() => {
     try {
       const isReapp =
@@ -507,7 +496,6 @@ export default function ApplyPWDSenior() {
     t("seniorRenewalReq4"),
   ]
 
-  // Render blocked active application UI directly (for PWD, Senior, Booklets, and Assistance wizards)
   const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
   const isAppRejected = String(blockedApp?.status || "").toLowerCase() === "rejected" || String(blockedApp?.status || "").toLowerCase() === "disapproved"
   const rejectionReason = blockedApp?.rejection_reason || blockedApp?.rejectionReason || blockedApp?.admin_notes || blockedApp?.remarks || ""
@@ -647,7 +635,7 @@ export default function ApplyPWDSenior() {
           </div>
 
           <div className="w-full pt-2 flex flex-col gap-2">
-            {/* Approved ID Applications: NO Re-apply allowed. Only Renewal, Replacement/Lost ID, and History */}
+            {}
             {isAppApproved && !isAssistance && !isSeniorSocial && !isSeniorMedicine && !isSeniorMovie ? (
               <>
                 <button
@@ -674,7 +662,7 @@ export default function ApplyPWDSenior() {
                 </button>
               </>
             ) : isAppRejected ? (
-              /* Rejected Applications: Allowed to re-apply / submit fresh application */
+
               <button
                 type="button"
                 onClick={() => {
@@ -701,7 +689,7 @@ export default function ApplyPWDSenior() {
               </button>
             ) : null}
 
-            {/* Navigation Button */}
+            {}
             <button
               type="button"
               onClick={() => {
@@ -726,7 +714,7 @@ export default function ApplyPWDSenior() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {/* Top Service Quick Info Banner - shown only on Step 1 when user is actively filling out the form */}
+      {}
       {currentStep === 1 && !isBlocked && !blockedApp && !hasApprovedApp && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3 animate-in fade-in duration-150">
           <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -763,7 +751,7 @@ export default function ApplyPWDSenior() {
         </div>
       )}
 
-      {/* Background: Direct Form Wizard */}
+      {}
       {(() => {
         const activeProfile = getCurrentUserProfile();
         return isSeniorMedicine ? (
@@ -795,7 +783,7 @@ export default function ApplyPWDSenior() {
         );
       })()}
 
-      {/* Requirements Dialog Modal appearing over the content */}
+      {}
       {showModal && (
         <div
           onClick={() => setShowModal(false)}
@@ -805,7 +793,7 @@ export default function ApplyPWDSenior() {
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-150"
           >
-            {/* Modal Header */}
+            {}
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
               <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
                 <h2 className="text-base md:text-lg font-bold text-foreground truncate">
@@ -825,9 +813,9 @@ export default function ApplyPWDSenior() {
               </button>
             </div>
 
-            {/* Modal Content */}
+            {}
             <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-              {/* MEDICINE BOOKLET REQUIREMENTS */}
+              {}
               {isSeniorMedicine && (
                 <>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
@@ -864,7 +852,7 @@ export default function ApplyPWDSenior() {
                 </>
               )}
 
-              {/* MOVIE BOOKLET REQUIREMENTS */}
+              {}
               {isSeniorMovie && (
                 <>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
@@ -901,7 +889,7 @@ export default function ApplyPWDSenior() {
                 </>
               )}
 
-              {/* SENIOR SOCIAL ASSISTANCE REQUIREMENTS */}
+              {}
               {isSeniorSocial && (
                 <>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
@@ -938,7 +926,7 @@ export default function ApplyPWDSenior() {
                 </>
               )}
 
-              {/* PWD ASSISTANCE SECTION */}
+              {}
               {isAssistance && (
                 <>
                   <div className="space-y-3">
@@ -983,7 +971,7 @@ export default function ApplyPWDSenior() {
                 </>
               )}
 
-              {/* PWD ID SECTION */}
+              {}
               {!isSenior && !isAssistance && (
                 <>
                   <div className="space-y-3">
@@ -1017,7 +1005,7 @@ export default function ApplyPWDSenior() {
                     </div>
                   </div>
 
-                  {/* General Requirements */}
+                  {}
                   <div>
                     <h3 className="text-base font-bold text-foreground mb-3">{t("pwdNewRenewalHeading")}</h3>
                     <ul className="space-y-1.5 mb-6">
@@ -1033,7 +1021,7 @@ export default function ApplyPWDSenior() {
                     </ul>
                   </div>
 
-                  {/* Apparent Disability Requirements */}
+                  {}
                   <div>
                     <h3 className="text-base font-bold text-foreground mb-3">{t("apparentDisabilityHeading")}</h3>
                     <ul className="space-y-1.5 mb-6">
@@ -1049,7 +1037,7 @@ export default function ApplyPWDSenior() {
                     </ul>
                   </div>
 
-                  {/* Non-Apparent Disability Requirements */}
+                  {}
                   <div>
                     <h3 className="text-base font-bold text-foreground mb-3">{t("nonApparentDisabilityHeading")}</h3>
                     <p className="text-xs text-muted-foreground mb-3 italic">
@@ -1074,7 +1062,7 @@ export default function ApplyPWDSenior() {
                 </>
               )}
 
-              {/* SENIOR CITIZEN ID SECTION */}
+              {}
               {isSeniorId && (
                 <>
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
@@ -1113,7 +1101,7 @@ export default function ApplyPWDSenior() {
                     </p>
                   </div>
 
-                  {/* Requirements */}
+                  {}
                   <div>
                     <h3 className="text-base font-bold text-foreground mb-3">{t("seniorRequirementsHeading")}</h3>
                     <ul className="space-y-2.5">
@@ -1138,7 +1126,7 @@ export default function ApplyPWDSenior() {
               )}
             </div>
 
-            {/* Modal Footer with Checkbox and Button */}
+            {}
             <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex items-center justify-between gap-4">
               <div className="flex items-start gap-2.5 flex-1">
                 <input

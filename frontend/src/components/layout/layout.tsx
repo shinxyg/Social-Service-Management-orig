@@ -19,7 +19,6 @@ export default function SocialServicesLayout() {
 
     syncTheme()
 
-    // Real-time automatic check every 15 seconds (handles 6:00 AM / 6:00 PM transitions)
     const interval = setInterval(syncTheme, 15000)
     window.addEventListener("theme_changed", syncTheme)
     window.addEventListener("storage", syncTheme)

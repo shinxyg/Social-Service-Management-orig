@@ -107,7 +107,6 @@ export function ProfileModal({
   user,
 }: ProfileModalProps) {
 
-  // Load current registered user from props or storage
   const getStoredUser = () => {
     if (user) return user;
     try {
@@ -165,7 +164,6 @@ export function ProfileModal({
   const [isUpdating, setIsUpdating] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
-  // Device management state
   const [deviceSessions, setDeviceSessions] = useState<DeviceSession[]>([]);
   const [isLoadingDevices, setIsLoadingDevices] = useState(false);
   const [deviceActionMsg, setDeviceActionMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -269,10 +267,8 @@ export function ProfileModal({
     }
   };
 
-  // Track open state so we ONLY reset on fresh modal open, preventing auto-erasing while typing
   const prevOpenRef = useRef(false);
 
-  // Change Password state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -282,7 +278,6 @@ export function ProfileModal({
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Live password requirements & strength calculation
   const hasMinLength = newPassword.length >= 8;
   const hasNumber = /\d/.test(newPassword);
   const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword);
@@ -344,7 +339,6 @@ export function ProfileModal({
     }
   };
 
-
   useEffect(() => {
     if (open && !prevOpenRef.current) {
       const liveProf = getCurrentUserProfile();
@@ -378,8 +372,6 @@ export function ProfileModal({
     }
     prevOpenRef.current = open;
   }, [open, user, resolvedEmail]);
-
-
 
   const languageOptions: { value: Language; label: string }[] = [
     { value: "en", label: t("english") },
@@ -509,7 +501,6 @@ export function ProfileModal({
       window.location.href = "/login";
     }
   };
-
 
   const handleUpdateProfile = async () => {
     setIsUpdating(true);
@@ -755,7 +746,7 @@ export function ProfileModal({
         className="bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 w-full max-w-4xl rounded-2xl shadow-xl relative overflow-hidden text-gray-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
+        {}
         <button
           onClick={handleModalClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors z-10 cursor-pointer"
@@ -764,7 +755,7 @@ export function ProfileModal({
           <X className="h-6 w-6" />
         </button>
 
-        {/* Greeting + Identification Section */}
+        {}
         <div className="px-8 pt-6 pb-4">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -810,7 +801,7 @@ export function ProfileModal({
           </div>
         </div>
 
-        {/* Header Banner */}
+        {}
         <div className="bg-slate-900 px-8 py-5 flex items-center justify-between gap-4 flex-wrap border-y border-slate-800">
           <div className="flex items-center gap-4 min-w-0">
             <div className="relative h-14 w-14 shrink-0 group">
@@ -878,7 +869,7 @@ export function ProfileModal({
           </div>
         </div>
 
-        {/* Tabs */}
+        {}
         <div className="flex justify-center gap-6 sm:gap-8 border-b border-gray-200 dark:border-slate-800 px-6 sm:px-8 pt-0 overflow-x-auto">
           <button
             onClick={() => setTab("account")}
@@ -918,7 +909,7 @@ export function ProfileModal({
           </button>
         </div>
 
-        {/* Body */}
+        {}
         <div className="px-8 py-6 space-y-6 max-h-[65vh] overflow-y-auto">
           {tab === "account" && (
             <div className="space-y-5">
@@ -931,7 +922,7 @@ export function ProfileModal({
                 </div>
               </div>
 
-              {/* Change Password Section */}
+              {}
               <div className="rounded-xl border border-gray-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-5 space-y-4 shadow-2xs">
                 <div className="flex items-center gap-2">
                   <KeyRound className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -1021,7 +1012,7 @@ export function ProfileModal({
                     </div>
                   </div>
 
-                  {/* Live Password Strength Bar & Requirements */}
+                  {}
                   {newPassword.length > 0 && (
                     <div className="space-y-2.5 pt-1">
                       <div className="space-y-1.5">
@@ -1059,7 +1050,7 @@ export function ProfileModal({
                     </div>
                   )}
 
-                  {/* Confirm Password Match Indicator */}
+                  {}
                   {confirmPassword.length > 0 && (
                     <div className="pt-0.5 text-[11px]">
                       {passwordsMatch ? (
@@ -1092,7 +1083,7 @@ export function ProfileModal({
           {tab === "personal" && (
             isAdmin ? (
               <div className="space-y-6">
-                {/* Admin Official Information Card */}
+                {}
                 <div className="rounded-xl border border-gray-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-5 space-y-4 shadow-2xs">
                   <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 pb-3">
                     <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1134,7 +1125,7 @@ export function ProfileModal({
                   </div>
                 </div>
 
-                {/* System Operational Permissions Matrix */}
+                {}
                 <div className="rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3 shadow-2xs">
                   <h4 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                     <Layers className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
@@ -1163,7 +1154,7 @@ export function ProfileModal({
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Full Name */}
+                {}
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">{t("fullNameHeading")}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1244,7 +1235,7 @@ export function ProfileModal({
                   </div>
                 </div>
 
-                {/* Birth Date & Blood Type */}
+                {}
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">{t("birthDateHeading")}</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -1329,7 +1320,7 @@ export function ProfileModal({
                   </div>
                 </div>
 
-                {/* Address */}
+                {}
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">{t("addressHeading")}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1407,7 +1398,7 @@ export function ProfileModal({
                   </div>
                 </div>
 
-                {/* Employment Details */}
+                {}
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">
                     {t("employmentDetails")}
@@ -1468,7 +1459,7 @@ export function ProfileModal({
                   </div>
                 </div>
 
-                {/* Sex */}
+                {}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                     {t("sex")}
@@ -1487,7 +1478,7 @@ export function ProfileModal({
                   </div>
                 </div>
 
-                {/* Mobile Number */}
+                {}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2 block">
                     {t("mobileNumber")}
@@ -1506,7 +1497,7 @@ export function ProfileModal({
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                {}
                 <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-slate-800">
                   {isEditing ? (
                     <>
@@ -1542,7 +1533,7 @@ export function ProfileModal({
 
           {tab === "devices" && (
             <div className="space-y-6">
-              {/* Header & Log Out Other Devices Action */}
+              {}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-slate-800 pb-4">
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1575,7 +1566,7 @@ export function ProfileModal({
                 </div>
               )}
 
-              {/* Active / Current Device Card */}
+              {}
               {(() => {
                 const currentDev = {
                   id: 1,
@@ -1591,7 +1582,6 @@ export function ProfileModal({
                   ...(deviceSessions.find((s) => s.isCurrentDevice) || deviceSessions[0] || {}),
                 };
 
-                // Real-time client verification for current device
                 const ua = typeof navigator !== "undefined" ? (navigator.userAgent || "") : "";
                 const lowerUa = ua.toLowerCase();
                 const isAndroid = /android/i.test(lowerUa);
@@ -1698,7 +1688,7 @@ export function ProfileModal({
                         </div>
                       </div>
 
-                      {/* Log Out Current Device Action Button */}
+                      {}
                       <button
                         type="button"
                         onClick={() => {
@@ -1746,7 +1736,7 @@ export function ProfileModal({
                 );
               })()}
 
-              {/* Login History / Other Sessions List */}
+              {}
               <div className="space-y-3">
                 <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {language === "tl" ? "Kasaysayan ng Pag-access ng Ibang Device" : "Other Devices & Login History"}
@@ -1833,7 +1823,7 @@ export function ProfileModal({
                               </div>
                             </div>
 
-                            {/* Remove Single Device Record Button */}
+                            {}
                             <button
                               type="button"
                               onClick={() => handleRemoveDevice(session.id)}
@@ -1901,7 +1891,7 @@ export function ProfileModal({
             </div>
           )}
 
-          {/* Danger Zone */}
+          {}
           <div className="mt-8 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20 p-6 space-y-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />

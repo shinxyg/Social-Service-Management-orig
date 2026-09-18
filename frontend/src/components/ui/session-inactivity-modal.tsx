@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { Clock, ShieldAlert, LogIn } from "lucide-react"
 import { API_BASE } from "../../config/api"
 
-// 15 Minutes Inactivity Timeout in milliseconds
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
 
 type ExpiryReason = "inactivity" | "concurrent" | null;
@@ -14,7 +13,6 @@ export function SessionInactivityWatcher() {
   const timerRef = useRef<any>(null);
   const verifyIntervalRef = useRef<any>(null);
 
-  // Check if currently authenticated
   const checkIsAuth = useCallback(() => {
     return (
       sessionStorage.getItem("isAuthenticated") === "true" ||
@@ -23,7 +21,7 @@ export function SessionInactivityWatcher() {
   }, []);
 
   const getCurrentUserEmail = useCallback(() => {
-    // 1. Primary: this tab's own sessionStorage
+
     const sessionEmail = sessionStorage.getItem("user_email");
     if (sessionEmail) return sessionEmail.toLowerCase().trim();
 
@@ -35,7 +33,6 @@ export function SessionInactivityWatcher() {
       }
     } catch {}
 
-    // 2. Fallback: localStorage
     const directEmail = localStorage.getItem("user_email");
     if (directEmail) return directEmail.toLowerCase().trim();
 
@@ -53,17 +50,14 @@ export function SessionInactivityWatcher() {
   const getSessionToken = useCallback(() => {
     const email = getCurrentUserEmail();
 
-    // 1. Strict priority: check this tab's own sessionStorage token first
     const tabToken = sessionStorage.getItem("sessionToken");
     if (tabToken) return tabToken;
 
-    // 2. Check email-scoped token in localStorage
     if (email) {
       const emailSpecific = localStorage.getItem(`sessionToken_${email}`);
       if (emailSpecific) return emailSpecific;
     }
 
-    // 3. Fallback to generic localStorage token only if email matches localStorage's current user_email
     const localUserEmail = (localStorage.getItem("user_email") || "").toLowerCase().trim();
     if (email && localUserEmail === email) {
       return localStorage.getItem("sessionToken") || "";
@@ -101,7 +95,6 @@ export function SessionInactivityWatcher() {
 
   const isVerifyingRef = useRef(false);
 
-  // Check if account was logged into on another device (Single Active Session rule)
   const verifyConcurrentSession = useCallback(async () => {
     if (!checkIsAuth()) return;
     if (expiryReason) return;
@@ -110,7 +103,6 @@ export function SessionInactivityWatcher() {
     const email = getCurrentUserEmail();
     const token = getSessionToken();
 
-    // If no valid active session token or email, do not trigger concurrent mismatch
     if (!email || !token) return;
 
     try {
@@ -151,7 +143,7 @@ export function SessionInactivityWatcher() {
 
   useEffect(() => {
     if (!checkIsAuth()) {
-      // Clear any lingering termination flags when not authenticated
+
       try {
         sessionStorage.removeItem("session_terminated_reason");
         sessionStorage.removeItem("terminated_new_device");
@@ -161,13 +153,11 @@ export function SessionInactivityWatcher() {
 
     lastActivityRef.current = Date.now();
 
-    // Listen to user interaction events for 15-minute inactivity tracker
     const events = ["mousemove", "mousedown", "keydown", "touchstart", "touchend", "scroll", "click"];
     events.forEach((evt) => {
       window.addEventListener(evt, handleUserActivity, { passive: true });
     });
 
-    // Check every 10 seconds for 15-minute inactivity
     timerRef.current = setInterval(() => {
       if (checkIsAuth()) {
         const elapsed = Date.now() - lastActivityRef.current;
@@ -178,17 +168,14 @@ export function SessionInactivityWatcher() {
       }
     }, 10000);
 
-    // Quick initial check for concurrent session with 1.5s grace period
     const initialTimer = setTimeout(() => {
       verifyConcurrentSession();
     }, 1500);
 
-    // Fast, responsive heartbeat check every 3.5 seconds for instant multi-device takeover detection
     verifyIntervalRef.current = setInterval(() => {
       verifyConcurrentSession();
     }, 3500);
 
-    // Instant check when window gains focus or tab becomes visible (300ms)
     let focusTimer: any = null;
     const handleVisibilityOrFocus = () => {
       if (focusTimer) clearTimeout(focusTimer);
@@ -246,7 +233,7 @@ export function SessionInactivityWatcher() {
       <div className={`bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 border text-center space-y-5 animate-in zoom-in-95 duration-150 ${
         isConcurrent ? "border-red-200" : "border-slate-200"
       }`}>
-        {/* Header Icon */}
+        {}
         <div
           className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-sm border ${
             isConcurrent
@@ -261,7 +248,7 @@ export function SessionInactivityWatcher() {
           )}
         </div>
 
-        {/* Title & Message */}
+        {}
         <div className="space-y-2">
           <div className="flex items-center justify-center gap-1.5">
             {isConcurrent && <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />}
@@ -283,7 +270,7 @@ export function SessionInactivityWatcher() {
           </p>
         </div>
 
-        {/* Re-login Button */}
+        {}
         <div className="pt-2">
           <button
             type="button"

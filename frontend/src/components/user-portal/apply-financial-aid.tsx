@@ -37,7 +37,6 @@ function getInitialDisbursementsForUser(): SyncedDisbursementRecord[] {
     const results: SyncedDisbursementRecord[] = []
     const seenRefs = new Set<string>()
 
-    // 1. Saved disbursements from cache
     if (Array.isArray(saved) && saved.length > 0) {
       saved.forEach((s) => {
         const name = (s.applicantName || "").toLowerCase().trim()
@@ -55,7 +54,6 @@ function getInitialDisbursementsForUser(): SyncedDisbursementRecord[] {
       })
     }
 
-    // 2. Check local storage approved applications
     try {
       const pwdApps = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
       if (Array.isArray(pwdApps)) {
@@ -151,7 +149,6 @@ export default function ApplyFinancialAid() {
   const [disbursements, setDisbursements] = useState<SyncedDisbursementRecord[]>(() => getInitialDisbursementsForUser())
   const isFetchingRef = useRef(false)
 
-  // Auto-sync approved disbursements and scheduled payout appointments
   useEffect(() => {
     let isMounted = true
 
@@ -160,7 +157,7 @@ export default function ApplyFinancialAid() {
       isFetchingRef.current = true
 
       try {
-        // Auto-release engine: check if any appointment time has arrived
+
         checkAndAutoReleaseScheduledDisbursements()
 
         const userProfile = getCurrentUserProfile()
@@ -190,7 +187,6 @@ export default function ApplyFinancialAid() {
         let pwdSeniorRecords: SyncedDisbursementRecord[] = []
         let appointmentsMap: Record<string, any> = {}
 
-        // Fetch all endpoints concurrently in parallel for lightning-fast loading
         const [resAicsSettled, resPwdSettled, resCwSettled, resDbSettled, resApptsSettled] = await Promise.allSettled([
           fetch(`${API_BASE}/api/aics/applications?qcId=${encodeURIComponent(qcId || "")}`),
           fetch(`${API_BASE}/api/pwd-senior/applications`),
@@ -202,7 +198,6 @@ export default function ApplyFinancialAid() {
           fetch(`${API_BASE}/api/appointments`),
         ])
 
-        // 1. Process AICS
         if (resAicsSettled.status === "fulfilled" && resAicsSettled.value.ok) {
           try {
             const dataAics = await resAicsSettled.value.json()
@@ -252,7 +247,6 @@ export default function ApplyFinancialAid() {
           } catch {}
         }
 
-        // 2. Process PWD / Senior
         if (resPwdSettled.status === "fulfilled" && resPwdSettled.value.ok) {
           try {
             const pwdApps = await resPwdSettled.value.json()
@@ -303,7 +297,6 @@ export default function ApplyFinancialAid() {
           } catch {}
         }
 
-        // 3. Process Child Welfare
         if (resCwSettled.status === "fulfilled" && resCwSettled.value.ok) {
           try {
             const cwData = await resCwSettled.value.json()
@@ -337,7 +330,6 @@ export default function ApplyFinancialAid() {
           } catch {}
         }
 
-        // 4. Process DB Financial Aid
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
           try {
             const dataDb = await resDbSettled.value.json()
@@ -366,7 +358,6 @@ export default function ApplyFinancialAid() {
           } catch {}
         }
 
-        // 5. Process Appointments
         if (resApptsSettled.status === "fulfilled" && resApptsSettled.value.ok) {
           try {
             const dataAppts = await resApptsSettled.value.json()
@@ -387,12 +378,10 @@ export default function ApplyFinancialAid() {
           if (rawSched) localScheduledMap = JSON.parse(rawSched)
         } catch {}
 
-        // Filter localDisbursements to only current user
         const localDisbursements = getSavedDisbursements().filter((l) =>
           isUserMatch(l.applicantName, l.applicationRef)
         )
 
-        // ── DEDUPLICATION & LATEST APPROVED SELECTION ──
         const recordMap = new Map<string, SyncedDisbursementRecord>()
 
         const processCandidate = (r: SyncedDisbursementRecord) => {
@@ -476,7 +465,6 @@ export default function ApplyFinancialAid() {
 
     loadDisbursements()
 
-    // Balanced background refresh interval (15s) with in-flight protection
     const liveTimer = setInterval(() => {
       loadDisbursements()
     }, 15000)
@@ -532,7 +520,7 @@ export default function ApplyFinancialAid() {
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-200">
-      {/* ── HEADER ── */}
+      {}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
           {t("financialAidOverviewTitle") || "Financial Aid Overview"}
@@ -542,7 +530,7 @@ export default function ApplyFinancialAid() {
         </p>
       </div>
 
-      {/* ── AUTO-SYNC STATUS BANNER ── */}
+      {}
       <div className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-2xl p-4 md:p-5 flex items-start gap-3.5 text-xs text-blue-900 dark:text-blue-200 shadow-2xs">
         <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
           <ShieldCheck className="w-5 h-5" />
@@ -557,7 +545,7 @@ export default function ApplyFinancialAid() {
         </div>
       </div>
 
-      {/* ── DISBURSEMENTS LIST ── */}
+      {}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
@@ -592,7 +580,7 @@ export default function ApplyFinancialAid() {
                   key={d.id || d.disbursementId}
                   className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 md:p-6 shadow-xs space-y-5 transition-all hover:border-gray-300 dark:hover:border-slate-700"
                 >
-                  {/* ── TOP BAR: TYPE & AMOUNT ── */}
+                  {}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-slate-800 pb-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -619,9 +607,9 @@ export default function ApplyFinancialAid() {
                     </div>
                   </div>
 
-                  {/* ── APPOINTMENT & STATUS DETAILS ── */}
+                  {}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Appointment Box */}
+                    {}
                     <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 space-y-2">
                       <span className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" />
@@ -650,7 +638,7 @@ export default function ApplyFinancialAid() {
                       )}
                     </div>
 
-                    {/* Payout Location Box */}
+                    {}
                     <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 space-y-2">
                       <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-red-500" />
@@ -665,7 +653,7 @@ export default function ApplyFinancialAid() {
                     </div>
                   </div>
 
-                  {/* Status Stepper */}
+                  {}
                   <div className="bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-gray-700 dark:text-slate-200">
@@ -720,7 +708,7 @@ export default function ApplyFinancialAid() {
                     </div>
                   </div>
 
-                  {/* Instructions */}
+                  {}
                   <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 text-xs text-slate-700 dark:text-slate-200 flex items-start gap-2">
                     <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                     <div>

@@ -10,17 +10,17 @@ interface MaskedTextProps {
   maskFn?: (val: string) => string;
   className?: string;
   defaultRevealed?: boolean;
-  /** Subject name for audit log (e.g., beneficiary/applicant name) */
+
   auditSubject?: string;
-  /** Field name for audit log (e.g., "QCID", "Contact Number", "Email") */
+
   auditField?: string;
-  /** Module name for audit log (e.g., "Beneficiary Management", "Case Management") */
+
   auditModule?: string;
-  /** Optional reference number for audit log */
+
   referenceNo?: string;
-  /** If true, show "[ 👁️ Show / Hide ]" button text along with icon */
+
   showButtonLabel?: boolean;
-  /** Disable reveal button if purely read-only masked */
+
   readOnlyMask?: boolean;
 }
 
@@ -66,7 +66,6 @@ export function MaskedText({
     const nextState = !revealed;
     setRevealed(nextState);
 
-    // If revealing sensitive data and audit parameters exist, record in Audit Log / Activity Trail
     if (nextState) {
       const user = getCurrentUser();
       const actorName = user?.firstName
@@ -86,7 +85,6 @@ export function MaskedText({
         detail: `Social Worker ${actorName} unmasked sensitive PII (${fieldName}) of ${subj} for verification.`,
       };
 
-      // Non-blocking fetch to backend audit trail
       fetch(`${API_BASE}/api/activity-log`, {
         method: 'POST',
         headers: {

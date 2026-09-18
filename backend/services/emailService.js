@@ -2,7 +2,6 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
 
-// Path to official project seal logo
 const logoPath = path.join(__dirname, '..', 'assets', 'logo.png');
 
 function getLogoAttachments() {
@@ -20,10 +19,6 @@ function getLogoAttachments() {
 
 let cachedTransporter = null;
 
-/**
- * Creates and returns a configured Nodemailer transporter.
- * Uses connection pooling to keep SMTP connections warm and ultra-fast.
- */
 function createTransporter() {
   if (cachedTransporter) return cachedTransporter;
 
@@ -53,9 +48,6 @@ function createTransporter() {
   return null;
 }
 
-/**
- * Sends an official PWD ID Approval email to the recipient.
- */
 async function sendPwdApprovalEmail({
   recipientEmail,
   recipientName,
@@ -170,7 +162,6 @@ async function sendPwdApprovalEmail({
     </html>
   `;
 
-  // 1. PRIMARY: Direct Gmail SMTP
   const transporter = createTransporter();
   const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
@@ -197,7 +188,7 @@ async function sendPwdApprovalEmail({
         const fallbackTransporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false, // STARTTLS
+          secure: false,
           auth: {
             user: senderEmail,
             pass: emailPass,
@@ -218,7 +209,6 @@ async function sendPwdApprovalEmail({
     }
   }
 
-  // 2. SECONDARY FALLBACK: Brevo HTTPS REST API
   const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
   if (brevoApiKey) {
     try {
@@ -249,7 +239,6 @@ async function sendPwdApprovalEmail({
     }
   }
 
-  // 3. TERTIARY FALLBACK: Resend HTTPS API
   const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
   if (resendApiKey) {
     try {
@@ -269,7 +258,6 @@ async function sendPwdApprovalEmail({
         }),
       });
 
-
       const data = await res.json();
       if (res.ok && data.id) {
         console.log(`[Resend HTTPS API] Email successfully delivered to ${recipientEmail}. MessageId: ${data.id}`);
@@ -288,9 +276,6 @@ async function sendPwdApprovalEmail({
   };
 }
 
-/**
- * Sends a 6-digit OTP verification email to the recipient.
- */
 async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident' }) {
   if (!recipientEmail || !recipientEmail.includes('@')) {
     console.warn(`[Mailer] Invalid recipient email for OTP: "${recipientEmail}". Skipped.`);
@@ -357,7 +342,6 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
     </html>
   `;
 
-  // 1. PRIMARY: Direct Gmail SMTP
   const transporter = createTransporter();
   const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
@@ -398,7 +382,6 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
     }
   }
 
-  // 2. FALLBACK: Brevo API
   const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
   if (brevoApiKey) {
     try {
@@ -433,9 +416,6 @@ async function sendOtpEmail({ recipientEmail, otpCode, recipientName = 'Resident
   };
 }
 
-/**
- * Sends an official Senior Citizen (OSCA) ID Approval email to the recipient.
- */
 async function sendSeniorCitizenApprovalEmail({
   recipientEmail,
   recipientName,
@@ -552,7 +532,6 @@ async function sendSeniorCitizenApprovalEmail({
     </html>
   `;
 
-  // 1. PRIMARY: Direct Gmail SMTP
   const transporter = createTransporter();
   const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
@@ -600,7 +579,6 @@ async function sendSeniorCitizenApprovalEmail({
     }
   }
 
-  // 2. SECONDARY FALLBACK: Brevo HTTPS REST API
   const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
   if (brevoApiKey) {
     try {
@@ -629,7 +607,6 @@ async function sendSeniorCitizenApprovalEmail({
     }
   }
 
-  // 3. TERTIARY FALLBACK: Resend HTTPS API
   const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
   if (resendApiKey) {
     try {
@@ -664,9 +641,6 @@ async function sendSeniorCitizenApprovalEmail({
   };
 }
 
-/**
- * Sends an official Senior Citizen Discount Booklet (Medicine / Movie) Approval email to the recipient.
- */
 async function sendSeniorBookletApprovalEmail({
   recipientEmail,
   recipientName,
@@ -802,7 +776,6 @@ async function sendSeniorBookletApprovalEmail({
     </html>
   `;
 
-  // 1. PRIMARY: Direct Gmail SMTP
   const transporter = createTransporter();
   const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
@@ -850,7 +823,6 @@ async function sendSeniorBookletApprovalEmail({
     }
   }
 
-  // 2. SECONDARY FALLBACK: Brevo HTTPS REST API
   const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
   if (brevoApiKey) {
     try {
@@ -879,7 +851,6 @@ async function sendSeniorBookletApprovalEmail({
     }
   }
 
-  // 3. TERTIARY FALLBACK: Resend HTTPS API
   const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
   if (resendApiKey) {
     try {
@@ -914,9 +885,6 @@ async function sendSeniorBookletApprovalEmail({
   };
 }
 
-/**
- * Sends an official Solo Parent ID Approval email to the recipient.
- */
 async function sendSoloParentApprovalEmail({
   recipientEmail,
   recipientName,
@@ -1033,7 +1001,6 @@ async function sendSoloParentApprovalEmail({
     </html>
   `;
 
-  // 1. PRIMARY: Direct Gmail SMTP
   const transporter = createTransporter();
   const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
@@ -1081,7 +1048,6 @@ async function sendSoloParentApprovalEmail({
     }
   }
 
-  // 2. SECONDARY FALLBACK: Brevo HTTPS REST API
   const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
   if (brevoApiKey) {
     try {
@@ -1110,7 +1076,6 @@ async function sendSoloParentApprovalEmail({
     }
   }
 
-  // 3. TERTIARY FALLBACK: Resend HTTPS API
   const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
   if (resendApiKey) {
     try {
@@ -1145,9 +1110,6 @@ async function sendSoloParentApprovalEmail({
   };
 }
 
-/**
- * Sends a Password Reset email with OTP and direct reset link to the recipient.
- */
 async function sendPasswordResetEmail({
   recipientEmail,
   otpCode,
@@ -1228,7 +1190,6 @@ async function sendPasswordResetEmail({
     </html>
   `;
 
-  // 1. PRIMARY: Direct Gmail SMTP
   const transporter = createTransporter();
   const senderEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
   const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
@@ -1271,7 +1232,6 @@ async function sendPasswordResetEmail({
     }
   }
 
-  // 2. FALLBACK: Brevo API
   const brevoApiKey = (process.env.BREVO_API_KEY || '').trim();
   if (brevoApiKey) {
     try {
@@ -1314,5 +1274,3 @@ module.exports = {
   sendOtpEmail,
   sendPasswordResetEmail,
 };
-
-

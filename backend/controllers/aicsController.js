@@ -59,8 +59,6 @@ function generateReferenceNo(qcId) {
   return '110000116932100';
 }
 
-// POST /api/aics/applications
-// Multipart form-data: mga regular fields + "documents" (multiple files) + "documentLabels" (JSON array na parehong pagkasunod-sunod sa files)
 exports.createApplication = async (req, res) => {
   const client = await db.connect();
   try {
@@ -79,8 +77,8 @@ exports.createApplication = async (req, res) => {
       phone,
       email,
       address,
-      details, // dapat JSON string mula sa frontend (informant/deceased/beneficiary info, checklist answers)
-      documentLabels, // JSON string array, kaparehong pagkakasunod-sunod ng files
+      details,
+      documentLabels,
     } = req.body;
 
     const finalFirstName = firstName || 'CLARISA MAE';
@@ -89,14 +87,13 @@ exports.createApplication = async (req, res) => {
 
     let referenceNo = req.body.referenceNo || req.body.reference_no || (qcId && String(qcId).trim()) || generateReferenceNo(qcId);
 
-    // Check if referenceNo already exists in DB to prevent unique key violation
     try {
       const existingCheck = await client.query('SELECT id FROM aics_applications WHERE reference_no = $1', [referenceNo]);
       if (existingCheck.rows.length > 0) {
         referenceNo = `${referenceNo}-${Date.now().toString().slice(-4)}`;
       }
     } catch {
-      // Table might still be initializing
+
     }
 
     let parsedAge = null;
@@ -208,27 +205,26 @@ async function enrichApplicationWithSuffix(app) {
   if (app.suffix && String(app.suffix).trim()) return app;
 
   try {
-    // 1. Check users table by qcid or email
+
     if (app.qc_id || app.email) {
       const uRes = await db.query(
-        `SELECT suffix FROM users 
-         WHERE (qcid_number = $1 OR ($2 <> '' AND LOWER(email) = LOWER($2))) 
+        `SELECT suffix FROM users
+         WHERE (qcid_number = $1 OR ($2 <> '' AND LOWER(email) = LOWER($2)))
            AND suffix IS NOT NULL AND suffix <> '' LIMIT 1`,
         [app.qc_id || '', app.email || '']
       );
       if (uRes.rows.length > 0 && uRes.rows[0].suffix) {
         app.suffix = uRes.rows[0].suffix;
-        // background update so it's persisted in aics_applications
+
         db.query('UPDATE aics_applications SET suffix = $1 WHERE id = $2', [app.suffix, app.id]).catch(() => {});
         return app;
       }
     }
 
-    // 2. Check pwd_senior_applications table
     const pRes = await db.query(
-      `SELECT suffix FROM pwd_senior_applications 
-       WHERE (reference_number = $1 OR ($2 <> '' AND LOWER(email) = LOWER($2)) 
-              OR (LOWER(first_name) = LOWER($3) AND LOWER(last_name) = LOWER($4))) 
+      `SELECT suffix FROM pwd_senior_applications
+       WHERE (reference_number = $1 OR ($2 <> '' AND LOWER(email) = LOWER($2))
+              OR (LOWER(first_name) = LOWER($3) AND LOWER(last_name) = LOWER($4)))
          AND suffix IS NOT NULL AND suffix <> '' LIMIT 1`,
       [app.qc_id || '', app.email || '', app.first_name || '', app.last_name || '']
     );
@@ -238,12 +234,11 @@ async function enrichApplicationWithSuffix(app) {
       return app;
     }
   } catch (e) {
-    // ignore query errors
+
   }
   return app;
 }
 
-// GET /api/aics/applications
 exports.getApplications = async (req, res) => {
   try {
     const { status, qcId, email } = req.query;
@@ -281,18 +276,16 @@ exports.getApplications = async (req, res) => {
   }
 };
 
-// GET /api/aics/applications/:referenceNo
 exports.getApplicationByReference = async (req, res) => {
   try {
     const { referenceNo } = req.params;
 
     let appResult;
-    // 1. Prioritize lookup by unique database primary key ID if numeric
+
     if (/^\d+$/.test(referenceNo) && parseInt(referenceNo, 10) < 1000000) {
       appResult = await db.query('SELECT * FROM aics_applications WHERE id = $1', [parseInt(referenceNo, 10)]);
     }
 
-    // 2. Try lookup by exact reference_no
     if (!appResult || appResult.rows.length === 0) {
       appResult = await db.query(
         'SELECT * FROM aics_applications WHERE reference_no = $1',
@@ -300,7 +293,6 @@ exports.getApplicationByReference = async (req, res) => {
       );
     }
 
-    // 3. Fallback to lookup by qc_id
     if (!appResult || appResult.rows.length === 0) {
       appResult = await db.query(
         'SELECT * FROM aics_applications WHERE qc_id = $1 ORDER BY created_at DESC',
@@ -367,7 +359,6 @@ exports.updateApplicationStatus = async (req, res) => {
       const fixedAmount = FIXED_AMOUNTS[cleanType] || FIXED_AMOUNTS[app.assistance_type] || 1000;
       const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      // 1. Insert into financial_aid_disbursements if not exists
       const disbCheck = await db.query(
         'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1 AND assistance_type = $2',
         [app.reference_no, cleanType]
@@ -390,7 +381,6 @@ exports.updateApplicationStatus = async (req, res) => {
         );
       }
 
-      // 2. Insert into appointments queue if not exists
       const apptCheck = await db.query(
         'SELECT id FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3',
         [app.reference_no, 'AICS', cleanType]
@@ -440,17 +430,16 @@ exports.checkDuplicatePerson = async (req, res) => {
     );
     const norm = (s) => (s || '').toString().trim().toLowerCase();
 
-    // FIX: i-normalize ang date papuntang plain YYYY-MM-DD, hindi Date.toString()
     const normDate = (d) => {
       if (!d) return '';
       if (d instanceof Date) {
-        // gamitin ang local calendar date parts, iwas sa UTC shift
+
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         return `${y}-${m}-${day}`;
       }
-      // string na format, kunin lang ang unang 10 chars (YYYY-MM-DD)
+
       return d.toString().slice(0, 10);
     };
 
@@ -499,7 +488,6 @@ exports.checkDuplicatePerson = async (req, res) => {
   }
 };
 
-// GET /api/aics/documents/:id/file
 exports.getDocumentFile = async (req, res) => {
   try {
     const { id } = req.params;
@@ -523,7 +511,6 @@ exports.getDocumentFile = async (req, res) => {
   }
 };
 
-// DELETE /api/aics/applications/:id
 exports.deleteApplication = async (req, res) => {
   try {
     const { id } = req.params;
@@ -552,14 +539,13 @@ exports.deleteApplication = async (req, res) => {
   }
 };
 
-// DELETE /api/aics/applications/cleanup-user/:nameOrRef
 exports.cleanupUserAics = async (req, res) => {
   try {
     const { nameOrRef } = req.params;
     const term = `%${nameOrRef}%`;
 
     const apps = await db.query(
-      `SELECT id, reference_no, qc_id FROM aics_applications 
+      `SELECT id, reference_no, qc_id FROM aics_applications
        WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
           OR LOWER(first_name || ' ' || middle_name || ' ' || last_name) LIKE LOWER($1)
           OR reference_no LIKE $1

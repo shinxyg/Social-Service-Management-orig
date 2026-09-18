@@ -12,7 +12,6 @@ import { lazyWithRetry } from "./utils/lazyWithRetry"
 import { ErrorBoundary } from "./components/ui/error-boundary"
 import { purgeLegacyLocalTestData } from "./utils/financialAidSync"
 
-// Execute test data purge immediately on app start
 try {
   purgeLegacyLocalTestData()
 } catch {}
@@ -22,7 +21,6 @@ const Login = lazyWithRetry(() => import("./components/entry-login/Login").then(
 const Register = lazyWithRetry(() => import("./components/entry-login/Register").then((m) => ({ default: m.Register })))
 const ResetPassword = lazyWithRetry(() => import("./components/entry-login/ResetPassword").then((m) => ({ default: m.ResetPassword })))
 
-// Lazy loaded Resident Portal pages
 const CitizenGuideHub = lazyWithRetry(() => import("./components/user-portal/citizen-guide-hub"))
 const AICSUser = lazyWithRetry(() => import("./components/user-portal/aics-user"))
 const ApplyPWDSenior = lazyWithRetry(() => import("./components/user-portal/apply-pwd-senior"))
@@ -101,13 +99,13 @@ export default function App() {
         <ErrorBoundary>
           <Suspense fallback={<PageLoadingFallback />}>
             <Routes>
-              {/* Public Routes */}
+              {}
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={!auth.isAuthenticated ? <Login /> : <Navigate to={auth.homePath} replace />} />
               <Route path="/register" element={!auth.isAuthenticated ? <Register /> : <Navigate to={auth.homePath} replace />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 
-              {/* Staff / Admin Routes */}
+              {}
               <Route
                 element={
                   auth.isStaff ? (
@@ -128,13 +126,13 @@ export default function App() {
                   />
                 ))}
 
-                {/* Aliases for URL encoding / spaces */}
+                {}
                 <Route path="case management" element={<Navigate to="/case-management" replace />} />
                 <Route path="case%20management" element={<Navigate to="/case-management" replace />} />
                 <Route path="modules/case-management" element={<Navigate to="/case-management" replace />} />
               </Route>
 
-              {/* Resident Routes */}
+              {}
               <Route
                 element={
                   auth.isResident ? (
@@ -156,11 +154,11 @@ export default function App() {
                 <Route path="/portal/my-applications" element={<MyApplications />} />
               </Route>
 
-              {/* URL with space fallback outside layout */}
+              {}
               <Route path="/case management" element={<Navigate to="/case-management" replace />} />
               <Route path="/case%20management" element={<Navigate to="/case-management" replace />} />
 
-              {/* Fallback / Catch All */}
+              {}
               <Route path="*" element={<Navigate to={auth.isAuthenticated ? auth.homePath : "/login"} replace />} />
             </Routes>
           </Suspense>

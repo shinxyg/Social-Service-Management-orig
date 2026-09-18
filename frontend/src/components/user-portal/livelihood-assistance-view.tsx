@@ -49,7 +49,6 @@ interface LivelihoodAssistanceViewProps {
   onProceedToMonitoring?: (application: any) => void
 }
 
-// Helper: parse date and time string to Date object in Philippine Standard Time (UTC+8)
 function parseDateTime(dateStr?: string, timeStr?: string): Date | null {
   if (!dateStr) return null
   try {
@@ -95,7 +94,6 @@ function parseDateTime(dateStr?: string, timeStr?: string): Date | null {
   }
 }
 
-// Helper: safely parse JSON or array
 function parseJsonArray<T>(val: any): T[] {
   if (Array.isArray(val)) return val
   if (typeof val === "string") {
@@ -117,14 +115,12 @@ export default function LivelihoodAssistanceView({
   const isEn = language === "en"
   const isBis = language === "bis"
 
-  // 1-second real-time tick to guarantee live transition exactly when scheduled time arrives
   const [, setTick] = useState(0)
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 1000)
     return () => clearInterval(timer)
   }, [])
 
-  // Linked assistance details from application or default
   const assistance: AssistanceDetails = application.assistance || {
     reference_number: application.reference_number || "LP-2026-1042",
     assistance_status: "for_processing",
@@ -144,7 +140,6 @@ export default function LivelihoodAssistanceView({
   const approvedMaterials = parseJsonArray<MaterialItem>(assistance.approved_materials)
   const approvedEquipment = parseJsonArray<EquipmentApprovedItem>(assistance.approved_equipment)
 
-  // Real-time scheduled date/time comparison
   const scheduledDt = parseDateTime(assistance.release_date, assistance.release_time)
   const isPastOrNow = scheduledDt !== null && Date.now() >= scheduledDt.getTime()
   const rawStatus = (assistance.assistance_status || "for_processing").toLowerCase()
@@ -173,7 +168,7 @@ export default function LivelihoodAssistanceView({
 
   return (
     <div className="space-y-6">
-      {/* Hero Header */}
+      {}
       <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-800 rounded-2xl p-6 text-white shadow-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -208,9 +203,9 @@ export default function LivelihoodAssistanceView({
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 1. APPLICATION INFORMATION                                    */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center gap-2 border-b border-border pb-3">
           <FileCheck className="h-5 w-5 text-blue-600" />
@@ -275,9 +270,9 @@ export default function LivelihoodAssistanceView({
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 2. APPROVED ASSISTANCE                                       */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2">
@@ -297,7 +292,7 @@ export default function LivelihoodAssistanceView({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* A. Financial / Capital Assistance */}
+          {}
           <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -326,7 +321,7 @@ export default function LivelihoodAssistanceView({
             </p>
           </div>
 
-          {/* B. Materials / Supplies */}
+          {}
           <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-3 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -368,7 +363,7 @@ export default function LivelihoodAssistanceView({
             </p>
           </div>
 
-          {/* C. Equipment */}
+          {}
           <div className="p-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5 space-y-3 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -412,9 +407,9 @@ export default function LivelihoodAssistanceView({
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 3. ASSISTANCE STATUS                                         */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div>
@@ -442,7 +437,7 @@ export default function LivelihoodAssistanceView({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          {/* Status 1: FOR PROCESSING */}
+          {}
           <div
             className={`p-4 rounded-xl border ${
               currentStatus === "for_processing"
@@ -467,7 +462,7 @@ export default function LivelihoodAssistanceView({
             </p>
           </div>
 
-          {/* Status 2: FOR RELEASE */}
+          {}
           <div
             className={`p-4 rounded-xl border ${
               currentStatus === "for_release"
@@ -496,7 +491,7 @@ export default function LivelihoodAssistanceView({
             </p>
           </div>
 
-          {/* Status 3: RELEASED */}
+          {}
           <div
             className={`p-4 rounded-xl border ${
               currentStatus === "released"
@@ -523,9 +518,9 @@ export default function LivelihoodAssistanceView({
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 4. RELEASE & APPOINTMENT INFORMATION                         */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {currentStatus === "for_processing" && (
         <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
           <div className="border-b border-border pb-3 flex items-center justify-between">
@@ -619,7 +614,7 @@ export default function LivelihoodAssistanceView({
             </div>
           </div>
 
-          {/* Release Instructions */}
+          {}
           <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/25 space-y-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
               <Info className="h-4 w-4" /> Release Instructions
@@ -636,7 +631,7 @@ export default function LivelihoodAssistanceView({
         </div>
       )}
 
-      {/* Action to proceed to Stage 3 if Released */}
+      {}
       {currentStatus === "released" && onProceedToMonitoring && (
         <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md animate-in fade-in duration-200">
           <div className="space-y-1 text-center sm:text-left">

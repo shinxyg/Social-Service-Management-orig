@@ -21,7 +21,6 @@ import {
 
 type LivelihoodProgramTab = "apply" | "assistance" | "monitoring" | "history"
 
-// Default mock approved application so the user can immediately test parts 2 and 3 if desired
 const DEFAULT_LIVELIHOOD_APP: LivelihoodApplicationRecord = {
   id: 3,
   reference_number: "LP-2026-2518",
@@ -79,14 +78,12 @@ const DEFAULT_LIVELIHOOD_APP: LivelihoodApplicationRecord = {
   monitoring: [],
 }
 
-
 export default function ApplyLivelihood() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const categoryParam = searchParams.get("category")?.toLowerCase() || "livelihood"
   const isTraining = categoryParam === "training"
 
-  // Active Tab: 1. Apply, 2. Capital/Materials Assistance, 3. Monitoring
   const tabParam = (searchParams.get("tab") as LivelihoodProgramTab) || "apply"
   const [activeTab, setActiveTab] = useState<LivelihoodProgramTab>(tabParam)
   const { language } = useLanguage()
@@ -161,16 +158,13 @@ export default function ApplyLivelihood() {
     },
   }[langKey]
 
-  // Requirements Modal visibility & acceptance
   const [showRequirements, setShowRequirements] = useState(false)
   const [requirementsAccepted, setRequirementsAccepted] = useState(false)
 
-  // Current Application Record
   const [activeApplication, setActiveApplication] = useState<LivelihoodApplicationRecord | null>(null)
   const [isWizardOpen, setIsWizardOpen] = useState(false)
   const [isUpdatingRevision, setIsUpdatingRevision] = useState(false)
 
-  // Fetch applications from server with real-time polling
   useEffect(() => {
     if (isTraining) return
 
@@ -180,7 +174,6 @@ export default function ApplyLivelihood() {
         const userProf = getCurrentUserProfile()
         const storedRef = localStorage.getItem("active_livelihood_ref") || ""
 
-        // 1. Fetch applications from backend
         let allApps: any[] = []
         let backendSuccess = false
         try {
@@ -195,7 +188,6 @@ export default function ApplyLivelihood() {
           }
         } catch (_) {}
 
-        // Fallback fetch with qcid parameter if general list was empty
         if (allApps.length === 0 && userQcid && !backendSuccess) {
           try {
             const res2 = await fetch(`${API_BASE}/api/livelihood/applications?qcid=${userQcid}`)
@@ -209,7 +201,6 @@ export default function ApplyLivelihood() {
           } catch (_) {}
         }
 
-        // Only merge locally cached applications if backend is completely unreachable
         if (!backendSuccess) {
           const localApps = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
           if (Array.isArray(localApps) && localApps.length > 0) {
@@ -255,7 +246,6 @@ export default function ApplyLivelihood() {
           }
         }
 
-        // If no match found and backend succeeded (application deleted or not found)
         if (backendSuccess) {
           localStorage.removeItem("active_livelihood_ref")
         }
@@ -265,7 +255,6 @@ export default function ApplyLivelihood() {
 
     fetchApp()
 
-    // Poll every 25 seconds for background sync; real-time events handle instant updates
     const interval = setInterval(fetchApp, 25000)
 
     const unsubscribe = subscribeToRealtimeChanges(() => {
@@ -282,7 +271,6 @@ export default function ApplyLivelihood() {
     }
   }, [isTraining])
 
-  // Sync tab with URL
   const handleTabChange = (tab: LivelihoodProgramTab) => {
     setActiveTab(tab)
     setSearchParams((prev) => {
@@ -292,7 +280,6 @@ export default function ApplyLivelihood() {
     })
   }
 
-  // Handle successful application submit
   const handleSuccessSubmit = (app: LivelihoodApplicationRecord) => {
     setActiveApplication(app)
     setIsWizardOpen(false)
@@ -300,13 +287,11 @@ export default function ApplyLivelihood() {
     setActiveTab("apply")
   }
 
-  // Handle user starting new application
   const handleStartNewApplication = () => {
     setShowRequirements(true)
     setRequirementsAccepted(false)
   }
 
-  // Handle user accepting requirements and continuing to wizard
   const handleProceedToWizard = () => {
     setShowRequirements(false)
     setIsUpdatingRevision(false)
@@ -314,7 +299,6 @@ export default function ApplyLivelihood() {
     setActiveTab("apply")
   }
 
-  // Handle "Revise Application" from Needs Revision
   const handleUpdateApplication = (app: LivelihoodApplicationRecord) => {
     setActiveApplication(app)
     setIsUpdatingRevision(true)
@@ -322,7 +306,6 @@ export default function ApplyLivelihood() {
     setActiveTab("apply")
   }
 
-  // Lock states according to workflow specifications
   const isApproved = activeApplication?.application_status === "approved"
   const assistData = activeApplication?.assistance
   const rawAssistStatus = (assistData?.assistance_status || "").toLowerCase().trim()
@@ -335,7 +318,6 @@ export default function ApplyLivelihood() {
 
   const [tabLockedKey, setTabLockedKey] = useState<"stage2" | "stage3" | null>(null)
 
-  // Top 3-Part Program Navigation Bar
   const handleSelectTab = (tab: LivelihoodProgramTab) => {
     setTabLockedKey(null)
     if (tab === "assistance" && !isApproved) {
@@ -350,7 +332,6 @@ export default function ApplyLivelihood() {
     handleTabChange(tab)
   }
 
-  // Auto-switch to active stage when application data arrives or status transitions
   const hasInitializedTabRef = useRef(false)
   const prevStatusKeyRef = useRef<string>("")
 
@@ -360,7 +341,6 @@ export default function ApplyLivelihood() {
     const currentStatusKey = `${activeApplication.application_status}_${assistData?.assistance_status || ""}_${assistData?.release_status || ""}_${isAssistanceReleased}`
     const isStatusChanged = prevStatusKeyRef.current !== "" && prevStatusKeyRef.current !== currentStatusKey
 
-    // Initial auto-routing when app loads, or when status updates
     if (!hasInitializedTabRef.current || isStatusChanged) {
       prevStatusKeyRef.current = currentStatusKey
       hasInitializedTabRef.current = true
@@ -375,7 +355,6 @@ export default function ApplyLivelihood() {
     }
   }, [activeApplication, isApproved, isAssistanceReleased, assistData])
 
-  // If currently on a locked tab, fallback to available tab
   useEffect(() => {
     if (activeTab === "assistance" && !isApproved) {
       handleTabChange("apply")
@@ -390,7 +369,7 @@ export default function ApplyLivelihood() {
         <TrainingProgramView />
       ) : (
         <>
-          {/* Tab Locked Alert Notice */}
+          {}
           {tabLockedKey && (
             <div className="p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200 animate-in fade-in duration-200">
               <div className="flex items-center gap-2">
@@ -409,7 +388,7 @@ export default function ApplyLivelihood() {
             </div>
           )}
 
-      {/* Top Requirements & Re-Apply Banner */}
+      {}
       <div className="mb-4 animate-in fade-in duration-150">
         <div className="bg-card border border-border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
@@ -443,10 +422,10 @@ export default function ApplyLivelihood() {
         </div>
       </div>
 
-      {/* Top 4-Part Program Navigation Bar */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-2 shadow-xs">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
-          {/* Tab 1: Apply for Livelihood */}
+          {}
           <button
             type="button"
             onClick={() => handleSelectTab("apply")}
@@ -461,7 +440,7 @@ export default function ApplyLivelihood() {
             <span className="truncate">{texts.tab1}</span>
           </button>
 
-          {/* Tab 2: Capital / Materials Assistance */}
+          {}
           <button
             type="button"
             onClick={() => handleSelectTab("assistance")}
@@ -479,7 +458,7 @@ export default function ApplyLivelihood() {
             <span className="truncate">{texts.tab2} {!isApproved && texts.locked}</span>
           </button>
 
-          {/* Tab 3: Livelihood Monitoring */}
+          {}
           <button
             type="button"
             onClick={() => handleSelectTab("monitoring")}
@@ -497,7 +476,7 @@ export default function ApplyLivelihood() {
             <span className="truncate">{texts.tab3} {!isAssistanceReleased && texts.locked}</span>
           </button>
 
-          {/* Tab 4: Livelihood History */}
+          {}
           <button
             type="button"
             onClick={() => handleSelectTab("history")}
@@ -514,9 +493,9 @@ export default function ApplyLivelihood() {
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 1. APPLY FOR LIVELIHOOD CONTENT                              */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {activeTab === "apply" && (
         <div>
           {isWizardOpen ? (
@@ -589,9 +568,9 @@ export default function ApplyLivelihood() {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* 2. CAPITAL / MATERIALS ASSISTANCE CONTENT                     */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {activeTab === "assistance" && (
         <div>
           <LivelihoodAssistanceView
@@ -601,9 +580,9 @@ export default function ApplyLivelihood() {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* 3. LIVELIHOOD MONITORING CONTENT                             */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {activeTab === "monitoring" && (
         <div>
           <LivelihoodMonitoringView
@@ -613,9 +592,9 @@ export default function ApplyLivelihood() {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* 4. LIVELIHOOD HISTORY CONTENT                                */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {activeTab === "history" && (
         <div>
           <LivelihoodHistoryView
@@ -625,7 +604,7 @@ export default function ApplyLivelihood() {
         </div>
       )}
 
-      {/* Requirements Dialog Modal */}
+      {}
       {showRequirements && (
         <LivelihoodRequirementsModal
           accepted={requirementsAccepted}

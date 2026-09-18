@@ -71,10 +71,8 @@ export interface UserNotificationItem {
   amount?: number
 }
 
-// ── INITIAL SEED DATA (Empty so only real applications appear) ──
 export const INITIAL_DISBURSEMENTS: SyncedDisbursementRecord[] = []
 
-// ── CHECK IF SERVICE IS PURELY A TRAINING PROGRAM (NON-MONETARY) ──
 export function isTrainingService(serviceOrConcern?: string): boolean {
   if (!serviceOrConcern) return false
   const lower = serviceOrConcern.toLowerCase()
@@ -90,7 +88,6 @@ export function isTrainingService(serviceOrConcern?: string): boolean {
   )
 }
 
-// ── CHECK IF SERVICE IS PURELY AN ID / BOOKLET APPLICATION (NOT CASH AID) ──
 export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
   if (!serviceOrConcern) return false
   if (isTrainingService(serviceOrConcern)) return false
@@ -124,7 +121,6 @@ export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
   )
 }
 
-// ── DELETED DISBURSEMENTS TRACKER ──
 export function getDeletedDisbursementKeys(): Set<string> {
   try {
     const raw = localStorage.getItem("deleted_financial_disbursement_keys")
@@ -158,10 +154,8 @@ export async function deleteFinancialAidDisbursement(record: {
     record.applicationRef,
   ].filter(Boolean) as string[]
 
-  // 1. Mark in permanent deleted blacklist to prevent re-generation from auto-sync
   markDisbursementAsDeleted(keysToDelete)
 
-  // 2. Remove from localStorage
   try {
     const raw = localStorage.getItem("all_financial_disbursements")
     if (raw) {
@@ -176,7 +170,6 @@ export async function deleteFinancialAidDisbursement(record: {
     }
   } catch {}
 
-  // 3. Delete from backend tables
   try {
     const cleanAppRef = (record.applicationRef || "")
       .replace(/^db-appt-/, "")
@@ -204,12 +197,10 @@ export async function deleteFinancialAidDisbursement(record: {
     console.warn("Error deleting disbursement from backend:", err)
   }
 
-  // 4. Notify all components
   window.dispatchEvent(new Event("financial_disbursements_updated"))
   window.dispatchEvent(new Event("storage"))
 }
 
-// ── GET DISBURSEMENTS ──
 export function getSavedDisbursements(): SyncedDisbursementRecord[] {
   try {
     const deletedKeys = getDeletedDisbursementKeys()
@@ -217,7 +208,7 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
     if (raw) {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) {
-        // Filter out dummy sample records (d1 to d8), pure ID services, and deleted keys
+
         const realOnes = parsed.filter(
           (p) =>
             p &&
@@ -229,12 +220,11 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
             !deletedKeys.has(p.applicationRef)
         )
 
-        // Deduplicate records by applicationRef + assistanceType
         const recordMap = new Map<string, SyncedDisbursementRecord>()
         realOnes.forEach((r) => {
           const key = `${(r.applicationRef || r.disbursementId || r.id || "").trim()}_${(r.assistanceType || "").trim()}`
           if (!key || key === "_") return
-          // Ensure correct fixed amount is applied
+
           const correctAmount = resolveFixedAmount(r.assistanceType)
           const recordWithCorrectAmount: SyncedDisbursementRecord = {
             ...r,
@@ -245,7 +235,7 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
             recordMap.set(key, recordWithCorrectAmount)
           } else {
             const existing = recordMap.get(key)!
-            // Prefer RELEASED over PENDING, or newer date
+
             if (r.status === "RELEASED" && existing.status !== "RELEASED") {
               recordMap.set(key, { ...recordWithCorrectAmount, status: "RELEASED" })
             } else if (r.appointmentDate && !existing.appointmentDate) {
@@ -263,7 +253,6 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
   return []
 }
 
-// ── CLEAR ALL DISBURSEMENTS ──
 export function clearAllDisbursements() {
   try {
     localStorage.removeItem("all_financial_disbursements")
@@ -273,10 +262,9 @@ export function clearAllDisbursements() {
   } catch (e) {}
 }
 
-// ── SAVE DISBURSEMENTS ──
 export function saveDisbursements(records: SyncedDisbursementRecord[]) {
   try {
-    // Deduplicate before saving
+
     const recordMap = new Map<string, SyncedDisbursementRecord>()
     records.forEach((r) => {
       const key = `${(r.applicationRef || r.disbursementId || r.id || "").trim()}_${(r.assistanceType || "").trim()}`
@@ -301,7 +289,6 @@ export function saveDisbursements(records: SyncedDisbursementRecord[]) {
   }
 }
 
-// ── ADD USER NOTIFICATION ──
 export function pushUserNotification(notif: {
   title: string
   desc: string
@@ -313,7 +300,6 @@ export function pushUserNotification(notif: {
     const raw = localStorage.getItem("all_user_notifications")
     const existing: UserNotificationItem[] = raw ? JSON.parse(raw) : []
 
-    // Strict deduplication check: avoid duplicate notifications for same application and title
     if (notif.applicationRef) {
       const isDuplicate = existing.some(
         (e) =>
@@ -367,7 +353,6 @@ export function pushUserNotification(notif: {
   }
 }
 
-// ── SYNC: WHEN ADMIN SCHEDULES/UPDATES APPOINTMENT ──
 export function syncAppointmentToFinancialAid(params: {
   referenceNo: string
   applicantName: string
@@ -377,7 +362,7 @@ export function syncAppointmentToFinancialAid(params: {
   location: string
   notes?: string
 }) {
-  // If the appointment concern is an ID application or Training Program, do not treat as cash payout
+
   if (isIdOrDocumentService(params.concern) || isTrainingService(params.concern)) {
     return
   }
@@ -389,7 +374,6 @@ export function syncAppointmentToFinancialAid(params: {
   const rawConcern = params.concern.replace(/\s*assistance/gi, "").trim()
   const formattedConcern = params.concern.includes("Assistance") ? params.concern : (rawConcern.charAt(0).toUpperCase() + rawConcern.slice(1) + " Assistance")
 
-  // Format date to human readable e.g. August 31, 2026
   let formattedDate = params.date
   try {
     const d = new Date(params.date)
@@ -417,7 +401,6 @@ export function syncAppointmentToFinancialAid(params: {
     return d
   })
 
-  // If not found, create new connected disbursement record!
   if (!found) {
     const newId = `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`
     const newRecord: SyncedDisbursementRecord = {
@@ -439,7 +422,6 @@ export function syncAppointmentToFinancialAid(params: {
 
   saveDisbursements(updatedDisbursements)
 
-  // Send User Notification for Scheduled Payout Appointment
   pushUserNotification({
     title: "Payout Appointment Scheduled",
     desc: `Your Financial Aid payout appointment has been scheduled.\nDate: ${formattedDate}\nTime: ${params.time}\nLocation: ${params.location || "Quezon City Hall"}\nAmount: ₱${fixedAmount.toLocaleString()}`,
@@ -448,7 +430,6 @@ export function syncAppointmentToFinancialAid(params: {
     amount: fixedAmount,
   })
 
-  // Asynchronously sync to Backend PostgreSQL
   try {
     fetch(`${API_BASE}/api/appointments/${encodeURIComponent(params.referenceNo)}/schedule`, {
       method: "PUT",
@@ -465,7 +446,6 @@ export function syncAppointmentToFinancialAid(params: {
   } catch {}
 }
 
-// ── SYNC: WHEN ADMIN CONFIRMS FINANCIAL AID RELEASE ──
 export function syncFinancialAidRelease(recordId: string, details: {
   releasedDate: string
   releasedBy: string
@@ -494,7 +474,7 @@ export function syncFinancialAidRelease(recordId: string, details: {
 
   if (releasedRecord) {
     const rec = releasedRecord as SyncedDisbursementRecord
-    // Send User Notification for Released Aid
+
     pushUserNotification({
       title: "Financial Aid Released",
       desc: `Your Financial Aid (${rec.assistanceType} — ₱${rec.fixedAmount.toLocaleString()}) has been released successfully. Date: ${details.releasedDate}.`,
@@ -503,7 +483,6 @@ export function syncFinancialAidRelease(recordId: string, details: {
       amount: rec.fixedAmount,
     })
 
-    // Asynchronously sync to Backend PostgreSQL
     try {
       fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(recordId)}/release`, {
         method: "PUT",
@@ -519,7 +498,6 @@ export function syncFinancialAidRelease(recordId: string, details: {
   }
 }
 
-// ── HELPER: PARSE APPOINTMENT DATETIME ──
 export function parseAppointmentDateTime(dateStr?: string, timeStr?: string): Date | null {
   if (!dateStr) return null
   try {
@@ -558,7 +536,6 @@ export function parseAppointmentDateTime(dateStr?: string, timeStr?: string): Da
   }
 }
 
-// ── TIME-BASED AUTO-RELEASE ENGINE ──
 export function checkAndAutoReleaseScheduledDisbursements(): number {
   const currentDisbursements = getSavedDisbursements()
   const now = new Date()
@@ -576,7 +553,6 @@ export function checkAndAutoReleaseScheduledDisbursements(): number {
         })
         const finalReleaseTime = d.appointmentTime || now.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })
 
-        // Send User Notification for Auto-Released Aid
         pushUserNotification({
           title: "Financial Aid Released",
           desc: `Your Financial Aid (${d.assistanceType} — ₱${d.fixedAmount.toLocaleString()}) has been automatically released at the scheduled appointment time (${d.appointmentDate} – ${finalReleaseTime}).`,
@@ -604,7 +580,6 @@ export function checkAndAutoReleaseScheduledDisbursements(): number {
   return releasedCount
 }
 
-// ── UTILITY: CLEANUP USER TEST DATA (RENZ & KRIS) ──
 export const TARGET_TEST_MATCHES = [
   "kris",
   "topher",
@@ -661,14 +636,13 @@ export function purgeLegacyLocalTestData() {
   }
 }
 
-// Automatically execute purge on module load
 try {
   purgeLegacyLocalTestData()
 } catch {}
 
 export async function cleanupRenzTestData() {
   try {
-    // 1. Backend cleanup calls
+
     await Promise.allSettled([
       fetch(`${API_BASE}/api/auth/reset-test-citizen?email=renzoe09062@gmail.com`),
       fetch(`${API_BASE}/api/cleanup-user/110000872276939`, { method: "DELETE" }),
@@ -689,10 +663,8 @@ export async function cleanupRenzTestData() {
     ])
   } catch {}
 
-  // 2. LocalStorage cleanup
   purgeLegacyLocalTestData()
 
-  // 3. Dispatch events
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event("financial_disbursements_updated"))
     window.dispatchEvent(new Event("appointments_updated"))

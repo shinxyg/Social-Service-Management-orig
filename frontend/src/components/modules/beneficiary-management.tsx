@@ -20,10 +20,6 @@ import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { getApplicantPhotoUrl } from "./pwd-senior-citizen"
 import MaskedText from "../ui/masked-text"
 
-// =====================================================================================
-// Types
-// =====================================================================================
-
 type ProgramKey = "AICS" | "PWD" | "Senior Citizen" | "Solo Parent" | "Child Welfare" | "Livelihood" | "Training" | "General" | "System"
 type VerificationStatus = "verified" | "pending" | "unverified"
 
@@ -73,10 +69,6 @@ interface Beneficiary {
   enrolledPrograms: EnrolledProgram[]
   history: HistoryEvent[]
 }
-
-// =====================================================================================
-// Theme & Utility Helpers
-// =====================================================================================
 
 const programColors: Record<string, string> = {
   AICS: "bg-blue-50 text-blue-700 border-blue-200",
@@ -158,10 +150,6 @@ function SectionHeading({ icon, children }: { icon: React.ReactNode; children: R
     </div>
   )
 }
-
-// =====================================================================================
-// Beneficiary Card
-// =====================================================================================
 
 function BeneficiaryCard({ b, onOpen }: { b: Beneficiary; onOpen: (b: Beneficiary) => void }) {
   const vt = getVerificationTheme(b.verificationStatus)
@@ -258,10 +246,6 @@ function getBeneficiaryCardPhoto(b: Beneficiary): string {
   return ""
 }
 
-// =====================================================================================
-// Beneficiary Profile Modal
-// =====================================================================================
-
 type ProfileTab = "overview" | "programs" | "verification" | "history"
 
 function BeneficiaryProfileModal({
@@ -292,7 +276,7 @@ function BeneficiaryProfileModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8 flex flex-col max-h-[90vh] overflow-hidden border border-border"
       >
-        {/* Header */}
+        {}
         <div className="px-6 pt-5 pb-4 border-b border-border bg-slate-50/50">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
@@ -346,7 +330,7 @@ function BeneficiaryProfileModal({
           </div>
         </div>
 
-        {/* Content */}
+        {}
         <div className="px-6 py-6 overflow-y-auto space-y-6 flex-1">
           {tab === "overview" && (
             <div>
@@ -464,7 +448,7 @@ function BeneficiaryProfileModal({
                 </SectionHeading>
               </div>
 
-              {/* Multi-Program Application Selector */}
+              {}
               {b.enrolledPrograms.length > 0 && (
                 <div className="space-y-1.5 bg-slate-50 border border-slate-200 rounded-xl p-3">
                   <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wide">
@@ -517,7 +501,7 @@ function BeneficiaryProfileModal({
                 </div>
               )}
 
-              {/* View according to the selected program or General profile */}
+              {}
               {(() => {
                 const currentProg = selectedProgramIndex >= 0 && selectedProgramIndex < b.enrolledPrograms.length ? b.enrolledPrograms[selectedProgramIndex] : null;
 
@@ -671,7 +655,7 @@ function BeneficiaryProfileModal({
           )}
         </div>
 
-        {/* Footer */}
+        {}
         <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-white shrink-0">
           <button
             onClick={onClose}
@@ -684,10 +668,6 @@ function BeneficiaryProfileModal({
     </div>
   )
 }
-
-// =====================================================================================
-// Main Component
-// =====================================================================================
 
 type MainTab = "list" | "verification" | "history"
 
@@ -721,7 +701,6 @@ export default function BeneficiaryManagement() {
 
   const isFetchingRef = useRef(false)
 
-  // Fetch beneficiaries from backend database
   const fetchBeneficiaries = useCallback(async (isSilent = false) => {
     if (isFetchingRef.current) return
     isFetchingRef.current = true
@@ -736,7 +715,7 @@ export default function BeneficiaryManagement() {
         try {
           localStorage.setItem("cached_beneficiary_records", JSON.stringify(data.beneficiaries))
         } catch {}
-        // Live update currently open beneficiary modal
+
         setSelectedBeneficiary((prev) => {
           if (!prev) return null
           const updated = data.beneficiaries.find(
@@ -761,12 +740,10 @@ export default function BeneficiaryManagement() {
   useEffect(() => {
     fetchBeneficiaries()
 
-    // Subscribe to cross-tab / realtime application and beneficiary status updates
     const unsubscribe = subscribeToRealtimeChanges(() => {
       fetchBeneficiaries(true)
     })
 
-    // Silent background poll every 12 seconds for multi-device live sync
     const interval = setInterval(() => {
       fetchBeneficiaries(true)
     }, 12000)
@@ -816,12 +793,12 @@ export default function BeneficiaryManagement() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+      {}
       <div>
         <h1 className="text-3xl font-bold text-foreground tracking-tight">Beneficiary Management</h1>
       </div>
 
-      {/* Error Banner if any */}
+      {}
       {error && (
         <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-between gap-3 text-sm">
           <div className="flex items-center gap-2">
@@ -837,7 +814,7 @@ export default function BeneficiaryManagement() {
         </div>
       )}
 
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl p-4 bg-card border border-border shadow-xs">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total Beneficiaries</p>
@@ -857,7 +834,7 @@ export default function BeneficiaryManagement() {
         </div>
       </div>
 
-      {/* Main Tabs Navigation */}
+      {}
       <div className="flex items-center gap-1 bg-muted rounded-xl p-1 w-fit flex-wrap border border-border/50">
         {MAIN_TABS.map((t) => (
           <button
@@ -873,7 +850,7 @@ export default function BeneficiaryManagement() {
         ))}
       </div>
 
-      {/* Beneficiary List View */}
+      {}
       {tab === "list" && (
         <div className="space-y-4">
           <div className="bg-white border border-border rounded-xl p-4 space-y-4 shadow-xs">
@@ -948,7 +925,7 @@ export default function BeneficiaryManagement() {
         </div>
       )}
 
-      {/* Verification Queue View */}
+      {}
       {tab === "verification" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -978,7 +955,7 @@ export default function BeneficiaryManagement() {
         </div>
       )}
 
-      {/* History Log View */}
+      {}
       {tab === "history" && (
         <div className="bg-white border border-border rounded-xl shadow-xs overflow-hidden">
           <div className="px-5 py-4 border-b border-border bg-slate-50/60 flex items-center justify-between">
@@ -1041,7 +1018,7 @@ export default function BeneficiaryManagement() {
         </div>
       )}
 
-      {/* Selected Profile Modal */}
+      {}
       {selectedBeneficiary && (
         <BeneficiaryProfileModal
           b={selectedBeneficiary}

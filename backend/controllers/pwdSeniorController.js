@@ -15,10 +15,8 @@ try {
   sendSeniorBookletApprovalEmail = emailService.sendSeniorBookletApprovalEmail;
 } catch {}
 
-// In-memory fallback if database table is initializing or offline
 let memoryApplications = [];
 
-// Ensure table exists and has all required columns
 async function initPwdSeniorTable() {
   try {
     await db.query(`
@@ -75,10 +73,9 @@ async function initPwdSeniorTable() {
     `);
     console.log('[DB] pwd_senior_applications table ready.');
 
-    // Remove legacy dummy seed applications if they exist
     await db.query(`
-      DELETE FROM pwd_senior_applications 
-      WHERE id IN ('APP-PWD-2026-001', 'APP-PWD-2026-002', 'APP-PWD-2026-003') 
+      DELETE FROM pwd_senior_applications
+      WHERE id IN ('APP-PWD-2026-001', 'APP-PWD-2026-002', 'APP-PWD-2026-003')
          OR reference_number IN ('PWD-QC-2026-4891', 'PWD-QC-2026-3109', 'PWD-QC-2026-5520')
     `);
   } catch (err) {
@@ -90,7 +87,7 @@ initPwdSeniorTable();
 
 let cachedApps = null;
 let lastCacheTime = 0;
-const CACHE_TTL_MS = 30000; // 30 seconds cache (invalidated on create/update/delete)
+const CACHE_TTL_MS = 30000;
 
 function invalidateAppsCache() {
   cachedApps = null;
@@ -142,7 +139,6 @@ function saveBase64File(base64Data, filenamePrefix = 'pwd-senior') {
     const dir = path.join(__dirname, '..', 'uploads', 'pwd-senior');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    // Sanitize prefix: remove slashes, special characters, and multiple underscores
     const cleanPrefix = String(filenamePrefix || 'pwd-senior')
       .replace(/[^a-zA-Z0-9_-]/g, '_')
       .replace(/_+/g, '_')
@@ -165,8 +161,7 @@ function sanitizeDocumentList(docs, shouldWriteDisk = false) {
     if (!doc || typeof doc !== 'object') return doc;
     const cleanDoc = { ...doc };
 
-    // Save base64 image if present to physical disk ONLY on creation
-    const rawData = cleanDoc.dataUrl || cleanDoc.base64 || cleanDoc.data || 
+    const rawData = cleanDoc.dataUrl || cleanDoc.base64 || cleanDoc.data ||
       (cleanDoc.fileUrl && cleanDoc.fileUrl.startsWith('data:') ? cleanDoc.fileUrl : null) ||
       (cleanDoc.previewUrl && cleanDoc.previewUrl.startsWith('data:') ? cleanDoc.previewUrl : null);
     if (rawData && typeof rawData === 'string' && rawData.startsWith('data:')) {
@@ -181,7 +176,6 @@ function sanitizeDocumentList(docs, shouldWriteDisk = false) {
       }
     }
 
-    // Ensure valid fileUrl
     if (!cleanDoc.fileUrl) {
       if (cleanDoc.previewUrl && typeof cleanDoc.previewUrl === 'string') {
         cleanDoc.fileUrl = cleanDoc.previewUrl;
@@ -202,7 +196,7 @@ function sanitizeDocumentList(docs, shouldWriteDisk = false) {
       cleanDoc.files = cleanDoc.files.map((f) => {
         if (!f || typeof f !== 'object') return f;
         const cleanF = { ...f };
-        const rawF = cleanF.dataUrl || cleanF.base64 || 
+        const rawF = cleanF.dataUrl || cleanF.base64 ||
           (cleanF.fileUrl && cleanF.fileUrl.startsWith('data:') ? cleanF.fileUrl : null) ||
           (cleanF.previewUrl && cleanF.previewUrl.startsWith('data:') ? cleanF.previewUrl : null);
         if (rawF && typeof rawF === 'string' && rawF.startsWith('data:')) {
@@ -230,10 +224,6 @@ function sanitizeDocumentList(docs, shouldWriteDisk = false) {
   });
 }
 
-/**
- * GET /api/pwd-senior/applications
- * Returns all submitted applications
- */
 exports.getAllApplications = async (req, res) => {
   const now = Date.now();
   if (cachedApps && now - lastCacheTime < CACHE_TTL_MS) {
@@ -402,10 +392,6 @@ exports.getAllApplications = async (req, res) => {
   }
 };
 
-/**
- * POST /api/pwd-senior/applications
- * Submits a new PWD or Senior Citizen application
- */
 exports.createApplication = async (req, res) => {
   try {
     const body = req.body;
@@ -606,10 +592,6 @@ exports.createApplication = async (req, res) => {
   }
 };
 
-/**
- * PATCH /api/pwd-senior/applications/:id/status
- * Updates status (approve / reject)
- */
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -618,7 +600,7 @@ exports.updateApplicationStatus = async (req, res) => {
 
     let targetApp = null;
     try {
-      // 1. Lookup strictly by unique ID first
+
       let q = await db.query(
         `SELECT * FROM pwd_senior_applications WHERE id = $1 OR id::text = $1 LIMIT 1`,
         [id]
@@ -626,7 +608,7 @@ exports.updateApplicationStatus = async (req, res) => {
       if (q.rows.length === 0 && lookupRef) {
         if (category && type) {
           q = await db.query(
-            `SELECT * FROM pwd_senior_applications 
+            `SELECT * FROM pwd_senior_applications
              WHERE (reference_number = $1 OR id::text = $1)
                AND (category ILIKE '%' || $2 || '%' OR category = $2)
                AND (type ILIKE '%' || $3 || '%' OR type = $3)
@@ -636,7 +618,7 @@ exports.updateApplicationStatus = async (req, res) => {
         }
         if (q.rows.length === 0 && category) {
           q = await db.query(
-            `SELECT * FROM pwd_senior_applications 
+            `SELECT * FROM pwd_senior_applications
              WHERE (reference_number = $1 OR id::text = $1)
                AND (category ILIKE '%' || $2 || '%' OR category = $2)
              ORDER BY created_at DESC LIMIT 1`,
@@ -684,7 +666,6 @@ exports.updateApplicationStatus = async (req, res) => {
       String(targetApp?.type || '').toLowerCase().includes('movie')
     );
 
-    // Correct ID prefix based on category
     if (status === 'approved') {
       if (isPwd) {
         if (assignedIdNumber) {
@@ -704,7 +685,7 @@ exports.updateApplicationStatus = async (req, res) => {
           assignedIdNumber = `137404-${year}-${randomSeq}`;
         }
       } else {
-        // Senior Citizen ID
+
         if (assignedIdNumber) {
           assignedIdNumber = assignedIdNumber.replace(/^(PWD|OSCA)-/i, 'SENIOR-');
           if (!assignedIdNumber.startsWith('SENIOR-')) {
@@ -733,7 +714,6 @@ exports.updateApplicationStatus = async (req, res) => {
       console.warn('[DB Error] Updating DB failed, updating in memory fallback:', dbErr.message);
     }
 
-    // Always keep in-memory sync updated strictly for this exact single application
     memoryApplications = memoryApplications.map((app) => {
       if (String(app.id) === String(exactAppId) || String(app.id) === String(id) || (app.referenceNumber === lookupRef && type && String(app.type).toLowerCase() === String(type).toLowerCase())) {
         const updated = {
@@ -754,7 +734,6 @@ exports.updateApplicationStatus = async (req, res) => {
       if (isAssistance) {
         const concernName = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
 
-        // 1. Insert into appointments only for Social Assistance
         try {
           const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [refNo]);
           if (checkAppt.rows.length === 0) {
@@ -770,7 +749,6 @@ exports.updateApplicationStatus = async (req, res) => {
           console.warn('Could not insert appointment for PWD/Senior:', e.message);
         }
 
-        // 2. Insert into financial_aid_disbursements if social assistance
         try {
           const disbCheck = await db.query('SELECT id FROM financial_aid_disbursements WHERE application_ref = $1', [refNo]);
           if (disbCheck.rows.length === 0) {
@@ -797,18 +775,17 @@ exports.updateApplicationStatus = async (req, res) => {
           console.warn('Could not insert financial disbursement for PWD/Senior:', e.message);
         }
       } else {
-        // For ID / Booklet card issuance, remove any existing appointment or disbursement
+
         try {
           await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [refNo]);
           await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref = $1`, [refNo]);
         } catch (_) {}
       }
 
-      // 3. Directly dispatch generated Official ID / Booklet Email to Gmail
       const targetEmail = targetApp?.email || targetApp?.contact_email;
       if (targetEmail && targetEmail.includes('@')) {
         if (isSeniorBooklet) {
-          // Senior Citizen Booklet (Medicine / Movie)
+
           if (sendSeniorBookletApprovalEmail) {
             sendSeniorBookletApprovalEmail({
               recipientEmail: targetEmail,
@@ -824,7 +801,7 @@ exports.updateApplicationStatus = async (req, res) => {
             }).catch((err) => console.warn('[Email Error] Failed to send Senior Booklet approval email:', err.message));
           }
         } else if (!isPwd) {
-          // Senior Citizen ID
+
           if (sendSeniorCitizenApprovalEmail) {
             sendSeniorCitizenApprovalEmail({
               recipientEmail: targetEmail,
@@ -839,7 +816,7 @@ exports.updateApplicationStatus = async (req, res) => {
             }).catch((err) => console.warn('[Email Error] Failed to send Senior Citizen approval email:', err.message));
           }
         } else {
-          // PWD ID
+
           if (sendPwdApprovalEmail) {
             sendPwdApprovalEmail({
               recipientEmail: targetEmail,
@@ -882,14 +859,12 @@ exports.updateApplicationStatus = async (req, res) => {
   }
 };
 
-// Delete single application
 exports.deleteApplication = async (req, res) => {
   const { id } = req.params;
   try {
-    // Delete from DB
+
     await db.query(`DELETE FROM pwd_senior_applications WHERE id = $1 OR reference_number = $1`, [id]);
-    
-    // Also remove from memoryApplications
+
     memoryApplications = memoryApplications.filter(app => app.id !== id && app.referenceNumber !== id);
 
     invalidateAppsCache();
@@ -900,7 +875,6 @@ exports.deleteApplication = async (req, res) => {
   }
 };
 
-// Clear/Delete all Senior Citizen applications (for fresh testing)
 exports.clearSeniorApplications = async (req, res) => {
   try {
     await db.query(`DELETE FROM pwd_senior_applications WHERE category ILIKE '%senior%' OR category = 'Senior Citizen'`);
@@ -914,13 +888,12 @@ exports.clearSeniorApplications = async (req, res) => {
   }
 };
 
-// Clear/Delete by user name or reference number
 exports.cleanupUserPwdSenior = async (req, res) => {
   const { nameOrRef } = req.params;
   try {
     const term = `%${nameOrRef}%`;
     const result = await db.query(
-      `DELETE FROM pwd_senior_applications 
+      `DELETE FROM pwd_senior_applications
        WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
           OR LOWER(first_name || ' ' || middle_name || ' ' || last_name) LIKE LOWER($1)
           OR reference_number LIKE $1`,

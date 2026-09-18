@@ -37,7 +37,6 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
     const records: SyncedDisbursementRecord[] = []
     const seenKeys = new Set<string>()
 
-    // Load local appointments cache to map appointment dates/times immediately
     let appointmentsMap: Record<string, any> = {}
     try {
       const rawAppts =
@@ -86,7 +85,6 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       })
     }
 
-    // AICS
     try {
       const aics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
       if (Array.isArray(aics)) {
@@ -116,7 +114,6 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       }
     } catch {}
 
-    // PWD / Senior
     try {
       const pwd = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
       if (Array.isArray(pwd)) {
@@ -152,7 +149,6 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       }
     } catch {}
 
-    // Livelihood
     try {
       const liv = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
       if (Array.isArray(liv)) {
@@ -180,7 +176,6 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       }
     } catch {}
 
-    // Attach appointments & evaluate auto-release
     const now = new Date()
     const processed = records.map((d) => {
       const appt = appointmentsMap[d.applicationRef] || appointmentsMap[d.applicantName.toLowerCase().trim()]
@@ -251,14 +246,13 @@ export default function FinancialAidDisbursement() {
     setRevealedAmounts((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
-  // Auto-sync submitted applications from Backend, LocalStorage, and Appointments Bridge
   useEffect(() => {
     let isSyncing = false
     const syncAll = async () => {
       if (isSyncing) return
       isSyncing = true
       try {
-        // Auto-release engine: check if any appointment time has arrived
+
         checkAndAutoReleaseScheduledDisbursements()
 
         const deletedKeys = getDeletedDisbursementKeys()
@@ -266,7 +260,6 @@ export default function FinancialAidDisbursement() {
         let remoteRecords: SyncedDisbursementRecord[] = []
         let appointmentsMap: Record<string, any> = {}
 
-        // Fetch all endpoints concurrently in parallel
         const [
           resDbSettled,
           resAicsSettled,
@@ -288,7 +281,6 @@ export default function FinancialAidDisbursement() {
           fetch(`${API_BASE}/api/appointments`),
         ])
 
-        // 1. Process DB records
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
           try {
             const dataDb = await resDbSettled.value.json()
@@ -328,7 +320,6 @@ export default function FinancialAidDisbursement() {
           } catch {}
         }
 
-        // 2. Process AICS
         if (resAicsSettled.status === "fulfilled" && resAicsSettled.value.ok) {
           try {
             const data = await resAicsSettled.value.json()
@@ -381,7 +372,6 @@ export default function FinancialAidDisbursement() {
           } catch {}
         }
 
-        // 3. Process PWD / Senior
         let pwdSeniorApps: any[] = []
         if (resPwdSettled.status === "fulfilled" && resPwdSettled.value.ok) {
           try {
@@ -452,7 +442,6 @@ export default function FinancialAidDisbursement() {
           })
         }
 
-        // 4. Process Livelihood
         if (resLivSettled.status === "fulfilled" && resLivSettled.value.ok) {
           try {
             const dataLiv = await resLivSettled.value.json()
@@ -490,7 +479,6 @@ export default function FinancialAidDisbursement() {
           } catch {}
         }
 
-        // 5. Process Child Welfare
         if (resCwSettled.status === "fulfilled" && resCwSettled.value.ok) {
           try {
             const dataCw = await resCwSettled.value.json()
@@ -536,7 +524,6 @@ export default function FinancialAidDisbursement() {
           } catch {}
         }
 
-        // 6. Process Appointments
         if (resApptsSettled.status === "fulfilled" && resApptsSettled.value.ok) {
           try {
             const dataAppts = await resApptsSettled.value.json()
@@ -557,7 +544,6 @@ export default function FinancialAidDisbursement() {
           if (rawSched) localScheduledMap = JSON.parse(rawSched)
         } catch {}
 
-        // Merge: remote records from database take precedence over local cache
         let merged = [...remoteRecords]
         localDisbursements.forEach((l) => {
           if (!merged.some((m) => m.applicationRef === l.applicationRef || m.disbursementId === l.disbursementId)) {
@@ -565,7 +551,6 @@ export default function FinancialAidDisbursement() {
           }
         })
 
-        // Filter against deleted keys
         merged = merged.filter(
           (d) =>
             !deletedKeys.has(d.id) &&
@@ -573,7 +558,6 @@ export default function FinancialAidDisbursement() {
             !deletedKeys.has(d.applicationRef)
         )
 
-        // Attach schedule from appointments/cache and check real-time auto-release
         merged = merged.map((d) => {
           const baseRef = (d.applicationRef || "").split("-")[0].trim()
           const cleanAssistance = String(d.assistanceType).toLowerCase().replace(/assistance/g, "").replace(/social/g, "").trim()
@@ -661,7 +645,6 @@ export default function FinancialAidDisbursement() {
 
     syncAll()
 
-    // Interval checker (15s) with in-flight protection
     const autoReleaseInterval = setInterval(() => {
       syncAll()
     }, 15000)
@@ -692,7 +675,6 @@ export default function FinancialAidDisbursement() {
     }
   }, [])
 
-  // Filtered disbursements
   const filteredDisbursements = useMemo(() => {
     return disbursements.filter((d) => {
       const matchStatus =
@@ -709,7 +691,6 @@ export default function FinancialAidDisbursement() {
     })
   }, [disbursements, selectedStatusTab, searchQuery])
 
-  // KPIs
   const totalDisbursed = disbursements
     .filter((d) => d.status === "RELEASED")
     .reduce((sum, d) => sum + d.fixedAmount, 0)
@@ -723,7 +704,7 @@ export default function FinancialAidDisbursement() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* ── HEADER ── */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -748,7 +729,7 @@ export default function FinancialAidDisbursement() {
         </button>
       </div>
 
-      {/* ── STATS SUMMARY CARDS ── */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs">
           <div className="flex items-center justify-between">
@@ -811,9 +792,9 @@ export default function FinancialAidDisbursement() {
         </div>
       </div>
 
-      {/* ───────────────────────────────────────────────────────────────── */}
-      {/* ── FIXED AMOUNT RATES TABLE ── */}
-      {/* ───────────────────────────────────────────────────────────────── */}
+      {}
+      {}
+      {}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs space-y-3">
         <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
           <h2 className="text-xs font-bold uppercase text-gray-700 flex items-center gap-1.5">
@@ -842,11 +823,11 @@ export default function FinancialAidDisbursement() {
         </div>
       </div>
 
-      {/* ───────────────────────────────────────────────────────────────── */}
-      {/* ── DISBURSEMENT RECORDS TABLE ── */}
-      {/* ───────────────────────────────────────────────────────────────── */}
+      {}
+      {}
+      {}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-xs overflow-hidden space-y-0">
-        {/* Top Controls */}
+        {}
         <div className="p-4 sm:p-5 border-b border-gray-100 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -859,7 +840,7 @@ export default function FinancialAidDisbursement() {
               </p>
             </div>
 
-            {/* Search */}
+            {}
             <div className="relative w-full sm:w-72">
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -872,7 +853,7 @@ export default function FinancialAidDisbursement() {
             </div>
           </div>
 
-          {/* Status Filter Tabs & Cleanup Buttons */}
+          {}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
               {["ALL", "PENDING", "RELEASED"].map((tab) => (
@@ -892,7 +873,7 @@ export default function FinancialAidDisbursement() {
           </div>
         </div>
 
-        {/* Table */}
+        {}
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
@@ -1010,9 +991,9 @@ export default function FinancialAidDisbursement() {
         </div>
       </div>
 
-      {/* ───────────────────────────────────────────────────────────────── */}
-      {/* ── MODAL: VIEW DETAILS ── */}
-      {/* ───────────────────────────────────────────────────────────────── */}
+      {}
+      {}
+      {}
       {selectedDetailsRecord && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
           <div className="bg-white border border-gray-200 rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-5">

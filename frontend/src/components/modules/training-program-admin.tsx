@@ -24,7 +24,6 @@ export default function TrainingProgramAdmin() {
   const [isLoading, setIsLoading] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // Review modal form state
   const [rejectReason, setRejectReason] = useState("")
   const [showRejectInput, setShowRejectInput] = useState(false)
   const [previewCertApp, setPreviewCertApp] = useState<TrainingApplicationRecord | null>(null)
@@ -53,7 +52,6 @@ export default function TrainingProgramAdmin() {
       setIsLoading(false)
     }
 
-    // Fallback: localStorage
     try {
       const stored = localStorage.getItem("training_applications")
       if (stored) {
@@ -86,7 +84,6 @@ export default function TrainingProgramAdmin() {
     }
   }, [selectedApp?.id, selectedApp?.referenceNumber])
 
-  // Sync and persist application changes
   const persistAppUpdate = async (updated: TrainingApplicationRecord) => {
     setIsProcessing(true)
     const updatedList = applications.map((a) => (String(a.id) === String(updated.id) || a.referenceNumber === updated.referenceNumber ? updated : a))
@@ -128,13 +125,11 @@ export default function TrainingProgramAdmin() {
       setIsProcessing(false)
     }
 
-    // Trigger real-time cross-tab sync AFTER PATCH succeeds so fetchTrainingApplications won't race
     window.dispatchEvent(new Event("storage"))
     const syncType = updated.status === "approved" ? "APPLICATION_APPROVED" : updated.status === "rejected" ? "APPLICATION_REJECTED" : "STATUS_CHANGED"
     notifyApplicationChange(syncType, "livelihood", updated.referenceNumber)
   }
 
-  // Handle Approve
   const handleApprove = async (app: TrainingApplicationRecord) => {
     const updated: TrainingApplicationRecord = {
       ...app,
@@ -151,7 +146,6 @@ export default function TrainingProgramAdmin() {
     await persistAppUpdate(updated)
   }
 
-  // Handle Reject
   const handleReject = async (app: TrainingApplicationRecord) => {
     if (!rejectReason.trim()) {
       alert(
@@ -173,13 +167,11 @@ export default function TrainingProgramAdmin() {
     setRejectReason("")
   }
 
-  // Counters
   const pendingCount = applications.filter((a) => a.status === "pending" || a.status === "under_review").length
   const approvedCount = applications.filter((a) => a.status === "approved").length
   const completedCount = applications.filter((a) => a.attendance?.completed || a.schedule?.trainingStatus === "Completed").length
   const rejectedCount = applications.filter((a) => a.status === "rejected").length
 
-  // Filtered applications
   const filteredApps = applications.filter((a) => {
     const matchStatus =
       filterStatus === "all"
@@ -202,7 +194,7 @@ export default function TrainingProgramAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Top action row */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-xl font-bold text-foreground">
@@ -215,7 +207,7 @@ export default function TrainingProgramAdmin() {
         </div>
       </div>
 
-      {/* Metric Cards */}
+      {}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20">
           <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
@@ -258,9 +250,9 @@ export default function TrainingProgramAdmin() {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Status Filters */}
+        {}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {[
             { id: "all", label: isEn ? "All" : isBis ? "Tanan" : "Lahat" },
@@ -284,7 +276,7 @@ export default function TrainingProgramAdmin() {
           ))}
         </div>
 
-        {/* Search input */}
+        {}
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <input
@@ -297,7 +289,7 @@ export default function TrainingProgramAdmin() {
         </div>
       </div>
 
-      {/* Applications List */}
+      {}
       {isLoading && applications.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-2">
           <RefreshCw className="h-6 w-6 text-purple-600 animate-spin mx-auto" />
@@ -420,13 +412,13 @@ export default function TrainingProgramAdmin() {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* TRAINING APPLICATION DETAILS & MANAGEMENT MODAL              */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {selectedApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 overflow-y-auto">
           <div className="bg-card border border-border rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            {/* Modal Header */}
+            {}
             <div className="flex items-start justify-between gap-4 pb-3 border-b border-border">
               <div>
                 <span className="text-[11px] font-mono font-bold text-purple-600 bg-purple-500/10 px-2 py-0.5 rounded-md">
@@ -446,7 +438,7 @@ export default function TrainingProgramAdmin() {
               </button>
             </div>
 
-            {/* Applicant Profile Grid */}
+            {}
             <div className="bg-muted/20 p-4 rounded-xl border border-border space-y-2 text-xs">
               <span className="font-bold text-[11px] text-muted-foreground uppercase tracking-wide">Applicant Information</span>
               <div className="grid grid-cols-2 gap-3 pt-1">
@@ -511,7 +503,7 @@ export default function TrainingProgramAdmin() {
               </div>
             </div>
 
-            {/* Schedule Info */}
+            {}
             <div className="bg-muted/20 p-4 rounded-xl border border-border space-y-2 text-xs">
               <span className="font-bold text-[11px] text-muted-foreground uppercase tracking-wide">Assigned Schedule</span>
               <div className="grid grid-cols-2 gap-2 pt-1">
@@ -528,7 +520,7 @@ export default function TrainingProgramAdmin() {
               </div>
             </div>
 
-            {/* Attendance & Session Monitor (Live Observe-Only for Admin) */}
+            {}
             {selectedApp.status === "approved" && (
               <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
@@ -597,7 +589,7 @@ export default function TrainingProgramAdmin() {
               </div>
             )}
 
-            {/* Action Buttons */}
+            {}
             <div className="space-y-3 pt-2 border-t border-border">
               {showRejectInput && (
                 <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-2">
@@ -701,9 +693,9 @@ export default function TrainingProgramAdmin() {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* CERTIFICATE PREVIEW MODAL (ADMIN VIEW-ONLY)                 */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {previewCertApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
           <div className="bg-card border border-border rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6">

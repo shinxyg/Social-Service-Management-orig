@@ -1,12 +1,11 @@
-// controllers/soloParentController.js
+
 const db = require('../config/db');
 const fs = require('fs').promises;
 const path = require('path');
 
-// In-memory cache for ultra-fast response times
 let cachedSoloApps = null;
 let lastSoloCacheTime = 0;
-const SOLO_CACHE_TTL = 4000; // 4 seconds cache
+const SOLO_CACHE_TTL = 4000;
 
 function invalidateSoloCache() {
   cachedSoloApps = null;
@@ -79,7 +78,7 @@ function sanitizeDocumentList(docs) {
     if (!doc || typeof doc !== 'object') return doc;
     const cleanDoc = { ...doc };
 
-    const rawData = cleanDoc.dataUrl || cleanDoc.base64 || cleanDoc.data || 
+    const rawData = cleanDoc.dataUrl || cleanDoc.base64 || cleanDoc.data ||
       (cleanDoc.fileUrl && cleanDoc.fileUrl.startsWith('data:') ? cleanDoc.fileUrl : null) ||
       (cleanDoc.previewUrl && cleanDoc.previewUrl.startsWith('data:') ? cleanDoc.previewUrl : null);
     if (rawData && typeof rawData === 'string' && rawData.startsWith('data:')) {
@@ -115,7 +114,7 @@ function sanitizeDocumentList(docs) {
       cleanDoc.files = cleanDoc.files.map((f) => {
         if (!f || typeof f !== 'object') return f;
         const cleanF = { ...f };
-        const rawF = cleanF.dataUrl || cleanF.base64 || 
+        const rawF = cleanF.dataUrl || cleanF.base64 ||
           (cleanF.fileUrl && cleanF.fileUrl.startsWith('data:') ? cleanF.fileUrl : null) ||
           (cleanF.previewUrl && cleanF.previewUrl.startsWith('data:') ? cleanF.previewUrl : null);
         if (rawF && typeof rawF === 'string' && rawF.startsWith('data:')) {
@@ -183,7 +182,7 @@ function sanitizeExtraData(extraData) {
 function sanitizeAppRow(row) {
   if (!row) return row;
   let cleanRow = { ...row };
-  
+
   if (cleanRow.uploaded_documents) {
     const raw = typeof cleanRow.uploaded_documents === 'string' ? (() => { try { return JSON.parse(cleanRow.uploaded_documents); } catch { return []; } })() : cleanRow.uploaded_documents;
     cleanRow.uploaded_documents = sanitizeDocumentList(raw);
@@ -203,7 +202,6 @@ function sanitizeAppRow(row) {
     cleanRow.photo_url = cleanRow.applicant_photo;
   }
 
-  // Ensure valid submission and creation timestamps
   const rawDate =
     cleanRow.created_at ||
     cleanRow.submitted_at ||
@@ -374,7 +372,6 @@ async function initSoloParentColumns() {
 }
 initSoloParentColumns();
 
-// Create new application
 exports.createApplication = async (req, res) => {
   try {
     await initSoloParentColumns();
@@ -390,7 +387,6 @@ exports.createApplication = async (req, res) => {
     const isIdVerified = appData.isIdVerified ?? req.body.isIdVerified ?? false;
     const initialDocs = appData.documents || req.body.documents || appData.uploadedDocuments || [];
 
-    // Clean up any unsubmitted draft records so they never block new attempts
     if (userId) {
       await db.query(
         `DELETE FROM solo_parent_child_welfare_applications
@@ -571,7 +567,6 @@ exports.createApplication = async (req, res) => {
   }
 };
 
-// Upload documents
 exports.uploadDocuments = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -623,13 +618,12 @@ exports.uploadDocuments = async (req, res) => {
       [JSON.stringify(uploadedDocuments), applicationId]
     );
 
-    // If this is a 2x2 photo or picture, also update applicantPhoto in form_data and extra_data
     const isPhotoDoc = /photo|picture|2x2|id_pic|avatar/i.test(documentId || documentLabel || '');
     const photoFile = uploadedFiles[0];
     if (isPhotoDoc && photoFile && photoFile.fileUrl) {
       try {
         await db.query(
-          `UPDATE solo_parent_child_welfare_applications 
+          `UPDATE solo_parent_child_welfare_applications
            SET form_data = jsonb_set(COALESCE(form_data, '{}'::jsonb), '{applicantPhoto}', to_jsonb($1::text), true),
                extra_data = jsonb_set(COALESCE(extra_data, '{}'::jsonb), '{applicantPhoto}', to_jsonb($1::text), true),
                applicant_photo = $1,
@@ -654,7 +648,6 @@ exports.uploadDocuments = async (req, res) => {
   }
 };
 
-// Remove document
 exports.removeDocument = async (req, res) => {
   try {
     const { applicationId, documentId, filename } = req.params;
@@ -701,7 +694,6 @@ exports.removeDocument = async (req, res) => {
   }
 };
 
-// Submit application
 exports.submitApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -730,7 +722,6 @@ exports.submitApplication = async (req, res) => {
   }
 };
 
-// Get application by reference number
 exports.getApplicationByReference = async (req, res) => {
   try {
     const { referenceNumber } = req.params;
@@ -747,7 +738,6 @@ exports.getApplicationByReference = async (req, res) => {
   }
 };
 
-// Get all applications by user
 exports.getUserApplications = async (req, res) => {
   try {
     await initSoloParentColumns();
@@ -795,7 +785,6 @@ exports.getUserApplications = async (req, res) => {
   }
 };
 
-// Get all applications (admin)
 exports.getAllApplications = async (req, res) => {
   try {
     await initSoloParentColumns();
@@ -804,7 +793,6 @@ exports.getAllApplications = async (req, res) => {
     const numLimit = parseInt(limit, 10) || 200;
     const numPage = parseInt(page, 10) || 1;
 
-    // Check fast in-memory cache if standard unfiltered or default request
     const isStandardList = (!status || status === 'all') && numPage === 1 && numLimit >= 100;
     if (isStandardList && cachedSoloApps && (Date.now() - lastSoloCacheTime < SOLO_CACHE_TTL)) {
       return res.status(200).json({
@@ -875,7 +863,6 @@ exports.getAllApplications = async (req, res) => {
   }
 };
 
-// Get single application by id (admin)
 exports.getApplicationById = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -889,7 +876,6 @@ exports.getApplicationById = async (req, res) => {
   }
 };
 
-// Update application status (admin)
 exports.updateApplicationStatus = async (req, res) => {
   try {
     await initSoloParentColumns();
@@ -1026,7 +1012,6 @@ exports.updateApplicationStatus = async (req, res) => {
   }
 };
 
-// Cancel application (user)
 exports.cancelApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -1050,7 +1035,6 @@ exports.cancelApplication = async (req, res) => {
   }
 };
 
-// Check eligibility bago pumasok sa wizard
 exports.checkEligibility = async (req, res) => {
   try {
     await initSoloParentColumns();
@@ -1085,7 +1069,6 @@ exports.checkEligibility = async (req, res) => {
       orClauses.push(`(LOWER(email) = LOWER($${params.length}) OR LOWER(form_data->>'email') = LOWER($${params.length}))`);
     }
 
-    // 1. Check if user has a pending application for this specific type
     params.push(applicationType);
     const typeParamIdx = params.length;
 
@@ -1117,7 +1100,6 @@ exports.checkEligibility = async (req, res) => {
       });
     }
 
-    // 2. Check if user has an approved Solo Parent application for this type
     if (req.query.reapply !== 'true') {
       const approvedQuery = `
         SELECT * FROM solo_parent_child_welfare_applications
@@ -1146,7 +1128,6 @@ exports.checkEligibility = async (req, res) => {
         });
       }
 
-      // 3. Check if user has a rejected application for this type (if not reapplying)
       const rejectedQuery = `
         SELECT * FROM solo_parent_child_welfare_applications
         WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
@@ -1182,7 +1163,6 @@ exports.checkEligibility = async (req, res) => {
   }
 };
 
-// Update application data (personal info, family members, atbp.)
 exports.updateApplicationData = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -1251,7 +1231,6 @@ exports.updateApplicationData = async (req, res) => {
   }
 };
 
-// Delete single application (admin)
 exports.deleteApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -1262,9 +1241,9 @@ exports.deleteApplication = async (req, res) => {
     }
     const cleanId = String(applicationId).replace(/^SP-/, '').trim();
     await db.query(
-      `DELETE FROM solo_parent_child_welfare_applications 
+      `DELETE FROM solo_parent_child_welfare_applications
        WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
-         AND (id::text = $1 OR reference_number = $1 OR reference_number = $2) 
+         AND (id::text = $1 OR reference_number = $1 OR reference_number = $2)
        RETURNING id`,
       [cleanId, applicationId]
     );
@@ -1276,7 +1255,6 @@ exports.deleteApplication = async (req, res) => {
   }
 };
 
-// Clear all solo parent applications (admin test cleanup)
 exports.clearApplications = async (req, res) => {
   try {
     await db.query(`DELETE FROM solo_parent_child_welfare_applications WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)`);
@@ -1288,7 +1266,6 @@ exports.clearApplications = async (req, res) => {
   }
 };
 
-// Direct verify Solo Parent ID endpoint
 exports.verifySoloParentId = async (req, res) => {
   try {
     const { idNumber } = req.params;
@@ -1299,7 +1276,6 @@ exports.verifySoloParentId = async (req, res) => {
     const cleanInput = String(idNumber).trim();
     const cleanDigits = cleanInput.replace(/\D/g, '');
 
-    // 1. Search in DB for existing application
     const query = `
       SELECT * FROM solo_parent_child_welfare_applications
       WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
@@ -1319,7 +1295,7 @@ exports.verifySoloParentId = async (req, res) => {
           OR regexp_replace(COALESCE(solo_parent_id_number, ''), '[^0-9]', '', 'g') LIKE '%' || $2 || '%'
         ))
       )
-      ORDER BY 
+      ORDER BY
         CASE WHEN application_status IN ('approved', 'completed', 'for_release', 'active') THEN 1 ELSE 2 END,
         created_at DESC LIMIT 1
     `;
@@ -1339,7 +1315,6 @@ exports.verifySoloParentId = async (req, res) => {
       });
     }
 
-    // 2. If valid format (6 or more digits), accept as valid existing ID for renewal / replacement
     if (cleanDigits.length >= 6) {
       return res.status(200).json({
         success: true,
@@ -1365,5 +1340,3 @@ exports.verifySoloParentId = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
-
-

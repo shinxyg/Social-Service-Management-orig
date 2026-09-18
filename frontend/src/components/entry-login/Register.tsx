@@ -40,7 +40,6 @@ const QC_BARANGAYS = [
   'White Plains',
 ];
 
-
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -102,21 +101,18 @@ export const Register = () => {
   const [birthDay, setBirthDay] = useState(() => savedDraft?.birthDay ?? '');
   const [birthYear, setBirthYear] = useState(() => savedDraft?.birthYear ?? '');
 
-  // Step 2 - Address
   const [city, setCity] = useState(() => savedDraft?.city ?? '');
   const [specifyCity, setSpecifyCity] = useState(() => savedDraft?.specifyCity ?? '');
   const [houseNo, setHouseNo] = useState(() => savedDraft?.houseNo ?? '');
   const [street, setStreet] = useState(() => savedDraft?.street ?? '');
   const [barangay, setBarangay] = useState(() => savedDraft?.barangay ?? '');
 
-  // Step 2 - Employment Details
   const [workingInQC, setWorkingInQC] = useState<'Yes' | 'No' | ''>(() => savedDraft?.workingInQC ?? '');
   const [occupation, setOccupation] = useState(() => savedDraft?.occupation ?? '');
   const [sex, setSex] = useState(() => savedDraft?.sex ?? '');
   const [bloodType, setBloodType] = useState(() => savedDraft?.bloodType ?? '');
   const [mobileNumber, setMobileNumber] = useState(() => savedDraft?.mobileNumber ?? '09');
 
-  // Step 2 - Login Credentials
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -174,7 +170,6 @@ export const Register = () => {
     }
   };
 
-  // Sync draft state to sessionStorage whenever form changes so reload preserves step 1
   useEffect(() => {
     if (step === 2) {
       try {
@@ -232,7 +227,6 @@ export const Register = () => {
     mobileNumber,
   ]);
 
-  // Warn user before accidental page reload / navigation when on Step 1
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (step === 1) {
@@ -245,14 +239,12 @@ export const Register = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [step]);
 
-  // Reset dependent specifyCity field when city changes.
   useEffect(() => {
     if (city !== 'Others') {
       setSpecifyCity('');
     }
   }, [city]);
 
-  // Clear occupation whenever the person says they don't work in QC.
   useEffect(() => {
     if (workingInQC !== 'Yes') {
       setOccupation('');
@@ -276,7 +268,6 @@ export const Register = () => {
       return;
     }
 
-    // Gmail specific rules
     if (trimmedEmail.toLowerCase().endsWith('@gmail.com')) {
       const username = trimmedEmail.toLowerCase().split('@')[0];
       if (username.length < 6 || username.length > 30) {
@@ -416,7 +407,6 @@ export const Register = () => {
     }
   };
 
-  // Password strength checks
   const hasLower = /[a-z]/.test(password);
   const hasUpper = /[A-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
@@ -530,7 +520,7 @@ export const Register = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        // Clear any old auth state and stale application caches
+
         sessionStorage.clear();
         localStorage.removeItem('isAuthenticated');
         localStorage.removeItem('userRole');
@@ -587,7 +577,7 @@ export const Register = () => {
     <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-[#070D1E] font-sans text-sm transition-colors duration-200" style={{ fontFamily: 'Inter, sans-serif' }}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
 
-        {/* Header */}
+        {}
         <div className="mb-10">
           <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4">
             <Link
@@ -624,7 +614,7 @@ export const Register = () => {
           </div>
         </div>
 
-        {/* Stepper */}
+        {}
         <div className="mb-6 px-1">
           <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-slate-400 dark:text-slate-500 mb-2">
             <span className={step >= 0 ? 'text-[#0F172A] dark:text-blue-400' : ''}>Email Verification</span>
@@ -653,7 +643,7 @@ export const Register = () => {
           </div>
         </div>
 
-        {/* Card */}
+        {}
         <div className="border border-slate-200 dark:border-slate-800/80 rounded-2xl bg-white dark:bg-[#111C44] p-6 sm:p-10 min-h-105 flex flex-col items-center justify-center relative shadow-xl shadow-slate-200/50 dark:shadow-black/50 transition-colors duration-200">
           {error && (
             <div className="w-full max-w-sm p-3 mb-5 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-xl border border-red-200 dark:border-red-900/60 text-center space-y-1">
@@ -671,7 +661,7 @@ export const Register = () => {
             </div>
           )}
 
-          {/* STEP 0: Email Verification */}
+          {}
           {step === 0 && (
             <div className="w-full max-w-sm flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-full border-2 border-[#0F172A] dark:border-blue-500 bg-transparent dark:bg-blue-950/40 flex items-center justify-center mb-4">
@@ -772,7 +762,7 @@ export const Register = () => {
             </div>
           )}
 
-          {/* STEP 1: Account Information */}
+          {}
           {step === 1 && (
             <div className="w-full max-w-2xl">
               <div className="flex flex-col items-center text-center mb-6">
@@ -786,7 +776,7 @@ export const Register = () => {
 
               <form onSubmit={handleAccountInfoSubmit} className="w-full space-y-6 text-left">
 
-                {/* Personal Details */}
+                {}
                 <div className="space-y-4">
                   <h3 className="text-sm font-bold text-[#0F172A] dark:text-white border-b border-slate-200 dark:border-slate-700/80 pb-2">
                     Personal Details
@@ -882,7 +872,7 @@ export const Register = () => {
                   </div>
                 </div>
 
-                {/* Address */}
+                {}
                 <div className="space-y-4">
                   <h3 className="text-sm font-bold text-[#0F172A] dark:text-white border-b border-slate-200 dark:border-slate-700/80 pb-2">
                     Address
@@ -973,7 +963,7 @@ export const Register = () => {
                   </div>
                 </div>
 
-                {/* Employment Details */}
+                {}
                 <div className="space-y-4">
                   <h3 className="text-sm font-bold text-[#0F172A] dark:text-white border-b border-slate-200 dark:border-slate-700/80 pb-2">
                     Employment Details
@@ -1066,7 +1056,7 @@ export const Register = () => {
                   </div>
                 </div>
 
-                {/* Login Credentials */}
+                {}
                 <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-700/80">
                   <h3 className="text-sm font-bold text-[#0F172A] dark:text-white pt-4">
                     Login Credentials
@@ -1165,7 +1155,7 @@ export const Register = () => {
             </div>
           )}
 
-          {/* STEP 2: Successful Registration */}
+          {}
           {step === 2 && (
             <div className="w-full max-w-sm flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border-2 border-emerald-500 flex items-center justify-center mb-4">

@@ -4,22 +4,15 @@ const { checkLoginLockout, recordFailedLogin, clearFailedLogins } = require('../
 const { generateToken, verifyToken } = require('../config/jwt');
 const bcrypt = require('bcryptjs');
 
-// In-memory fallback stores
-let memoryOtps = new Map(); // email -> { otpCode, expiresAt, isUsed }
+let memoryOtps = new Map();
 let memoryUsers = [];
 let memorySessions = [];
 
-/**
- * Hashes a plaintext password using bcrypt (salt rounds = 12)
- */
 async function hashPassword(password) {
   if (!password) return '';
   return await bcrypt.hash(password, 12);
 }
 
-/**
- * Validates a plaintext password against a hashed (or legacy plaintext) password.
- */
 async function verifyPassword(plainPassword, storedPassword) {
   if (!plainPassword || !storedPassword) return false;
   if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$')) {
@@ -28,25 +21,16 @@ async function verifyPassword(plainPassword, storedPassword) {
   return plainPassword === storedPassword;
 }
 
-/**
- * Generates a standard 15-digit Quezon City Resident ID (QCID)
- */
 function generateQcidNumber() {
   const prefix = '110000';
   const randomPart = Math.floor(100000000 + Math.random() * 900000000).toString();
   return `${prefix}${randomPart}`;
 }
 
-/**
- * Generates a unique active session token for single device login control
- */
 function generateSessionToken() {
   return 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 12);
 }
 
-/**
- * Parses User-Agent header to identify device type, OS, and Browser
- */
 function parseDeviceInfo(req) {
   const ua = req ? (req.headers['user-agent'] || '') : '';
   let deviceType = 'PC';
@@ -87,7 +71,6 @@ function parseDeviceInfo(req) {
     deviceType = 'PC';
   }
 
-  // Browser detection
   if (/edg/i.test(lowerUa)) {
     browser = 'Microsoft Edge';
   } else if (/opr|opera/i.test(lowerUa)) {
@@ -109,7 +92,6 @@ function parseDeviceInfo(req) {
     deviceName = `${os} PC • ${browser}`;
   }
 
-  // IP resolution
   const forwarded = req?.headers ? req.headers['x-forwarded-for'] : null;
   let ip = (forwarded ? forwarded.split(',')[0].trim() : req?.socket?.remoteAddress || '127.0.0.1');
   if (ip === '::1' || ip === '::ffff:127.0.0.1') ip = '127.0.0.1';
@@ -162,17 +144,16 @@ async function recordNewSession(userId, email, sessionToken, req) {
   };
   const cleanEmail = String(email).toLowerCase();
   try {
-    // 1. Mark previous active sessions for this user as terminated
+
     await db.query(
-      `UPDATE user_login_sessions 
-       SET is_active = false, logout_at = NOW(), logout_reason = $1 
+      `UPDATE user_login_sessions
+       SET is_active = false, logout_at = NOW(), logout_reason = $1
        WHERE LOWER(email) = $2 AND is_active = true`,
       [`Overtaken by new login from ${devInfo.deviceName}`, cleanEmail]
     );
 
-    // 2. Insert new session record
     await db.query(
-      `INSERT INTO user_login_sessions 
+      `INSERT INTO user_login_sessions
        (user_id, email, session_token, device_type, device_name, browser, os, ip_address, location, is_active, login_at, last_active_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW(), NOW())`,
       [userId || null, cleanEmail, sessionToken, devInfo.deviceType, devInfo.deviceName, devInfo.browser, devInfo.os, devInfo.ipAddress, devInfo.location]
@@ -181,7 +162,6 @@ async function recordNewSession(userId, email, sessionToken, req) {
     console.warn('[DB Error] Recording login session to DB failed, updating memorySessions fallback:', err.message);
   }
 
-  // Memory store fallback
   memorySessions.forEach((s) => {
     if (s.email.toLowerCase() === cleanEmail && s.isActive) {
       s.isActive = false;
@@ -209,10 +189,6 @@ async function recordNewSession(userId, email, sessionToken, req) {
   });
 }
 
-/**
- * POST /api/auth/send-otp
- * Generates and emails a 6-digit OTP code to the applicant's Gmail address
- */
 exports.sendOtp = async (req, res) => {
   try {
     const { email, recipientName } = req.body;
@@ -247,7 +223,6 @@ exports.sendOtp = async (req, res) => {
       }
     }
 
-    // Check if email is already registered in Database or memory store
     try {
       const existingUserRes = await db.query('SELECT id, email, status FROM users WHERE LOWER(email) = $1', [cleanEmail]);
       if (existingUserRes.rows.length > 0) {
@@ -270,11 +245,9 @@ exports.sendOtp = async (req, res) => {
       });
     }
 
-    // Generate random 6-digit numeric OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // Save to Database
     try {
       await db.query(
         `INSERT INTO email_otps (email, otp_code, expires_at, is_used, created_at)
@@ -285,7 +258,6 @@ exports.sendOtp = async (req, res) => {
       console.warn('[DB Error] Saving OTP to DB failed, using memory store:', dbErr.message);
     }
 
-    // Always keep in memory store as fallback
     memoryOtps.set(cleanEmail, {
       otpCode,
       expiresAt: expiresAt.getTime(),
@@ -294,7 +266,6 @@ exports.sendOtp = async (req, res) => {
 
     console.log(`[OTP] Generated OTP ${otpCode} for ${cleanEmail}. Dispatching email in background...`);
 
-    // Dispatch official email asynchronously in background so client response is instant
     sendOtpEmail({
       recipientEmail: cleanEmail,
       otpCode,
@@ -315,10 +286,6 @@ exports.sendOtp = async (req, res) => {
   }
 };
 
-/**
- * POST /api/auth/verify-otp
- * Verifies the 6-digit OTP code
- */
 exports.verifyOtp = async (req, res) => {
   try {
     const { email, otpCode } = req.body;
@@ -330,10 +297,9 @@ exports.verifyOtp = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanOtp = otpCode.trim();
 
-    // 1. Check in DB
     try {
       const dbRes = await db.query(
-        `SELECT * FROM email_otps 
+        `SELECT * FROM email_otps
          WHERE email = $1 AND otp_code = $2 AND is_used = false AND expires_at > NOW()
          ORDER BY id DESC LIMIT 1`,
         [cleanEmail, cleanOtp]
@@ -341,7 +307,7 @@ exports.verifyOtp = async (req, res) => {
 
       if (dbRes.rows.length > 0) {
         const otpRecord = dbRes.rows[0];
-        // Mark as used
+
         await db.query(`UPDATE email_otps SET is_used = true WHERE id = $1`, [otpRecord.id]);
         memoryOtps.delete(cleanEmail);
         return res.status(200).json({
@@ -353,7 +319,6 @@ exports.verifyOtp = async (req, res) => {
       console.warn('[DB Error] Verifying OTP in DB failed, checking memory store:', dbErr.message);
     }
 
-    // 2. Fallback check memory store
     const memRecord = memoryOtps.get(cleanEmail);
     if (memRecord) {
       const now = Date.now();
@@ -377,10 +342,6 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
-/**
- * POST /api/auth/register
- * Creates and registers a new resident user account in the database
- */
 exports.register = async (req, res) => {
   try {
     const {
@@ -457,7 +418,6 @@ exports.register = async (req, res) => {
         });
       }
 
-      // Insert new user
       const insertRes = await db.query(
         `INSERT INTO users (
           email, password, first_name, last_name, middle_name, suffix,
@@ -513,10 +473,6 @@ exports.register = async (req, res) => {
   }
 };
 
-/**
- * POST /api/auth/login
- * Handles user and staff login with strict registered user validation
- */
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -528,7 +484,6 @@ exports.login = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
 
-    // 0. Check Progressive Rate Limiting & Lockout
     const lockout = await checkLoginLockout(req, cleanEmail);
     if (lockout.isLocked) {
       return res.status(429).json({
@@ -539,7 +494,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Helper for login failure response with tiered attempt counter
     const handleLoginFailure = async (userEmail, customMsg) => {
       const record = await recordFailedLogin(req, userEmail);
       if (record.count >= 6) {
@@ -573,19 +527,16 @@ exports.login = async (req, res) => {
       });
     };
 
-    // 1. Query PostgreSQL Database for registered user (Strict 100% DB Verification)
     try {
       const userRes = await db.query('SELECT * FROM users WHERE LOWER(email) = $1', [cleanEmail]);
       if (userRes.rows.length > 0) {
         const dbUser = userRes.rows[0];
 
-        // Check password using bcrypt
         const isPasswordValid = await verifyPassword(cleanPassword, dbUser.password);
         if (!isPasswordValid) {
           return await handleLoginFailure(cleanEmail);
         }
 
-        // Check account active/inactive status
         const userStatus = String(dbUser.status || 'active').toLowerCase();
         if (userStatus === 'inactive' || userStatus === 'deactivated') {
           return res.status(403).json({
@@ -597,10 +548,8 @@ exports.login = async (req, res) => {
           });
         }
 
-        // Generate unique single active session token
         const sessionToken = generateSessionToken();
 
-        // 1. Persist active session token in DB synchronously before returning
         try {
           await db.query('UPDATE users SET last_login = NOW(), active_session_token = $1 WHERE id = $2', [sessionToken, dbUser.id]);
           await recordNewSession(dbUser.id, dbUser.email, sessionToken, req);
@@ -608,7 +557,6 @@ exports.login = async (req, res) => {
           console.warn('[Session Init Warning]:', sessErr.message);
         }
 
-        // 2. Background cleanup of failed logins & legacy password upgrade
         clearFailedLogins(req, cleanEmail).catch(() => {});
         if (dbUser.password && !dbUser.password.startsWith('$2')) {
           hashPassword(cleanPassword).then((upgradedHash) => {
@@ -643,7 +591,6 @@ exports.login = async (req, res) => {
           lastLogin: new Date().toISOString(),
         };
 
-        // Generate signed JSON Web Token (JWT) with 8-hour expiration
         const token = generateToken({
           id: userPayload.id,
           email: userPayload.email,
@@ -664,7 +611,6 @@ exports.login = async (req, res) => {
       console.warn('[DB Error] Login DB lookup failed, checking memory fallback:', dbErr.message);
     }
 
-    // 3. Check memory store fallback
     const memUser = memoryUsers.find(u => u.email.toLowerCase() === cleanEmail);
     if (memUser) {
       const isMemPasswordValid = await verifyPassword(cleanPassword, memUser.password);
@@ -698,7 +644,6 @@ exports.login = async (req, res) => {
       const safeMemUser = { ...memUser };
       delete safeMemUser.password;
 
-      // Generate signed JSON Web Token (JWT) for memory user
       const token = generateToken({
         id: safeMemUser.id || 1,
         email: safeMemUser.email,
@@ -716,7 +661,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 4. User is NOT found in database or memory store -> Record failed attempt for random names
     return await handleLoginFailure(cleanEmail, 'Account not found or invalid credentials.');
   } catch (err) {
     console.error('Error in login controller:', err);
@@ -724,10 +668,6 @@ exports.login = async (req, res) => {
   }
 };
 
-/**
- * GET /api/auth/lockout-status
- * Checks if client IP / email is currently in lockout state
- */
 exports.getLockoutStatus = async (req, res) => {
   try {
     const email = (req.query.email || '').trim().toLowerCase();
@@ -742,10 +682,6 @@ exports.getLockoutStatus = async (req, res) => {
   }
 };
 
-/**
- * POST /api/auth/reactivate
- * Self-service account reactivation by resident user
- */
 exports.reactivateAccount = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -755,7 +691,6 @@ exports.reactivateAccount = async (req, res) => {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Check in DB
     try {
       const userRes = await db.query('SELECT * FROM users WHERE LOWER(email) = $1', [cleanEmail]);
       if (userRes.rows.length > 0) {
@@ -811,7 +746,6 @@ exports.reactivateAccount = async (req, res) => {
       console.warn('[DB Error] Reactivate account failed:', dbErr.message);
     }
 
-    // 2. Memory store fallback
     const memUser = memoryUsers.find(u => u.email.toLowerCase() === cleanEmail);
     if (memUser) {
       if (password) {
@@ -842,10 +776,6 @@ exports.reactivateAccount = async (req, res) => {
   }
 };
 
-/**
- * GET /api/auth/verify-session
- * Validates if the client's current session token matches the single active session in DB
- */
 exports.verifySession = async (req, res) => {
   try {
     const email = (req.query.email || req.headers['x-user-email'] || '').trim().toLowerCase();
@@ -855,7 +785,6 @@ exports.verifySession = async (req, res) => {
       return res.status(200).json({ success: true, active: true });
     }
 
-    // Check account status and active session in DB
     try {
       const userRes = await db.query('SELECT id, status, active_session_token FROM users WHERE LOWER(email) = $1', [email]);
       if (userRes.rows.length > 0) {
@@ -869,23 +798,19 @@ exports.verifySession = async (req, res) => {
           });
         }
 
-        // If the token matches the active session token in DB, it is active and valid
         if (dbUser.active_session_token === sessionToken) {
           return res.status(200).json({ success: true, active: true });
         }
 
-        // If active_session_token is not set in DB, set it now
         if (!dbUser.active_session_token) {
           db.query('UPDATE users SET active_session_token = $1 WHERE id = $2', [sessionToken, dbUser.id]).catch(() => {});
           return res.status(200).json({ success: true, active: true });
         }
 
-        // If active_session_token in DB is DIFFERENT from this client's token,
-        // it means another device (e.g. CP / Cellphone or other PC) has logged into this account!
         const sessRes = await db.query(
-          `SELECT device_name, device_type, browser, os, ip_address, login_at 
-           FROM user_login_sessions 
-           WHERE LOWER(email) = $1 AND is_active = true 
+          `SELECT device_name, device_type, browser, os, ip_address, login_at
+           FROM user_login_sessions
+           WHERE LOWER(email) = $1 AND is_active = true
            ORDER BY id DESC LIMIT 1`,
           [email]
         );
@@ -911,10 +836,6 @@ exports.verifySession = async (req, res) => {
   }
 };
 
-/**
- * GET /api/auth/devices
- * Retrieves active device and login history for the user
- */
 exports.getUserDevices = async (req, res) => {
   try {
     const email = (req.query.email || req.headers['x-user-email'] || '').trim().toLowerCase();
@@ -964,7 +885,6 @@ exports.getUserDevices = async (req, res) => {
         }));
     }
 
-    // If still empty (e.g. legacy session without record), synthesize current device entry
     if (sessions.length === 0) {
       const devInfo = parseDeviceInfo(req);
       sessions = [{
@@ -986,7 +906,6 @@ exports.getUserDevices = async (req, res) => {
       }];
     }
 
-    // Real-time sync for current device based on incoming client User-Agent
     const incomingDev = parseDeviceInfo(req);
     sessions = sessions.map(s => {
       if (s.isCurrentDevice) {
@@ -1008,8 +927,8 @@ exports.getUserDevices = async (req, res) => {
         }
         try {
           db.query(
-            `UPDATE user_login_sessions 
-             SET os = $1, device_type = $2, device_name = $3, browser = $4 
+            `UPDATE user_login_sessions
+             SET os = $1, device_type = $2, device_name = $3, browser = $4
              WHERE session_token = $5`,
             [s.os, s.deviceType, s.deviceName, s.browser, s.sessionToken]
           ).catch(() => {});
@@ -1028,10 +947,6 @@ exports.getUserDevices = async (req, res) => {
   }
 };
 
-/**
- * POST /api/auth/devices/logout-others
- * Terminates all other active sessions except the requesting client
- */
 exports.terminateAllOtherDevices = async (req, res) => {
   try {
     const { email, currentToken } = req.body;
@@ -1042,17 +957,17 @@ exports.terminateAllOtherDevices = async (req, res) => {
 
     try {
       if (currentToken) {
-        // Automatically delete all other devices from database
+
         await db.query(
-          `DELETE FROM user_login_sessions 
+          `DELETE FROM user_login_sessions
            WHERE LOWER(email) = $1 AND session_token != $2`,
           [cleanEmail, currentToken]
         );
-        // Ensure user active_session_token is set to current token
+
         await db.query(`UPDATE users SET active_session_token = $1 WHERE LOWER(email) = $2`, [currentToken, cleanEmail]);
       } else {
         await db.query(
-          `DELETE FROM user_login_sessions 
+          `DELETE FROM user_login_sessions
            WHERE LOWER(email) = $1`,
           [cleanEmail]
         );
@@ -1073,10 +988,6 @@ exports.terminateAllOtherDevices = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/auth/devices/:id
- * Removes and deletes a specific device session record
- */
 exports.removeDeviceSession = async (req, res) => {
   try {
     const { id } = req.params;
@@ -1100,10 +1011,6 @@ exports.removeDeviceSession = async (req, res) => {
   }
 };
 
-/**
- * POST or DELETE /api/auth/devices/clear-history
- * Completely clears all previous device login sessions for this account
- */
 exports.clearAllDeviceHistory = async (req, res) => {
   try {
     const email = (req.body?.email || req.query?.email || '').trim().toLowerCase();
@@ -1143,11 +1050,6 @@ exports.clearAllDeviceHistory = async (req, res) => {
   }
 };
 
-
-/**
- * GET /api/users/profile or GET /api/auth/profile
- * Retrieves registered user profile by email
- */
 exports.getProfile = async (req, res) => {
   try {
     const email = (req.query.email || req.headers['x-user-email'] || '').trim().toLowerCase();
@@ -1204,10 +1106,6 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/users/profile or PUT /api/auth/profile
- * Updates editable profile fields for a registered user
- */
 exports.updateProfile = async (req, res) => {
   try {
     const {
@@ -1308,7 +1206,6 @@ exports.updateProfile = async (req, res) => {
       console.warn('[DB Error] updateProfile DB update failed, updating memory:', dbErr.message);
     }
 
-    // Fallback update memory
     const memUserIdx = memoryUsers.findIndex(u => u.email.toLowerCase() === cleanEmail);
     if (memUserIdx !== -1) {
       memoryUsers[memUserIdx] = {
@@ -1346,10 +1243,6 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-/**
- * POST /api/auth/forgot-password
- * Sends password reset instructions with a 6-digit OTP code and direct reset link to user's Gmail
- */
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -1360,7 +1253,6 @@ exports.forgotPassword = async (req, res) => {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check if user exists in DB or memory store
     let recipientName = 'Resident';
     try {
       const userRes = await db.query('SELECT first_name, last_name, email FROM users WHERE LOWER(email) = $1', [cleanEmail]);
@@ -1372,12 +1264,10 @@ exports.forgotPassword = async (req, res) => {
       console.warn('[DB Warning in forgotPassword]:', dbErr.message);
     }
 
-    // Generate random 6-digit numeric OTP and token
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    // Save to Database
     try {
       await db.query(
         `INSERT INTO email_otps (email, otp_code, expires_at, is_used, created_at)
@@ -1388,7 +1278,6 @@ exports.forgotPassword = async (req, res) => {
       console.warn('[DB Error] Saving Reset OTP to DB failed, using memory store:', dbErr.message);
     }
 
-    // Always keep in memory store as fallback
     memoryOtps.set(cleanEmail, {
       otpCode,
       resetToken,
@@ -1428,10 +1317,6 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-/**
- * POST /api/auth/reset-password
- * Verifies OTP code and sets the new password for the account
- */
 exports.resetPassword = async (req, res) => {
   try {
     const { email, otpCode, newPassword } = req.body;
@@ -1461,10 +1346,9 @@ exports.resetPassword = async (req, res) => {
 
     let isValid = false;
 
-    // 1. Verify in DB
     try {
       const dbRes = await db.query(
-        `SELECT * FROM email_otps 
+        `SELECT * FROM email_otps
          WHERE LOWER(email) = $1 AND otp_code = $2 AND is_used = false AND expires_at > NOW()
          ORDER BY id DESC LIMIT 1`,
         [cleanEmail, cleanOtp]
@@ -1478,7 +1362,6 @@ exports.resetPassword = async (req, res) => {
       console.warn('[DB Error] Verifying Reset OTP in DB failed, checking memory:', dbErr.message);
     }
 
-    // 2. Fallback verify in memory
     if (!isValid) {
       const memRecord = memoryOtps.get(cleanEmail);
       if (memRecord && !memRecord.isUsed && memRecord.otpCode === cleanOtp && memRecord.expiresAt > Date.now()) {
@@ -1494,7 +1377,6 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // Update user's password in Database with bcrypt hash
     const hashedNewPassword = await hashPassword(newPassword);
 
     try {
@@ -1503,7 +1385,6 @@ exports.resetPassword = async (req, res) => {
         [hashedNewPassword, cleanEmail]
       );
 
-      // If user wasn't found in DB, check memoryUsers or insert
       if (updateRes.rows.length === 0) {
         const memIdx = memoryUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
         if (memIdx !== -1) {
@@ -1537,10 +1418,6 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-/**
- * POST /api/auth/change-password
- * Changes the authenticated user's password directly
- */
 exports.changePassword = async (req, res) => {
   try {
     const { email, currentPassword, newPassword } = req.body;
@@ -1555,7 +1432,6 @@ exports.changePassword = async (req, res) => {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Check user in DB
     let userFound = false;
     let storedPassword = null;
 
@@ -1581,7 +1457,6 @@ exports.changePassword = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User account not found.' });
     }
 
-    // Verify current password if provided
     if (currentPassword && storedPassword) {
       const isCurrentValid = await verifyPassword(currentPassword, storedPassword);
       if (!isCurrentValid) {
@@ -1589,17 +1464,14 @@ exports.changePassword = async (req, res) => {
       }
     }
 
-    // Hash new password
     const hashedNewPassword = await hashPassword(newPassword);
 
-    // Update in DB
     try {
       await db.query('UPDATE users SET password = $1, updated_at = NOW() WHERE LOWER(email) = $2', [hashedNewPassword, cleanEmail]);
     } catch (dbErr) {
       console.warn('[DB Error] changePassword DB update failed:', dbErr.message);
     }
 
-    // Update in memory
     const memIdx = memoryUsers.findIndex(u => u.email.toLowerCase() === cleanEmail);
     if (memIdx !== -1) {
       memoryUsers[memIdx].password = hashedNewPassword;
@@ -1614,7 +1486,6 @@ exports.changePassword = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error during password change', error: err.message });
   }
 };
-
 
 let lastUserSyncTime = 0;
 let isUserSyncInProgress = false;
@@ -1692,15 +1563,10 @@ function triggerUserSyncIfStale() {
     });
 }
 
-/**
- * GET /api/users or GET /api/auth/users
- * Returns all real registered user records directly from the central database
- */
 exports.getAllUsers = async (req, res) => {
   try {
     triggerUserSyncIfStale();
 
-    // 1. Fetch all users and applications in parallel
     const [
       usersRes,
       aicsRes,
@@ -1724,7 +1590,6 @@ exports.getAllUsers = async (req, res) => {
     const liveApps = liveRes.rows || [];
     const appointments = aptRes.rows || [];
 
-    // Combine with memory users if any exist that are not in DB
     const seenEmails = new Set(dbUsers.map(u => (u.email || '').toLowerCase()));
     for (const memU of memoryUsers) {
       if (memU && memU.email && !seenEmails.has(memU.email.toLowerCase())) {
@@ -1752,37 +1617,36 @@ exports.getAllUsers = async (req, res) => {
       }
     }
 
-    // Build user representations with connected applications counts in-memory (0 DB queries per user)
     const users = dbUsers.map((u) => {
       const userQcid = String(u.qcid_number || u.qcid || `110000${String(u.id).padStart(9, '0')}`).trim().toLowerCase();
       const userEmail = (u.email || '').trim().toLowerCase();
       const userIdStr = String(u.id);
 
-      const aicsCount = aicsApps.filter(a => 
-        (a.email && a.email.toLowerCase() === userEmail) || 
+      const aicsCount = aicsApps.filter(a =>
+        (a.email && a.email.toLowerCase() === userEmail) ||
         (a.qc_id && String(a.qc_id).toLowerCase() === userQcid)
       ).length;
 
-      const pwdCount = pwdApps.filter(p => 
-        (p.email && p.email.toLowerCase() === userEmail) || 
+      const pwdCount = pwdApps.filter(p =>
+        (p.email && p.email.toLowerCase() === userEmail) ||
         (p.reference_number && String(p.reference_number).toLowerCase() === userQcid)
       ).length;
 
-      const soloCount = soloApps.filter(s => 
+      const soloCount = soloApps.filter(s =>
         (s.module_type === 'SOLO_PARENT' || !s.module_type) &&
         (String(s.user_id) === userIdStr || (s.email && s.email.toLowerCase() === userEmail) || (s.qcid_number && String(s.qcid_number).toLowerCase() === userQcid))
       ).length;
 
-      const childCount = soloApps.filter(s => 
+      const childCount = soloApps.filter(s =>
         s.module_type === 'CHILD_WELFARE' &&
         (String(s.user_id) === userIdStr || (s.guardian_email && s.guardian_email.toLowerCase() === userEmail) || (s.email && s.email.toLowerCase() === userEmail))
       ).length;
 
-      const liveCount = liveApps.filter(l => 
+      const liveCount = liveApps.filter(l =>
         String(l.user_id) === userIdStr || (l.email && l.email.toLowerCase() === userEmail) || (l.qcid_no && String(l.qcid_no).toLowerCase() === userQcid)
       ).length;
 
-      const appointmentCount = appointments.filter(apt => 
+      const appointmentCount = appointments.filter(apt =>
         (apt.email && apt.email.toLowerCase() === userEmail) || (apt.qcid_no && String(apt.qcid_no).toLowerCase() === userQcid)
       ).length;
 
@@ -1831,7 +1695,6 @@ exports.getAllUsers = async (req, res) => {
       };
     });
 
-    // Ensure all unique accounts are present
     const uniqueMap = new Map();
     for (const userItem of users) {
       const key = (userItem.email || '').toLowerCase();
@@ -1859,10 +1722,6 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-/**
- * GET /api/users/:id
- * Returns a user with all linked application records across modules
- */
 exports.getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -1907,7 +1766,6 @@ exports.getUserById = async (req, res) => {
     const userQcid = dbUser.qcid_number || '';
     const userIdStr = String(dbUser.id);
 
-    // Fetch related records
     const [aics, pwdSenior, soloParent, childWelfare, livelihood, appointments, cases] = await Promise.all([
       db.query(
         `SELECT reference_no as reference_number, category, assistance_title, status, created_at FROM aics_applications WHERE LOWER(email) = $1 OR qc_id = $2`,
@@ -1989,10 +1847,6 @@ exports.getUserById = async (req, res) => {
   }
 };
 
-/**
- * PATCH /api/users/:id/status or POST /api/users/:id/toggle-status
- * Updates user account status between ACTIVE and INACTIVE
- */
 exports.toggleUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -2001,7 +1855,6 @@ exports.toggleUserStatus = async (req, res) => {
 
     let newStatus = status;
 
-    // If no explicit status provided, toggle from current
     if (!newStatus) {
       const existing = await db.query('SELECT status FROM users WHERE id = $1', [cleanId]);
       if (existing.rows.length > 0) {
@@ -2019,7 +1872,6 @@ exports.toggleUserStatus = async (req, res) => {
       [normStatus, cleanId || '0', id, String(id).toLowerCase()]
     );
 
-    // Also update in memory store if present
     const memUser = memoryUsers.find(u => String(u.id) === String(id) || u.email.toLowerCase() === String(id).toLowerCase());
     if (memUser) {
       memUser.status = normStatus;
@@ -2036,10 +1888,6 @@ exports.toggleUserStatus = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/users/:id
- * Updates editable user account fields (Name, Contact No, Role, Status)
- */
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -2084,10 +1932,6 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/users/:id
- * Deletes user account
- */
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -2109,10 +1953,6 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-/**
- * GET /api/auth/migrate-passwords
- * Manually trigger password migration for all plaintext accounts in DB
- */
 exports.migrateAllPasswords = async (req, res) => {
   try {
     const plainUsers = await db.query("SELECT id, email, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%'");
@@ -2135,9 +1975,6 @@ exports.migrateAllPasswords = async (req, res) => {
   }
 };
 
-/**
- * Resets application history for test citizen account (renzoe09062@gmail.com / Kris 110000872276939)
- */
 exports.resetTestCitizenAccount = async (req, res) => {
   try {
     const targetEmail = req.query.email || req.body.email || 'renzoe09062@gmail.com';
@@ -2152,11 +1989,10 @@ exports.resetTestCitizenAccount = async (req, res) => {
     const userEmails = userRes.rows.map(r => r.email);
     const qcIds = [...new Set([...userRes.rows.map(r => r.qcid_number).filter(Boolean), '110000872276939', '110000572516915'])];
 
-    // 1. Appointments
     await db.query(
-      `DELETE FROM appointments 
-       WHERE user_id = ANY($1::int[]) 
-          OR email = ANY($2::text[]) 
+      `DELETE FROM appointments
+       WHERE user_id = ANY($1::int[])
+          OR email = ANY($2::text[])
           OR qcid = ANY($3::text[])
           OR reference_no = ANY($3::text[])
           OR applicant_name ILIKE '%kris%'
@@ -2167,10 +2003,9 @@ exports.resetTestCitizenAccount = async (req, res) => {
       [userIds.length ? userIds : [-1], userEmails.length ? userEmails : [''], qcIds]
     ).catch(() => {});
 
-    // 2. Disbursements
     await db.query(
-      `DELETE FROM financial_aid_disbursements 
-       WHERE application_ref = ANY($1::text[]) 
+      `DELETE FROM financial_aid_disbursements
+       WHERE application_ref = ANY($1::text[])
           OR application_ref ILIKE '%110000872276939%'
           OR application_ref ILIKE '%110000572516915%'
           OR disbursement_id = 'DISB-2026-4213'
@@ -2182,12 +2017,11 @@ exports.resetTestCitizenAccount = async (req, res) => {
       [qcIds]
     ).catch(() => {});
 
-    // 3. AICS
     const aicsApps = await db.query(
-      `SELECT id FROM aics_applications 
-       WHERE user_id = ANY($1::int[]) 
-          OR email = ANY($2::text[]) 
-          OR qcid_number = ANY($3::text[]) 
+      `SELECT id FROM aics_applications
+       WHERE user_id = ANY($1::int[])
+          OR email = ANY($2::text[])
+          OR qcid_number = ANY($3::text[])
           OR qc_id = ANY($3::text[])
           OR reference_no = ANY($3::text[])
           OR first_name ILIKE '%kris%'
@@ -2201,12 +2035,11 @@ exports.resetTestCitizenAccount = async (req, res) => {
       await db.query(`DELETE FROM aics_applications WHERE id = ANY($1::int[])`, [aicsIds]).catch(() => {});
     }
 
-    // 4. PWD / Senior
     await db.query(
-      `DELETE FROM pwd_senior_applications 
-       WHERE user_id = ANY($1::int[]) 
-          OR email = ANY($2::text[]) 
-          OR qcid = ANY($3::text[]) 
+      `DELETE FROM pwd_senior_applications
+       WHERE user_id = ANY($1::int[])
+          OR email = ANY($2::text[])
+          OR qcid = ANY($3::text[])
           OR reference_number = ANY($3::text[])
           OR first_name ILIKE '%kris%'
           OR first_name ILIKE '%renz%'
@@ -2214,12 +2047,11 @@ exports.resetTestCitizenAccount = async (req, res) => {
       [userIds.length ? userIds : [-1], userEmails.length ? userEmails : [''], qcIds]
     ).catch(() => {});
 
-    // 5. Solo Parent & Child Welfare
     await db.query(
-      `DELETE FROM solo_parent_child_welfare_applications 
-       WHERE user_id = ANY($1::int[]) 
-          OR email = ANY($2::text[]) 
-          OR qcid_number = ANY($3::text[]) 
+      `DELETE FROM solo_parent_child_welfare_applications
+       WHERE user_id = ANY($1::int[])
+          OR email = ANY($2::text[])
+          OR qcid_number = ANY($3::text[])
           OR reference_number = ANY($3::text[])
           OR first_name ILIKE '%kris%'
           OR first_name ILIKE '%renz%'
@@ -2227,12 +2059,11 @@ exports.resetTestCitizenAccount = async (req, res) => {
       [userIds.length ? userIds : [-1], userEmails.length ? userEmails : [''], qcIds]
     ).catch(() => {});
 
-    // 6. Livelihood
     const lhApps = await db.query(
-      `SELECT id FROM livelihood_applications 
-       WHERE user_id = ANY($1::int[]) 
-          OR email = ANY($2::text[]) 
-          OR qcid = ANY($3::text[]) 
+      `SELECT id FROM livelihood_applications
+       WHERE user_id = ANY($1::int[])
+          OR email = ANY($2::text[])
+          OR qcid = ANY($3::text[])
           OR reference_number = ANY($3::text[])
           OR first_name ILIKE '%kris%'
           OR first_name ILIKE '%renz%'
@@ -2246,22 +2077,20 @@ exports.resetTestCitizenAccount = async (req, res) => {
       await db.query(`DELETE FROM livelihood_applications WHERE id = ANY($1::int[])`, [lhIds]).catch(() => {});
     }
 
-    // 7. Training
     await db.query(
-      `DELETE FROM training_applications 
-       WHERE user_id = ANY($1::int[]) 
-          OR email = ANY($2::text[]) 
-          OR qcid = ANY($3::text[]) 
+      `DELETE FROM training_applications
+       WHERE user_id = ANY($1::int[])
+          OR email = ANY($2::text[])
+          OR qcid = ANY($3::text[])
           OR reference_number = ANY($3::text[])
           OR first_name ILIKE '%kris%'
           OR first_name ILIKE '%renz%'`,
       [userIds.length ? userIds : [-1], userEmails.length ? userEmails : [''], qcIds]
     ).catch(() => {});
 
-    // 8. Clean Beneficiaries & History
     const benRes = await db.query(
-      `SELECT id FROM beneficiaries 
-       WHERE qcid_number = ANY($1::text[]) 
+      `SELECT id FROM beneficiaries
+       WHERE qcid_number = ANY($1::text[])
           OR first_name ILIKE '%kris%'
           OR first_name ILIKE '%renz%'`,
       [qcIds]
@@ -2273,10 +2102,9 @@ exports.resetTestCitizenAccount = async (req, res) => {
       await db.query(`DELETE FROM beneficiaries WHERE id = ANY($1::int[])`, [benIds]).catch(() => {});
     }
 
-    // 9. Clean Case Records
     await db.query(
-      `DELETE FROM case_records 
-       WHERE qcid_number = ANY($1::text[]) 
+      `DELETE FROM case_records
+       WHERE qcid_number = ANY($1::text[])
           OR client_name ILIKE '%kris%'
           OR client_name ILIKE '%topher%'
           OR client_name ILIKE '%renz%'
@@ -2284,31 +2112,28 @@ exports.resetTestCitizenAccount = async (req, res) => {
       [qcIds]
     ).catch(() => {});
 
-    // 10. Clean Archived Applications
     await db.query(
-      `DELETE FROM archived_applications 
-       WHERE qcid = ANY($1::text[]) 
+      `DELETE FROM archived_applications
+       WHERE qcid = ANY($1::text[])
           OR reference_number = ANY($1::text[])
           OR applicant_name ILIKE '%kris%'
           OR applicant_name ILIKE '%renz%'`,
       [qcIds]
     ).catch(() => {});
 
-    // 11. Clean Notifications
     await db.query(
-      `DELETE FROM user_notifications 
-       WHERE user_id = ANY($1::text[]) 
+      `DELETE FROM user_notifications
+       WHERE user_id = ANY($1::text[])
           OR qcid_number = ANY($2::text[])`,
       [userIds.map(String).length ? userIds.map(String) : [''], qcIds]
     ).catch(() => {});
 
-    // 12. Clean Activity Log
     await db.query(
-      `DELETE FROM activity_log 
+      `DELETE FROM activity_log
        WHERE actor ILIKE '%kris%'
           OR actor ILIKE '%topher%'
-          OR actor ILIKE '%renzoe%' 
-          OR actor ILIKE '%renz%millares%' 
+          OR actor ILIKE '%renzoe%'
+          OR actor ILIKE '%renz%millares%'
           OR reference_no = ANY($1::text[])`,
       [qcIds]
     ).catch(() => {});

@@ -24,7 +24,6 @@ import {
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import MaskedText from "../ui/masked-text"
 
-// ---- Types for collected form data from user submissions ----
 interface ApplicationDocument {
   name: string
   filename?: string
@@ -41,7 +40,6 @@ interface PWDApplicationSubmission {
   category: "PWD"
   type: "new" | "renewal" | "loss" | "assistance"
 
-  // Personal Info
   firstName: string
   middleName?: string
   lastName: string
@@ -51,20 +49,17 @@ interface PWDApplicationSubmission {
   sex: string
   civilStatus: string
 
-  // Contact & Address
   contactNo: string
   cellphoneNo?: string
   email: string
   address: string
 
-  // Disability Info
   disabilityType: string
   disabilityClass: "apparent" | "non-apparent" | string
   causeOfDisability: string
   disabilityDescription?: string
   briefDescription?: string
 
-  // Socio-Economic / Assistance
   householdMembersCount?: string | number
   householdMembers?: string | number
   numberOfHouseholdMembers?: string | number
@@ -75,7 +70,6 @@ interface PWDApplicationSubmission {
   livingArrangement?: string
   pensionSource?: string
 
-  // Family / Emergency Info
   applyingFor?: "myself" | "family"
   familyMemberName?: string
   familyRelationship?: string
@@ -89,10 +83,8 @@ interface PWDApplicationSubmission {
   guardianContact?: string
   guardianAddress?: string
 
-  // Documents
   documents: ApplicationDocument[]
 
-  // Admin Review
   status: "pending" | "approved" | "rejected" | "needs_revision"
   assignedIdNumber?: string
   rejectionReason?: string
@@ -108,7 +100,6 @@ interface SeniorCitizenApplicationSubmission {
   category: "Senior Citizen"
   type: "new" | "renewal" | "loss" | "medicine-booklet" | "movie-booklet" | "social-assistance"
 
-  // Personal Info
   firstName: string
   middleName?: string
   lastName: string
@@ -118,21 +109,17 @@ interface SeniorCitizenApplicationSubmission {
   sex: string
   civilStatus: string
 
-  // Contact & Address
   cellphoneNo: string
   contactNo?: string
   email: string
   address: string
 
-  // Optional Disability Info (if dual or mapped from unified records)
   disabilityType?: string
   disabilityClass?: string
   causeOfDisability?: string
 
-  // Vaccination Info
   vaccinatedCovid: string
 
-  // Family / Emergency Info
   applyingFor?: "myself" | "family"
   familyMemberName?: string
   familyRelationship?: string
@@ -146,10 +133,8 @@ interface SeniorCitizenApplicationSubmission {
   guardianContact?: string
   guardianAddress?: string
 
-  // Documents
   documents: ApplicationDocument[]
 
-  // Admin Review
   status: "pending" | "approved" | "rejected" | "needs_revision"
   assignedIdNumber?: string
   rejectionReason?: string
@@ -168,7 +153,6 @@ function isPWD(app: ApplicationSubmission): app is PWDApplicationSubmission {
   const type = String(app.type || "").toLowerCase()
   const service = String((app as any).service || "").toLowerCase()
 
-  // 1. Explicit Senior Citizen or Booklet indicators mean NOT PWD
   if (
     cat.includes("senior") ||
     cat.includes("osca") ||
@@ -188,7 +172,6 @@ function isPWD(app: ApplicationSubmission): app is PWDApplicationSubmission {
     return false
   }
 
-  // 2. Otherwise check PWD markers
   if (
     cat.includes("pwd") ||
     cat.includes("disabilit") ||
@@ -332,7 +315,6 @@ function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: Applic
     }
   }
 
-  // Look up applicant in allApps or localStorage
   let pool: any[] = allApps || []
   if (!pool.length) {
     try {
@@ -346,7 +328,7 @@ function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: Applic
   const appName = `${app.firstName || ""} ${app.lastName || ""}`.trim().toLowerCase()
 
   if (Array.isArray(pool)) {
-    // 1. First look for prior approved application belonging to the same person with matching category
+
     const priorApproved = pool.find((a) => {
       if (!a || a.id === app.id) return false
       const aIsPwd = isPWD(a)
@@ -378,7 +360,6 @@ function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: Applic
       }
     }
 
-    // 2. Look for any prior application of same user that had an existingIdNumber with same category
     const priorWithId = pool.find((a) => {
       if (!a || a.id === app.id) return false
       const aIsPwd = isPWD(a)
@@ -409,7 +390,6 @@ function findExistingIdForApplicant(app: ApplicationSubmission, allApps?: Applic
     }
   }
 
-  // If user entered a reference number that starts with PWD- or SENIOR-
   if (isPwdApp && appRef.startsWith("pwd-")) {
     return appRef.toUpperCase()
   }
@@ -446,7 +426,6 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
     rawType === "loss" ||
     rawType === "replacement"
 
-  // 1. Movie Booklet
   if (
     rawType === "movie-booklet" ||
     rawType.includes("movie") ||
@@ -460,7 +439,6 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
     return `137404-${year}-${stableSeq}`
   }
 
-  // 2. Medicine Booklet
   if (
     rawType === "medicine-booklet" ||
     rawType.includes("medicine") ||
@@ -476,7 +454,6 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
     return `137404-${year}-${stableSeq}`
   }
 
-  // Retain fixed existing ID for Renewal or Loss
   if (isRenewalOrLoss) {
     const existingId = findExistingIdForApplicant(app, allApps)
     if (existingId) {
@@ -488,7 +465,6 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
     }
   }
 
-  // 3. PWD ID
   if (isPwdApp) {
     if (app.assignedIdNumber) {
       const sanitized = app.assignedIdNumber.toUpperCase().replace(/^(SENIOR|OSCA)-/i, "PWD-")
@@ -498,7 +474,6 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
     return `PWD-137404-${year}-${stableSeq}`
   }
 
-  // 4. Senior Citizen ID
   if (app.assignedIdNumber) {
     const sanitized = app.assignedIdNumber.toUpperCase().replace(/^(PWD|OSCA)-/i, "SENIOR-")
     if (sanitized.startsWith("SENIOR-")) return sanitized
@@ -507,12 +482,6 @@ function generateOfficialIdNumber(app: ApplicationSubmission, allApps?: Applicat
   return `SENIOR-137404-${year}-${stableSeq}`
 }
 
-
-
-
-// =====================================================================================
-// Design Tokens & GovServe Styles (Identical to Solo Parent & Child Welfare)
-// =====================================================================================
 const Tokens = React.memo(function Tokens() {
   return (
     <style>{`
@@ -616,7 +585,6 @@ function initials(app: ApplicationSubmission) {
   return `${f}${l}`.toUpperCase()
 }
 
-
 function AvatarCircle({
   app,
   sizeClass = "h-11 w-11",
@@ -704,13 +672,11 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 function getDocImageUrl(doc: ApplicationDocument | null, app?: ApplicationSubmission | null): string {
   if (!doc) return ""
 
-  // 0. Prefer direct base64 in doc
   const docBase64 = (doc as any).dataUrl || (doc as any).base64 || (doc as any).data
   if (docBase64 && typeof docBase64 === "string" && docBase64.startsWith("data:")) {
     return docBase64
   }
 
-  // 1. Direct match from app.documents if provided
   if (app && Array.isArray(app.documents)) {
     const matched = app.documents.find((d: any) =>
       (d?.name && doc.name && d.name.toLowerCase() === doc.name.toLowerCase()) ||
@@ -727,8 +693,7 @@ function getDocImageUrl(doc: ApplicationDocument | null, app?: ApplicationSubmis
       }
     }
   }
-  
-  // 2. Direct candidate
+
   const candidate =
     (doc as any).dataUrl ||
     (doc as any).base64 ||
@@ -759,7 +724,6 @@ function getDocImageUrl(doc: ApplicationDocument | null, app?: ApplicationSubmis
     return `${API_BASE}/uploads/${candidate}`
   }
 
-  // 2. Check filename if available
   const fn = doc.filename || doc.name
   if (fn && typeof fn === "string" && !fn.toLowerCase().includes("sample")) {
     if (fn.startsWith("data:") || fn.startsWith("http://") || fn.startsWith("https://")) return fn
@@ -768,7 +732,6 @@ function getDocImageUrl(doc: ApplicationDocument | null, app?: ApplicationSubmis
     return `${API_BASE}/uploads/pwd-senior/${fn}`
   }
 
-  // 3. Fallback to localStorage check
   try {
     const localKeys = ["pwd_senior_applications", "all_user_applications", "applications", "userProfile", "currentUser"]
     for (const k of localKeys) {
@@ -823,7 +786,6 @@ export function getApplicantPhotoUrl(app: ApplicationSubmission | null | any): s
 
   let fallbackBlob = ""
 
-  // 1. Direct properties on the application (check all possible variants)
   const direct =
     app.applicantPhoto ||
     app.applicant_photo ||
@@ -898,7 +860,6 @@ export function getApplicantPhotoUrl(app: ApplicationSubmission | null | any): s
     return ""
   }
 
-  // 2. Parse documents list
   let docsList: any[] = []
   if (Array.isArray(app.documents)) {
     docsList = app.documents
@@ -914,7 +875,6 @@ export function getApplicantPhotoUrl(app: ApplicationSubmission | null | any): s
     docsList = (app as any).formData.uploaded_documents
   }
 
-  // Flatten nested structures (e.g. { files: [...] })
   const flatDocs: any[] = []
   for (const item of docsList) {
     if (!item) continue
@@ -931,7 +891,6 @@ export function getApplicantPhotoUrl(app: ApplicationSubmission | null | any): s
     }
   }
 
-  // 3. Find explicit photo/picture doc
   const photoDoc = flatDocs.find((d) => {
     const n = String(d.name || d.documentId || d.label || d.id || d.documentType || d.type || "").toLowerCase()
     const fn = String(d.filename || "").toLowerCase()
@@ -956,7 +915,6 @@ export function getApplicantPhotoUrl(app: ApplicationSubmission | null | any): s
     if (src.startsWith("blob:")) fallbackBlob = fallbackBlob || src
   }
 
-  // 4. Any image document from flatDocs
   const anyImageDoc = flatDocs.find((d) => {
     const src = resolveDocSrc(d)
     const fn = String(d.filename || d.name || "").toLowerCase()
@@ -972,7 +930,6 @@ export function getApplicantPhotoUrl(app: ApplicationSubmission | null | any): s
     if (src.startsWith("blob:")) fallbackBlob = fallbackBlob || src
   }
 
-  // 5. Look across localStorage
   try {
     const localKeys = [
       "solo_parent_applications",
@@ -1143,14 +1100,13 @@ function DocumentViewerModal({
   const isImage = /\.(jpe?g|png|webp|avif|gif)$/i.test(doc.filename || doc.name || src) || (src && src.startsWith("data:image"))
 
   const handleImageError = () => {
-    // 1. Direct base64 fallback from doc object
+
     const directData = (doc as any).dataUrl || (doc as any).base64 || (doc as any).data
     if (directData && typeof directData === "string" && directData.startsWith("data:") && src !== directData) {
       setSrc(directData)
       return
     }
 
-    // 2. Direct base64 fallback from app.documents or extra_data
     if (app && Array.isArray(app.documents)) {
       const match = app.documents.find((d: any) =>
         (d?.name && doc.name && d.name.toLowerCase() === doc.name.toLowerCase()) ||
@@ -1174,7 +1130,7 @@ function DocumentViewerModal({
       setRetryStep(3)
       setSrc(`${API_BASE}/uploads/${rawFilename}`)
     } else {
-      // 3. Fallback across all local storage collections
+
       try {
         const localKeys = ["pwd_senior_applications", "all_user_applications", "user_applications", "applications", "userProfile"]
         for (const k of localKeys) {
@@ -1299,7 +1255,7 @@ function OfficialIdCardFront({
         printColorAdjust: "exact",
       }}
     >
-      {/* Header */}
+      {}
       <div
         className={`px-3.5 py-2.5 flex items-center justify-between shadow-xs ${isPwdApp
             ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950"
@@ -1329,7 +1285,7 @@ function OfficialIdCardFront({
         </span>
       </div>
 
-      {/* Sub-header */}
+      {}
       <div
         className={`py-1 text-center text-[9.5px] font-black uppercase tracking-widest ${isPwdApp
             ? "bg-slate-950 text-amber-300 border-b border-amber-500/40"
@@ -1340,16 +1296,16 @@ function OfficialIdCardFront({
         {isPwdApp ? "Persons with Disability Affairs Office" : "Office for Senior Citizens Affairs"}
       </div>
 
-      {/* Details with QC Logo on right side */}
+      {}
       <div className="p-3 flex gap-2.5 items-start relative">
-        {/* 2x2 Photo with error fallback */}
+        {}
         <ApplicantPhotoDisplay
           photoUrl={photoUrl}
           tag={`QC ${isPwdApp ? "PDAO" : "OSCA"}`}
           isPwd={isPwdApp}
         />
 
-        {/* Details text */}
+        {}
         <div className="flex-1 min-w-0 space-y-1 relative z-10">
           <div>
             <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC ID Number</span>
@@ -1389,7 +1345,7 @@ function OfficialIdCardFront({
           </div>
         </div>
 
-        {/* QC Official Logo on the right side */}
+        {}
         <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
           <img
             src="/gov-serves-seal.png"
@@ -1401,7 +1357,7 @@ function OfficialIdCardFront({
         </div>
       </div>
 
-      {/* Bottom Signatures & Barcode */}
+      {}
       <div
         className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]"
         style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
@@ -1455,12 +1411,12 @@ function OfficialIdCardBack({
         printColorAdjust: "exact",
       }}
     >
-      {/* Background Watermark Seal */}
+      {}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
         <img src="/gov-serves-seal.png" alt="" crossOrigin="anonymous" className="w-48 h-48 object-contain" />
       </div>
 
-      {/* Back Header Strip */}
+      {}
       <div
         className={`px-3.5 py-1.5 flex items-center justify-between shadow-xs relative z-10 ${isPwdApp
             ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950"
@@ -1488,7 +1444,7 @@ function OfficialIdCardBack({
       </div>
 
       <div className="p-3 pt-2 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
-        {/* Benefits / Rights List */}
+        {}
         <div
           className={`rounded-lg p-2 space-y-1 text-[7.5px] text-slate-800 leading-tight border ${isPwdApp ? "bg-amber-50/80 border-amber-200/80" : "bg-blue-50/80 border-blue-200/80"
             }`}
@@ -1508,7 +1464,7 @@ function OfficialIdCardBack({
           </p>
         </div>
 
-        {/* Emergency Contact */}
+        {}
         <div
           className={`border-t pt-1.5 ${isPwdApp ? "border-amber-200/70" : "border-blue-200/70"}`}
           style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
@@ -1660,7 +1616,7 @@ function OfficialIdCardModal({
         className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
+        {}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-2">
             <IdCard className="w-5 h-5 text-blue-600" />
@@ -1676,7 +1632,7 @@ function OfficialIdCardModal({
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl font-light leading-none p-1 cursor-pointer">×</button>
         </div>
 
-        {/* Side Selector */}
+        {}
         <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-3">
           <button
             onClick={() => setActiveSide("front")}
@@ -1694,7 +1650,7 @@ function OfficialIdCardModal({
           </button>
         </div>
 
-        {/* Card Body Live View */}
+        {}
         <div className="p-6 bg-slate-100/80 flex flex-col items-center justify-center overflow-x-auto min-h-[380px]">
           {activeSide === "front" ? (
             <OfficialIdCardFront
@@ -1718,9 +1674,7 @@ function OfficialIdCardModal({
           )}
         </div>
 
-
-
-        {/* Modal Footer */}
+        {}
         <div className="p-4 border-t border-gray-200 bg-slate-50 flex items-center justify-end gap-3">
           <button
             type="button"
@@ -1735,9 +1689,6 @@ function OfficialIdCardModal({
   )
 }
 
-// =====================================================================================
-// Application Card (List Row)
-// =====================================================================================
 interface ApplicationCardProps {
   app: ApplicationSubmission
   onView: (app: ApplicationSubmission) => void
@@ -1827,9 +1778,6 @@ function ApplicationCard({ app, onView, onShowCard }: ApplicationCardProps) {
   )
 }
 
-// =====================================================================================
-// Detailed View Modal
-// =====================================================================================
 interface DetailedViewProps {
   app: ApplicationSubmission
   onClose: () => void
@@ -1955,7 +1903,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
           boxShadow: "var(--shadow-medium)",
         }}
       >
-        {/* Header */}
+        {}
         <div className="px-6 pt-5 pb-4" style={{ background: "var(--surface-sunk)", borderBottom: "1px solid var(--line)" }}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3.5 min-w-0">
@@ -1995,9 +1943,9 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
           </div>
         </div>
 
-        {/* Content */}
+        {}
         <div className="px-6 py-6 overflow-y-auto space-y-7">
-          {/* Section 01: Personal Information */}
+          {}
           <div>
             <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>Personal Information</SectionHeading>
             <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
@@ -2092,7 +2040,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
             </div>
           </div>
 
-          {/* Section 02: Disability Information (for PWD) or Program Details */}
+          {}
           {isPWD(app) && (
             <div>
               <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>
@@ -2186,7 +2134,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
             </div>
           )}
 
-          {/* Section: Household & Socio-Economic Information (for Social Assistance) */}
+          {}
           {isAssistance && (
             <div>
               <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>
@@ -2291,7 +2239,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
             </div>
           )}
 
-          {/* Section: Assistance Details (for Social Assistance) */}
+          {}
           {isAssistance && (
             <div>
               <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>
@@ -2324,7 +2272,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
             </div>
           )}
 
-          {/* Section: Emergency Contact Information (for ID Applications only, not for Booklets or Assistance) */}
+          {}
           {!isAssistance && !isSeniorBooklet && (
             <div>
               <SectionHeading number={nextNum()} icon={<Phone className="h-4 w-4" />}>
@@ -2365,7 +2313,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
             </div>
           )}
 
-          {/* Documents */}
+          {}
           <div>
             <SectionHeading number={nextNum()} icon={<Paperclip className="h-4 w-4" />}>
               Supporting Documents ({(app.documents || []).length})
@@ -2406,7 +2354,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
             </div>
           </div>
 
-          {/* Action Decision Section inside body if active */}
+          {}
           {app.status === "pending" && actionMode !== "view" && (
             <div className="border-t border-border pt-5">
               {actionMode === "approve" && (
@@ -2588,7 +2536,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
           )}
         </div>
 
-        {/* Sticky Footer */}
+        {}
         <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-3" style={{ background: "var(--surface-sunk)" }}>
           <div className="flex items-center gap-2">
             <button
@@ -2653,7 +2601,6 @@ export default function PWDSeniorCitizen() {
   const [cardApp, setCardApp] = useState<ApplicationSubmission | null>(null)
   const isFetchingRef = useRef(false)
 
-  // Fetch applications from backend and localStorage in real-time
   useEffect(() => {
     let isMounted = true
 
@@ -2682,7 +2629,6 @@ export default function PWDSeniorCitizen() {
           }
         }
 
-        // Only check localStorage if backend was offline / unreachable
         if (!backendFetched) {
           try {
             const raw = localStorage.getItem("pwd_senior_applications")
@@ -2748,7 +2694,6 @@ export default function PWDSeniorCitizen() {
     }
   }, [])
 
-  // Persist applications to state & localStorage
   const updateApplications = (updater: (prev: ApplicationSubmission[]) => ApplicationSubmission[]) => {
     setApplications((prev) => {
       const next = updater(prev)
@@ -2767,7 +2712,7 @@ export default function PWDSeniorCitizen() {
     const approvedDate = new Date().toISOString()
 
     clearApiCache("/api/pwd-senior/applications")
-    // Strict 1-application update only: match by exact unique application id or referenceNumber + type
+
     updateApplications((prev) =>
       prev.map((app) =>
         app.id === id || (id && app.id === id) || (refNo && app.referenceNumber === refNo && String(app.type || "").toLowerCase() === String(targetApp.type || "").toLowerCase())
@@ -2782,7 +2727,6 @@ export default function PWDSeniorCitizen() {
       )
     )
 
-    // Sync status to backend database strictly by unique application id
     try {
       await fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(targetIdentifier)}/status`, {
         method: "PATCH",
@@ -2803,7 +2747,6 @@ export default function PWDSeniorCitizen() {
       console.warn("Failed updating backend status:", err)
     }
 
-    // Handle Assistance Applications vs ID Applications
     const isAssistanceApp =
       targetApp.type === "assistance" ||
       (targetApp as any).type === "social-assistance" ||
@@ -2815,7 +2758,6 @@ export default function PWDSeniorCitizen() {
     if (isAssistanceApp) {
       const assistanceName = isPWD(targetApp) ? "PWD Social Assistance" : "Senior Social Assistance"
 
-      // 1. Sync to Financial Aid Disbursements
       try {
         const currentDisbursements = getSavedDisbursements()
         if (!currentDisbursements.some((d) => d.applicationRef === targetApp.referenceNumber)) {
@@ -2837,7 +2779,6 @@ export default function PWDSeniorCitizen() {
         console.warn("Failed saving disbursement record:", err)
       }
 
-      // 2. Sync to Appointments
       try {
         fetch(`${API_BASE}/api/appointments`, {
           method: "POST",
@@ -2858,7 +2799,6 @@ export default function PWDSeniorCitizen() {
       window.dispatchEvent(new Event("financial_disbursements_updated"))
       window.dispatchEvent(new Event("storage"))
 
-      // 3. In-portal Bell Notification
       pushUserNotification({
         title: `${assistanceName}: Approved`,
         desc: `Congratulations! Your application for ${assistanceName} has been approved and forwarded to Appointments for payout scheduling and Financial Aid Disbursement (₱2,000).`,
@@ -2867,7 +2807,7 @@ export default function PWDSeniorCitizen() {
         amount: 2000,
       })
     } else {
-      // 1. Dispatch in-portal bell notification to applicant for ID cards / Booklets
+
       if (targetApp) {
         const rawType = String(targetApp.type || "").toLowerCase()
         const isSeniorBooklet = !isPWD(targetApp) && (
@@ -2905,7 +2845,6 @@ export default function PWDSeniorCitizen() {
           assistanceType: isPWD(targetApp) ? "PWD Services" : "Senior Citizen Services",
         })
 
-        // 2. Dispatch official ID / Booklet approval email directly to applicant's Gmail
         if (targetEmail && targetEmail.includes("@")) {
           if (isSeniorBooklet) {
             fetch(`${API_BASE}/api/email/send-senior-booklet`, {
@@ -2986,7 +2925,7 @@ export default function PWDSeniorCitizen() {
     }
 
     clearApiCache("/api/pwd-senior/applications")
-    // Sync rejection to backend database
+
     try {
       await fetch(`${API_BASE}/api/pwd-senior/applications/${id}/status`, {
         method: "PATCH",
@@ -3003,10 +2942,6 @@ export default function PWDSeniorCitizen() {
     }
   }
 
-
-
-
-  // Filter applications
   const filteredApps = applications.filter((app) => {
     const appCat = String(app.category || "").toUpperCase()
     const matchCategory =
@@ -3041,7 +2976,6 @@ export default function PWDSeniorCitizen() {
     return matchCategory && matchType && matchStatus && matchSearch
   })
 
-  // Stats
   const stats = {
     total: applications.length,
     pending: applications.filter((a) => a.status === "pending").length,
@@ -3074,14 +3008,14 @@ export default function PWDSeniorCitizen() {
     <div className="gw-root">
       <Tokens />
       <div className="p-4 md:p-8 space-y-7 max-w-6xl mx-auto">
-        {/* Header */}
+        {}
         <div>
           <h1 className="gw-serif text-[2.1rem] font-semibold leading-tight" style={{ color: "var(--ink)" }}>
             PWD &amp; Senior Citizen Services
           </h1>
         </div>
 
-        {/* Stats */}
+        {}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Total applications", value: isLoading ? "—" : stats.total, color: "var(--ink)" },
@@ -3096,7 +3030,7 @@ export default function PWDSeniorCitizen() {
           ))}
         </div>
 
-        {/* Filters */}
+        {}
         <div className="gw-card p-4 space-y-4">
           <div className="flex items-center gap-2 rounded-lg px-3" style={{ border: "1px solid var(--line)", background: "var(--surface-sunk)" }}>
             <Search className="h-4 w-4 shrink-0" style={{ color: "var(--ink-faint)" }} />
@@ -3161,7 +3095,7 @@ export default function PWDSeniorCitizen() {
           </div>
         </div>
 
-        {/* Applications List */}
+        {}
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -3204,7 +3138,7 @@ export default function PWDSeniorCitizen() {
           )}
         </div>
 
-        {/* Detailed View Modal */}
+        {}
         {selectedApp && (
           <DetailedView
             app={selectedApp}
@@ -3216,8 +3150,7 @@ export default function PWDSeniorCitizen() {
           />
         )}
 
-
-        {/* Official QC ID Card Modal */}
+        {}
         {cardApp && (
           <OfficialIdCardModal
             app={cardApp}

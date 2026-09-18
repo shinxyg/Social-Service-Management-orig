@@ -9,8 +9,6 @@ export function StatCard({ label, value }: { label: string; value: string }) {
   )
 }
 
-/* Semantic status colors — mapped to the docx §5 token set:
-   success / warning / info / destructive / muted */
 const statusColors: Record<string, string> = {
   Pending: "bg-warning/10 text-warning",
   Approved: "bg-info/10 text-info",
@@ -40,7 +38,6 @@ export function StatusBadge({ status }: { status: string }) {
   )
 }
 
-// Accepts either { label, desc } (older callers) or { title, description, icon } (newer callers).
 type ServiceCardProps = {
   label?: string
   desc?: string
@@ -66,7 +63,6 @@ export function ServiceCard({ label, desc, title, description, icon: Icon }: Ser
   )
 }
 
-// Accepts either "desc" or "subtitle" — different modules use different naming.
 type PageHeaderProps = {
   title: string
   desc?: string

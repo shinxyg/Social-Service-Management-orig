@@ -92,7 +92,6 @@ export default function LivelihoodMonitoringView({
         },
       ]
 
-  // The latest monitoring update determines the current monitoring status
   const latestLog = monitoringList[0]
   const currentStatusRaw = latestLog?.monitoring_status || latestLog?.status || "ACTIVE"
   const currentStatus = currentStatusRaw.toUpperCase().replace(/_/g, " ")
@@ -100,7 +99,6 @@ export default function LivelihoodMonitoringView({
   const fullName = `${application.first_name || ""} ${application.middle_name ? application.middle_name + " " : ""}${application.last_name || ""}${application.suffix ? " " + application.suffix : ""}`.trim() || "Beneficiary Name"
   const finAmount = Number(assistance.approved_financial_amount) > 0 ? Number(assistance.approved_financial_amount) : 15000
 
-  // Safe parsing for materials & equipment
   const matCount = Array.isArray(assistance.approved_materials)
     ? assistance.approved_materials.length
     : typeof assistance.approved_materials === "string"
@@ -125,7 +123,7 @@ export default function LivelihoodMonitoringView({
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
+      {}
       <div className="bg-gradient-to-r from-emerald-700 via-teal-700 to-green-800 rounded-2xl p-6 text-white shadow-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -179,9 +177,9 @@ export default function LivelihoodMonitoringView({
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 1. LIVELIHOOD INFORMATION                                     */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center gap-2 border-b border-border pb-3">
           <Building2 className="h-5 w-5 text-emerald-600" />
@@ -263,9 +261,9 @@ export default function LivelihoodMonitoringView({
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 2. CURRENT MONITORING STATUS                                 */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div>
@@ -351,9 +349,9 @@ export default function LivelihoodMonitoringView({
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 3. PROGRESS UPDATES                                          */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div>
@@ -433,9 +431,9 @@ export default function LivelihoodMonitoringView({
         )}
       </div>
 
-      {/* ============================================================ */}
-      {/* 4. MONITORING HISTORY                                        */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
         <div className="border-b border-border pb-3">
           <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">

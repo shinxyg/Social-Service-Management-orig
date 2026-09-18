@@ -31,17 +31,17 @@ export function SubmitPrivacyOverlayModal({
   }
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isSubmitting) onClose()
       }}
     >
-      <div 
+      <div
         className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-xl my-6 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
+        {}
         <div className="px-6 py-4 border-b border-border bg-muted/30 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
@@ -62,9 +62,9 @@ export function SubmitPrivacyOverlayModal({
           </button>
         </div>
 
-        {/* Modal Body */}
+        {}
         <div className="p-6 overflow-y-auto space-y-4 text-xs sm:text-sm text-foreground/90 leading-relaxed">
-          {/* Main Collection Notice */}
+          {}
           <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 space-y-2">
             <div className="flex items-center gap-2 font-bold text-blue-900 dark:text-blue-200 text-sm">
               <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -75,7 +75,7 @@ export function SubmitPrivacyOverlayModal({
             </p>
           </div>
 
-          {/* Policy Summary */}
+          {}
           <div className="space-y-2 text-xs text-muted-foreground bg-muted/20 p-3.5 rounded-xl border border-border/60">
             <p className="font-semibold text-foreground">Summary of Privacy Principles (RA 10173):</p>
             <ul className="list-disc pl-4 space-y-1">
@@ -85,7 +85,7 @@ export function SubmitPrivacyOverlayModal({
             </ul>
           </div>
 
-          {/* Toggle Full Policy View */}
+          {}
           <button
             type="button"
             onClick={() => setShowFullPolicy((prev) => !prev)}
@@ -96,7 +96,7 @@ export function SubmitPrivacyOverlayModal({
             {showFullPolicy ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
 
-          {/* Expanded Full Policy Text */}
+          {}
           {showFullPolicy && (
             <div className="p-3.5 rounded-xl bg-muted/40 border border-border text-xs space-y-2 text-muted-foreground animate-fade-in max-h-48 overflow-y-auto">
               <p className="font-bold text-foreground">Republic Act No. 10173 - Rights of Data Subjects:</p>
@@ -106,7 +106,7 @@ export function SubmitPrivacyOverlayModal({
             </div>
           )}
 
-          {/* Mandatory Checkbox Agreement Overlay */}
+          {}
           <div className={`mt-2 p-4 rounded-xl border transition-all ${
             attemptedSubmit && !agreed
               ? "border-red-500/80 bg-red-50/60 dark:bg-red-950/30"
@@ -138,7 +138,7 @@ export function SubmitPrivacyOverlayModal({
           </div>
         </div>
 
-        {/* Modal Footer Actions */}
+        {}
         <div className="px-6 py-4 border-t border-border bg-muted/20 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 shrink-0">
           <button
             type="button"

@@ -1,4 +1,3 @@
-// Centralized Dynamic User Profile & Unique QCID Manager
 
 export interface LoggedInUserProfile {
   id?: string | number
@@ -58,9 +57,6 @@ export function getCurrentUser(): any {
   }
 }
 
-/**
- * Clamps year, month, and day to a real, valid date in the Gregorian calendar.
- */
 export function clampValidDate(year: number, month: number, day: number): string {
   const currYear = new Date().getFullYear()
   let y = Math.floor(year)
@@ -75,7 +71,6 @@ export function clampValidDate(year: number, month: number, day: number): string
   if (isNaN(m) || m < 1) m = 1
   if (m > 12) m = 12
 
-  // Exact maximum days in this month of this year
   const maxDays = new Date(y, m, 0).getDate()
   let d = Math.floor(day)
   if (isNaN(d) || d < 1) d = 1
@@ -84,15 +79,11 @@ export function clampValidDate(year: number, month: number, day: number): string
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`
 }
 
-/**
- * Normalizes any date string into YYYY-MM-DD.
- */
 export function toISODateString(val?: string | null): string {
   if (!val) return ""
   const str = String(val).trim()
   if (!str) return ""
 
-  // 1. Matches YYYY-MM-DD or YYYY-M-D
   const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)
   if (isoMatch) {
     return clampValidDate(
@@ -117,7 +108,6 @@ export function toISODateString(val?: string | null): string {
     DECEMBER: 12, DEC: 12, DISYEMBRE: 12,
   }
 
-  // 2. Match "Month DD, YYYY" or "Month DD YY" or "Month DD, 12"
   const m1 = str.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{1,4})$/)
   if (m1) {
     const monthNum = MONTHS[m1[1].toUpperCase()] || 1
@@ -126,7 +116,6 @@ export function toISODateString(val?: string | null): string {
     return clampValidDate(year, monthNum, day)
   }
 
-  // 3. Match "MM/DD/YYYY" or "M/D/YY"
   const m2 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{1,4})$/)
   if (m2) {
     const monthNum = parseInt(m2[1], 10)
@@ -135,7 +124,6 @@ export function toISODateString(val?: string | null): string {
     return clampValidDate(year, monthNum, day)
   }
 
-  // 4. Try JS Date parser
   const parsed = new Date(str)
   if (!isNaN(parsed.getTime())) {
     return clampValidDate(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate())
@@ -144,17 +132,11 @@ export function toISODateString(val?: string | null): string {
   return ""
 }
 
-/**
- * Generates a random unique 15-digit QCID starting with 110000
- */
 export function generateUniqueQcid(): string {
   const random9 = Math.floor(100000000 + Math.random() * 900000000).toString()
   return `110000${random9}`
 }
 
-/**
- * Returns the currently authenticated user's profile.
- */
 export function getCurrentUserProfile(): LoggedInUserProfile {
   const currentUser = getCurrentUser()
   const u = currentUser || {}
@@ -184,7 +166,7 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
 
   if (rawBirthDate && (!parsedMonth || !parsedYear || !parsedDay)) {
     const trimmed = String(rawBirthDate).trim()
-    // YYYY-MM-DD
+
     const isoM = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
     if (isoM) {
       const y = parseInt(isoM[1], 10)
@@ -194,7 +176,7 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
       parsedDay = String(d)
       parsedMonth = MONTH_NAMES[m - 1] || "JANUARY"
     } else {
-      // MM/DD/YYYY
+
       const slashM = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)
       if (slashM) {
         const m = parseInt(slashM[1], 10)
@@ -204,7 +186,7 @@ export function getCurrentUserProfile(): LoggedInUserProfile {
         parsedDay = String(d)
         parsedMonth = MONTH_NAMES[m - 1] || "JANUARY"
       } else {
-        // "Month DD, YYYY" or "JUNE 9 2005"
+
         const parts = trimmed.split(/[\s,]+/)
         if (parts.length >= 3) {
           parsedMonth = parts[0].toUpperCase()

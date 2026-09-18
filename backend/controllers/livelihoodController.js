@@ -1,4 +1,4 @@
-// controllers/livelihoodController.js
+
 const db = require('../config/db');
 const path = require('path');
 const fs = require('fs');
@@ -60,10 +60,8 @@ function savePersistentApps(apps) {
   }
 }
 
-// In-memory fallback if PostgreSQL is temporarily unavailable
 let memoryApplications = loadPersistentApps() || [];
 
-// Helper: parse date and time string to Date object in Philippine Standard Time (UTC+8)
 function parseDateTime(dateStr, timeStr) {
   if (!dateStr) return null;
   try {
@@ -104,7 +102,6 @@ function parseDateTime(dateStr, timeStr) {
       }
     }
 
-    // Convert Philippine Time (UTC+8) to UTC timestamp
     const targetUtcMs = Date.UTC(year, month, day, hours - 8, minutes, 0, 0);
     return new Date(targetUtcMs);
   } catch {
@@ -112,7 +109,6 @@ function parseDateTime(dateStr, timeStr) {
   }
 }
 
-// Background auto-release: Automatically marks assistance as RELEASED when scheduled date & time arrives
 async function autoReleaseScheduledLivelihood() {
   try {
     const result = await db.query(
@@ -159,11 +155,8 @@ async function autoReleaseScheduledLivelihood() {
   } catch (err) {}
 }
 
-// Interval timer for scheduled release worker (every 30 seconds)
 setInterval(autoReleaseScheduledLivelihood, 30000);
 
-
-// 1. Create Livelihood Application
 exports.createApplication = async (req, res) => {
   try {
     const {
@@ -320,7 +313,6 @@ exports.createApplication = async (req, res) => {
   }
 };
 
-// 2. Get Applications (list for User or Admin)
 exports.getApplications = async (req, res) => {
   try {
     await autoReleaseScheduledLivelihood();
@@ -351,7 +343,6 @@ exports.getApplications = async (req, res) => {
       const result = await db.query(query, params);
       const apps = result.rows;
 
-      // Attach assistance and monitoring to each
       for (const app of apps) {
         const assistRes = await db.query('SELECT * FROM livelihood_assistance WHERE application_id = $1 LIMIT 1', [app.id]);
         app.assistance = assistRes.rows[0] || null;
@@ -368,7 +359,6 @@ exports.getApplications = async (req, res) => {
         const monRes = await db.query('SELECT * FROM livelihood_monitoring WHERE application_id = $1 ORDER BY created_at DESC', [app.id]);
         app.monitoring = monRes.rows || [];
 
-        // Attach linked financial aid disbursement & appointment
         const disbCheck = await db.query(
           `SELECT f.*, a.scheduled_date, a.scheduled_time, a.office_location, a.status as appointment_status
            FROM financial_aid_disbursements f
@@ -411,7 +401,6 @@ exports.getApplications = async (req, res) => {
   }
 };
 
-// 3. Get Application by Reference
 exports.getApplicationByReference = async (req, res) => {
   try {
     await autoReleaseScheduledLivelihood();
@@ -439,7 +428,6 @@ exports.getApplicationByReference = async (req, res) => {
       const monRes = await db.query('SELECT * FROM livelihood_monitoring WHERE application_id = $1 ORDER BY created_at DESC', [app.id]);
       app.monitoring = monRes.rows || [];
 
-      // Attach linked financial aid disbursement & appointment
       const disbCheck = await db.query(
         `SELECT f.*, a.scheduled_date, a.scheduled_time, a.office_location, a.status as appointment_status
          FROM financial_aid_disbursements f
@@ -479,7 +467,6 @@ exports.getApplicationByReference = async (req, res) => {
   }
 };
 
-// 4. Update / Resubmit Application (Needs Revision -> Under Review)
 exports.updateApplication = async (req, res) => {
   try {
     const { id } = req.params;
@@ -589,12 +576,11 @@ exports.updateApplication = async (req, res) => {
   }
 };
 
-// 5. Update Application Status (Admin: approve, reject, needs_revision, under_review)
 exports.updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      status, // 'approved', 'rejected', 'needs_revision', 'under_review'
+      status,
       approvedBy = 'Administrator',
       rejectionReason,
       revisionNotes,
@@ -651,7 +637,6 @@ exports.updateStatus = async (req, res) => {
 
       const updated = result.rows[0];
 
-      // If approved, create default assistance record if it doesn't already exist
       if (isApproved) {
         const assistCheck = await db.query('SELECT * FROM livelihood_assistance WHERE application_id = $1', [updated.id]);
         if (assistCheck.rows.length === 0) {
@@ -704,7 +689,6 @@ exports.updateStatus = async (req, res) => {
           );
         }
 
-        // Automatically create Financial Aid Disbursement entry for approved livelihood application
         const disbCheck = await db.query('SELECT id FROM financial_aid_disbursements WHERE application_ref = $1', [updated.reference_number]);
         if (disbCheck.rows.length === 0) {
           const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -726,7 +710,6 @@ exports.updateStatus = async (req, res) => {
           );
         }
 
-        // 2. Insert into appointments queue for Livelihood
         const apptCheck = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [updated.reference_number]);
         if (apptCheck.rows.length === 0) {
           const fullName = `${updated.first_name || ''} ${updated.last_name || ''}`.trim().toUpperCase() || 'BENEFICIARY';
@@ -785,12 +768,11 @@ exports.updateStatus = async (req, res) => {
   }
 };
 
-// 6. Save or Update Capital / Materials Assistance Details (Part 2)
 exports.saveAssistance = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      assistanceStatus = 'for_processing', // 'for_processing', 'for_release', 'released'
+      assistanceStatus = 'for_processing',
       approvedFinancialAmount = 0,
       approvedMaterials = [],
       approvedEquipment = [],
@@ -876,7 +858,6 @@ exports.saveAssistance = async (req, res) => {
         savedAssist = insertRes.rows[0];
       }
 
-      // Sync approved amount to financial_aid_disbursements
       try {
         await db.query(
           `UPDATE financial_aid_disbursements
@@ -887,7 +868,6 @@ exports.saveAssistance = async (req, res) => {
         );
       } catch (_) {}
 
-      // Automatically create Livelihood Monitoring record when marked as released
       if (finalAssistanceStatus === 'released') {
         const monCheck = await db.query('SELECT id FROM livelihood_monitoring WHERE application_id = $1', [app.id]);
         if (monCheck.rows.length === 0) {
@@ -978,14 +958,13 @@ exports.saveAssistance = async (req, res) => {
   }
 };
 
-// 7. Add Monitoring Log / Progress Update (Part 3)
 exports.addMonitoringLog = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      monitoringStatus = 'active', // 'active', 'ongoing', 'needs_follow_up', 'completed'
+      monitoringStatus = 'active',
       status,
-      logType = 'inspection', // 'resident_update', 'inspection', 'follow_up'
+      logType = 'inspection',
       title,
       progressUpdate,
       notes,
@@ -1100,7 +1079,6 @@ exports.addMonitoringLog = async (req, res) => {
   }
 };
 
-// 8. Upload Supporting Documents
 exports.uploadDocuments = async (req, res) => {
   try {
     const files = req.files || [];
@@ -1126,7 +1104,6 @@ exports.uploadDocuments = async (req, res) => {
   }
 };
 
-// 8. Reset / Delete All Applications (For clean administrative testing)
 exports.resetApplications = async (req, res) => {
   try {
     try {
@@ -1148,4 +1125,3 @@ exports.resetApplications = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Reset error', details: err.message });
   }
 };
-

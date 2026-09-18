@@ -9,7 +9,6 @@ import { RecaptchaModal } from '../ui/recaptcha-modal';
 export const Login = () => {
   const navigate = useNavigate();
 
-  // Government seal mula sa public/samples folder
   const governmentSealImage = '/samples/Government Service Integrity Seal.png';
 
   useEffect(() => {
@@ -71,7 +70,6 @@ export const Login = () => {
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
 
-  // Check lockout status from server on mount
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3000);
@@ -101,7 +99,6 @@ export const Login = () => {
     };
   }, []);
 
-  // Real-time countdown timer that survives page reloads
   useEffect(() => {
     if (lockoutRemaining <= 0) {
       localStorage.removeItem('login_lockout_until');
@@ -137,7 +134,6 @@ export const Login = () => {
     return () => clearInterval(interval);
   }, [lockoutRemaining]);
 
-  // Inactive Account Reactivation state
   const [inactiveUserPrompt, setInactiveUserPrompt] = useState<{
     email: string;
     name: string;
@@ -331,7 +327,6 @@ export const Login = () => {
             localStorage.setItem(`user_profile_${cleanEmail}`, JSON.stringify(data.user));
           }
 
-          // Trigger auth listeners across app
           window.dispatchEvent(new Event('auth_state_changed'));
           window.dispatchEvent(new Event('user_profile_updated'));
 
@@ -339,7 +334,6 @@ export const Login = () => {
             ? '/reports'
             : '/portal/overview';
 
-          // Immediate seamless navigation
           navigate(target, { replace: true });
           window.location.replace(target);
           return;
@@ -356,7 +350,7 @@ export const Login = () => {
         }
       } catch (err: any) {
         setIsLoginLoading(false);
-        // If already authenticated in storage, avoid showing error
+
         if (sessionStorage.getItem('isAuthenticated') === 'true' || localStorage.getItem('isAuthenticated') === 'true') {
           const role = (sessionStorage.getItem('userRole') || localStorage.getItem('userRole') || 'user').toLowerCase();
           const target = (role === 'super_admin' || role === 'admin' || role === 'staff') ? '/reports' : '/portal/overview';
@@ -384,7 +378,6 @@ export const Login = () => {
       return;
     }
 
-    // Buksan yung confirmation dialog (Image 3)
     setIsConfirmModalOpen(true);
   };
 
@@ -426,11 +419,11 @@ export const Login = () => {
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#F8FAFC] dark:bg-[#070D1E] font-sans text-sm relative transition-colors duration-200" style={{ fontFamily: 'Inter, sans-serif' }}>
 
-      {/* Left Hero Section */}
+      {}
       <div
         className="w-full md:w-1/2 text-white p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden text-center items-center bg-[#0B132B] dark:bg-[#060B18]"
       >
-        {/* Centered Government Seal Watermark */}
+        {}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden p-6">
           <div className="w-full max-w-[340px] sm:max-w-[400px] md:max-w-[440px] lg:max-w-[480px] aspect-square flex items-center justify-center shrink-0 opacity-[0.22] md:opacity-[0.25]">
             <img
@@ -470,7 +463,7 @@ export const Login = () => {
         </div>
       </div>
 
-      {/* Right Login Form Section */}
+      {}
       <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-10 lg:p-12 bg-[#F3F4F8] dark:bg-[#0A1024] transition-colors duration-200">
         <div className="w-full max-w-[440px] bg-white dark:bg-[#111C44] p-7 sm:p-10 rounded-3xl shadow-2xl shadow-slate-200/80 dark:shadow-black/60 border border-slate-100 dark:border-slate-800/80 transition-colors duration-200">
 
@@ -573,7 +566,7 @@ export const Login = () => {
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
+      {}
       {isForgotPasswordOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-[#111C44] border border-slate-100 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 relative overflow-hidden text-left max-h-[90vh] overflow-y-auto">
@@ -716,7 +709,7 @@ export const Login = () => {
         </div>
       )}
 
-      {/* Password Reset Confirmation Modal */}
+      {}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 z-110 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-[#111C44] border border-slate-100 dark:border-slate-800 w-full max-w-sm rounded-2xl shadow-2xl p-6 sm:p-8 text-center">
@@ -783,7 +776,7 @@ export const Login = () => {
         </div>
       )}
 
-      {/* Interactive reCAPTCHA Modal Challenge */}
+      {}
       <RecaptchaModal
         isOpen={isRecaptchaChallengeOpen}
         onClose={() => setIsRecaptchaChallengeOpen(false)}
@@ -793,7 +786,7 @@ export const Login = () => {
         }}
       />
 
-      {/* Account Deactivated Reactivation Prompt Modal */}
+      {}
       {inactiveUserPrompt && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#111C44] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 text-center space-y-4 animate-in zoom-in-95 duration-150">

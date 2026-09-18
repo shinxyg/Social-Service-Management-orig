@@ -14,7 +14,6 @@ import {
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { API_BASE } from "../../config/api"
 
-// ---- Types ----
 type ModuleKey =
   | "AICS"
   | "PWD"
@@ -39,7 +38,6 @@ interface AppointmentRequest {
   notes?: string
 }
 
-// ---- Empty Mock Data so only real submitted applications appear ----
 const MOCK_APPOINTMENTS: AppointmentRequest[] = []
 
 const MODULE_OPTIONS: ModuleKey[] = [
@@ -112,7 +110,6 @@ function formatDateTime(iso: string) {
   return `${d.toLocaleDateString()} at ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
 }
 
-// ---- Schedule Modal ----
 interface ScheduleModalProps {
   appointment: AppointmentRequest
   onClose: () => void
@@ -199,7 +196,6 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
   )
 }
 
-// ---- Appointment Card ----
 function AppointmentCard({
   appt,
   onSchedule,
@@ -269,7 +265,6 @@ function AppointmentCard({
   )
 }
 
-// Helper: Robust single-key deduplicator for appointments
 function getAppointmentDeduplicationKey(a: { referenceNo?: string; applicantName?: string; concern?: string; module?: string }): string {
   const cleanName = String(a.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
   const cleanConcern = String(a.concern || "")
@@ -287,7 +282,6 @@ function getAppointmentDeduplicationKey(a: { referenceNo?: string; applicantName
   return `ref_${cleanRef}_${cleanConcern}`
 }
 
-// ---- Main Component ----
 export default function Appointments() {
   const [appointments, setAppointments] = useState<AppointmentRequest[]>(() => {
     try {
@@ -314,14 +308,12 @@ export default function Appointments() {
       try {
         let appts: AppointmentRequest[] = []
 
-        // Local cache for instantly scheduled/completed appointments
         let localScheduledMap: Record<string, any> = {}
         try {
           const raw = localStorage.getItem("all_appointments_scheduled")
           if (raw) localScheduledMap = JSON.parse(raw)
         } catch {}
 
-        // Read dismissed/deleted appointments list
         let dismissedSet = new Set<string>()
         try {
           const dismissedRaw = localStorage.getItem("dismissed_appointments")
@@ -333,7 +325,6 @@ export default function Appointments() {
           }
         } catch {}
 
-        // Fetch all endpoints concurrently in parallel
         const [
           resDbSettled,
           resAicsSettled,
@@ -353,7 +344,6 @@ export default function Appointments() {
           }),
         ])
 
-        // 1. Process DB appointments
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
           try {
             const dataDb = await resDbSettled.value.json()
@@ -397,7 +387,6 @@ export default function Appointments() {
           } catch {}
         }
 
-        // 2. Process AICS
         if (resAicsSettled.status === "fulfilled" && resAicsSettled.value.ok) {
           try {
             const data = await resAicsSettled.value.json()
@@ -429,7 +418,6 @@ export default function Appointments() {
           } catch {}
         }
 
-        // 3. Process PWD / Senior
         let pwdSeniorApps: any[] = []
         if (resPwdSettled.status === "fulfilled" && resPwdSettled.value.ok) {
           try {
@@ -476,7 +464,6 @@ export default function Appointments() {
           })
         }
 
-        // 4. Process Livelihood
         if (resLivSettled.status === "fulfilled" && resLivSettled.value.ok) {
           try {
             const dataLiv = await resLivSettled.value.json()
@@ -507,7 +494,6 @@ export default function Appointments() {
           } catch {}
         }
 
-        // 5. Process Child Welfare
         if (resCwSettled.status === "fulfilled" && resCwSettled.value.ok) {
           try {
             const dataCw = await resCwSettled.value.json()
@@ -539,7 +525,6 @@ export default function Appointments() {
           } catch {}
         }
 
-        // Filter out any dismissed / deleted appointments
         appts = appts.filter((a) => {
           const ref = String(a.referenceNo || '').toLowerCase().trim()
           const id = String(a.id || '').toLowerCase().trim()
@@ -547,7 +532,6 @@ export default function Appointments() {
           return !dismissedSet.has(ref) && !dismissedSet.has(id) && !dismissedSet.has(rawId)
         })
 
-        // Strict single-appointment deduplication by normalized reference / applicant and concern
         const dedupedMap = new Map<string, AppointmentRequest>()
         const statusPriority: Record<AppointmentStatus, number> = { completed: 3, scheduled: 2, pending: 1 }
 
@@ -603,8 +587,6 @@ export default function Appointments() {
 
     fetchAppointments()
 
-    // Auto-complete appointments and auto-release disbursements when exact scheduled date/time arrives
-    // and periodically re-fetch from database to keep appointments in real-time sync with all devices
     const liveTimer = setInterval(() => {
       fetchAppointments()
       checkAndAutoReleaseScheduledDisbursements()
@@ -652,7 +634,7 @@ export default function Appointments() {
   const handleSaveSchedule = async (id: string, date: string, time: string, location: string, notes: string) => {
     const targetAppt = appointments.find((a) => a.id === id)
     if (targetAppt) {
-      // Save directly into local cache so it NEVER reverts to pending during poll
+
       try {
         const raw = localStorage.getItem("all_appointments_scheduled")
         const localScheduledMap = raw ? JSON.parse(raw) : {}
@@ -669,7 +651,6 @@ export default function Appointments() {
         localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
       } catch {}
 
-      // Auto-connect with Financial Aid Disbursement and User Notifications
       syncAppointmentToFinancialAid({
         referenceNo: targetAppt.referenceNo,
         applicantName: targetAppt.applicantName,
@@ -680,7 +661,6 @@ export default function Appointments() {
         notes,
       })
 
-      // Explicit API PUT call
       try {
         await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetAppt.referenceNo)}/schedule`, {
           method: "PUT",
@@ -761,7 +741,7 @@ export default function Appointments() {
         <h1 className="text-3xl font-bold text-foreground">Appointments</h1>
       </div>
 
-      {/* Stats */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Requests", value: stats.total },
@@ -776,7 +756,7 @@ export default function Appointments() {
         ))}
       </div>
 
-      {/* Filters */}
+      {}
       <div className="bg-card border border-border rounded-lg p-4 space-y-4">
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
@@ -822,7 +802,7 @@ export default function Appointments() {
         </div>
       </div>
 
-      {/* List */}
+      {}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-foreground">Requests ({filtered.length})</h2>
@@ -847,7 +827,6 @@ export default function Appointments() {
                     const cleanId = String(id || '').trim()
                     const rawId = cleanId.replace(/^(db-appt-|aics-appt-|pwd-senior-appt-|cw-appt-)/, '').trim()
 
-                    // 1. Immediately remove from frontend state
                     setAppointments((prev) =>
                       prev.filter((item) => {
                         const iRef = String(item.referenceNo || '').trim().toLowerCase()
@@ -859,7 +838,6 @@ export default function Appointments() {
                       })
                     )
 
-                    // 2. Persist in dismissed localStorage
                     try {
                       const dismissedRaw = localStorage.getItem("dismissed_appointments") || "[]"
                       const dismissedList: string[] = JSON.parse(dismissedRaw)
@@ -869,7 +847,6 @@ export default function Appointments() {
                       localStorage.setItem("dismissed_appointments", JSON.stringify(dismissedList))
                     } catch {}
 
-                    // 3. Clear from local scheduled cache
                     try {
                       const raw = localStorage.getItem("all_appointments_scheduled")
                       if (raw) {
@@ -881,7 +858,6 @@ export default function Appointments() {
                       }
                     } catch {}
 
-                    // 4. Send DELETE to backend database
                     try {
                       await Promise.allSettled([
                         fetch(`${API_BASE}/api/appointments/${encodeURIComponent(cleanId)}`, { method: "DELETE" }),

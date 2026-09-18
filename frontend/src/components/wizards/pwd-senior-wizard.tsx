@@ -26,9 +26,6 @@ const requirementsByCategory: Record<string, string[]> = {
   ],
 }
 
-// Admin/staff process flow only. Intake happens on the resident-facing
-// portal (user-portal/apply-pwd-senior.tsx) — staff always start here
-// from an already-submitted application, at Registration.
 const steps: WizardStep[] = [
   { label: "Registration", icon: ClipboardList },
   { label: "Medical Verification", icon: Stethoscope },
@@ -44,8 +41,6 @@ export type PWDSeniorApplicationResult = {
   status: string
 }
 
-// Info submitted by the resident online (apply-pwd-senior.tsx). Required —
-// the admin wizard only ever processes an existing submission.
 export type PWDSeniorApplicantInfo = {
   name: string
   address: string
@@ -73,23 +68,18 @@ export function PWDSeniorApplicationWizard({
 
   const { name, address, contact, category, medicalCertificate } = applicant
 
-  // Step 1 — Registration (Supporting Documents input)
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({})
 
-  // Step 2 — Medical Verification
   const [conditionNotes, setConditionNotes] = useState("")
   const [verifyingOfficer, setVerifyingOfficer] = useState("")
   const [eligibility, setEligibility] = useState<"Eligible" | "Not eligible">("Eligible")
 
-  // Step 3 — Approval
   const [approvingOfficer, setApprovingOfficer] = useState("")
   const [approvalStatus, setApprovalStatus] = useState<"Approved" | "Disapproved">("Approved")
 
-  // Step 4 — Issue ID
   const [idNumber, setIdNumber] = useState(() => generateIdNumber(category))
   const [issueDate, setIssueDate] = useState("")
 
-  // Step 5 — Benefits Activation
   const [socialPension, setSocialPension] = useState(false)
   const [discountBooklet, setDiscountBooklet] = useState(true)
   const [activationDate, setActivationDate] = useState("")
@@ -155,7 +145,7 @@ export function PWDSeniorApplicationWizard({
     <div className="space-y-6">
       <WizardStepper steps={steps} step={step} />
 
-      {/* Applicant summary — read-only, submitted online by the resident */}
+      {}
       <div className="bg-muted/50 border border-border rounded-2xl p-4 text-sm">
         <p className="text-xs font-medium text-muted-foreground mb-1">Applicant (submitted online)</p>
         <p className="text-foreground font-medium">{name} — {category}</p>

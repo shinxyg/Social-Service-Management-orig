@@ -40,7 +40,7 @@ export function SettingsModal({
         </h3>
 
         <div className="space-y-5">
-          {/* Language Section */}
+          {}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Languages className="h-4 w-4 text-primary" />

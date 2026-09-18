@@ -4,7 +4,6 @@ exports.getAnalyticsOverview = async (req, res) => {
   try {
     const range = req.query.range || 'Last 6 Months';
 
-    // Fetch from all database tables with individual fallback (excluding archived)
     const [
       aicsRes,
       pwdSeniorRes,
@@ -13,16 +12,16 @@ exports.getAnalyticsOverview = async (req, res) => {
       livelihoodRes,
       disbRes,
     ] = await Promise.all([
-      db.query(`SELECT id, status, created_at, assistance_type FROM aics_applications WHERE (is_archived IS NOT true)`).catch(() => 
+      db.query(`SELECT id, status, created_at, assistance_type FROM aics_applications WHERE (is_archived IS NOT true)`).catch(() =>
         db.query(`SELECT id, status, created_at, assistance_type FROM aics_applications`).catch(() => ({ rows: [] }))
       ),
-      db.query(`SELECT id, status, created_at, category, type FROM pwd_senior_applications WHERE (is_archived IS NOT true)`).catch(() => 
+      db.query(`SELECT id, status, created_at, category, type FROM pwd_senior_applications WHERE (is_archived IS NOT true)`).catch(() =>
         db.query(`SELECT id, status, created_at, category, type FROM pwd_senior_applications`).catch(() => ({ rows: [] }))
       ),
       db.query(`SELECT id, application_status as status, created_at, application_type FROM solo_parent_child_welfare_applications WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL) AND application_status != 'draft' AND (is_archived IS NOT true)`).catch(() => ({ rows: [] })),
       db.query(`SELECT id, application_status as status, created_at FROM solo_parent_child_welfare_applications WHERE module_type = 'CHILD_WELFARE' AND application_status != 'draft' AND (is_archived IS NOT true)`).catch(() => ({ rows: [] })),
       db.query(`SELECT id, application_status as status, created_at FROM livelihood_applications WHERE (is_archived IS NOT true)`).catch(() => ({ rows: [] })),
-      db.query(`SELECT id, fixed_amount, assistance_type, status, date_approved, released_date, created_at FROM financial_aid_disbursements WHERE (is_archived IS NOT true)`).catch(() => 
+      db.query(`SELECT id, fixed_amount, assistance_type, status, date_approved, released_date, created_at FROM financial_aid_disbursements WHERE (is_archived IS NOT true)`).catch(() =>
         db.query(`SELECT id, fixed_amount, assistance_type, status, date_approved, released_date, created_at FROM financial_aid_disbursements`).catch(() => ({ rows: [] }))
       ),
     ]);

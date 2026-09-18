@@ -1,19 +1,9 @@
 import { createContext, useContext, useState, type ReactNode } from "react"
 
-/*
-  Language context — English / Tagalog / Bisaya toggle.
-  Wrap the app with <LanguageProvider> (done in App.tsx) and call
-  useLanguage() anywhere to read `language`, call `setLanguage`, or
-  translate a known key with `t("someKey")`.
-
-  Add more keys here as more pages get wired up. If a key is missing,
-  t() just falls back to the key itself so nothing breaks.
-*/
-
 export type Language = "en" | "tl" | "bis"
 
 const translations: Record<string, { en: string; tl: string; bis: string }> = {
-  // Common
+
   settings: { en: "Settings", tl: "Mga Setting", bis: "Mga Setting" },
   profile: { en: "Profile", tl: "Profile", bis: "Profile" },
   logOut: { en: "Log Out", tl: "Mag-logout", bis: "Mag-logout" },
@@ -28,7 +18,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   notifications: { en: "Notifications", tl: "Mga Abiso", bis: "Mga Pahibalo" },
   helpAndGuides: { en: "Help & guides", tl: "Tulong at Gabay", bis: "Tabang ug Giya" },
 
-  // Brand / sidebar shell
   socialServicesManagement: { en: "Social Services Management", tl: "Pangasiwaan ng Serbisyong Panlipunan", bis: "Pagdumala sa Serbisyo Sosyal" },
   socialServices: { en: "Social Services", tl: "Serbisyong Panlipunan", bis: "Serbisyo Sosyal" },
   residentPortal: { en: "Resident Portal", tl: "Portal ng Residente", bis: "Portal sa Residente" },
@@ -36,7 +25,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   modules: { en: "Modules", tl: "Mga Module", bis: "Mga Module" },
   views: { en: "Views", tl: "Mga View", bis: "Mga View" },
 
-  // Resident sidebar nav
   navServiceGuide: { en: "Help & Service Guide", tl: "Tulong at Gabay", bis: "Tabang ug Giya" },
   navAICS: { en: "AICS", tl: "AICS", bis: "AICS" },
   navAICSAssistance: { en: "AICS Assistance", tl: "Tulong ng AICS", bis: "Tabang sa AICS" },
@@ -76,7 +64,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   collapseSidebar: { en: "Collapse sidebar", tl: "I-collapse ang sidebar", bis: "I-collapse ang sidebar" },
   expandSidebar: { en: "Expand sidebar", tl: "I-expand ang sidebar", bis: "I-expand ang sidebar" },
 
-  // Profile Modal & Language
   hiUser: { en: "Hi, {name}!", tl: "Kamusta, {name}!", bis: "Kumusta, {name}!" },
   hiUserShort: { en: "Hi, {name}", tl: "Kamusta, {name}", bis: "Kumusta, {name}" },
   statusActive: { en: "Active", tl: "Aktibo", bis: "Aktibo" },
@@ -161,7 +148,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   mobileNumber: { en: "Mobile Number", tl: "Numero ng Mobile", bis: "Numero sa Mobile" },
   profileUpdatedSuccess: { en: "Profile updated successfully!", tl: "Matagumpay na na-update ang profile!", bis: "Malamposong na-update ang profile!" },
 
-  // Common Wizard & Requirements Modal
   iUnderstand: { en: "I UNDERSTAND", tl: "NAIINTINDIHAN KO", bis: "NASABTAN NAKO" },
   requirementsAcceptCheckbox: {
     en: "I accept and understand the documentary requirements for this service",
@@ -175,14 +161,12 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   },
   livelihoodBusinessPlan: { en: "Business Plan", tl: "Plano sa Negosyo", bis: "Plano sa Negosyo" },
 
-  // Staff sidebar nav (module labels)
   navPWDSenior: { en: "PWD & Senior Citizen Services", tl: "Serbisyo para sa PWD at Senior Citizen", bis: "Serbisyo para sa PWD ug Senior Citizen" },
   navSoloParent: { en: "Solo Parent & Child Welfare", tl: "Solo Parent at Kapakanan ng Bata", bis: "Solo Parent ug Kaayohan sa Bata" },
   navLivelihood: { en: "Livelihood & Training Program", tl: "Programa sa Kabuhayan at Pagsasanay", bis: "Programa sa Panginabuhi ug Pagbansay" },
   navFinancialAid: { en: "Financial Aid Disbursement", tl: "Paglabas ng Tulong Pinansyal", bis: "Paghatag og Tabang Pinansyal" },
   navMyApplicationsDuplicate: { en: "Application History", tl: "Application History", bis: "Application History" },
 
-  // App header (staff)
   toggleSidebar: { en: "Toggle sidebar", tl: "I-toggle ang sidebar", bis: "I-toggle ang sidebar" },
   switchToLightMode: { en: "Switch to light mode", tl: "Lumipat sa light mode", bis: "Balhin sa light mode" },
   switchToDarkMode: { en: "Switch to dark mode", tl: "Lumipat sa dark mode", bis: "Balhin sa dark mode" },
@@ -194,7 +178,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   residentRole: { en: "Resident", tl: "Residente", bis: "Residente" },
   applicantRole: { en: "Applicant", tl: "Aplikante", bis: "Aplikante" },
 
-  // Help topics (staff header)
   helpAicsTitle: { en: "Processing AICS applications", tl: "Pagpoproseso ng aplikasyon sa AICS", bis: "Pagproseso sa aplikasyon sa AICS" },
   helpAicsDesc: { en: "How to review submissions, run verification, and release assistance.", tl: "Paano suriin ang mga isinumite, mag-verify, at maglabas ng tulong.", bis: "Giunsa pagrepaso sa mga isumite, pag-verify, ug paghatag og tabang." },
   helpPwdTitle: { en: "PWD & Senior Citizen ID issuance", tl: "Pagbigay ng ID sa PWD at Senior Citizen", bis: "Pagpagawas og ID sa PWD ug Senior Citizen" },
@@ -206,7 +189,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   helpDisbursementTitle: { en: "Tracking disbursements", tl: "Pagsubaybay sa paglabas ng tulong", bis: "Pagsubay sa paghatag og tabang" },
   helpDisbursementDesc: { en: "How releases are logged across all assistance programs.", tl: "Paano naitala ang mga paglabas sa lahat ng programa ng tulong.", bis: "Giunsa pagtala ang mga paghatag sa tanang programa sa tabang." },
 
-  // Notifications mock (staff header)
   notifAicsTitle: { en: "New AICS submission", tl: "Bagong isinumiteng AICS", bis: "Bag-ong isumite nga AICS" },
   notifAicsDesc: { en: "Liza P. Gonzales filed a medical assistance request.", tl: "Nag-file si Liza P. Gonzales ng kahilingan sa tulong medikal.", bis: "Si Liza P. Gonzales nag-file og hangyo sa tabang medikal." },
   notifPwdTitle: { en: "PWD application approved", tl: "Naaprubahan ang aplikasyon ng PWD", bis: "Naaprubahan ang aplikasyon sa PWD" },
@@ -217,7 +199,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   notifTime1hour: { en: "1 hour ago", tl: "1 oras ang nakalipas", bis: "1 oras ang milabay" },
   notifTimeYesterday: { en: "Yesterday", tl: "Kahapon", bis: "Kagahapon" },
 
-  // Resident AICS page (aics-user.tsx)
   aicsWelcome: { en: "Welcome back, {name}. Here's what you can apply for.", tl: "Maligayang pagbabalik, {name}. Ito ang mga puwede mong i-apply.", bis: "Maayong pagbalik, {name}. Kini ang imong mahimong i-apply." },
   aicsAssistance: { en: "AICS ASSISTANCE", tl: "TULONG NG AICS", bis: "TABANG SA AICS" },
   aicsMedical: { en: "Medical Assistance", tl: "Tulong Medikal", bis: "Tabang Medikal" },
@@ -233,7 +214,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   },
   back: { en: "← Back to AICS", tl: "← Bumalik sa AICS", bis: "← Balik sa AICS" },
 
-  // apply-aics.tsx form
   applyAicsTitle: { en: "Apply for AICS assistance", tl: "Mag-apply ng tulong sa AICS", bis: "Mag-apply og tabang sa AICS" },
   applyAicsDesc: {
     en: "Fill out this form to request Assistance to Individuals in Crisis Situations. A social worker will review your application and contact you for the next steps.",
@@ -271,7 +251,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   assistEducational: { en: "Educational assistance", tl: "Tulong pang-edukasyon", bis: "Tabang pang-edukasyon" },
   assistTransportationLower: { en: "Transportation assistance", tl: "Tulong sa pamasahe", bis: "Tabang sa pamasahe" },
 
-  // Wizard tabs
   wizardChecklist: { en: "Complete checklist", tl: "Kumpletuhin ang Checklist", bis: "Kumpletoha ang Checklist" },
   wizardPersonal: { en: "Personal information", tl: "Personal na Impormasyon", bis: "Personal nga Impormasyon" },
   wizardDocuments: { en: "Submit documents", tl: "Magsumite ng Dokumento", bis: "Isumite ang Dokumento" },
@@ -280,20 +259,17 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   nextButton: { en: "Next", tl: "Susunod", bis: "Sunod" },
   backButton: { en: "Back", tl: "Bumalik", bis: "Balik" },
 
-  // Checklist step — common
   eligibility: { en: "Eligibility", tl: "Kwalipikasyon", bis: "Kwalipikasyon" },
   yes: { en: "Yes", tl: "Oo", bis: "Oo" },
   no: { en: "No", tl: "Hindi", bis: "Dili" },
   otherOption: { en: "Others", tl: "Iba pa", bis: "Lain pa" },
   sameAsApplicantAddress: { en: "Same as applicant's address", tl: "Katulad ng Address ng Applicant", bis: "Pareho sa Address sa Applicant" },
 
-  // Checklist — educational
   eduEligResident: { en: "Resident of Quezon City, and a duly registered Child with Disability (with QC ID)", tl: "Residente ng Quezon City, at duly registered na Children with Disability (may QC ID)", bis: "Residente sa Quezon City, ug duly registered nga Child with Disability (naa'y QC ID)" },
   eduEligAge: { en: "6-30 years old", tl: "Edad 6-30 taong gulang", bis: "Edad 6-30 ka tuig" },
   eduEligSchool: { en: "Enrolled in a Public School (SPED up to Grade 10)", tl: "Nakatala sa Public School (SPED hanggang Grade 10)", bis: "Naka-enrol sa Public School (SPED hangtod Grade 10)" },
   eduEligIndigent: { en: "Part of an indigent family with income of 13,873 and below", tl: "Kabilang sa indigent family na may income na 13,873 at pababa", bis: "Kabahin sa indigent family nga may income nga 13,873 og ubos" },
 
-  // Checklist — funeral
   deceasedResidentQuestion: { en: "Was the deceased a resident of QC?", tl: "Ang namatay ba ay residente ng QC?", bis: "Ang namatay ba residente sa QC?" },
   relationToDeceasedQuestion: { en: "What is your relation to the deceased?", tl: "Ano ang relasyon mo sa yumao?", bis: "Unsa imong relasyon sa namatay?" },
   relationChild: { en: "Child", tl: "Anak", bis: "Anak" },
@@ -304,7 +280,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   chooseFuneralHome: { en: "Choose a funeral home", tl: "Pumili ng funeral home", bis: "Pagpili og funeral home" },
   funeralHomeHint: { en: "Please choose an accredited partner funeral home. If your chosen funeral home is not listed, select 'Others'.", tl: "Pumili po ng isang akreditadong partner na punerarya. Kung hindi nakalista ang inyong napiling punerarya, piliin ang 'Iba pa'.", bis: "Palihug pilia ang usa ka akreditado nga partner nga punerarya. Kung wala nakalista ang inyong gipili nga punerarya, pilia ang 'Lain pa'." },
 
-  // Checklist — medical (default)
   medicalRequirementsTitle: { en: "Service and primary requirements", tl: "Mga Kinakailangan sa Serbisyo at sa Pangunahing Kinakailangan", bis: "Mga Kinahanglanon sa Serbisyo ug Panguna nga Kinahanglanon" },
   qcResidentQuestion: { en: "Are you a legitimate resident of Quezon City?", tl: "Ikaw ba ay isang lehitimong residente ng Quezon City?", bis: "Ikaw ba usa ka lehitimong residente sa Quezon City?" },
   qcPatientQuestion: { en: "Are you a QC citizen (or family member) with an illness who needs financial assistance for hospitalization/medicine?", tl: "Ikaw ba ay isang QC citizen (o miyembro ng pamilya) na may karamdaman na nangangailangan ng tulong pinansyal para sa ospitalisasyon/gamot?", bis: "Ikaw ba usa ka QC citizen (o membro sa pamilya) nga may sakit nga nagkinahanglan og tabang pinansyal para sa ospitalisasyon/tambal?" },
@@ -321,7 +296,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   chooseAssistanceType: { en: "Choose the type of assistance", tl: "Pumili ng Type ng Assistance", bis: "Pilia ang Type sa Assistance" },
   medicinesMedicalSupplies: { en: "Medicines / Medical Supplies", tl: "Medicines / Medical Supplies", bis: "Medicines / Medical Supplies" },
 
-  // Pending Screen / Block Screen & Submission Status
   hasPendingAppTitle: { en: "You Have an Active Application", tl: "May Kasalukuyang Application Ka Pa", bis: "Naa kay Kasamtangang Aplikasyon" },
   hasPendingAppDesc: {
     en: "Your application for {type} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application.",
@@ -365,7 +339,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Awtomatikong mobalhin sa status sa aplikasyon sulod sa {count} segundos...",
   },
 
-  // Personal information step
   importantReminder: { en: "Important reminder", tl: "Mahalagang Paalala", bis: "Importanteng Pahinumdom" },
   qcidReminderNote: {
     en: "Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service.",
@@ -396,7 +369,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   emailLabel: { en: "Email", tl: "Email", bis: "Email" },
   selfPatientCheckbox: { en: "I am the patient applying for myself", tl: "Ako ang pasyente na nag-a-apply para sa sarili ko", bis: "Ako ang pasyente nga nag-apply para sa akong kaugalingon" },
 
-  // Deceased info (funeral)
   deceasedInfoHeader: { en: "Deceased information", tl: "Impormasyon ng Namatay", bis: "Impormasyon sa Namatay" },
   deathDateLabel: { en: "Date of death", tl: "Petsa ng Kamatayan", bis: "Petsa sa Kamatayon" },
   ageAutoFilled: { en: "Automatically computed", tl: "Awtomatikong makukuha", bis: "Awtomatikong makuha" },
@@ -418,7 +390,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   placeOfDeathLabel: { en: "Place of death", tl: "Lugar ng Kamatayan", bis: "Lugar sa Kamatayon" },
   burialDateLabel: { en: "Date of burial", tl: "Petsa ng Libing", bis: "Petsa sa Lubong" },
 
-  // Beneficiary info (educational)
   relationToBeneficiaryLabel: { en: "Relation to beneficiary", tl: "Relasyon sa Benepisyaryo", bis: "Relasyon sa Benepisyaryo" },
   relationParentType: { en: "Parent", tl: "Magulang", bis: "Ginikanan" },
   relationGuardian: { en: "Guardian", tl: "Tagapag-alaga (Guardian)", bis: "Tigbantay (Guardian)" },
@@ -447,10 +418,8 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   beneficiaryStreetNameLabel: { en: "Beneficiary's street name", tl: "Pangalan ng Kalye ng Benepisyaryo", bis: "Ngalan sa Dalan sa Benepisyaryo" },
   beneficiaryBarangayLabel: { en: "Beneficiary's barangay", tl: "Barangay ng Benepisyaryo", bis: "Barangay sa Benepisyaryo" },
 
-  // Informant info (medical)
   informantInfoHeader: { en: "Informant information", tl: "Impormasyon ng Informant", bis: "Impormasyon sa Informant" },
 
-  // Documents step
   fileUploadHeader: { en: "File upload", tl: "Pag-upload ng File", bis: "Pag-upload sa File" },
   fileUploadDesc1: {
     en: "Make sure to upload the appropriate documents for each category and verify that all details—such as your full name (first, middle, and last name) and address—match the information on your QC ID.",
@@ -471,7 +440,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   noFileUploadedYet: { en: "No file uploaded yet.", tl: "Wala pang na-upload na file.", bis: "Wala pa nay na-upload nga file." },
   noSampleImageAvailable: { en: "No sample image available.", tl: "Walang sample image na available.", bis: "Walay sample image nga available." },
 
-  // Review step
   burialAssistanceHeading: { en: "Burial Assistance", tl: "Burial Assistance", bis: "Burial Assistance" },
   reviewApplicationHeader: { en: "Review your application", tl: "Suriin ang Iyong Application", bis: "Susiha ang Imong Application" },
   reviewApplicationDesc: {
@@ -497,7 +465,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   completeAddressLabel: { en: "Complete address", tl: "Kumpletong Address", bis: "Kompleto nga Address" },
   submitButton: { en: "Submit", tl: "Submit", bis: "Submit" },
 
-  // Appointment step
   requestAppointmentHeader: { en: "Request an appointment", tl: "Hiling ng Appointment", bis: "Hangyo og Appointment" },
   requestAppointmentDesc: {
     en: "The date and time of your appointment will be set by a social worker after reviewing your application. You don't need to choose a schedule — you'll receive a notification once it has been set.",
@@ -521,9 +488,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   appointmentScheduleLabel: { en: "Appointment schedule", tl: "Appointment schedule", bis: "Appointment schedule" },
   appointmentPendingNote: { en: "Pending — to be set by the social worker", tl: "Hihintayin — itatakda ng social worker", bis: "Hulaton — i-set sa social worker" },
 
-  // ─────────────────────────────────────────────
-  // PWD Application Wizard (PWDApplicationWizard.tsx)
-  // ─────────────────────────────────────────────
   pwdStepChecklist: { en: "Complete checklist", tl: "Kumpletuhin ang Checklist", bis: "Kumpletoha ang Checklist" },
   pwdStepPersonal: { en: "Personal information", tl: "Personal na Impormasyon", bis: "Personal nga Impormasyon" },
   pwdStepDocuments: { en: "Upload documents", tl: "Magsumite ng Dokumento", bis: "Isumite ang Dokumento" },
@@ -732,9 +696,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Sa pag-click sa \"Confirm & Submit\", ipadala ang imong hangyo sa appointment sa PDAO office. Ang imong appointment schedule motungha sa status sa imong application kung na-confirm na sa social worker.",
   },
 
-  // ─────────────────────────────────────────────
-  // Solo Parent Application Wizard (SoloParentApplicationWizard.tsx)
-  // ─────────────────────────────────────────────
   spStepDocuments: { en: "Upload documents", tl: "Magsumite ng Dokumento", bis: "Isumite ang Dokumento" },
 
   spChecklistTitle: { en: "Service and primary requirements", tl: "Mga Kinakailangan sa Serbisyo at sa Pangunahing Kinakailangan", bis: "Mga Kinahanglanon sa Serbisyo ug Panguna nga Kinahanglanon" },
@@ -933,7 +894,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   spFieldRequiredNote: { en: "This field is required.", tl: "Kailangan punan ang field na ito.", bis: "Kinahanglan sudlan ang field nga kini." },
   spDocRequiredNote: { en: "You need to upload this document.", tl: "Kailangan mag-upload ng dokumentong ito.", bis: "Kinahanglan mag-upload sa dokumento nga kini." },
 
-  // Requirements Modals / Dialogs
   reminderTitle: { en: "REMINDER", tl: "PAALALA", bis: "PAHIBALO" },
   pwdAssistanceReqTitle: { en: "Requirements for PWD Social Assistance", tl: "Mga Kinakailangan para sa PWD Social Assistance", bis: "Mga Kinahanglanon para sa PWD Social Assistance" },
   seniorIdReqTitle: { en: "Requirements for Application of Senior Citizen (SENIOR) ID", tl: "Mga Kinakailangan sa Aplikasyon ng Senior Citizen (SENIOR) ID", bis: "Mga Kinahanglanon sa Aplikasyon sa Senior Citizen (SENIOR) ID" },
@@ -1149,7 +1109,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Kontakon ka sa usa ka social worker para sa beripikasyon ug mag-iskedyul og appointment. Palihug dad-a ang tanang gikinahanglang dokumento sa imong pagbisita.",
   },
 
-  // PWD Social Assistance Items
   pwdSocialReq1Title: { en: "Valid QC ID – PWD Sector", tl: "Valid QC ID – PWD Sector", bis: "Balido nga QC ID – PWD Sector" },
   pwdSocialReq1Desc: { en: "Clear copy or photo of your QCitizen ID (PWD sector)", tl: "Malinaw na kopya o litrato ng iyong QCitizen ID (PWD sector)", bis: "Tin-aw nga kopya o litrato sa imong QCitizen ID (PWD sector)" },
   pwdSocialReq2Title: { en: "Barangay Certificate of Indigency", tl: "Barangay Certificate of Indigency", bis: "Barangay Certificate of Indigency" },
@@ -1159,7 +1118,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   pwdSocialReq4Title: { en: "2×2 Picture", tl: "2×2 Picture", bis: "2×2 nga Litrato" },
   pwdSocialReq4Desc: { en: "Whole-body photo with a calendar (if applicant is bedridden)", tl: "Whole-body picture na may kasamang kalendaryo (kung bedridden ang aplikante)", bis: "Whole-body nga litrato nga adunay kalendaryo (kung bedridden ang aplikante)" },
 
-  // General PWD Items
   pwdGenReqResidence: { en: "Proof of Residence", tl: "Katibayan ng Paninirahan", bis: "Pamatuod sa Pagpuyo" },
   pwdGenReqResidenceDesc: { en: "Valid ID or Original Barangay Certificate", tl: "Valid ID o Orihinal na Barangay Certificate", bis: "Balido nga ID o Orihinal nga Barangay Certificate" },
   pwdGenReqPhoto: { en: "ID Picture (2x2)", tl: "Litrato ng ID (2x2)", bis: "Litrato sa ID (2x2)" },
@@ -1168,7 +1126,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   pwdGenReqDisability: { en: "Proof of Disability", tl: "Katibayan ng Kapansanan", bis: "Pamatuod sa Kabakangan" },
   pwdGenReqDisabilityDesc: { en: "See Apparent / Non-Apparent Disability requirements below", tl: "Tingnan ang Apparent / Non-Apparent Disability requirements sa ibaba", bis: "Tan-awa ang Apparent / Non-Apparent Disability requirements sa ubos" },
 
-  // Apparent / Non-Apparent PWD Items
   pwdApparentPhoto: { en: "Whole Body Picture", tl: "Buong Katawang Litrato", bis: "Tibuok Lawas nga Litrato" },
   pwdApparentPhotoDesc: { en: "Clear photo showing the disability", tl: "Malinaw na larawan na nagpapakita ng kapansanan", bis: "Tin-aw nga litrato nga nagpakita sa kabakangan" },
   pwdApparentXray: { en: "X-ray for Clients with Orthopedic Devices", tl: "X-ray para sa may Orthopedic Devices", bis: "X-ray para sa adunay Orthopedic Devices" },
@@ -1178,7 +1135,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   pwdNonApparentMedCert: { en: "Medical Certificate from the Specialist (Physician)", tl: "Medical Certificate mula sa Espesyalistang Doktor", bis: "Medical Certificate gikan sa Espesyalistang Doktor" },
   pwdNonApparentMedCertDesc: { en: "For cancer and rare diseases", tl: "Para sa cancer at mga pambihirang sakit", bis: "Para sa cancer ug talagsaong mga sakit" },
 
-  // Senior Requirements
   seniorReq1: {
     en: "Fully Accomplished QCitizen ID Online Form or Request for Sectoral Status Change (if already a holder of regular resident/non-senior QC ID) in QC E-Services",
     tl: "Kumpletong QCitizen ID Online Form o Request for Sectoral Status Change (kung mayroon nang regular na QC ID) sa QC E-Services",
@@ -1210,7 +1166,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     bis: "Pinakabag-o nga digital o ID picture (2×2) – Adunay kolor ug puti nga background",
   },
 
-  // Solo Parent & Child Welfare Modal Texts
   spReqModalTitleChildWelfare: { en: "Requirements for Child Welfare Application", tl: "Mga Kinakailangan sa Aplikasyon para sa Kapakanan ng Bata", bis: "Mga Kinahanglanon sa Aplikasyon para sa Kaayohan sa Bata" },
   spReqModalTitleRenewal: { en: "Requirements for Renewal of Solo Parent ID", tl: "Mga Kinakailangan sa Pag-renew ng Solo Parent ID", bis: "Mga Kinahanglanon sa Pag-renew sa Solo Parent ID" },
   spReqModalTitleLoss: { en: "Requirements for Replacement / Lost Solo Parent ID", tl: "Mga Kinakailangan para sa Nawala / Papalitang Solo Parent ID", bis: "Mga Kinahanglanon para sa Nawala / Ilisdan nga Solo Parent ID" },
@@ -1339,7 +1294,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   reqDocsRenewalSenior: { en: "Required Documents for Senior ID Renewal", tl: "Mga Kinakailangang Dokumento para sa Pag-renew ng Senior ID", bis: "Mga Gikinahanglang Dokumento para sa Pag-renew sa Senior ID" },
   reqDocsLossSenior: { en: "Required Documents for Replacement of Lost Senior ID", tl: "Mga Kinakailangang Dokumento para sa Pagpapalit ng Nawalang Senior ID", bis: "Mga Gikinahanglang Dokumento para sa Pag-ilis sa Nawala nga Senior ID" },
 
-  // ── Child Welfare Wizard ──
   cwStepChecklist: { en: "COMPLETE CHECKLIST", tl: "KUMPLETUHIN ANG CHECKLIST", bis: "KUMPLETOHA ANG CHECKLIST" },
   cwStepPersonal: { en: "PERSONAL INFORMATION", tl: "PERSONAL NA IMPORMASYON", bis: "PERSONAL NGA IMPORMASYON" },
   cwStepDocuments: { en: "SUBMIT DOCUMENTS", tl: "MAGSUMITE NG DOKUMENTO", bis: "ISUMITE ANG MGA DOKUMENTO" },
@@ -1360,7 +1314,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   trackPortalNotifDesc: { en: "You can track the status in your Portal Notifications and Activity History.", tl: "Maaari ninyong i-track ang status sa inyong Portal Notifications at Activity History.", bis: "Mahimo nimong masubay ang status sa imong Portal Notifications ug Activity History." },
   autoRedirectCountdown: { en: "Returning to form in {seconds} seconds...", tl: "Babalik sa aplikasyon sa loob ng {seconds} segundo...", bis: "Mobalik sa aplikasyon sulod sa {seconds} segundos..." },
 
-  // ── Financial Aid Page ──
   financialAidOverviewTitle: { en: "Financial Aid Overview", tl: "Pangkalahatang-ideya ng Ayuda", bis: "Kinatibuk-ang Pagtan-aw sa Tabang Pinansyal" },
   financialAidSubtitle: { en: "Your approved financial assistance, designated amount, and City Hall payout appointment schedule are automatically recorded here.", tl: "Awtomatikong nakatala rito ang inyong naaprubahang ayuda, itinakdang halaga, at iskedyul ng payout appointment sa City Hall.", bis: "Awtomatikong nakatala dinhi ang imong naaprubahan nga tabang, gitakda nga kantidad, ug iskedyul sa payout appointment sa City Hall." },
   autoConnectNoticeTitle: { en: "Appointment & Financial Aid Automatically Connected", tl: "Awtomatikong Nakakabit ang Appointment at Ayuda", bis: "Awtomatikong Nakakonektar ang Appointment ug Tabang" },
@@ -1384,7 +1337,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   step2ReleasedDesc: { en: "Financial aid has been disbursed", tl: "Naipagkaloob na ang ayuda", bis: "Nahatag na ang tabang pinansyal" },
   payoutReminderNotice: { en: "Appointment Reminder: Please bring your QCitizen ID or 1 Valid Government-issued ID along with original copies of your documents at the designated payout time.", tl: "Paalala sa Pagdalo sa Appointment: Dalhin ang inyong QCitizen ID o 1 Valid Government-issued ID kasama ang orihinal na kopya ng inyong mga dokumento sa takdang oras ng payout.", bis: "Pahinumdom sa Pagtambong sa Appointment: Dad-a ang imong QCitizen ID o 1 Balido nga Government ID uban ang orihinal nga kopya sa imong mga dokumento sa gitakda nga oras sa payout." },
 
-  // ── History Applications ──
   myApplicationsTitle: { en: "Application History", tl: "Application History", bis: "Application History" },
   myApplicationsSubtitle: { en: "Track the status, schedule, and details of all your submitted social service requests.", tl: "Subaybayan ang estado, iskedyul, at detalye ng lahat ng inyong naisumiteng kahilingan sa serbisyong panlipunan.", bis: "Subaya ang estado, iskedyul, ug detalye sa tanan nimong nasumite nga hangyo sa serbisyo sosyal." },
   backToMyApplications: { en: "Back to Application History", tl: "Bumalik sa Application History", bis: "Balik sa Application History" },
@@ -1395,7 +1347,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   applicantDetailsHeader: { en: "Applicant Details", tl: "Mga Detalye ng Aplikante", bis: "Mga Detalye sa Aplikante" },
   statusTimelineHeader: { en: "Status Timeline", tl: "Timeline ng Katayuan", bis: "Timeline sa Kahimtang" },
 
-  // General & Form Keys
   pwdPersonalInfoHeader: { en: "Personal Information", tl: "Personal na Impormasyon", bis: "Personal nga Impormasyon" },
   pwdFieldRequiredNote: { en: "Fields marked with (*) are required", tl: "Ang mga field na may (*) ay kinakailangan", bis: "Ang mga field nga may (*) gikinahanglan" },
   qcidProfileDesc: { en: "Information auto-filled from your verified QCID profile.", tl: "Awtomatikong kinuha ang impormasyon mula sa inyong verified QCID profile.", bis: "Awtomatikong gikuha ang impormasyon gikan sa imong verified QCID profile." },
@@ -1408,7 +1359,6 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
   editInformation: { en: "Edit Information", tl: "I-edit ang Impormasyon", bis: "I-edit ang Impormasyon" },
   lockInformation: { en: "Lock Information", tl: "I-lock ang Impormasyon", bis: "I-lock ang Impormasyon" },
 
-  // Notification Multi-language translations
   notifPwdApprovedTitle: {
     en: "PWD ID Application: Approved",
     tl: "Aplikasyon sa PWD ID: Naaprubahan",

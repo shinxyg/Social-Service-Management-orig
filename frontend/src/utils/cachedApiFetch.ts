@@ -1,13 +1,11 @@
-// frontend/src/utils/cachedApiFetch.ts
-// Request deduplication, in-flight locking, and intelligent caching for high-frequency portal API calls
 
 import { API_BASE } from "../config/api"
 
 const inFlightMap = new Map<string, Promise<any>>()
 const cacheMap = new Map<string, { data: any; expiresAt: number }>()
 
-const DEFAULT_CACHE_MS = 3000 // 3 seconds default cache
-const REQUEST_TIMEOUT_MS = 9000 // 9s timeout to prevent hanging pending sockets
+const DEFAULT_CACHE_MS = 3000
+const REQUEST_TIMEOUT_MS = 9000
 
 export async function deduplicatedFetch(url: string, cacheTtlMs: number = DEFAULT_CACHE_MS): Promise<any> {
   return cachedApiFetch(url, undefined, cacheTtlMs)
@@ -35,7 +33,7 @@ export async function cachedApiFetch<T = any>(
 
     try {
       const separator = url.includes("?") ? "&" : "?"
-      // Only append _t if cacheTtlMs is 0, otherwise use cache-friendly url
+
       const reqUrl = cacheTtlMs > 0 ? url : `${url}${separator}_t=${Date.now()}`
 
       const res = await fetch(reqUrl, {
@@ -84,4 +82,3 @@ export async function fetchPwdSeniorApplications(): Promise<any[]> {
     return []
   }
 }
-

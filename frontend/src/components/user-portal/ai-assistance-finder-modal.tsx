@@ -37,7 +37,6 @@ interface AIAssistanceFinderModalProps {
   onClose: () => void
 }
 
-// Full Multilingual Dictionary for the AI Interview & Recommendation Engine
 const I18N = {
   en: {
     modalTitle: "MSWDO Smart Social Assistance Intake Interview",
@@ -48,7 +47,6 @@ const I18N = {
     step3Tab: "3. Narrative Statement",
     step4Tab: "4. AI Assessment & Recommendations",
 
-    // Step 1
     s1Title: "Household Profile & Socio-Economic Demographics",
     s1Subtitle: "Please provide baseline demographic and living conditions to ensure precise MSWDO policy evaluation.",
     qApplicant: "Who is the primary applicant?",
@@ -105,7 +103,6 @@ const I18N = {
     optUrgUrgent: "Urgent Need (Within 1–2 Weeks - Unpaid bills / Medicines)",
     optUrgStandard: "Standard Application (Regular Welfare ID / Annual Pension / Livelihood)",
 
-    // Step 2: Real Life Circumstances & Hardships
     s2Title: "Current Life Situation & Hardships",
     s2Subtitle: "Select all real-life challenges or emergencies your household is currently facing. Our AI will automatically identify and diagnose the exact government programs you qualify for:",
 
@@ -136,7 +133,6 @@ const I18N = {
     hLivelihoodTitle: "Lack of Livelihood Capital or Vocational Skills",
     hLivelihoodDesc: "Unemployed or informal daily earner needing startup seed funds for a micro-enterprise (sari-sari store, street vending) or free TESDA skills certification.",
 
-    // Step 3
     s3Title: "Narrative Statement of Situation",
     s3Subtitle: "Describe your family's current emergency or financial hardship in your own words:",
     narrativePlaceholder: "Example: I am a single mother of 3 children living in Barangay Poblacion. My youngest child was recently hospitalized with pneumonia, and I currently have no stable work to pay the hospital bill...",
@@ -146,7 +142,6 @@ const I18N = {
     chip3: "Bereavement / Funeral expenses for deceased parent",
     chip4: "Indigent senior citizen needing pension & wheelchair",
 
-    // Actions
     btnNext: "Next Step",
     btnBack: "Previous",
     btnAnalyze: "Analyze & Generate AI Recommendation",
@@ -156,7 +151,6 @@ const I18N = {
     btnPrint: "Print Summary",
     btnClose: "Close",
 
-    // Results
     resTitle: "Personalized MSWDO Social Assistance Recommendation",
     resSubtitle: "Based on your intake answers, you are eligible for the following municipal government programs:",
     matchConfidence: "Eligibility Match Score",
@@ -198,7 +192,6 @@ const I18N = {
     step3Tab: "3. Sitwasyon at Kwento",
     step4Tab: "4. Rekomendasyon ng AI",
 
-    // Step 1
     s1Title: "Profile ng Sambahayan at Katayuang Sosyo-Ekonomiko",
     s1Subtitle: "Magbigay ng detalyadong impormasyon tungkol sa iyong pamilya at kalagayan sa buhay para sa tumpak na ebalwasyon.",
     qApplicant: "Para kanino ang hinihinging tulong?",
@@ -255,7 +248,6 @@ const I18N = {
     optUrgUrgent: "Mabilisang Pangangailangan (Sa loob ng 1–2 Linggo - Gamot / Reseta)",
     optUrgStandard: "Karaniwang Aplikasyon (ID Card / Taunang Pensyon / Puhunan)",
 
-    // Step 2: Real Life Circumstances & Hardships
     s2Title: "Kasalukuyang Kalagayan at Nararanasang Krisis",
     s2Subtitle: "Piliin ang mga totoong suliranin o krisis na nararanasan ng iyong pamilya ngayon. Awtomatikong tutukuyin ng AI ang lahat ng programa ng tulong na naaangkop sa inyo:",
 
@@ -286,7 +278,6 @@ const I18N = {
     hLivelihoodTitle: "Walang Trabaho / Kailangan ng Puhunan o Pagsasanay",
     hLivelihoodDesc: "Nais magsimula ng maliit na negosyo (sari-sari store, paninda) o makakuha ng libreng skills training sa TESDA.",
 
-    // Step 3
     s3Title: "Kwento at Detalye ng Kasalukuyang Krisis",
     s3Subtitle: "Ilarawan gamit ang sariling salita ang pinakamabigat na suliranin o pangangailangan ng pamilya:",
     narrativePlaceholder: "Halimbawa: Ako po ay isang solong ina na may 3 anak mula Barangay Poblacion. Na-ospital po ang bunso kong anak dahil sa pneumonia at wala po akong regular na trabaho pambayad sa billing...",
@@ -296,7 +287,6 @@ const I18N = {
     chip3: "Gastusin sa burol at libing ng namatayang magulang",
     chip4: "Matandang senior na kailangan ng social pension at wheelchair",
 
-    // Actions
     btnNext: "Susunod na Hakbang",
     btnBack: "Bumalik",
     btnAnalyze: "Suriin at Magbigay ng Rekomendasyon ng AI",
@@ -306,7 +296,6 @@ const I18N = {
     btnPrint: "I-print ang Buod",
     btnClose: "Isara",
 
-    // Results
     resTitle: "Personal na Rekomendasyon ng Tulong Panlipunan ng MSWDO",
     resSubtitle: "Batay sa iyong mga isinumiteng sagot sa panayam, ikaw ay kwalipikado sa mga sumusunod na programa:",
     matchConfidence: "Antas ng Pagiging Kwalipikado (Match Score)",
@@ -348,7 +337,6 @@ const I18N = {
     step3Tab: "3. Sitwasyon ug Sugilanon",
     step4Tab: "4. Rekomendasyon sa AI",
 
-    // Step 1
     s1Title: "Profile sa Panimalay ug Panginabuhian",
     s1Subtitle: "Palihog paghatag og detalyadong kasayuran bahin sa imong pamilya ug kahimtang sa kinabuhi.",
     qApplicant: "Para kang kinsa ang gipangayo nga tabang?",
@@ -405,7 +393,6 @@ const I18N = {
     optUrgUrgent: "Gikinahanglan Diriot (Sulod sa 1–2 Semana - Tambal / Reseta)",
     optUrgStandard: "Standard nga Aplikasyon (ID Card / Pension / Puhunan)",
 
-    // Step 2: Real Life Circumstances & Hardships
     s2Title: "Kasamtangang Kalisdanan ug Sitwasyon sa Panimalay",
     s2Subtitle: "Pilia ang tanang tinuod nga kalisod o emerhensiya nga gi-atubang sa inyong panimalay karon. Tumbokon sa AI ang tanang tabang sa gobyerno nga angayan ninyong madawat:",
 
@@ -436,7 +423,6 @@ const I18N = {
     hLivelihoodTitle: "Walay Trabaho / Nagkinahanglan og Puhunan o Pagbansay",
     hLivelihoodDesc: "Gusto magtukod og gamayng negosyo (sari-sari store, paninda) o mokuha og libreng pagbansay sa TESDA.",
 
-    // Step 3
     s3Title: "Sugilanon ug Detalye sa Kasamtangang Sitwasyon",
     s3Subtitle: "Ihulagway gamit ang imong kaugalingong pulong ang pinakalisod nga suliran o panginahanglan sa pamilya:",
     narrativePlaceholder: "Pananglitan: Ako usa ka solo nga inahan nga dunay 3 ka anak nga nagpuyo sa Poblacion. Na-ospital ang akong kamanghuran tungod sa pneumonia ug wala koy regular nga trabaho...",
@@ -446,7 +432,6 @@ const I18N = {
     chip3: "Gasto sa haya ug lubong sa namatay nga ginikanan",
     chip4: "Tiguwang nga senior nga nanginahanglan og pension ug wheelchair",
 
-    // Actions
     btnNext: "Sunod nga Lakang",
     btnBack: "Balik",
     btnAnalyze: "Susiha ug Paghatag og Rekomendasyon sa AI",
@@ -456,7 +441,6 @@ const I18N = {
     btnPrint: "I-print ang Sumaryo",
     btnClose: "Isira",
 
-    // Results
     resTitle: "Personal nga Rekomendasyon sa Tabang Sosyal sa MSWDO",
     resSubtitle: "Base sa imong mga tubag sa interbyu, kwalipikado ka sa mga mosunod nga programa:",
     matchConfidence: "Lebel sa Pagka-Kwalipikado (Match Score)",
@@ -497,7 +481,6 @@ export default function AIAssistanceFinderModal({
   const navigate = useNavigate()
   const { language: contextLang, setLanguage } = useLanguage()
 
-  // Local language state (synced with global context)
   const [selectedLang, setSelectedLang] = useState<Language>(() => {
     return contextLang === "tl" || contextLang === "bis" ? contextLang : "en"
   })
@@ -509,10 +492,8 @@ export default function AIAssistanceFinderModal({
     setLanguage(lang)
   }
 
-  // Interview Multi-step flow: 1 -> 2 -> 3 -> 4 (Results)
   const [currentStep, setCurrentStep] = useState<number>(1)
 
-  // Step 1: Socio-economic profile state
   const [applicantType, setApplicantType] = useState("self")
   const [incomeLevel, setIncomeLevel] = useState("low")
   const [dependentsCount, setDependentsCount] = useState("3-5")
@@ -523,7 +504,6 @@ export default function AIAssistanceFinderModal({
   const [healthInsurance, setHealthInsurance] = useState("indigent")
   const [urgency, setUrgency] = useState("immediate")
 
-  // Step 2: Real Life Circumstances & Hardship Indicators
   const [selectedHardships, setSelectedHardships] = useState<Record<string, boolean>>({
     med_emergency: true,
     bereavement: false,
@@ -536,14 +516,11 @@ export default function AIAssistanceFinderModal({
     unemployed_livelihood: false,
   })
 
-  // Step 3: Narrative
   const [narrativeText, setNarrativeText] = useState("")
 
-  // Step 4: AI Analysis Output
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<any>(null)
 
-  // Interactive Gemini Assistant Chat State
   const [chatInput, setChatInput] = useState("")
   const [isChatSending, setIsChatSending] = useState(false)
   const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "assistant"; text: string }>>([])
@@ -614,7 +591,6 @@ export default function AIAssistanceFinderModal({
     }))
   }
 
-  // Map icon and badge color to program
   const resolveProgramCardMeta = (prog: any) => {
     const id = String(prog.id || "").toLowerCase()
     const cat = String(prog.category || "").toLowerCase()
@@ -659,7 +635,6 @@ export default function AIAssistanceFinderModal({
     }
   }
 
-  // Run AI Evaluation logic (Gemini API with seamless local fallback)
   const handleRunAiEvaluation = async () => {
     setIsAnalyzing(true)
     setCurrentStep(4)
@@ -709,7 +684,6 @@ export default function AIAssistanceFinderModal({
       console.warn("[Gemini AI] Switching to local evaluation fallback:", apiErr)
     }
 
-    // Fallback: Local Rule Diagnostic Engine
     setTimeout(() => {
       let baseScore = 95
       const recs: any[] = []
@@ -776,7 +750,6 @@ export default function AIAssistanceFinderModal({
         narrativeLower.includes("puhunan") ||
         narrativeLower.includes("tindahan")
 
-      // 1. AICS Medical Card
       if (hasMed) {
         recs.push({
           id: "aics_medical",
@@ -823,7 +796,6 @@ export default function AIAssistanceFinderModal({
         )
       }
 
-      // 2. AICS Burial
       if (hasBurial) {
         recs.push({
           id: "aics_burial",
@@ -864,7 +836,6 @@ export default function AIAssistanceFinderModal({
         )
       }
 
-      // 3. Food / Crisis Survival
       if (hasFoodCrisis && !hasMed && !hasBurial) {
         recs.push({
           id: "aics_food",
@@ -895,7 +866,6 @@ export default function AIAssistanceFinderModal({
         })
       }
 
-      // 4. Solo Parent Welfare (RA 11861)
       if (hasSoloParent) {
         recs.push({
           id: "solo_parent",
@@ -936,7 +906,6 @@ export default function AIAssistanceFinderModal({
         )
       }
 
-      // 5. PWD Services
       if (hasPwd) {
         recs.push({
           id: "pwd_services",
@@ -976,7 +945,6 @@ export default function AIAssistanceFinderModal({
         )
       }
 
-      // 6. Senior Citizen Welfare & Social Pension
       if (hasSenior) {
         recs.push({
           id: "senior_services",
@@ -1016,7 +984,6 @@ export default function AIAssistanceFinderModal({
         )
       }
 
-      // 7. Child Welfare & ECCD Daycare Program
       if (hasChildWelfare) {
         recs.push({
           id: "child_welfare",
@@ -1055,7 +1022,6 @@ export default function AIAssistanceFinderModal({
         )
       }
 
-      // 8. Sustainable Livelihood & Skills Training
       if (hasLivelihood || recs.length < 2) {
         recs.push({
           id: "livelihood_prog",
@@ -1095,7 +1061,6 @@ export default function AIAssistanceFinderModal({
         )
       }
 
-      // Economic Indigency scoring
       if (incomeLevel === "none" || incomeLevel === "low") {
         baseScore = 98
         justifications.unshift(
@@ -1140,9 +1105,9 @@ export default function AIAssistanceFinderModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-blue-100 dark:border-slate-800 overflow-hidden">
-        {/* ========================================================= */}
-        {/* MODAL HEADER */}
-        {/* ========================================================= */}
+        {}
+        {}
+        {}
         <div className="relative px-5 sm:px-7 py-4 sm:py-5 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-amber-300 shadow-inner shrink-0">
@@ -1163,9 +1128,9 @@ export default function AIAssistanceFinderModal({
             </div>
           </div>
 
-          {/* Header Controls: Language Switcher & Close */}
+          {}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Quick Language Switcher */}
+            {}
             <div className="flex rounded-xl bg-white/10 p-0.5 border border-white/20 backdrop-blur-sm text-[11px] font-bold">
               <button
                 type="button"
@@ -1209,9 +1174,9 @@ export default function AIAssistanceFinderModal({
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* STEP PROGRESS NAVIGATION TABS */}
-        {/* ========================================================= */}
+        {}
+        {}
+        {}
         <div className="px-5 sm:px-7 py-2.5 bg-slate-100/90 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 overflow-x-auto">
           <div className="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-xs font-bold">
             <button
@@ -1283,13 +1248,13 @@ export default function AIAssistanceFinderModal({
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* MODAL BODY (SCROLLABLE CONTENT FOR ACTIVE STEP) */}
-        {/* ========================================================= */}
+        {}
+        {}
+        {}
         <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6 text-gray-800 dark:text-slate-100 text-sm">
-          {/* ------------------------------------------------------- */}
-          {/* STEP 1: HOUSEHOLD & ECONOMIC PROFILE */}
-          {/* ------------------------------------------------------- */}
+          {}
+          {}
+          {}
           {currentStep === 1 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div className="space-y-1">
@@ -1303,7 +1268,7 @@ export default function AIAssistanceFinderModal({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Applicant Role */}
+                {}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
                     {t.qApplicant}
@@ -1321,7 +1286,7 @@ export default function AIAssistanceFinderModal({
                   </select>
                 </div>
 
-                {/* Monthly Income Bracket */}
+                {}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
                     {t.qIncome}
@@ -1338,7 +1303,7 @@ export default function AIAssistanceFinderModal({
                   </select>
                 </div>
 
-                {/* Registered Barangay */}
+                {}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5 text-blue-500" />
@@ -1358,7 +1323,7 @@ export default function AIAssistanceFinderModal({
                   </select>
                 </div>
 
-                {/* Dependents count */}
+                {}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
                     {t.qDependents}
@@ -1374,7 +1339,7 @@ export default function AIAssistanceFinderModal({
                   </select>
                 </div>
 
-                {/* Employment Status */}
+                {}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
                     {t.qEmployment}
@@ -1391,7 +1356,7 @@ export default function AIAssistanceFinderModal({
                   </select>
                 </div>
 
-                {/* Social Welfare / 4Ps Status */}
+                {}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
                     <Activity className="h-3.5 w-3.5 text-indigo-500" />
@@ -1409,7 +1374,7 @@ export default function AIAssistanceFinderModal({
                   </select>
                 </div>
 
-                {/* Health Insurance / PhilHealth */}
+                {}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
                     <Stethoscope className="h-3.5 w-3.5 text-emerald-500" />
@@ -1427,7 +1392,7 @@ export default function AIAssistanceFinderModal({
                   </select>
                 </div>
 
-                {/* Assistance Urgency */}
+                {}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
                     <Clock className="h-3.5 w-3.5 text-rose-500" />
@@ -1444,7 +1409,7 @@ export default function AIAssistanceFinderModal({
                   </select>
                 </div>
 
-                {/* Housing / Residency */}
+                {}
                 <div className="sm:col-span-2 space-y-1.5">
                   <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
                     {t.qResidency}
@@ -1463,9 +1428,9 @@ export default function AIAssistanceFinderModal({
             </div>
           )}
 
-          {/* ------------------------------------------------------- */}
-          {/* STEP 2: REAL-LIFE HARDSHIP & CRISIS CIRCUMSTANCES */}
-          {/* ------------------------------------------------------- */}
+          {}
+          {}
+          {}
           {currentStep === 2 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div className="space-y-1">
@@ -1478,9 +1443,9 @@ export default function AIAssistanceFinderModal({
                 </p>
               </div>
 
-              {/* 9 Real-life Hardship Cards Grid */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[58vh] overflow-y-auto pr-1">
-                {/* 1. Medical Emergency */}
+                {}
                 <div
                   onClick={() => toggleHardship("med_emergency")}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
@@ -1514,7 +1479,7 @@ export default function AIAssistanceFinderModal({
                   </div>
                 </div>
 
-                {/* 2. Bereavement / Funeral */}
+                {}
                 <div
                   onClick={() => toggleHardship("bereavement")}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
@@ -1548,7 +1513,7 @@ export default function AIAssistanceFinderModal({
                   </div>
                 </div>
 
-                {/* 3. Food Shortage / Survival */}
+                {}
                 <div
                   onClick={() => toggleHardship("acute_hunger")}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
@@ -1582,7 +1547,7 @@ export default function AIAssistanceFinderModal({
                   </div>
                 </div>
 
-                {/* 4. Stranded / Provincial Travel */}
+                {}
                 <div
                   onClick={() => toggleHardship("stranded_transpo")}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
@@ -1616,7 +1581,7 @@ export default function AIAssistanceFinderModal({
                   </div>
                 </div>
 
-                {/* 5. Physical / Mental Disability (PWD) */}
+                {}
                 <div
                   onClick={() => toggleHardship("mobility_disability")}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
@@ -1650,7 +1615,7 @@ export default function AIAssistanceFinderModal({
                   </div>
                 </div>
 
-                {/* 6. Elderly Care / Senior Citizen */}
+                {}
                 <div
                   onClick={() => toggleHardship("elderly_care")}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
@@ -1684,7 +1649,7 @@ export default function AIAssistanceFinderModal({
                   </div>
                 </div>
 
-                {/* 7. Solo Parent Raising Kids Alone */}
+                {}
                 <div
                   onClick={() => toggleHardship("solo_parenting")}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
@@ -1718,7 +1683,7 @@ export default function AIAssistanceFinderModal({
                   </div>
                 </div>
 
-                {/* 8. Young Children Nutrition / Daycare */}
+                {}
                 <div
                   onClick={() => toggleHardship("toddler_daycare")}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
@@ -1752,7 +1717,7 @@ export default function AIAssistanceFinderModal({
                   </div>
                 </div>
 
-                {/* 9. Need Livelihood Seed Capital / Skills */}
+                {}
                 <div
                   onClick={() => toggleHardship("unemployed_livelihood")}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none sm:col-span-2 ${
@@ -1789,9 +1754,9 @@ export default function AIAssistanceFinderModal({
             </div>
           )}
 
-          {/* ------------------------------------------------------- */}
-          {/* STEP 3: NARRATIVE / INTERVIEW CONVERSATIONAL STATEMENT */}
-          {/* ------------------------------------------------------- */}
+          {}
+          {}
+          {}
           {currentStep === 3 && (
             <div className="space-y-5 animate-in fade-in duration-200">
               <div className="space-y-1">
@@ -1813,7 +1778,7 @@ export default function AIAssistanceFinderModal({
                   className="w-full px-4 py-3 text-xs rounded-2xl border border-gray-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white shadow-inner"
                 />
 
-                {/* Quick Scenarios chips */}
+                {}
                 <div className="space-y-2">
                   <span className="text-[11px] font-bold text-gray-500 dark:text-slate-400">
                     {t.quickChipsLabel}
@@ -1865,9 +1830,9 @@ export default function AIAssistanceFinderModal({
             </div>
           )}
 
-          {/* ------------------------------------------------------- */}
-          {/* STEP 4: AI ANALYSIS OUTPUT & TIERED RECOMMENDATIONS */}
-          {/* ------------------------------------------------------- */}
+          {}
+          {}
+          {}
           {currentStep === 4 && (
             <div className="space-y-6 animate-in fade-in duration-300">
               {isAnalyzing ? (
@@ -1884,7 +1849,7 @@ export default function AIAssistanceFinderModal({
                 </div>
               ) : analysisResult ? (
                 <div className="space-y-6">
-                  {/* Overall Confidence Score Card with Household Qualification Profile */}
+                  {}
                   <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-blue-500/15 border border-emerald-500/20 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
@@ -1920,9 +1885,9 @@ export default function AIAssistanceFinderModal({
                       </button>
                     </div>
 
-                    {/* Granular Household Qualification Snapshot Matrix */}
+                    {}
                     <div className="pt-2 border-t border-emerald-500/20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
-                      {/* Income Bracket */}
+                      {}
                       <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-800/80 border border-emerald-100 dark:border-slate-700/60 flex items-center gap-2">
                         <Wallet className="h-4 w-4 text-emerald-600 shrink-0" />
                         <div className="min-w-0">
@@ -1935,7 +1900,7 @@ export default function AIAssistanceFinderModal({
                         </div>
                       </div>
 
-                      {/* Dependents & Applicant */}
+                      {}
                       <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-800/80 border border-emerald-100 dark:border-slate-700/60 flex items-center gap-2">
                         <Users className="h-4 w-4 text-blue-600 shrink-0" />
                         <div className="min-w-0">
@@ -1948,7 +1913,7 @@ export default function AIAssistanceFinderModal({
                         </div>
                       </div>
 
-                      {/* Barangay & Urgency */}
+                      {}
                       <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-800/80 border border-emerald-100 dark:border-slate-700/60 flex items-center gap-2">
                         <Clock className="h-4 w-4 text-rose-500 shrink-0" />
                         <div className="min-w-0">
@@ -1961,7 +1926,7 @@ export default function AIAssistanceFinderModal({
                         </div>
                       </div>
 
-                      {/* Welfare Registry Status */}
+                      {}
                       <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-800/80 border border-emerald-100 dark:border-slate-700/60 flex items-center gap-2">
                         <Activity className="h-4 w-4 text-indigo-600 shrink-0" />
                         <div className="min-w-0">
@@ -1976,7 +1941,7 @@ export default function AIAssistanceFinderModal({
                     </div>
                   </div>
 
-                  {/* Recommendation Cards Stack */}
+                  {}
                   <div className="space-y-4">
                     {analysisResult.recommendations.map((rec: any) => {
                       const IconComp = rec.icon || ShieldAlert
@@ -1985,7 +1950,7 @@ export default function AIAssistanceFinderModal({
                           key={rec.id}
                           className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-xs hover:border-blue-400 dark:hover:border-blue-600 transition-all space-y-4"
                         >
-                          {/* Program Header */}
+                          {}
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                             <div className="flex items-start gap-3">
                               <div className="h-10 w-10 rounded-2xl bg-blue-50 dark:bg-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-300 shrink-0">
@@ -2018,7 +1983,7 @@ export default function AIAssistanceFinderModal({
                             </div>
                           </div>
 
-                          {/* Specific Window & Processing Turnaround Row */}
+                          {}
                           <div className="flex flex-wrap gap-2 text-[11px]">
                             {rec.windowUnit && (
                               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-200 font-semibold border border-blue-200 dark:border-blue-900">
@@ -2042,7 +2007,7 @@ export default function AIAssistanceFinderModal({
                             )}
                           </div>
 
-                          {/* Why You Are Eligible (Matched Criteria) */}
+                          {}
                           {rec.criteriaMatched && rec.criteriaMatched.length > 0 && (
                             <div className="bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 p-3.5 rounded-2xl space-y-2">
                               <div className="text-[11px] font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
@@ -2060,7 +2025,7 @@ export default function AIAssistanceFinderModal({
                             </div>
                           )}
 
-                          {/* Requirements & Direct Action Link */}
+                          {}
                           <div className="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                             <div className="space-y-1">
                               <span className="font-bold text-gray-700 dark:text-slate-200 text-[11px] block">
@@ -2093,7 +2058,7 @@ export default function AIAssistanceFinderModal({
                     })}
                   </div>
 
-                  {/* AI Explainability & Policy Justification */}
+                  {}
                   <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-800/40 text-xs space-y-2">
                     <div className="font-bold text-blue-900 dark:text-blue-300 flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-1.5">
@@ -2121,7 +2086,7 @@ export default function AIAssistanceFinderModal({
                     )}
                   </div>
 
-                  {/* Actionable Advice & Next Steps */}
+                  {}
                   {analysisResult.actionableAdvice && (
                     <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/40 text-xs space-y-2">
                       <div className="font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
@@ -2134,7 +2099,7 @@ export default function AIAssistanceFinderModal({
                     </div>
                   )}
 
-                  {/* Official Administrative Discretion & Approval Notice Banner */}
+                  {}
                   <div className="p-4 sm:p-4.5 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-500/30 dark:border-amber-700/40 text-xs space-y-2 shadow-xs">
                     <div className="flex items-center gap-2 font-bold text-amber-950 dark:text-amber-300">
                       <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -2145,7 +2110,7 @@ export default function AIAssistanceFinderModal({
                     </p>
                   </div>
 
-                  {/* Interactive Gemini AI Social Worker Chat Assistant */}
+                  {}
                   <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-indigo-50/50 via-slate-50 to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 border border-indigo-100 dark:border-slate-700 shadow-sm space-y-3.5">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
@@ -2163,7 +2128,7 @@ export default function AIAssistanceFinderModal({
                       </div>
                     </div>
 
-                    {/* Quick inquiry chips */}
+                    {}
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       <button
                         type="button"
@@ -2188,7 +2153,7 @@ export default function AIAssistanceFinderModal({
                       </button>
                     </div>
 
-                    {/* Chat history list */}
+                    {}
                     {chatMessages.length > 0 && (
                       <div className="space-y-2.5 max-h-56 overflow-y-auto p-3 rounded-2xl bg-white dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 text-xs">
                         {chatMessages.map((msg, mIdx) => (
@@ -2212,7 +2177,7 @@ export default function AIAssistanceFinderModal({
                       </div>
                     )}
 
-                    {/* Chat Input Bar */}
+                    {}
                     <form
                       onSubmit={(e) => {
                         e.preventDefault()
@@ -2248,9 +2213,9 @@ export default function AIAssistanceFinderModal({
           )}
         </div>
 
-        {/* ========================================================= */}
-        {/* MODAL FOOTER CONTROLS */}
-        {/* ========================================================= */}
+        {}
+        {}
+        {}
         <div className="px-5 sm:px-7 py-3.5 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <p className="text-[11px] text-gray-500 dark:text-slate-400 italic text-center sm:text-left">
             {t.disclaimer}

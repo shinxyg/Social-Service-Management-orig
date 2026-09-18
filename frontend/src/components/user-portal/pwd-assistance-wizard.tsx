@@ -118,13 +118,12 @@ function formatFileSize(bytes: number) {
 }
 
 interface FormData {
-  // Checklist
+
   isResident: boolean
   hasDisability: boolean
   isIndigent: boolean
   applyingFor: "myself" | "family"
 
-  // Step 2: Personal Info
   firstName: string
   middleName: string
   lastName: string
@@ -138,30 +137,25 @@ interface FormData {
   contactNumber: string
   email: string
 
-  // Address
   houseNo: string
   street: string
   barangay: string
   cityMunicipality: string
 
-  // Disability
   disabilityType: string
   disabilityTypeOther: string
   causeOfDisability: string
   causeOfDisabilityOther: string
   disabilityDescription: string
 
-  // Household
   householdMembersCount: string
   monthlyHouseholdIncome: string
   monthlyHouseholdExpenses: string
 
-  // Assistance
   assistanceType: string
   assistanceTypeOther: string
   reasonForRequest: string
 
-  // Certification & Signature
   isCertified: boolean
   signatureName: string
 }
@@ -208,7 +202,6 @@ const EMPTY_FORM: FormData = {
   signatureName: "",
 }
 
-// ── UI Helper Components ──
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="border-b border-border pb-2">
@@ -476,7 +469,6 @@ interface PWDSocialAssistanceWizardProps {
   onStepChange?: (step: number) => void
 }
 
-// ── Main Wizard Component ──
 export default function PWDSocialAssistanceWizard({
   userProfile: propUserProfile,
   onBack,
@@ -540,7 +532,6 @@ export default function PWDSocialAssistanceWizard({
     }
   }, [step, submissionStage, onStepChange])
 
-  // Poll for status update when user just submitted an application in this session
   useEffect(() => {
     if (submissionStage !== "pending") return
     let isMounted = true
@@ -587,7 +578,6 @@ export default function PWDSocialAssistanceWizard({
     }
   }, [submissionStage, reference, userProfile])
 
-  // Reload / Navigation warning protection
   useEffect(() => {
     if (step > 1 && submissionStage === "form") {
       ;(window as any).__isFormDirty = true
@@ -723,7 +713,6 @@ export default function PWDSocialAssistanceWizard({
           a.disabilityType ||
           (typeof a.type === "string" && a.type.toLowerCase().includes("pwd"))
 
-        // Also check if any PWD identifier matches
         const matchesAnyId =
           checkFieldMatch(a.assignedIdNumber) ||
           checkFieldMatch(a.referenceNumber) ||
@@ -787,7 +776,6 @@ export default function PWDSocialAssistanceWizard({
     setFormData((prev) => ({ ...prev, [key]: value }))
   }
 
-  // Strict Photo Upload
   const handleFileUpload = (docId: string, files: File[]) => {
     if (!files || files.length === 0) return
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
@@ -819,7 +807,6 @@ export default function PWDSocialAssistanceWizard({
     })
   }
 
-  // Step 1 Validation (Checklist)
   const step1Valid =
     formData.isResident &&
     formData.hasDisability &&
@@ -828,7 +815,6 @@ export default function PWDSocialAssistanceWizard({
     formData.disabilityType !== "" &&
     formData.assistanceType !== ""
 
-  // Step 2 Validation (Personal Information / Application Form)
   const step2Valid =
     Boolean((formData.disabilityDescription || "").trim()) &&
     Boolean((formData.householdMembersCount || "").trim()) &&
@@ -836,12 +822,10 @@ export default function PWDSocialAssistanceWizard({
     Boolean((formData.monthlyHouseholdExpenses || "").trim()) &&
     Boolean((formData.reasonForRequest || "").trim())
 
-  // Step 3 Validation (Upload Documents)
   const step3Valid = REQUIRED_DOCUMENTS.every(
     (doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0
   )
 
-  // Step 4 Validation (Review & Submit)
   const step4Valid = true
 
   const canGoNext =
@@ -953,14 +937,13 @@ export default function PWDSocialAssistanceWizard({
     }
 
     try {
-      // 1. Submit to backend API first
+
       await fetch(`${API_BASE}/api/pwd-senior/applications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newApp),
       })
 
-      // 2. Safe localStorage
       try {
         const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
         localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing.slice(0, 5)]))
@@ -973,7 +956,6 @@ export default function PWDSocialAssistanceWizard({
       }
       window.dispatchEvent(new Event("pwd_senior_applications_updated"))
 
-      // Dispatch real-time event to Admin dashboard
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)
     } catch {
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)
@@ -1097,7 +1079,7 @@ export default function PWDSocialAssistanceWizard({
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
       <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-        {/* Step indicator dots */}
+        {}
         <div className="flex items-center px-6 pt-6 pb-4">
           {STEPS.map((s, idx) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
@@ -1119,7 +1101,7 @@ export default function PWDSocialAssistanceWizard({
           ))}
         </div>
 
-        {/* Tab labels */}
+        {}
         <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
@@ -1138,7 +1120,7 @@ export default function PWDSocialAssistanceWizard({
         </div>
 
         <div className="p-6 min-h-90">
-          {/* ──────────────── STEP 1: COMPLETE CHECKLIST ──────────────── */}
+          {}
           {step === 1 && (
             <div className="space-y-6">
               <div>
@@ -1179,7 +1161,7 @@ export default function PWDSocialAssistanceWizard({
                 )}
               </div>
 
-              {/* Service Info Banner */}
+              {}
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
@@ -1294,10 +1276,10 @@ export default function PWDSocialAssistanceWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 2: PERSONAL INFORMATION ──────────────── */}
+          {}
           {step === 2 && (
             <div className="space-y-6">
-              {/* IMPORTANT REMINDER BOX matching Pic 1 */}
+              {}
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -1308,7 +1290,7 @@ export default function PWDSocialAssistanceWizard({
                 </div>
               </div>
 
-              {/* APPLICANT FIELDS matching Pic 1 */}
+              {}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="QC ID *">
@@ -1382,7 +1364,7 @@ export default function PWDSocialAssistanceWizard({
                 </div>
               </div>
 
-              {/* DISABILITY INFORMATION */}
+              {}
               <div className="space-y-4">
                 <SectionHeader title="DISABILITY INFORMATION" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1408,7 +1390,7 @@ export default function PWDSocialAssistanceWizard({
                 </Field>
               </div>
 
-              {/* HOUSEHOLD & SOCIO-ECONOMIC INFORMATION */}
+              {}
               <div className="space-y-4">
                 <SectionHeader title="HOUSEHOLD & SOCIO-ECONOMIC INFORMATION" />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1442,7 +1424,7 @@ export default function PWDSocialAssistanceWizard({
                 </div>
               </div>
 
-              {/* ASSISTANCE DETAILS */}
+              {}
               <div className="space-y-4">
                 <SectionHeader title="ASSISTANCE DETAILS" />
                 <Field label="Type of Assistance Requested *">
@@ -1468,8 +1450,8 @@ export default function PWDSocialAssistanceWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 3: SAMPLE DOCUMENTS / UPLOAD PHOTO ──────────────── */}
-          {/* ──────────────── STEP 3: FILE UPLOAD / SUBMIT DOCUMENTS ──────────────── */}
+          {}
+          {}
           {step === 3 && (
             <div className="space-y-4">
               <h3 className="text-base font-bold text-foreground">{t("fileUploadHeader") || "File upload"}</h3>
@@ -1585,7 +1567,7 @@ export default function PWDSocialAssistanceWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 4: REVIEW & SUBMIT ──────────────── */}
+          {}
           {step === 4 && (
             <div className="space-y-5">
               <div>
@@ -1680,7 +1662,7 @@ export default function PWDSocialAssistanceWizard({
                 </AccordionSection>
               </div>
 
-              {/* Important Notice */}
+              {}
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                 <p className="text-sm text-blue-700">
@@ -1691,7 +1673,7 @@ export default function PWDSocialAssistanceWizard({
           )}
         </div>
 
-        {/* Wizard Footer Navigation */}
+        {}
         <div className="flex items-center justify-between border-t border-border bg-gray-50 px-6 py-4">
           <button
             type="button"
@@ -1733,7 +1715,7 @@ export default function PWDSocialAssistanceWizard({
         </div>
       </div>
 
-      {/* 🔔 CONFIRMATION & PRIVACY CONSENT DIALOG / MODAL BEFORE SUBMIT */}
+      {}
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -1746,7 +1728,7 @@ export default function PWDSocialAssistanceWizard({
         confirmText="YES, SUBMIT APPLICATION"
       />
 
-      {/* 📸 Document Camera Capture Modal */}
+      {}
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}
         onClose={() => setCameraDoc(null)}
@@ -1758,7 +1740,7 @@ export default function PWDSocialAssistanceWizard({
         }}
       />
 
-      {/* 👁️ UPLOADED DOCUMENT FULL PREVIEW MODAL */}
+      {}
       {previewDocModal && (
         <UploadedDocPreviewModal
           title={previewDocModal.title}

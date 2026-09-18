@@ -1,10 +1,9 @@
-// routes/soloParentRoutes.js
+
 const express = require('express');
 const router = express.Router();
 const soloParentController = require('../controllers/soloParentController');
-const uploadFiles = require('../middleware/fileUpload'); // Multer config
+const uploadFiles = require('../middleware/fileUpload');
 
-// User routes
 router.post(
   '/create',
   soloParentController.createApplication
@@ -81,4 +80,4 @@ router.delete('/admin/clear-all', soloParentController.clearApplications);
 router.delete('/admin/:applicationId', soloParentController.deleteApplication);
 router.delete('/:applicationId', soloParentController.deleteApplication);
 
-module.exports = router;
+module.exports = router;

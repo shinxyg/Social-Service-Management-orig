@@ -72,7 +72,6 @@ function initials(name: string) {
   return `${parts[0]?.charAt(0) ?? ""}${parts[parts.length - 1]?.charAt(0) ?? ""}`.toUpperCase()
 }
 
-// Ino-convert ang raw row mula sa backend (snake_case) papuntang ActivityEntry (camelCase)
 function mapActivityRow(row: any): ActivityEntry {
   return {
     id: String(row.id),
@@ -316,8 +315,6 @@ export default function ActivityLog() {
     fetchActivity()
   }, [fetchActivity])
 
-  // Kunin ang laman ng trash mula sa backend tuwing bubuksan ito,
-  // para sync sa totoong data (hindi lang local state).
   useEffect(() => {
     if (showTrash) {
       fetchDeletedActivity()
@@ -330,8 +327,6 @@ export default function ActivityLog() {
     }
   }, [])
 
-  // Soft delete: alisin agad sa main list (optimistic), ilagay sa "recently deleted".
-  // Kung mabigo ang request sa backend, ibabalik sa main list at may error message.
   const handleSoftDelete = useCallback(async (entry: ActivityEntry) => {
     setActivity((prev) => prev.filter((a) => a.id !== entry.id))
     setRecentlyDeleted((prev) => [{ ...entry, deletedAt: new Date().toISOString() }, ...prev])
@@ -345,7 +340,7 @@ export default function ActivityLog() {
       if (!res.ok) throw new Error("soft-delete failed")
     } catch (err) {
       console.error(err)
-      // i-rollback ang optimistic update
+
       setRecentlyDeleted((prev) => prev.filter((a) => a.id !== entry.id))
       setActivity((prev) =>
         [...prev, entry].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
@@ -355,7 +350,6 @@ export default function ActivityLog() {
     }
   }, [])
 
-  // Undo mula sa toast, o Restore mula sa trash panel — parehong balik sa main list
   const handleRestore = useCallback(async (entry: ActivityEntry) => {
     setRecentlyDeleted((prev) => prev.filter((a) => a.id !== entry.id))
     setActivity((prev) => {
@@ -371,14 +365,13 @@ export default function ActivityLog() {
       if (!res.ok) throw new Error("restore failed")
     } catch (err) {
       console.error(err)
-      // i-rollback ang optimistic update
+
       setActivity((prev) => prev.filter((a) => a.id !== entry.id))
       setRecentlyDeleted((prev) => [entry, ...prev])
       setTrashErrorMsg("Hindi na-restore ang entry. Siguraduhing tumatakbo ang backend server.")
     }
   }, [])
 
-  // Permanenteng pagbura — kailangan muna ng confirmation
   const requestPermanentDelete = useCallback((entry: ActivityEntry) => {
     setConfirmTarget(entry)
   }, [])
@@ -420,7 +413,7 @@ export default function ActivityLog() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto relative">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-3xl font-bold text-foreground">
           {showTrash ? "Recently Deleted" : "Activity Log"}
@@ -454,7 +447,7 @@ export default function ActivityLog() {
       </div>
 
       {showTrash ? (
-        /* Trash view — pinapalitan ang buong content habang naka-open ang Recently Deleted */
+
         <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
           <div className="px-4 py-3 border-b border-border">
             <h2 className="text-sm font-semibold text-foreground">
@@ -490,7 +483,7 @@ export default function ActivityLog() {
             <div className="p-4 rounded-lg bg-red-50 text-red-700 text-sm">{errorMsg}</div>
           )}
 
-          {/* Stats */}
+          {}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-card border border-border rounded-2xl p-5 shadow-soft">
               <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -522,7 +515,7 @@ export default function ActivityLog() {
             </div>
           </div>
 
-          {/* Filters */}
+          {}
           <div className="bg-card border border-border rounded-lg p-4 space-y-4">
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
@@ -574,7 +567,7 @@ export default function ActivityLog() {
             </div>
           </div>
 
-          {/* Timeline */}
+          {}
           <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
             <div className="px-4 py-3 border-b border-border">
               <h2 className="text-sm font-semibold text-foreground">
@@ -598,7 +591,7 @@ export default function ActivityLog() {
         </>
       )}
 
-      {/* Undo toast */}
+      {}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
           <div className="flex items-center gap-3 bg-foreground text-background px-4 py-3 rounded-xl shadow-lg text-sm">
@@ -624,7 +617,7 @@ export default function ActivityLog() {
         </div>
       )}
 
-      {/* Confirm permanent delete modal */}
+      {}
       {confirmTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-card border border-border rounded-2xl shadow-lg max-w-sm w-full p-5">

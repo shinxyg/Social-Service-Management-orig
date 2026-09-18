@@ -221,20 +221,17 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
   const bypassedActiveAppRef = useRef(false)
   const dismissedAppRefCurrent = useRef<string | null>(null)
 
-  // Checklist State (Step 1)
   const [isResident, setIsResident] = useState(false)
   const [isSenior, setIsSenior] = useState(false)
   const [hasSeniorId, setHasSeniorId] = useState(false)
   const [isIndigentOrInNeed, setIsIndigentOrInNeed] = useState(false)
 
-  // Form Data (Step 1 & Step 2)
   const [formData, setFormData] = useState(() => {
     const prof: any = propUserProfile || getCurrentUserProfile() || {}
     const fullName = `${prof.firstName || ""} ${prof.lastName || ""}`.trim()
     return {
       seniorIdNumber: "",
 
-      // Step 2: Personal (from QCID profile)
       qcidNumber: prof.qcidNo || prof.qcidNumber || getLoggedInUserQcid(),
       firstName: prof.firstName || prof.first_name || "",
       middleName: prof.middleName || prof.middle_name || "",
@@ -253,7 +250,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       contactNumber: String(prof.contactNo || prof.mobileNumber || "").replace(/\s+/g, ""),
       emailAddress: prof.email || "",
 
-      // Step 2: Household & Need
       livingArrangement: "Alone",
       familyMembersCount: "1",
       monthlyIncome: "Below ₱5,000",
@@ -262,14 +258,12 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       purposeOfAssistance: "",
       needDescription: "Living independently and requesting financial assistance for maintenance medicine.",
 
-      // Step 4 & 5
       signatureName: fullName,
       agreedToCertification: false,
       districtOffice: "main",
     }
   })
 
-  // Reload / Navigation warning protection — only active starting Step 2
   const isFormDirty = !submitted && step > 1
 
   useEffect(() => {
@@ -301,7 +295,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
     }
   }, [step, submitted, onStepChange])
 
-  // Real-time active application & approval state sync
   useEffect(() => {
     let isMounted = true
 
@@ -406,7 +399,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
     }
   }, [userProfile, formData.emailAddress, formData.qcidNumber, formData.firstName, formData.lastName])
 
-  // Uploaded Files (Step 3)
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({})
   const [cameraDoc, setCameraDoc] = useState<RequiredDoc | null>(null)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
@@ -501,7 +493,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         } catch {}
       }
 
-      // Strict matching against registered Senior Citizen records (New App, Renewal, or existing ID)
       const matchedApp = allApps.find((a) => {
         if (!a) return false
         const cat = String(a.category || a.service || a.serviceCategory || "").toUpperCase()
@@ -518,13 +509,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         const aExistingDigits = aExistingClean.replace(/\D/g, "")
         const aQcidDigits = aQcidClean.replace(/\D/g, "")
 
-        // 1. Strict exact alphanumeric match (all characters must match exactly)
         if (aAssignedClean && aAssignedClean === cleanTyped) return true
         if (aRefClean && aRefClean === cleanTyped) return true
         if (aExistingClean && aExistingClean === cleanTyped) return true
         if (aQcidClean && aQcidClean === cleanTyped) return true
 
-        // 2. Exact full 16-digit or exact sequence match
         if (cleanDigits.length >= 6) {
           if (aAssignedDigits && (aAssignedDigits === cleanDigits || (cleanDigits.length >= 16 && aAssignedDigits.endsWith(cleanDigits)))) return true
           if (aRefDigits && (aRefDigits === cleanDigits || (cleanDigits.length >= 16 && aRefDigits.endsWith(cleanDigits)))) return true
@@ -551,7 +540,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         setVerifyError(null)
         setVerifiedSeniorName(foundName || "SENIOR CITIZEN BENEFICIARY")
 
-        // Auto-fill applicant details from verified Senior ID
         const bMonth = matchedApp.dobMonth || ""
         const bDay = matchedApp.dobDay || ""
         const bYear = matchedApp.dobYear || ""
@@ -629,7 +617,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
     })
   }
 
-  // Step Validations
   const isStep1Valid =
     isResident &&
     isSenior &&
@@ -764,14 +751,13 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
     }
 
     try {
-      // 1. Submit to backend API first
+
       await fetch(`${API_BASE}/api/pwd-senior/applications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newApp),
       })
 
-      // 2. Safe localStorage
       try {
         const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
         localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing.slice(0, 5)]))
@@ -784,7 +770,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       }
       window.dispatchEvent(new Event("pwd_senior_applications_updated"))
 
-      // Dispatch real-time event to Admin dashboard
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)
     } catch {
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)
@@ -896,9 +881,9 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
-      {/* Main Wizard Card with 5-Step Indicator */}
+      {}
       <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-        {/* Step indicator dots */}
+        {}
         <div className="flex items-center px-6 pt-6 pb-4">
           {STEPS.map((s, idx) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
@@ -920,7 +905,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
           ))}
         </div>
 
-        {/* Tab labels bar */}
+        {}
         <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
@@ -938,14 +923,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
           ))}
         </div>
 
-        {/* Current Step Sub-Header */}
+        {}
         <div className="px-6 pt-4 pb-2">
           <h2 className="text-lg font-bold text-foreground">{STEPS[step - 1]?.label}</h2>
         </div>
 
-        {/* Step Body */}
+        {}
         <div className="p-6 md:p-8 min-h-[380px]">
-          {/* ──────────────── STEP 1: CHECKLIST ──────────────── */}
+          {}
           {step === 1 && (
             <div className="space-y-6">
               <div className="border-b border-border pb-3">
@@ -964,7 +949,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               )}
 
-              {/* Blue Info Alert Banner */}
+              {}
               <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
                 <div>
@@ -977,7 +962,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               </div>
 
-              {/* Eligibility Checkboxes */}
+              {}
               <div className="space-y-3 bg-gray-50/60 border border-border rounded-xl p-5">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
@@ -1028,7 +1013,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </label>
               </div>
 
-              {/* Senior Citizen ID Number input */}
+              {}
               <div className="bg-slate-50 border border-blue-200 rounded-xl p-5 space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
@@ -1113,15 +1098,15 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
             </div>
           )}
 
-          {/* ──────────────── STEP 2: PERSONAL & HOUSEHOLD INFO ──────────────── */}
+          {}
           {step === 2 && (
             <div className="space-y-6">
-              {/* Header */}
+              {}
               <div className="border-b border-border pb-3">
                 <h3 className="text-base font-bold text-foreground">{(t("pwdPersonalInfoHeader") || "PERSONAL INFORMATION").toUpperCase()}</h3>
               </div>
 
-              {/* IMPORTANT REMINDER BOX */}
+              {}
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -1139,7 +1124,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               )}
 
-              {/* Applicant QCID Profile Information Grid */}
+              {}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -1391,14 +1376,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               </div>
 
-              {/* Household & Economic Situation */}
+              {}
               <div className="border-t border-border pt-4 space-y-4">
                 <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                   <Home className="h-4 w-4 text-blue-600" />
                   <span>{t("seniorHouseholdSituationTitle") || "Kalagayan ng Sambahayan at Kabuhayan"}</span>
                 </h4>
 
-                {/* Living Arrangement */}
+                {}
                 <div>
                   <label className="text-xs font-bold text-foreground uppercase tracking-wide block mb-2">
                     {t("seniorLivingArrangementLabel") || "Kaayusan sa Tirahan (Living Arrangement)"} <span className="text-red-500">*</span>
@@ -1553,7 +1538,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
             </div>
           )}
 
-          {/* ──────────────── STEP 3: DOCUMENTS / FILE UPLOAD ──────────────── */}
+          {}
           {step === 3 && (
             <div className="space-y-4">
               <h3 className="text-base font-bold text-foreground">{t("fileUploadHeader") || "File upload"}</h3>
@@ -1663,7 +1648,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
             </div>
           )}
 
-          {/* ──────────────── STEP 4: REVIEW & SUBMIT ──────────────── */}
+          {}
           {step === 4 && (
             <div className="space-y-5">
               <div>
@@ -1671,7 +1656,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 <p className="text-sm text-muted-foreground">{t("pwdReviewDesc") || "Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon."}</p>
               </div>
 
-              {/* Section 1: Checklist & Assistance */}
+              {}
               <ReviewSection title="Mga Kinakailangan at Tulong na Hinihiling" onEdit={() => { setReturnToReview(true); setStep(1) }}>
                 <div className="divide-y divide-border">
                   <ReviewCheckItem ok={isResident} label="Lehitimong residente ng Quezon City" />
@@ -1681,7 +1666,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               </ReviewSection>
 
-              {/* Section 2: Personal & Household */}
+              {}
               <ReviewSection title="Personal na Impormasyon at Kalagayan ng Tahanan" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <ReviewField label="QC ID" value={formData.qcidNumber} />
@@ -1714,7 +1699,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               </ReviewSection>
 
-              {/* Section 3: Documents */}
+              {}
               <ReviewSection title="Mga Dokumentong Na-upload" onEdit={() => { setReturnToReview(true); setStep(3) }}>
                 <div className="space-y-4">
                   {requiredDocuments.map((doc) => {
@@ -1762,7 +1747,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
           )}
         </div>
 
-        {/* Wizard Footer Navigation */}
+        {}
         <div className="flex items-center justify-between border-t border-border bg-gray-50 px-6 py-4">
           {step === 1 && !onBack ? (
             <div />
@@ -1810,7 +1795,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         </div>
       </div>
 
-      {/* 🔔 CONFIRMATION & PRIVACY CONSENT DIALOG / MODAL BEFORE SUBMIT */}
+      {}
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -1824,7 +1809,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         confirmText="YES, SUBMIT APPLICATION"
       />
 
-      {/* 📸 Document Camera Capture Modal */}
+      {}
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}
         onClose={() => setCameraDoc(null)}
@@ -1836,7 +1821,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         }}
       />
 
-      {/* 👁️ UPLOADED DOCUMENT FULL PREVIEW MODAL */}
+      {}
       {previewDocModal && (
         <UploadedDocPreviewModal
           title={previewDocModal.title}

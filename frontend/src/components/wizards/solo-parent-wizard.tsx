@@ -19,9 +19,6 @@ const documentRequirements = [
   "Certificate of Indigency (if applicable)",
 ]
 
-// Admin/staff process flow only. Intake happens on the resident-facing
-// portal (user-portal/apply-solo-parent.tsx) — staff always start here
-// from an already-submitted application, at Application review.
 const steps: WizardStep[] = [
   { label: "Application", icon: ClipboardList },
   { label: "Document Review", icon: FileCheck2 },
@@ -36,8 +33,6 @@ export type SoloParentApplicationResult = {
   idNumber: string
 }
 
-// Info submitted by the resident online (apply-solo-parent.tsx). Required —
-// the admin wizard only ever processes an existing submission.
 export type SoloParentApplicantInfo = {
   name: string
   address: string
@@ -65,22 +60,17 @@ export function SoloParentApplicationWizard({
 
   const { name, address, contact, dependents, proofOfStatus } = applicant
 
-  // Step 1 — Application review
   const [detailsConfirmed, setDetailsConfirmed] = useState(false)
   const [applicationNotes, setApplicationNotes] = useState("")
 
-  // Step 2 — Document Review
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({})
 
-  // Step 3 — Interview
   const [interviewDate, setInterviewDate] = useState("")
   const [interviewNotes, setInterviewNotes] = useState("")
 
-  // Step 4 — Approval
   const [approvingOfficer, setApprovingOfficer] = useState("")
   const [approvalStatus, setApprovalStatus] = useState<"Approved" | "Disapproved">("Approved")
 
-  // Step 5 — Issue ID
   const [idNumber, setIdNumber] = useState(generateIdNumber)
   const [issueDate, setIssueDate] = useState("")
   const [remarks, setRemarks] = useState("")
@@ -142,7 +132,7 @@ export function SoloParentApplicationWizard({
     <div className="space-y-6">
       <WizardStepper steps={steps} step={step} />
 
-      {/* Applicant summary — read-only, submitted online by the resident */}
+      {}
       <div className="bg-muted/50 border border-border rounded-2xl p-4 text-sm">
         <p className="text-xs font-medium text-muted-foreground mb-1">Applicant (submitted online)</p>
         <p className="text-foreground font-medium">{name} — {dependents}</p>

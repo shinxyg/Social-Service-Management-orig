@@ -11,7 +11,7 @@ interface PhotoChallenge {
   prompt: string;
   keyword: string;
   imageSrc: string;
-  // Slices (0 to 8, where index = row * 3 + col)
+
   matchingTiles: number[];
 }
 
@@ -49,7 +49,7 @@ const CHALLENGES: PhotoChallenge[] = [
 ];
 
 function generateRandomAudioCode(): string {
-  // Generate 5 random single digits
+
   return Math.floor(10000 + Math.random() * 90000).toString();
 }
 
@@ -66,7 +66,6 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
   const [shake, setShake] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
-  // Audio challenge state
   const [audioCode, setAudioCode] = useState(() => generateRandomAudioCode());
   const [audioInput, setAudioInput] = useState('');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -123,7 +122,6 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
       setIsPlayingAudio(true);
       setErrorMessage('');
 
-      // Formulate clear security speech format
       const digitsList = code.split('').join(' . . . ');
       const utterance = new SpeechSynthesisUtterance(`Security code: . . ${digitsList}`);
       utterance.rate = 0.85;
@@ -203,7 +201,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
         }
       }, 600);
     } else {
-      // Audio verification
+
       const cleanInput = audioInput.trim().replace(/\s+/g, '');
       if (!cleanInput) {
         setErrorMessage('Please enter the numbers you heard.');
@@ -237,8 +235,8 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
   return (
     <div className="fixed inset-0 z-120 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
       <div className={`bg-white rounded-lg shadow-2xl border border-slate-300 w-full max-w-[360px] overflow-hidden select-none animate-scale-up text-left transition-transform ${shake ? 'animate-bounce' : ''}`}>
-        
-        {/* Challenge Header */}
+
+        {}
         <div className="bg-[#1A73E8] p-4 text-white">
           {mode === 'visual' ? (
             <>
@@ -267,7 +265,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
           )}
         </div>
 
-        {/* Content Area */}
+        {}
         {showInfo ? (
           <div className="p-4 bg-slate-50 space-y-3 animate-fade-in text-xs text-slate-600">
             <div className="flex items-center gap-2 text-[#1A73E8] font-bold text-sm">
@@ -296,7 +294,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
             </button>
           </div>
         ) : mode === 'visual' ? (
-          /* 3x3 Sliced Real Photo Grid */
+
           <div className="p-2.5 bg-slate-100">
             <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-sm border border-slate-300">
               {Array.from({ length: 9 }).map((_, idx) => {
@@ -304,7 +302,6 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
                 const col = idx % 3;
                 const isSelected = selectedTiles.includes(idx);
 
-                // 0% for col 0, 50% for col 1, 100% for col 2
                 const posX = col === 0 ? '0%' : col === 1 ? '50%' : '100%';
                 const posY = row === 0 ? '0%' : row === 1 ? '50%' : '100%';
 
@@ -322,7 +319,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
                       backgroundRepeat: 'no-repeat',
                     }}
                   >
-                    {/* Selection Overlay */}
+                    {}
                     {isSelected && (
                       <div className="absolute inset-0 bg-[#1A73E8]/25 flex items-center justify-center animate-fade-in">
                         <div className="w-6 h-6 bg-[#1A73E8] text-white rounded-full flex items-center justify-center shadow-md animate-scale-up">
@@ -336,7 +333,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
             </div>
           </div>
         ) : (
-          /* Audio Player and Input Area */
+
           <div className="p-5 bg-slate-50 space-y-4">
             <div className="bg-white border border-slate-300 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm">
               <button
@@ -389,7 +386,7 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
           </div>
         )}
 
-        {/* Footer controls */}
+        {}
         <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-slate-500">
             <button
@@ -465,4 +462,3 @@ export const RecaptchaModal: React.FC<RecaptchaModalProps> = ({
     </div>
   );
 };
-

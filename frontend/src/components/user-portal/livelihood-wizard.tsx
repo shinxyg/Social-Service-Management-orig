@@ -79,7 +79,7 @@ export interface UploadedDocItem {
 }
 
 export interface LivelihoodFormData {
-  // Step 1: Applicant Information
+
   qcid: string
   firstName: string
   middleName: string
@@ -97,15 +97,13 @@ export interface LivelihoodFormData {
   phoneNumber: string
   email: string
 
-  // Step 2: Livelihood Details
   livelihoodType: string
   livelihoodStatus: "New Livelihood" | "Existing Livelihood" | ""
   businessDescription: string
   businessLocation: string
   sameAsRegisteredAddress: boolean
 
-  // Step 3: Assistance & Requirements
-  assistanceNeeded: string[] // 'Financial / Capital Assistance', 'Materials / Supplies', 'Equipment'
+  assistanceNeeded: string[]
   estimatedAmount: string
   reasonPurpose: string
   requestedMaterials: Array<{ item: string; quantity: string }>
@@ -186,7 +184,6 @@ export default function LivelihoodApplicationWizard({
     onStepChange?.(step)
   }, [step, onStepChange])
 
-  // Alert before reloading when on step 2 or higher
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (step >= 2 && !isSubmitting) {
@@ -199,7 +196,6 @@ export default function LivelihoodApplicationWizard({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [step, isSubmitting])
 
-  // Form State initialized with Profile data
   const [formData, setFormData] = useState<LivelihoodFormData>(() => {
     let prof: any = {}
     let loggedQcid = ""
@@ -241,7 +237,6 @@ export default function LivelihoodApplicationWizard({
     }
   })
 
-  // Synchronize registered address if checkbox toggled
   useEffect(() => {
     if (formData.sameAsRegisteredAddress) {
       const fullRegistered = `${formData.houseBuildingNo ? formData.houseBuildingNo + " " : ""}${formData.streetName}, ${formData.barangay}, QUEZON CITY`.trim()
@@ -249,7 +244,6 @@ export default function LivelihoodApplicationWizard({
     }
   }, [formData.sameAsRegisteredAddress, formData.houseBuildingNo, formData.streetName, formData.barangay])
 
-  // File Upload Handlers
   const fileInputValidIdRef = useRef<HTMLInputElement>(null)
   const fileInputValidIdCameraRef = useRef<HTMLInputElement>(null)
   const fileInputResidencyRef = useRef<HTMLInputElement>(null)
@@ -293,7 +287,6 @@ export default function LivelihoodApplicationWizard({
     }
     reader.readAsDataURL(file)
 
-    // Clear field error if set
     setErrors((prev) => {
       const next = { ...prev }
       delete next[type]
@@ -309,7 +302,6 @@ export default function LivelihoodApplicationWizard({
     }))
   }
 
-  // Toggle assistance needed
   const toggleAssistance = (type: string) => {
     setFormData((prev) => {
       const exists = prev.assistanceNeeded.includes(type)
@@ -336,7 +328,6 @@ export default function LivelihoodApplicationWizard({
     })
   }
 
-  // Requested Materials helpers
   const handleAddMaterialItem = () => {
     setFormData((prev) => ({
       ...prev,
@@ -357,7 +348,6 @@ export default function LivelihoodApplicationWizard({
     }))
   }
 
-  // Requested Equipment helpers
   const handleAddEquipmentItem = () => {
     setFormData((prev) => ({
       ...prev,
@@ -378,7 +368,6 @@ export default function LivelihoodApplicationWizard({
     }))
   }
 
-  // Validation per step
   const validateStep = (currentStep: number): boolean => {
     const newErrors: Record<string, string> = {}
 
@@ -398,7 +387,7 @@ export default function LivelihoodApplicationWizard({
       if (!formData.reasonPurpose.trim()) {
         newErrors.reasonPurpose = "Please provide the reason / purpose of assistance"
       }
-      // Check for Valid ID
+
       const hasValidId = formData.uploadedDocuments.some((d) => d.type === "validId")
       if (!hasValidId) {
         newErrors.validId = "Valid ID / QCID upload is required"
@@ -431,7 +420,6 @@ export default function LivelihoodApplicationWizard({
     }
   }
 
-  // Submit Application
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
@@ -478,14 +466,14 @@ export default function LivelihoodApplicationWizard({
 
       let res
       if (isUpdatingRevision && (initialData as any)?.reference_number) {
-        // Update application
+
         res = await fetch(`${API_BASE}/api/livelihood/applications/${(initialData as any).reference_number}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...payload, resubmit: true }),
         })
       } else {
-        // Create new application
+
         res = await fetch(`${API_BASE}/api/livelihood/applications`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -495,7 +483,7 @@ export default function LivelihoodApplicationWizard({
 
       const data = await res.json()
       if (data.success && data.application) {
-        // Store in localStorage for instant offline access
+
         try {
           const stored = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
           const updatedList = [data.application, ...stored.filter((a: any) => a.reference_number !== data.application.reference_number)]
@@ -510,7 +498,7 @@ export default function LivelihoodApplicationWizard({
         }
         window.dispatchEvent(new Event("livelihood_status_updated"))
       } else {
-        // Local fallback if server had an error
+
         const fallbackApp = {
           id: Date.now(),
           reference_number: formData.qcid || "110000116932100",
@@ -558,7 +546,7 @@ export default function LivelihoodApplicationWizard({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      {/* Revision Notice Banner */}
+      {}
       {isUpdatingRevision && (
         <div className="mb-6 p-4 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
@@ -571,7 +559,7 @@ export default function LivelihoodApplicationWizard({
         </div>
       )}
 
-      {/* Stepper Header */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-xs mb-6">
         <div className="flex items-center justify-between gap-2 border-b border-border pb-4 mb-4">
           <div>
@@ -587,7 +575,7 @@ export default function LivelihoodApplicationWizard({
           </span>
         </div>
 
-        {/* Stepper Dots / Bars */}
+        {}
         <div className="grid grid-cols-4 gap-2 sm:gap-4">
           {[
             { s: 1, title: "Applicant Information" },
@@ -618,11 +606,11 @@ export default function LivelihoodApplicationWizard({
         </div>
       </div>
 
-      {/* Wizard Step Body */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 sm:p-8 shadow-sm">
-        {/* ============================================================ */}
-        {/* STEP 1: APPLICANT INFORMATION                                */}
-        {/* ============================================================ */}
+        {}
+        {}
+        {}
         {step === 1 && (
           <div className="space-y-6 animate-in fade-in duration-200">
             <div>
@@ -634,7 +622,7 @@ export default function LivelihoodApplicationWizard({
               </p>
             </div>
 
-            {/* Important Reminder Notice Box */}
+            {}
             <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-start gap-3">
               <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
               <div className="text-xs sm:text-sm text-blue-900 dark:text-blue-200">
@@ -645,7 +633,7 @@ export default function LivelihoodApplicationWizard({
               </div>
             </div>
 
-            {/* Auto-filled form fields */}
+            {}
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -666,7 +654,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Row 1: QC ID *, First name * */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">QC ID *</label>
@@ -701,7 +689,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Row 2: Middle name, Last name *, Suffix (Jr., Sr., III, etc.) */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Middle name</label>
@@ -752,7 +740,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Row 3: Nationality *, Date of birth *, Age * */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Nationality *</label>
@@ -801,7 +789,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Row 4: Gender *, Civil status *, Blood type * */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Gender *</label>
@@ -860,7 +848,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Row 5: House/Building number *, Street name *, Barangay * */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">House/Building number *</label>
@@ -909,7 +897,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Row 6: Phone number *, Email * */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Phone number *</label>
@@ -945,7 +933,7 @@ export default function LivelihoodApplicationWizard({
               </div>
             </div>
 
-            {/* Buttons */}
+            {}
             <div className="pt-6 border-t border-border flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -968,9 +956,9 @@ export default function LivelihoodApplicationWizard({
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* STEP 2: LIVELIHOOD DETAILS                                   */}
-        {/* ============================================================ */}
+        {}
+        {}
+        {}
         {step === 2 && (
           <div className="space-y-6 animate-in fade-in duration-200">
             <div>
@@ -983,7 +971,7 @@ export default function LivelihoodApplicationWizard({
             </div>
 
             <div className="space-y-5">
-              {/* Type of Livelihood */}
+              {}
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Type of Livelihood <span className="text-red-500">*</span>
@@ -1015,7 +1003,7 @@ export default function LivelihoodApplicationWizard({
                 {errors.livelihoodType && <p className="text-xs text-red-500 mt-1">{errors.livelihoodType}</p>}
               </div>
 
-              {/* Livelihood Status */}
+              {}
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Livelihood Status <span className="text-red-500">*</span>
@@ -1061,7 +1049,7 @@ export default function LivelihoodApplicationWizard({
                 {errors.livelihoodStatus && <p className="text-xs text-red-500 mt-1">{errors.livelihoodStatus}</p>}
               </div>
 
-              {/* Business Description */}
+              {}
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Business / Livelihood Description <span className="text-red-500">*</span>
@@ -1087,7 +1075,7 @@ export default function LivelihoodApplicationWizard({
                 )}
               </div>
 
-              {/* Business Location */}
+              {}
               <div className="space-y-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-foreground">
@@ -1153,7 +1141,7 @@ export default function LivelihoodApplicationWizard({
               )}
             </div>
 
-            {/* Buttons */}
+            {}
             <div className="pt-6 border-t border-border flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -1177,9 +1165,9 @@ export default function LivelihoodApplicationWizard({
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* STEP 3: ASSISTANCE & REQUIREMENTS                            */}
-        {/* ============================================================ */}
+        {}
+        {}
+        {}
         {step === 3 && (
           <div className="space-y-6 animate-in fade-in duration-200">
             <div>
@@ -1192,7 +1180,7 @@ export default function LivelihoodApplicationWizard({
             </div>
 
             <div className="space-y-5">
-              {/* Assistance Needed */}
+              {}
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Assistance Needed <span className="text-red-500">*</span>
@@ -1223,7 +1211,7 @@ export default function LivelihoodApplicationWizard({
                 {errors.assistanceNeeded && <p className="text-xs text-red-500 mt-1">{errors.assistanceNeeded}</p>}
               </div>
 
-              {/* Dynamic Materials / Supplies Requested by User */}
+              {}
               {formData.assistanceNeeded.includes("Materials / Supplies") && (
                 <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-3 animate-in fade-in">
                   <div className="flex items-center justify-between">
@@ -1276,7 +1264,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               )}
 
-              {/* Dynamic Equipment Requested by User */}
+              {}
               {formData.assistanceNeeded.includes("Equipment") && (
                 <div className="p-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5 space-y-3 animate-in fade-in">
                   <div className="flex items-center justify-between">
@@ -1329,8 +1317,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               )}
 
-
-              {/* Reason / Purpose of Assistance */}
+              {}
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Reason / Purpose of Assistance <span className="text-red-500">*</span>
@@ -1354,7 +1341,7 @@ export default function LivelihoodApplicationWizard({
                 {errors.reasonPurpose && <p className="text-xs text-red-500 mt-1">{errors.reasonPurpose}</p>}
               </div>
 
-              {/* Upload Supporting Requirements - Medical Assistance Style */}
+              {}
               <div className="pt-3 border-t border-border space-y-4">
                 <div>
                   <h3 className="text-sm font-bold text-foreground">Upload Supporting Requirements</h3>
@@ -1363,7 +1350,7 @@ export default function LivelihoodApplicationWizard({
                   </p>
                 </div>
 
-                {/* 1. Upload Valid ID / QCID */}
+                {}
                 <div
                   className={`border rounded-xl p-4 space-y-3 transition-colors ${
                     validIdDocs.length > 0
@@ -1397,7 +1384,7 @@ export default function LivelihoodApplicationWizard({
                     {t("allowedFileTypesCameraPdfNote") || "Allowed file types: JPG, JPEG, PNG, WEBP, PDF (o kumuha gamit ang Camera)"}
                   </p>
 
-                  {/* Hidden inputs */}
+                  {}
                   <input
                     ref={fileInputValidIdRef}
                     type="file"
@@ -1414,7 +1401,7 @@ export default function LivelihoodApplicationWizard({
                     className="hidden"
                   />
 
-                  {/* Action Buttons */}
+                  {}
                   <div className="flex flex-wrap items-center gap-2.5">
                     <button
                       type="button"
@@ -1435,7 +1422,7 @@ export default function LivelihoodApplicationWizard({
                     </button>
                   </div>
 
-                  {/* Uploaded File Previews */}
+                  {}
                   {validIdDocs.length > 0 && (
                     <div className="flex flex-wrap gap-3 pt-2">
                       {validIdDocs.map((doc) => {
@@ -1478,7 +1465,7 @@ export default function LivelihoodApplicationWizard({
                   {errors.validId && <p className="text-xs text-red-500 font-medium">{errors.validId}</p>}
                 </div>
 
-                {/* 2. Upload Proof of Residency */}
+                {}
                 <div
                   className={`border rounded-xl p-4 space-y-3 transition-colors ${
                     residencyDocs.length > 0
@@ -1512,7 +1499,7 @@ export default function LivelihoodApplicationWizard({
                     {t("allowedFileTypesCameraPdfNote") || "Allowed file types: JPG, JPEG, PNG, WEBP, PDF (o kumuha gamit ang Camera)"}
                   </p>
 
-                  {/* Hidden inputs */}
+                  {}
                   <input
                     ref={fileInputResidencyRef}
                     type="file"
@@ -1529,7 +1516,7 @@ export default function LivelihoodApplicationWizard({
                     className="hidden"
                   />
 
-                  {/* Action Buttons */}
+                  {}
                   <div className="flex flex-wrap items-center gap-2.5">
                     <button
                       type="button"
@@ -1550,7 +1537,7 @@ export default function LivelihoodApplicationWizard({
                     </button>
                   </div>
 
-                  {/* Uploaded File Previews */}
+                  {}
                   {residencyDocs.length > 0 && (
                     <div className="flex flex-wrap gap-3 pt-2">
                       {residencyDocs.map((doc) => {
@@ -1593,7 +1580,7 @@ export default function LivelihoodApplicationWizard({
                   {errors.proofOfResidency && <p className="text-xs text-red-500 font-medium">{errors.proofOfResidency}</p>}
                 </div>
 
-                {/* 3. Upload Other Supporting Documents */}
+                {}
                 <div
                   className={`border rounded-xl p-4 space-y-3 transition-colors ${
                     supportingDocs.length > 0
@@ -1625,7 +1612,7 @@ export default function LivelihoodApplicationWizard({
                     {t("allowedFileTypesCameraPdfNote") || "Allowed file types: JPG, JPEG, PNG, WEBP, PDF (o kumuha gamit ang Camera)"}
                   </p>
 
-                  {/* Hidden inputs */}
+                  {}
                   <input
                     ref={fileInputSupportingRef}
                     type="file"
@@ -1642,7 +1629,7 @@ export default function LivelihoodApplicationWizard({
                     className="hidden"
                   />
 
-                  {/* Action Buttons */}
+                  {}
                   <div className="flex flex-wrap items-center gap-2.5">
                     <button
                       type="button"
@@ -1663,7 +1650,7 @@ export default function LivelihoodApplicationWizard({
                     </button>
                   </div>
 
-                  {/* Uploaded File Previews */}
+                  {}
                   {supportingDocs.length > 0 && (
                     <div className="flex flex-wrap gap-3 pt-2">
                       {supportingDocs.map((doc) => {
@@ -1707,7 +1694,7 @@ export default function LivelihoodApplicationWizard({
               </div>
             </div>
 
-            {/* Buttons */}
+            {}
             <div className="pt-6 border-t border-border flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -1731,9 +1718,9 @@ export default function LivelihoodApplicationWizard({
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* STEP 4: REVIEW & SUBMIT                                      */}
-        {/* ============================================================ */}
+        {}
+        {}
+        {}
         {step === 4 && (
           <div className="space-y-6 animate-in fade-in duration-200">
             <div>
@@ -1746,7 +1733,7 @@ export default function LivelihoodApplicationWizard({
             </div>
 
             <div className="space-y-4">
-              {/* Section 1: Applicant Information Summary */}
+              {}
               <div className="p-4 rounded-xl border border-border bg-muted/10 space-y-3">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
@@ -1788,7 +1775,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Section 2: Livelihood Details Summary */}
+              {}
               <div className="p-4 rounded-xl border border-border bg-muted/10 space-y-3">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
@@ -1822,7 +1809,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Section 3: Assistance Requested Summary */}
+              {}
               <div className="p-4 rounded-xl border border-border bg-muted/10 space-y-3">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
@@ -1852,7 +1839,7 @@ export default function LivelihoodApplicationWizard({
                     <p className="font-medium text-foreground mt-0.5 leading-relaxed">{formData.reasonPurpose}</p>
                   </div>
 
-                  {/* Materials list in review */}
+                  {}
                   {formData.requestedMaterials && formData.requestedMaterials.some((m) => m.item.trim()) && (
                     <div className="pt-2 border-t border-border">
                       <span className="text-muted-foreground block text-[11px] font-semibold">Hinihiling na Materyales / Paninda:</span>
@@ -1868,7 +1855,7 @@ export default function LivelihoodApplicationWizard({
                     </div>
                   )}
 
-                  {/* Equipment list in review */}
+                  {}
                   {formData.requestedEquipment && formData.requestedEquipment.some((e) => e.equipment.trim()) && (
                     <div className="pt-2 border-t border-border">
                       <span className="text-muted-foreground block text-[11px] font-semibold">Hinihiling na Kagamitan / Equipment:</span>
@@ -1886,7 +1873,7 @@ export default function LivelihoodApplicationWizard({
                 </div>
               </div>
 
-              {/* Section 4: Uploaded Requirements Summary */}
+              {}
               <div className="p-4 rounded-xl border border-border bg-muted/10 space-y-3">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
@@ -1931,7 +1918,7 @@ export default function LivelihoodApplicationWizard({
 
             </div>
 
-            {/* Buttons */}
+            {}
             <div className="pt-6 border-t border-border flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -1967,7 +1954,7 @@ export default function LivelihoodApplicationWizard({
         )}
       </div>
 
-      {/* Uploaded Document Full Preview Modal */}
+      {}
       {previewModalDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-150">
           <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">

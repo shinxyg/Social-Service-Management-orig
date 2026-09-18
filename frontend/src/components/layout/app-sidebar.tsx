@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronsRight } from "lucide-react"
 import { moduleRoutes } from "./routes"
 import { Tooltip } from "../ui/tooltip"
 
-
 export function AppSidebar({
   open,
   onToggle,
@@ -18,7 +17,7 @@ export function AppSidebar({
       }`}
     >
       <div className={`flex flex-col h-full ${open ? "w-64" : "w-16"}`}>
-        {/* Brand + Toggle */}
+        {}
         <div className={`p-5 flex items-center gap-3 ${!open ? "flex-col justify-center px-0" : "justify-between"}`}>
           <div className={`flex items-center gap-3 ${!open && "justify-center"}`}>
             <Tooltip label="GovServe">
@@ -52,8 +51,8 @@ export function AppSidebar({
           </Tooltip>
         </div>
 
-        {/* Nav groups */}
-          {/* Nav groups */}
+        {}
+          {}
         <nav className="flex-1 px-3 py-5 overflow-y-auto">
           <div>
             <div className="flex flex-col gap-1">
@@ -95,7 +94,6 @@ export function AppSidebar({
                   </Tooltip>
                 )
 
-                // Divider + section label bago ang Beneficiary Management
                 if (path === "/beneficiaries") {
                   return (
                     <div key={`section-${path}`}>
@@ -110,9 +108,6 @@ export function AppSidebar({
                   )
                 }
 
-                // Divider + section label bago ang Case Management, para hiwalay
-                // ang cross-program case tracking mula sa mga direktang service
-                // applications sa itaas nito.
                 if (path === "/case-management") {
                   return (
                     <div key={`section-${path}`}>
@@ -127,8 +122,6 @@ export function AppSidebar({
                   )
                 }
 
-                // Divider + section label bago ang Appointments, para hiwalay
-                // ang "scheduling" mula sa mga direktang service applications.
                 if (path === "/appointments") {
                   return (
                     <div key={`section-${path}`}>
@@ -143,8 +136,6 @@ export function AppSidebar({
                   )
                 }
 
-                // Divider + section label bago ang Activity Log, para hiwalay
-                // ang read-only audit trail mula sa scheduling at applications.
                 if (path === "/activity-log") {
                   return (
                     <div key={`section-${path}`}>
@@ -159,7 +150,6 @@ export function AppSidebar({
                   )
                 }
 
-                // Divider + section label bago ang User Management
                 if (path === "/users") {
                   return (
                     <div key={`section-${path}`}>

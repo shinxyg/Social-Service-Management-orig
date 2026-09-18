@@ -81,9 +81,9 @@ export default function LivelihoodStatusCard({
 
   return (
     <div className="space-y-6">
-      {/* Main Status Header Card */}
+      {}
       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-        {/* Status Header Banner */}
+        {}
         <div
           className={`p-6 text-white ${
             isApproved
@@ -131,11 +131,11 @@ export default function LivelihoodStatusCard({
           </div>
         </div>
 
-        {/* Status Body and Explanations */}
+        {}
         <div className="p-6 space-y-6">
-          {/* ============================================================ */}
-          {/* 1. PENDING / UNDER REVIEW STATE                              */}
-          {/* ============================================================ */}
+          {}
+          {}
+          {}
           {isUnderReview && (
             <div className="space-y-5">
               <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-sm text-foreground space-y-2">
@@ -164,7 +164,7 @@ export default function LivelihoodStatusCard({
                 </p>
               </div>
 
-              {/* Visual Workflow Steps */}
+              {}
               <div className="space-y-2 pt-1">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {isEn ? "Verification Progress" : isBis ? "Progreso sa Pagpamatuod" : "Progreso ng Pagpapatunay"}
@@ -214,9 +214,9 @@ export default function LivelihoodStatusCard({
             </div>
           )}
 
-          {/* ============================================================ */}
-          {/* 2. NEEDS REVISION STATE                                      */}
-          {/* ============================================================ */}
+          {}
+          {}
+          {}
           {isNeedsRevision && (
             <div className="space-y-5">
               <div className="p-5 rounded-xl bg-amber-500/15 border border-amber-500/30 space-y-3">
@@ -240,7 +240,7 @@ export default function LivelihoodStatusCard({
                   </div>
                 </div>
 
-                {/* Revision Notes Box */}
+                {}
                 <div className="p-4 rounded-xl bg-card border border-amber-500/30 text-sm text-foreground space-y-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-0.5">
@@ -262,7 +262,7 @@ export default function LivelihoodStatusCard({
                 </div>
               </div>
 
-              {/* Action: Revise Application */}
+              {}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-muted/20 border border-border">
                 <div className="text-xs text-muted-foreground">
                   <p className="font-semibold text-foreground text-sm">
@@ -289,9 +289,9 @@ export default function LivelihoodStatusCard({
             </div>
           )}
 
-          {/* ============================================================ */}
-          {/* 3. REJECTED STATE                                            */}
-          {/* ============================================================ */}
+          {}
+          {}
+          {}
           {isRejected && (
             <div className="space-y-4">
               <div className="p-5 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-3">
@@ -360,9 +360,9 @@ export default function LivelihoodStatusCard({
             </div>
           )}
 
-          {/* ============================================================ */}
-          {/* 4. APPROVED STATE                                            */}
-          {/* ============================================================ */}
+          {}
+          {}
+          {}
           {isApproved && (
             <div className="space-y-5">
               <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 space-y-3">
@@ -408,7 +408,7 @@ export default function LivelihoodStatusCard({
                 </div>
               </div>
 
-              {/* Call to action: Go directly to Part 2 */}
+              {}
               <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md">
                 <div className="space-y-1 text-center sm:text-left">
                   <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">
@@ -443,7 +443,7 @@ export default function LivelihoodStatusCard({
             </div>
           )}
 
-          {/* Quick Summary Info Table */}
+          {}
           <div className="pt-2 border-t border-border">
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
               {isEn ? "Application Summary Snapshot" : isBis ? "Mubo nga Sumaryo sa Aplikasyon" : "Application Summary Snapshot"}
@@ -472,7 +472,7 @@ export default function LivelihoodStatusCard({
         </div>
       </div>
 
-      {/* Full Details Modal */}
+      {}
       {showDetailModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="bg-card border border-border w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
@@ -546,4 +546,3 @@ export default function LivelihoodStatusCard({
     </div>
   )
 }
-

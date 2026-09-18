@@ -14,7 +14,6 @@ async function initDb() {
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
     await db.query(schemaSql);
 
-    // Migration patches for solo_parent_child_welfare_applications (Unified Solo Parent & Child Welfare Table)
     await db.query(`
       CREATE TABLE IF NOT EXISTS solo_parent_child_welfare_applications (
         id SERIAL PRIMARY KEY,
@@ -63,7 +62,7 @@ async function initDb() {
       ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS form_data JSONB DEFAULT '{}'::jsonb;
       ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS family_members JSONB DEFAULT '[]'::jsonb;
       ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS extra_data JSONB DEFAULT '{}'::jsonb;
-      
+
       -- Child Welfare Fields
       ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS category_id VARCHAR(100);
       ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS category_title VARCHAR(255);
@@ -117,7 +116,6 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_spcw_module ON solo_parent_child_welfare_applications(module_type);
     `);
 
-    // Dynamic safe migration helper for consolidating legacy tables into solo_parent_child_welfare_applications
     async function consolidateLegacyTable(sourceTable, defaultModule) {
       try {
         const check = await db.query(`SELECT to_regclass($1) as tbl;`, [`public.${sourceTable}`]);
@@ -125,18 +123,16 @@ async function initDb() {
 
         console.log(`🔄 Consolidating legacy table '${sourceTable}' into solo_parent_child_welfare_applications...`);
 
-        // Check available columns in source table
         const srcColsRes = await db.query(`
-          SELECT column_name 
-          FROM information_schema.columns 
+          SELECT column_name
+          FROM information_schema.columns
           WHERE table_name = $1 AND table_schema = 'public'
         `, [sourceTable]);
         const srcCols = new Set(srcColsRes.rows.map(r => r.column_name));
 
-        // Check columns in target table
         const tgtColsRes = await db.query(`
-          SELECT column_name 
-          FROM information_schema.columns 
+          SELECT column_name
+          FROM information_schema.columns
           WHERE table_name = 'solo_parent_child_welfare_applications' AND table_schema = 'public'
         `);
         const tgtCols = tgtColsRes.rows.map(r => r.column_name).filter(c => c !== 'id');
@@ -185,7 +181,6 @@ async function initDb() {
     await consolidateLegacyTable('solo_parent_applications', 'SOLO_PARENT');
     await consolidateLegacyTable('child_welfare_applications', 'CHILD_WELFARE');
 
-    // Migration patches for livelihood_applications (Workflow, Revision, & Approval Columns)
     await db.query(`
       ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
       ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS revision_notes TEXT;
@@ -341,7 +336,6 @@ async function initDb() {
       );
     `);
 
-    // 1. Auto-migrate any existing unhashed plain-text passwords in DB to bcrypt
     try {
       const plainUsers = await db.query("SELECT id, email, password FROM users WHERE password IS NOT NULL AND password NOT LIKE '$2%'");
       if (plainUsers && plainUsers.rows && plainUsers.rows.length > 0) {
@@ -358,17 +352,15 @@ async function initDb() {
       console.warn('⚠️ [Init DB] Plaintext password auto-hash note:', e.message);
     }
 
-    // 2. Seed and migrate administrator account strictly to admin@quezoncity.gov.ph
     const adminHashed = bcrypt.hashSync('Admin123!', 12);
     const defaultHashed = bcrypt.hashSync('default123', 10);
 
-    // Update any old 'admin' email to 'admin@quezoncity.gov.ph'
     try {
       const existingAdminCheck = await db.query("SELECT id FROM users WHERE LOWER(email) = 'admin@quezoncity.gov.ph'");
       if (existingAdminCheck.rows.length === 0) {
-        // If no admin@quezoncity.gov.ph exists yet, rename 'admin' directly
+
         await db.query(`
-          UPDATE users 
+          UPDATE users
           SET email = 'admin@quezoncity.gov.ph',
               password = '${adminHashed}',
               role = 'admin',
@@ -379,7 +371,7 @@ async function initDb() {
           WHERE LOWER(email) = 'admin'
         `);
       } else {
-        // If admin@quezoncity.gov.ph already exists, delete old 'admin' record
+
         await db.query("DELETE FROM users WHERE LOWER(email) = 'admin'");
       }
     } catch (e) {
@@ -388,7 +380,7 @@ async function initDb() {
 
     await db.query(`
       INSERT INTO users (email, password, first_name, last_name, role, status, is_email_verified, qcid_number)
-      VALUES 
+      VALUES
         ('admin@quezoncity.gov.ph', '${adminHashed}', 'System', 'Administrator', 'admin', 'active', true, '110000116932100')
       ON CONFLICT (email) DO UPDATE SET password = '${adminHashed}', role = 'admin', status = 'active';
 
@@ -581,7 +573,7 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_ben_history_ben_id ON beneficiary_history(beneficiary_id);
 
       -- Clean up dummy mock records
-      DELETE FROM beneficiaries 
+      DELETE FROM beneficiaries
       WHERE full_name IN ('Clarisa Mae Dimal', 'Rosalinda Torres', 'Julius Cabrera', 'Emilyn Salazar', 'Ferdinand Villanueva', 'Bryan Aguilar')
          OR beneficiary_number IN ('BNF-2026-0001', 'BNF-2026-0002', 'BNF-2026-0003', 'BNF-2026-0004');
 
@@ -664,7 +656,6 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_user_notif_user ON user_notifications(user_id);
     `);
 
-    // Seed / Ensure strictly 1 official Administrator account in DB
     try {
       const adminPassHash = await bcrypt.hash('Admin123!', 12);
       const adminEmail = 'admin@quezoncity.gov.ph';
@@ -694,23 +685,21 @@ async function initDb() {
       console.warn('[DB] Warning during admin account seed:', adminSeedErr.message);
     }
 
-    // Cleanup application history for test citizen renzoe09062@gmail.com / Kris Topher (110000872276939)
     try {
       const targetEmails = ['renzoe09062@gmail.com', 'renzoe0906@gmail.com'];
       const userRes = await db.query(
         `SELECT id, email, qcid_number, first_name, last_name FROM users WHERE LOWER(email) = ANY($1) OR email ILIKE '%renzoe%' OR first_name ILIKE '%kris%' OR first_name ILIKE '%renz%' OR qcid_number ILIKE '%110000872276939%'`,
         [targetEmails]
       );
-      
+
       const userIds = userRes.rows.map(r => r.id);
       const userEmails = userRes.rows.map(r => r.email);
       const qcIds = [...new Set([...userRes.rows.map(r => r.qcid_number).filter(Boolean), '110000872276939', '110000572516915'])];
 
-      // 1. Clean appointments
       await db.query(
-        `DELETE FROM appointments 
-         WHERE user_id = ANY($1::int[]) 
-            OR email = ANY($2::text[]) 
+        `DELETE FROM appointments
+         WHERE user_id = ANY($1::int[])
+            OR email = ANY($2::text[])
             OR qcid = ANY($3::text[])
             OR reference_no = ANY($3::text[])
             OR applicant_name ILIKE '%kris%'
@@ -721,10 +710,9 @@ async function initDb() {
         [userIds.length ? userIds : [-1], userEmails.length ? userEmails : [''], qcIds]
       ).catch(() => {});
 
-      // 2. Clean disbursements
       await db.query(
-        `DELETE FROM financial_aid_disbursements 
-         WHERE application_ref = ANY($1::text[]) 
+        `DELETE FROM financial_aid_disbursements
+         WHERE application_ref = ANY($1::text[])
             OR application_ref ILIKE '%110000872276939%'
             OR application_ref ILIKE '%110000572516915%'
             OR disbursement_id = 'DISB-2026-4213'
@@ -736,12 +724,11 @@ async function initDb() {
         [qcIds]
       ).catch(() => {});
 
-      // 3. Clean AICS applications & documents
       const aicsApps = await db.query(
-        `SELECT id FROM aics_applications 
-         WHERE user_id = ANY($1::int[]) 
-            OR email = ANY($2::text[]) 
-            OR qcid_number = ANY($3::text[]) 
+        `SELECT id FROM aics_applications
+         WHERE user_id = ANY($1::int[])
+            OR email = ANY($2::text[])
+            OR qcid_number = ANY($3::text[])
             OR qc_id = ANY($3::text[])
             OR reference_no = ANY($3::text[])
             OR first_name ILIKE '%kris%'
@@ -755,12 +742,11 @@ async function initDb() {
         await db.query(`DELETE FROM aics_applications WHERE id = ANY($1::int[])`, [aicsIds]).catch(() => {});
       }
 
-      // 4. Clean PWD / Senior applications
       await db.query(
-        `DELETE FROM pwd_senior_applications 
-         WHERE user_id = ANY($1::int[]) 
-            OR email = ANY($2::text[]) 
-            OR qcid = ANY($3::text[]) 
+        `DELETE FROM pwd_senior_applications
+         WHERE user_id = ANY($1::int[])
+            OR email = ANY($2::text[])
+            OR qcid = ANY($3::text[])
             OR reference_number = ANY($3::text[])
             OR first_name ILIKE '%kris%'
             OR first_name ILIKE '%renz%'
@@ -768,12 +754,11 @@ async function initDb() {
         [userIds.length ? userIds : [-1], userEmails.length ? userEmails : [''], qcIds]
       ).catch(() => {});
 
-      // 5. Clean Solo Parent & Child Welfare
       await db.query(
-        `DELETE FROM solo_parent_child_welfare_applications 
-         WHERE user_id = ANY($1::int[]) 
-            OR email = ANY($2::text[]) 
-            OR qcid_number = ANY($3::text[]) 
+        `DELETE FROM solo_parent_child_welfare_applications
+         WHERE user_id = ANY($1::int[])
+            OR email = ANY($2::text[])
+            OR qcid_number = ANY($3::text[])
             OR reference_number = ANY($3::text[])
             OR first_name ILIKE '%kris%'
             OR first_name ILIKE '%renz%'
@@ -781,12 +766,11 @@ async function initDb() {
         [userIds.length ? userIds : [-1], userEmails.length ? userEmails : [''], qcIds]
       ).catch(() => {});
 
-      // 6. Clean Livelihood
       const lhApps = await db.query(
-        `SELECT id FROM livelihood_applications 
-         WHERE user_id = ANY($1::int[]) 
-            OR email = ANY($2::text[]) 
-            OR qcid = ANY($3::text[]) 
+        `SELECT id FROM livelihood_applications
+         WHERE user_id = ANY($1::int[])
+            OR email = ANY($2::text[])
+            OR qcid = ANY($3::text[])
             OR reference_number = ANY($3::text[])
             OR first_name ILIKE '%kris%'
             OR first_name ILIKE '%renz%'
@@ -800,22 +784,20 @@ async function initDb() {
         await db.query(`DELETE FROM livelihood_applications WHERE id = ANY($1::int[])`, [lhIds]).catch(() => {});
       }
 
-      // 7. Clean Training applications
       await db.query(
-        `DELETE FROM training_applications 
-         WHERE user_id = ANY($1::int[]) 
-            OR email = ANY($2::text[]) 
-            OR qcid = ANY($3::text[]) 
+        `DELETE FROM training_applications
+         WHERE user_id = ANY($1::int[])
+            OR email = ANY($2::text[])
+            OR qcid = ANY($3::text[])
             OR reference_number = ANY($3::text[])
             OR first_name ILIKE '%kris%'
             OR first_name ILIKE '%renz%'`,
         [userIds.length ? userIds : [-1], userEmails.length ? userEmails : [''], qcIds]
       ).catch(() => {});
 
-      // 8. Clean Beneficiaries & History
       const benRes = await db.query(
-        `SELECT id FROM beneficiaries 
-         WHERE qcid_number = ANY($1::text[]) 
+        `SELECT id FROM beneficiaries
+         WHERE qcid_number = ANY($1::text[])
             OR first_name ILIKE '%kris%'
             OR first_name ILIKE '%renz%'`,
         [qcIds]
@@ -827,10 +809,9 @@ async function initDb() {
         await db.query(`DELETE FROM beneficiaries WHERE id = ANY($1::int[])`, [benIds]).catch(() => {});
       }
 
-      // 9. Clean Case Records
       await db.query(
-        `DELETE FROM case_records 
-         WHERE qcid_number = ANY($1::text[]) 
+        `DELETE FROM case_records
+         WHERE qcid_number = ANY($1::text[])
             OR client_name ILIKE '%kris%'
             OR client_name ILIKE '%topher%'
             OR client_name ILIKE '%renz%'
@@ -838,31 +819,28 @@ async function initDb() {
         [qcIds]
       ).catch(() => {});
 
-      // 10. Clean Archived Applications
       await db.query(
-        `DELETE FROM archived_applications 
-         WHERE qcid = ANY($1::text[]) 
+        `DELETE FROM archived_applications
+         WHERE qcid = ANY($1::text[])
             OR reference_number = ANY($1::text[])
             OR applicant_name ILIKE '%kris%'
             OR applicant_name ILIKE '%renz%'`,
         [qcIds]
       ).catch(() => {});
 
-      // 11. Clean Notifications
       await db.query(
-        `DELETE FROM user_notifications 
-         WHERE user_id = ANY($1::text[]) 
+        `DELETE FROM user_notifications
+         WHERE user_id = ANY($1::text[])
             OR qcid_number = ANY($2::text[])`,
         [userIds.map(String).length ? userIds.map(String) : [''], qcIds]
       ).catch(() => {});
 
-      // 12. Clean Activity Log
       await db.query(
-        `DELETE FROM activity_log 
+        `DELETE FROM activity_log
          WHERE actor ILIKE '%kris%'
             OR actor ILIKE '%topher%'
-            OR actor ILIKE '%renzoe%' 
-            OR actor ILIKE '%renz%millares%' 
+            OR actor ILIKE '%renzoe%'
+            OR actor ILIKE '%renz%millares%'
             OR reference_no = ANY($1::text[])`,
         [qcIds]
       ).catch(() => {});

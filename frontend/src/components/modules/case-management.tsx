@@ -22,10 +22,6 @@ import { API_BASE } from "../../config/api"
 import { subscribeToRealtimeChanges, notifyApplicationChange } from "../../utils/realtimeSync"
 import MaskedText from "../ui/masked-text"
 
-// =====================================================================================
-// Types
-// =====================================================================================
-
 export type ModuleKey =
   | "AICS"
   | "PWD"
@@ -110,10 +106,6 @@ export interface CaseRecord {
   timeline: TimelineEvent[]
 }
 
-// =====================================================================================
-// Helpers & Tokens
-// =====================================================================================
-
 const programColors: Record<string, string> = {
   AICS: "bg-blue-50 text-blue-700 border-blue-200",
   PWD: "bg-purple-50 text-purple-700 border-purple-200",
@@ -190,10 +182,6 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" }
 }
 
-// =====================================================================================
-// Case Details Modal Component
-// =====================================================================================
-
 interface CaseDetailsModalProps {
   c: CaseRecord
   onClose: () => void
@@ -208,7 +196,6 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
   const monitoringLogs = c.monitoringLogs || []
   const timeline = c.timeline || []
 
-  // Close on Escape key press
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -232,7 +219,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-4xl bg-white border border-slate-200 rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden cursor-default"
       >
-        {/* Modal Header */}
+        {}
         <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/80 flex items-start justify-between gap-4 shrink-0">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
@@ -288,7 +275,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
           </button>
         </div>
 
-        {/* Tab Navigation */}
+        {}
         <div className="flex items-center gap-1 px-6 py-2 border-b border-slate-100 bg-white overflow-x-auto shrink-0 scrollbar-none text-xs">
           {[
             { key: "overview", label: "Overview & Beneficiary", icon: <User className="h-3.5 w-3.5" /> },
@@ -313,12 +300,12 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
           ))}
         </div>
 
-        {/* Tab Body */}
+        {}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
-          {/* TAB 1: Overview & Beneficiary */}
+          {}
           {activeTab === "overview" && (
             <div className="space-y-6">
-              {/* Beneficiary Information */}
+              {}
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3 border-b border-slate-200/60 pb-2 flex-wrap gap-2">
                   <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -381,7 +368,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
                 </div>
               </div>
 
-              {/* Application Details */}
+              {}
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3 border-b border-slate-200/60 pb-2">
                   <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -416,7 +403,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
             </div>
           )}
 
-          {/* TAB 2: Connected Appointment */}
+          {}
           {activeTab === "appointment" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -471,7 +458,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
             </div>
           )}
 
-          {/* TAB 3: Connected Financial Aid */}
+          {}
           {activeTab === "financial" && (
             <div className="space-y-4">
               <div>
@@ -541,7 +528,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
             </div>
           )}
 
-          {/* TAB 4: Referrals */}
+          {}
           {activeTab === "referrals" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -558,7 +545,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
                 </div>
               </div>
 
-              {/* Referrals List */}
+              {}
               {c.referrals.length === 0 ? (
                 <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-500">
                   No active referrals required for this case. All essential services provided in-house.
@@ -600,7 +587,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
             </div>
           )}
 
-          {/* TAB 5: Monitoring Logs */}
+          {}
           {activeTab === "monitoring" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -617,7 +604,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
                 </div>
               </div>
 
-              {/* Monitoring List */}
+              {}
               {c.monitoringLogs.length === 0 ? (
                 <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-500">
                   No monitoring logs recorded.
@@ -654,7 +641,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
             </div>
           )}
 
-          {/* TAB 6: Chronological Timeline */}
+          {}
           {activeTab === "timeline" && (
             <div className="space-y-4">
               <div>
@@ -681,7 +668,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
 
                   return (
                     <div key={ev.id || idx} className="relative group">
-                      {/* Node Bullet */}
+                      {}
                       <div className="absolute -left-9 top-0.5 h-6 w-6 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center shadow-xs">
                         {getIcon()}
                       </div>
@@ -700,7 +687,7 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
           )}
         </div>
 
-        {/* Modal Footer */}
+        {}
         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between flex-wrap gap-3 shrink-0">
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-500">
@@ -744,10 +731,6 @@ function CaseDetailsModal({ c, onClose, onUpdateStatus }: CaseDetailsModalProps)
   )
 }
 
-// =====================================================================================
-// Main Admin Case Management Component
-// =====================================================================================
-
 export default function CaseManagement() {
   const [cases, setCases] = useState<CaseRecord[]>(() => {
     try {
@@ -780,7 +763,6 @@ export default function CaseManagement() {
   const [activeCase, setActiveCase] = useState<CaseRecord | null>(null)
   const isFetchingRef = useState({ current: false })[0]
 
-  // Fetch all real cases directly from Backend API (Approved Applications Integration)
   const loadCases = async (silent = false) => {
     if (isFetchingRef.current) return
     isFetchingRef.current = true
@@ -796,7 +778,7 @@ export default function CaseManagement() {
           try {
             localStorage.setItem("cached_case_management_cases", JSON.stringify(data.cases))
           } catch {}
-          // Update active case if open
+
           if (activeCase) {
             const updated = data.cases.find((c: CaseRecord) => c.caseNumber === activeCase.caseNumber)
             if (updated) setActiveCase(updated)
@@ -814,10 +796,8 @@ export default function CaseManagement() {
   useEffect(() => {
     loadCases(false)
 
-    // Interval polling for background changes
     const interval = setInterval(() => loadCases(true), 8000)
 
-    // Real-time broadcast sync
     const unsubscribe = subscribeToRealtimeChanges(() => {
       loadCases(true)
     })
@@ -842,7 +822,6 @@ export default function CaseManagement() {
     }
   }, [])
 
-  // Case Status Update Handler
   const handleUpdateStatus = async (
     caseNumber: string,
     newStatus: CaseStatus,
@@ -866,7 +845,6 @@ export default function CaseManagement() {
     notifyApplicationChange("APPLICATION_APPROVED", "case", caseNumber)
   }
 
-  // Stats calculation
   const stats = useMemo(() => {
     const total = cases.length
     const open = cases.filter((c) => c.status === "open").length
@@ -875,13 +853,11 @@ export default function CaseManagement() {
     return { total, open, monitoringOrReferred, closed }
   }, [cases])
 
-  // Filtered cases
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
-      // 1. Program Filter
+
       if (selectedProgram !== "ALL" && c.linkedProgram !== selectedProgram) return false
 
-      // 2. Status Filter
       if (selectedStatusTab !== "ALL") {
         if (selectedStatusTab === "MONITORING_REFERRED") {
           if (c.status !== "monitoring" && c.status !== "referred") return false
@@ -890,10 +866,8 @@ export default function CaseManagement() {
         }
       }
 
-      // 3. Priority Filter
       if (selectedPriority !== "ALL" && c.priority !== selectedPriority.toLowerCase()) return false
 
-      // 4. Realtime Search Query (Instant Multi-token Search across all case fields)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim()
         const tokens = q.split(/\s+/).filter(Boolean)
@@ -924,14 +898,14 @@ export default function CaseManagement() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto font-sans">
-      {/* Module Title Header */}
+      {}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">
           Case Management
         </h1>
       </div>
 
-      {/* KPI Stats Cards - Perfectly balanced and symmetrical */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Cases", value: stats.total, icon: <FolderKanban className="h-4 w-4 text-blue-500" /> },
@@ -951,7 +925,7 @@ export default function CaseManagement() {
         ))}
       </div>
 
-      {/* Search & Filter Bar */}
+      {}
       <div className="bg-card border border-border rounded-xl p-4 md:p-5 shadow-xs space-y-4">
         <div className="flex items-center gap-2 bg-background border border-border px-3.5 py-2.5 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 transition-all">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -973,7 +947,7 @@ export default function CaseManagement() {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap text-xs">
-          {/* Program Filter */}
+          {}
           <div className="flex items-center gap-2">
             <span className="font-semibold text-muted-foreground">Program:</span>
             <select
@@ -992,7 +966,7 @@ export default function CaseManagement() {
             </select>
           </div>
 
-          {/* Status Filter */}
+          {}
           <div className="flex items-center gap-2">
             <span className="font-semibold text-muted-foreground">Status:</span>
             <select
@@ -1008,7 +982,7 @@ export default function CaseManagement() {
             </select>
           </div>
 
-          {/* Priority Filter */}
+          {}
           <div className="flex items-center gap-2">
             <span className="font-semibold text-muted-foreground">Priority:</span>
             <select
@@ -1029,7 +1003,7 @@ export default function CaseManagement() {
         </div>
       </div>
 
-      {/* Cases List / Cards */}
+      {}
       <div className="space-y-3">
         {isLoading ? (
           <div className="text-center py-16 bg-card border border-border rounded-xl">
@@ -1059,13 +1033,13 @@ export default function CaseManagement() {
                 className="bg-card border border-border hover:border-blue-500/60 hover:shadow-md rounded-xl p-4 md:p-5 transition-all cursor-pointer group select-none"
               >
                 <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 md:gap-4">
-                  {/* Left Section: Beneficiary & Case Info (Strictly clean 3 horizontal lines like Card 2) */}
+                  {}
                   <div className="flex items-center gap-3.5 min-w-0 shrink-0">
                     <div className="h-11 w-11 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0 uppercase shadow-xs">
                       {c.beneficiaryName.charAt(0)}
                     </div>
                     <div className="min-w-0 space-y-0.5">
-                      {/* Top Badges Row (Strictly 1 line) */}
+                      {}
                       <div className="flex items-center gap-2 flex-nowrap">
                         <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shrink-0 whitespace-nowrap">
                           {c.caseNumber}
@@ -1078,12 +1052,12 @@ export default function CaseManagement() {
                         </span>
                       </div>
 
-                      {/* Beneficiary Name (Strictly 1 line) */}
+                      {}
                       <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-500 transition-colors whitespace-nowrap">
                         {c.beneficiaryName}
                       </h3>
 
-                      {/* Metadata row (Strictly 1 line) */}
+                      {}
                       <p className="text-xs text-slate-500 dark:text-slate-400 font-mono whitespace-nowrap">
                         QCID: {c.beneficiaryId} • REF: {c.applicationId}
                         {[
@@ -1099,9 +1073,9 @@ export default function CaseManagement() {
                     </div>
                   </div>
 
-                  {/* Right Section: Connected Module Badges & Status */}
+                  {}
                   <div className="flex items-center gap-2 flex-wrap justify-start xl:justify-end text-xs pt-1 xl:pt-0">
-                    {/* Appointment badge */}
+                    {}
                     {c.linkedAppointment ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-medium text-xs whitespace-nowrap">
                         <Calendar className="h-3.5 w-3.5 text-indigo-500" />
@@ -1113,7 +1087,7 @@ export default function CaseManagement() {
                       </span>
                     )}
 
-                    {/* Financial Aid badge */}
+                    {}
                     {c.linkedFinancialAid ? (
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold text-xs border whitespace-nowrap ${
@@ -1127,7 +1101,7 @@ export default function CaseManagement() {
                       </span>
                     ) : null}
 
-                    {/* Referral count badge */}
+                    {}
                     {referrals.length > 0 && (
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-semibold whitespace-nowrap">
                         <Send className="h-3 w-3" />
@@ -1135,7 +1109,7 @@ export default function CaseManagement() {
                       </span>
                     )}
 
-                    {/* Monitoring count badge */}
+                    {}
                     {monitoringLogs.length > 0 && (
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-semibold whitespace-nowrap">
                         <Activity className="h-3 w-3" />
@@ -1143,7 +1117,7 @@ export default function CaseManagement() {
                       </span>
                     )}
 
-                    {/* Case Status Badge */}
+                    {}
                     {c.status !== "open" && (
                       <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border whitespace-nowrap ${sm.chip}`}>
                         <span className={`h-2 w-2 rounded-full ${sm.dot}`} />
@@ -1158,7 +1132,7 @@ export default function CaseManagement() {
         )}
       </div>
 
-      {/* Case Details Modal */}
+      {}
       {activeCase && (
         <CaseDetailsModal
           c={activeCase}

@@ -154,7 +154,6 @@ export default function SeniorBookletWizard({
     }
   }, [step, isBlocked, bypassedBlock, onStepChange])
 
-  // Reload / Navigation warning protection
   useEffect(() => {
     if (step > 1 && !submitted) {
       ;(window as any).__isFormDirty = true
@@ -166,7 +165,6 @@ export default function SeniorBookletWizard({
     }
   }, [step, submitted])
 
-  // Auto-redirect to pending status screen (Pic 2) after 3 seconds on submitted
   useEffect(() => {
     if (!submitted) return
 
@@ -197,20 +195,17 @@ export default function SeniorBookletWizard({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [step, submitted])
 
-  // STEP 1 Checklist
   const [isResident, setIsResident] = useState(false)
   const [isSenior, setIsSenior] = useState(false)
   const [hasSeniorId, setHasSeniorId] = useState(false)
   const [hasPriorBooklet, setHasPriorBooklet] = useState<"yes" | "no" | "">("")
   const [applicationType, setApplicationType] = useState<"new" | "renewal" | "replacement">("new")
 
-  // ID Verification state
   const [oscaIdInput, setOscaIdInput] = useState("")
   const [isVerifying, setIsVerifying] = useState(false)
   const [isIdVerified, setIsIdVerified] = useState(false)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
-  // Renewal / Replacement fields
   const [bookletNumber, setBookletNumber] = useState("")
   const [renewalReason, setRenewalReason] = useState("Renewal due")
   const [replacementReason, setReplacementReason] = useState("Lost")
@@ -246,7 +241,6 @@ export default function SeniorBookletWizard({
     }
   }
 
-  // STEP 2 Personal Information
   const [isEditingInfo, setIsEditingInfo] = useState(false)
   const [formData, setFormData] = useState(() => {
     const prof: any = propUserProfile || getCurrentUserProfile() || {}
@@ -277,11 +271,9 @@ export default function SeniorBookletWizard({
     }
   })
 
-  // STEP 3 Uploaded Files
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({})
   const [cameraDoc, setCameraDoc] = useState<{ id: string; label: string } | null>(null)
 
-  // Dynamic Required Documents according to application type
   const getRequiredDocuments = (): RequiredDoc[] => {
     if (isMedicine) {
       if (applicationType === "new") {
@@ -339,7 +331,7 @@ export default function SeniorBookletWizard({
           },
         ]
       } else {
-        // replacement
+
         return [
           {
             id: "seniorId",
@@ -371,7 +363,7 @@ export default function SeniorBookletWizard({
         ]
       }
     } else {
-      // Movie Booklet
+
       return [
         {
           id: "seniorId",
@@ -415,7 +407,6 @@ export default function SeniorBookletWizard({
     })
   }
 
-  // Real-time Active Application Status & Booklet sync
   useEffect(() => {
     let isMounted = true
 
@@ -491,7 +482,6 @@ export default function SeniorBookletWizard({
           return false
         }
 
-        // 1. Check if user has an active or approved application for this booklet type (pending prioritized)
         const matchingBookletApps = allApps
           .filter((a) => {
             if (!a) return false
@@ -565,7 +555,6 @@ export default function SeniorBookletWizard({
     const cleanDigits = typed.replace(/\D/g, "")
     const isBookletInput = typed.startsWith("MB-") || typed.startsWith("MV-") || typed.includes("MB") || typed.includes("MV")
 
-    // Validation: either 16 digits Senior ID, or valid Booklet Number / sequence
     if (!isBookletInput && cleanDigits.length !== 16 && cleanDigits.length < 6) {
       setIsIdVerified(false)
       setVerifyError(
@@ -603,7 +592,6 @@ export default function SeniorBookletWizard({
       const cleanTypedNormalized = cleanDigits
       const userProfileQcidDigits = (userProfile?.qcidNo || formData.qcidNo || "").replace(/\D/g, "")
 
-      // Search across all applications for matching Senior ID or Booklet Number
       const matchedApp = allApps.find((a) => {
         if (!a) return false
         const cat = String(a.category || a.service || "").toUpperCase()
@@ -622,7 +610,6 @@ export default function SeniorBookletWizard({
         const existingBk = String(a.existingBookletNumber || a.bookletNumber || "").toUpperCase()
         const existingId = String(a.existingIdNumber || a.existing_id_number || "").replace(/\D/g, "")
 
-        // 1. Booklet match: MB-2026-XXXXXX / MV-2026-XXXXXX
         if (isBookletInput || (cleanTypedNormalized.length >= 6 && cleanTypedNormalized.length <= 10)) {
           if (assignedStr.includes(typed) || typed.includes(assignedStr) || existingBk.includes(typed) || typed.includes(existingBk)) {
             return true
@@ -632,7 +619,6 @@ export default function SeniorBookletWizard({
           }
         }
 
-        // 2. Senior Citizen ID exact match (alphanumeric or exact digits)
         const matchExactClean = (aAssignedClean && aAssignedClean === cleanTyped) ||
           (aRefClean && aRefClean === cleanTyped) ||
           (aExistingClean && aExistingClean === cleanTyped) ||
@@ -648,7 +634,6 @@ export default function SeniorBookletWizard({
       const isProfileMatch = (userProfileQcidDigits.length >= 16 && userProfileQcidDigits === cleanTypedNormalized) ||
         (userProfile && String((userProfile as any).seniorIdNumber || "").replace(/\D/g, "") === cleanTypedNormalized)
 
-      // Check if this senior citizen already has an approved or active application for this booklet
       const existingBookletApp = allApps.find((a) => {
         if (!a) return false
         const aType = String(a.type || a.service || a.extra_data?.type || "").toLowerCase()
@@ -714,7 +699,6 @@ export default function SeniorBookletWizard({
           else if (matchedApp.movieBookletNumber) foundBooklet = matchedApp.movieBookletNumber
         }
 
-        // Also look through allApps for prior booklet records for this senior
         const priorBookletRecord = allApps.find((a) => {
           if (!a) return false
           const cat = String(a.category || a.service || a.extra_data?.category || "").toLowerCase()
@@ -819,7 +803,6 @@ export default function SeniorBookletWizard({
     }
   }
 
-  // Booklet Number validation against registered/expected booklet number
   const cleanBooklet = (bookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
   const cleanExpected = (expectedBookletNumber || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
   const cleanDigitsBooklet = (bookletNumber || "").replace(/\D/g, "")
@@ -841,7 +824,6 @@ export default function SeniorBookletWizard({
 
   const isExistingBookletValid = hasPriorBooklet === "no" || (isIdVerified && isBookletNumberMatch)
 
-  // Step validations
   const isStep1Valid =
     isResident &&
     isSenior &&
@@ -893,7 +875,6 @@ export default function SeniorBookletWizard({
     setStep((prev) => Math.max(prev - 1, 1))
   }
 
-  // Submits after modal confirmation
   const handleConfirmSubmit = async () => {
     setShowConfirmModal(false)
     setIsSubmitting(true)
@@ -954,14 +935,13 @@ export default function SeniorBookletWizard({
     }
 
     try {
-      // 1. Submit to backend API first
+
       await fetch(`${API_BASE}/api/pwd-senior/applications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newApp),
       })
 
-      // 2. Save to localStorage safely
       try {
         const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
         localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing.slice(0, 5)]))
@@ -975,14 +955,12 @@ export default function SeniorBookletWizard({
         localStorage.setItem("pwd_senior_applications", JSON.stringify([lightApp]))
       }
 
-      // Dispatch real-time event
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     } catch (err) {
       console.warn("Failed saving application to backend API:", err)
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     }
 
-    // Trigger storage and update events
     window.dispatchEvent(new Event("pwd_senior_applications_updated"))
     window.dispatchEvent(new Event("storage"))
 
@@ -994,7 +972,6 @@ export default function SeniorBookletWizard({
     }, 1000)
   }
 
-  // ---- PENDING STATE (Identical to Solo Parent) ----
   const isAppApproved =
     String(blockedApp?.status || "").toLowerCase() === "approved" ||
     String(blockedApp?.status || "").toLowerCase() === "completed" ||
@@ -1028,7 +1005,6 @@ export default function SeniorBookletWizard({
     )
   }
 
-  // Blocked Screen (Approved Status)
   if (isAppApproved && !bypassedBlock) {
     const displayRef =
       blockedApp?.referenceNumber ||
@@ -1174,7 +1150,7 @@ export default function SeniorBookletWizard({
             </p>
           </div>
 
-          {/* Reference Card */}
+          {}
           <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
             <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
               <span className="font-semibold text-muted-foreground">Application Reference No.:</span>
@@ -1232,9 +1208,9 @@ export default function SeniorBookletWizard({
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
-      {/* Main Wizard Card matching Pic 2 */}
+      {}
       <div className="border border-gray-200 rounded-xl overflow-hidden bg-white relative shadow-xs">
-        {/* Step indicator connected numbered circles */}
+        {}
         <div className="flex items-center px-6 pt-6 pb-4">
           {STEPS.map((s, idx) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
@@ -1256,7 +1232,7 @@ export default function SeniorBookletWizard({
           ))}
         </div>
 
-        {/* Tab labels bar */}
+        {}
         <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
@@ -1274,9 +1250,9 @@ export default function SeniorBookletWizard({
           ))}
         </div>
 
-        {/* Step Body */}
+        {}
         <div className="p-6 sm:p-8 space-y-7 border-t border-gray-100">
-          {/* ──────────────── STEP 1: COMPLETE CHECKLIST ──────────────── */}
+          {}
           {step === 1 && (
             <div className="space-y-6">
               <div>
@@ -1303,7 +1279,7 @@ export default function SeniorBookletWizard({
                 />
               </div>
 
-              {/* Blue Info Alert Banner */}
+              {}
               <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
                 <div>
@@ -1515,7 +1491,7 @@ export default function SeniorBookletWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 2: PERSONAL INFORMATION ──────────────── */}
+          {}
           {step === 2 && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-3">
@@ -1539,7 +1515,7 @@ export default function SeniorBookletWizard({
                 </div>
               </div>
 
-              {/* IMPORTANT REMINDER BOX matching Pic 3 */}
+              {}
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -1550,7 +1526,7 @@ export default function SeniorBookletWizard({
                 </div>
               </div>
 
-              {/* Applicant QCID Profile Information Grid matching Pic 3 */}
+              {}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -1708,7 +1684,7 @@ export default function SeniorBookletWizard({
                   </div>
                 </div>
 
-                {/* Existing Senior Citizen ID / OSCA ID */}
+                {}
                 <div className="pt-4 border-t border-gray-200 space-y-1">
                   <label className="text-xs font-semibold text-gray-700">
                     Existing Senior Citizen ID / OSCA ID *
@@ -1732,7 +1708,7 @@ export default function SeniorBookletWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 3: REQUIREMENTS / DOCUMENT UPLOAD ──────────────── */}
+          {}
           {step === 3 && (
             <div className="space-y-6">
               <div className="border-b border-border pb-3">
@@ -1744,7 +1720,7 @@ export default function SeniorBookletWizard({
                 </p>
               </div>
 
-              {/* Renewal photo note */}
+              {}
               {applicationType === "renewal" && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-emerald-900">
                   <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -1847,7 +1823,7 @@ export default function SeniorBookletWizard({
             </div>
           )}
 
-          {/* ──────────────── STEP 4: REVIEW & SUBMIT ──────────────── */}
+          {}
           {step === 4 && (
             <div className="space-y-6">
               <div className="border-b border-border pb-3">
@@ -1857,7 +1833,7 @@ export default function SeniorBookletWizard({
                 </p>
               </div>
 
-              {/* Application Details */}
+              {}
               <div className="border border-border rounded-xl p-4 md:p-5 bg-white space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700">Application Details</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
@@ -1896,7 +1872,7 @@ export default function SeniorBookletWizard({
                 </div>
               </div>
 
-              {/* Personal Information */}
+              {}
               <div className="border border-border rounded-xl p-4 md:p-5 bg-white space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700">Personal Information</h4>
@@ -1936,7 +1912,7 @@ export default function SeniorBookletWizard({
                 </div>
               </div>
 
-              {/* Documents */}
+              {}
               <div className="border border-border rounded-xl p-4 md:p-5 bg-white space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700">Documents</h4>
@@ -1992,7 +1968,7 @@ export default function SeniorBookletWizard({
           )}
         </div>
 
-        {/* Wizard Footer Navigation */}
+        {}
         <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 sm:px-8 py-5">
           {step === 1 ? (
             <div />
@@ -2033,7 +2009,7 @@ export default function SeniorBookletWizard({
         </div>
       </div>
 
-      {/* 🔔 CONFIRMATION & PRIVACY CONSENT DIALOG / MODAL BEFORE SUBMIT */}
+      {}
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -2047,7 +2023,7 @@ export default function SeniorBookletWizard({
         confirmText="YES, SUBMIT APPLICATION"
       />
 
-      {/* 📸 Document Camera Capture Modal */}
+      {}
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}
         onClose={() => setCameraDoc(null)}
@@ -2059,7 +2035,7 @@ export default function SeniorBookletWizard({
         }}
       />
 
-      {/* 👁️ UPLOADED DOCUMENT FULL PREVIEW MODAL */}
+      {}
       {previewDocModal && (
         <UploadedDocPreviewModal
           title={previewDocModal.title}

@@ -164,7 +164,6 @@ const SOLO_PARENT_CATEGORIES: SoloParentCategory[] = [
   },
 ]
 
-// ---- Step 3: Sample Documents (dynamic base sa ID status) ----
 interface SampleDocument {
   id: string
   label: string
@@ -235,8 +234,6 @@ function slugify(text: string) {
     .replace(/(^-|-$)/g, "")
 }
 
-// I-convert ang isang requirement string mula sa SOLO_PARENT_CATEGORIES
-// patungong SampleDocument row (may sample image kung may existing match).
 function requirementToDocument(requirement: string, index: number): SampleDocument {
   const id = `req-${index}-${slugify(requirement).slice(0, 40)}`
 
@@ -276,8 +273,6 @@ function requirementToDocument(requirement: string, index: number): SampleDocume
   }
 }
 
-// Ang 2x2 ID picture ay palaging kailangan para sa ID card mismo,
-// kahit hindi ito nasa RA 8972/11861 requirements list.
 const BASE_NEW_APPLICANT_DOCUMENT: SampleDocument = {
   id: "idPicture",
   label: "1 PC 2X2 ID PICTURE",
@@ -426,7 +421,6 @@ function extractEmergencyContact(app: any, fallbackProfile?: any) {
     (typeof app?.extra_data === "object" ? app?.extra_data?.formData : null) ||
     {}
 
-  // Name extraction
   let efName = app?.emergency_first_name || app?.emergencyFirstName || fd?.emergencyFirstName || ""
   let elName = app?.emergency_last_name || app?.emergencyLastName || fd?.emergencyLastName || ""
   const rawFullName =
@@ -456,7 +450,6 @@ function extractEmergencyContact(app: any, fallbackProfile?: any) {
     elName = fallbackProfile.emergencyLastName
   }
 
-  // Phone
   const ePhone =
     app?.emergency_contact_no ||
     app?.emergencyContactNo ||
@@ -470,7 +463,6 @@ function extractEmergencyContact(app: any, fallbackProfile?: any) {
     fallbackProfile?.contactNo ||
     ""
 
-  // Relationship
   const eRel =
     app?.emergency_relationship ||
     app?.emergencyRelationship ||
@@ -479,7 +471,6 @@ function extractEmergencyContact(app: any, fallbackProfile?: any) {
     fallbackProfile?.emergencyRelationship ||
     "Immediate Family"
 
-  // Address
   let eAddr =
     app?.emergency_address ||
     app?.emergencyAddress ||
@@ -555,7 +546,6 @@ function TextInput({
   )
 }
 
-// ── Sample Document modal ──
 interface DocumentModalProps {
   doc: SampleDocument | null
   isOpen: boolean
@@ -624,7 +614,6 @@ function DocumentSampleModal({ doc, isOpen, onClose }: DocumentModalProps) {
   )
 }
 
-// ── Multi-file upload row ──
 function DocumentUploadRow({
   doc,
   docIndex,
@@ -735,7 +724,6 @@ function DocumentUploadRow({
   )
 }
 
-// ── Review & Submit helpers ──
 function ReviewField({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -781,9 +769,6 @@ function ReviewSection({
   )
 }
 
-// ============================================================================
-// MAIN COMPONENT: SoloParentApplicationWizard
-// ============================================================================
 export default function SoloParentApplicationWizard({
   onBack,
   userProfile: propUserProfile,
@@ -870,7 +855,7 @@ export default function SoloParentApplicationWizard({
         qcidNumber: prev.qcidNumber || prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
         email: prev.email || prof.email || userProfile?.email || "",
         bloodType: prev.bloodType || (prof as any).bloodType || userProfile?.bloodType || "O+",
-        // Emergency contact: BLANK on new application unless already entered; only auto-filled on renewal/loss
+
         emergencyFirstName: prev.emergencyFirstName || (isNew ? "" : (prof.emergencyFirstName || userProfile?.emergencyFirstName || "")),
         emergencyLastName: prev.emergencyLastName || (isNew ? "" : (prof.emergencyLastName || userProfile?.emergencyLastName || "")),
         emergencyContactNo: prev.emergencyContactNo || (isNew ? "" : (prof.emergencyContactNo || userProfile?.emergencyContactNo || "")),
@@ -901,7 +886,6 @@ export default function SoloParentApplicationWizard({
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
-  // ---- Step 1: Complete Checklist / Verification ----
   const [isResident, setIsResident] = useState(false)
   const [hasSoleParentalCare, setHasSoleParentalCare] = useState(false)
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(initialCategoryId ?? null)
@@ -986,7 +970,6 @@ export default function SoloParentApplicationWizard({
       }
     } catch {}
 
-    // Fallback to local cache
     try {
       const raw = localStorage.getItem("solo_parent_applications")
       if (raw) {
@@ -1020,7 +1003,6 @@ export default function SoloParentApplicationWizard({
       const apps = await fetchAllSoloParentApps()
       const prof = getCurrentUserProfile()
 
-      // 1. Find Solo Parent applications from local cache & user apps (must be APPROVED)
       const soloApps = apps.filter((a) => {
         if (!a) return false
         const cat = String(a.classification_title || a.category || a.service || a.application_type || "").toLowerCase()
@@ -1037,7 +1019,6 @@ export default function SoloParentApplicationWizard({
         return isSoloParent && isApproved
       })
 
-      // Match against approved user records
       let matchedApp = soloApps.find((a) => {
         const aAssignedDigits = String(a.assigned_id_number || a.assignedIdNumber || "").replace(/\D/g, "")
         const aSoloIdDigits = String(a.solo_parent_id_number || a.soloParentIdNumber || "").replace(/\D/g, "")
@@ -1057,7 +1038,6 @@ export default function SoloParentApplicationWizard({
         return Boolean(matchDigits || matchExactString)
       })
 
-      // 2. Direct backend query fallback if not in local cache
       if (!matchedApp) {
         try {
           const resVerify = await fetch(`${API_BASE}/api/solo-parent/verify-id/${encodeURIComponent(typed)}?_t=${Date.now()}`, {
@@ -1076,7 +1056,6 @@ export default function SoloParentApplicationWizard({
         } catch {}
       }
 
-      // If matched approved Solo Parent application
       if (matchedApp) {
         setIsIdVerified(true)
         setVerifyError("")
@@ -1147,12 +1126,11 @@ export default function SoloParentApplicationWizard({
       setIsVerifying(false)
     }
   }
-  
-  // ---- Eligibility check (bago pumasok sa wizard) ----
+
   const currentProf = getCurrentUserProfile()
   const userId = userProfile?.userId || (userProfile as any)?.id || currentProf?.id || ""
   const [checkingEligibility, setCheckingEligibility] = useState(false)
-  
+
   const [isBlocked, setIsBlocked] = useState(() => {
     try {
       const prof = getCurrentUserProfile()
@@ -1320,7 +1298,7 @@ export default function SoloParentApplicationWizard({
     let isMounted = true
 
     const checkEligibility = async (isInitial = false) => {
-      // If user is actively in submission stage matching, do not interrupt
+
       if (submissionStage === "matching") {
         return
       }
@@ -1339,7 +1317,6 @@ export default function SoloParentApplicationWizard({
 
         const isReapply = isReapplying || (typeof window !== "undefined" && window.location.search.includes("reapply=true"))
 
-        // 1. Backend Eligibility API via cached fetch
         try {
           const data = await cachedApiFetch(
             `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&reapply=${isReapply ? "true" : "false"}`,
@@ -1354,7 +1331,6 @@ export default function SoloParentApplicationWizard({
           }
         } catch {}
 
-        // 2. Real-time fetch verification
         const allApps = await fetchAllSoloParentApps()
         const userQcidClean = qcid.replace(/\D/g, "")
         const userEmailClean = email.toLowerCase()
@@ -1451,7 +1427,6 @@ export default function SoloParentApplicationWizard({
           }
         }
 
-        // Pre-fill formData behind the scenes on Renewal / Loss (without auto-filling or auto-verifying Step 1)
         const appToPreFill = approvedAnyApp || approvedAppForType
         if (appToPreFill && (typeToCheck === "renewal" || typeToCheck === "loss") && !isBlockedFound) {
           const emergencyData = extractEmergencyContact(appToPreFill, prof)
@@ -1551,16 +1526,13 @@ export default function SoloParentApplicationWizard({
     }
   }, [userId, idStatus])
 
-  // ---- Submission & Application State ----
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [reference, setReference] = useState("")
-
 
   useEffect(() => {
     onSubmissionStageChange?.(submissionStage)
   }, [submissionStage, onSubmissionStageChange])
 
-  // When on pending stage, mark blocked state so user cannot re-fill
   useEffect(() => {
     if (submissionStage === "pending") {
       setIsBlocked(true)
@@ -1570,7 +1542,6 @@ export default function SoloParentApplicationWizard({
   }, [submissionStage, reference])
   const familyMembers: FamilyMember[] = []
 
-  // ---- Step 2: Personal Information ----
   const [formData, setFormData] = useState<FormData>(() => {
     const prof = getCurrentUserProfile()
     const isNew = initialType === "new"
@@ -1595,7 +1566,7 @@ export default function SoloParentApplicationWizard({
       qcidNumber: prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
       email: prof.email || userProfile?.email || "",
       bloodType: (prof as any).bloodType || userProfile?.bloodType || "O+",
-      // Emergency contact: BLANK on new application; only auto-filled on renewal/loss
+
       emergencyFirstName: isNew ? "" : (prof.emergencyFirstName || userProfile?.emergencyFirstName || ""),
       emergencyLastName: isNew ? "" : (prof.emergencyLastName || userProfile?.emergencyLastName || ""),
       emergencyContactNo: isNew ? "" : (prof.emergencyContactNo || userProfile?.emergencyContactNo || ""),
@@ -1606,13 +1577,11 @@ export default function SoloParentApplicationWizard({
   const updateField = (key: keyof FormData, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }))
 
-  // ---- Step 3: Sample Documents (dynamic base sa idStatus) ----
   const requiredDocs = getRequiredDocuments(idStatus, selectedCategoryId)
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
   const [uploadedDocsBase64, setUploadedDocsBase64] = useState<Record<string, string>>({})
   const [privacyAgreed, setPrivacyAgreed] = useState(false)
 
-  // Reload / Navigation warning protection — active from Step 2 onwards when modal is closed and form is actively being filled
   const isFormDirty =
     !isModalOpen &&
     !isBlocked &&
@@ -1671,7 +1640,6 @@ export default function SoloParentApplicationWizard({
       [docId]: [fileToUpload],
     }))
 
-    // Read as Base64 Data URL with mobile-friendly compression
     readFileAsDataUrl(fileToUpload, 1000, 0.75).then((dataUrl) => {
       if (dataUrl) {
         setUploadedDocsBase64((prev) => ({ ...prev, [docId]: dataUrl }))
@@ -1697,20 +1665,17 @@ export default function SoloParentApplicationWizard({
     const fallbackRef = reference || generateReference(idStatus, userProfile?.qcidNo || formData?.qcidNumber)
     setReference(fallbackRef)
 
-    // Instantly transition to pending state (0ms delay)
     setSubmissionStage("pending")
     setIsBlocked(true)
     setBlockReason("pending")
     setBlockedReference(fallbackRef)
 
-    // Construct submission payloads
     const userId = (userProfile as any)?.id || (userProfile as any)?.userId || "0"
     const isRenewalOrLoss = idStatus === "renewal" || idStatus === "loss"
     const emFirst = isRenewalOrLoss ? formData.emergencyFirstName : ((userProfile as any)?.emergencyFirstName || formData.emergencyFirstName || "")
     const emLast = isRenewalOrLoss ? formData.emergencyLastName : ((userProfile as any)?.emergencyLastName || formData.emergencyLastName || "")
     const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
 
-    // Extract uploaded 2x2 photo Base64
     const photoKey = Object.keys(uploadedDocsBase64).find((k) =>
       /photo|picture|2x2|id_pic|avatar/i.test(k)
     )
@@ -1739,7 +1704,6 @@ export default function SoloParentApplicationWizard({
       bloodType: formData.bloodType || "O+",
     }
 
-    // High-fidelity document records with real user upload preview & dataUrl
     const newDocItems = requiredDocs.map((d) => ({
       documentId: d.id,
       documentLabel: d.label,
@@ -1753,7 +1717,6 @@ export default function SoloParentApplicationWizard({
       })),
     }))
 
-    // Instant local cache sync with safe quota limit handling
     try {
       const stored = JSON.parse(localStorage.getItem("solo_parent_applications") || "[]")
       const localRecord = {
@@ -1798,7 +1761,7 @@ export default function SoloParentApplicationWizard({
     } catch {}
 
     try {
-      // 1. Create application record sa backend (Super lightweight JSON body)
+
       const res = await fetch(`${API_BASE}/api/solo-parent/create`, {
         method: "POST",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -1839,10 +1802,8 @@ export default function SoloParentApplicationWizard({
           setReference(data.referenceNumber)
         }
 
-        // 2. Broadcast immediately so Admin receives and shows the pending record without delay
         notifyApplicationChange("APPLICATION_SUBMITTED", "solo_parent", data.referenceNumber || fallbackRef)
 
-        // 3. Upload physical documents in parallel in background
         const token = getAuthToken()
         const uploadPromises = requiredDocs.map(async (doc) => {
           const files = uploadedDocs[doc.id] || []
@@ -1861,7 +1822,6 @@ export default function SoloParentApplicationWizard({
 
         await Promise.all(uploadPromises)
 
-        // 4. Submit confirmation
         if (appId) {
           await fetch(`${API_BASE}/api/solo-parent/${appId}/submit`, {
             method: "POST",
@@ -1869,7 +1829,6 @@ export default function SoloParentApplicationWizard({
           }).catch(() => {})
         }
 
-        // Final broadcast to Admin
         notifyApplicationChange("APPLICATION_SUBMITTED", "solo_parent", data.referenceNumber || fallbackRef)
       }
     } catch (err) {
@@ -1944,8 +1903,6 @@ export default function SoloParentApplicationWizard({
 
   const applicationTypeLabel =
     idStatus === "renewal" ? t("spTypeRenewal") : idStatus === "loss" ? t("spTypeReplacementRequest") : t("spTypeApplication")
-
-
 
   if (isBlocked && !isReapplying && (blockReason === "pending" || blockReason === "draft" || blockReason === "rejected" || (blockReason === "approved" && idStatus === "new"))) {
     const isAppApproved = blockReason === "approved" || blockedApp?.application_status === "approved" || blockedApp?.status === "approved"
@@ -2255,7 +2212,7 @@ export default function SoloParentApplicationWizard({
             </p>
           </div>
 
-          {/* Reference Card */}
+          {}
           <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
             <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
               <span className="font-semibold text-muted-foreground">
@@ -2372,7 +2329,7 @@ export default function SoloParentApplicationWizard({
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
       <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-        {/* Step indicator dots */}
+        {}
         <div className="flex items-center px-6 pt-6 pb-4">
           {STEPS.map((s, idx) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
@@ -2394,7 +2351,7 @@ export default function SoloParentApplicationWizard({
           ))}
         </div>
 
-        {/* Tab labels */}
+        {}
         <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
@@ -2412,9 +2369,9 @@ export default function SoloParentApplicationWizard({
           ))}
         </div>
 
-        {/* Step content */}
+        {}
         <div className="p-6 min-h-90">
-          {/* ──────────────── STEP 1: COMPLETE CHECKLIST ──────────────── */}
+          {}
           {step === 1 && (
             <div className="space-y-6">
               <div>
@@ -2427,7 +2384,7 @@ export default function SoloParentApplicationWizard({
                 </h3>
               </div>
 
-              {/* Checklist items without outer borders */}
+              {}
               <div className="space-y-3">
                 <label className="flex items-start gap-2.5 cursor-pointer select-none">
                   <input
@@ -2506,7 +2463,7 @@ export default function SoloParentApplicationWizard({
                 )}
               </div>
 
-              {/* Blue Info Alert Banner */}
+              {}
               <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
                 <div>
@@ -2551,7 +2508,7 @@ export default function SoloParentApplicationWizard({
                 </div>
               </div>
 
-              {/* Dropdown / ID verification section */}
+              {}
               {idStatus === "new" && (
                 <div className="space-y-2 pt-2">
                   <label className="text-xs font-bold text-foreground uppercase tracking-wide block">
@@ -2598,7 +2555,7 @@ export default function SoloParentApplicationWizard({
                 </div>
               )}
 
-              {/* RENEWAL: STEP 1 — VERIFY EXISTING SOLO PARENT ID */}
+              {}
               {idStatus === "renewal" && (
                 <div className="space-y-5 pt-2">
                   <div className="border-b border-gray-200 pb-2">
@@ -2743,7 +2700,7 @@ export default function SoloParentApplicationWizard({
                 </div>
               )}
 
-              {/* LOSS: STEP 1 — VERIFY EXISTING SOLO PARENT ID */}
+              {}
               {idStatus === "loss" && (
                 <div className="space-y-5 pt-2">
                   <div className="border-b border-gray-200 pb-2">
@@ -2915,7 +2872,7 @@ export default function SoloParentApplicationWizard({
                 </div>
               </div>
 
-              {/* IMPORTANT REMINDER BOX */}
+              {}
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -2926,7 +2883,7 @@ export default function SoloParentApplicationWizard({
                 </div>
               </div>
 
-              {/* Applicant QCID Profile Information Grid */}
+              {}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -3211,7 +3168,7 @@ export default function SoloParentApplicationWizard({
                   </div>
                 </div>
 
-                {/* EMERGENCY CONTACT */}
+                {}
                 <div className="pt-4 border-t border-gray-200 space-y-3">
                   <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5">
                     <User className="w-4 h-4 text-[#3b82f6]" />
@@ -3366,7 +3323,7 @@ export default function SoloParentApplicationWizard({
                 <p className="text-sm text-muted-foreground">{t("pwdReviewDesc") || "Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon."}</p>
               </div>
 
-              {/* Application Details */}
+              {}
               <ReviewSection title="Application Details" onEdit={() => { setReturnToReview(true); setStep(1) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField
@@ -3400,7 +3357,7 @@ export default function SoloParentApplicationWizard({
                 </div>
               </ReviewSection>
 
-              {/* Personal Information */}
+              {}
               <ReviewSection title="Personal Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField label="Full Name" value={fullApplicantName} />
@@ -3425,7 +3382,7 @@ export default function SoloParentApplicationWizard({
                 </div>
               </ReviewSection>
 
-              {/* Uploaded Documents */}
+              {}
               <ReviewSection title="Uploaded Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>
                 <div className="p-4 space-y-4">
                   {requiredDocs.map((doc) => {
@@ -3522,7 +3479,7 @@ export default function SoloParentApplicationWizard({
         </div>
       </div>
 
-      {/* 🔔 DATA PRIVACY CONSENT OVERLAY MODAL BEFORE SUBMIT */}
+      {}
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -3533,7 +3490,7 @@ export default function SoloParentApplicationWizard({
         }}
       />
 
-      {/* Sample Document Modal */}
+      {}
       <DocumentSampleModal
         doc={selectedSampleDoc}
         isOpen={showSampleModal}
@@ -3543,7 +3500,7 @@ export default function SoloParentApplicationWizard({
         }}
       />
 
-      {/* 📸 Document Camera Capture Modal */}
+      {}
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}
         onClose={() => setCameraDoc(null)}
@@ -3555,7 +3512,7 @@ export default function SoloParentApplicationWizard({
         }}
       />
 
-      {/* 👁️ UPLOADED DOCUMENT FULL PREVIEW MODAL */}
+      {}
       {previewDocModal && (
         <UploadedDocPreviewModal
           title={previewDocModal.title}

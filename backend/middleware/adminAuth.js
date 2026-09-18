@@ -1,11 +1,8 @@
 const { verifyToken } = require('../config/jwt');
 const db = require('../config/db');
 
-/**
- * Middleware to authenticate requests and verify that user has Admin privileges
- */
 module.exports = async function adminAuthMiddleware(req, res, next) {
-  // If already verified by previous auth middleware
+
   if (req.user) {
     const role = (req.user.role || '').toLowerCase();
     const isAdmin = role === 'admin' || role === 'superadmin' || role === 'staff' || role === 'worker' || role === 'social worker';
@@ -52,7 +49,6 @@ module.exports = async function adminAuthMiddleware(req, res, next) {
     return next();
   }
 
-  // Check active DB session
   try {
     const sessionRes = await db.query(
       'SELECT id, email, first_name, last_name, role FROM users WHERE active_session_token = $1',

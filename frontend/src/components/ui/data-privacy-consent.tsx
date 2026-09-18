@@ -25,10 +25,10 @@ export function DataPrivacyConsent({
 
   return (
     <div className={`rounded-xl border p-4 transition-all ${
-      hasError 
-        ? "border-red-500/60 bg-red-50/50 dark:bg-red-950/20 shadow-sm" 
-        : checked 
-          ? "border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/10" 
+      hasError
+        ? "border-red-500/60 bg-red-50/50 dark:bg-red-950/20 shadow-sm"
+        : checked
+          ? "border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/10"
           : "border-border bg-card/60 hover:border-primary/40"
     } ${className}`}>
       <div className="flex items-start gap-3">
@@ -72,7 +72,7 @@ export function DataPrivacyConsent({
         </div>
       </div>
 
-      {/* Data Privacy Modal */}
+      {}
       {showModal && (
         <DataPrivacyModal onClose={() => setShowModal(false)} onAgree={() => { onChange(true); setShowModal(false); }} />
       )}
@@ -84,7 +84,7 @@ export function DataPrivacyModal({ onClose, onAgree }: { onClose: () => void; on
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
       <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-2xl my-8 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
+        {}
         <div className="px-6 py-4 border-b border-border bg-muted/30 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
@@ -104,7 +104,7 @@ export function DataPrivacyModal({ onClose, onAgree }: { onClose: () => void; on
           </button>
         </div>
 
-        {/* Content Body */}
+        {}
         <div className="p-6 overflow-y-auto space-y-5 text-xs sm:text-sm text-foreground/90 leading-relaxed">
           <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
             <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
@@ -165,7 +165,7 @@ export function DataPrivacyModal({ onClose, onAgree }: { onClose: () => void; on
           </section>
         </div>
 
-        {/* Footer Actions */}
+        {}
         <div className="px-6 py-4 border-t border-border bg-muted/20 flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"

@@ -200,7 +200,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   const [selectedCourse, setSelectedCourse] = useState<TrainingCourse | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
-  // Localized course helper
   const getLocalizedCourse = (course: TrainingCourse) => {
     if (isBis) {
       if (course.id.includes("sewing")) {
@@ -244,7 +243,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         }
       }
     } else if (language === "tl") {
-      // Tagalog
+
       if (course.id.includes("sewing")) {
         return {
           ...course,
@@ -287,7 +286,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
       }
     }
 
-    // Default / English
     if (course.id.includes("sewing")) {
       return {
         ...course,
@@ -331,28 +329,23 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     return course
   }
 
-  // Current active user application state
   const [activeApplication, setActiveApplication] = useState<TrainingApplicationRecord | null>(null)
   const [allUserApplications, setAllUserApplications] = useState<TrainingApplicationRecord[]>([])
 
-  // Apply Form State
   const [applyCourseId, setApplyCourseId] = useState<string>("tr-sewing")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formStep, setFormStep] = useState<"select" | "profile" | "review">("select")
   const [isAttested, setIsAttested] = useState(false)
   const [isRevising, setIsRevising] = useState(false)
 
-  // Certificate Modal State
   const [certificateModalApp, setCertificateModalApp] = useState<TrainingApplicationRecord | null>(null)
 
-  // User Profile
   const profile: LoggedInUserProfile = getCurrentUserProfile()
   const userQcid = getLoggedInUserQcid() || profile.qcidNo || "110000116932100"
 
-  // Fetch available courses and user applications
   const fetchTrainingData = async () => {
     try {
-      // 1. Fetch available programs
+
       try {
         const resProg = await fetch(`${API_BASE}/api/training/programs`)
         if (resProg.ok) {
@@ -363,7 +356,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         }
       } catch (_) {}
 
-      // 2. Fetch user applications
       try {
         const resApps = await fetch(`${API_BASE}/api/training/applications?qcid=${userQcid}`)
         if (resApps.ok) {
@@ -393,7 +385,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         }
       } catch (_) {}
 
-      // Fallback: localStorage
       const local = JSON.parse(localStorage.getItem("training_applications") || "[]")
       if (Array.isArray(local) && local.length > 0) {
         const match = local.filter(
@@ -428,7 +419,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     return () => clearInterval(interval)
   }, [userQcid])
 
-  // Get icon for training course
   const getCourseIcon = (id: string) => {
     if (id.includes("sewing")) return <Scissors className="h-6 w-6 text-indigo-600" />
     if (id.includes("cooking")) return <UtensilsCrossed className="h-6 w-6 text-amber-600" />
@@ -436,20 +426,17 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     return <Laptop className="h-6 w-6 text-blue-600" />
   }
 
-  // Handle open details modal
   const handleOpenDetails = (course: TrainingCourse) => {
     setSelectedCourse(course)
     setIsDetailModalOpen(true)
   }
 
-  // Check if citizen has an ongoing active training (not yet completed, not rejected)
   const hasActiveOngoingTraining = Boolean(
     allUserApplications.some(
       (a) => a.status !== "rejected" && !a.attendance?.completed
     )
   )
 
-  // Handle jump from course to Apply tab
   const handleSelectToApply = (course: TrainingCourse) => {
     if (hasActiveOngoingTraining) {
       const activeRunning = allUserApplications.find((a) => a.status !== "rejected" && !a.attendance?.completed)
@@ -470,7 +457,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     setFormStep("profile")
   }
 
-  // Handle submit application
   const handleSubmitApplication = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isAttested) {
@@ -523,13 +509,13 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           const newApp = data.application
           setActiveApplication(newApp)
           setAllUserApplications((prev) => [newApp, ...prev.filter((a) => String(a.id) !== String(newApp.id) && a.referenceNumber !== newApp.referenceNumber)])
-          // Save in local storage
+
           const existing = JSON.parse(localStorage.getItem("training_applications") || "[]")
           const filtered = existing.filter((a: any) => String(a.id) !== String(newApp.id) && a.referenceNumber !== newApp.referenceNumber)
           localStorage.setItem("training_applications", JSON.stringify([newApp, ...filtered]))
         }
       } else {
-        // Fallback local creation
+
         const candidateSuffix = allUserApplications.length > 0 ? `-${allUserApplications.length}` : ""
         const fallbackApp: TrainingApplicationRecord = {
           id: Date.now(),
@@ -575,7 +561,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     }
   }
 
-  // User interactive daily attendance check-in (3 hours per day)
   const handleUserCheckin = async (dayNumber: number) => {
     if (!activeApplication) return
     const currentSessions = activeApplication.attendance?.sessions || [
@@ -587,7 +572,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
     const targetSession = currentSessions.find((s) => s.day === dayNumber)
     if (targetSession && targetSession.attended) {
-      return // Already attended, do not repeat or toggle off
+      return
     }
 
     const updatedSessions = currentSessions.map((s) => {
@@ -627,7 +612,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         : null,
     }
 
-    // Instant local state update
     setActiveApplication(updated)
     setAllUserApplications((prev) => {
       const exists = prev.some((a) => String(a.id) === String(updated.id) || a.referenceNumber === updated.referenceNumber)
@@ -657,7 +641,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     notifyApplicationChange(isComplete ? "APPLICATION_APPROVED" : "STATUS_CHANGED", "livelihood", updated.referenceNumber)
   }
 
-  // Active status badge helper
   const renderStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
@@ -695,7 +678,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
   return (
     <div className="space-y-6">
-      {/* Sub-Module Top Header */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-5 md:p-6 shadow-xs relative overflow-hidden">
         <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-blue-500/5 blur-2xl pointer-events-none" />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
@@ -741,10 +724,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         </div>
       </div>
 
-      {/* 4-Stage Navigation Tabs */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-1.5 shadow-xs">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
-          {/* Tab 1: Available Training */}
+          {}
           <button
             type="button"
             onClick={() => setActiveTab("available")}
@@ -759,7 +742,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             <span>{isEn ? "1. AVAILABLE TRAINING" : isBis ? "1. MGA BUKAS NGA PAGBANSAY" : "1. MGA BUKAS NA PAGSASANAY"}</span>
           </button>
 
-          {/* Tab 2: Apply for Training */}
+          {}
           <button
             type="button"
             onClick={() => setActiveTab("apply")}
@@ -774,7 +757,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             <span>{isEn ? "2. APPLY FOR TRAINING" : isBis ? "2. MAG-APPLY SA PAGBANSAY" : "2. MAG-APPLY SA PAGSASANAY"}</span>
           </button>
 
-          {/* Tab 3: Training Schedule */}
+          {}
           <button
             type="button"
             onClick={() => setActiveTab("schedule")}
@@ -789,7 +772,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             <span>{isEn ? "3. TRAINING SCHEDULE" : isBis ? "3. ISKEDYUL SA PAGBANSAY" : "3. ISKEDYUL NG PAGSASANAY"}</span>
           </button>
 
-          {/* Tab 4: Training History */}
+          {}
           <button
             type="button"
             onClick={() => setActiveTab("history")}
@@ -806,12 +789,12 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 1. AVAILABLE TRAINING CONTENT                                */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {activeTab === "available" && (
         <div className="space-y-6">
-          {/* Active Training Notice Banner */}
+          {}
           {hasActiveOngoingTraining && (
             <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 rounded-2xl p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs animate-in fade-in duration-200">
               <div className="flex items-start sm:items-center gap-3">
@@ -859,8 +842,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {courses.map((rawCourse) => {
               const course = getLocalizedCourse(rawCourse)
-              
-              // Dynamic slot calculations based on backend or all stored applications
+
               const allStoredApps: TrainingApplicationRecord[] = (() => {
                 try {
                   const stored = localStorage.getItem("training_applications")
@@ -889,7 +871,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 Math.round((enrolledCount / totalSlots) * 100)
               )
 
-              // Check if currently logged in user is already enrolled/applied in this course
               const isUserEnrolledInThis = allUserApplications.some(
                 (a) =>
                   (a.trainingId === course.id ||
@@ -951,7 +932,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       {course.description}
                     </p>
 
-                    {/* Schedule & Location summary */}
+                    {}
                     <div className="space-y-1.5 pt-2 border-t border-border/60 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
@@ -967,7 +948,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       </div>
                     </div>
 
-                    {/* Slots progress */}
+                    {}
                     <div className="pt-2">
                       <div className="flex justify-between text-[11px] font-medium text-muted-foreground mb-1">
                         <span>{isEn ? "Slots filled" : isBis ? "Mga slot nga napuno" : "Mga slot na napuno"}</span>
@@ -988,7 +969,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     </div>
                   </div>
 
-                  {/* Actions */}
+                  {}
                   <div className="grid grid-cols-2 gap-2 pt-4 mt-2 border-t border-border/60">
                     <button
                       type="button"
@@ -1041,12 +1022,12 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* 2. APPLY FOR TRAINING & APPLICATION STATUS                   */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {activeTab === "apply" && (
         <div className="space-y-6 max-w-3xl mx-auto">
-          {/* Multiple Applications History Switcher */}
+          {}
           {allUserApplications.length > 1 && (
             <div className="bg-card border border-border rounded-2xl p-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
@@ -1075,7 +1056,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             </div>
           )}
 
-          {/* Active Application Status Tracker Banner (if any) */}
+          {}
           {activeApplication && !isRevising && (
             <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
@@ -1111,7 +1092,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
               </div>
 
-              {/* Status specific detailed explanation card */}
+              {}
               {activeApplication.status === "pending" && (
                 <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 space-y-2">
                   <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300 font-bold text-sm">
@@ -1231,7 +1212,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
               )}
 
-              {/* Application Summary details */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-muted/20 p-4 rounded-xl border border-border">
                 <div>
                   <span className="text-muted-foreground block text-[11px]">{isEn ? "Selected Program:" : isBis ? "Napiling Programa:" : "Napiling Programa:"}</span>
@@ -1253,7 +1234,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             </div>
           )}
 
-          {/* APPLICATION FORM (shown if no application yet, or if revising/re-applying) */}
+          {}
           {(!activeApplication || isRevising) && (
             <form onSubmit={handleSubmitApplication} className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-6">
               <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1284,7 +1265,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
               </div>
 
-              {/* Step 1: Selected Training */}
+              {}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
@@ -1326,7 +1307,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 })()}
               </div>
 
-              {/* Step 2: Auto-filled Applicant Information from User Profile */}
+              {}
               <div className="space-y-4 pt-4 border-t border-border">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
@@ -1410,7 +1391,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
               </div>
 
-              {/* Step 3: Review Application */}
+              {}
               <div className="space-y-3 pt-4 border-t border-border">
                 <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
                   {isEn ? "Step 3. Review Application" : isBis ? "Step 3. Subaya ang Aplikasyon" : "Step 3. Repasuhin ang Aplikasyon"}
@@ -1448,7 +1429,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </label>
               </div>
 
-              {/* Step 4: Submit Application */}
+              {}
               <div className="pt-2 flex items-center justify-end gap-3">
                 {isRevising && (
                   <button
@@ -1482,9 +1463,9 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* 3. TRAINING SCHEDULE CONTENT                                 */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {activeTab === "schedule" && (
         <div className="space-y-6 max-w-3xl mx-auto">
           <div>
@@ -1530,7 +1511,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             </div>
           ) : (
             <div className="space-y-5">
-              {/* Schedule Main Card */}
+              {}
               <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
                   <div>
@@ -1576,7 +1557,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
               </div>
 
-              {/* Daily Attendance & Goal Progress Card */}
+              {}
               <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
                   <div className="space-y-1">
@@ -1604,7 +1585,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   </div>
                 </div>
 
-                {/* Progress bar with percentage */}
+                {}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
                     <span>{isEn ? "Training Progress" : "Progreso sa Pagsasanay"}</span>
@@ -1631,7 +1612,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   </div>
                 </div>
 
-                {/* Interactive Daily Sessions Checklist */}
+                {}
                 <div className="space-y-2.5 pt-2">
                   {(activeApplication.attendance?.sessions || [
                     { day: 1, topic: "Orientation & Fundamental Skills", hours: 3, attended: false, date: "Day 1" },
@@ -1701,7 +1682,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   ))}
                 </div>
 
-                {/* Certificate Lock / Unlock Status Card */}
+                {}
                 {activeApplication.attendance?.completed ? (
                   <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-200">
                     <div className="flex items-start gap-3.5">
@@ -1763,9 +1744,9 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* 4. TRAINING HISTORY & CERTIFICATES                           */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {activeTab === "history" && (
         <div className="space-y-6 max-w-3xl mx-auto">
           <div>
@@ -1781,7 +1762,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             </p>
           </div>
 
-          {/* Active In-Progress Training Banner (If not yet completed) */}
+          {}
           {activeApplication && activeApplication.status === "approved" && !activeApplication.attendance?.completed && (
             <div className="bg-card border border-amber-500/30 bg-amber-500/5 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
@@ -1877,9 +1858,9 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* MODAL: TRAINING DETAILS                                      */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {isDetailModalOpen && selectedCourse && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
           <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
@@ -1982,13 +1963,13 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* MODAL: OFFICIAL CERTIFICATE OF COMPLETION                    */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {certificateModalApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
           <div className="bg-card border border-border rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150">
-            {/* Header controls */}
+            {}
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <Award className="h-5 w-5 text-purple-600" />
@@ -2003,13 +1984,13 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               </button>
             </div>
 
-            {/* Printable Certificate Canvas */}
+            {}
             <div
               id="qc-official-certificate"
               className="bg-white text-slate-900 border-8 border-double border-amber-600/60 rounded-xl p-6 sm:p-8 text-center space-y-4 shadow-md relative"
               style={{ fontFamily: "Georgia, serif" }}
             >
-              {/* Seal and headers */}
+              {}
               <div className="flex items-center justify-center gap-3">
                 <img
                   src="/samples/Government Service Integrity Seal.png"
@@ -2084,7 +2065,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               </div>
             </div>
 
-            {/* Actions */}
+            {}
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
               <button
                 type="button"

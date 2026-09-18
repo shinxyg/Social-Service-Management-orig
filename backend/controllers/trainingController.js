@@ -1,4 +1,4 @@
-// backend/controllers/trainingController.js
+
 const fs = require('fs');
 const path = require('path');
 const db = require('../config/db');
@@ -141,7 +141,6 @@ function savePersistentApps(apps) {
 
 let memoryApplications = loadPersistentApps();
 
-// Ensure DB table exists
 async function initTrainingTable() {
   try {
     await db.query(`
@@ -175,7 +174,6 @@ async function initTrainingTable() {
 }
 initTrainingTable();
 
-// Format DB record to frontend structure
 function mapDbRowToApp(row) {
   return {
     id: row.id,
@@ -197,7 +195,6 @@ function mapDbRowToApp(row) {
   };
 }
 
-// GET /api/training/programs
 exports.getAvailablePrograms = async (req, res) => {
   try {
     let allApps = [];
@@ -241,12 +238,10 @@ exports.getAvailablePrograms = async (req, res) => {
   }
 };
 
-// GET /api/training/applications
 exports.getApplications = async (req, res) => {
   try {
     const { qcid, email } = req.query;
 
-    // Try querying PostgreSQL
     try {
       let query = 'SELECT * FROM training_applications';
       const params = [];
@@ -277,7 +272,6 @@ exports.getApplications = async (req, res) => {
       console.warn('DB query failed, using memory/file storage:', dbErr.message);
     }
 
-    // Fallback to memory / file storage
     let list = [...memoryApplications];
     if (qcid) {
       const q = String(qcid).trim();
@@ -296,7 +290,6 @@ exports.getApplications = async (req, res) => {
   }
 };
 
-// POST /api/training/apply
 exports.applyForTraining = async (req, res) => {
   try {
     const { trainingId, trainingName, applicantInfo, qcid, referenceNumber } = req.body;
@@ -359,7 +352,6 @@ exports.applyForTraining = async (req, res) => {
 
     let createdApp = null;
 
-    // Save to PostgreSQL
     try {
       const insertQuery = `
         INSERT INTO training_applications (
@@ -404,11 +396,9 @@ exports.applyForTraining = async (req, res) => {
       };
     }
 
-    // Keep memory / JSON file synced
     memoryApplications.unshift(createdApp);
     savePersistentApps(memoryApplications);
 
-    // Activity Log
     if (logActivity) {
       try {
         logActivity({
@@ -433,7 +423,6 @@ exports.applyForTraining = async (req, res) => {
   }
 };
 
-// PATCH /api/training/applications/:id/status
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -441,7 +430,6 @@ exports.updateApplicationStatus = async (req, res) => {
 
     let updatedApp = null;
 
-    // 1. Try DB Update
     try {
       const getRes = await db.query(
         'SELECT * FROM training_applications WHERE id::text = $1 OR reference_number = $1',
@@ -501,7 +489,7 @@ exports.updateApplicationStatus = async (req, res) => {
         }
 
         const updateRes = await db.query(
-          `UPDATE training_applications 
+          `UPDATE training_applications
            SET status = $1, approved_by = $2, approved_date = $3, rejection_reason = $4,
                revision_notes = $5, schedule = $6, attendance = $7, certificate = $8, updated_at = NOW()
            WHERE id = $9 RETURNING *`,
@@ -526,7 +514,6 @@ exports.updateApplicationStatus = async (req, res) => {
       console.warn('PostgreSQL update training application error:', dbErr.message);
     }
 
-    // 2. Fallback memory / JSON update
     const idx = memoryApplications.findIndex((a) => String(a.id) === String(id) || a.referenceNumber === String(id));
     if (idx !== -1) {
       const app = memoryApplications[idx];
@@ -573,7 +560,6 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Application not found.' });
     }
 
-    // Direct Notification Entry for User Portal
     if (status === 'approved' || status === 'rejected' || status === 'needs_revision') {
       try {
         const notifTitle = status === 'approved'
@@ -591,7 +577,6 @@ exports.updateApplicationStatus = async (req, res) => {
       } catch (_) {}
     }
 
-    // Activity Log
     if (logActivity) {
       try {
         logActivity({
@@ -616,12 +601,10 @@ exports.updateApplicationStatus = async (req, res) => {
   }
 };
 
-// DELETE /api/training/applications/:id
 exports.deleteApplication = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // DB delete
     try {
       await db.query(
         'DELETE FROM training_applications WHERE id::text = $1 OR reference_number = $1',
@@ -631,7 +614,6 @@ exports.deleteApplication = async (req, res) => {
       console.warn('DB delete error:', e.message);
     }
 
-    // Memory delete
     memoryApplications = memoryApplications.filter(
       (a) => String(a.id) !== String(id) && a.referenceNumber !== String(id)
     );
@@ -643,7 +625,6 @@ exports.deleteApplication = async (req, res) => {
   }
 };
 
-// POST /api/training/reset
 exports.resetApplications = async (req, res) => {
   try {
     try {

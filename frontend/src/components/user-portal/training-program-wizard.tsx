@@ -75,7 +75,6 @@ interface FormData {
   email: string
 }
 
-
 function Field({
   label,
   required,
@@ -380,7 +379,6 @@ export default function TrainingProgramWizard({ onBack }: TrainingProgramWizardP
   const [selectedSampleDoc, setSelectedSampleDoc] = useState<RequiredDoc | null>(null)
   const [showSampleModal, setShowSampleModal] = useState(false)
 
-  // Auto-redirect to pending status screen (Pic 2) after 3 seconds on pending
   useEffect(() => {
     if (stage !== "pending") return
 
@@ -494,7 +492,7 @@ export default function TrainingProgramWizard({ onBack }: TrainingProgramWizardP
             </p>
           </div>
 
-          {/* Reference Card */}
+          {}
           <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
             <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
               <span className="font-semibold text-muted-foreground">Application Reference No.:</span>

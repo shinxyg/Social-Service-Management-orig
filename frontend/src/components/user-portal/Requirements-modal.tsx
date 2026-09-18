@@ -1,7 +1,6 @@
 import { X, AlertTriangle, AlertCircle } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 
-
 export interface RequirementSection {
   heading: string
   body?: string
@@ -23,7 +22,6 @@ export interface ProgramRequirements {
   slotBannerText?: string
   faqs?: RequirementFAQ[]
 }
-
 
 export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
   aicsMedical: {
@@ -347,7 +345,7 @@ export default function RequirementsModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-white w-full max-w-2xl max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden relative cursor-default animate-in zoom-in-95 duration-150"
       >
-        {/* Modal Header (Matches Pic 2) */}
+        {}
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10 shrink-0">
           <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
             <h2 className="text-base md:text-lg font-bold text-foreground truncate">
@@ -367,9 +365,9 @@ export default function RequirementsModal({
           </button>
         </div>
 
-        {/* Modal Content (Matches Pic 2) */}
+        {}
         <div className="p-6 space-y-5 overflow-y-auto flex-1">
-          {/* Important reminder (Blue Box) */}
+          {}
           {showInfoBanner && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
@@ -390,7 +388,7 @@ export default function RequirementsModal({
             </div>
           )}
 
-          {/* Slot / Alert Banner (Amber Box) */}
+          {}
           {showSlotBanner && requirements.slotBannerText && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
@@ -410,7 +408,7 @@ export default function RequirementsModal({
             </div>
           )}
 
-          {/* Sections */}
+          {}
           <div className="space-y-5">
             {requirements.sections.map((section, i) => (
               <div key={i} className="space-y-2">
@@ -470,7 +468,7 @@ export default function RequirementsModal({
           </div>
         </div>
 
-        {/* Modal Footer (Matches Pic 2) */}
+        {}
         <div className="sticky bottom-0 bg-white dark:bg-slate-900 border-t border-border dark:border-slate-800 px-6 py-4 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-start gap-2.5 flex-1">
             <input
@@ -500,4 +498,3 @@ export default function RequirementsModal({
     </div>
   )
 }
-

@@ -2,9 +2,6 @@ import { Check, type LucideIcon } from "lucide-react"
 
 export type WizardStep = { label: string; icon: LucideIcon }
 
-// Shared step-progress header used by every admin processing wizard
-// (AICS, PWD & Senior, Solo Parent, Livelihood) so the flows look and
-// behave consistently.
 export function WizardStepper({ steps, step }: { steps: WizardStep[]; step: number }) {
   return (
     <div className="bg-card border border-border rounded-2xl p-5 shadow-soft overflow-x-auto">

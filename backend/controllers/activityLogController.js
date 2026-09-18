@@ -1,6 +1,5 @@
 const db = require('../config/db');
 
-
 async function logActivity({ actor, actorRole, action, module, referenceNo, subject, detail }) {
   try {
     await db.query(
@@ -13,8 +12,6 @@ async function logActivity({ actor, actorRole, action, module, referenceNo, subj
   }
 }
 
-// POST /api/activity-log
-// Mag-record ng activity log mula sa client (hal. UNMASK_PII audit)
 exports.createActivityLog = async (req, res) => {
   try {
     const { actor, actorRole, action, module, referenceNo, subject, detail } = req.body;
@@ -34,8 +31,6 @@ exports.createActivityLog = async (req, res) => {
   }
 };
 
-// GET /api/activity-log
-// Ibinabalik lang ang mga entries na hindi pa deleted (deleted_at IS NULL)
 exports.getActivityLog = async (req, res) => {
   try {
     const result = await db.query(
@@ -51,8 +46,6 @@ exports.getActivityLog = async (req, res) => {
   }
 };
 
-// GET /api/activity-log/deleted
-// Para sa "Recently Deleted" view — mga entries na may deleted_at
 exports.getDeletedActivityLog = async (req, res) => {
   try {
     const result = await db.query(
@@ -68,9 +61,6 @@ exports.getDeletedActivityLog = async (req, res) => {
   }
 };
 
-// PATCH /api/activity-log/:id/soft-delete
-// Hindi talaga binubura — nilalagyan lang ng timestamp para maalis sa main list
-// pero mapupunta sa "Recently Deleted" (pwede pang i-restore)
 exports.softDeleteActivity = async (req, res) => {
   const { id } = req.params;
   try {
@@ -91,8 +81,6 @@ exports.softDeleteActivity = async (req, res) => {
   }
 };
 
-// PATCH /api/activity-log/:id/restore
-// Ibinabalik sa main list ang isang soft-deleted entry
 exports.restoreActivity = async (req, res) => {
   const { id } = req.params;
   try {
@@ -113,8 +101,6 @@ exports.restoreActivity = async (req, res) => {
   }
 };
 
-// DELETE /api/activity-log/:id
-// Permanenteng binubura sa database — hindi na mababawi
 exports.permanentlyDeleteActivity = async (req, res) => {
   const { id } = req.params;
   try {

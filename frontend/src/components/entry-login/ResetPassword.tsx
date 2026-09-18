@@ -52,7 +52,6 @@ export const ResetPassword = () => {
     if (otpParam) setOtpCode(otpParam);
   }, [searchParams]);
 
-  // Live password requirements
   const hasMinLength = newPassword.length >= 8;
   const hasNumber = /\d/.test(newPassword);
   const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword);
@@ -127,7 +126,7 @@ export const ResetPassword = () => {
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#F8FAFC] dark:bg-[#070D1E] font-sans text-sm relative transition-colors duration-200" style={{ fontFamily: 'Inter, sans-serif' }}>
-      {/* Left Hero Section */}
+      {}
       <div
         className="w-full md:w-1/2 text-white p-4 sm:p-6 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden text-center items-center bg-[#0B132B] dark:bg-[#060B18]"
       >
@@ -167,7 +166,7 @@ export const ResetPassword = () => {
         </div>
       </div>
 
-      {/* Right Form Section */}
+      {}
       <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-[#F3F4F8] dark:bg-[#0A1024] transition-colors duration-200">
         <div className="w-full max-w-md p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#111C44] shadow-2xl shadow-slate-200/80 dark:shadow-black/60 border border-slate-100 dark:border-slate-800/80 transition-colors duration-200">
           {success ? (
@@ -206,7 +205,7 @@ export const ResetPassword = () => {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4 text-left">
-                {/* Email Address */}
+                {}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                     Registered Email Address
@@ -231,7 +230,7 @@ export const ResetPassword = () => {
                   </div>
                 </div>
 
-                {/* 6-digit OTP */}
+                {}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                     6-Digit Verification Code (OTP from Email)
@@ -252,7 +251,7 @@ export const ResetPassword = () => {
                   </div>
                 </div>
 
-                {/* New Password */}
+                {}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                     New Password
@@ -279,7 +278,7 @@ export const ResetPassword = () => {
                   </div>
                 </div>
 
-                {/* Live Password Requirements Checklist */}
+                {}
                 {newPassword.length > 0 && (
                   <div className="p-3 bg-slate-50 dark:bg-[#141C3A] border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] space-y-1.5 animate-fade-in">
                     <div className="font-semibold text-slate-600 dark:text-slate-300 mb-1">Password Requirements:</div>
@@ -302,7 +301,7 @@ export const ResetPassword = () => {
                   </div>
                 )}
 
-                {/* Confirm Password */}
+                {}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                     Confirm New Password

@@ -1,12 +1,11 @@
-// controllers/childWelfareController.js
+
 const db = require('../config/db');
 const fs = require('fs').promises;
 const path = require('path');
 
-// In-memory cache for ultra-fast response times
 let cachedChildApps = null;
 let lastChildCacheTime = 0;
-const CHILD_CACHE_TTL = 4000; // 4 seconds cache
+const CHILD_CACHE_TTL = 4000;
 
 function invalidateChildCache() {
   cachedChildApps = null;
@@ -79,7 +78,7 @@ function sanitizeDocumentList(docs) {
     if (!doc || typeof doc !== 'object') return doc;
     const cleanDoc = { ...doc };
 
-    const rawData = cleanDoc.dataUrl || cleanDoc.base64 || cleanDoc.data || 
+    const rawData = cleanDoc.dataUrl || cleanDoc.base64 || cleanDoc.data ||
       (cleanDoc.fileUrl && cleanDoc.fileUrl.startsWith('data:') ? cleanDoc.fileUrl : null) ||
       (cleanDoc.previewUrl && cleanDoc.previewUrl.startsWith('data:') ? cleanDoc.previewUrl : null);
     if (rawData && typeof rawData === 'string' && rawData.startsWith('data:')) {
@@ -115,7 +114,7 @@ function sanitizeDocumentList(docs) {
       cleanDoc.files = cleanDoc.files.map((f) => {
         if (!f || typeof f !== 'object') return f;
         const cleanF = { ...f };
-        const rawF = cleanF.dataUrl || cleanF.base64 || 
+        const rawF = cleanF.dataUrl || cleanF.base64 ||
           (cleanF.fileUrl && cleanF.fileUrl.startsWith('data:') ? cleanF.fileUrl : null) ||
           (cleanF.previewUrl && cleanF.previewUrl.startsWith('data:') ? cleanF.previewUrl : null);
         if (rawF && typeof rawF === 'string' && rawF.startsWith('data:')) {
@@ -177,7 +176,6 @@ function sanitizeAppRow(row) {
     cleanRow.form_data = sanitizeFormData(raw);
   }
 
-  // Ensure valid submission and creation timestamps
   const rawDate =
     cleanRow.created_at ||
     cleanRow.submitted_at ||
@@ -268,13 +266,11 @@ async function initChildWelfareColumns() {
 }
 initChildWelfareColumns();
 
-// Create new application
 exports.createApplication = async (req, res) => {
   try {
     const { userId, applicationData, requiredDocumentIds } = req.body;
     const { isResident, selectedCategoryId, selectedCategory, formData = {} } = applicationData || {};
 
-    // Clean up any unsubmitted draft records so they never block new attempts
     if (userId && String(userId) !== '0') {
       await db.query(
         `DELETE FROM solo_parent_child_welfare_applications WHERE user_id = $1 AND application_status = 'draft' AND module_type = 'CHILD_WELFARE'`,
@@ -438,7 +434,6 @@ exports.createApplication = async (req, res) => {
   }
 };
 
-// Upload documents
 exports.uploadDocuments = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -449,8 +444,8 @@ exports.uploadDocuments = async (req, res) => {
     }
 
     const appResult = await db.query(
-      `SELECT id, uploaded_documents, extra_data, form_data 
-       FROM solo_parent_child_welfare_applications 
+      `SELECT id, uploaded_documents, extra_data, form_data
+       FROM solo_parent_child_welfare_applications
        WHERE module_type = 'CHILD_WELFARE' AND (CAST(id AS TEXT) = $1 OR reference_number = $1)`,
       [String(applicationId)]
     );
@@ -506,7 +501,7 @@ exports.uploadDocuments = async (req, res) => {
     if (isPhotoDoc && photoFile && photoFile.fileUrl) {
       try {
         await db.query(
-          `UPDATE solo_parent_child_welfare_applications 
+          `UPDATE solo_parent_child_welfare_applications
            SET extra_data = jsonb_set(COALESCE(extra_data, '{}'::jsonb), '{applicantPhoto}', to_jsonb($1::text), true)
            WHERE id = $2`,
           [photoFile.fileUrl, realAppId]
@@ -522,14 +517,13 @@ exports.uploadDocuments = async (req, res) => {
   }
 };
 
-// Remove document
 exports.removeDocument = async (req, res) => {
   try {
     const { applicationId, documentId, filename } = req.params;
 
     const appResult = await db.query(
-      `SELECT id, uploaded_documents 
-       FROM solo_parent_child_welfare_applications 
+      `SELECT id, uploaded_documents
+       FROM solo_parent_child_welfare_applications
        WHERE module_type = 'CHILD_WELFARE' AND (CAST(id AS TEXT) = $1 OR reference_number = $1)`,
       [String(applicationId)]
     );
@@ -573,14 +567,13 @@ exports.removeDocument = async (req, res) => {
   }
 };
 
-// Submit application
 exports.submitApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
 
     const appResult = await db.query(
-      `SELECT id, reference_number 
-       FROM solo_parent_child_welfare_applications 
+      `SELECT id, reference_number
+       FROM solo_parent_child_welfare_applications
        WHERE module_type = 'CHILD_WELFARE' AND (CAST(id AS TEXT) = $1 OR reference_number = $1)`,
       [String(applicationId)]
     );
@@ -604,7 +597,6 @@ exports.submitApplication = async (req, res) => {
   }
 };
 
-// Get by reference number
 exports.getApplicationByReference = async (req, res) => {
   try {
     const { referenceNumber } = req.params;
@@ -621,7 +613,6 @@ exports.getApplicationByReference = async (req, res) => {
   }
 };
 
-// Get all applications by user
 exports.getUserApplications = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -671,8 +662,8 @@ exports.getUserApplications = async (req, res) => {
     }
 
     const result = await db.query(
-      `SELECT * FROM solo_parent_child_welfare_applications 
-       WHERE module_type = 'CHILD_WELFARE' AND (${orClauses.join(' OR ')}) 
+      `SELECT * FROM solo_parent_child_welfare_applications
+       WHERE module_type = 'CHILD_WELFARE' AND (${orClauses.join(' OR ')})
        ORDER BY created_at DESC`,
       params
     );
@@ -684,7 +675,6 @@ exports.getUserApplications = async (req, res) => {
   }
 };
 
-// Get all applications (admin)
 exports.getAllApplications = async (req, res) => {
   try {
     await initChildWelfareColumns();
@@ -692,7 +682,6 @@ exports.getAllApplications = async (req, res) => {
     const numLimit = parseInt(limit, 10) || 100;
     const numPage = parseInt(page, 10) || 1;
 
-    // Check fast in-memory cache if standard unfiltered request
     const isStandardList = (!status || status === 'all') && numPage === 1 && numLimit >= 100;
     if (isStandardList && cachedChildApps && (Date.now() - lastChildCacheTime < CHILD_CACHE_TTL)) {
       return res.status(200).json({
@@ -749,7 +738,6 @@ exports.getAllApplications = async (req, res) => {
   }
 };
 
-// Get single application by id (admin)
 exports.getApplicationById = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -766,7 +754,6 @@ exports.getApplicationById = async (req, res) => {
   }
 };
 
-// Update application status (admin) — may approved_amount para dito
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -864,7 +851,6 @@ exports.updateApplicationStatus = async (req, res) => {
       } catch (err) {}
     }
 
-    // Auto-sync with Financial Aid Disbursements and Appointments upon approval
     if (status === 'approved') {
       try {
         const guardianName = [app.guardian_first_name, app.guardian_middle_name, app.guardian_last_name].filter(Boolean).join(' ').trim().toUpperCase() || 'GUARDIAN / BENEFICIARY';
@@ -900,7 +886,6 @@ exports.updateApplicationStatus = async (req, res) => {
           );
         }
 
-        // Auto-create pending appointment record if not existing
         const apptCheck = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [app.reference_number]);
         if (apptCheck.rows.length === 0) {
           await db.query(
@@ -947,7 +932,6 @@ exports.updateApplicationStatus = async (req, res) => {
   }
 };
 
-// Cancel application (user)
 exports.cancelApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -969,7 +953,6 @@ exports.cancelApplication = async (req, res) => {
   }
 };
 
-// Delete single application (admin)
 exports.deleteApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
@@ -980,9 +963,9 @@ exports.deleteApplication = async (req, res) => {
     }
     const cleanId = String(applicationId).replace(/^CW-/, '').trim();
     await db.query(
-      `DELETE FROM solo_parent_child_welfare_applications 
-       WHERE module_type = 'CHILD_WELFARE' 
-         AND (id::text = $1 OR reference_number = $1 OR reference_number = $2) 
+      `DELETE FROM solo_parent_child_welfare_applications
+       WHERE module_type = 'CHILD_WELFARE'
+         AND (id::text = $1 OR reference_number = $1 OR reference_number = $2)
        RETURNING id`,
       [cleanId, applicationId]
     );
@@ -994,7 +977,6 @@ exports.deleteApplication = async (req, res) => {
   }
 };
 
-// Clear all child welfare applications (admin test cleanup)
 exports.clearApplications = async (req, res) => {
   try {
     await db.query(`DELETE FROM solo_parent_child_welfare_applications WHERE module_type = 'CHILD_WELFARE'`);
@@ -1005,5 +987,3 @@ exports.clearApplications = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error clearing applications', error: error.message });
   }
 };
-
-

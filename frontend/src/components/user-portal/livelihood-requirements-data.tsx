@@ -159,7 +159,7 @@ export function LivelihoodRequirementsModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-card border border-border w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden relative"
       >
-        {/* Header */}
+        {}
         <div className="p-6 pb-4 border-b border-border shrink-0 flex items-center justify-between gap-4 bg-muted/20">
           <div>
             <h2 className="text-xl font-heading font-bold text-foreground">
@@ -180,9 +180,9 @@ export function LivelihoodRequirementsModal({
           )}
         </div>
 
-        {/* Content Body with Scroll */}
+        {}
         <div className="p-6 space-y-5 overflow-y-auto flex-1 text-sm leading-relaxed text-foreground">
-          {/* Important Reminder Banner */}
+          {}
           <div className="relative flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-amber-900 dark:text-amber-200">
             <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div className="text-sm">
@@ -195,7 +195,7 @@ export function LivelihoodRequirementsModal({
             </div>
           </div>
 
-          {/* Section I */}
+          {}
           <div className="bg-muted/10 border border-border/80 rounded-xl p-4 space-y-2">
             <h3 className="font-bold text-base text-primary flex items-center gap-2">
               <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold">I</span>
@@ -217,7 +217,7 @@ export function LivelihoodRequirementsModal({
             </div>
           </div>
 
-          {/* Section II */}
+          {}
           <div className="bg-muted/10 border border-border/80 rounded-xl p-4 space-y-2">
             <h3 className="font-bold text-base text-primary flex items-center gap-2">
               <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold">II</span>
@@ -233,7 +233,7 @@ export function LivelihoodRequirementsModal({
             </ul>
           </div>
 
-          {/* Section III */}
+          {}
           <div className="bg-muted/10 border border-border/80 rounded-xl p-4 space-y-2">
             <h3 className="font-bold text-base text-primary flex items-center gap-2">
               <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold">III</span>
@@ -255,7 +255,7 @@ export function LivelihoodRequirementsModal({
           </div>
         </div>
 
-        {/* Footer with Acceptance Checkbox & Button */}
+        {}
         <div className="p-6 pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 bg-muted/20">
           <label className="flex items-start gap-2.5 text-sm select-none text-foreground cursor-pointer group">
             <input

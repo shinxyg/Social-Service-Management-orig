@@ -1,10 +1,6 @@
 const db = require('../config/db');
 const { logActivity } = require('./activityLogController');
 
-/**
- * POST /api/user-applications/delete or /archive
- * Moves application to deleted/trash state (soft delete)
- */
 exports.archiveApplication = async (req, res) => {
   try {
     const {
@@ -34,7 +30,6 @@ exports.archiveApplication = async (req, res) => {
     const catUpper = String(category || '').toUpperCase();
     let updatedInDb = false;
 
-    // 1. PWD & Senior Citizen
     if (catUpper.includes('PWD') || catUpper.includes('SENIOR') || catUpper.includes('DISABILITY')) {
       try {
         const q = await db.query(
@@ -50,7 +45,6 @@ exports.archiveApplication = async (req, res) => {
       }
     }
 
-    // 2. AICS
     if (catUpper.includes('AICS') || !updatedInDb) {
       try {
         const q = await db.query(
@@ -66,7 +60,6 @@ exports.archiveApplication = async (req, res) => {
       }
     }
 
-    // 3. Solo Parent
     if (catUpper.includes('SOLO') || !updatedInDb) {
       try {
         const q = await db.query(
@@ -82,7 +75,6 @@ exports.archiveApplication = async (req, res) => {
       }
     }
 
-    // 5. Livelihood
     if (catUpper.includes('LIVELIHOOD') || !updatedInDb) {
       try {
         const q = await db.query(
@@ -98,7 +90,6 @@ exports.archiveApplication = async (req, res) => {
       }
     }
 
-    // 6. Training
     if (catUpper.includes('TRAIN') || !updatedInDb) {
       try {
         const q = await db.query(
@@ -114,7 +105,6 @@ exports.archiveApplication = async (req, res) => {
       }
     }
 
-    // Full snapshot payload for restoration
     const fullPayload = payload || {
       applicationNo: targetRef || targetId,
       assistance: assistance || 'Social Service Application',
@@ -128,7 +118,6 @@ exports.archiveApplication = async (req, res) => {
       dateApplied: dateApplied || new Date().toISOString(),
     };
 
-    // Save/Update in archived_applications table
     try {
       await db.query(
         `INSERT INTO archived_applications (
@@ -150,7 +139,6 @@ exports.archiveApplication = async (req, res) => {
       console.warn('Could not insert to archived_applications table:', auditErr.message);
     }
 
-    // Record activity log
     if (logActivity) {
       logActivity({
         actor: applicantName || 'Resident User',
@@ -175,10 +163,6 @@ exports.archiveApplication = async (req, res) => {
   }
 };
 
-/**
- * GET /api/user-applications/deleted
- * Returns all soft-deleted / archived applications for the given user
- */
 exports.getDeletedApplications = async (req, res) => {
   try {
     const { email, qcid, name } = req.query;
@@ -234,10 +218,6 @@ exports.getDeletedApplications = async (req, res) => {
   }
 };
 
-/**
- * POST /api/user-applications/restore
- * Restores a soft-deleted application (sets is_archived = false)
- */
 exports.restoreApplication = async (req, res) => {
   try {
     const { id, applicationNo, referenceNo, category, assistance, applicantName } = req.body;
@@ -248,7 +228,6 @@ exports.restoreApplication = async (req, res) => {
       return res.status(400).json({ error: 'Application ID or Reference Number is required' });
     }
 
-    // 1. PWD & Senior Citizen
     try {
       await db.query(
         `UPDATE pwd_senior_applications
@@ -260,7 +239,6 @@ exports.restoreApplication = async (req, res) => {
       console.warn('PWD restore query failed:', e.message);
     }
 
-    // 2. AICS
     try {
       await db.query(
         `UPDATE aics_applications
@@ -272,7 +250,6 @@ exports.restoreApplication = async (req, res) => {
       console.warn('AICS restore query failed:', e.message);
     }
 
-    // 3. Solo Parent
     try {
       await db.query(
         `UPDATE solo_parent_child_welfare_applications
@@ -284,7 +261,6 @@ exports.restoreApplication = async (req, res) => {
       console.warn('Solo parent restore query failed:', e.message);
     }
 
-    // 5. Livelihood
     try {
       await db.query(
         `UPDATE livelihood_applications
@@ -296,7 +272,6 @@ exports.restoreApplication = async (req, res) => {
       console.warn('Livelihood restore query failed:', e.message);
     }
 
-    // 6. Training
     try {
       await db.query(
         `UPDATE training_applications
@@ -308,7 +283,6 @@ exports.restoreApplication = async (req, res) => {
       console.warn('Training restore query failed:', e.message);
     }
 
-    // Remove from archived_applications table
     try {
       await db.query(
         `DELETE FROM archived_applications
@@ -317,7 +291,6 @@ exports.restoreApplication = async (req, res) => {
       );
     } catch (e) {}
 
-    // Record activity log
     if (logActivity) {
       logActivity({
         actor: applicantName || 'Resident User',
@@ -342,10 +315,6 @@ exports.restoreApplication = async (req, res) => {
   }
 };
 
-/**
- * POST /api/user-applications/permanent-delete
- * Permanently deletes application from database
- */
 exports.permanentDeleteApplication = async (req, res) => {
   try {
     const { id, applicationNo, referenceNo, category, assistance, applicantName } = req.body;
@@ -356,7 +325,6 @@ exports.permanentDeleteApplication = async (req, res) => {
       return res.status(400).json({ error: 'Application ID or Reference Number is required' });
     }
 
-    // Hard delete from database tables
     try {
       await db.query(
         `DELETE FROM pwd_senior_applications
@@ -405,7 +373,6 @@ exports.permanentDeleteApplication = async (req, res) => {
       );
     } catch (e) {}
 
-    // Record activity log
     if (logActivity) {
       logActivity({
         actor: applicantName || 'Resident User',

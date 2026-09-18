@@ -4,8 +4,6 @@ import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
 
-
-
 function formatFileSize(bytes: number) {
   if (!bytes) return "0.0 KB"
   const kb = bytes / 1024
@@ -15,7 +13,7 @@ function formatFileSize(bytes: number) {
 
 interface ApplyAICSProps {
   initialType?: string
-  initialTypeKey?: string   
+  initialTypeKey?: string
   onBack?: () => void
 }
 
@@ -61,8 +59,6 @@ export default function ApplyAICS({ initialType, initialTypeKey }: ApplyAICSProp
   ]
 
   const ALLOWED_UPLOAD_FILE_TYPES = "JPG, JPEG, PNG, WEBP"
-
-
 
   const assistanceTypes = [
     t("assistMedical"),
@@ -443,7 +439,6 @@ const canProceedPersonal = Boolean(
   const [cameraDoc, setCameraDoc] = useState<string | null>(null)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
-  // Reload / Navigation warning protection — strictly active only starting from Step 2 onwards (personal, documents, review)
   const isFormDirty =
     step === "personal" ||
     step === "documents" ||
@@ -505,7 +500,6 @@ const canProceedPersonal = Boolean(
     (doc) => (uploadedDocs[doc]?.length ?? 0) > 0
   )
 
-  // Check for existing active/pending applications for the current user & service
   useEffect(() => {
     let isMounted = true
 
@@ -634,7 +628,6 @@ const canProceedPersonal = Boolean(
     }
   }, [type, resolvedTypeKey])
 
-  // Live status poller when viewing pending status screen
   useEffect(() => {
     if (step !== "pending" || !reference) return
 
@@ -665,7 +658,6 @@ const canProceedPersonal = Boolean(
     const interval = setInterval(checkStatus, 4000)
     return () => clearInterval(interval)
   }, [step, reference, appStatus])
-
 
 const checkDuplicateBeneficiary = async () => {
   const patientInfo = isFuneralAssistance
@@ -861,8 +853,6 @@ const handleFinalSubmit = async () => {
   }
 }
 
-
-
   const renderTopRequirementsBanner = () => (
     <>
       <div className="mb-4">
@@ -950,7 +940,7 @@ const handleFinalSubmit = async () => {
           </div>
 
           <div className="p-6 sm:p-8 space-y-7">
-            {/* Blue Info Alert Banner */}
+            {}
             <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
               <div>
@@ -2359,7 +2349,7 @@ const handleFinalSubmit = async () => {
           </div>
         </div>
 
-        {/* 🔔 CONFIRMATION DIALOG / MODAL BEFORE SUBMIT */}
+        {}
         {showConfirmModal && (
           <div
             onClick={() => setShowConfirmModal(false)}
@@ -2369,7 +2359,7 @@ const handleFinalSubmit = async () => {
               onClick={(e) => e.stopPropagation()}
               className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col border border-border text-left cursor-default"
             >
-              {/* Modal Header */}
+              {}
               <div className="p-6 pb-5 flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-base font-bold text-foreground">Review Before Submission</h3>
@@ -2387,7 +2377,7 @@ const handleFinalSubmit = async () => {
                 </button>
               </div>
 
-              {/* Footer Buttons */}
+              {}
               <div className="p-4 bg-gray-50 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
                 <button
                   type="button"
@@ -2415,7 +2405,7 @@ const handleFinalSubmit = async () => {
           </div>
         )}
 
-        {/* 👁️ UPLOADED DOCUMENT FULL PREVIEW MODAL */}
+        {}
         {previewDocModal && (
           <UploadedDocPreviewModal
             title={previewDocModal.title}
@@ -2427,9 +2417,8 @@ const handleFinalSubmit = async () => {
     )
   }
 
-
   if (step === "pending") {
-    // NA-REJECT
+
     if (appStatus === "rejected") {
       return (
         <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
@@ -2512,7 +2501,6 @@ const handleFinalSubmit = async () => {
       )
     }
 
-    // NA-APPROVE (o completed)
     if (appStatus === "approved" || appStatus === "completed") {
       return (
         <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
@@ -2602,7 +2590,6 @@ const handleFinalSubmit = async () => {
       )
     }
 
-    // NASA "PENDING" PA RIN (habang sinusuri ng Social Worker)
     return (
       <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
@@ -2622,7 +2609,7 @@ const handleFinalSubmit = async () => {
             </p>
           </div>
 
-          {/* Reference Card */}
+          {}
           <div className="border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-slate-50/90 dark:bg-slate-800/60">
             <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-slate-700/60">
               <span className="font-semibold text-slate-500 dark:text-slate-400">{t("appRefNoLabel")}</span>

@@ -42,7 +42,6 @@ function resolveFixedAmount(concern) {
   return 5000;
 }
 
-// Helper: parse date and time string to Date object in Philippine Standard Time (UTC+8)
 function parseDateTime(dateStr, timeStr) {
   if (!dateStr) return null;
   try {
@@ -90,7 +89,6 @@ function parseDateTime(dateStr, timeStr) {
   }
 }
 
-// Background auto-release check
 async function autoReleaseScheduledDisbursements() {
   try {
     const result = await db.query(
@@ -112,7 +110,6 @@ async function autoReleaseScheduledDisbursements() {
         const releaseTime = apptTime || now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
         const releaseDate = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
 
-        // 1. Mark Financial Aid as RELEASED
         if (d.status === 'PENDING') {
           await db.query(
             `UPDATE financial_aid_disbursements
@@ -125,7 +122,6 @@ async function autoReleaseScheduledDisbursements() {
             [`${releaseDate} ${releaseTime}`, `Awtomatikong na-release sa takdang oras ng appointment (${apptDate} - ${releaseTime}).`, d.id]
           );
 
-          // 2. Add Notification
           await db.query(
             `INSERT INTO user_notifications (title, description, application_ref)
              VALUES ($1, $2, $3)`,
@@ -136,7 +132,6 @@ async function autoReleaseScheduledDisbursements() {
             ]
           );
 
-          // 3. Log Activity
           await logActivity({
             actor: 'System Auto-Release',
             actorRole: 'Automated Worker',
@@ -147,7 +142,6 @@ async function autoReleaseScheduledDisbursements() {
             detail: `Automated financial aid payout released for ${d.assistance_type} (₱${Number(d.fixed_amount).toLocaleString()}).`,
           });
 
-          // 4. If this is a Livelihood assistance disbursement, also update livelihood_assistance & auto-activate monitoring
           if (d.application_ref && (d.application_ref.startsWith('LP-') || (d.assistance_type && d.assistance_type.includes('Livelihood')))) {
             await db.query(
               `UPDATE livelihood_assistance
@@ -186,7 +180,6 @@ async function autoReleaseScheduledDisbursements() {
           }
         }
 
-        // 5. Mark Appointment as COMPLETED
         await db.query(
           `UPDATE appointments
            SET status = 'completed',
@@ -201,13 +194,11 @@ async function autoReleaseScheduledDisbursements() {
   }
 }
 
-// GET /api/financial-aid
 exports.getDisbursements = async (req, res) => {
   try {
-    // Run auto-release check asynchronously in background to ensure instant HTTP response
+
     autoReleaseScheduledDisbursements().catch(() => {});
 
-    // Auto-clean any ID card issuances from disbursements (only financial/social assistance is disbursed)
     try {
       await db.query(`
         DELETE FROM financial_aid_disbursements
@@ -215,7 +206,6 @@ exports.getDisbursements = async (req, res) => {
       `);
     } catch (_) {}
 
-    // Auto-correct any disbursements where fixed_amount was mistakenly set to 1000 instead of 5000
     try {
       await db.query(`
         UPDATE financial_aid_disbursements
@@ -231,7 +221,6 @@ exports.getDisbursements = async (req, res) => {
       `);
     } catch (_) {}
 
-    // Auto-clean any duplicate disbursements (keep newest by highest id)
     try {
       await db.query(`
         DELETE FROM financial_aid_disbursements f1
@@ -240,7 +229,6 @@ exports.getDisbursements = async (req, res) => {
       `);
     } catch (_) {}
 
-    // Auto-clean any orphan disbursements that do not exist in active approved applications
     try {
       await db.query(`
         DELETE FROM financial_aid_disbursements
@@ -252,7 +240,7 @@ exports.getDisbursements = async (req, res) => {
             SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
           )
           AND application_ref NOT IN (
-            SELECT l.reference_number 
+            SELECT l.reference_number
             FROM livelihood_applications l
             INNER JOIN livelihood_assistance la ON l.reference_number = la.reference_number
             WHERE (l.application_status = 'approved' OR l.status = 'approved')
@@ -265,13 +253,12 @@ exports.getDisbursements = async (req, res) => {
       `);
     } catch (_) {}
 
-    // Auto-populate disbursements from approved livelihood applications whose capital assistance is ready for release
     try {
       const approvedLivelihood = await db.query(
-        `SELECT l.reference_number, l.first_name, l.last_name, l.estimated_amount 
+        `SELECT l.reference_number, l.first_name, l.last_name, l.estimated_amount
          FROM livelihood_applications l
          INNER JOIN livelihood_assistance la ON l.reference_number = la.reference_number
-         WHERE l.application_status = 'approved' 
+         WHERE l.application_status = 'approved'
            AND (la.assistance_status = 'for_release' OR la.assistance_status = 'released' OR la.assistance_status = 'FOR RELEASE' OR la.assistance_status = 'RELEASED')`
       );
       for (const row of approvedLivelihood.rows) {
@@ -302,7 +289,6 @@ exports.getDisbursements = async (req, res) => {
         }
       }
 
-      // Fix any existing zero-amount livelihood disbursements
       await db.query(
         `UPDATE financial_aid_disbursements
          SET fixed_amount = 15000
@@ -310,12 +296,11 @@ exports.getDisbursements = async (req, res) => {
       );
     } catch (_) {}
 
-    // Auto-populate disbursements from approved PWD & Senior Citizen Social Assistance
     try {
       const approvedPwdAssistance = await db.query(
         `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, approved_date
-         FROM pwd_senior_applications 
-         WHERE status IN ('approved', 'completed', 'for_release') 
+         FROM pwd_senior_applications
+         WHERE status IN ('approved', 'completed', 'for_release')
            AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%')`
       );
       for (const row of approvedPwdAssistance.rows) {
@@ -349,11 +334,10 @@ exports.getDisbursements = async (req, res) => {
       }
     } catch (_) {}
 
-    // Auto-populate disbursements from approved Child Welfare (Nutritional, Child Protection, Emergency Assistance)
     try {
       const approvedChildWelfare = await db.query(
         `SELECT reference_number, category_title, primary_reason_for_assistance, guardian_first_name, guardian_middle_name, guardian_last_name, approved_amount, updated_at, created_at
-         FROM solo_parent_child_welfare_applications 
+         FROM solo_parent_child_welfare_applications
          WHERE module_type = 'CHILD_WELFARE' AND application_status IN ('approved', 'completed', 'for_release')`
       );
       for (const row of approvedChildWelfare.rows) {
@@ -421,7 +405,6 @@ exports.getDisbursements = async (req, res) => {
   }
 };
 
-// GET /api/financial-aid/user/:refOrQcId
 exports.getUserDisbursements = async (req, res) => {
   try {
     autoReleaseScheduledDisbursements().catch(() => {});
@@ -463,8 +446,6 @@ exports.getUserDisbursements = async (req, res) => {
   }
 };
 
-
-// POST /api/financial-aid/cleanup
 exports.cleanupOrphanDisbursements = async (req, res) => {
   try {
     const result = await db.query(`
@@ -481,7 +462,6 @@ exports.cleanupOrphanDisbursements = async (req, res) => {
   }
 };
 
-// POST /api/financial-aid
 exports.createDisbursement = async (req, res) => {
   try {
     const {
@@ -534,7 +514,6 @@ exports.createDisbursement = async (req, res) => {
   }
 };
 
-// PUT /api/financial-aid/:id/release
 exports.releaseDisbursement = async (req, res) => {
   try {
     const { id } = req.params;
@@ -564,7 +543,6 @@ exports.releaseDisbursement = async (req, res) => {
 
     const d = result.rows[0];
 
-    // Notification to citizen
     await db.query(
       `INSERT INTO user_notifications (title, description, application_ref)
        VALUES ($1, $2, $3)`,
@@ -575,13 +553,11 @@ exports.releaseDisbursement = async (req, res) => {
       ]
     );
 
-    // Update appointment status to completed if matched
     await db.query(
       `UPDATE appointments SET status = 'completed', updated_at = NOW() WHERE reference_no = $1`,
       [d.application_ref]
     );
 
-    // Log activity
     await logActivity({
       actor: finalOfficer,
       actorRole: 'Disbursing Officer',
@@ -599,7 +575,6 @@ exports.releaseDisbursement = async (req, res) => {
   }
 };
 
-// DELETE /api/financial-aid/:id
 exports.deleteDisbursement = async (req, res) => {
   try {
     const { id } = req.params;
@@ -612,9 +587,8 @@ exports.deleteDisbursement = async (req, res) => {
       .replace(/^remote-/, '')
       .trim();
 
-    // Query matching row first to capture application_ref and applicant_name
     const found = await db.query(
-      `SELECT application_ref, applicant_name, disbursement_id FROM financial_aid_disbursements 
+      `SELECT application_ref, applicant_name, disbursement_id FROM financial_aid_disbursements
        WHERE id::text = $1 OR id::text = $2 OR disbursement_id = $1 OR disbursement_id = $2 OR application_ref = $1 OR application_ref = $2`,
       [rawId, cleanId]
     );
@@ -622,14 +596,12 @@ exports.deleteDisbursement = async (req, res) => {
     const appRef = found.rows[0]?.application_ref || cleanId;
     const applicantName = found.rows[0]?.applicant_name || '';
 
-    // 1. Delete from financial_aid_disbursements table
     await db.query(
-      `DELETE FROM financial_aid_disbursements 
+      `DELETE FROM financial_aid_disbursements
        WHERE id::text = $1 OR id::text = $2 OR disbursement_id = $1 OR disbursement_id = $2 OR application_ref = $1 OR application_ref = $2`,
       [rawId, cleanId]
     );
 
-    // 2. Also delete from underlying application tables so it does not auto-repopulate
     if (appRef) {
       await Promise.allSettled([
         db.query(`DELETE FROM solo_parent_child_welfare_applications WHERE (module_type = 'CHILD_WELFARE') AND (reference_number = $1 OR id::text = $1)`, [appRef]),
@@ -653,14 +625,13 @@ exports.deleteDisbursement = async (req, res) => {
   }
 };
 
-// DELETE /api/financial-aid/cleanup-user/:nameOrRef
 exports.deleteUserDisbursements = async (req, res) => {
   try {
     const { nameOrRef } = req.params;
     const term = `%${nameOrRef}%`;
     const result = await db.query(
-      `DELETE FROM financial_aid_disbursements 
-       WHERE applicant_name ILIKE $1 
+      `DELETE FROM financial_aid_disbursements
+       WHERE applicant_name ILIKE $1
           OR application_ref ILIKE $1
           OR disbursement_id ILIKE $1`,
       [term]
@@ -681,5 +652,4 @@ exports.deleteUserDisbursements = async (req, res) => {
   }
 };
 
-// Periodic runner export
 exports.autoReleaseScheduledDisbursements = autoReleaseScheduledDisbursements;

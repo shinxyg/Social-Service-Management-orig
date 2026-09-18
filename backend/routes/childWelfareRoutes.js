@@ -1,4 +1,4 @@
-// routes/childWelfareRoutes.js
+
 const express = require('express');
 const router = express.Router();
 const childWelfareController = require('../controllers/childWelfareController');
@@ -25,7 +25,6 @@ router.get('/reference/:referenceNumber', childWelfareController.getApplicationB
 
 router.post('/:applicationId/cancel', childWelfareController.cancelApplication);
 
-// Admin routes
 router.get('/admin/all', childWelfareController.getAllApplications);
 router.get('/admin/:applicationId', childWelfareController.getApplicationById);
 router.patch('/:applicationId/admin/update-status', childWelfareController.updateApplicationStatus);

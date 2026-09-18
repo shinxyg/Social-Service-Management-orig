@@ -1,10 +1,8 @@
 const rateLimit = require('express-rate-limit');
 const db = require('../config/db');
 
-// In-memory store fallback for failed login attempts: key -> { count, lockedUntil, firstAttempt }
 const loginAttempts = new Map();
 
-// Helper to get client IP cleanly
 function getClientIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
   let ip = forwarded ? forwarded.split(',')[0].trim() : (req.socket?.remoteAddress || req.ip || '127.0.0.1');
@@ -12,19 +10,11 @@ function getClientIp(req) {
   return ip;
 }
 
-/**
- * Check if the user/IP is currently locked out from logging in
- * Progression:
- * - Tier 1: 3 attempts -> 1 minute (60s) lock
- * - Tier 2: 5 attempts -> 5 minutes (300s) lock
- * - Tier 3: 6+ attempts -> 15 minutes (900s) strict lockout
- */
 async function checkLoginLockout(req, email) {
   const ip = getClientIp(req);
   const cleanEmail = (email || '').trim().toLowerCase();
   const now = Date.now();
 
-  // 1. Instant check in-memory store (0ms)
   const memRecord = loginAttempts.get(ip) || (cleanEmail ? loginAttempts.get(cleanEmail) : null);
   if (memRecord) {
     if (memRecord.lockedUntil && now < memRecord.lockedUntil) {
@@ -51,13 +41,12 @@ async function checkLoginLockout(req, email) {
     }
   }
 
-  // 2. Fast DB check with 2.5s fallback
   try {
     const dbPromise = db.query(
-      `SELECT id, attempt_count, locked_until, first_attempt 
-       FROM login_attempts 
+      `SELECT id, attempt_count, locked_until, first_attempt
+       FROM login_attempts
        WHERE ip_address = $1 OR ($2 != '' AND email = $2)
-       ORDER BY attempt_count DESC 
+       ORDER BY attempt_count DESC
        LIMIT 1`,
       [ip, cleanEmail]
     );
@@ -93,20 +82,12 @@ async function checkLoginLockout(req, email) {
       }
     }
   } catch (err) {
-    // DB check fallback silently
+
   }
 
   return { isLocked: false };
 }
 
-/**
- * Record a failed login attempt with tiered progressive lockout:
- * - Attempt 1 & 2 -> (1/3), (2/3)
- * - Attempt 3 -> 1 minute (60s) lock
- * - Attempt 4 -> (4/5)
- * - Attempt 5 -> 5 minutes (300s) lock
- * - Attempt 6+ -> 15 minutes (900s) lock
- */
 async function recordFailedLogin(req, email) {
   const ip = getClientIp(req);
   const cleanEmail = (email || '').trim().toLowerCase();
@@ -115,13 +96,12 @@ async function recordFailedLogin(req, email) {
   let count = 1;
   let lockedUntil = null;
 
-  // PostgreSQL Database update
   try {
     const existing = await db.query(
-      `SELECT id, attempt_count, first_attempt, locked_until 
-       FROM login_attempts 
+      `SELECT id, attempt_count, first_attempt, locked_until
+       FROM login_attempts
        WHERE ip_address = $1 OR ($2 != '' AND email = $2)
-       ORDER BY id DESC 
+       ORDER BY id DESC
        LIMIT 1`,
       [ip, cleanEmail]
     );
@@ -129,22 +109,22 @@ async function recordFailedLogin(req, email) {
     if (existing.rows.length > 0) {
       const dbRow = existing.rows[0];
       const firstTime = new Date(dbRow.first_attempt).getTime();
-      const isWindowExpired = (now - firstTime > 30 * 60 * 1000); // 30 mins idle resets
+      const isWindowExpired = (now - firstTime > 30 * 60 * 1000);
 
       count = isWindowExpired ? 1 : dbRow.attempt_count + 1;
       let dbLockUntil = null;
 
       if (count >= 6) {
-        dbLockUntil = new Date(now + 15 * 60 * 1000); // Tier 3: 15 minutes
+        dbLockUntil = new Date(now + 15 * 60 * 1000);
       } else if (count === 5) {
-        dbLockUntil = new Date(now + 5 * 60 * 1000);  // Tier 2: 5 minutes
+        dbLockUntil = new Date(now + 5 * 60 * 1000);
       } else if (count === 3) {
-        dbLockUntil = new Date(now + 1 * 60 * 1000);  // Tier 1: 1 minute
+        dbLockUntil = new Date(now + 1 * 60 * 1000);
       }
 
       await db.query(
-        `UPDATE login_attempts 
-         SET attempt_count = $1, email = $2, ip_address = $3, last_attempt = NOW(), locked_until = $4 
+        `UPDATE login_attempts
+         SET attempt_count = $1, email = $2, ip_address = $3, last_attempt = NOW(), locked_until = $4
          WHERE id = $5`,
         [count, cleanEmail || dbRow.email || 'unknown', ip, dbLockUntil, dbRow.id]
       );
@@ -156,7 +136,7 @@ async function recordFailedLogin(req, email) {
       }
 
       await db.query(
-        `INSERT INTO login_attempts 
+        `INSERT INTO login_attempts
          (ip_address, email, attempt_count, first_attempt, last_attempt, locked_until, created_at)
          VALUES ($1, $2, $3, NOW(), NOW(), $4, NOW())`,
         [ip, cleanEmail || 'unknown', count, dbLockUntil]
@@ -166,8 +146,8 @@ async function recordFailedLogin(req, email) {
 
     if (cleanEmail) {
       await db.query(
-        `UPDATE users 
-         SET failed_login_attempts = $1, locked_until = $2 
+        `UPDATE users
+         SET failed_login_attempts = $1, locked_until = $2
          WHERE LOWER(email) = $3`,
         [count, lockedUntil, cleanEmail]
       ).catch(() => {});
@@ -176,7 +156,6 @@ async function recordFailedLogin(req, email) {
     console.warn('[DB Warning] Failed to update login_attempts table in DB:', err.message);
   }
 
-  // Memory store update
   let record = loginAttempts.get(ip) || (cleanEmail ? loginAttempts.get(cleanEmail) : null);
   if (!record || (now - record.firstAttempt > 30 * 60 * 1000)) {
     record = { count: 1, firstAttempt: now, lockedUntil: null };
@@ -201,9 +180,6 @@ async function recordFailedLogin(req, email) {
   return { count, lockedUntil };
 }
 
-/**
- * Clear failed login attempts upon successful authentication
- */
 async function clearFailedLogins(req, email) {
   const ip = getClientIp(req);
   const cleanEmail = (email || '').trim().toLowerCase();
@@ -227,13 +203,9 @@ async function clearFailedLogins(req, email) {
   }
 }
 
-/**
- * Express Rate Limit Middleware for /api/auth/send-otp
- * Maximum 3 requests per 5 minutes per IP/Email
- */
 const sendOtpLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 3, // Limit each IP to 3 OTP requests per 5-minute window
+  windowMs: 5 * 60 * 1000,
+  max: 3,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
@@ -251,13 +223,9 @@ const sendOtpLimiter = rateLimit({
   },
 });
 
-/**
- * Express Rate Limit Middleware for /api/auth/login
- * Standard burst protection: Maximum 15 total requests per 5 minutes
- */
 const loginRateLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 15, // 15 total HTTP attempts per window
+  windowMs: 5 * 60 * 1000,
+  max: 15,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {

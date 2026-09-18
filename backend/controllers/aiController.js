@@ -5,12 +5,8 @@ const GEMINI_API_KEY = (
   'AIzaSyCr2mu87r0FCIcPKV9Ufevu5HV1mqck09g'
 ).trim();
 
-// Active Gemini model candidates
 const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-flash-latest'];
 
-/**
- * Helper to call Google Gemini API with fallback across active models
- */
 async function callGeminiApi(payload) {
   let lastError = null;
 
@@ -72,9 +68,6 @@ async function callGeminiApi(payload) {
   throw lastError || new Error('All Gemini models failed to respond');
 }
 
-/**
- * High-accuracy fallback MSWDO diagnostic engine with full Eligibility Criteria & Legal Basis
- */
 function generateLocalMswdoDiagnostic({
   language = 'en',
   applicantType = 'self',
@@ -97,7 +90,6 @@ function generateLocalMswdoDiagnostic({
   const isVulnerableWorker = employmentStatus === 'unemployed' || employmentStatus === 'daily' || employmentStatus === 'informal';
   const is4PsMember = socialRegistry === '4ps';
 
-  // 1. Medical emergency check
   const hasMed =
     selectedHardships.med_emergency ||
     narrativeLower.includes('ospital') ||
@@ -107,7 +99,6 @@ function generateLocalMswdoDiagnostic({
     narrativeLower.includes('surgery') ||
     narrativeLower.includes('reseta');
 
-  // 2. Bereavement / Burial check
   const hasBurial =
     selectedHardships.bereavement ||
     narrativeLower.includes('libing') ||
@@ -116,7 +107,6 @@ function generateLocalMswdoDiagnostic({
     narrativeLower.includes('burol') ||
     narrativeLower.includes('funeral');
 
-  // 3. PWD Disability check
   const hasPwd =
     selectedHardships.mobility_disability ||
     applicantType === 'pwd' ||
@@ -126,7 +116,6 @@ function generateLocalMswdoDiagnostic({
     narrativeLower.includes('saklay') ||
     narrativeLower.includes('hearing aid');
 
-  // 4. Senior citizen check
   const hasSenior =
     selectedHardships.elderly_care ||
     applicantType === 'senior' ||
@@ -138,7 +127,6 @@ function generateLocalMswdoDiagnostic({
     narrativeLower.includes('pensyon') ||
     narrativeLower.includes('matanda');
 
-  // 5. Solo parent check
   const hasSoloParent =
     selectedHardships.solo_parenting ||
     applicantType === 'child' ||
@@ -147,7 +135,6 @@ function generateLocalMswdoDiagnostic({
     narrativeLower.includes('hiwalay') ||
     narrativeLower.includes('biyuda');
 
-  // 6. Child welfare check
   const hasChildWelfare =
     selectedHardships.toddler_daycare ||
     hasSoloParent ||
@@ -157,7 +144,6 @@ function generateLocalMswdoDiagnostic({
     narrativeLower.includes('feeding') ||
     narrativeLower.includes('paslit');
 
-  // 7. Livelihood / micro-enterprise check
   const hasLivelihood =
     selectedHardships.unemployed_livelihood ||
     isVulnerableWorker ||
@@ -165,7 +151,6 @@ function generateLocalMswdoDiagnostic({
     narrativeLower.includes('puhunan') ||
     narrativeLower.includes('tindahan');
 
-  // Populate programs with deep eligibility criteria
   if (hasMed) {
     recs.push({
       id: 'aics_medical',
@@ -428,7 +413,6 @@ function generateLocalMswdoDiagnostic({
     });
   }
 
-  // Fallback if no specific condition matched
   if (recs.length === 0) {
     recs.push({
       id: 'aics_crisis',
@@ -482,9 +466,6 @@ function generateLocalMswdoDiagnostic({
   };
 }
 
-/**
- * Fallback conversational reply when external chat model is rate-limited
- */
 function generateLocalAssistantReply(message = '', language = 'en') {
   const msg = (message || '').toLowerCase();
 
@@ -517,7 +498,6 @@ function generateLocalAssistantReply(message = '', language = 'en') {
     return 'Maayong adlaw! Andam ako motabang kaninyo bahin sa mga programa sa MSWDO sama sa AICS Medical/Burial, Solo Parent ID, PWD Benefits, ug Senior Citizen Pension. Unsa ang inyong pangutana?';
   }
 
-  // English default
   if (msg.includes('medical') || msg.includes('hospital') || msg.includes('medicine')) {
     return 'For AICS Medical Assistance, please prepare a Medical Abstract/Certificate from your physician, Hospital Billing Statement or Doctor\'s Prescription, Barangay Certificate of Indigency, and a Valid Government ID. You can submit directly via the portal under AICS Assistance.';
   }
@@ -530,12 +510,9 @@ function generateLocalAssistantReply(message = '', language = 'en') {
   return 'Hello! I am your MSWDO Smart Social Assistance AI Assistant. I can guide you through municipal welfare programs including AICS (Medical, Burial, Food, Transportation), Solo Parent ID (RA 11861), PWD Services (RA 7277), Senior Citizen Social Pension (RA 11916), and Livelihood Grants. How may I assist you today?';
 }
 
-/**
- * Controller: Analyze Citizen Intake for MSWDO Social Assistance Eligibility
- */
 exports.analyzeEligibility = async (req, res) => {
   const {
-    language = 'en', // 'en' | 'tl' | 'bis'
+    language = 'en',
     applicantType = 'self',
     incomeLevel = 'low',
     dependentsCount = '3-5',
@@ -698,9 +675,6 @@ You MUST output ONLY a valid JSON object strictly matching this schema:
   }
 };
 
-/**
- * Controller: Interactive Chat Q&A with Gemini AI MSWDO Social Worker Assistant
- */
 exports.assistantChat = async (req, res) => {
   const { message, history = [], language = 'en', applicantContext = {} } = req.body;
 
@@ -763,9 +737,6 @@ Instructions:
   }
 };
 
-/**
- * Health check endpoint
- */
 exports.healthCheck = (req, res) => {
   res.status(200).json({
     status: 'online',

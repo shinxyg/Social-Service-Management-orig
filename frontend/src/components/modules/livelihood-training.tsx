@@ -32,7 +32,6 @@ import { API_BASE } from "../../config/api"
 import TrainingProgramAdmin from "./training-program-admin"
 import MaskedText from "../ui/masked-text"
 
-// ---- Unified Interfaces ----
 export type ApplicationStatus = "pending" | "under_review" | "approved" | "rejected" | "needs_revision"
 
 export interface MaterialItem {
@@ -153,7 +152,6 @@ export interface LivelihoodApplication {
   monitoring: LivelihoodMonitoringRecord[]
 }
 
-// Helper: parse date and time string to Date object in Philippine Standard Time (UTC+8)
 function parseDateTime(dateStr?: string, timeStr?: string): Date | null {
   if (!dateStr) return null
   try {
@@ -235,7 +233,6 @@ function isImageFile(filename?: string, fileUrl?: string) {
   return /\.(jpe?g|png|webp|gif|svg|avif|bmp)($|\?)/i.test(target) || !target.includes(".")
 }
 
-// Normalization helper
 function normalizeApplication(raw: any): LivelihoodApplication {
   const rawStatus = (raw.application_status || raw.status || "pending").toLowerCase()
   const status: ApplicationStatus =
@@ -320,7 +317,6 @@ function normalizeApplication(raw: any): LivelihoodApplication {
       }))
     : []
 
-  // If assistance reached scheduled time and became RELEASED, automatically activate Stage 3 monitoring
   if (assist && assist.assistance_status === "RELEASED" && monitoringLogs.length === 0) {
     monitoringLogs.push({
       id: `MON-${raw.id || Date.now()}`,
@@ -400,7 +396,6 @@ function normalizeApplication(raw: any): LivelihoodApplication {
       }
       if (!Array.isArray(docList)) docList = []
 
-      // If docList is empty or documents have no previewUrl, check if localStorage has applicant's cached documents
       if (docList.length === 0 || docList.every((d: any) => !d.previewUrl && !d.file_url && !d.fileUrl && !d.dataUrl)) {
         try {
           const stored = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
@@ -467,7 +462,6 @@ function normalizeApplication(raw: any): LivelihoodApplication {
   }
 }
 
-// UI Badges
 function StatusBadge({ status }: { status: ApplicationStatus }) {
   if (status === "pending" || status === "under_review") {
     return (
@@ -561,9 +555,6 @@ function MonitoringStatusBadge({ status }: { status: string }) {
   )
 }
 
-// =====================================================================================
-// 1. APPLICATION REVIEW MODAL (STAGE 1 DECISIONS)
-// =====================================================================================
 interface ReviewModalProps {
   app: LivelihoodApplication
   onClose: () => void
@@ -616,7 +607,7 @@ function ReviewModal({
       }}
       className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-blur-xs cursor-pointer"
     >
-      {/* Floating Exit Button outside the box */}
+      {}
       <button
         type="button"
         onClick={onClose}
@@ -631,7 +622,7 @@ function ReviewModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl my-8 overflow-hidden flex flex-col max-h-[90vh] cursor-default relative"
       >
-        {/* Header */}
+        {}
         <div className="px-6 py-4 border-b border-border bg-muted/40 flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2.5">
@@ -652,9 +643,9 @@ function ReviewModal({
           </button>
         </div>
 
-        {/* Content */}
+        {}
         <div className="p-6 overflow-y-auto space-y-6">
-          {/* Section 1: Checklist & Client Category (Form Step 2) */}
+          {}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">1. Checklist &amp; Client Category</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm p-4 rounded-xl bg-muted/20 border border-border">
@@ -669,7 +660,7 @@ function ReviewModal({
             </div>
           </div>
 
-          {/* Section 2: Personal Info (Form Step 1) */}
+          {}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">2. Personal Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm p-4 rounded-xl bg-muted/20 border border-border">
@@ -750,7 +741,7 @@ function ReviewModal({
             </div>
           </div>
 
-          {/* Section 3: Proposed Business Details (Form Step 2) */}
+          {}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">3. Proposed Business Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm p-4 rounded-xl bg-muted/20 border border-border">
@@ -769,7 +760,7 @@ function ReviewModal({
             </div>
           </div>
 
-          {/* Section 4: Requested Assistance Details (Form Step 3) */}
+          {}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">4. Requested Assistance Details</h3>
             <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-3.5 text-sm">
@@ -799,7 +790,7 @@ function ReviewModal({
                 </div>
               </div>
 
-              {/* Optional Requested Materials Breakdown */}
+              {}
               {Array.isArray(app.requestedMaterials) && app.requestedMaterials.length > 0 && (
                 <div className="pt-2 border-t border-border/50">
                   <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
@@ -817,7 +808,7 @@ function ReviewModal({
                 </div>
               )}
 
-              {/* Optional Requested Equipment Breakdown */}
+              {}
               {Array.isArray(app.requestedEquipment) && app.requestedEquipment.length > 0 && (
                 <div className="pt-2 border-t border-border/50">
                   <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
@@ -837,7 +828,7 @@ function ReviewModal({
             </div>
           </div>
 
-          {/* Section 5: Uploaded Documents (Form Step 4 - Clickable & Interactive) */}
+          {}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -878,7 +869,7 @@ function ReviewModal({
             </div>
           </div>
 
-          {/* APPLICATION DECISION SECTION */}
+          {}
           <div className="border-t border-border pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
@@ -889,7 +880,7 @@ function ReviewModal({
               </span>
             </div>
 
-            {/* If approved, show banner with direct link to Stage 2 */}
+            {}
             {app.status === "approved" && (
               <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-xs text-emerald-900 dark:text-emerald-200 space-y-0.5">
@@ -916,7 +907,7 @@ function ReviewModal({
               </div>
             )}
 
-            {/* 3 Decision Actions: APPROVE, NEEDS REVISION, REJECT */}
+            {}
             {actionMode === "view" && app.status !== "approved" && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
@@ -949,7 +940,7 @@ function ReviewModal({
               </div>
             )}
 
-            {/* 1. APPROVE Confirmation Dialog */}
+            {}
             {actionMode === "approve" && (
               <div className="p-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 space-y-4 animate-in fade-in duration-150">
                 <div className="flex items-start gap-3">
@@ -991,7 +982,7 @@ function ReviewModal({
               </div>
             )}
 
-            {/* 2. NEEDS REVISION */}
+            {}
             {actionMode === "revision" && (
               <div className="p-5 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-4 animate-in fade-in duration-150">
                 <div className="flex items-start gap-3">
@@ -1078,7 +1069,7 @@ function ReviewModal({
               </div>
             )}
 
-            {/* 3. REJECT */}
+            {}
             {actionMode === "reject" && (
               <div className="p-5 rounded-xl border border-rose-500/30 bg-rose-500/10 space-y-4 animate-in fade-in duration-150">
                 <div className="flex items-start gap-3">
@@ -1166,7 +1157,7 @@ function ReviewModal({
           </div>
         </div>
 
-        {/* Footer */}
+        {}
         <div className="px-6 py-4 border-t border-border bg-muted/30 flex justify-end gap-3 shrink-0">
           <button
             type="button"
@@ -1178,7 +1169,7 @@ function ReviewModal({
         </div>
       </div>
 
-      {/* DOCUMENT PREVIEW MODAL (Pic 2 Style) */}
+      {}
       {previewDocModal && (() => {
         const fallback = getSampleDocumentFallback(previewDocModal.name || previewDocModal.label, (previewDocModal as any).original_filename || (previewDocModal as any).filename)
         const rawSrc = previewDocModal.previewUrl || previewDocModal.fileUrl || previewDocModal.url || previewDocModal.path
@@ -1207,7 +1198,7 @@ function ReviewModal({
               className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
+              {}
               <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0 bg-slate-50/70">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl shrink-0">
@@ -1231,7 +1222,7 @@ function ReviewModal({
                 </button>
               </div>
 
-              {/* Content Viewer */}
+              {}
               <div className="p-6 overflow-y-auto flex items-center justify-center bg-slate-100/70 min-h-[380px] max-h-[65vh]">
                 {isPdf ? (
                   <iframe
@@ -1256,7 +1247,7 @@ function ReviewModal({
                 )}
               </div>
 
-              {/* Footer */}
+              {}
               <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-4 shrink-0 bg-white">
                 <a
                   href={currentSrc}
@@ -1281,9 +1272,6 @@ function ReviewModal({
   )
 }
 
-// =====================================================================================
-// 2. CAPITAL / MATERIALS PROCESSING MODAL (STAGE 2)
-// =====================================================================================
 interface AssistanceModalProps {
   app: LivelihoodApplication
   onClose: () => void
@@ -1372,7 +1360,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
       }}
       className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto cursor-pointer"
     >
-      {/* Floating Exit Button outside the box */}
+      {}
       <button
         type="button"
         onClick={onClose}
@@ -1387,7 +1375,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
         onClick={(e) => e.stopPropagation()}
         className="bg-card border border-border rounded-2xl w-full max-w-3xl max-h-[92vh] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 cursor-default relative my-4"
       >
-        {/* Header */}
+        {}
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30 shrink-0">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-bold text-foreground">
@@ -1413,9 +1401,9 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
           </button>
         </div>
 
-        {/* Scrollable Body */}
+        {}
         <div className="p-6 overflow-y-auto space-y-5 flex-1 text-xs">
-          {/* Section 1: Beneficiary Overview */}
+          {}
           <div className="border border-border rounded-xl p-4 bg-muted/20 space-y-3">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
@@ -1437,7 +1425,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
             </div>
           </div>
 
-          {/* Section 2: Review Requested Allocation */}
+          {}
           <div className="border border-border rounded-xl p-5 space-y-5 bg-card shadow-xs">
             <div className="border-b border-border pb-3">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
@@ -1448,7 +1436,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
               </p>
             </div>
 
-            {/* A. Financial Assistance */}
+            {}
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                 <Banknote className="h-4 w-4 text-emerald-600" />
@@ -1464,7 +1452,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
               </div>
             </div>
 
-            {/* B. Materials / Supplies */}
+            {}
             <div className="space-y-3 pt-3 border-t border-border">
               <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                 <Package className="h-4 w-4 text-blue-600" />
@@ -1490,7 +1478,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
               )}
             </div>
 
-            {/* C. Equipment */}
+            {}
             <div className="space-y-3 pt-3 border-t border-border">
               <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                 <Wrench className="h-4 w-4 text-indigo-600" />
@@ -1516,7 +1504,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
               )}
             </div>
 
-            {/* Next Step Notice */}
+            {}
             <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/25 space-y-1.5">
               <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
                 <Calendar className="h-4 w-4" />
@@ -1531,7 +1519,7 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
           </div>
         </div>
 
-        {/* Footer Action Buttons */}
+        {}
         <div className="px-6 py-4 border-t border-border bg-muted/30 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <button
             type="button"
@@ -1558,9 +1546,6 @@ function AssistanceModal({ app, onClose, onSaveAssistance }: AssistanceModalProp
   )
 }
 
-// =====================================================================================
-// 3. FULL LIVELIHOOD MONITORING DETAILS MODAL (STAGE 3)
-// =====================================================================================
 interface MonitoringModalProps {
   app: LivelihoodApplication
   onClose: () => void
@@ -1582,7 +1567,6 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
   const [showAddForm, setShowAddForm] = useState(false)
   const [showConfirmComplete, setShowConfirmComplete] = useState(false)
 
-  // Add update form state
   const [monitoringDate, setMonitoringDate] = useState(new Date().toISOString().split("T")[0])
   const [selectedStatus, setSelectedStatus] = useState("ONGOING")
   const [progressUpdate, setProgressUpdate] = useState("")
@@ -1596,7 +1580,6 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
   const fullName = [app.firstName, app.middleName, app.lastName].filter(Boolean).join(" ")
   const assistance = app.assistance
 
-  // Format materials & equipment received
   const materialsList = Array.isArray(assistance?.approved_materials)
     ? assistance.approved_materials
     : typeof assistance?.approved_materials === "string"
@@ -1658,7 +1641,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
       }}
       className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-3 sm:p-4 overflow-y-auto backdrop-blur-xs cursor-pointer"
     >
-      {/* Floating Exit Button outside the box */}
+      {}
       <button
         type="button"
         onClick={onClose}
@@ -1673,7 +1656,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
         onClick={(e) => e.stopPropagation()}
         className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl my-8 overflow-hidden flex flex-col max-h-[92vh] cursor-default relative"
       >
-        {/* Modal Header */}
+        {}
         <div className="px-6 py-4 border-b border-border bg-muted/40 flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2.5">
@@ -1696,11 +1679,11 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
           </button>
         </div>
 
-        {/* Modal Body */}
+        {}
         <div className="p-6 overflow-y-auto space-y-6">
-          {/* ============================================================ */}
-          {/* 1. BENEFICIARY INFORMATION                                   */}
-          {/* ============================================================ */}
+          {}
+          {}
+          {}
           <div className="bg-card border border-border rounded-xl p-5 shadow-xs space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b border-border pb-2">
               <User className="h-4 w-4 text-emerald-600" />
@@ -1731,9 +1714,9 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
             </div>
           </div>
 
-          {/* ============================================================ */}
-          {/* 2. ASSISTANCE RECEIVED                                       */}
-          {/* ============================================================ */}
+          {}
+          {}
+          {}
           <div className="bg-card border border-border rounded-xl p-5 shadow-xs space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b border-border pb-2">
               <Package className="h-4 w-4 text-blue-600" />
@@ -1741,7 +1724,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              {/* Financial Assistance */}
+              {}
               <div className="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20">
                 <span className="text-emerald-800 dark:text-emerald-300 font-bold block text-[11px] uppercase flex items-center gap-1">
                   <Banknote className="h-3.5 w-3.5" /> Financial Capital Grant
@@ -1752,7 +1735,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
                 <span className="text-[11px] text-muted-foreground block mt-0.5">Approved Cash Disbursement</span>
               </div>
 
-              {/* Release Schedule & Handover Details */}
+              {}
               <div className="col-span-2 p-3.5 rounded-xl border border-border bg-muted/15 space-y-1.5">
                 <div className="flex items-center justify-between border-b border-border pb-1">
                   <span className="font-bold text-[11px] uppercase text-muted-foreground">Release Handover Status</span>
@@ -1781,9 +1764,9 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
               </div>
             </div>
 
-            {/* Materials & Equipment Lists */}
+            {}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 text-xs">
-              {/* Materials */}
+              {}
               <div className="border border-border rounded-xl p-3.5 bg-muted/10 space-y-2">
                 <span className="font-bold text-foreground text-xs block uppercase tracking-wider flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5 text-blue-600" />
@@ -1808,7 +1791,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
                 )}
               </div>
 
-              {/* Equipment */}
+              {}
               <div className="border border-border rounded-xl p-3.5 bg-muted/10 space-y-2">
                 <span className="font-bold text-foreground text-xs block uppercase tracking-wider flex items-center gap-1.5">
                   <Wrench className="h-3.5 w-3.5 text-indigo-600" />
@@ -1835,9 +1818,9 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
             </div>
           </div>
 
-          {/* ============================================================ */}
-          {/* 3. CURRENT MONITORING STATUS                                 */}
-          {/* ============================================================ */}
+          {}
+          {}
+          {}
           <div className="bg-card border border-border rounded-xl p-5 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
               <div>
@@ -1881,7 +1864,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
               </div>
             </div>
 
-            {/* Visual Workflow Breadcrumb */}
+            {}
             <div className="p-3 rounded-xl bg-muted/20 border border-border flex items-center justify-between text-[11px] text-muted-foreground flex-wrap gap-2">
               <span className="font-bold text-foreground">Monitoring Progression:</span>
               <div className="flex items-center gap-1.5 font-semibold">
@@ -1897,7 +1880,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
               </div>
             </div>
 
-            {/* If COMPLETED, show informational banner */}
+            {}
             {isCompleted && (
               <div className="p-4 rounded-xl border border-purple-500/30 bg-purple-500/10 flex items-start gap-3 text-xs text-purple-900 dark:text-purple-200">
                 <CheckCircle2 className="h-5 w-5 text-purple-600 shrink-0 mt-0.5" />
@@ -1910,7 +1893,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
               </div>
             )}
 
-            {/* ADD MONITORING UPDATE FORM */}
+            {}
             {showAddForm && !isCompleted && (
               <form onSubmit={handleFormSubmit} className="p-5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-4 animate-in fade-in duration-150">
                 <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
@@ -2015,7 +1998,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
               </form>
             )}
 
-            {/* COMPLETED STATUS CONFIRMATION DIALOG */}
+            {}
             {showConfirmComplete && (
               <div className="p-5 rounded-xl border border-purple-500/40 bg-purple-500/10 space-y-3 animate-in fade-in duration-150">
                 <div className="flex items-start gap-3">
@@ -2053,9 +2036,9 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
             )}
           </div>
 
-          {/* ============================================================ */}
-          {/* 4. MONITORING HISTORY                                        */}
-          {/* ============================================================ */}
+          {}
+          {}
+          {}
           <div className="bg-card border border-border rounded-xl p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <div>
@@ -2114,7 +2097,7 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
           </div>
         </div>
 
-        {/* Modal Footer */}
+        {}
         <div className="px-6 py-4 border-t border-border bg-muted/30 flex justify-end gap-3 shrink-0">
           <button
             type="button"
@@ -2129,11 +2112,8 @@ function MonitoringModal({ app, onClose, onAddMonitoringUpdate, onReopenMonitori
   )
 }
 
-// =====================================================================================
-// MAIN ADMIN COMPONENT
-// =====================================================================================
 export default function LivelihoodApplicationsAdmin() {
-  // Initialize applications from localStorage or seed
+
   const [applications, setApplications] = useState<LivelihoodApplication[]>(() => {
     try {
       const stored = localStorage.getItem("livelihood_applications")
@@ -2156,17 +2136,14 @@ export default function LivelihoodApplicationsAdmin() {
 
   const [adminTab, setAdminTab] = useState<"applications" | "assistance" | "monitoring" | "training">("applications")
 
-  // Modals state
   const [selectedReviewApp, setSelectedReviewApp] = useState<LivelihoodApplication | null>(null)
   const [selectedAssistanceApp, setSelectedAssistanceApp] = useState<LivelihoodApplication | null>(null)
   const [selectedMonitoringApp, setSelectedMonitoringApp] = useState<LivelihoodApplication | null>(null)
 
-  // Filters & Search
   const [filterStatusOfClient, setFilterStatusOfClient] = useState("all")
   const [filterStatus, setFilterStatus] = useState<"all" | ApplicationStatus>("all")
   const [searchTerm, setSearchTerm] = useState("")
 
-  // Single source of truth storage updater
   const updateAndPersist = (updatedList: LivelihoodApplication[]) => {
     setApplications(updatedList)
     try {
@@ -2176,7 +2153,6 @@ export default function LivelihoodApplicationsAdmin() {
     } catch (_) {}
   }
 
-  // Fetch applications from backend
   const fetchApps = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/livelihood/applications`)
@@ -2207,9 +2183,6 @@ export default function LivelihoodApplicationsAdmin() {
     }
   }, [])
 
-  // ==========================================
-  // REQUIRED APPROVAL LOGIC
-  // ==========================================
   const handleApproveApplication = async (id: string | number) => {
     const updatedList = applications.map((app) => {
       if (String(app.id) === String(id) || app.referenceNumber === id || app.reference_number === id) {
@@ -2334,7 +2307,6 @@ export default function LivelihoodApplicationsAdmin() {
     setSelectedReviewApp(null)
   }
 
-  // Save Assistance Details (Stage 2)
   const handleSaveAssistance = async (appId: string | number, assistanceData: CapitalMaterialsAssistance) => {
     const isReleased = assistanceData.assistance_status === "RELEASED" || assistanceData.assistance_status === "released"
 
@@ -2397,7 +2369,6 @@ export default function LivelihoodApplicationsAdmin() {
     } catch (_) {}
   }
 
-  // Add Monitoring Update (Stage 3)
   const handleAddMonitoringUpdate = async (
     appId: string | number,
     update: {
@@ -2449,7 +2420,6 @@ export default function LivelihoodApplicationsAdmin() {
 
     updateAndPersist(updatedList)
 
-    // Immediately update modal active app state so modal re-renders with new status and history
     if (updatedAppObject) {
       setSelectedMonitoringApp(updatedAppObject)
     }
@@ -2469,7 +2439,6 @@ export default function LivelihoodApplicationsAdmin() {
     } catch (_) {}
   }
 
-  // Reopen Monitoring if completed
   const handleReopenMonitoring = async (appId: string | number) => {
     let updatedAppObject: LivelihoodApplication | null = null
 
@@ -2506,12 +2475,10 @@ export default function LivelihoodApplicationsAdmin() {
     }
   }
 
-  // Stage 2: All applications where application_status = "APPROVED" AND has a valid linked Capital / Materials Assistance record
   const capitalMaterialsList = applications.filter(
     (app) => (app.status === "approved" || app.application_status === "approved") && app.assistance !== null
   )
 
-  // Stage 3: All released assistance records
   const releasedBeneficiaries = capitalMaterialsList.filter(
     (app) =>
       app.assistance?.assistance_status === "RELEASED" ||
@@ -2519,7 +2486,6 @@ export default function LivelihoodApplicationsAdmin() {
       app.assistance?.release_status === "RELEASED"
   )
 
-  // Stage 1: Applications review list
   const filteredApps = applications.filter((app) => {
     const matchStatusOfClient = filterStatusOfClient === "all" || app.statusOfClient === filterStatusOfClient
     const isPendingMatch =
@@ -2535,7 +2501,6 @@ export default function LivelihoodApplicationsAdmin() {
     return matchStatusOfClient && matchStatus && matchSearch
   })
 
-  // Exact Dashboard Counters
   const pendingCount = applications.filter(
     (a) => a.status === "pending" || a.status === "under_review" || a.application_status === "pending" || a.application_status === "under_review"
   ).length
@@ -2560,7 +2525,7 @@ export default function LivelihoodApplicationsAdmin() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Top Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
@@ -2572,7 +2537,7 @@ export default function LivelihoodApplicationsAdmin() {
         </div>
       </div>
 
-      {/* Admin 4-Stage Navigation Tabs */}
+      {}
       <div className="bg-card border border-border rounded-2xl p-1.5 shadow-xs">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5">
           <button
@@ -2633,12 +2598,12 @@ export default function LivelihoodApplicationsAdmin() {
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* TAB 1: APPLICATIONS INTAKE & REVIEW                          */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {adminTab === "applications" && (
         <div className="space-y-6">
-          {/* Dashboard Metrics */}
+          {}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: "Total Applications", value: applications.length, text: "text-blue-600 dark:text-blue-400" },
@@ -2653,7 +2618,7 @@ export default function LivelihoodApplicationsAdmin() {
             ))}
           </div>
 
-          {/* Search and Filters */}
+          {}
           <div className="bg-card border border-border rounded-xl p-4 space-y-4 shadow-xs">
             <div className="flex items-center gap-2 px-3 py-2 border border-border rounded-xl bg-muted/20">
               <Search className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -2698,7 +2663,7 @@ export default function LivelihoodApplicationsAdmin() {
             </div>
           </div>
 
-          {/* Applications List */}
+          {}
           <div className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-foreground">
               Applications Registry ({filteredApps.length})
@@ -2760,12 +2725,12 @@ export default function LivelihoodApplicationsAdmin() {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* TAB 2: CAPITAL / MATERIALS (STAGE 2)                         */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {adminTab === "assistance" && (
         <div className="space-y-6">
-          {/* Dashboard Metrics for Stage 2 */}
+          {}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: "Total Approved Grants", value: capitalMaterialsList.length, text: "text-indigo-600 dark:text-indigo-400" },
@@ -2856,12 +2821,12 @@ export default function LivelihoodApplicationsAdmin() {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* TAB 3: LIVELIHOOD MONITORING (STAGE 3)                       */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {adminTab === "monitoring" && (
         <div className="space-y-6">
-          {/* Dashboard Metrics for Stage 3 */}
+          {}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: "Total Released", value: releasedCount, text: "text-emerald-600 dark:text-emerald-400" },
@@ -2946,17 +2911,17 @@ export default function LivelihoodApplicationsAdmin() {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* TAB 4: TRAINING PROGRAM SUB-MODULE                            */}
-      {/* ============================================================ */}
+      {}
+      {}
+      {}
       {adminTab === "training" && (
         <TrainingProgramAdmin />
       )}
 
-      {/* ============================================================ */}
-      {/* MODALS                                                       */}
-      {/* ============================================================ */}
-      {/* 1. Stage 1 Review Modal */}
+      {}
+      {}
+      {}
+      {}
       {selectedReviewApp && (
         <ReviewModal
           app={selectedReviewApp}
@@ -2971,7 +2936,7 @@ export default function LivelihoodApplicationsAdmin() {
         />
       )}
 
-      {/* 2. Stage 2 Capital / Materials Processing Modal */}
+      {}
       {selectedAssistanceApp && (
         <AssistanceModal
           app={selectedAssistanceApp}
@@ -2980,7 +2945,7 @@ export default function LivelihoodApplicationsAdmin() {
         />
       )}
 
-      {/* 3. Stage 3 Monitoring & Progress Update Modal */}
+      {}
       {selectedMonitoringApp && (
         <MonitoringModal
           app={selectedMonitoringApp}

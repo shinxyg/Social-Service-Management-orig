@@ -25,10 +25,6 @@ const authHeaders = (): Record<string, string> => {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-// =====================================================================================
-// Types
-// =====================================================================================
-
 export type AccountRole = "USER / BENEFICIARY" | "ADMINISTRATOR"
 export type AccountStatus = "ACTIVE" | "INACTIVE"
 
@@ -52,7 +48,7 @@ export interface LinkedAppointment {
 }
 
 export interface CentralUser {
-  id: string // e.g. "USR-0278" or numeric
+  id: string
   numericId?: number
   name: string
   firstName?: string
@@ -76,10 +72,6 @@ export interface UserStats {
   inactive: number
   administrators: number
 }
-
-// =====================================================================================
-// Utility Helpers
-// =====================================================================================
 
 function formatDateOnly(dateStr?: string) {
   if (!dateStr) return "—"
@@ -116,10 +108,6 @@ function getInitials(name: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-// =====================================================================================
-// User Card Component
-// =====================================================================================
-
 function UserCard({
   u,
   onManage,
@@ -138,7 +126,7 @@ function UserCard({
       }`}
     >
       <div className="flex items-start gap-4">
-        {/* Avatar */}
+        {}
         <div
           className={`hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white font-bold text-sm shadow-xs ${
             isAdmin
@@ -149,14 +137,14 @@ function UserCard({
           {getInitials(u.name)}
         </div>
 
-        {/* Info */}
+        {}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors tracking-tight truncate uppercase">
               {u.name}
             </h3>
 
-            {/* Role Badge */}
+            {}
             <span
               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
                 isAdmin
@@ -168,7 +156,7 @@ function UserCard({
               {u.role}
             </span>
 
-            {/* Status Badge */}
+            {}
             <span
               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
                 isActive
@@ -200,7 +188,7 @@ function UserCard({
             </p>
           </div>
 
-          {/* Activity Meta */}
+          {}
           <div className="flex items-center gap-4 flex-wrap text-[11px] text-slate-500 pt-2 border-t border-slate-100">
             <span className="inline-flex items-center gap-1">
               <Calendar className="h-3 w-3 text-slate-400" />
@@ -223,10 +211,6 @@ function UserCard({
   )
 }
 
-// =====================================================================================
-// Manage User Modal Component
-// =====================================================================================
-
 function ManageUserModal({
   user,
   onClose,
@@ -237,7 +221,6 @@ function ManageUserModal({
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
   const [detailedUser, setDetailedUser] = useState<CentralUser>(user)
 
-  // Fetch full details with linked applications & appointments
   useEffect(() => {
     let isMounted = true
     const fetchFullDetails = async () => {
@@ -292,11 +275,10 @@ function ManageUserModal({
     }
   }
 
-
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl my-8 overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
-        {/* Header */}
+        {}
         <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-start justify-between gap-4 shrink-0">
           <div className="flex items-center gap-4">
             <div
@@ -349,9 +331,9 @@ function ManageUserModal({
           </button>
         </div>
 
-        {/* Modal Scrollable Body */}
+        {}
         <div className="p-6 space-y-6 overflow-y-auto flex-1 text-slate-800">
-          {/* USER INFORMATION */}
+          {}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5 text-blue-600" />
@@ -409,7 +391,7 @@ function ManageUserModal({
             </div>
           </div>
 
-          {/* CONNECTED APPLICATION RECORDS */}
+          {}
           <div className="space-y-3 pt-2">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <FileText className="h-3.5 w-3.5 text-blue-600" />
@@ -470,7 +452,7 @@ function ManageUserModal({
             )}
           </div>
 
-          {/* CONNECTED APPOINTMENTS */}
+          {}
           {detailedUser.appointments && detailedUser.appointments.length > 0 && (
             <div className="space-y-3 pt-2">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -499,7 +481,7 @@ function ManageUserModal({
           )}
         </div>
 
-        {/* Modal Footer */}
+        {}
         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
             <span>Account Status:</span>
@@ -547,10 +529,6 @@ function ManageUserModal({
   )
 }
 
-// =====================================================================================
-// Main Admin User Management Component
-// =====================================================================================
-
 export default function UserManagement() {
   const [users, setUsers] = useState<CentralUser[]>(() => {
     try {
@@ -575,14 +553,12 @@ export default function UserManagement() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<CentralUser | null>(null)
 
-  // Filters
   const [searchTerm, setSearchTerm] = useState("")
   const [filterRole, setFilterRole] = useState<"ALL" | AccountRole>("ALL")
   const [filterStatus, setFilterStatus] = useState<"ALL" | AccountStatus>("ALL")
 
   const isFetchingRef = useRef(false)
 
-  // Fetch real central users directly from Backend API
   const loadUsers = async (silent = false) => {
     if (isFetchingRef.current) return
     isFetchingRef.current = true
@@ -642,7 +618,6 @@ export default function UserManagement() {
     }
   }, [])
 
-  // Filter users
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       const matchRole = filterRole === "ALL" || u.role === filterRole
@@ -661,8 +636,6 @@ export default function UserManagement() {
     })
   }, [users, filterRole, filterStatus, searchTerm])
 
-  // Exact Dashboard Stats as strictly required:
-  // TOTAL USERS, ACTIVE USERS, INACTIVE USERS, ADMINISTRATORS
   const stats: UserStats = useMemo(() => {
     return {
       total: users.length,
@@ -674,7 +647,7 @@ export default function UserManagement() {
 
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto font-sans">
-      {/* Title Header */}
+      {}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
@@ -686,9 +659,9 @@ export default function UserManagement() {
         </div>
       </div>
 
-      {/* 2. DASHBOARD KPI CARDS (TOTAL USERS, ACTIVE USERS, INACTIVE USERS, ADMINISTRATORS) */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* TOTAL USERS */}
+        {}
         <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -702,7 +675,7 @@ export default function UserManagement() {
           </span>
         </div>
 
-        {/* ACTIVE USERS */}
+        {}
         <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -716,7 +689,7 @@ export default function UserManagement() {
           </span>
         </div>
 
-        {/* INACTIVE USERS */}
+        {}
         <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -730,7 +703,7 @@ export default function UserManagement() {
           </span>
         </div>
 
-        {/* ADMINISTRATORS */}
+        {}
         <div className="p-4 md:p-5 rounded-2xl border bg-white border-slate-200 text-slate-900 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -745,9 +718,9 @@ export default function UserManagement() {
         </div>
       </div>
 
-      {/* 3. FILTERS & SEARCH */}
+      {}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-2xs space-y-4">
-        {/* Search Bar */}
+        {}
         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all">
           <Search className="h-4 w-4 text-slate-400 shrink-0" />
           <input
@@ -767,9 +740,9 @@ export default function UserManagement() {
           )}
         </div>
 
-        {/* Dropdown Filters (Role & Status) */}
+        {}
         <div className="flex items-center gap-4 flex-wrap text-xs">
-          {/* Role Filter: All Roles, User / Beneficiary, Administrator */}
+          {}
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-600">Account Role:</span>
             <select
@@ -783,7 +756,7 @@ export default function UserManagement() {
             </select>
           </div>
 
-          {/* Status Filter: All Statuses, Active, Inactive */}
+          {}
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-600">Account Status:</span>
             <select
@@ -803,7 +776,7 @@ export default function UserManagement() {
         </div>
       </div>
 
-      {/* 4. USER LIST */}
+      {}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-slate-900 tracking-tight">
@@ -844,7 +817,7 @@ export default function UserManagement() {
         )}
       </div>
 
-      {/* Manage User Modal */}
+      {}
       {selectedUser && (
         <ManageUserModal
           user={selectedUser}

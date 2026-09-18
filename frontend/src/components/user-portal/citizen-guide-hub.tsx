@@ -68,7 +68,6 @@ export default function CitizenGuideHub() {
   const userId = profile?.id || localStorage.getItem("userId") || "1"
   const userName = profile?.firstName ? `${profile.firstName} ${profile.lastName || ""}` : "Resident"
 
-  // Fetch active / recent applications for user context bar with live real-time sync & delete protection
   useEffect(() => {
     let isMounted = true
 
@@ -80,7 +79,6 @@ export default function CitizenGuideHub() {
         const userLastName = (profile?.lastName || "").toLowerCase().trim()
         const userFirstName = (profile?.firstName || "").toLowerCase().trim()
 
-        // 0. Build set of deleted / archived application references
         const deletedSet = new Set<string>()
         try {
           const localDel = JSON.parse(localStorage.getItem("deleted_user_applications") || "[]")
@@ -127,7 +125,6 @@ export default function CitizenGuideHub() {
           const aLast = String(a.lastName || a.last_name || a.guardian_last_name || a.applicantInfo?.lastName || "").toLowerCase().trim()
           const aName = String(a.full_name || a.applicantName || a.child_name || a.applicantInfo?.fullName || `${aFirst} ${aLast}`).toLowerCase().trim()
 
-          // Check if deleted
           if (deletedSet.has(aRef) || (a.id && deletedSet.has(String(a.id).toLowerCase().trim()))) {
             return false
           }
@@ -146,7 +143,6 @@ export default function CitizenGuideHub() {
           return false
         }
 
-        // 1. AICS Apps
         try {
           const data = await cachedApiFetch(`${API_BASE}/api/aics/applications?qcId=${encodeURIComponent(qcid)}`, { headers: authHeaders }, 4000).catch(() => null)
           if (data) {
@@ -168,7 +164,6 @@ export default function CitizenGuideHub() {
           }
         } catch {}
 
-        // 2. PWD / Senior Apps
         try {
           const list2 = await cachedApiFetch(`${API_BASE}/api/pwd-senior/applications`, { headers: authHeaders }, 4000).catch(() => null)
           if (Array.isArray(list2)) {
@@ -187,7 +182,6 @@ export default function CitizenGuideHub() {
           }
         } catch {}
 
-        // 3. Solo Parent Apps
         try {
           const data3 = await cachedApiFetch(`${API_BASE}/api/solo-parent/user/${userId}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(userEmail)}`, { headers: authHeaders }, 4000).catch(() => null)
           if (data3) {
@@ -207,7 +201,6 @@ export default function CitizenGuideHub() {
           }
         } catch {}
 
-        // 4. Child Welfare Apps
         try {
           const data4 = await cachedApiFetch(`${API_BASE}/api/child-welfare/user/${userId}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(userEmail)}`, { headers: authHeaders }, 4000).catch(() => null)
           if (data4) {
@@ -227,7 +220,6 @@ export default function CitizenGuideHub() {
           }
         } catch {}
 
-        // 5. Livelihood Apps
         try {
           const data5 = await cachedApiFetch(`${API_BASE}/api/livelihood/applications`, { headers: authHeaders }, 4000).catch(() => null)
           if (data5) {
@@ -247,7 +239,6 @@ export default function CitizenGuideHub() {
           }
         } catch {}
 
-        // 6. Training Apps
         try {
           const data6 = await cachedApiFetch(`${API_BASE}/api/training/applications`, { headers: authHeaders }, 4000).catch(() => null)
           if (data6) {
@@ -267,7 +258,6 @@ export default function CitizenGuideHub() {
           }
         } catch {}
 
-        // 7. Clean up stale localStorage caches for deleted items
         const localKeys = ["pwd_senior_applications", "aics_applications", "all_user_applications", "applications", "livelihood_applications", "training_applications", "child_welfare_applications", "solo_parent_applications"]
         for (const k of localKeys) {
           try {
@@ -284,7 +274,6 @@ export default function CitizenGuideHub() {
           } catch {}
         }
 
-        // Deduplicate found items by ref
         const uniqueFound: any[] = []
         const seenRefs = new Set<string>()
         for (const item of found) {
@@ -299,13 +288,12 @@ export default function CitizenGuideHub() {
           setRecentApps(uniqueFound)
         }
       } catch {
-        // ignore fetch error
+
       }
     }
 
     fetchUserStatus()
 
-    // Real-time synchronization
     const handleUpdate = () => {
       fetchUserStatus()
     }
@@ -533,9 +521,9 @@ export default function CitizenGuideHub() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-16">
-      {/* 1. HERO HEADER */}
+      {}
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white pt-8 pb-12 px-4 sm:px-6 lg:px-8 shadow-sm">
-        {/* Blended Gov Serves Seal Watermark on the right side */}
+        {}
         <div className="absolute -right-12 sm:-right-6 md:right-0 lg:right-4 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0">
           <img
             src="/gov-serves-seal.png"
@@ -571,7 +559,7 @@ export default function CitizenGuideHub() {
             </div>
           </div>
 
-          {/* Search Bar */}
+          {}
           <div className="mt-8 relative max-w-2xl">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
@@ -592,7 +580,7 @@ export default function CitizenGuideHub() {
             )}
           </div>
 
-          {/* Category Filter Pills */}
+          {}
           <div className="mt-4 flex flex-wrap items-center gap-2 pt-1">
             {[
               { id: "all", label: "All Services" },
@@ -615,7 +603,7 @@ export default function CitizenGuideHub() {
               </button>
             ))}
 
-            {/* ✨ AI Assistance & Eligibility Finder Button */}
+            {}
             <button
               type="button"
               onClick={() => setIsAiModalOpen(true)}
@@ -630,7 +618,7 @@ export default function CitizenGuideHub() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 space-y-8">
-        {/* LIVE SEARCH RESULTS BANNER (SHOWN WHEN USER TYPES) */}
+        {}
         {hasSearch && (
           <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-md space-y-4 animate-in fade-in duration-200">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
@@ -659,7 +647,7 @@ export default function CitizenGuideHub() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Matching Modules */}
+                {}
                 {filteredModules.map((mod) => (
                   <div
                     key={mod.id}
@@ -684,7 +672,7 @@ export default function CitizenGuideHub() {
                   </div>
                 ))}
 
-                {/* Matching AICS Services */}
+                {}
                 {filteredAics.map((svc) => (
                   <div
                     key={svc.type}
@@ -716,7 +704,7 @@ export default function CitizenGuideHub() {
           </div>
         )}
 
-        {/* CATEGORY FILTERED VIEW: APPEARS IN-PLACE AT THE TOP */}
+        {}
         {!hasSearch && selectedCategory !== "all" && (
           <div className="space-y-6 animate-in fade-in duration-150">
             <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -747,7 +735,7 @@ export default function CitizenGuideHub() {
               </button>
             </div>
 
-            {/* If AICS is selected, show the 6 types breakdown */}
+            {}
             {selectedCategory === "aics" && (
               <div className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
@@ -786,7 +774,7 @@ export default function CitizenGuideHub() {
                           </div>
                         </div>
                         <p className="text-xs text-gray-600 leading-relaxed">{svc.desc}</p>
-                        
+
                         <div className="bg-slate-100/80 rounded-xl p-3 space-y-1.5">
                           <div className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">
                             Key Requirements:
@@ -812,7 +800,7 @@ export default function CitizenGuideHub() {
               </div>
             )}
 
-            {/* Filtered Category Module Cards */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {filteredModules.map((mod) => (
                 <div
@@ -873,10 +861,10 @@ export default function CitizenGuideHub() {
           </div>
         )}
 
-        {/* DEFAULT VIEW (WHEN ALL SERVICES IS SELECTED) */}
+        {}
         {!hasSearch && selectedCategory === "all" && (
           <>
-            {/* 2. RECENT APPLICATIONS STATUS BANNER (IF ANY) */}
+            {}
             {recentApps.length > 0 && (
               <div className="bg-white border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
@@ -924,7 +912,7 @@ export default function CitizenGuideHub() {
               </div>
             )}
 
-            {/* 3. HOW IT WORKS (STEP-BY-STEP PROCESS) */}
+            {}
             <div className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs">
               <div className="text-center max-w-2xl mx-auto mb-8 space-y-1">
                 <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
@@ -985,7 +973,7 @@ export default function CitizenGuideHub() {
               </div>
             </div>
 
-            {/* 4. AICS 6 SERVICE TYPES BREAKDOWN */}
+            {}
             <div id="aics-breakdown" className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
                 <div className="space-y-1">
@@ -1026,7 +1014,7 @@ export default function CitizenGuideHub() {
                         </div>
                       </div>
                       <p className="text-xs text-gray-600 leading-relaxed">{svc.desc}</p>
-                      
+
                       <div className="bg-slate-100/80 rounded-xl p-3 space-y-1.5">
                         <div className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">
                           Key Requirements:
@@ -1051,7 +1039,7 @@ export default function CitizenGuideHub() {
               </div>
             </div>
 
-            {/* 5. ALL MODULES & SOCIAL SERVICES DIRECTORY */}
+            {}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
@@ -1123,7 +1111,7 @@ export default function CitizenGuideHub() {
           </>
         )}
 
-        {/* 6. GENERAL QUALIFICATION & DOCUMENT REQUIREMENTS SUMMARY */}
+        {}
         <div className="bg-gradient-to-br from-blue-900 to-indigo-950 text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
           <div className="max-w-2xl space-y-2">
             <h2 className="text-xl sm:text-2xl font-extrabold text-white">
@@ -1167,7 +1155,7 @@ export default function CitizenGuideHub() {
           </div>
         </div>
 
-        {/* 7. FREQUENTLY ASKED QUESTIONS (FAQS) */}
+        {}
         <div className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200">
@@ -1214,7 +1202,7 @@ export default function CitizenGuideHub() {
           </div>
         </div>
 
-        {/* 8. FOOTER CONTACT / HOTLINES */}
+        {}
         <div className="bg-slate-100 border border-slate-200 dark:bg-slate-900/80 dark:border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="space-y-1">
             <div className="font-bold text-gray-900 text-sm flex items-center justify-center sm:justify-start gap-2">
@@ -1235,7 +1223,7 @@ export default function CitizenGuideHub() {
         </div>
       </div>
 
-      {/* AI Assistance & Eligibility Finder Modal */}
+      {}
       <AIAssistanceFinderModal
         isOpen={isAiModalOpen}
         onClose={() => setIsAiModalOpen(false)}

@@ -179,7 +179,6 @@ export default function AICSServiceWizard({
 }: AICSServiceWizardProps) {
   const { t, language } = useLanguage()
 
-  // Requirements Modal state
   const reqKey =
     serviceType === "material"
       ? "aicsMaterial"
@@ -209,16 +208,13 @@ export default function AICSServiceWizard({
     isReapplyingRef.current = isReapplying
   }, [isReapplying])
 
-  // Current Step: 1 = checklist, 2 = personal, 3 = documents, 4 = review, 5 = submitted, 6 = pending review
   const [currentStep, setCurrentStep] = useState<number>(1)
   const [returnToReview, setReturnToReview] = useState(false)
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
 
-  // Eligibility check state
   const [isBlocked, setIsBlocked] = useState(false)
   const [blockedApp, setBlockedApp] = useState<any>(null)
 
-  // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [referenceNo, setReferenceNo] = useState("")
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -244,29 +240,22 @@ export default function AICSServiceWizard({
     } catch {}
   }
 
-  // Camera modal state
   const [cameraModalOpen, setCameraModalOpen] = useState(false)
   const [cameraTargetField, setCameraTargetField] = useState<string>("")
 
-  // ===================== FORM DATA =====================
-  // Step 1: Checklist & Primary Requirements
   const [qcResident, setQcResident] = useState(false)
   const [crisisSituation, setCrisisSituation] = useState(false)
 
-  // Material specific checklist
   const [receivedMaterialPrior, setReceivedMaterialPrior] = useState<"yes" | "no" | "">("")
   const [materialAgainReason, setMaterialAgainReason] = useState("")
   const [materialType, setMaterialType] = useState("")
 
-  // Food specific checklist
   const [receivedFoodPrior, setReceivedFoodPrior] = useState<"yes" | "no" | "">("")
   const [foodAgainReason, setFoodAgainReason] = useState("")
   const [foodType, setFoodType] = useState("")
 
-  // Transportation specific checklist
   const [transportationPurpose, setTransportationPurpose] = useState("")
 
-  // Step 2: Personal Information (Auto-filled from account / QCID & disabled like Pic 4)
   const initialProf = getCurrentUserProfile()
   const [qcIdNumber, setQcIdNumber] = useState(initialProf?.qcidNo || "110000572516915")
   const [firstName, setFirstName] = useState(initialProf?.firstName || "RENZ")
@@ -285,7 +274,6 @@ export default function AICSServiceWizard({
   const [email, setEmail] = useState(initialProf?.email || "rencemillares619@gmail.com")
   const completeAddress = `${houseNumber} ${streetName}, Brgy. ${barangay}, Quezon City`
 
-  // Auto-fill from authenticated account
   useEffect(() => {
     try {
       const u = getCurrentUserProfile()
@@ -308,7 +296,6 @@ export default function AICSServiceWizard({
     } catch {}
   }, [])
 
-  // Check for existing active/pending applications for this AICS service
   useEffect(() => {
     let isMounted = true
 
@@ -417,28 +404,22 @@ export default function AICSServiceWizard({
     }
   }, [serviceType])
 
-  // Material Step 2 details
   const [materialReason, setMaterialReason] = useState("")
 
-  // Food Step 2 details
   const [householdMembers, setHouseholdMembers] = useState("5")
   const [householdChildren, setHouseholdChildren] = useState("2")
   const [foodReason, setFoodReason] = useState("")
 
-  // Transportation Step 2 details
   const [destination, setDestination] = useState("")
   const [personsTraveling, setPersonsTraveling] = useState("1")
   const [travelDate, setTravelDate] = useState("")
   const [transportationReason, setTransportationReason] = useState("")
 
-  // Step 3: Documents
   const [validIdFiles, setValidIdFiles] = useState<File[]>([])
   const [barangayCertFiles, setBarangayCertFiles] = useState<File[]>([])
   const [supportingDocFiles, setSupportingDocFiles] = useState<File[]>([])
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
-
-  // Title strings
   const serviceTitle =
     serviceType === "material"
       ? "Material Assistance"
@@ -446,7 +427,6 @@ export default function AICSServiceWizard({
       ? "Food Assistance"
       : "Transportation Assistance"
 
-  // Material choices
   const MATERIAL_CHOICES = [
     "Hygiene Kit",
     "Sleeping Kit",
@@ -456,7 +436,6 @@ export default function AICSServiceWizard({
     "Assistive Devices",
   ]
 
-  // Reasons for requesting material assistance again
   const MATERIAL_AGAIN_REASONS = [
     "Family Financial Hardship",
     "Loss of Income / Unemployment",
@@ -466,10 +445,8 @@ export default function AICSServiceWizard({
     "Natural Disaster / Calamity",
   ]
 
-  // Food choices
   const FOOD_CHOICES = ["Food Pack", "Emergency Food Assistance"]
 
-  // Reasons for requesting food assistance again
   const FOOD_AGAIN_REASONS = [
     "Family Financial Hardship",
     "Loss of Income / Unemployment",
@@ -479,14 +456,12 @@ export default function AICSServiceWizard({
     "Natural Disaster / Calamity",
   ]
 
-  // Transportation choices
   const TRANSPORT_CHOICES = [
     { value: "Balik-Probinsya", label: "Balik-Probinsya" },
     { value: "Medical-related Travel", label: "Medical-related Travel" },
     { value: "Emergency Transportation", label: "Emergency Transportation" },
   ]
 
-  // Auto-redirect to pending status screen after 3 seconds on Step 5
   useEffect(() => {
     if (currentStep !== 5) return
 
@@ -511,7 +486,6 @@ export default function AICSServiceWizard({
     return () => clearInterval(interval)
   }, [currentStep, referenceNo, qcIdNumber])
 
-  // Reload / Navigation warning protection — active from Step 2 onwards
   const isFormDirty = currentStep >= 2 && currentStep <= 4 && !showRequirementsModal
 
   useEffect(() => {
@@ -536,7 +510,6 @@ export default function AICSServiceWizard({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [isFormDirty])
 
-  // Validation helpers
   const canProceedStep1 = () => {
     if (!qcResident) return false
     if (serviceType !== "food" && !crisisSituation) return false
@@ -591,7 +564,6 @@ export default function AICSServiceWizard({
     )
   }
 
-  // Handle files selected via file input reliably
   const handleFilesSelected = (
     field: "validId" | "barangayCert" | "supportingDoc",
     e: React.ChangeEvent<HTMLInputElement>
@@ -609,7 +581,6 @@ export default function AICSServiceWizard({
     e.target.value = ""
   }
 
-  // File capture from camera
   const handleCameraCapture = (file: File) => {
     if (cameraTargetField === "validId") {
       setValidIdFiles([file])
@@ -634,7 +605,6 @@ export default function AICSServiceWizard({
     }
   }
 
-  // Form submit handler
   const handleSubmit = async () => {
     if (isSubmitting) return
 
@@ -730,7 +700,7 @@ export default function AICSServiceWizard({
       console.warn("Backend unavailable, saving offline reference:", err)
       setReferenceNo(generatedRef)
     } finally {
-      // Automatically register to Financial Aid Disbursement
+
       try {
         const titleFormatted = serviceTitle.includes("Assistance") ? serviceTitle : `${serviceTitle} Assistance`
         const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[titleFormatted] || FIXED_ASSISTANCE_AMOUNTS[serviceTitle] || 1000
@@ -789,7 +759,6 @@ export default function AICSServiceWizard({
     }
   }
 
-  // WIZARD TABS
   const WIZARD_TABS = [
     "COMPLETE CHECKLIST",
     "PERSONAL INFORMATION",
@@ -797,7 +766,6 @@ export default function AICSServiceWizard({
     "REVIEW & SUBMIT",
   ]
 
-  // If blocked (Existing Pending Application)
   if (isBlocked) {
     const status = (blockedApp?.status || "pending").toLowerCase()
     const applicantFullName = [firstName, middleName, lastName, suffix].filter(Boolean).join(" ") || "Applicant"
@@ -947,7 +915,6 @@ export default function AICSServiceWizard({
       )
     }
 
-    // Default: Pending Review / Under Review
     return (
       <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
@@ -967,7 +934,7 @@ export default function AICSServiceWizard({
             </p>
           </div>
 
-          {/* Reference Card */}
+          {}
           <div className="border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-slate-50/90 dark:bg-slate-800/60">
             <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-slate-700/60">
               <span className="font-semibold text-slate-500 dark:text-slate-400">{t("appRefNoLabel")}</span>
@@ -1055,7 +1022,7 @@ export default function AICSServiceWizard({
             </p>
           </div>
 
-          {/* Reference Card */}
+          {}
           <div className="border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-slate-50/90 dark:bg-slate-800/60">
             <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-slate-700/60">
               <span className="font-semibold text-slate-500 dark:text-slate-400">{t("appRefNoLabel")}</span>
@@ -1117,7 +1084,7 @@ export default function AICSServiceWizard({
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
-      {/* Top Requirements Banner with Button to Open Modal (shown only on Step 1) */}
+      {}
       {programRequirements && currentStep === 1 && (
         <div className="mb-4 animate-in fade-in duration-150">
           <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1150,7 +1117,7 @@ export default function AICSServiceWizard({
         </div>
       )}
 
-      {/* Requirements Modal Popup */}
+      {}
       {showRequirementsModal && programRequirements && (
         <RequirementsModal
           requirements={programRequirements}
@@ -1168,7 +1135,7 @@ export default function AICSServiceWizard({
         />
       )}
 
-      {/* Document Camera Modal */}
+      {}
       <DocumentCameraModal
         isOpen={cameraModalOpen}
         onClose={() => setCameraModalOpen(false)}
@@ -1182,9 +1149,9 @@ export default function AICSServiceWizard({
         }
       />
 
-      {/* Main Single Card */}
+      {}
       <div className="border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 relative">
-        {/* Step Indicator Badges and Tab Bars */}
+        {}
         <div className="flex items-center px-6 pt-6 pb-4">
           {WIZARD_TABS.map((_, i) => (
             <div key={i} className="flex items-center flex-1 last:flex-none">
@@ -1223,9 +1190,9 @@ export default function AICSServiceWizard({
           ))}
         </div>
 
-        {/* Card Content */}
+        {}
         <div className="p-6 sm:p-8 space-y-7">
-            {/* ================= STEP 1: COMPLETE CHECKLIST ================= */}
+            {}
             {currentStep === 1 && (
               <>
                 <div>
@@ -1234,7 +1201,7 @@ export default function AICSServiceWizard({
                   </h2>
                 </div>
 
-                {/* Blue Info Alert Banner */}
+                {}
                 <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30">
                   <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
                   <div>
@@ -1266,7 +1233,7 @@ export default function AICSServiceWizard({
                   )}
                 </div>
 
-                {/* Material Checklist Questions */}
+                {}
                 {serviceType === "material" && (
                   <div className="space-y-4">
                     <div>
@@ -1302,7 +1269,7 @@ export default function AICSServiceWizard({
                       </div>
                     </div>
 
-                    {/* Kapag YES -> Reason for requesting material assistance again */}
+                    {}
                     {receivedMaterialPrior === "yes" && (
                       <div className="space-y-2 pt-2 border-t border-gray-100">
                         <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
@@ -1336,8 +1303,7 @@ export default function AICSServiceWizard({
                       </div>
                     )}
 
-                    {/* SELECT TYPE OF MATERIAL ASSISTANCE:
-                        Diretso kapag "Not yet", o kapag "Yes" at nakapili na ng reason */}
+                    {}
                     {(receivedMaterialPrior === "no" || (receivedMaterialPrior === "yes" && materialAgainReason !== "")) && (
                       <div className="pt-2 border-t border-gray-100">
                         <h3 className="text-sm font-bold text-gray-900 mb-2 tracking-wide uppercase">
@@ -1368,7 +1334,7 @@ export default function AICSServiceWizard({
                   </div>
                 )}
 
-                {/* Food Checklist Questions */}
+                {}
                 {serviceType === "food" && (
                   <div className="space-y-5">
                     <div>
@@ -1404,7 +1370,7 @@ export default function AICSServiceWizard({
                       </div>
                     </div>
 
-                    {/* Kapag YES -> Reason for requesting food assistance again */}
+                    {}
                     {receivedFoodPrior === "yes" && (
                       <div className="space-y-2 pt-2 border-t border-gray-100">
                         <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
@@ -1438,7 +1404,7 @@ export default function AICSServiceWizard({
                       </div>
                     )}
 
-                    {/* SELECT TYPE OF FOOD ASSISTANCE */}
+                    {}
                     {(receivedFoodPrior === "no" || (receivedFoodPrior === "yes" && foodAgainReason !== "")) && (
                       <div className="pt-4 border-t border-gray-100 space-y-2">
                         <h3 className="text-sm font-bold text-gray-900 tracking-wide uppercase">
@@ -1465,7 +1431,7 @@ export default function AICSServiceWizard({
                   </div>
                 )}
 
-                {/* Transportation Checklist Questions */}
+                {}
                 {serviceType === "transportation" && (
                   <div>
                     <h3 className="text-sm font-bold text-gray-900 mb-2 tracking-wide uppercase">
@@ -1490,7 +1456,7 @@ export default function AICSServiceWizard({
                   </div>
                 )}
 
-                {/* Step 1 Next Button */}
+                {}
                 <div className="pt-4 flex justify-end">
                   <button
                     type="button"
@@ -1515,7 +1481,7 @@ export default function AICSServiceWizard({
               </>
             )}
 
-            {/* ================= STEP 2: PERSONAL INFORMATION ================= */}
+            {}
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
@@ -1586,7 +1552,7 @@ export default function AICSServiceWizard({
                   </Field>
                 </div>
 
-                {/* Sub-sections per assistance type */}
+                {}
                 {serviceType === "material" && (
                   <div className="space-y-4 pt-4 border-t border-gray-200">
                     <h3 className="text-base font-bold text-gray-900 tracking-wide uppercase">
@@ -1702,7 +1668,7 @@ export default function AICSServiceWizard({
                   </div>
                 )}
 
-                {/* Back and Next */}
+                {}
                 <div className="pt-4 flex justify-between">
                   <button
                     onClick={() => setCurrentStep(1)}
@@ -1733,7 +1699,7 @@ export default function AICSServiceWizard({
               </div>
             )}
 
-            {/* ================= STEP 3: SUBMIT DOCUMENTS ================= */}
+            {}
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
@@ -1745,7 +1711,7 @@ export default function AICSServiceWizard({
                   </p>
                 </div>
 
-                {/* Document 1: Barangay Certificate */}
+                {}
                 <div className="space-y-2">
 
                   <div
@@ -1822,7 +1788,7 @@ export default function AICSServiceWizard({
                   </div>
                 </div>
 
-                {/* Document 2: QCitizen ID / Valid Government-Issued ID */}
+                {}
                 <div className="space-y-2">
 
                   <div
@@ -1899,7 +1865,7 @@ export default function AICSServiceWizard({
                   </div>
                 </div>
 
-                {/* Document 3: Supporting Document (Kung Applicable) */}
+                {}
                 <div className="space-y-2">
 
                   <div
@@ -1976,7 +1942,7 @@ export default function AICSServiceWizard({
                   </div>
                 </div>
 
-                {/* Back and Next */}
+                {}
                 <div className="pt-4 flex justify-between">
                   <button
                     onClick={() => setCurrentStep(2)}
@@ -2003,7 +1969,7 @@ export default function AICSServiceWizard({
               </div>
             )}
 
-            {/* ================= STEP 4: REVIEW & SUBMIT ================= */}
+            {}
             {currentStep === 4 && (
               <div className="space-y-5">
                 <div>
@@ -2015,7 +1981,7 @@ export default function AICSServiceWizard({
                   </p>
                 </div>
 
-                {/* Section 1: Requirements */}
+                {}
                 <ReviewSection title="Requirements" onEdit={() => { setReturnToReview(true); setCurrentStep(1) }}>
                   <div className="divide-y divide-gray-100">
                     <ReviewCheckItem
@@ -2128,7 +2094,7 @@ export default function AICSServiceWizard({
                   </div>
                 </ReviewSection>
 
-                {/* Section 2: Personal Information */}
+                {}
                 <ReviewSection title="Personal Information" onEdit={() => { setReturnToReview(true); setCurrentStep(2) }}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 p-5 text-xs sm:text-sm">
                     <ReviewField label="QC ID NUMBER" value={qcIdNumber} />
@@ -2173,7 +2139,7 @@ export default function AICSServiceWizard({
                   </div>
                 </ReviewSection>
 
-                {/* Section 3: Required Documents */}
+                {}
                 <ReviewSection title="Required Documents" onEdit={() => { setReturnToReview(true); setCurrentStep(3) }}>
                   <div className="p-5 space-y-6">
                     {[
@@ -2241,7 +2207,7 @@ export default function AICSServiceWizard({
                   </div>
                 </ReviewSection>
 
-                {/* Important Notice */}
+                {}
                 <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                   <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                   <p className="text-sm text-blue-700">
@@ -2249,7 +2215,7 @@ export default function AICSServiceWizard({
                   </p>
                 </div>
 
-                {/* Back and Submit Application */}
+                {}
                 <div className="pt-4 flex justify-between">
                   <button
                     type="button"
@@ -2272,7 +2238,7 @@ export default function AICSServiceWizard({
             )}
           </div>
 
-        {/* 🔔 CONFIRMATION DIALOG / MODAL BEFORE SUBMIT */}
+        {}
         {showConfirmModal && (
           <div
             onClick={() => setShowConfirmModal(false)}
@@ -2282,7 +2248,7 @@ export default function AICSServiceWizard({
               onClick={(e) => e.stopPropagation()}
               className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col border border-gray-200 text-left cursor-default"
             >
-              {/* Modal Header */}
+              {}
               <div className="p-6 pb-5 flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-base font-bold text-gray-900">Review Before Submission</h3>
@@ -2300,7 +2266,7 @@ export default function AICSServiceWizard({
                 </button>
               </div>
 
-              {/* Footer Buttons */}
+              {}
               <div className="p-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <button
                   type="button"
@@ -2325,7 +2291,7 @@ export default function AICSServiceWizard({
           </div>
         )}
 
-        {/* Camera Modal */}
+        {}
         <DocumentCameraModal
           isOpen={cameraModalOpen}
           onClose={() => {
@@ -2344,7 +2310,7 @@ export default function AICSServiceWizard({
           }}
         />
 
-        {/* 👁️ UPLOADED DOCUMENT FULL PREVIEW MODAL */}
+        {}
         {previewDocModal && (
           <UploadedDocPreviewModal
             title={previewDocModal.title}

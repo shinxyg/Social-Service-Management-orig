@@ -201,10 +201,6 @@ function isSoloParent(app: WelfareSubmission): app is SoloParentSubmission {
   return app.category === "Solo Parent"
 }
 
-// =====================================================================================
-// Backend wiring — fetch mula sa PostgreSQL via Express API
-// =====================================================================================
-
 function getAdminAuthToken() {
   if (typeof window === "undefined") return ""
   return (
@@ -234,7 +230,6 @@ function parseJsonSafe(val: any, fallback: any = {}) {
     return fallback
   }
 }
-
 
 function resolveFileUrl(fileUrl?: string, filename?: string, isChildWelfare: boolean = false): string {
   if (fileUrl) {
@@ -353,7 +348,6 @@ function mapUploadedDocuments(raw: any, isChildWelfare: boolean = false): Applic
     }
   }
 
-  // Fallback standard documents ONLY for legacy seeded demo rows (not real user submissions)
   if (uniqueDocs.length === 0 && raw?.is_sample) {
     if (isChildWelfare) {
       docs.push(
@@ -834,14 +828,13 @@ async function fetchAllSubmissions(): Promise<WelfareSubmission[]> {
     console.warn("API fetch error in welfare admin:", e)
   }
 
-  // If backend returned data, save fresh copy to localStorage
   if (backendFetched) {
     try {
       localStorage.setItem("solo_parent_applications", JSON.stringify(soloApps))
       localStorage.setItem("child_welfare_applications", JSON.stringify(childApps))
     } catch {}
   } else {
-    // Only use localStorage if backend was completely offline
+
     try {
       const localSolo = JSON.parse(localStorage.getItem("solo_parent_applications") || "[]")
       if (Array.isArray(localSolo) && localSolo.length > 0) {
@@ -1065,7 +1058,7 @@ function getDocumentCandidateUrls(doc: ApplicationDocument, app?: WelfareSubmiss
     if (!resolved || resolved.includes("/samples/")) return
     if (resolved.startsWith("data:") || resolved.startsWith("blob:")) {
       if (!urls.includes(resolved)) {
-        // Prioritize instant Base64 data URLs at the beginning
+
         urls.unshift(resolved)
       }
       return
@@ -1078,12 +1071,10 @@ function getDocumentCandidateUrls(doc: ApplicationDocument, app?: WelfareSubmiss
 
   const isPhotoDoc = Boolean(/2x2|photo|picture|1x1|id_pic|avatar/i.test(`${doc.name} ${doc.filename || ""}`))
 
-  // 1. Direct fileUrl / previewUrl / dataUrl from doc
   if (doc.dataUrl && !doc.dataUrl.includes("/samples/")) add(doc.dataUrl)
   if (doc.previewUrl && !doc.previewUrl.includes("/samples/")) add(doc.previewUrl)
   if (doc.fileUrl && !doc.fileUrl.includes("/samples/")) add(doc.fileUrl)
 
-  // 2. Search app object (formData, extraData, uploaded_documents, documents)
   if (app) {
     const rawDocs: any[] = []
     if (Array.isArray(app.documents)) rawDocs.push(...app.documents)
@@ -1111,7 +1102,6 @@ function getDocumentCandidateUrls(doc: ApplicationDocument, app?: WelfareSubmiss
     }
   }
 
-  // 3. PWD Logic: Check localStorage for real user upload records across all application stores
   try {
     const localKeys = [
       "solo_parent_applications",
@@ -1159,7 +1149,6 @@ function getDocumentCandidateUrls(doc: ApplicationDocument, app?: WelfareSubmiss
     }
   } catch {}
 
-  // 4. Server filename URL
   if (doc.filename && !doc.filename.toLowerCase().startsWith("sample")) {
     const fn = doc.filename.replace(/^.*[\\\/]/, "").trim()
     if (fn) {
@@ -1169,7 +1158,6 @@ function getDocumentCandidateUrls(doc: ApplicationDocument, app?: WelfareSubmiss
     }
   }
 
-  // 5. If photo doc, try applicant photo from app object
   if (isPhotoDoc && app) {
     const appPhoto = getApplicantPhotoUrl(app)
     if (appPhoto && !appPhoto.includes("/samples/")) add(appPhoto)
@@ -1231,7 +1219,7 @@ function DocumentPreviewModal({
         className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0 bg-slate-50/70">
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl shrink-0">
@@ -1253,7 +1241,7 @@ function DocumentPreviewModal({
           </button>
         </div>
 
-        {/* Content Viewer */}
+        {}
         <div className="p-6 overflow-y-auto flex items-center justify-center bg-slate-100/70 min-h-[380px] max-h-[65vh]">
           {isPdf ? (
             <iframe
@@ -1282,7 +1270,7 @@ function DocumentPreviewModal({
           )}
         </div>
 
-        {/* Footer */}
+        {}
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-4 shrink-0 bg-white">
           <a
             href={currentSrc}
@@ -1322,7 +1310,6 @@ const statusMeta = {
   needs_revision: { dot: "gw-dot--revision", text: "gw-status--revision", label: "Needs Revision" },
 } as const
 
-
 function StatusBadge({ status }: { status: WelfareSubmission["status"] }) {
   const m = statusMeta[status] ?? statusMeta.pending
   return (
@@ -1335,8 +1322,6 @@ function StatusBadge({ status }: { status: WelfareSubmission["status"] }) {
 function CategoryTag({ category }: { category: WelfareSubmission["category"] }) {
   return <span className={`gw-tag ${category === "Solo Parent" ? "gw-tag--solo" : "gw-tag--child"}`}>{category}</span>
 }
-
-
 
 function SectionHeading({ icon, number, children }: { icon: React.ReactNode; number: string; children: React.ReactNode }) {
   return (
@@ -1357,10 +1342,6 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
     </div>
   )
 }
-
-// =====================================================================================
-// Application card (list row)
-// =====================================================================================
 
 interface CardProps {
   app: WelfareSubmission
@@ -1443,7 +1424,6 @@ function ApplicationCard({ app, onView, onShowCard, allSubmissions }: CardProps)
   )
 }
 
-
 function getStableSequence(refOrId: string): string {
   let hash = 0
   for (let i = 0; i < refOrId.length; i++) {
@@ -1488,7 +1468,6 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
       }
     }
 
-    // Check pool
     let pool: any[] = allSubmissions || []
     if (!pool.length) {
       try {
@@ -1535,7 +1514,6 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
   return `SP-137404-${year}-${stableSeq}`
 }
 
-
 function SoloParentCardFront({
   app,
   photoUrl,
@@ -1561,7 +1539,7 @@ function SoloParentCardFront({
         printColorAdjust: "exact",
       }}
     >
-      {/* Header */}
+      {}
       <div
         className="px-3.5 py-2.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs"
         style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
@@ -1581,7 +1559,7 @@ function SoloParentCardFront({
         </span>
       </div>
 
-      {/* Sub-header */}
+      {}
       <div
         className="py-1 text-center text-[9.5px] font-black uppercase tracking-widest bg-amber-400 text-slate-950"
         style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
@@ -1589,7 +1567,7 @@ function SoloParentCardFront({
         Social Services Development Department — Solo Parent Welfare
       </div>
 
-      {/* Details with QC Logo on right side */}
+      {}
       <div className="p-3 flex gap-2.5 items-start relative">
         <ApplicantPhotoDisplay
           photoUrl={photoUrl}
@@ -1626,7 +1604,7 @@ function SoloParentCardFront({
           </div>
         </div>
 
-        {/* QC Official Logo on the right side */}
+        {}
         <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
           <img
             src="/gov-serves-seal.png"
@@ -1638,7 +1616,7 @@ function SoloParentCardFront({
         </div>
       </div>
 
-      {/* Bottom Signatures & Barcode */}
+      {}
       <div
         className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]"
         style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
@@ -1686,12 +1664,12 @@ function SoloParentCardBack({
         printColorAdjust: "exact",
       }}
     >
-      {/* Background Watermark Seal */}
+      {}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
         <img src="/gov-serves-seal.png" alt="" crossOrigin="anonymous" className="w-48 h-48 object-contain" />
       </div>
 
-      {/* Back Header Strip */}
+      {}
       <div
         className="px-3.5 py-1.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs relative z-10"
         style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
@@ -1712,7 +1690,7 @@ function SoloParentCardBack({
 
       <div className="p-3 pt-2 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
         <div>
-          {/* Benefits / Rights List */}
+          {}
           <div
             className="bg-red-50/70 border border-red-200/80 rounded-lg p-2 space-y-1 text-[7.5px] text-slate-800 leading-tight"
             style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
@@ -1731,7 +1709,7 @@ function SoloParentCardBack({
             </p>
           </div>
 
-          {/* Children / Dependents List */}
+          {}
           <div className="mt-1.5">
             <p className="text-[7.5px] font-black text-red-900 uppercase tracking-wider mb-0.5 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span>
@@ -1755,7 +1733,7 @@ function SoloParentCardBack({
           </div>
         </div>
 
-        {/* Emergency Contact */}
+        {}
         <div
           className="border-t border-red-200/70 pt-1.5"
           style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
@@ -1870,7 +1848,7 @@ function OfficialSoloParentIdCardModal({
         className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
+        {}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-2">
             <IdCard className="w-5 h-5 text-blue-600" />
@@ -1886,7 +1864,7 @@ function OfficialSoloParentIdCardModal({
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl font-light leading-none p-1 cursor-pointer">×</button>
         </div>
 
-        {/* Side Selector */}
+        {}
         <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-3">
           <button
             onClick={() => setActiveSide("front")}
@@ -1906,7 +1884,7 @@ function OfficialSoloParentIdCardModal({
           </button>
         </div>
 
-        {/* Card Body Interactive Screen View */}
+        {}
         <div className="p-6 bg-slate-100/80 flex flex-col items-center justify-center overflow-x-auto min-h-[380px]">
           {activeSide === "front" ? (
             <SoloParentCardFront
@@ -1927,9 +1905,7 @@ function OfficialSoloParentIdCardModal({
           )}
         </div>
 
-
-
-        {/* Modal Footer */}
+        {}
         <div className="p-4 border-t border-gray-200 bg-slate-50 flex items-center justify-end gap-3">
           <button
             type="button"
@@ -1989,8 +1965,8 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
     boxShadow: "var(--shadow-medium)",
   }}
 >
-      
-        {/* Header */}
+
+        {}
         <div className="px-6 pt-5 pb-4" style={{ background: "var(--surface-sunk)", borderBottom: "1px solid var(--line)" }}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3.5 min-w-0">
@@ -2018,11 +1994,11 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
           </div>
         </div>
 
-        {/* Content */}
+        {}
         <div className="px-6 py-6 overflow-y-auto space-y-7">
           {isSoloParent(app) ? (
             <>
-              {/* Section 01: Personal Information */}
+              {}
               <div>
                 <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>Personal information</SectionHeading>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
@@ -2102,7 +2078,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               </div>
 
-              {/* Section 02: Application Details & Basis */}
+              {}
               <div>
                 <SectionHeading number={nextNum()} icon={<ClipboardList className="h-4 w-4" />}>
                   {app.applicationType === "new"
@@ -2136,7 +2112,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               </div>
 
-              {/* Only show family composition if it has actual data */}
+              {}
               {app.familyMembers && app.familyMembers.length > 0 && (
                 <div>
                   <SectionHeading number={nextNum()} icon={<Users className="h-4 w-4" />}>Family composition</SectionHeading>
@@ -2158,7 +2134,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               )}
 
-              {/* Section 03: Emergency Contact */}
+              {}
               {(() => {
                 const rawFd = (app as any).formData || (app as any).form_data || {}
                 const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
@@ -2252,7 +2228,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 )
               })()}
 
-              {/* Only show circumstances if it has actual data */}
+              {}
               {(app.circumstanceDetails || app.needsProblems || app.familyResources) && (
                 <div>
                   <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>Circumstances and needs</SectionHeading>
@@ -2266,7 +2242,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
             </>
           ) : (
             <>
-              {/* Section 01: Application Details */}
+              {}
               <div>
                 <SectionHeading number={nextNum()} icon={<ClipboardList className="h-4 w-4" />}>Application details</SectionHeading>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
@@ -2304,7 +2280,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               </div>
 
-              {/* Section 02: Applicant / Child Information */}
+              {}
               <div>
                 <SectionHeading number={nextNum()} icon={<Baby className="h-4 w-4" />}>Applicant / Child information</SectionHeading>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
@@ -2349,7 +2325,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               </div>
 
-              {/* Section 03: Parent / Guardian / Reporting Person */}
+              {}
               <div>
                 <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>Parent / Guardian / Reporting person</SectionHeading>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
@@ -2385,7 +2361,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               </div>
 
-              {/* Section 04: Additional Information & Protection Safety Status */}
+              {}
               <div>
                 <SectionHeading number={nextNum()} icon={<ShieldAlert className="h-4 w-4" />}>
                   Additional Information &amp; Protection Status
@@ -2429,7 +2405,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
             </>
           )}
 
-          {/* Submitted Documents (shared) */}
+          {}
           <div>
             <SectionHeading number={nextNum()} icon={<Paperclip className="h-4 w-4" />}>Documents on file ({app.documents?.length || 0})</SectionHeading>
             <div className="space-y-2">
@@ -2459,7 +2435,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
             </div>
           </div>
 
-          {/* Actions */}
+          {}
            <DocumentPreviewModal doc={previewDoc} app={app} onClose={() => setPreviewDoc(null)} />
           {app.status === "pending" && (
             <div className="pt-6" style={{ borderTop: "1px solid var(--line)" }}>
@@ -2631,7 +2607,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
           )}
         </div>
 
-        {/* Footer */}
+        {}
         <div className="px-6 py-4 flex items-center justify-between gap-3 shrink-0" style={{ borderTop: "1px solid var(--line)", background: "var(--surface)" }}>
           <div>
             {onShowCard && app.status === "approved" && isSolo && (
@@ -2653,10 +2629,6 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
     </div>
   )
 }
-
-// =====================================================================================
-// Main Admin Component
-// =====================================================================================
 
 export default function SoloParentChildWelfareAdmin() {
   const [applications, setApplications] = useState<WelfareSubmission[]>(() => {
@@ -2706,7 +2678,6 @@ export default function SoloParentChildWelfareAdmin() {
     }
   }, [])
 
-
   const [selectedApp, setSelectedApp] = useState<WelfareSubmission | null>(null)
   const [cardApp, setCardApp] = useState<WelfareSubmission | null>(null)
   const [filterCategory, setFilterCategory] = useState<"all" | "Solo Parent" | "Child Welfare">("all")
@@ -2720,7 +2691,6 @@ export default function SoloParentChildWelfareAdmin() {
     const approvedDate = new Date().toISOString()
     const targetRef = app.referenceNumber || ""
 
-    // 1. Instant Optimistic UI + Storage
     setApplications((prev) =>
       prev.map((a) => {
         if (a.id === app.id || (targetRef && a.referenceNumber === targetRef)) {
@@ -2759,7 +2729,7 @@ export default function SoloParentChildWelfareAdmin() {
     } catch {}
 
     try {
-      // 2. Persist to PostgreSQL Database
+
       await approveSubmission(app, value)
 
       if (isSoloParent(app)) {
@@ -2785,7 +2755,6 @@ export default function SoloParentChildWelfareAdmin() {
           }
         }
 
-        // Sync Solo Parent ID claiming to Appointments
         try {
           fetch(`${API_BASE}/api/appointments`, {
             method: "POST",
@@ -2809,11 +2778,10 @@ export default function SoloParentChildWelfareAdmin() {
           assistanceType: "Solo Parent ID",
         })
       } else {
-        // Child Welfare Support Grant
+
         const grantAmount = Number(value) || 5000
         const supportTitle = app.supportCategory ? `${app.supportCategory} (Child Welfare)` : "Child Welfare Support"
 
-        // 1. Sync to Financial Aid Disbursements
         try {
           const currentDisbursements = getSavedDisbursements()
           if (!currentDisbursements.some((d) => d.applicationRef === app.referenceNumber)) {
@@ -2835,7 +2803,6 @@ export default function SoloParentChildWelfareAdmin() {
           console.warn("Failed saving child welfare disbursement record:", err)
         }
 
-        // 2. Sync to Appointments for payout scheduling
         try {
           fetch(`${API_BASE}/api/appointments`, {
             method: "POST",
@@ -2852,7 +2819,6 @@ export default function SoloParentChildWelfareAdmin() {
           }).catch(() => {})
         } catch {}
 
-        // 3. In-portal Bell Notification
         pushUserNotification({
           title: "Child Welfare: Approved",
           desc: `Congratulations! Your application for ${supportTitle} has been approved and forwarded to Appointments for payout scheduling and Financial Aid Disbursement (₱${grantAmount.toLocaleString()}).`,
@@ -2880,7 +2846,6 @@ export default function SoloParentChildWelfareAdmin() {
 
     const targetRef = app.referenceNumber || ""
 
-    // 1. Instant Optimistic UI Update + Storage
     setApplications((prev) =>
       prev.map((a) => {
         if (a.id === app.id || (targetRef && a.referenceNumber === targetRef)) {
@@ -2904,7 +2869,6 @@ export default function SoloParentChildWelfareAdmin() {
       await loadApplications(true)
     }
   }
-
 
   const filteredApps = applications.filter((app) => {
     const matchCategory = filterCategory === "all" || app.category === filterCategory
@@ -2940,14 +2904,14 @@ export default function SoloParentChildWelfareAdmin() {
     <div className="gw-root">
       <Tokens />
       <div className="p-4 md:p-8 space-y-7 max-w-6xl mx-auto">
-        {/* Header */}
+        {}
         <div>
           <h1 className="gw-serif text-[2.1rem] font-semibold leading-tight" style={{ color: "var(--ink)" }}>
             Solo Parent &amp; Child Welfare
           </h1>
         </div>
 
-        {/* Stats */}
+        {}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Total applications", value: stats.total, color: "var(--ink)" },
@@ -2962,7 +2926,7 @@ export default function SoloParentChildWelfareAdmin() {
           ))}
         </div>
 
-        {/* Filters */}
+        {}
         <div className="gw-card p-4 space-y-4">
           <div className="flex items-center gap-2 rounded-lg px-3" style={{ border: "1px solid var(--line)", background: "var(--surface-sunk)" }}>
             <Search className="h-4 w-4 shrink-0" style={{ color: "var(--ink-faint)" }} />
@@ -3012,7 +2976,7 @@ export default function SoloParentChildWelfareAdmin() {
           </div>
         </div>
 
-        {/* Applications List */}
+        {}
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">

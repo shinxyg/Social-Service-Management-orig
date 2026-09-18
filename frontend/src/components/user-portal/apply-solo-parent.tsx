@@ -153,7 +153,6 @@ function getLocalizedSoloParentRequirements(
     ]
   }
 
-  // New Application
   if (language === "en") {
     return [
       {
@@ -340,7 +339,6 @@ export default function ApplySoloParent() {
   const currentCwPrograms = getLocalizedChildWelfarePrograms(language)
   const matchedCwProgram = currentCwPrograms.find((p) => p.key === programParam) || currentCwPrograms[0]
 
-  // Fast synchronous evaluation of local cached applications so blocked screen renders in 0ms
   const [initialBlockedState] = useState(() => {
     try {
       if (typeof window === "undefined") return { isBlocked: false, blockedApp: null }
@@ -397,7 +395,6 @@ export default function ApplySoloParent() {
         const uid = userProf?.id || (userProf as any)?.userId || ""
         const currentEmail = (userProf?.email || "").toLowerCase().trim()
 
-        // 1. Fast evaluation from local storage (0ms)
         const localApps = getLocalSoloParentApplications()
         const localRes = evaluateSoloParentBlockedState(localApps, typeParam, userProf, currentQcid)
         if (isMounted && localRes.isBlocked) {
@@ -405,7 +402,6 @@ export default function ApplySoloParent() {
           setBlockedApp(localRes.blockedApp)
         }
 
-        // 2. Fresh backend applications sync with 15s cache
         let backendApps: any[] = []
         try {
           const data = await cachedApiFetch(
@@ -420,7 +416,7 @@ export default function ApplySoloParent() {
             }
           }
         } catch {
-          // silent fallback
+
         }
 
         let allApps = [...backendApps]
@@ -531,7 +527,6 @@ export default function ApplySoloParent() {
 
   const activeProfile = getCurrentUserProfile()
 
-  // Render blocked active application UI directly (matches ApplyPWDSenior)
   const isAppApproved =
     String(blockedApp?.application_status || blockedApp?.status || "").toLowerCase() === "approved" ||
     String(blockedApp?.application_status || blockedApp?.status || "").toLowerCase() === "completed" ||
@@ -784,7 +779,7 @@ export default function ApplySoloParent() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {/* Top Requirements Banner with Button to Open Modal */}
+      {}
       {shouldShowRequirements && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-4 animate-in fade-in duration-150">
           <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -831,7 +826,7 @@ export default function ApplySoloParent() {
         </div>
       )}
 
-      {/* Background: Direct Form Wizard */}
+      {}
       {isChildWelfare ? (
         <ChildWelfareApplicationWizard
           key={`child-welfare-${matchedCwProgram.key}`}
@@ -860,7 +855,7 @@ export default function ApplySoloParent() {
         />
       )}
 
-      {/* Requirements Dialog Modal appearing over content */}
+      {}
       {showRequirementsModal && shouldShowRequirements && (
         <div
           onClick={() => setShowRequirementsModal(false)}
@@ -870,7 +865,7 @@ export default function ApplySoloParent() {
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-150 cursor-default"
           >
-            {/* Modal Header */}
+            {}
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10 shrink-0">
               <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
                 <h2 className="text-base md:text-lg font-bold text-foreground truncate">
@@ -890,9 +885,9 @@ export default function ApplySoloParent() {
               </button>
             </div>
 
-            {/* Modal Content */}
+            {}
             <div className="p-6 space-y-5 flex-1 overflow-y-auto">
-              {/* Important Reminder (Blue Box) */}
+              {}
               <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
@@ -907,7 +902,7 @@ export default function ApplySoloParent() {
                 </div>
               </div>
 
-              {/* Status / Category Alert Box */}
+              {}
               {isChildWelfare ? (
                 <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
                   <HeartHandshake className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
@@ -954,7 +949,7 @@ export default function ApplySoloParent() {
                 </div>
               )}
 
-              {/* Requirements Body */}
+              {}
               {isChildWelfare ? (
                 <div className="space-y-5">
                   <div>
@@ -1090,7 +1085,7 @@ export default function ApplySoloParent() {
               )}
             </div>
 
-            {/* Modal Footer with Checkbox and Button */}
+            {}
             <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex items-center justify-between gap-4 shrink-0">
               <div className="flex items-start gap-2.5 flex-1">
                 <input

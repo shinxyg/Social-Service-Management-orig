@@ -8,12 +8,12 @@ async function cleanup() {
   const millaresTerm = '%millares%';
 
   try {
-    // 1. Delete appointments for Renz
+
     try {
       const apptRes = await db.query(
-        `DELETE FROM appointments 
-         WHERE applicant_name ILIKE $1 
-            OR reference_no ILIKE $2 
+        `DELETE FROM appointments
+         WHERE applicant_name ILIKE $1
+            OR reference_no ILIKE $2
             OR applicant_name ILIKE $3`,
         [term, refTerm, millaresTerm]
       );
@@ -22,12 +22,11 @@ async function cleanup() {
       console.log('appointments cleanup error:', e.message);
     }
 
-    // 2. Delete financial aid disbursements
     try {
       const disbRes = await db.query(
-        `DELETE FROM financial_aid_disbursements 
-         WHERE applicant_name ILIKE $1 
-            OR application_ref ILIKE $2 
+        `DELETE FROM financial_aid_disbursements
+         WHERE applicant_name ILIKE $1
+            OR application_ref ILIKE $2
             OR applicant_name ILIKE $3`,
         [term, refTerm, millaresTerm]
       );
@@ -36,17 +35,16 @@ async function cleanup() {
       console.log('financial_aid_disbursements cleanup error:', e.message);
     }
 
-    // 3. Delete AICS applications & documents
     try {
       const aicsApps = await db.query(
-        `SELECT id FROM aics_applications 
-         WHERE first_name ILIKE $1 
-            OR last_name ILIKE $3 
-            OR reference_no ILIKE $2 
+        `SELECT id FROM aics_applications
+         WHERE first_name ILIKE $1
+            OR last_name ILIKE $3
+            OR reference_no ILIKE $2
             OR qc_id ILIKE $2`,
         [term, refTerm, millaresTerm]
       );
-      
+
       if (aicsApps.rows.length > 0) {
         const ids = aicsApps.rows.map(r => r.id);
         await db.query(`DELETE FROM aics_documents WHERE application_id = ANY($1::int[])`, [ids]).catch(() => {});
@@ -59,12 +57,11 @@ async function cleanup() {
       console.log('aics_applications cleanup error:', e.message);
     }
 
-    // 4. Delete PWD / Senior applications
     try {
       const pwdSeniorRes = await db.query(
-        `DELETE FROM pwd_senior_applications 
-         WHERE first_name ILIKE $1 
-            OR last_name ILIKE $3 
+        `DELETE FROM pwd_senior_applications
+         WHERE first_name ILIKE $1
+            OR last_name ILIKE $3
             OR reference_number ILIKE $2`,
         [term, refTerm, millaresTerm]
       );
@@ -73,13 +70,12 @@ async function cleanup() {
       console.log('pwd_senior_applications cleanup error:', e.message);
     }
 
-    // 5. Delete Solo Parent applications
     try {
       const spRes = await db.query(
-        `DELETE FROM solo_parent_child_welfare_applications 
-         WHERE first_name ILIKE $1 
-            OR last_name ILIKE $3 
-            OR reference_number ILIKE $2 
+        `DELETE FROM solo_parent_child_welfare_applications
+         WHERE first_name ILIKE $1
+            OR last_name ILIKE $3
+            OR reference_number ILIKE $2
             OR qcid_number ILIKE $2`,
         [term, refTerm, millaresTerm]
       );
@@ -88,14 +84,13 @@ async function cleanup() {
       console.log('solo_parent_child_welfare_applications cleanup error:', e.message);
     }
 
-    // 6. Delete Solo Parent & Child Welfare applications
     try {
       const cwRes = await db.query(
-        `DELETE FROM solo_parent_child_welfare_applications 
+        `DELETE FROM solo_parent_child_welfare_applications
          WHERE (module_type = 'CHILD_WELFARE')
-           AND (guardian_first_name ILIKE $1 
-             OR guardian_last_name ILIKE $3 
-             OR reference_number ILIKE $2 
+           AND (guardian_first_name ILIKE $1
+             OR guardian_last_name ILIKE $3
+             OR reference_number ILIKE $2
              OR child_name ILIKE $1)`,
         [term, refTerm, millaresTerm]
       );
@@ -104,13 +99,12 @@ async function cleanup() {
       console.log('child_welfare cleanup error:', e.message);
     }
 
-    // 7. Delete Livelihood applications
     try {
       const lhApps = await db.query(
-        `SELECT id FROM livelihood_applications 
-         WHERE first_name ILIKE $1 
-            OR last_name ILIKE $3 
-            OR reference_number ILIKE $2 
+        `SELECT id FROM livelihood_applications
+         WHERE first_name ILIKE $1
+            OR last_name ILIKE $3
+            OR reference_number ILIKE $2
             OR qcid ILIKE $2`,
         [term, refTerm, millaresTerm]
       );
@@ -127,10 +121,9 @@ async function cleanup() {
       console.log('livelihood_applications cleanup error:', e.message);
     }
 
-    // 8. Delete User Notifications
     try {
       const notifRes = await db.query(
-        `DELETE FROM user_notifications 
+        `DELETE FROM user_notifications
          WHERE user_id ILIKE $2 OR application_ref ILIKE $2`,
         [refTerm]
       );
@@ -139,10 +132,9 @@ async function cleanup() {
       console.log('user_notifications cleanup error:', e.message);
     }
 
-    // 9. Delete Activity Logs for Renz
     try {
       const actRes = await db.query(
-        `DELETE FROM activity_log 
+        `DELETE FROM activity_log
          WHERE actor ILIKE $1 OR reference_no ILIKE $2 OR subject ILIKE $1`,
         [term, refTerm]
       );

@@ -5,7 +5,6 @@ export function getApiBase(): string {
     ""
   ).trim();
 
-  // Strip accidental "VITE_API_URL=" or "VITE_API_BASE_URL=" prefix if pasted by user in Railway
   if (url.startsWith("VITE_API_URL=")) {
     url = url.replace(/^VITE_API_URL=/, "").trim();
   }
@@ -26,7 +25,6 @@ export function getApiBase(): string {
     return "https://backend-production-1736.up.railway.app";
   }
 
-  // If provided as a domain without protocol (e.g. backend-production-1736.up.railway.app)
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
     url = `https://${url}`;
   }
@@ -36,9 +34,6 @@ export function getApiBase(): string {
 
 export const API_BASE = getApiBase();
 
-/**
- * Retrieves the stored JWT authentication token from localStorage or sessionStorage
- */
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
   return (
@@ -50,9 +45,6 @@ export function getAuthToken(): string | null {
   );
 }
 
-/**
- * Returns common HTTP headers including Authorization: Bearer <token> if available
- */
 export function getAuthHeaders(customHeaders: Record<string, string> = {}): Record<string, string> {
   const token = getAuthToken();
   const headers: Record<string, string> = {

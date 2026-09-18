@@ -6,8 +6,6 @@ import MaskedText from '../ui/masked-text'
 
 const API_BASE = `${APP_API_BASE}/api/aics`
 
-
-
 const DESIGN = {
   colors: {
     primary: 'var(--color-primary, hsl(221, 83%, 53%))',
@@ -29,7 +27,6 @@ const DESIGN = {
   },
 }
 
-// ---- Types galing sa backend (aics_applications / aics_documents tables) ----
 type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'completed'
 
 interface AicsDocument {
@@ -117,7 +114,7 @@ export default function AICS() {
   const [reviewingDocs, setReviewingDocs] = useState<AicsDocument[]>([])
   const [viewingDoc, setViewingDoc] = useState<AicsDocument | null>(null)
   const [showInformantInfo, setShowInformantInfo] = useState(false)
-  const [showDeceasedInfo, setShowDeceasedInfo] = useState(false)  
+  const [showDeceasedInfo, setShowDeceasedInfo] = useState(false)
   const [showBeneficiaryInfo, setShowBeneficiaryInfo] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
 
@@ -142,7 +139,6 @@ export default function AICS() {
   useEffect(() => {
     fetchApplications(false)
 
-    // Realtime live polling every 2 seconds
     const interval = setInterval(() => {
       fetchApplications(true)
     }, 2000)
@@ -203,7 +199,6 @@ export default function AICS() {
           const qcid = reviewingApp.qc_id || reviewingApp.reference_no || '110000116932100'
           const appName = fullName(reviewingApp).toUpperCase()
 
-          // Add to all_financial_disbursements
           const rawDisb = localStorage.getItem('all_financial_disbursements')
           const currentDisb = rawDisb ? JSON.parse(rawDisb) : []
           const appDisbId = `aics-disb-${reviewingApp.id}`
@@ -278,7 +273,6 @@ export default function AICS() {
   const pendingCount = applications.filter((a) => a.status === 'pending').length
   const approvedCount = applications.filter((a) => a.status === 'approved' || a.status === 'completed').length
 
-  // DASHBOARD VIEW
   if (currentView === 'dashboard') {
     return (
       <div style={{ backgroundColor: DESIGN.colors.canvas, minHeight: '100%' }} className="py-8">
@@ -298,7 +292,7 @@ export default function AICS() {
             <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 text-sm">{errorMsg}</div>
           )}
 
-          {/* Stats */}
+          {}
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-6 shadow-sm">
               <h3 style={{ color: DESIGN.colors.foreground, opacity: 0.6, fontSize: '14px', fontWeight: 500 }}>Total applications</h3>
@@ -314,7 +308,7 @@ export default function AICS() {
             </div>
           </div>
 
-          {/* Applications table */}
+          {}
           <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-6 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <h2 style={{ color: DESIGN.colors.foreground, fontSize: '18px', fontWeight: 600 }}>All applications</h2>
@@ -374,7 +368,6 @@ export default function AICS() {
     )
   }
 
-  // ADMIN REVIEW VIEW
   if (currentView === 'admin-review' && reviewingApp) {
     const details = reviewingApp.details || {}
 
@@ -503,7 +496,7 @@ export default function AICS() {
                   </div>
 
                           {details.informantRelation && (
-                              <div style={{ borderTopColor: DESIGN.colors.border }} className="pt-4 border-t">                              
+                              <div style={{ borderTopColor: DESIGN.colors.border }} className="pt-4 border-t">
                                   <button
                                     type="button"
                                     onClick={() => setShowInformantInfo(true)}
@@ -523,7 +516,7 @@ export default function AICS() {
                                   >
                                     View Informant Information
                                   </button>
-                                
+
                               </div>
                             )}
                                             {details.deceasedFirstName && (
@@ -588,8 +581,7 @@ export default function AICS() {
                 </div>
               </div>
 
-
-                            {/* Actions */}
+                            {}
               <div style={{ borderTopColor: DESIGN.colors.border }} className="mt-8 pt-8 border-t flex gap-4">
                     <button
                           onClick={() => updateStatus('approved')}

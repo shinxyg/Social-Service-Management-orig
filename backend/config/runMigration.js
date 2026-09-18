@@ -1,4 +1,4 @@
-// Run standalone migration script against PostgreSQL database
+
 const fs = require('fs');
 const path = require('path');
 const db = require('./db');

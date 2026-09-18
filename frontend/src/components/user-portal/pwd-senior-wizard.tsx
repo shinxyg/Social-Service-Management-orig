@@ -269,7 +269,6 @@ const EMPTY_FORM_DATA: FormData = {
   familyCauseOfDisability: "",
 }
 
-
 interface UserProfile {
   id?: string | number
   qcid?: string
@@ -325,7 +324,6 @@ interface PWDApplicationWizardProps {
   onStepChange?: (step: number) => void
 }
 
-// real uploaded file + generated preview URL, instead of a plain boolean
 interface UploadedDoc {
   file: File
   previewUrl: string
@@ -481,7 +479,6 @@ function TextInput({
   )
 }
 
-
 function LockedField({ value, placeholder }: { value: string; placeholder?: string }) {
   return (
     <input
@@ -495,8 +492,6 @@ function LockedField({ value, placeholder }: { value: string; placeholder?: stri
   )
 }
 
-
-// full-size preview modal for a document the user actually uploaded
 function UploadedDocPreviewModal({
   title,
   doc,
@@ -534,14 +529,12 @@ function UploadedDocPreviewModal({
   )
 }
 
-// formats bytes into a readable size like "5.2 MB"
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-// Uses the user's official QCID Number
 function generateReferenceNumber(qcid?: string) {
   if (qcid && (qcid || "").trim() && qcid !== "110000116932100") return (qcid || "").trim()
   return getLoggedInUserQcid()
@@ -632,7 +625,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
     }
   }, [step, latestApprovedApp, isBlocked, initialIdStatus, onStepChange])
 
-  // Reset wizard to Step 1 whenever flow/type changes or an application becomes approved
   useEffect(() => {
     setStep(1)
     setReturnToReview(false)
@@ -704,11 +696,10 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
   })
 
   const [uploaded, setUploaded] = useState<Record<string, UploadedDoc | undefined>>({})
-  const [previewDoc, setPreviewDoc] = useState<string | null>(null) // which uploaded doc is being previewed
+  const [previewDoc, setPreviewDoc] = useState<string | null>(null)
   const [cameraDoc, setCameraDoc] = useState<string | null>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
-  // Reload / Navigation warning protection
   const isFormDirty =
     submitStatus !== "submitted" &&
     (step > 1 ||
@@ -718,7 +709,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
       disabilityClass !== null ||
       Object.keys(uploaded).length > 0)
 
-  // Reload / Navigation warning protection
   useEffect(() => {
     if (step > 1 && submitStatus === "idle") {
       ;(window as any).__isFormDirty = true
@@ -730,7 +720,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
     }
   }, [step, submitStatus])
 
-  // Check if there is an active application for this user in real-time
   useEffect(() => {
     let isMounted = true
 
@@ -764,10 +753,8 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         const isPwdCategory = aCat === "PWD" || aCat.includes("DISABILITY") || String(a.service || "").toLowerCase().includes("pwd")
         if (!isPwdCategory) return false
 
-        // 1. User ID match
         if (currentUid && aUid && currentUid === aUid && currentUid !== "0") return true
 
-        // 2. QCID / Reference match
         if (loggedQcid) {
           if (aRef === loggedQcid || aAssigned === loggedQcid || aRef.includes(loggedQcid) || loggedQcid.includes(aRef)) return true
           const userDigits = loggedQcid.replace(/\D/g, "")
@@ -775,10 +762,8 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
           if (userDigits.length >= 8 && (appRefDigits === userDigits || appRefDigits.includes(userDigits) || userDigits.includes(appRefDigits))) return true
         }
 
-        // 3. Email match
         if (email && aEmail && aEmail === email) return true
 
-        // 4. Name match (Last name matches + First name matches or contains)
         if (userLastName && aLastName) {
           const lastNameMatch = userLastName === aLastName || aLastName.includes(userLastName) || userLastName.includes(aLastName)
           if (lastNameMatch) {
@@ -789,7 +774,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
           }
         }
 
-        // 5. Full name match
         if (userFullName && aFullName && (userFullName === aFullName || aFullName.includes(userLastName) && aFullName.includes(userFirstName))) {
           return true
         }
@@ -808,7 +792,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         }
       } catch {}
 
-      // Fallback to localStorage only if backend was not reachable (offline)
       if (allUserPwdApps.length === 0 && isMounted) {
         const localKeys = ["pwd_senior_applications", "applications", "all_user_applications", "active_applications"]
         for (const k of localKeys) {
@@ -838,7 +821,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
 
       if (!isMounted) return
 
-      // Prioritized Match Resolvers
       const pendingFlow = allUserPwdApps.find((a) => {
         if (a.status !== "pending" && a.status !== "under_review") return false
         if (expectedType === "replacement") return a.type === "replacement" || a.type === "loss"
@@ -850,7 +832,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         (a) => a.status === "approved" || a.status === "completed" || a.status === "for_release"
       )
 
-      // If user is on "new" application flow:
       if (expectedType === "new") {
         if (approvedAny) {
           setBlockedApp(approvedAny)
@@ -869,9 +850,9 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
           setActiveAppStatus(null)
         }
       }
-      // If user is on "renewal" or "replacement" flow:
+
       else {
-        // Only block if there is currently an ongoing PENDING application for THIS exact flow
+
         if (pendingFlow) {
           setBlockedApp(pendingFlow)
           setLatestApprovedApp(null)
@@ -903,7 +884,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
     }
   }, [userProfile?.qcidNo, userProfile?.email, initialIdStatus])
 
-  // Auto-redirect to My Applications after submission
   useEffect(() => {
     if (submitStatus !== "submitted") return
 
@@ -953,7 +933,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
     }
   }
 
-  // handles the actual <input type="file"> change event
   const handleFileChange = (title: string, fileList: FileList | null) => {
     const file = fileList?.[0]
     if (!file) return
@@ -1020,7 +999,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
   const [reasonForReplacement, setReasonForReplacement] = useState("")
   const [reasonForRenewal, setReasonForRenewal] = useState("")
 
-  // Function to fetch all PWD applications from Backend + LocalStorage
   const fetchAllPwdApps = async (): Promise<any[]> => {
     let allApps: any[] = []
     try {
@@ -1047,8 +1025,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
     return allApps
   }
 
-
-
   const handleVerifyId = async () => {
     setVerifyError(null)
     const typed = (formData.existingPwdIdNumber || "").trim()
@@ -1067,7 +1043,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
       const userQcid = (getLoggedInUserQcid() || userProfile?.qcidNo || "").replace(/\D/g, "")
       const userEmail = (userProfile?.email || "").toLowerCase().trim()
 
-      // STRICT CHECK: Only check against APPROVED / COMPLETED PWD Applications
       const approvedApps = apps.filter((a) => {
         if (!a) return false
         const isPwd = String(a.category || a.service || "").toUpperCase().includes("PWD") || !a.category
@@ -1075,7 +1050,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         return isPwd && isApproved
       })
 
-      // 1. Check matching approved PWD application by assigned ID number or reference number
       let matchedApp = approvedApps.find((a) => {
         const assignedClean = String(a.assignedIdNumber || a.assigned_id_number || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
         const refClean = String(a.referenceNumber || a.reference_no || "").replace(/[^a-z0-9]/gi, "").toLowerCase()
@@ -1095,7 +1069,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         return Boolean(matchClean || matchDigits)
       })
 
-      // 2. If entered by current user with approved New PWD application
       if (!matchedApp) {
         matchedApp = approvedApps.find((a) => {
           const appQcid = (a.referenceNumber || a.qcid || a.qcidNo || "").replace(/\D/g, "")
@@ -1124,7 +1097,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         setVerifyError(null)
         setApprovedPwdRecord(matchedApp)
 
-        // Find the user's richest previous PWD application (e.g. from New Application)
         const userFirst = (userProfile?.firstName || matchedApp.firstName || "").toLowerCase().trim()
         const userLast = (userProfile?.lastName || matchedApp.lastName || "").toLowerCase().trim()
         const userPwdApps = apps.filter((a) => {
@@ -1283,7 +1255,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
           specificDisability: specDis || prev.specificDisability,
         }))
       } else {
-        // NO VALID PWD ID RECORD FOUND
+
         setIsIdVerified(false)
         setApprovedPwdRecord(null)
         setVerifyError(
@@ -1470,7 +1442,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         status: "pending",
       }
 
-      // 1. Send to real backend API FIRST so it saves directly to PostgreSQL
       try {
         await fetch(`${API_BASE}/api/pwd-senior/applications`, {
           method: "POST",
@@ -1481,7 +1452,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         console.warn("Backend sync failed:", err)
       }
 
-      // 2. Safe local storage save with QuotaExceededError protection on mobile devices
       try {
         const existing = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
         localStorage.setItem("pwd_senior_applications", JSON.stringify([newApp, ...existing.slice(0, 5)]))
@@ -1504,7 +1474,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         } catch {}
       }
 
-      // Dispatch real-time event to Admin dashboard
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", refNum)
     } catch (e) {
       console.error("Failed submitting application:", e)
@@ -1512,14 +1481,12 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
     }
   }
 
-  // ---- BLOCKED / ACTIVE / PENDING APPLICATION STATES ----
   const targetApp = blockedApp || latestApprovedApp
   const isAppApproved =
     String(targetApp?.status || "").toLowerCase() === "approved" ||
     String(targetApp?.status || "").toLowerCase() === "completed" ||
     String(targetApp?.status || "").toLowerCase() === "for_release"
 
-  // ---- PENDING STATE (Identical to Solo Parent) ----
   if (isBlocked && !isAppApproved) {
     const serviceTitle =
       initialIdStatus === "renewal"
@@ -1599,7 +1566,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
     )
   }
 
-  // ---- APPROVED state (Only blocks New ID applications if user already has an active approved ID) ----
   if (latestApprovedApp && initialIdStatus !== "renewal" && initialIdStatus !== "loss") {
     const targetApp = blockedApp || latestApprovedApp
     const isAppApproved =
@@ -1740,7 +1706,6 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
     )
   }
 
-  // ---- SUBMITTED / SUCCESS state ----
   if (submitStatus === "submitted") {
     const fullApplicantName = [formData.firstName, formData.middleName, formData.lastName, formData.suffix]
       .filter(Boolean)
@@ -1765,7 +1730,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
             </p>
           </div>
 
-          {/* Reference Card */}
+          {}
           <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
             <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
               <span className="font-semibold text-muted-foreground">Application Reference No.:</span>
@@ -1837,7 +1802,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
       <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-        {/* Step indicator dots */}
+        {}
         <div className="flex items-center px-6 pt-6 pb-4">
           {STEPS.map((s, idx) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
@@ -1859,7 +1824,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
           ))}
         </div>
 
-        {/* Tab labels */}
+        {}
         <div className="flex gap-2 border-b border-border bg-gray-50 p-2">
           {STEPS.map((s) => (
             <div
@@ -1877,7 +1842,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
           ))}
         </div>
 
-        {/* Step content */}
+        {}
         <div className="p-6 min-h-90">
           {step === 1 && (
             <div className="space-y-6">
@@ -1933,7 +1898,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                       </div>
 
                       <div className="p-4 rounded-xl bg-slate-50 border border-blue-200 space-y-3">
-                        {/* 1. Reason for Renewal (Moved to Top) */}
+                        {}
                         <div className="space-y-2">
                           <label className={`block text-xs font-semibold ${attemptedNext && !reasonForRenewal ? "text-red-600 font-semibold" : "text-foreground"}`}>
                             Reason for Renewal <span className="text-red-500">*</span>
@@ -1962,7 +1927,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                           )}
                         </div>
 
-                        {/* 2. PWD ID Input & Verify Button */}
+                        {}
                         <div className="pt-2 border-t border-blue-100 space-y-2">
                           <div className="flex justify-between items-center">
                             <label className={`block text-xs font-semibold ${attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) ? "text-red-600" : "text-foreground"}`}>
@@ -2077,7 +2042,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                       </div>
 
                       <div className="p-4 rounded-xl bg-slate-50 border border-blue-200 space-y-3">
-                        {/* 1. Reason for Replacement (Moved to Top) */}
+                        {}
                         <div className="space-y-1.5">
                           <label className={`block text-xs font-semibold ${attemptedNext && reasonForReplacement === "" ? "text-red-600" : "text-foreground"}`}>
                             Reason for Replacement <span className="text-red-500">*</span>
@@ -2111,7 +2076,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                           )}
                         </div>
 
-                        {/* 2. PWD ID Input & Verify Button */}
+                        {}
                         <div className="pt-2 border-t border-blue-100 space-y-2">
                           <div className="flex justify-between items-center">
                             <label className={`block text-xs font-semibold ${attemptedNext && !isIdVerified ? "text-red-600" : "text-foreground"}`}>
@@ -2255,7 +2220,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                     <div className="mt-3 space-y-3">
                       {idStatus === "renewal" && (
                         <div className="p-4 rounded-lg bg-slate-50 border border-blue-200 space-y-3">
-                          {/* 1. Reason for Renewal (Moved to Top) */}
+                          {}
                           <div className="space-y-2">
                             <label className={`block text-xs font-semibold ${attemptedNext && !reasonForRenewal ? "text-red-600 font-semibold" : "text-foreground"}`}>
                               Reason for Renewal <span className="text-red-500">*</span>
@@ -2284,7 +2249,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                             )}
                           </div>
 
-                          {/* 2. PWD ID Input & Verify Button */}
+                          {}
                           <div className="pt-2 border-t border-blue-100 space-y-2">
                             <div className="flex justify-between items-center">
                               <label className={`block text-xs font-semibold ${attemptedNext && (!(formData.existingPwdIdNumber || "").trim() || !isIdVerified) ? "text-red-600" : "text-foreground"}`}>
@@ -2399,7 +2364,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
 
                       {idStatus === "loss" && (
                         <div className="p-4 rounded-lg bg-slate-50 border border-blue-200 space-y-3">
-                          {/* 1. Reason for Replacement (Moved to Top) */}
+                          {}
                           <div className="space-y-1.5">
                             <label className={`block text-xs font-semibold ${attemptedNext && reasonForReplacement === "" ? "text-red-600" : "text-foreground"}`}>
                               Reason for Replacement <span className="text-red-500">*</span>
@@ -2433,7 +2398,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                             )}
                           </div>
 
-                          {/* 2. PWD ID Input & Verify Button */}
+                          {}
                           <div className="pt-2 border-t border-blue-100 space-y-2">
                             <div className="flex justify-between items-center">
                               <label className={`block text-xs font-semibold ${attemptedNext && !isIdVerified ? "text-red-600" : "text-foreground"}`}>
@@ -2583,7 +2548,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
             </div>
           )}
 
-          {/* STEP 2 — PWD Personal Information Form */}
+          {}
           {step === 2 && (
             <div className="space-y-6">
               {(idStatus === "renewal" || idStatus === "loss") && (
@@ -2600,7 +2565,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 </div>
               )}
 
-              {/* IMPORTANT REMINDER BOX */}
+              {}
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -2611,7 +2576,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 </div>
               </div>
 
-              {/* Applicant QCID Profile Information Grid */}
+              {}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label={`${t("qcIdLabel")} *`}>
@@ -2681,7 +2646,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 </Field>
               </div>
 
-              {/* Additional personal fields */}
+              {}
               <div className="space-y-4 border-t border-border pt-6">
                 <SectionHeader title={t("personalInfoSectionTitle").toUpperCase()} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2735,7 +2700,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 </div>
               </div>
 
-              {/* Emergency Contact */}
+              {}
               <div className="space-y-4">
                 <SectionHeader title={t("pwdEmergencyContactLabel").toUpperCase()} />
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -2835,7 +2800,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 </Field>
               </div>
 
-              {/* Physical Appearance */}
+              {}
               <div className="space-y-4">
                 <SectionHeader title={t("pwdPhysicalAppearanceHeader").toUpperCase()} />
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -2901,7 +2866,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 </Field>
               </div>
 
-              {/* Sectoral Form / PWD Information */}
+              {}
               <div className="space-y-4">
                 <SectionHeader title="PWD INFORMATION" />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -2937,7 +2902,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 </div>
               </div>
 
-              {/* Error Banner when Next is attempted with incomplete fields */}
+              {}
               {attemptedNext && !step2Valid && (
                 <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700">
                   <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
@@ -2947,7 +2912,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
             </div>
           )}
 
-          {/* STEP 3 — matches the AICS "Pag-upload ng File" card layout */}
+          {}
           {step === 3 && (
             <div className="space-y-4">
               <h3 className="text-base font-bold text-foreground">{t("fileUploadHeader")}</h3>
@@ -2961,7 +2926,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                   const isImage = entry?.file.type.startsWith("image/")
                   return (
                     <div key={doc.title}>
-                      {/* Hidden real file input */}
+                      {}
                       <input
                         ref={(el) => {
                           fileInputRefs.current[doc.title] = el
@@ -3045,7 +3010,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
             </div>
           )}
 
-          {/* STEP 4 — matches the AICS review layout */}
+          {}
           {step === 4 && (
             <div className="space-y-5">
               <div>
@@ -3053,7 +3018,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 <p className="text-sm text-muted-foreground">{t("pwdReviewDesc")}</p>
               </div>
 
-              {/* Requirements */}
+              {}
               <div className="border border-border rounded-xl overflow-hidden">
                 <div className="flex items-center justify-between px-5 pt-5 pb-3">
                   <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
@@ -3106,7 +3071,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 </div>
               </div>
 
-              {/* Personal Information */}
+              {}
               <div className="border border-border rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
@@ -3174,7 +3139,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
                 </div>
               </div>
 
-              {/* Documents */}
+              {}
               <div className="border border-border rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
@@ -3252,7 +3217,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
 
         </div>
 
-        {/* Guidance banner when validation failed */}
+        {}
         {attemptedNext && !canGoNext && (
           <div className="mx-6 mb-3 flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-semibold animate-in fade-in duration-150">
             <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
@@ -3260,7 +3225,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
           </div>
         )}
 
-        {/* Footer nav */}
+        {}
         <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-gray-50">
           {step === 1 ? (
             <div />
@@ -3295,7 +3260,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         </div>
       </div>
 
-      {/* 🔔 DATA PRIVACY CONSENT OVERLAY MODAL BEFORE SUBMIT */}
+      {}
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -3314,7 +3279,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         />
       )}
 
-      {/* 📸 Document Camera Capture Modal */}
+      {}
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}
         onClose={() => setCameraDoc(null)}

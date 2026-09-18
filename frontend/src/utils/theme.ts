@@ -1,9 +1,3 @@
-/**
- * Theme Manager with 100% Automatic Time-based switching:
- * - 6:00 AM (06:00) to 6:00 PM (18:00) -> Light Mode (Puti)
- * - 6:00 PM (18:00) to 6:00 AM (06:00) -> Dark Mode (Madilim)
- * Automatic by default: No configuration or manual "Auto" button required.
- */
 
 export type ThemeMode = "auto" | "light" | "dark";
 
@@ -31,13 +25,10 @@ export function getEffectiveTheme(mode: ThemeMode = getThemePreference()): boole
 }
 
 export function getInitialTheme(): boolean {
-  // Purely automatic based on current time
+
   return isNightTime();
 }
 
-/**
- * Applies the effective theme class to the HTML document.
- */
 export function applyTheme(isDark: boolean = isNightTime(), persist: boolean = false) {
   try {
     if (isDark) {
