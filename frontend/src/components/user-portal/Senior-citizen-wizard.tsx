@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
+import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 import { API_BASE } from "../../config/api"
 import { useLanguage } from "../ui/language-context"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
@@ -288,6 +289,7 @@ export default function SeniorCitizenApplicationWizard({
   ]
 
   const [step, setStep] = useState(1)
+  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
   const [returnToReview, setReturnToReview] = useState(false)
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -2339,6 +2341,16 @@ export default function SeniorCitizenApplicationWizard({
       </div>
 
       {}
+      <PreFillupPrivacyModal
+        isOpen={showPrePrivacyModal}
+        onAccept={() => setShowPrePrivacyModal(false)}
+        onCancel={() => {
+          if (onBack) onBack()
+          else window.history.back()
+        }}
+        moduleName="Senior Citizen ID Application"
+      />
+
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}

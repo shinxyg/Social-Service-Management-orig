@@ -21,6 +21,7 @@ import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { DataPrivacyConsent } from "../ui/data-privacy-consent"
 import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
+import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 import { API_BASE, getAuthHeaders, getAuthToken } from "../../config/api"
 import { cachedApiFetch } from "../../utils/cachedApiFetch"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
@@ -873,6 +874,7 @@ export default function SoloParentApplicationWizard({
   ]
 
   const [step, setStep] = useState(1)
+  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
   const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
@@ -3480,6 +3482,16 @@ export default function SoloParentApplicationWizard({
       </div>
 
       {}
+      <PreFillupPrivacyModal
+        isOpen={showPrePrivacyModal}
+        onAccept={() => setShowPrePrivacyModal(false)}
+        onCancel={() => {
+          if (onBack) onBack()
+          else window.history.back()
+        }}
+        moduleName="Solo Parent ID & Benefits Application"
+      />
+
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}

@@ -29,6 +29,7 @@ import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, type LoggedInUserProfile } from "../../utils/userProfile"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
 import { useLanguage } from "../ui/language-context"
+import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 
 export type TrainingProgramTab = "available" | "apply" | "schedule" | "history"
 
@@ -335,6 +336,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   const [applyCourseId, setApplyCourseId] = useState<string>("tr-sewing")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formStep, setFormStep] = useState<"select" | "profile" | "review">("select")
+  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
   const [isAttested, setIsAttested] = useState(false)
   const [isRevising, setIsRevising] = useState(false)
 
@@ -2085,6 +2087,17 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             </div>
           </div>
         </div>
+      )}
+
+      {activeTab === "apply" && (!activeApplication || isRevising) && (
+        <PreFillupPrivacyModal
+          isOpen={showPrePrivacyModal}
+          onAccept={() => setShowPrePrivacyModal(false)}
+          onCancel={() => {
+            setActiveTab("available")
+          }}
+          moduleName="Skills Training & Livelihood Program Application"
+        />
       )}
     </div>
   )

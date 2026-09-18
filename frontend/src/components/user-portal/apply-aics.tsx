@@ -3,6 +3,7 @@ import { X, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, AlertCircl
 import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
+import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 
 function formatFileSize(bytes: number) {
   if (!bytes) return "0.0 KB"
@@ -27,6 +28,7 @@ export default function ApplyAICS({ initialType, initialTypeKey }: ApplyAICSProp
   const { t, language } = useLanguage()
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
 
   const WIZARD_TABS = [
     t("wizardChecklist")?.toUpperCase() || "COMPLETE CHECKLIST",
@@ -2405,7 +2407,6 @@ const handleFinalSubmit = async () => {
           </div>
         )}
 
-        {}
         {previewDocModal && (
           <UploadedDocPreviewModal
             title={previewDocModal.title}
@@ -2413,6 +2414,15 @@ const handleFinalSubmit = async () => {
             onClose={() => setPreviewDocModal(null)}
           />
         )}
+
+        <PreFillupPrivacyModal
+          isOpen={showPrePrivacyModal}
+          onAccept={() => setShowPrePrivacyModal(false)}
+          onCancel={() => {
+            window.location.href = "/portal/overview"
+          }}
+          moduleName={type ? `AICS - ${type}` : "AICS Financial Assistance"}
+        />
       </div>
     )
   }
