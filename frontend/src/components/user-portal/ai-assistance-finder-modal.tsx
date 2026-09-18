@@ -476,14 +476,10 @@ export default function AIAssistanceFinderModal({
   onClose,
 }: AIAssistanceFinderModalProps) {
   const navigate = useNavigate()
-  const { language: contextLang, setLanguage } = useLanguage()
+  const { language } = useLanguage()
 
-  const selectedLang: Language = contextLang === "tl" || contextLang === "bis" ? contextLang : "en"
+  const selectedLang: Language = language === "tl" || language === "bis" ? language : "en"
   const t = I18N[selectedLang] || I18N.en
-
-  const handleLanguageChange = (lang: Language) => {
-    setLanguage(lang)
-  }
 
   const [currentStep, setCurrentStep] = useState<number>(1)
 
@@ -1120,44 +1116,11 @@ export default function AIAssistanceFinderModal({
 
           {}
           <div className="flex items-center gap-2 shrink-0">
-            {}
-            <div className="flex rounded-xl bg-white/10 p-0.5 border border-white/20 backdrop-blur-sm text-[11px] font-bold">
-              <button
-                type="button"
-                onClick={() => handleLanguageChange("en")}
-                className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
-                  selectedLang === "en" ? "bg-white text-blue-900 shadow-xs" : "text-white/80 hover:text-white"
-                }`}
-                title="English"
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => handleLanguageChange("tl")}
-                className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
-                  selectedLang === "tl" ? "bg-white text-blue-900 shadow-xs" : "text-white/80 hover:text-white"
-                }`}
-                title="Tagalog"
-              >
-                TL
-              </button>
-              <button
-                type="button"
-                onClick={() => handleLanguageChange("bis")}
-                className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
-                  selectedLang === "bis" ? "bg-white text-blue-900 shadow-xs" : "text-white/80 hover:text-white"
-                }`}
-                title="Bisaya"
-              >
-                BIS
-              </button>
-            </div>
-
             <button
               type="button"
               onClick={onClose}
-              className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              title={selectedLang === "en" ? "Close" : selectedLang === "bis" ? "Isira" : "Isara"}
             >
               <X className="h-4 w-4" />
             </button>
@@ -2238,9 +2201,9 @@ export default function AIAssistanceFinderModal({
               <button
                 type="button"
                 onClick={handleRunAiEvaluation}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-600 text-white text-xs font-extrabold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
               >
-                <Sparkles className="h-4 w-4 text-amber-300" />
+                <BadgeCheck className="h-4 w-4 text-blue-200" />
                 <span>{t.btnAnalyze}</span>
               </button>
             )}
@@ -2258,14 +2221,6 @@ export default function AIAssistanceFinderModal({
                 <span>{t.btnRetake}</span>
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-800 dark:text-white text-xs font-bold transition-colors cursor-pointer"
-            >
-              {t.btnClose}
-            </button>
           </div>
         </div>
       </div>
