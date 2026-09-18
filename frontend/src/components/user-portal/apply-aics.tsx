@@ -857,6 +857,22 @@ const handleFinalSubmit = async () => {
 
   const renderTopRequirementsBanner = () => (
     <>
+      <PreFillupPrivacyModal
+        isOpen={showPrePrivacyModal}
+        onAccept={() => setShowPrePrivacyModal(false)}
+        onCancel={() => {
+          if (onBack) onBack()
+          else window.location.href = "/portal/overview"
+        }}
+        moduleName={
+          isFuneralAssistance
+            ? "AICS - Tulong sa Pagpapalibing (Funeral Assistance)"
+            : isEducationalAssistance
+            ? "AICS - Tulong Pang-Edukasyon (Educational Assistance)"
+            : "AICS - Tulong Medikal (Medical Assistance)"
+        }
+      />
+
       <div className="mb-4">
         <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -1199,6 +1215,21 @@ const handleFinalSubmit = async () => {
   if (step === "personal") {
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
+        <PreFillupPrivacyModal
+          isOpen={showPrePrivacyModal}
+          onAccept={() => setShowPrePrivacyModal(false)}
+          onCancel={() => {
+            if (onBack) onBack()
+            else window.location.href = "/portal/overview"
+          }}
+          moduleName={
+            isFuneralAssistance
+              ? "AICS - Tulong sa Pagpapalibing (Funeral Assistance)"
+              : isEducationalAssistance
+              ? "AICS - Tulong Pang-Edukasyon (Educational Assistance)"
+              : "AICS - Tulong Medikal (Medical Assistance)"
+          }
+        />
         <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
           <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
@@ -1906,6 +1937,21 @@ const handleFinalSubmit = async () => {
   if (step === "documents") {
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
+        <PreFillupPrivacyModal
+          isOpen={showPrePrivacyModal}
+          onAccept={() => setShowPrePrivacyModal(false)}
+          onCancel={() => {
+            if (onBack) onBack()
+            else window.location.href = "/portal/overview"
+          }}
+          moduleName={
+            isFuneralAssistance
+              ? "AICS - Tulong sa Pagpapalibing (Funeral Assistance)"
+              : isEducationalAssistance
+              ? "AICS - Tulong Pang-Edukasyon (Educational Assistance)"
+              : "AICS - Tulong Medikal (Medical Assistance)"
+          }
+        />
         <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
           <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
