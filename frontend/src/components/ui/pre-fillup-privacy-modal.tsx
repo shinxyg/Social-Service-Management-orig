@@ -262,7 +262,7 @@ export function PreFillupPrivacyModal({
             onClick={onCancel}
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
           >
-            {isEn ? "Back / Cancel" : isBis ? "Balik / Kanselaha" : "Bumalik / Kanselahin"}
+            {isEn ? "Back" : isBis ? "Balik" : "Bumalik"}
           </button>
 
           <button
