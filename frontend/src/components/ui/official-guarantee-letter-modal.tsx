@@ -107,11 +107,6 @@ export function OfficialGuaranteeLetterModal({
             <span className="text-xs font-bold uppercase tracking-wider">
               Quezon City SSDD • Official Guarantee Letter (GL)
             </span>
-            {!canPrint && (
-              <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Digital Copy • View Only
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-2">
             {canPrint && (
@@ -163,7 +158,7 @@ export function OfficialGuaranteeLetterModal({
             <div>
               <p>
                 <span className="font-bold text-gray-700">CONTROL NO. : </span>
-                <span className="font-black text-blue-900">{finalControlNo}</span>
+                <span className="font-black text-black">{finalControlNo}</span>
               </p>
               <p>
                 <span className="font-bold text-gray-700">BARANGAY    : </span>
@@ -177,7 +172,7 @@ export function OfficialGuaranteeLetterModal({
               </p>
               <p>
                 <span className="font-bold text-gray-700">VALID UNTIL : </span>
-                <span className="font-bold text-red-700">{validUntilStr}</span>
+                <span className="font-bold text-black">{validUntilStr}</span>
               </p>
             </div>
           </div>
@@ -226,7 +221,7 @@ export function OfficialGuaranteeLetterModal({
               </p>
               <p>
                 <span className="font-bold text-gray-600">QC ID / Resident No.: </span>
-                <span className="font-mono font-bold text-blue-900">{data.qcidNumber || data.applicationRef || "QC-1100-0094-8211"}</span>
+                <span className="font-mono font-bold text-gray-900">{data.qcidNumber || data.applicationRef || "QC-1100-0094-8211"}</span>
               </p>
               <p>
                 <span className="font-bold text-gray-600">Age / Gender: </span>
@@ -262,7 +257,7 @@ export function OfficialGuaranteeLetterModal({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <p>
                   <span className="font-bold text-gray-600">GUARANTEED AMOUNT : </span>
-                  <span className="font-black text-emerald-800 text-sm sm:text-base">
+                  <span className="font-black text-black text-sm sm:text-base">
                     ₱ {data.amount.toLocaleString()}.00
                   </span>
                 </p>
@@ -276,13 +271,13 @@ export function OfficialGuaranteeLetterModal({
                 <p className="font-bold text-gray-600 mb-1">COVERED EXPENSES:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[11px] text-gray-800">
                   <span className="flex items-center gap-1.5 font-medium">
-                    <span className="font-black text-blue-700">[X]</span> Hospital Confinement / Room &amp; Board
+                    <span className="font-black text-black">[X]</span> Hospital Confinement / Room &amp; Board
                   </span>
                   <span className="flex items-center gap-1.5 font-medium">
-                    <span className="font-black text-blue-700">[X]</span> Dialysis / Diagnostic Tests
+                    <span className="font-black text-black">[X]</span> Dialysis / Diagnostic Tests
                   </span>
                   <span className="flex items-center gap-1.5 font-medium">
-                    <span className="font-black text-blue-700">[X]</span> Medicines &amp; Medical Supplies
+                    <span className="font-black text-black">[X]</span> Medicines &amp; Medical Supplies
                   </span>
                 </div>
               </div>
