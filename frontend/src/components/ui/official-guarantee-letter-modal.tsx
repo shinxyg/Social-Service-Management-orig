@@ -1,4 +1,3 @@
-import React from "react"
 import { Printer, X, ShieldCheck, QrCode } from "lucide-react"
 
 export interface GuaranteeLetterData {
