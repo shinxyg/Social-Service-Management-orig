@@ -952,6 +952,7 @@ export default function AICS() {
               amount: FIXED_ASSISTANCE_AMOUNTS['Medical Assistance'] || 25000,
             }}
             onClose={() => setGlApp(null)}
+            canPrint={true}
           />
         )}
       </div>

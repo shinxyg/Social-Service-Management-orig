@@ -1189,6 +1189,7 @@ export default function FinancialAidDisbursement() {
             diagnosis: glModalRecord.remarks || "Chronic Kidney Disease (Stage 5) / Hemodialysis",
           }}
           onClose={() => setGlModalRecord(null)}
+          canPrint={true}
         />
       )}
     </div>

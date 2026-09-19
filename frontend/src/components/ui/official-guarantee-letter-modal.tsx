@@ -52,11 +52,13 @@ export function amountInWords(amount: number): string {
 interface OfficialGuaranteeLetterModalProps {
   data: GuaranteeLetterData
   onClose: () => void
+  canPrint?: boolean
 }
 
 export function OfficialGuaranteeLetterModal({
   data,
   onClose,
+  canPrint = false,
 }: OfficialGuaranteeLetterModalProps) {
   const hospital = data.hospitalName || "EAST AVENUE MEDICAL CENTER (EAMC)"
   const hospitalAddress =
@@ -106,16 +108,23 @@ export function OfficialGuaranteeLetterModal({
             <span className="text-xs font-bold uppercase tracking-wider">
               Quezon City SSDD • Official Guarantee Letter (GL)
             </span>
+            {!canPrint && (
+              <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                Digital Copy • View Only
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print GL</span>
-            </button>
+            {canPrint && (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print GL</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -335,22 +344,32 @@ export function OfficialGuaranteeLetterModal({
         </div>
 
         {/* Modal Bottom Actions */}
-        <div className="px-6 py-3.5 bg-gray-100 border-t border-gray-300 flex items-center justify-between no-print">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-700 transition-colors cursor-pointer"
-          >
-            Close
-          </button>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Print Guarantee Letter (GL)</span>
-          </button>
+        <div className="px-6 py-3.5 bg-gray-100 border-t border-gray-300 flex items-center justify-between no-print gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-700 transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+            {!canPrint && (
+              <span className="text-[11px] text-gray-500 font-medium hidden sm:inline-block">
+                🔒 Para sa pagsusuri lamang. Ang opisyal na kopya na may dry seal at pirma ay kukunin sa SSDD.
+              </span>
+            )}
+          </div>
+
+          {canPrint && (
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Print Guarantee Letter (GL)</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
