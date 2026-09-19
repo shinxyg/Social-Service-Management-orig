@@ -1647,23 +1647,17 @@ function AppointmentSlipModal({
         </div>
 
         {/* Buttons */}
-        <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-white transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-white transition-colors cursor-pointer"
           >
             Close
           </button>
-
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Print / Save Appointment Slip (PDF)</span>
-          </button>
+          <span className="text-[11px] text-gray-500 font-medium hidden sm:inline-block">
+            Ipakita ang slip na ito o sabihin ang QC ID sa information desk sa araw ng appointment.
+          </span>
         </div>
       </div>
     </div>
