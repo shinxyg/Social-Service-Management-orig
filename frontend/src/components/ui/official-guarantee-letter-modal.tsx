@@ -1,4 +1,4 @@
-import { Printer, X, ShieldCheck, QrCode } from "lucide-react"
+import { Printer, X, ShieldCheck } from "lucide-react"
 
 export interface GuaranteeLetterData {
   controlNo?: string
@@ -302,37 +302,28 @@ export function OfficialGuaranteeLetterModal({
             </ol>
           </div>
 
-          {/* Verification QR & Signatories */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 items-end font-sans">
-            {/* QR Code Box */}
-            <div className="border-2 border-dashed border-gray-400 p-2 rounded-xl text-center flex flex-col items-center justify-center bg-gray-50">
-              <QrCode className="w-12 h-12 text-slate-900 mx-auto" />
-              <p className="text-[9px] font-black uppercase text-gray-700 mt-1">
-                QR CODE FOR HOSPITAL VERIFICATION
-              </p>
-              <p className="text-[8px] text-gray-500">Scan to verify authentic GL</p>
-            </div>
-
+          {/* Signatories (Evaluated By & Approved By) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-8 items-end font-sans">
             {/* Evaluator Signature */}
             <div className="text-center space-y-0.5">
-              <p className="text-[9px] font-bold uppercase text-gray-500 mb-6">
+              <p className="text-[10px] font-bold uppercase text-gray-600 mb-8">
                 PREPARED &amp; EVALUATED BY:
               </p>
-              <div className="w-40 border-b-2 border-black mx-auto" />
-              <p className="font-black text-xs uppercase text-black pt-0.5">MARIA SANTOS, RSW</p>
-              <p className="text-[10px] text-gray-600">Social Welfare Officer II</p>
-              <p className="text-[9px] text-gray-500">PRC License No. 0048123</p>
+              <div className="w-52 border-b-2 border-black mx-auto" />
+              <p className="font-black text-xs uppercase text-black pt-1">MARIA SANTOS, RSW</p>
+              <p className="text-[10px] text-gray-700 font-medium">Social Welfare Officer II</p>
+              <p className="text-[9.5px] text-gray-500">PRC License No. 0048123</p>
             </div>
 
             {/* Approver Signature */}
             <div className="text-center space-y-0.5">
-              <p className="text-[9px] font-bold uppercase text-gray-500 mb-6">
+              <p className="text-[10px] font-bold uppercase text-gray-600 mb-8">
                 APPROVED BY:
               </p>
-              <div className="w-40 border-b-2 border-black mx-auto" />
-              <p className="font-black text-xs uppercase text-black pt-0.5">FE P. MACALE</p>
-              <p className="text-[10px] text-gray-600">SSDD Department Head / City Mayor Rep.</p>
-              <p className="text-[9px] text-gray-500">Quezon City Government</p>
+              <div className="w-52 border-b-2 border-black mx-auto" />
+              <p className="font-black text-xs uppercase text-black pt-1">FE P. MACALE</p>
+              <p className="text-[10px] text-gray-700 font-medium">SSDD Department Head / City Mayor Rep.</p>
+              <p className="text-[9.5px] text-gray-500">Quezon City Government</p>
             </div>
           </div>
         </div>
