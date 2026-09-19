@@ -58,6 +58,9 @@ export interface SyncedDisbursementRecord {
   releasedDate?: string
   releasedBy?: string
   remarks?: string
+  hospitalName?: string
+  partnerHospital?: string
+  [key: string]: any
 }
 
 export interface UserNotificationItem {

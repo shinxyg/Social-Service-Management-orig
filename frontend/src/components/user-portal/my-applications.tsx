@@ -23,6 +23,10 @@ import {
   IdCard,
   User,
   X,
+  Calendar,
+  Building2,
+  Printer,
+  Info,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { cachedApiFetch } from "../../utils/cachedApiFetch"
@@ -39,6 +43,7 @@ import {
 } from "../../utils/financialAidSync"
 import { useLanguage } from "../ui/language-context"
 import MaskedText from "../ui/masked-text"
+import { OfficialGuaranteeLetterModal } from "../ui/official-guarantee-letter-modal"
 
 export type ApplicationStatus =
   | "Pending"
@@ -204,6 +209,21 @@ export function isTrainingApplication(app?: { assistance?: string; assistanceCat
 export function isIdOrDocumentApplication(app?: { assistance?: string; assistanceCategory?: string } | null) {
   if (!app || isTrainingApplication(app)) return false
   return isIdOrDocumentService(`${app.assistanceCategory || ""} ${app.assistance || ""}`)
+}
+
+export function isAicsMedicalApplication(app?: { assistance?: string; assistanceCategory?: string } | null) {
+  if (!app || isTrainingApplication(app)) return false
+  const ast = String(app.assistance || "").toLowerCase()
+  const cat = String(app.assistanceCategory || "").toLowerCase()
+  return (
+    ast.includes("medical") ||
+    ast.includes("gamot") ||
+    ast.includes("hospital") ||
+    ast.includes("medicine") ||
+    ast.includes("medikal") ||
+    cat.includes("medical") ||
+    (cat.includes("aics") && !ast.includes("burial") && !ast.includes("funeral") && !ast.includes("educational") && !ast.includes("transportation") && !ast.includes("livelihood"))
+  )
 }
 
 export function getApplicantPhotoUrl(app: any): string {
@@ -1445,6 +1465,211 @@ function DigitalIdCardModal({
   )
 }
 
+function AppointmentSlipModal({
+  app,
+  onClose,
+}: {
+  app: ApplicationRecord
+  onClose: () => void
+}) {
+  const partnerHospital =
+    app.details?.partnerHospital ||
+    app.formData?.partnerHospital ||
+    app.extra_data?.partnerHospital ||
+    app.partnerHospital ||
+    "East Avenue Medical Center (EAMC)"
+
+  const diagnosis =
+    app.details?.medicalDiagnosis ||
+    app.formData?.medicalDiagnosis ||
+    app.extra_data?.medicalDiagnosis ||
+    app.medicalDiagnosis ||
+    "Medical & Hospitalization Assistance"
+
+  const appointmentDate =
+    app.appointmentDate ||
+    app.formData?.appointmentDate ||
+    app.extra_data?.appointmentDate ||
+    app.details?.appointmentDate ||
+    "September 24, 2026"
+
+  const appointmentTime =
+    app.appointmentTime ||
+    app.formData?.appointmentTime ||
+    app.extra_data?.appointmentTime ||
+    app.details?.appointmentTime ||
+    "09:00 AM"
+
+  const venue = "SSDD Crisis Intervention Division, City Hall Compound, Diliman, Quezon City"
+
+  return (
+    <div
+      className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      style={{ background: "rgba(15,23,42,0.75)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-6 overflow-hidden flex flex-col border border-gray-300 animate-in zoom-in-95 duration-200 text-left"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top Bar */}
+        <div className="px-6 py-3 bg-slate-900 text-white flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-blue-400" />
+            <span className="text-xs font-bold uppercase tracking-wider">
+              Quezon City SSDD • Official Appointment Slip
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-800 text-gray-300 hover:text-white transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Printable Content */}
+        <div className="p-6 space-y-4 text-gray-900 overflow-y-auto max-h-[75vh]">
+          {/* Official Header */}
+          <div className="border-b-2 border-slate-900 pb-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <img src="/gov-serves-seal.png" alt="QC Seal" className="w-14 h-14 object-contain shrink-0" />
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Republic of the Philippines</p>
+                <h2 className="text-sm sm:text-base font-black uppercase text-gray-900">Quezon City Government</h2>
+                <p className="text-xs font-semibold text-blue-700">Social Services Development Department (SSDD)</p>
+              </div>
+            </div>
+
+            <div className="text-right hidden sm:block">
+              <div className="inline-block px-2 py-1 bg-gray-100 rounded-lg border border-gray-300 font-mono text-[11px] font-bold text-blue-700">
+                REF: {app.applicationNo}
+              </div>
+              <p className="text-[10px] text-gray-500 mt-0.5">Intake Control Form</p>
+            </div>
+          </div>
+
+          {/* Title */}
+          <div className="text-center py-1">
+            <h3 className="text-base sm:text-lg font-black uppercase tracking-wide text-slate-900">
+              APPOINTMENT CONFIRMATION &amp; CHECKLIST SLIP
+            </h3>
+            <p className="text-xs text-gray-600 font-medium">
+              AICS Medical Assistance &amp; Hospital Intake Process
+            </p>
+          </div>
+
+          {/* Warning Banner */}
+          <div className="p-3.5 rounded-xl bg-amber-50 border-2 border-amber-400 text-amber-950 space-y-1 shadow-xs">
+            <div className="flex items-center gap-1.5 text-xs font-black uppercase text-amber-900">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>MAHALAGANG PAALALA (IMPORTANT NOTICE):</span>
+            </div>
+            <p className="text-xs leading-relaxed text-amber-900 font-medium">
+              Ang dokumentong ito ay <strong>PATUNAY NG APPOINTMENT LAMANG</strong> at <strong>HINDI ISANG GUARANTEE LETTER (GL)</strong>. Hindi ito tatanggapin ng ospital para ibawas sa bill. Kailangan ninyong dumalo sa personal na assessment sa SSDD sa inyong itinakdang iskedyul upang personal na maberipika ng lisensyadong Social Worker ang inyong orihinal na mga papeles bago ma-isyu ang inyong opisyal na Guarantee Letter.
+            </p>
+          </div>
+
+          {/* Case Info */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-gray-200">
+            <div>
+              <span className="text-[10px] uppercase font-bold text-gray-400 block">Aplikante / Pasyente:</span>
+              <span className="font-extrabold text-gray-900 text-sm uppercase">{app.applicantName}</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-gray-400 block">Reference / QC ID Number:</span>
+              <span className="font-mono font-bold text-blue-700 text-sm">{app.applicationNo}</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-gray-400 block">Accredited Partner Hospital:</span>
+              <span className="font-bold text-gray-900 flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                {partnerHospital}
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-gray-400 block">Diagnosis / Procedure:</span>
+              <span className="font-semibold text-gray-800">{diagnosis}</span>
+            </div>
+            <div className="sm:col-span-2 pt-2 border-t border-gray-200">
+              <span className="text-[10px] uppercase font-bold text-gray-400 block">Iskedyul ng Assessment sa SSDD:</span>
+              <span className="font-black text-blue-900 text-sm block mt-0.5">
+                🗓️ {appointmentDate} • {appointmentTime}
+              </span>
+              <span className="text-[11px] text-gray-600 flex items-center gap-1 mt-0.5">
+                <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                {venue}
+              </span>
+            </div>
+          </div>
+
+          {/* Requirements Checklist */}
+          <div className="space-y-2 border border-blue-200 bg-blue-50/60 p-3.5 rounded-xl text-xs">
+            <h4 className="font-bold text-blue-950 flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-blue-600" />
+              MGA ORIHINAL NA DOKUMENTONG DAPAT DALHIN SA ARAW NG APPOINTMENT:
+            </h4>
+            <div className="space-y-1 text-slate-800 font-medium pl-1">
+              <p className="flex items-start gap-2">
+                <span className="h-4 w-4 rounded border border-blue-400 bg-white inline-flex items-center justify-center shrink-0 mt-0.5 text-blue-600 font-bold text-[10px]">✓</span>
+                <span>1. Orihinal na Medical Abstract / Medical Certificate (may pirma ng doktor at PTR/PRC License No.)</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="h-4 w-4 rounded border border-blue-400 bg-white inline-flex items-center justify-center shrink-0 mt-0.5 text-blue-600 font-bold text-[10px]">✓</span>
+                <span>2. Latest Hospital Statement of Account (SOA) o Pharmacy Quotation / Reseta</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="h-4 w-4 rounded border border-blue-400 bg-white inline-flex items-center justify-center shrink-0 mt-0.5 text-blue-600 font-bold text-[10px]">✓</span>
+                <span>3. Orihinal na Barangay Certificate of Indigency (para sa Medical Assistance)</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="h-4 w-4 rounded border border-blue-400 bg-white inline-flex items-center justify-center shrink-0 mt-0.5 text-blue-600 font-bold text-[10px]">✓</span>
+                <span>4. Valid QC ID o Government-issued ID ng Pasyente</span>
+              </p>
+              <p className="flex items-start gap-2">
+                <span className="h-4 w-4 rounded border border-blue-400 bg-white inline-flex items-center justify-center shrink-0 mt-0.5 text-blue-600 font-bold text-[10px]">✓</span>
+                <span>5. Valid ID ng Representative at Authorization Letter (kung kinatawan ang pupunta)</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Footer Bar */}
+          <div className="pt-2 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>QC SSDD Crisis Intervention Unit • Valid for In-Person Intake Only</span>
+            </div>
+            <span className="font-mono font-bold text-gray-700">QC-SSDD-PASS-{app.applicationNo.slice(-6)}</span>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-white transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Print / Save Appointment Slip (PDF)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function getInitialApplications(): ApplicationRecord[] {
   try {
     const cached = localStorage.getItem("cached_my_applications")
@@ -1476,6 +1701,8 @@ export default function MyApplications() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null)
   const [idCardApp, setIdCardApp] = useState<ApplicationRecord | null>(null)
+  const [appointmentSlipApp, setAppointmentSlipApp] = useState<ApplicationRecord | null>(null)
+  const [guaranteeLetterApp, setGuaranteeLetterApp] = useState<ApplicationRecord | null>(null)
 
   const [appToDelete, setAppToDelete] = useState<ApplicationRecord | null>(null)
   const [appToPermanentDelete, setAppToPermanentDelete] = useState<ApplicationRecord | null>(null)
@@ -3020,6 +3247,139 @@ export default function MyApplications() {
             )
           }
 
+          if (isAicsMedicalApplication(selectedApp)) {
+            const isClaimed = selectedApp.status === "Released" || selectedApp.status === "Completed"
+            const isGLIssued = selectedApp.status === "Approved" || selectedApp.status === "For Release" || isClaimed
+            const isAssessmentDone = isGLIssued || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment"
+            const partnerHospital =
+              selectedApp.details?.partnerHospital ||
+              selectedApp.formData?.partnerHospital ||
+              selectedApp.extra_data?.partnerHospital ||
+              selectedApp.partnerHospital ||
+              "East Avenue Medical Center (EAMC)"
+            const diagnosis =
+              selectedApp.details?.medicalDiagnosis ||
+              selectedApp.formData?.medicalDiagnosis ||
+              selectedApp.extra_data?.medicalDiagnosis ||
+              selectedApp.medicalDiagnosis ||
+              "Medical Assistance & Hospitalization"
+            const appDateStr = selectedApp.appointmentDate || selectedApp.formData?.appointmentDate || "September 24, 2026"
+            const appTimeStr = selectedApp.appointmentTime || selectedApp.formData?.appointmentTime || "09:00 AM"
+
+            return (
+              <div className="bg-slate-50 dark:bg-slate-900 border border-blue-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-5">
+                <div className="flex items-center justify-between border-b border-blue-200/80 dark:border-slate-800 pb-3 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <div>
+                      <h3 className="text-sm font-bold text-blue-950 dark:text-white">
+                        AICS MEDICAL ASSISTANCE &amp; GUARANTEE LETTER LIFECYCLE
+                      </h3>
+                      <p className="text-[11px] text-slate-500">Accredited Hospital Assistance &amp; Direct Billing Protocol</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {isGLIssued && (
+                      <button
+                        type="button"
+                        onClick={() => setGuaranteeLetterApp(selectedApp)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>View Guarantee Letter (GL)</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setAppointmentSlipApp(selectedApp)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>View Appointment Slip</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 4-Stage Progress Pipeline */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="p-3 rounded-xl border bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 space-y-1">
+                    <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400">STAGE 1</span>
+                    <p className="text-xs font-bold">Appointment Scheduled</p>
+                    <p className="text-[10px] text-blue-800/80 dark:text-blue-300/80">Online Form Submitted &amp; Schedule Set</p>
+                  </div>
+
+                  <div className={`p-3 rounded-xl border space-y-1 ${
+                    isAssessmentDone
+                      ? "bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold"
+                      : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
+                  }`}>
+                    <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400">STAGE 2</span>
+                    <p className="text-xs font-bold">In-Person Assessment</p>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">
+                      {isAssessmentDone ? "✓ Case Evaluated at SSDD" : "Pending Social Worker Interview"}
+                    </p>
+                  </div>
+
+                  <div className={`p-3 rounded-xl border space-y-1 ${
+                    isGLIssued
+                      ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
+                      : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
+                  }`}>
+                    <span className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400">STAGE 3</span>
+                    <p className="text-xs font-bold">Guarantee Letter Issued</p>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">
+                      {isGLIssued ? "✓ Printed & Released at SSDD" : "Awaiting Evaluation Approval"}
+                    </p>
+                  </div>
+
+                  <div className={`p-3 rounded-xl border space-y-1 ${
+                    isClaimed
+                      ? "bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-300 text-emerald-900 dark:text-emerald-200 font-bold"
+                      : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
+                  }`}>
+                    <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">STAGE 4</span>
+                    <p className="text-xs font-bold">Claimed at Hospital</p>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">
+                      {isClaimed ? "✓ Deducted from Hospital SOA" : "Pending Hospital Billing"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Case Particulars */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Accredited Partner Hospital</span>
+                    <span className="text-sm font-extrabold text-blue-950 dark:text-white block">{partnerHospital}</span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Direct Billing Partner Facility</p>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Diagnosis / Case Info</span>
+                    <span className="text-sm font-extrabold text-gray-900 dark:text-white block">{diagnosis}</span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Subject to Social Case Study verification</p>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">SSDD Assessment Schedule</span>
+                    <span className="text-sm font-extrabold text-blue-900 dark:text-blue-300 block">{appDateStr} – {appTimeStr}</span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">SSDD Crisis Intervention Unit, QC Hall</p>
+                  </div>
+                </div>
+
+                {/* Security and Protocol Note */}
+                <div className="p-4 rounded-xl bg-amber-50/90 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800/60 text-xs text-amber-950 dark:text-amber-200 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    Paalala sa Pag-release ng Guarantee Letter (GL):
+                  </p>
+                  <p className="leading-relaxed">
+                    Ang opisyal na Guarantee Letter na may dry seal at pirma ng lisensyadong Social Worker ay <strong>personal na ipinagkakaloob sa SSDD</strong> pagkatapos ng in-person assessment. Hindi ito direktang nada-download online upang mapanatili ang integridad ng financial assistance ng pamahalaan.
+                  </p>
+                </div>
+              </div>
+            )
+          }
+
           const rawType = (selectedApp.assistance || "").replace(/\s*assistance/gi, "").trim()
           const formattedType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
           const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[formattedType] || FIXED_ASSISTANCE_AMOUNTS[selectedApp.assistance] || 1000
@@ -3440,6 +3800,104 @@ export default function MyApplications() {
                     )
                   }
 
+                  if (isAicsMedicalApplication(app)) {
+                    const isClaimed = app.status === "Released" || app.status === "Completed"
+                    const isGLIssued = app.status === "Approved" || app.status === "For Release" || isClaimed
+                    const isAssessmentDone = isGLIssued || app.status === "Under Review" || app.status === "For Assessment"
+                    const partnerHospital =
+                      app.details?.partnerHospital ||
+                      app.formData?.partnerHospital ||
+                      app.extra_data?.partnerHospital ||
+                      app.partnerHospital ||
+                      "East Avenue Medical Center (EAMC)"
+                    const appDateStr = app.appointmentDate || app.formData?.appointmentDate || "Sep 24, 2026"
+                    const appTimeStr = app.appointmentTime || app.formData?.appointmentTime || "09:00 AM"
+
+                    return (
+                      <div className="bg-slate-50 dark:bg-slate-800/80 border border-blue-200 dark:border-slate-700/80 rounded-xl p-3.5 space-y-3 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-100 dark:border-slate-700 pb-2">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            <span className="text-xs font-bold text-gray-900 dark:text-white">
+                              Partner Facility: <strong className="text-blue-700 dark:text-blue-300">{partnerHospital}</strong>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
+                            <Clock className="w-3.5 h-3.5 text-blue-600" />
+                            <span>SSDD Intake: <strong>{appDateStr} ({appTimeStr})</strong></span>
+                          </div>
+                        </div>
+
+                        {/* 4-Stage Visual Pipeline */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+                          <div className="p-2 rounded-lg border text-center text-[10px] space-y-0.5 bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold">
+                            <span className="block text-blue-600 dark:text-blue-400 font-black">1. SCHEDULED</span>
+                            <span className="text-[9px] block">Appointment Set</span>
+                          </div>
+
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
+                            isAssessmentDone
+                              ? "bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold"
+                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block font-black">{isAssessmentDone ? "2. INTERVIEWED" : "2. ASSESSMENT"}</span>
+                            <span className="text-[9px] block">{isAssessmentDone ? "Assessment Done" : "Pending Interview"}</span>
+                          </div>
+
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
+                            isGLIssued
+                              ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
+                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block font-black">{isGLIssued ? "3. GL ISSUED" : "3. GL ISSUANCE"}</span>
+                            <span className="text-[9px] block">{isGLIssued ? "Released at SSDD" : "Awaiting Approval"}</span>
+                          </div>
+
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
+                            isClaimed
+                              ? "bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-300 text-emerald-900 dark:text-emerald-200 font-bold"
+                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block font-black">{isClaimed ? "4. CLAIMED" : "4. HOSPITAL BILL"}</span>
+                            <span className="text-[9px] block">{isClaimed ? "Applied to Hospital" : "Pending Billing"}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1 border-t border-blue-100 dark:border-slate-700/60 flex-wrap">
+                          <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                            * Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview.
+                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {isGLIssued && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setGuaranteeLetterApp(app)
+                                }}
+                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>View GL</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setAppointmentSlipApp(app)
+                              }}
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              <span>View Slip</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   const fixedAmt = resolveFixedAmount(app.assistance)
 
                   const savedDisbursements = getSavedDisbursements()
@@ -3670,6 +4128,30 @@ export default function MyApplications() {
         <DigitalIdCardModal
           app={idCardApp}
           onClose={() => setIdCardApp(null)}
+        />
+      )}
+
+      {appointmentSlipApp && (
+        <AppointmentSlipModal
+          app={appointmentSlipApp}
+          onClose={() => setAppointmentSlipApp(null)}
+        />
+      )}
+
+      {guaranteeLetterApp && (
+        <OfficialGuaranteeLetterModal
+          data={{
+            controlNo: `QC-SSDD-GL-2026-${String(guaranteeLetterApp.applicationNo || "048912").replace(/\D/g, "").slice(-6).padStart(6, "0")}`,
+            applicationRef: guaranteeLetterApp.applicationNo,
+            patientName: guaranteeLetterApp.applicantName,
+            qcidNumber: guaranteeLetterApp.qcidNumber || guaranteeLetterApp.applicationNo,
+            barangay: guaranteeLetterApp.barangay || guaranteeLetterApp.details?.barangay,
+            district: guaranteeLetterApp.district || guaranteeLetterApp.details?.district,
+            diagnosis: guaranteeLetterApp.details?.medicalDiagnosis || guaranteeLetterApp.medicalDiagnosis || "Chronic Kidney Disease (Stage 5) / Hemodialysis",
+            hospitalName: guaranteeLetterApp.details?.partnerHospital || guaranteeLetterApp.partnerHospital || "EAST AVENUE MEDICAL CENTER (EAMC)",
+            amount: resolveFixedAmount(guaranteeLetterApp.assistance) || 25000,
+          }}
+          onClose={() => setGuaranteeLetterApp(null)}
         />
       )}
     </div>

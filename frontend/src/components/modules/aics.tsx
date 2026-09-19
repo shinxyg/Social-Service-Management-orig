@@ -3,6 +3,7 @@ import { API_BASE as APP_API_BASE } from '../../config/api'
 import { getSavedProfilePhoto } from '../../utils/profilePhoto'
 import { FIXED_ASSISTANCE_AMOUNTS } from '../../utils/financialAidSync'
 import MaskedText from '../ui/masked-text'
+import { OfficialGuaranteeLetterModal } from '../ui/official-guarantee-letter-modal'
 
 const API_BASE = `${APP_API_BASE}/api/aics`
 
@@ -117,6 +118,7 @@ export default function AICS() {
   const [showDeceasedInfo, setShowDeceasedInfo] = useState(false)
   const [showBeneficiaryInfo, setShowBeneficiaryInfo] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  const [glApp, setGlApp] = useState<any | null>(null)
 
   const fetchApplications = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -619,6 +621,24 @@ export default function AICS() {
                         >
                           ✕ Reject Application
                     </button>
+                    {(reviewingApp.assistance_type?.toLowerCase().includes('medical') || reviewingApp.status === 'approved' || reviewingApp.status === 'completed') && (
+                      <button
+                        onClick={() => setGlApp(reviewingApp)}
+                        style={{
+                          backgroundColor: '#6366f1',
+                          color: 'white',
+                          borderRadius: DESIGN.radius.card,
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          padding: '16px 24px',
+                          flex: 1,
+                          cursor: 'pointer',
+                        }}
+                        className="hover:opacity-90 transition transform hover:scale-105"
+                      >
+                        📄 Print Guarantee Letter (GL)
+                      </button>
+                    )}
                 <button
                   onClick={() => {
                     setCurrentView('dashboard')
@@ -916,6 +936,23 @@ export default function AICS() {
               </div>
             </div>
           </div>
+        )}
+
+        {glApp && (
+          <OfficialGuaranteeLetterModal
+            data={{
+              controlNo: `QC-SSDD-GL-2026-${String(glApp.id || glApp.reference_no || '048912').replace(/\D/g, '').slice(-6).padStart(6, '0')}`,
+              applicationRef: glApp.reference_no || glApp.qc_id,
+              patientName: fullName(glApp),
+              qcidNumber: glApp.qc_id || glApp.reference_no,
+              barangay: glApp.barangay,
+              district: glApp.district,
+              diagnosis: (typeof glApp.details === 'object' ? glApp.details?.medicalDiagnosis : null) || 'Chronic Kidney Disease (Stage 5) / Hemodialysis',
+              hospitalName: (typeof glApp.details === 'object' ? glApp.details?.partnerHospital : null) || 'EAST AVENUE MEDICAL CENTER (EAMC)',
+              amount: FIXED_ASSISTANCE_AMOUNTS['Medical Assistance'] || 25000,
+            }}
+            onClose={() => setGlApp(null)}
+          />
         )}
       </div>
     )

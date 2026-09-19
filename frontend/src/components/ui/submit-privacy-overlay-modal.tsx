@@ -4,7 +4,11 @@ import { ShieldCheck, Lock, FileText, CheckCircle2, AlertCircle, X, ChevronDown,
 interface SubmitPrivacyOverlayModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirmSubmit: () => void
+  onConfirmSubmit?: () => void
+  onConfirm?: () => void
+  title?: string
+  description?: string
+  confirmText?: string
   moduleName?: string
   isSubmitting?: boolean
 }
@@ -13,6 +17,10 @@ export function SubmitPrivacyOverlayModal({
   isOpen,
   onClose,
   onConfirmSubmit,
+  onConfirm,
+  title,
+  description,
+  confirmText,
   moduleName = "Social Assistance Program",
   isSubmitting = false,
 }: SubmitPrivacyOverlayModalProps) {
@@ -27,7 +35,11 @@ export function SubmitPrivacyOverlayModal({
       setAttemptedSubmit(true)
       return
     }
-    onConfirmSubmit()
+    if (onConfirm) {
+      onConfirm()
+    } else if (onConfirmSubmit) {
+      onConfirmSubmit()
+    }
   }
 
   return (
@@ -48,7 +60,7 @@ export function SubmitPrivacyOverlayModal({
               <ShieldCheck className="h-5.5 w-5.5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground">Data Privacy Consent & Review</h3>
+              <h3 className="text-base font-bold text-foreground">{title || "Data Privacy Consent & Review"}</h3>
               <p className="text-xs text-muted-foreground">Quezon City SSDD • Republic Act No. 10173 (Data Privacy Act of 2012)</p>
             </div>
           </div>
@@ -71,7 +83,11 @@ export function SubmitPrivacyOverlayModal({
               <span>Data Collection Consent Notice</span>
             </div>
             <p className="text-blue-800 dark:text-blue-300 text-xs leading-relaxed">
-              Before submitting your <strong className="text-foreground">{moduleName}</strong> application, please confirm that you allow the Quezon City Social Services Development Department (SSDD) to collect, process, and store your personal information and uploaded supporting documents strictly for social welfare evaluation, eligibility verification, and assistance disbursement.
+              {description || (
+                <>
+                  Before submitting your <strong className="text-foreground">{moduleName}</strong> application, please confirm that you allow the Quezon City Social Services Development Department (SSDD) to collect, process, and store your personal information and uploaded supporting documents strictly for social welfare evaluation, eligibility verification, and assistance disbursement.
+                </>
+              )}
             </p>
           </div>
 
@@ -164,7 +180,7 @@ export function SubmitPrivacyOverlayModal({
             ) : (
               <>
                 <CheckCircle2 className="h-4 w-4" />
-                <span>CONFIRM & SUBMIT APPLICATION</span>
+                <span>{confirmText || "CONFIRM & SUBMIT APPLICATION"}</span>
               </>
             )}
           </button>

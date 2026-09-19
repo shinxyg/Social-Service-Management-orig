@@ -11,6 +11,7 @@ import {
   Users,
   X,
   Printer,
+  FileText,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import {
@@ -27,6 +28,7 @@ import {
 } from "../../utils/financialAidSync"
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import MaskedText from "../ui/masked-text"
+import { OfficialGuaranteeLetterModal } from "../ui/official-guarantee-letter-modal"
 
 export { FIXED_ASSISTANCE_AMOUNTS, type DisbursementStage, type SyncedDisbursementRecord }
 
@@ -237,6 +239,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
 
 export default function FinancialAidDisbursement() {
   const [disbursements, setDisbursements] = useState<SyncedDisbursementRecord[]>(() => getInitialDisbursementsForAdmin())
+  const [glModalRecord, setGlModalRecord] = useState<SyncedDisbursementRecord | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedStatusTab, setSelectedStatusTab] = useState<string>("ALL")
   const [selectedDetailsRecord, setSelectedDetailsRecord] = useState<SyncedDisbursementRecord | null>(null)
@@ -971,6 +974,17 @@ export default function FinancialAidDisbursement() {
                       </td>
                       <td className="px-4 py-3.5 text-right">
                         <div className="inline-flex items-center justify-end gap-1.5">
+                          {d.assistanceType.toLowerCase().includes("medical") && (
+                            <button
+                              type="button"
+                              onClick={() => setGlModalRecord(d)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
+                              title="Print Official Guarantee Letter (GL)"
+                            >
+                              <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>Print GL</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => setSelectedDetailsRecord(d)}
@@ -1128,8 +1142,19 @@ export default function FinancialAidDisbursement() {
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedDetailsRecord.assistanceType.toLowerCase().includes("medical") && (
+                  <button
+                    type="button"
+                    onClick={() => setGlModalRecord(selectedDetailsRecord)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Print Guarantee Letter (GL)</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => window.print()}
@@ -1150,6 +1175,21 @@ export default function FinancialAidDisbursement() {
             </div>
           </div>
         </div>
+      )}
+
+      {glModalRecord && (
+        <OfficialGuaranteeLetterModal
+          data={{
+            controlNo: `QC-SSDD-GL-2026-${String(glModalRecord.id || glModalRecord.disbursementId || "048912").replace(/\D/g, "").slice(-6).padStart(6, "0")}`,
+            applicationRef: glModalRecord.applicationRef || glModalRecord.disbursementId,
+            patientName: glModalRecord.applicantName,
+            qcidNumber: glModalRecord.applicationRef,
+            amount: glModalRecord.fixedAmount || 25000,
+            hospitalName: glModalRecord.hospitalName || glModalRecord.partnerHospital || "EAST AVENUE MEDICAL CENTER (EAMC)",
+            diagnosis: glModalRecord.remarks || "Chronic Kidney Disease (Stage 5) / Hemodialysis",
+          }}
+          onClose={() => setGlModalRecord(null)}
+        />
       )}
     </div>
   )

@@ -8,7 +8,6 @@ import {
   X,
   Pencil,
   Info,
-  ShieldCheck,
   User,
   IdCard,
   Search,

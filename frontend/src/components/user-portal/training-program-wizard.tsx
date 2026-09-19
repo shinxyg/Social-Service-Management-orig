@@ -12,7 +12,6 @@ import {
 import { useLanguage } from "../ui/language-context"
 import { DataPrivacyConsent } from "../ui/data-privacy-consent"
 import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
-import DocumentCameraModal from "../ui/document-camera-modal"
 
 function generateReference(qcid?: string) {
   if (qcid && qcid.trim()) return qcid.trim()

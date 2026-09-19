@@ -6,11 +6,7 @@ import {
   Search,
   MapPin,
 } from "lucide-react"
-import {
-  syncAppointmentToFinancialAid,
-  parseAppointmentDateTime,
-  checkAndAutoReleaseScheduledDisbursements,
-} from "../../utils/financialAidSync"
+
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { API_BASE } from "../../config/api"
 
@@ -587,34 +583,10 @@ export default function Appointments() {
 
     fetchAppointments()
 
+    // Periodic live sync without auto-completing appointments prematurely
     const liveTimer = setInterval(() => {
       fetchAppointments()
-      checkAndAutoReleaseScheduledDisbursements()
-      const now = new Date()
-      setAppointments((prev) => {
-        let hasChanges = false
-        const updated = prev.map((a) => {
-          if (a.status === "scheduled" && a.scheduledDate) {
-            const dt = parseAppointmentDateTime(a.scheduledDate, a.scheduledTime)
-            if (dt && now.getTime() >= dt.getTime()) {
-              hasChanges = true
-              try {
-                const raw = localStorage.getItem("all_appointments_scheduled")
-                const localMap = raw ? JSON.parse(raw) : {}
-                localMap[a.id] = { status: "completed", scheduledDate: a.scheduledDate, scheduledTime: a.scheduledTime }
-                localMap[a.referenceNo] = { status: "completed", scheduledDate: a.scheduledDate, scheduledTime: a.scheduledTime }
-                localMap[`${a.referenceNo}_${a.concern}`] = { status: "completed", scheduledDate: a.scheduledDate, scheduledTime: a.scheduledTime }
-                localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
-              } catch {}
-              fetch(`${API_BASE}/api/appointments/${encodeURIComponent(a.referenceNo)}/complete`, { method: "PUT" }).catch(() => {})
-              return { ...a, status: "completed" as const }
-            }
-          }
-          return a
-        })
-        return hasChanges ? updated : prev
-      })
-    }, 5000)
+    }, 10000)
 
     const unsubscribeRealtime = subscribeToRealtimeChanges(() => {
       fetchAppointments()

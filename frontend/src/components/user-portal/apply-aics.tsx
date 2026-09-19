@@ -201,9 +201,12 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [pHouseNumber, setPHouseNumber] = useState("")
   const [pStreetName, setPStreetName] = useState("")
   const [pBarangay, setPBarangay] = useState("")
-  const [pPhoneNumber, setPPhoneNumber] = useState("")
   const [pEmail, setPEmail] = useState("")
   const [isSelfPatient, setIsSelfPatient] = useState(false)
+  const [partnerHospital, setPartnerHospital] = useState("East Avenue Medical Center (EAMC)")
+  const [partnerHospitalOther, setPartnerHospitalOther] = useState("")
+  const [medicalDiagnosis, setMedicalDiagnosis] = useState("")
+  const [hospitalBillEstimate, setHospitalBillEstimate] = useState("")
 
   const [iRelation, setIRelation] = useState("")
   const [iFirstName, setIFirstName] = useState("")
@@ -829,6 +832,9 @@ const handleFinalSubmit = async () => {
           informantAddress: `${[iHouseNumber, iStreetName].filter(Boolean).join(" ")}${iBarangay ? ` Brgy. ${iBarangay}` : ""}`,
           priorAidOffice,
           priorAidType,
+          partnerHospital: partnerHospital === "Other" ? (partnerHospitalOther || "Accredited Health Facility") : partnerHospital,
+          medicalDiagnosis,
+          hospitalBillEstimate,
         }
 
     formData.append("details", JSON.stringify(details))
@@ -1197,6 +1203,65 @@ const handleFinalSubmit = async () => {
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t("chooseAssistanceType")} **</label>
                   <div className="w-full h-11 rounded-lg border border-gray-300 bg-gray-50 px-3.5 flex items-center text-sm font-medium text-gray-800">
                     {t("medicinesMedicalSupplies")}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4 space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      Accredited Partner Hospital / Healthcare Facility *
+                    </label>
+                    <select
+                      value={partnerHospital}
+                      onChange={(e) => setPartnerHospital(e.target.value)}
+                      className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                    >
+                      <option value="East Avenue Medical Center (EAMC)">East Avenue Medical Center (EAMC)</option>
+                      <option value="Quezon City General Hospital (QCGH)">Quezon City General Hospital (QCGH)</option>
+                      <option value="National Kidney and Transplant Institute (NKTI)">National Kidney and Transplant Institute (NKTI)</option>
+                      <option value="Philippine Heart Center (PHC)">Philippine Heart Center (PHC)</option>
+                      <option value="Lung Center of the Philippines (LCP)">Lung Center of the Philippines (LCP)</option>
+                      <option value="Philippine Children’s Medical Center (PCMC)">Philippine Children’s Medical Center (PCMC)</option>
+                      <option value="Quirino Memorial Medical Center (QMMC)">Quirino Memorial Medical Center (QMMC)</option>
+                      <option value="St. Luke’s Medical Center – Quezon City">St. Luke’s Medical Center – Quezon City</option>
+                      <option value="Novaliches District Hospital (NDH)">Novaliches District Hospital (NDH)</option>
+                      <option value="Rosario Maclang Bautista General Hospital (RMBGH)">Rosario Maclang Bautista General Hospital (RMBGH)</option>
+                      <option value="Other">Other Accredited Health Facility</option>
+                    </select>
+                  </div>
+
+                  {partnerHospital === "Other" && (
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Specify Hospital / Facility Name *</label>
+                      <input
+                        value={partnerHospitalOther}
+                        onChange={(e) => setPartnerHospitalOther(e.target.value)}
+                        placeholder="e.g. Philippine General Hospital (PGH)"
+                        className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Medical Condition / Diagnosis *</label>
+                      <input
+                        value={medicalDiagnosis}
+                        onChange={(e) => setMedicalDiagnosis(e.target.value)}
+                        placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
+                        className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Estimated Hospital Bill / Prescription (₱)</label>
+                      <input
+                        value={hospitalBillEstimate}
+                        onChange={(e) => setHospitalBillEstimate(e.target.value.replace(/\D/g, ""))}
+                        placeholder="e.g. 25000"
+                        className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        inputMode="numeric"
+                      />
+                    </div>
                   </div>
                 </div>
               </>
