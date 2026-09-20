@@ -290,8 +290,8 @@ function AppointmentCard({
   )
 }
 
-function getAppointmentDeduplicationKey(a: { referenceNo?: string; applicantName?: string; concern?: string; module?: string }): string {
-  const cleanName = String(a.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
+function getAppointmentDeduplicationKey(a: { id?: string; referenceNo?: string; applicantName?: string; concern?: string; module?: string }): string {
+  const cleanRef = String(a.referenceNo || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim()
   const cleanConcern = String(a.concern || "")
     .toLowerCase()
     .replace(/assistance/g, "")
@@ -300,11 +300,15 @@ function getAppointmentDeduplicationKey(a: { referenceNo?: string; applicantName
     .replace(/capital/g, "")
     .replace(/[^a-z0-9]/g, "")
     .trim()
-  if (cleanName) {
-    return `name_${cleanName}_${cleanConcern}`
+  if (cleanRef) {
+    return `ref_${cleanRef}_${cleanConcern}`
   }
-  const cleanRef = String(a.referenceNo || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim()
-  return `ref_${cleanRef}_${cleanConcern}`
+  const cleanId = String(a.id || "").toLowerCase().trim()
+  if (cleanId) {
+    return `id_${cleanId}_${cleanConcern}`
+  }
+  const cleanName = String(a.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
+  return `name_${cleanName}_${cleanConcern}`
 }
 
 export default function Appointments() {
@@ -393,6 +397,13 @@ export default function Appointments() {
                   const apptId = `db-appt-${a.id}`
                   const ref = a.qc_id || a.qcid || a.reference_no || a.reference_number || ""
                   const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${a.concern}`]
+                  const hasDate = Boolean(cached?.scheduledDate || a.scheduled_date)
+                  const statusVal: AppointmentStatus = a.status === 'completed' || cached?.status === 'completed'
+                    ? 'completed'
+                    : hasDate
+                    ? 'scheduled'
+                    : 'pending'
+
                   return {
                     id: apptId,
                     referenceNo: ref,
@@ -400,7 +411,7 @@ export default function Appointments() {
                     applicantName: a.applicant_name,
                     submittedAt: a.created_at || new Date().toISOString(),
                     concern: a.concern,
-                    status: (cached?.status || a.status || "pending") as AppointmentStatus,
+                    status: statusVal,
                     scheduledDate: cached?.scheduledDate || a.scheduled_date,
                     scheduledTime: cached?.scheduledTime || a.scheduled_time,
                     officeLocation: cached?.officeLocation || a.office_location,
@@ -424,6 +435,11 @@ export default function Appointments() {
                   const apptId = `aics-appt-${app.id || ref}`
                   const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${cleanType}`]
                   const isDone = app.status === "completed" || app.status === "released" || cached?.status === "completed"
+                  const hasDate = Boolean(cached?.scheduledDate || (app.details as any)?.appointmentDate)
+                  const apptStatus: AppointmentStatus = isDone 
+                    ? "completed" 
+                    : (hasDate ? "scheduled" : "pending")
+
                   appts.push({
                     id: apptId,
                     referenceNo: ref,
@@ -431,10 +447,10 @@ export default function Appointments() {
                     applicantName: `${app.first_name || ""} ${app.middle_name || ""} ${app.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY APPLICANT",
                     submittedAt: app.created_at || new Date().toISOString(),
                     concern: cleanType,
-                    status: isDone ? "completed" : ((cached?.status || "pending") as AppointmentStatus),
-                    scheduledDate: cached?.scheduledDate,
-                    scheduledTime: cached?.scheduledTime,
-                    officeLocation: cached?.officeLocation || "Quezon City Hall",
+                    status: apptStatus,
+                    scheduledDate: cached?.scheduledDate || (app.details as any)?.appointmentDate,
+                    scheduledTime: cached?.scheduledTime || (app.details as any)?.appointmentTime,
+                    officeLocation: cached?.officeLocation || (app.details as any)?.appointmentVenue || "Quezon City Hall",
                     notes: cached?.notes,
                   })
                 }
