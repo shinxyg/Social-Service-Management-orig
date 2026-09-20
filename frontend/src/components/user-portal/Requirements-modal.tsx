@@ -46,8 +46,7 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
         body: "Para sa Pasyente",
         list: [
           "Medical Certificate / Clinical Abstract",
-          "Reseta",
-          "Statement of Account (SOA) / Hospital Bill",
+          "Hospital Bill / SOA",
           "Barangay Certificate of Indigency",
           "Gov Service ID",
         ],
