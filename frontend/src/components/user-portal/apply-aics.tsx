@@ -1231,26 +1231,14 @@ const handleFinalSubmit = async () => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Medical Condition / Diagnosis *</label>
-                      <input
-                        value={medicalDiagnosis}
-                        onChange={(e) => setMedicalDiagnosis(e.target.value)}
-                        placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
-                        className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Estimated Hospital Bill / Prescription (₱)</label>
-                      <input
-                        value={hospitalBillEstimate}
-                        onChange={(e) => setHospitalBillEstimate(e.target.value.replace(/\D/g, ""))}
-                        placeholder="e.g. 25000"
-                        className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                        inputMode="numeric"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Medical Condition / Diagnosis *</label>
+                    <input
+                      value={medicalDiagnosis}
+                      onChange={(e) => setMedicalDiagnosis(e.target.value)}
+                      placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
+                      className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                    />
                   </div>
                 </div>
               </>
