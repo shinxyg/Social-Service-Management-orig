@@ -655,36 +655,11 @@ export default function AICS() {
                 <p className="text-xs text-slate-400 mt-1">{reviewingApp.assistance_type} &bull; Applied on {formatDate(reviewingApp.created_at)}</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-3">
                 <span className={`inline-flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl border bg-white/10 text-white border-white/20 backdrop-blur-xs`}>
                   <span className={`w-2 h-2 rounded-full ${currentStatus === 'approved' || currentStatus === 'completed' ? 'bg-emerald-400' : currentStatus === 'rejected' ? 'bg-rose-400' : 'bg-amber-400 animate-pulse'}`}></span>
                   Current: {badge.label}
                 </span>
-
-                {/* Primary Decision Actions when not yet finalized */}
-                {currentStatus !== 'approved' && currentStatus !== 'completed' && currentStatus !== 'rejected' && (
-                  <>
-                    <button
-                      type="button"
-                      disabled={actionLoading}
-                      onClick={() => updateStatus('approved')}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Approve</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={actionLoading}
-                      onClick={() => setShowRejectModal(true)}
-                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <XCircle className="w-4 h-4" />
-                      <span>Reject</span>
-                    </button>
-                  </>
-                )}
 
                 <button
                   type="button"
@@ -695,7 +670,7 @@ export default function AICS() {
                   }}
                   className="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition cursor-pointer"
                 >
-                  Back to List
+                  Close
                 </button>
               </div>
             </div>
@@ -869,9 +844,66 @@ export default function AICS() {
 
                   {reviewingDocs.length === 0 && (
                     <div className="col-span-4 py-8 text-center text-slate-400 text-xs">
-                      Walang nakitang documentary attachments.
+                      No documentary attachments found.
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Bottom Action Footer */}
+              <div className="mt-8 pt-5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {/* Left Side: Approve and Reject Actions */}
+                <div className="flex items-center gap-3">
+                  {currentStatus !== 'approved' && currentStatus !== 'completed' && currentStatus !== 'rejected' && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => updateStatus('approved')}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Approve</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => setShowRejectModal(true)}
+                        className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        <span>Reject</span>
+                      </button>
+                    </>
+                  )}
+                  {(currentStatus === 'approved' || currentStatus === 'completed') && (
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Case Approved & Queued in Appointments</span>
+                    </span>
+                  )}
+                  {currentStatus === 'rejected' && (
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold">
+                      <XCircle className="w-4 h-4 text-rose-600" />
+                      <span>Case Disqualified / Rejected</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Right Side: Close Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentView('dashboard')
+                      setReviewingApp(null)
+                      setReviewingDocs([])
+                    }}
+                    className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
 
