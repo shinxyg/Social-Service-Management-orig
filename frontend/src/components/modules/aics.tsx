@@ -661,7 +661,7 @@ export default function AICS() {
             <div className="bg-slate-900 text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs uppercase tracking-widest font-bold text-blue-400">Social Case Review & Decision Hub</span>
+                  <span className="text-xs uppercase tracking-widest font-bold text-blue-400">Social Case Review</span>
                   <span className="text-slate-500">&bull;</span>
                   <span className="text-xs font-mono text-slate-300">{reviewingApp.reference_no}</span>
                 </div>
@@ -669,11 +669,36 @@ export default function AICS() {
                 <p className="text-xs text-slate-400 mt-1">{reviewingApp.assistance_type} &bull; Applied on {formatDate(reviewingApp.created_at)}</p>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className={`inline-flex items-center gap-2 text-xs font-bold px-3.5 py-1.5 rounded-xl border bg-white/10 text-white border-white/20 backdrop-blur-xs`}>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className={`inline-flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl border bg-white/10 text-white border-white/20 backdrop-blur-xs`}>
+                  <span className={`w-2 h-2 rounded-full ${currentStatus === 'approved' || currentStatus === 'completed' ? 'bg-emerald-400' : currentStatus === 'rejected' ? 'bg-rose-400' : 'bg-amber-400 animate-pulse'}`}></span>
                   Current: {badge.label}
                 </span>
+
+                {/* Primary Decision Actions when not yet finalized */}
+                {currentStatus !== 'approved' && currentStatus !== 'completed' && currentStatus !== 'rejected' && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => updateStatus('approved')}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Approve</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => setShowRejectModal(true)}
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      <span>Reject</span>
+                    </button>
+                  </>
+                )}
 
                 <button
                   type="button"
@@ -682,168 +707,14 @@ export default function AICS() {
                     setReviewingApp(null)
                     setReviewingDocs([])
                   }}
-                  className="px-3.5 py-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition cursor-pointer"
+                  className="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition cursor-pointer"
                 >
                   Back to List
                 </button>
               </div>
             </div>
 
-            {/* Visual 7-Stage Flow Progress Indicator */}
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 overflow-x-auto">
-              <div className="flex items-center justify-between min-w-[650px] text-xs">
-                {[
-                  { key: 'submit_pending', label: '1. Submitted' },
-                  { key: 'waiting_approval', label: '2. Screening' },
-                  { key: 'scheduled', label: '3. Scheduled' },
-                  { key: 'under_review', label: '4. Under Review' },
-                  { key: 'outcome', label: '5. Decision / Referral' },
-                ].map((st, idx) => {
-                  let isDone = false
-                  let isCurrent = false
-
-                  if (st.key === 'submit_pending') {
-                    isDone = true
-                    if (currentStatus === 'submit_pending' || currentStatus === 'pending') isCurrent = true
-                  } else if (st.key === 'waiting_approval') {
-                    if (['waiting_approval', 'scheduled', 'under_review', 'approved', 'for_referral', 'referred', 'completed'].includes(currentStatus)) isDone = true
-                    if (currentStatus === 'waiting_approval') isCurrent = true
-                  } else if (st.key === 'scheduled') {
-                    if (['scheduled', 'under_review', 'approved', 'for_referral', 'referred', 'completed'].includes(currentStatus)) isDone = true
-                    if (currentStatus === 'scheduled') isCurrent = true
-                  } else if (st.key === 'under_review') {
-                    if (['under_review', 'approved', 'for_referral', 'referred', 'completed'].includes(currentStatus)) isDone = true
-                    if (currentStatus === 'under_review') isCurrent = true
-                  } else if (st.key === 'outcome') {
-                    if (['approved', 'for_referral', 'referred', 'rejected', 'completed'].includes(currentStatus)) {
-                      isDone = true
-                      isCurrent = true
-                    }
-                  }
-
-                  return (
-                    <div key={st.key} className="flex items-center gap-2">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] ${
-                        isCurrent 
-                          ? 'bg-blue-600 text-white ring-4 ring-blue-100' 
-                          : isDone 
-                          ? 'bg-emerald-500 text-white' 
-                          : 'bg-slate-200 text-slate-600'
-                      }`}>
-                        {idx + 1}
-                      </div>
-                      <span className={`font-semibold ${isCurrent ? 'text-blue-700 font-bold' : isDone ? 'text-slate-800' : 'text-slate-400'}`}>
-                        {st.label}
-                      </span>
-                      {idx < 4 && <div className={`w-8 h-0.5 ${isDone ? 'bg-emerald-300' : 'bg-slate-200'}`} />}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
             <div className="p-6 sm:p-8">
-              {/* Dynamic Action Bar based on current stage */}
-              <div className="mb-8 p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">Action & Decision:</span>
-                    <p className="text-sm font-semibold text-slate-900 mt-0.5">
-                      {currentStatus === 'approved' || currentStatus === 'completed'
-                        ? '✓ Approved: Case is active and queued in the Appointments module (sidebar).'
-                        : currentStatus === 'for_referral' || currentStatus === 'referred'
-                        ? '🏛️ Inter-Agency Referral: Official endorsement letter issued.'
-                        : currentStatus === 'rejected'
-                        ? '✕ Disqualified / Denied: Reason recorded.'
-                        : 'Review applicant documents and decide: Approve, Refer to Agency, or Reject.'}
-                    </p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Primary Decision Actions when not yet finalized */}
-                    {currentStatus !== 'approved' && currentStatus !== 'completed' && currentStatus !== 'for_referral' && currentStatus !== 'referred' && currentStatus !== 'rejected' && (
-                      <>
-                        <button
-                          type="button"
-                          disabled={actionLoading}
-                          onClick={() => updateStatus('approved')}
-                          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                          title="Approves assistance and automatically adds to Appointments module in the sidebar"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>✓ Approve Application</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={actionLoading}
-                          onClick={() => setShowReferralModal(true)}
-                          className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Building2 className="w-4 h-4" />
-                          <span>🏛️ Refer to Agency (PCSO/DSWD)</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={actionLoading}
-                          onClick={() => setShowRejectModal(true)}
-                          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          <span>✕ Reject Application</span>
-                        </button>
-                      </>
-                    )}
-
-                    {/* Print Guarantee Letter if Approved */}
-                    {(currentStatus === 'approved' || currentStatus === 'completed') && (
-                      <>
-                        <div className="px-3 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          <span>Queued in Appointments (Sidebar)</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setGlApp(reviewingApp)}
-                          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Printer className="w-4 h-4" />
-                          <span>📄 Print Guarantee Letter (GL)</span>
-                        </button>
-                      </>
-                    )}
-
-                    {/* Print Referral Letter if Referred */}
-                    {(currentStatus === 'for_referral' || currentStatus === 'referred') && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRefLetterApp({
-                            controlNo: `QC-SSDD-REF-2026-${String(reviewingApp.id).padStart(6, '0')}`,
-                            applicationRef: reviewingApp.reference_no,
-                            patientName: fullName(reviewingApp),
-                            qcidNumber: reviewingApp.qc_id || reviewingApp.reference_no,
-                            barangay: reviewingApp.address?.split(',')[1]?.trim() || (reviewingApp.details as any)?.beneficiaryBarangay || 'Commonwealth',
-                            district: '2',
-                            age: reviewingApp.age || '45',
-                            gender: reviewingApp.gender || 'Female',
-                            diagnosis: (reviewingApp.details as any)?.medicalDiagnosis || 'Chronic Kidney Disease / Surgical Intervention',
-                            hospitalName: (reviewingApp.details as any)?.partnerHospital || (reviewingApp.details as any)?.partnerHospitalOther || 'East Avenue Medical Center',
-                            targetAgency: (reviewingApp.details as any)?.referralAgency || 'PCSO',
-                            referralReason: (reviewingApp.details as any)?.referralNotes || 'Total financial requirement exceeds local budget capacity. Respectfully endorsed for partner agency financial assistance.',
-                          })
-                        }}
-                        className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Printer className="w-4 h-4" />
-                        <span>🏛️ Print Official Referral Letter</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
 
               {/* Applicant & Case Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
