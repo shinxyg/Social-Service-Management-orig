@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Clock, ShieldAlert, LogIn } from "lucide-react"
+import { Clock, ShieldAlert } from "lucide-react"
 import { API_BASE } from "../../config/api"
 
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
@@ -281,7 +281,6 @@ export function SessionInactivityWatcher() {
                 : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-blue-200"
             }`}
           >
-            <LogIn className="w-4 h-4" />
             <span>Log In Again</span>
           </button>
         </div>
