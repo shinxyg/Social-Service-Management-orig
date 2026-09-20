@@ -3999,17 +3999,12 @@ export default function MyApplications() {
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1 border-t border-blue-100 dark:border-slate-700/60 flex-wrap">
-                          <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
-                            {isGLIssued ? (
-                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                Naaprubahan na ang tulong. I-click ang &quot;View GL&quot; upang makita ang Guarantee Letter.
-                              </span>
-                            ) : (
-                              "* Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview."
-                            )}
-                          </p>
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                          {!isGLIssued ? (
+                            <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                              * Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview.
+                            </p>
+                          ) : <div />}
+                          <div className="flex items-center gap-1.5 flex-wrap ml-auto">
                             {isGLIssued && (
                               <button
                                 type="button"
