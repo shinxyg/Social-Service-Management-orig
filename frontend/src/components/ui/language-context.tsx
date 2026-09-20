@@ -1789,6 +1789,16 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Iba pang katibayan o dokumento na sumusuporta sa inyong aplikasyon.",
     bis: "Uban pang pamatuod o dokumento nga nagsuporta sa inyong aplikasyon.",
   },
+  cameraAccessError: {
+    en: "Camera access is blocked or unavailable. Please allow camera permission in your browser or upload a file directly.",
+    tl: "Hindi ma-access ang camera. Pakitiyak na pinapayagan ang camera permission sa inyong browser o mag-upload ng file.",
+    bis: "Dili ma-access ang camera. Palihug tugoti ang camera permission sa inyong browser o mag-upload og file.",
+  },
+  cameraBlockedDesc: {
+    en: "Please check your browser address bar permissions to allow Camera access.",
+    tl: "Pakitingnan ang permission settings sa address bar ng inyong browser upang i-allow ang Camera.",
+    bis: "Palihug tan-awa ang settings sa address bar sa inyong browser aron i-allow ang Camera.",
+  },
 }
 
 interface LanguageContextValue {

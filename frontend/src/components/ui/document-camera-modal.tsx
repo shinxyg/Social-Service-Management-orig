@@ -202,13 +202,32 @@ export default function DocumentCameraModal({
 
           {}
           {cameraError && (
-            <div className="absolute inset-x-4 top-4 bg-red-600/90 text-white text-xs p-3 rounded-xl flex items-start gap-2 backdrop-blur-xs">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{cameraError}</span>
+            <div className="absolute inset-4 bg-black/80 text-white text-xs p-4 rounded-xl flex flex-col items-center justify-center text-center gap-2.5 backdrop-blur-xs">
+              <AlertCircle className="w-8 h-8 text-rose-500 shrink-0" />
+              <div>
+                <p className="font-bold text-sm text-rose-300">Camera Access Denied</p>
+                <p className="mt-1 text-slate-300 max-w-xs text-[11px]">
+                  Hindi pinapayagan ang camera permission sa inyong browser. Maaari ninyong gamitin ang button sa ibaba upang pumili ng litrato mula sa inyong device.
+                </p>
+              </div>
+              <label className="mt-1 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer text-xs transition shadow-sm">
+                <span>📁 Pumili ng File / Photo</span>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) {
+                      onCapture(f)
+                      onClose()
+                    }
+                  }}
+                />
+              </label>
             </div>
           )}
 
-          {}
           {!capturedPhotoUrl && !cameraError && (
             <button
               type="button"
