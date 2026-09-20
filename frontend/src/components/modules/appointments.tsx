@@ -349,46 +349,26 @@ function AppointmentCard({
 
             {/* 3. Approved / Completed Stage */}
             {(appt.status === "approved" || appt.status === "completed") && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onSchedule(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Edit Schedule</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onPrintGL?.(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  <span>📄 Print GL</span>
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => onPrintGL?.(appt)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>📄 Print GL</span>
+              </button>
             )}
 
             {/* 4. Referred Stage */}
             {appt.status === "referred" && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onSchedule(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Edit Schedule</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onPrintReferral?.(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  <span>🏛️ Print Referral</span>
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => onPrintReferral?.(appt)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>🏛️ Print Referral</span>
+              </button>
             )}
           </div>
         </div>
