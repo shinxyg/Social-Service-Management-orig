@@ -371,7 +371,7 @@ exports.scheduleAppointment = async (req, res) => {
                'appointmentVenue', $3::text
              ),
              updated_at = NOW()
-         WHERE reference_no = $4 OR qc_id = $4 OR id::text = $4`,
+         WHERE reference_no = $4 OR id::text = $4`,
         [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', cleanId]
       );
     } catch (aicsSyncErr) {
@@ -475,7 +475,7 @@ exports.completeAppointment = async (req, res) => {
 
     try {
       await db.query(
-        `UPDATE aics_applications SET status = 'approved', updated_at = NOW() WHERE reference_no = $1 OR qc_id = $1 OR id::text = $1`,
+        `UPDATE aics_applications SET status = 'approved', updated_at = NOW() WHERE reference_no = $1 OR id::text = $1`,
         [cleanId]
       );
     } catch (_) {}

@@ -662,12 +662,14 @@ const canProceedPersonal = Boolean(
             const rawSched = localStorage.getItem("all_appointments_scheduled")
             if (rawSched) {
               const parsed = JSON.parse(rawSched)
-              const localSched = parsed[ref] || parsed[`aics-appt-${activeApp.id}`]
-              if (localSched?.status) {
+              const exactKey = activeApp.reference_no || (activeApp.id ? `aics-appt-${activeApp.id}` : "")
+              const localSched = exactKey ? (parsed[exactKey] || (activeApp.id ? parsed[`aics-appt-${activeApp.id}`] : null)) : null
+              if (localSched?.status && rawSt === "pending") {
                 const schedSt = String(localSched.status).toLowerCase()
                 if (schedSt === "approved" || schedSt === "completed") cleanSt = "approved"
                 else if (schedSt === "referred") cleanSt = "referred"
                 else if (schedSt === "rejected") cleanSt = "rejected"
+                else if (schedSt === "scheduled" || schedSt === "under_review") cleanSt = "under_review"
               }
             }
           } catch {}

@@ -241,16 +241,6 @@ async function enrichApplicationWithSuffix(app) {
 
 exports.getApplications = async (req, res) => {
   try {
-    await db.query(`
-      UPDATE aics_applications
-      SET status = 'approved', updated_at = NOW()
-      WHERE status = 'under_review'
-        AND (
-          reference_no IN (SELECT reference_no FROM appointments WHERE status = 'completed')
-          OR qc_id IN (SELECT reference_no FROM appointments WHERE status = 'completed')
-        )
-    `).catch(() => {});
-
     const { status, qcId, email } = req.query;
     let query = 'SELECT * FROM aics_applications';
     const conditions = [];
@@ -289,17 +279,6 @@ exports.getApplications = async (req, res) => {
 exports.getApplicationByReference = async (req, res) => {
   try {
     const { referenceNo } = req.params;
-
-    await db.query(`
-      UPDATE aics_applications
-      SET status = 'approved', updated_at = NOW()
-      WHERE (reference_no = $1 OR qc_id = $1)
-        AND status = 'under_review'
-        AND (
-          reference_no IN (SELECT reference_no FROM appointments WHERE status = 'completed')
-          OR qc_id IN (SELECT reference_no FROM appointments WHERE status = 'completed')
-        )
-    `, [referenceNo]).catch(() => {});
 
     let appResult;
 
