@@ -546,6 +546,7 @@ export default function Appointments() {
             const data = await resAicsSettled.value.json()
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
+                const rawAppStatus = String(app.status || '').toLowerCase()
                 // Only show in Appointments if APPROVED for scheduling (or already scheduled / under review / referred / completed).
                 // Do NOT show if still in initial submit_pending or if rejected!
                 if (
