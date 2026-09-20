@@ -42,14 +42,20 @@ import {
 import { useLanguage } from "../ui/language-context"
 import MaskedText from "../ui/masked-text"
 import { OfficialGuaranteeLetterModal } from "../ui/official-guarantee-letter-modal"
+import { OfficialReferralLetterModal, type ReferralLetterData } from "../ui/official-referral-letter-modal"
 
 export type ApplicationStatus =
   | "Pending"
+  | "Submit Pending"
+  | "Waiting to Approve"
+  | "Scheduled"
   | "Under Review"
   | "For Assessment"
   | "Approved"
   | "For Release"
   | "Released"
+  | "For Referral"
+  | "Referred"
   | "Completed"
   | "Rejected"
   | "Needs Revision"
@@ -1695,6 +1701,7 @@ export default function MyApplications() {
   const [idCardApp, setIdCardApp] = useState<ApplicationRecord | null>(null)
   const [appointmentSlipApp, setAppointmentSlipApp] = useState<ApplicationRecord | null>(null)
   const [guaranteeLetterApp, setGuaranteeLetterApp] = useState<ApplicationRecord | null>(null)
+  const [referralLetterApp, setReferralLetterApp] = useState<ReferralLetterData | null>(null)
 
   const [appToDelete, setAppToDelete] = useState<ApplicationRecord | null>(null)
   const [appToPermanentDelete, setAppToPermanentDelete] = useState<ApplicationRecord | null>(null)
@@ -2149,22 +2156,45 @@ export default function MyApplications() {
                 rawTimestamp: appDate.getTime(),
                 dateApplied: formatAppDate(rawDate, app),
                 status:
-                  app.status === "approved"
+                  app.status === "approved" || app.status === "completed"
                     ? "Approved"
                     : app.status === "released"
                     ? "Released"
                     : app.status === "for_release"
                     ? "For Release"
-                    : app.status === "assessment"
-                    ? "For Assessment"
-                    : "Under Review",
-                applicantName: app.full_name || `${userProfile.firstName} ${userProfile.lastName}`,
+                    : app.status === "scheduled"
+                    ? "Scheduled"
+                    : app.status === "waiting_approval"
+                    ? "Waiting to Approve"
+                    : app.status === "submit_pending"
+                    ? "Submit Pending"
+                    : app.status === "for_referral"
+                    ? "For Referral"
+                    : app.status === "referred"
+                    ? "Referred"
+                    : app.status === "rejected"
+                    ? "Rejected"
+                    : app.status === "assessment" || app.status === "under_review"
+                    ? "Under Review"
+                    : "Pending",
+                applicantName: app.full_name || [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`,
                 dateOfBirth: app.birth_date || userProfile.birthDateDisplay,
                 address:
                   app.address ||
                   `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
-                contactNumber: app.contact_number || userProfile.mobileNumber,
+                contactNumber: app.phone || app.contact_number || userProfile.mobileNumber,
                 email: app.email || userProfile.email,
+                details: app.details || {},
+                remarks:
+                  app.status === "referred" || app.status === "for_referral"
+                    ? `Referred to ${app.details?.referralAgency || "PCSO / DSWD"} (Official Referral Endorsement Released)`
+                    : app.status === "scheduled"
+                    ? `Nakatakda ang interview sa ${app.details?.appointmentDate || "Scheduled Date"}`
+                    : app.status === "approved"
+                    ? "Aprubado ang tulong pinansyal / Guarantee Letter mula sa QC"
+                    : app.status === "rejected"
+                    ? `Tinanggihan: ${app.details?.rejectionReason || "Hindi kwalipikado"}`
+                    : "Kasalukuyang pinoproseso sa ilalim ng SSDD Social Worker evaluation",
               }
             })
           allFoundApps.push(...mappedAics)
@@ -2872,24 +2902,103 @@ export default function MyApplications() {
           const isTrainingApp = isTrainingApplication(selectedApp)
           const isIdApp = isIdOrDocumentApplication(selectedApp)
 
+          if (selectedApp.status === "Referred" || selectedApp.status === "For Referral") {
+            const targetAgency = selectedApp.details?.referralAgency || "PCSO / DSWD Central / DOH"
+            return (
+              <div className="bg-purple-50 border border-purple-200 rounded-2xl p-6 shadow-xs space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2 text-purple-900 font-bold text-sm">
+                    <Building2 className="w-5 h-5 text-purple-600" />
+                    <span>Official Inter-Agency Referral Endorsement</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-200 text-purple-900">
+                    Referred to {targetAgency}
+                  </span>
+                </div>
+                <p className="text-xs text-purple-950 leading-relaxed">
+                  Ang inyong aplikasyon ay matagumpay na na-assess ng Social Worker. Dahil ang kailangang halaga para sa inyong gamot/operasyon/hospital bill ay lumampas sa pondo ng QC LGU, opisyal kayong inendorso sa <strong>{targetAgency}</strong> para sa kaukulang tulong pinansyal.
+                </p>
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReferralLetterApp({
+                        controlNo: `QC-SSDD-REF-2026-${String(selectedApp.applicationNo || "048912").replace(/\D/g, "").slice(-6).padStart(6, "0")}`,
+                        applicationRef: selectedApp.applicationNo,
+                        patientName: selectedApp.applicantName,
+                        qcidNumber: selectedApp.applicationNo,
+                        barangay: selectedApp.address?.split(',')[1]?.trim() || selectedApp.details?.beneficiaryBarangay || 'Commonwealth',
+                        district: '2',
+                        age: selectedApp.details?.age || selectedApp.dateOfBirth ? '45' : '—',
+                        gender: selectedApp.sex || selectedApp.details?.gender || '—',
+                        diagnosis: selectedApp.details?.medicalDiagnosis || selectedApp.details?.condition || 'Medical Confinement / Specialty Care',
+                        hospitalName: selectedApp.details?.partnerHospital || 'East Avenue Medical Center (EAMC)',
+                        targetAgency: targetAgency,
+                        referralReason: selectedApp.details?.referralNotes || 'Financial requirement exceeds local capacity. Endorsed for partner agency assistance.',
+                      })
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>View / Print Official Referral Letter</span>
+                  </button>
+                </div>
+              </div>
+            )
+          }
+
+          if (selectedApp.status === "Scheduled") {
+            const schedDate = selectedApp.details?.appointmentDate || "Scheduled Assessment Window"
+            const schedVenue = selectedApp.details?.appointmentVenue || "Quezon City Hall Complex - SSDD Assessment Area"
+            return (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 shadow-xs space-y-3 text-xs text-indigo-950">
+                <div className="flex items-center gap-2 font-bold text-sm text-indigo-900">
+                  <Calendar className="w-5 h-5 text-indigo-600" />
+                  <span>Nakatakdang Iskedyul ng Panayam (Appointment Confirmed)</span>
+                </div>
+                <div className="p-3 bg-white rounded-xl border border-indigo-100 space-y-1">
+                  <p><strong>Petsa at Oras:</strong> {schedDate}</p>
+                  <p><strong>Lugar / Venue:</strong> {schedVenue}</p>
+                  <p className="text-slate-500 italic mt-1">Pakidala ang orihinal na kopya ng Clinical Abstract, Hospital Bill, Indigency, at QC ID.</p>
+                </div>
+              </div>
+            )
+          }
+
+          if (selectedApp.status === "Rejected") {
+            return (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-5 shadow-xs flex items-start gap-3">
+                <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <div className="space-y-1 text-xs text-red-950">
+                  <p className="font-bold text-sm text-red-900">Application Denied / Disqualified</p>
+                  <p className="text-red-800 leading-relaxed">
+                    Dahilan: <strong>{selectedApp.details?.rejectionReason || selectedApp.remarks || "Hindi pumasa sa mga kwalipikasyon o residency requirements ng lungsod."}</strong>
+                  </p>
+                </div>
+              </div>
+            )
+          }
+
           if (!isApprovedOrReleased) {
+            const isWaitApprove = selectedApp.status === "Waiting to Approve"
+            const isSubmitPending = selectedApp.status === "Submit Pending" || selectedApp.status === "Pending"
             return (
               <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-5 shadow-xs flex items-start gap-3">
                 <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-0.5 text-xs text-amber-900">
                   <p className="font-bold text-sm text-amber-950">
-                    {isTrainingApp
-                      ? "Kasalukuyang Sinusuri ang Training Program Aplikasyon (Pending / Under Review)"
-                      : isIdApp
-                      ? "Kasalukuyang Sinusuri ang ID Aplikasyon (Pending / Under Review)"
-                      : "Kasalukuyang Sinusuri ang Aplikasyon (Pending / Under Review)"}
+                    {isSubmitPending
+                      ? "1. Naisumite na ang Aplikasyon (Submit Pending)"
+                      : isWaitApprove
+                      ? "2. Pre-Approved para sa Scheduling (Waiting to Approve)"
+                      : "4. Kasalukuyang Sinusuri ng Social Worker (Under Review)"}
                   </p>
                   <p className="text-amber-800 leading-relaxed">
-                    {isTrainingApp
-                      ? "Ang inyong aplikasyon sa libreng pagsasanay ay sinusuri ng SSDD Skills Training Division. Awtomatikong magkakaroon ng Training Schedule at Module access kapag na-aprubahan."
-                      : isIdApp
-                      ? "Ang inyong ID aplikasyon at mga isinumiteng dokumento ay pinoproseso at sinusuri pa ng Social Worker / Verification Officer. Awtomatikong magkakaroon ng Official ID Record at Digital ID kapag na-aprubahan na ito."
-                      : "Ang inyong aplikasyon ay pinoproseso at sinusuri pa ng Social Worker. Awtomatikong magkakaroon ng Fixed Financial Aid record at appointment schedule para sa payout kapag na-aprubahan na ito."}
+                    {isSubmitPending
+                      ? "Matagumpay na natanggap ang inyong dokumento. Kasalukuyang naka-queue para sa paunang pagsusuri ng intake officer."
+                      : isWaitApprove
+                      ? "Naipasa ang unang screening ng dokumento. Inihahanda na ang inyong appointment schedule sa SSDD Center."
+                      : "Kasalukuyang sinusuri ang inyong profile at medical condition upang makapaglabas ng Guarantee Letter o Referral."}
                   </p>
                 </div>
               </div>
@@ -4144,6 +4253,14 @@ export default function MyApplications() {
             amount: resolveFixedAmount(guaranteeLetterApp.assistance) || 25000,
           }}
           onClose={() => setGuaranteeLetterApp(null)}
+        />
+      )}
+
+      {referralLetterApp && (
+        <OfficialReferralLetterModal
+          data={referralLetterApp}
+          onClose={() => setReferralLetterApp(null)}
+          canPrint={true}
         />
       )}
     </div>

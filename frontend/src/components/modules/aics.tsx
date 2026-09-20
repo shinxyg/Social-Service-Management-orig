@@ -1,9 +1,27 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { API_BASE as APP_API_BASE } from '../../config/api'
 import { getSavedProfilePhoto } from '../../utils/profilePhoto'
-import { FIXED_ASSISTANCE_AMOUNTS } from '../../utils/financialAidSync'
+import { FIXED_ASSISTANCE_AMOUNTS, pushUserNotification } from '../../utils/financialAidSync'
+import { notifyApplicationChange } from '../../utils/realtimeSync'
 import MaskedText from '../ui/masked-text'
 import { OfficialGuaranteeLetterModal } from '../ui/official-guarantee-letter-modal'
+import { OfficialReferralLetterModal, type ReferralLetterData } from '../ui/official-referral-letter-modal'
+import { 
+  Calendar, 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle, 
+  Building2, 
+  UserCheck, 
+  XCircle, 
+  Search, 
+  FileText, 
+  Printer, 
+  Send,
+  X,
+  ChevronRight,
+  Sparkles
+} from 'lucide-react'
 
 const API_BASE = `${APP_API_BASE}/api/aics`
 
@@ -28,7 +46,17 @@ const DESIGN = {
   },
 }
 
-type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'completed'
+export type ApplicationStatus = 
+  | 'submit_pending' 
+  | 'waiting_approval' 
+  | 'scheduled' 
+  | 'under_review' 
+  | 'approved' 
+  | 'for_referral' 
+  | 'referred' 
+  | 'rejected' 
+  | 'pending' 
+  | 'completed'
 
 interface AicsDocument {
   id: number
@@ -104,8 +132,40 @@ function formatDate(dateStr: string) {
   }
 }
 
+export function getStatusBadgeInfo(status: string) {
+  const s = String(status || '').toLowerCase()
+  switch (s) {
+    case 'submit_pending':
+    case 'pending':
+      return { label: 'Submit Pending', color: 'bg-amber-100 text-amber-800 border-amber-200', step: 1 }
+    case 'waiting_approval':
+    case 'for_screening':
+      return { label: 'Waiting to Approve', color: 'bg-orange-100 text-orange-800 border-orange-200', step: 2 }
+    case 'scheduled':
+    case 'set_scheduling':
+      return { label: 'Scheduled', color: 'bg-indigo-100 text-indigo-800 border-indigo-200', step: 3 }
+    case 'under_review':
+    case 'under_assessment':
+      return { label: 'Under Review', color: 'bg-blue-100 text-blue-800 border-blue-200', step: 4 }
+    case 'approved':
+    case 'completed':
+      return { label: 'Approved', color: 'bg-emerald-100 text-emerald-800 border-emerald-200', step: 5 }
+    case 'for_referral':
+      return { label: 'For Referral', color: 'bg-purple-100 text-purple-800 border-purple-200', step: 5 }
+    case 'referred':
+      return { label: 'Referred', color: 'bg-teal-100 text-teal-800 border-teal-200', step: 5 }
+    case 'rejected':
+    case 'denied':
+      return { label: 'Rejected / Denied', color: 'bg-red-100 text-red-800 border-red-200', step: 5 }
+    default:
+      return { label: status || 'Pending', color: 'bg-gray-100 text-gray-800 border-gray-200', step: 1 }
+  }
+}
+
 export default function AICS() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'admin-review'>('dashboard')
+  const [selectedTab, setSelectedTab] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState<string>('')
 
   const [applications, setApplications] = useState<AicsApplication[]>([])
   const [loading, setLoading] = useState(false)
@@ -118,7 +178,29 @@ export default function AICS() {
   const [showDeceasedInfo, setShowDeceasedInfo] = useState(false)
   const [showBeneficiaryInfo, setShowBeneficiaryInfo] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+
+  // Modals for Actions
   const [glApp, setGlApp] = useState<any | null>(null)
+  const [refLetterApp, setRefLetterApp] = useState<ReferralLetterData | null>(null)
+  
+  // Schedule Modal
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [scheduleDate, setScheduleDate] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 2)
+    return d.toISOString().split('T')[0]
+  })
+  const [scheduleTime, setScheduleTime] = useState('09:00 AM')
+  const [scheduleVenue, setScheduleVenue] = useState('Quezon City Hall Complex - SSDD Assessment Area')
+
+  // Referral Modal
+  const [showReferralModal, setShowReferralModal] = useState(false)
+  const [referralAgency, setReferralAgency] = useState('PCSO')
+  const [referralNotes, setReferralNotes] = useState('')
+
+  // Reject Modal
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [rejectReason, setRejectReason] = useState('Non-resident of Quezon City / Unverified Residency Documents')
 
   const fetchApplications = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -143,7 +225,7 @@ export default function AICS() {
 
     const interval = setInterval(() => {
       fetchApplications(true)
-    }, 2000)
+    }, 2500)
 
     const handleSync = () => {
       fetchApplications(true)
@@ -151,12 +233,14 @@ export default function AICS() {
 
     window.addEventListener('storage', handleSync)
     window.addEventListener('aics_application_submitted', handleSync)
+    window.addEventListener('aics_applications_updated', handleSync)
     window.addEventListener('focus', handleSync)
 
     return () => {
       clearInterval(interval)
       window.removeEventListener('storage', handleSync)
       window.removeEventListener('aics_application_submitted', handleSync)
+      window.removeEventListener('aics_applications_updated', handleSync)
       window.removeEventListener('focus', handleSync)
     }
   }, [fetchApplications])
@@ -182,33 +266,105 @@ export default function AICS() {
     }
   }
 
-  const updateStatus = async (status: ApplicationStatus) => {
+  // Fast optimistic status updater with real-time push notification
+  const updateStatus = async (
+    newStatus: ApplicationStatus, 
+    meta?: { 
+      rejectionReason?: string
+      referralAgency?: string
+      referralNotes?: string
+      appointmentDate?: string
+      appointmentVenue?: string 
+    }
+  ) => {
     if (!reviewingApp) return
+    const targetApp = reviewingApp
     setActionLoading(true)
+
+    // Optimistic local state update
+    const updatedDetails = {
+      ...(targetApp.details || {}),
+      ...(meta?.rejectionReason ? { rejectionReason: meta.rejectionReason } : {}),
+      ...(meta?.referralAgency ? { referralAgency: meta.referralAgency } : {}),
+      ...(meta?.referralNotes ? { referralNotes: meta.referralNotes } : {}),
+      ...(meta?.appointmentDate ? { appointmentDate: meta.appointmentDate } : {}),
+      ...(meta?.appointmentVenue ? { appointmentVenue: meta.appointmentVenue } : {}),
+    }
+
+    const optimisticApp: AicsApplication = {
+      ...targetApp,
+      status: newStatus,
+      details: updatedDetails,
+      updated_at: new Date().toISOString(),
+    }
+
+    setReviewingApp(optimisticApp)
+    setApplications(prev => prev.map(a => a.id === targetApp.id ? optimisticApp : a))
+
     try {
-      const res = await fetch(`${API_BASE}/applications/${reviewingApp.id}/status`, {
+      const res = await fetch(`${API_BASE}/applications/${targetApp.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ 
+          status: newStatus,
+          ...meta 
+        }),
       })
+
       if (!res.ok) throw new Error('Failed to update status')
 
-      if (status === 'approved') {
+      const appName = fullName(targetApp).toUpperCase()
+      const appRef = targetApp.reference_no || targetApp.qc_id || 'QC-AICS-REF'
+
+      // Instant notifications dispatch
+      if (newStatus === 'waiting_approval') {
+        pushUserNotification({
+          userId: targetApp.qc_id || targetApp.email || 'all',
+          title: 'AICS: Pre-Approved for Scheduling',
+          message: `Magandang araw! Ang inyong ${targetApp.assistance_type} application (${appRef}) ay na-screen at naka-queue na para sa appointment scheduling.`,
+          type: 'aics',
+          link: '/portal/aics',
+        })
+      } else if (newStatus === 'scheduled') {
+        pushUserNotification({
+          userId: targetApp.qc_id || targetApp.email || 'all',
+          title: 'AICS: Appointment Confirmed',
+          message: `Nakatakda ang inyong interview sa ${meta?.appointmentDate || scheduleDate} sa ${meta?.appointmentVenue || scheduleVenue}. Pakidala ang orihinal na dokumento.`,
+          type: 'appointment',
+          link: '/portal/aics',
+        })
+      } else if (newStatus === 'under_review') {
+        pushUserNotification({
+          userId: targetApp.qc_id || targetApp.email || 'all',
+          title: 'AICS: Under Review & Case Assessment',
+          message: `Kasalukuyan nang sinusuri ng Social Worker ang inyong ${targetApp.assistance_type} (${appRef}).`,
+          type: 'aics',
+          link: '/portal/aics',
+        })
+      } else if (newStatus === 'approved') {
+        pushUserNotification({
+          userId: targetApp.qc_id || targetApp.email || 'all',
+          title: 'AICS: Application APPROVED',
+          message: `Malugod naming ipinababatid na APPROVED ang inyong ${targetApp.assistance_type}. Ang inyong Guarantee Letter / Aid Voucher ay inihahanda na.`,
+          type: 'payout',
+          link: '/portal/aics',
+        })
+
+        // Auto disbursement entry
         try {
-          const rawConcern = (reviewingApp.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim()
+          const rawConcern = (targetApp.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim()
           const formattedConcern = rawConcern.charAt(0).toUpperCase() + rawConcern.slice(1) + ' Assistance'
-          const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[formattedConcern] || FIXED_ASSISTANCE_AMOUNTS[reviewingApp.assistance_type] || 5000
-          const qcid = reviewingApp.qc_id || reviewingApp.reference_no || '110000116932100'
-          const appName = fullName(reviewingApp).toUpperCase()
+          const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[formattedConcern] || FIXED_ASSISTANCE_AMOUNTS[targetApp.assistance_type] || 5000
+          const qcid = targetApp.qc_id || targetApp.reference_no || '110000116932100'
 
           const rawDisb = localStorage.getItem('all_financial_disbursements')
           const currentDisb = rawDisb ? JSON.parse(rawDisb) : []
-          const appDisbId = `aics-disb-${reviewingApp.id}`
+          const appDisbId = `aics-disb-${targetApp.id}`
 
           if (!currentDisb.some((d: any) => d.id === appDisbId)) {
             currentDisb.unshift({
               id: appDisbId,
-              disbursementId: `DISB-2026-${String(reviewingApp.id).padStart(4, '0')}`,
+              disbursementId: `DISB-2026-${String(targetApp.id).padStart(4, '0')}`,
               applicationRef: qcid,
               applicantName: appName,
               assistanceType: formattedConcern,
@@ -223,46 +379,79 @@ export default function AICS() {
         } catch (e) {
           console.warn('Could not auto-register AICS disbursement:', e)
         }
+      } else if (newStatus === 'for_referral' || newStatus === 'referred') {
+        pushUserNotification({
+          userId: targetApp.qc_id || targetApp.email || 'all',
+          title: `AICS: Referred to ${meta?.referralAgency || 'Partner Agency'}`,
+          message: `Ang inyong kaso ay matagumpay na nai-endorso sa ${meta?.referralAgency || 'PCSO/DSWD'}. Maaari ninyong kunin/i-download ang inyong Official Referral Letter.`,
+          type: 'aics',
+          link: '/portal/aics',
+        })
+      } else if (newStatus === 'rejected') {
+        pushUserNotification({
+          userId: targetApp.qc_id || targetApp.email || 'all',
+          title: 'AICS: Application Update',
+          message: `Ang inyong aplikasyon (${appRef}) ay hindi naaprubahan. Dahilan: ${meta?.rejectionReason || 'Hindi kwalipikado sa mga panuntunan ng programa.'}`,
+          type: 'aics',
+          link: '/portal/aics',
+        })
       }
 
+      // Trigger broad realtime sync
+      notifyApplicationChange('STATUS_CHANGED', 'aics', appRef)
       window.dispatchEvent(new Event('aics_applications_updated'))
-      window.dispatchEvent(new Event('applications_updated'))
-      window.dispatchEvent(new Event('appointments_updated'))
+      window.dispatchEvent(new Event('user_notifications_updated'))
       window.dispatchEvent(new Event('financial_disbursements_updated'))
-      window.dispatchEvent(new Event('storage'))
+      window.dispatchEvent(new Event('appointments_updated'))
 
-      alert(
-        status === 'approved'
-          ? ` Application from ${fullName(reviewingApp)} has been APPROVED!`
-          : ` Application from ${fullName(reviewingApp)} has been REJECTED!`
-      )
-
-      setReviewingApp(null)
-      setReviewingDocs([])
-      setCurrentView('dashboard')
-      fetchApplications()
     } catch (err) {
-      console.error(err)
+      console.error('Status update failed:', err)
       alert('May error sa pag-update ng status. Pakisubukan ulit.')
+      fetchApplications()
     } finally {
       setActionLoading(false)
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'approved':
-        return 'bg-blue-100 text-blue-800'
-      case 'completed':
-        return 'bg-green-100 text-green-800'
-      case 'rejected':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+  // Filtered applications
+  const filteredApplications = useMemo(() => {
+    return applications.filter((app) => {
+      const q = searchQuery.toLowerCase().trim()
+      const matchesSearch = 
+        !q ||
+        fullName(app).toLowerCase().includes(q) ||
+        (app.reference_no || '').toLowerCase().includes(q) ||
+        (app.qc_id || '').toLowerCase().includes(q) ||
+        (app.assistance_type || '').toLowerCase().includes(q)
+
+      if (!matchesSearch) return false
+
+      if (selectedTab === 'all') return true
+      if (selectedTab === 'submit_pending') return app.status === 'submit_pending' || app.status === 'pending'
+      if (selectedTab === 'waiting_approval') return app.status === 'waiting_approval'
+      if (selectedTab === 'scheduled') return app.status === 'scheduled'
+      if (selectedTab === 'under_review') return app.status === 'under_review'
+      if (selectedTab === 'approved') return app.status === 'approved' || app.status === 'completed'
+      if (selectedTab === 'referred') return app.status === 'for_referral' || app.status === 'referred'
+      if (selectedTab === 'rejected') return app.status === 'rejected'
+
+      return true
+    })
+  }, [applications, searchQuery, selectedTab])
+
+  // Counts for tabs
+  const tabCounts = useMemo(() => {
+    return {
+      all: applications.length,
+      submit_pending: applications.filter(a => a.status === 'submit_pending' || a.status === 'pending').length,
+      waiting_approval: applications.filter(a => a.status === 'waiting_approval').length,
+      scheduled: applications.filter(a => a.status === 'scheduled').length,
+      under_review: applications.filter(a => a.status === 'under_review').length,
+      approved: applications.filter(a => a.status === 'approved' || a.status === 'completed').length,
+      referred: applications.filter(a => a.status === 'for_referral' || a.status === 'referred').length,
+      rejected: applications.filter(a => a.status === 'rejected').length,
     }
-  }
+  }, [applications])
 
   const labelStyle = {
     color: DESIGN.colors.foreground,
@@ -272,9 +461,9 @@ export default function AICS() {
     textTransform: 'uppercase' as const,
   }
 
-  const pendingCount = applications.filter((a) => a.status === 'pending').length
-  const approvedCount = applications.filter((a) => a.status === 'approved' || a.status === 'completed').length
-
+  // ==========================================
+  // VIEW 1: DASHBOARD VIEW
+  // ==========================================
   if (currentView === 'dashboard') {
     return (
       <div style={{ backgroundColor: DESIGN.colors.canvas, minHeight: '100%' }} className="py-8">
@@ -284,80 +473,181 @@ export default function AICS() {
         `}</style>
 
         <div className="max-w-7xl mx-auto px-4">
-          <div className="mb-8 flex items-center justify-between">
-            <h1 style={{ color: DESIGN.colors.foreground, fontSize: '30px', fontWeight: 700 }} className="font-heading">
-              Assistance to Individual In Crisis
-            </h1>
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 style={{ color: DESIGN.colors.foreground, fontSize: '28px', fontWeight: 700 }} className="font-heading tracking-tight">
+                Assistance to Individuals in Crisis Situation (AICS)
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">
+                7-Stage Social Case Lifecycle Management &bull; Real-time Processing & Inter-Agency Referrals
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search applicant, QCID, ref..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none w-64 shadow-2xs"
+                />
+              </div>
+            </div>
           </div>
 
           {errorMsg && (
-            <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 text-sm">{errorMsg}</div>
+            <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-700 text-sm border border-red-200">{errorMsg}</div>
           )}
 
-          {}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-6 shadow-sm">
-              <h3 style={{ color: DESIGN.colors.foreground, opacity: 0.6, fontSize: '14px', fontWeight: 500 }}>Total applications</h3>
-              <p style={{ color: DESIGN.colors.foreground, fontSize: '30px', fontWeight: 700, marginTop: '8px' }}>{applications.length}</p>
+          {/* Quick Metrics Summary */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
+            <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-4 shadow-2xs border border-slate-100 flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Intake / Pending</span>
+                <p className="text-xl font-extrabold text-slate-800">{tabCounts.submit_pending}</p>
+              </div>
             </div>
-            <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-6 shadow-sm">
-              <h3 style={{ color: DESIGN.colors.foreground, opacity: 0.6, fontSize: '14px', fontWeight: 500 }}>Pending review</h3>
-              <p style={{ color: DESIGN.colors.foreground, fontSize: '30px', fontWeight: 700, marginTop: '8px' }}>{pendingCount}</p>
+
+            <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-4 shadow-2xs border border-slate-100 flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Scheduled / Review</span>
+                <p className="text-xl font-extrabold text-slate-800">{tabCounts.scheduled + tabCounts.under_review}</p>
+              </div>
             </div>
-            <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-6 shadow-sm">
-              <h3 style={{ color: DESIGN.colors.foreground, opacity: 0.6, fontSize: '14px', fontWeight: 500 }}>Approved</h3>
-              <p style={{ color: DESIGN.colors.foreground, fontSize: '30px', fontWeight: 700, marginTop: '8px' }}>{approvedCount}</p>
+
+            <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-4 shadow-2xs border border-slate-100 flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">QC Approved Aid</span>
+                <p className="text-xl font-extrabold text-slate-800">{tabCounts.approved}</p>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-4 shadow-2xs border border-slate-100 flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Referred (PCSO/DSWD)</span>
+                <p className="text-xl font-extrabold text-slate-800">{tabCounts.referred}</p>
+              </div>
             </div>
           </div>
 
-          {}
-          <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <h2 style={{ color: DESIGN.colors.foreground, fontSize: '18px', fontWeight: 600 }}>All applications</h2>
-            </div>
+          {/* Workflow Status Filter Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none">
+            {[
+              { key: 'all', label: 'All Applications', count: tabCounts.all },
+              { key: 'submit_pending', label: '1. Submit Pending', count: tabCounts.submit_pending },
+              { key: 'waiting_approval', label: '2. Waiting to Approve', count: tabCounts.waiting_approval },
+              { key: 'scheduled', label: '3. Scheduled', count: tabCounts.scheduled },
+              { key: 'under_review', label: '4. Under Review', count: tabCounts.under_review },
+              { key: 'approved', label: '5. Approved', count: tabCounts.approved },
+              { key: 'referred', label: '6. For Referral / Referred', count: tabCounts.referred },
+              { key: 'rejected', label: '7. Rejected', count: tabCounts.rejected },
+            ].map((tab) => {
+              const active = selectedTab === tab.key
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setSelectedTab(tab.key)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer shadow-2xs ${
+                    active
+                      ? 'bg-blue-600 text-white shadow-blue-200'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${
+                    active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
 
+          {/* Applications Table */}
+          <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-6 shadow-sm border border-slate-100">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ borderBottomColor: DESIGN.colors.border }} className="border-b">
-                    <th style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600 }} className="text-left py-3 px-4">Reference No.</th>
-                    <th style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600 }} className="text-left py-3 px-4">Applicant</th>
-                    <th style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600 }} className="text-left py-3 px-4">Assistance type</th>
-                    <th style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600 }} className="text-left py-3 px-4">Date filed</th>
-                    <th style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600 }} className="text-left py-3 px-4">Status</th>
+                  <tr style={{ borderBottomColor: DESIGN.colors.border }} className="border-b text-slate-400">
+                    <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-left py-3 px-4 uppercase tracking-wider">Reference No.</th>
+                    <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-left py-3 px-4 uppercase tracking-wider">Applicant Name</th>
+                    <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-left py-3 px-4 uppercase tracking-wider">Assistance Type</th>
+                    <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-left py-3 px-4 uppercase tracking-wider">Date Filed</th>
+                    <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-left py-3 px-4 uppercase tracking-wider">Current Status</th>
+                    <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-right py-3 px-4 uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {applications.map((app) => (
-                    <tr
-                      key={app.id}
-                      onClick={() => openReview(app)}
-                      style={{ borderBottomColor: DESIGN.colors.border, cursor: 'pointer' }}
-                      className="border-b hover:bg-gray-50"
-                    >
-                      <td style={{ color: DESIGN.colors.foreground, opacity: 0.7, fontSize: '13px', fontFamily: 'monospace' }} className="py-3 px-4">
-                        <MaskedText
-                          value={app.qc_id || app.reference_no}
-                          type="id"
-                          auditSubject={fullName(app)}
-                          auditField="QCID / Reference No"
-                          auditModule="AICS"
-                        />
-                      </td>
-                      <td style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 500 }} className="py-3 px-4">{fullName(app)}</td>
-                      <td style={{ color: DESIGN.colors.foreground, opacity: 0.7, fontSize: '14px' }} className="py-3 px-4">{app.assistance_type}</td>
-                      <td style={{ color: DESIGN.colors.foreground, opacity: 0.7, fontSize: '14px' }} className="py-3 px-4">{formatDate(app.created_at)}</td>
-                      <td className="py-3 px-4">
-                        <span style={{ fontSize: '12px', fontWeight: 600, borderRadius: '6px', padding: '4px 12px' }} className={getStatusColor(app.status)}>
-                          {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {applications.length === 0 && !loading && (
+                <tbody className="divide-y divide-slate-100">
+                  {filteredApplications.map((app) => {
+                    const badge = getStatusBadgeInfo(app.status)
+                    return (
+                      <tr
+                        key={app.id}
+                        onClick={() => openReview(app)}
+                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                      >
+                        <td className="py-3 px-4 text-xs font-mono text-slate-600 font-semibold">
+                          <MaskedText
+                            value={app.qc_id || app.reference_no}
+                            type="id"
+                            auditSubject={fullName(app)}
+                            auditField="QCID / Reference No"
+                            auditModule="AICS"
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900 text-sm">{fullName(app)}</div>
+                          <div className="text-[11px] text-slate-400 font-medium">QC ID: {app.qc_id || '—'}</div>
+                        </td>
+                        <td className="py-3 px-4 text-xs font-semibold text-slate-700">
+                          <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800">
+                            {app.assistance_type}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-xs text-slate-500 font-medium">{formatDate(app.created_at)}</td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg border ${badge.color}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                            {badge.label}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              openReview(app)
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 rounded-lg transition-all"
+                          >
+                            <span>Review Case</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+
+                  {filteredApplications.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-sm text-gray-400">
-                        No applications found.
+                      <td colSpan={6} className="py-12 text-center text-slate-400 text-sm">
+                        <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                        Walang nahanap na aplikasyon sa ilalim ng napiling status filter.
                       </td>
                     </tr>
                   )}
@@ -370,8 +660,13 @@ export default function AICS() {
     )
   }
 
+  // ==========================================
+  // VIEW 2: ADMIN REVIEW & DECISION PORTAL
+  // ==========================================
   if (currentView === 'admin-review' && reviewingApp) {
     const details = reviewingApp.details || {}
+    const badge = getStatusBadgeInfo(reviewingApp.status)
+    const currentStatus = String(reviewingApp.status || '').toLowerCase()
 
     return (
       <div style={{ backgroundColor: DESIGN.colors.canvas, minHeight: '100vh' }} className="py-8">
@@ -380,564 +675,720 @@ export default function AICS() {
           h1, h2, h3, h4, h5, h6 { font-family: ${DESIGN.fonts.heading}; font-weight: 600; }
         `}</style>
 
-        <div className="max-w-4xl mx-auto px-4">
-          <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card, overflow: 'hidden' }} className="shadow-sm">
-            <div style={{ backgroundColor: DESIGN.colors.primary, color: 'white', padding: '32px' }}>
-              <h1 style={{ fontSize: '28px', fontWeight: 700 }} className="font-heading">Admin Review Portal</h1>
-              <p style={{ fontSize: '14px', opacity: 0.9, marginTop: '8px' }}>Review and approve/reject assistance applications</p>
-            </div>
-
-            <div className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
-                <div className="space-y-6">
-                        <div style={{ borderLeftColor: DESIGN.colors.primary }} className="border-l-4 pl-4 flex items-center gap-4">
-                          <div style={{ width: '56px', height: '56px', borderRadius: '50%', flexShrink: 0, overflow: 'hidden', backgroundColor: DESIGN.colors.muted, border: `1px solid ${DESIGN.colors.border}` }} className="flex items-center justify-center">
-                            {getSavedProfilePhoto(reviewingApp.qc_id) ? (
-                              <img src={getSavedProfilePhoto(reviewingApp.qc_id)!} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <span style={{ fontSize: '18px', fontWeight: 700, color: DESIGN.colors.primary }}>
-                                {reviewingApp.first_name?.charAt(0)}{reviewingApp.last_name?.charAt(0)}
-                              </span>
-                            )}
-                          </div>
-                          <div>
-                            <label style={labelStyle}>Applicant Name</label>
-                            <p style={{ color: DESIGN.colors.foreground, fontSize: '20px', fontWeight: 700, marginTop: '4px' }}>{fullName(reviewingApp)}</p>
-                          </div>
-                        </div>
-                  <div>
-                    <label style={labelStyle}>Assistance Type</label>
-                    <p style={{ backgroundColor: DESIGN.colors.muted, borderRadius: DESIGN.radius.lg, padding: '10px 16px', fontSize: '14px', fontWeight: 600, color: DESIGN.colors.foreground, marginTop: '8px' }}>{reviewingApp.assistance_type}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label style={labelStyle}>Reference No.</label>
-                      <div style={{ color: DESIGN.colors.foreground, fontSize: '15px', fontWeight: 700, fontFamily: 'monospace', marginTop: '8px' }}>
-                        <MaskedText
-                          value={reviewingApp.qc_id || reviewingApp.reference_no}
-                          type="id"
-                          showButtonLabel
-                          auditSubject={fullName(reviewingApp)}
-                          auditField="Reference No"
-                          auditModule="AICS"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Date Applied</label>
-                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{formatDate(reviewingApp.created_at)}</p>
-                    </div>
-                  </div>
-
-                  <div style={{ borderTopColor: DESIGN.colors.border }} className="pt-4 border-t grid grid-cols-2 gap-4">
-                    <div>
-                      <label style={labelStyle}>QC ID Number</label>
-                      <div style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>
-                        <MaskedText
-                          value={reviewingApp.qc_id}
-                          type="id"
-                          showButtonLabel
-                          auditSubject={fullName(reviewingApp)}
-                          auditField="QC ID Number"
-                          auditModule="AICS"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Nationality</label>
-                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.nationality || '—'}</p>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Suffix</label>
-                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{getAppSuffix(reviewingApp) || '—'}</p>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Birth Date</label>
-                      <div style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>
-                        <MaskedText
-                          value={reviewingApp.birth_date}
-                          type="birthdate"
-                          showButtonLabel
-                          auditSubject={fullName(reviewingApp)}
-                          auditField="Birth Date"
-                          auditModule="AICS"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Age</label>
-                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.age || '—'}</p>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Gender</label>
-                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.gender || '—'}</p>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Civil Status</label>
-                      <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.civil_status || '—'}</p>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Phone Number</label>
-                      <div style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>
-                        <MaskedText
-                          value={reviewingApp.phone}
-                          type="phone"
-                          showButtonLabel
-                          auditSubject={fullName(reviewingApp)}
-                          auditField="Phone Number"
-                          auditModule="AICS"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ borderTopColor: DESIGN.colors.border }} className="pt-4 border-t">
-                    <label style={labelStyle}>Complete Address</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>{reviewingApp.address || '—'}</p>
-                  </div>
-
-                          {details.informantRelation && (
-                              <div style={{ borderTopColor: DESIGN.colors.border }} className="pt-4 border-t">
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowInformantInfo(true)}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                      fontSize: '12px',
-                                      fontWeight: 700,
-                                      color: DESIGN.colors.primary,
-                                      background: 'none',
-                                      border: `1px solid ${DESIGN.colors.primary}`,
-                                      borderRadius: '6px',
-                                      padding: '4px 10px',
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    View Informant Information
-                                  </button>
-
-                              </div>
-                            )}
-                                            {details.deceasedFirstName && (
-                  <div style={{ borderTopColor: DESIGN.colors.border }} className="pt-4 border-t">
-                    <button
-                      type="button"
-                      onClick={() => setShowDeceasedInfo(true)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700,
-                        color: DESIGN.colors.primary, background: 'none', border: `1px solid ${DESIGN.colors.primary}`,
-                        borderRadius: '6px', padding: '6px 12px', cursor: 'pointer',
-                      }}
-                    >
-                       View Deceased Information
-                    </button>
-                  </div>
-                )}
-
-                {details.beneficiaryFirstName && (
-                  <div style={{ borderTopColor: DESIGN.colors.border }} className="pt-4 border-t">
-                    <button
-                      type="button"
-                      onClick={() => setShowBeneficiaryInfo(true)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700,
-                        color: DESIGN.colors.primary, background: 'none', border: `1px solid ${DESIGN.colors.primary}`,
-                        borderRadius: '6px', padding: '6px 12px', cursor: 'pointer',
-                      }}
-                      >
-                       View Beneficiary Information
-                    </button>
-                  </div>
-                )}
-                    <div style={{ borderTopColor: DESIGN.colors.border }} className="pt-4 border-t">
-                      <label style={labelStyle}>Uploaded Documents ({reviewingDocs.length})</label>
-                      {reviewingDocs.length > 0 ? (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginTop: '8px' }}>
-                          {reviewingDocs.map((doc) => (
-                            <button
-                              key={doc.id}
-                              type="button"
-                              onClick={() => setViewingDoc(doc)}
-                              style={{ display: 'block', textAlign: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%' }}
-                            >
-                              {doc.file_type?.startsWith('image/') ? (
-                                <img
-                                  src={`${API_BASE}/documents/${doc.id}/file`}
-                                  alt={doc.document_label}
-                                  style={{ width: '100%', height: '90px', objectFit: 'cover', borderRadius: '8px', border: `1px solid ${DESIGN.colors.border}` }}
-                                />
-                              ) : (
-                                <div style={{ width: '100%', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: DESIGN.colors.muted, borderRadius: '8px' }}>📄</div>
-                              )}
-                              <p style={{ fontSize: '11px', color: DESIGN.colors.foreground, marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.document_label}</p>
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <p style={{ color: DESIGN.colors.foreground, fontSize: '13px', opacity: 0.5, marginTop: '8px' }}>No documents recorded.</p>
-                      )}
-                    </div>
+        <div className="max-w-5xl mx-auto px-4">
+          <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card, overflow: 'hidden' }} className="shadow-md border border-slate-100">
+            
+            {/* Header with Case Status Banner */}
+            <div className="bg-slate-900 text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs uppercase tracking-widest font-bold text-blue-400">Social Case Review & Decision Hub</span>
+                  <span className="text-slate-500">&bull;</span>
+                  <span className="text-xs font-mono text-slate-300">{reviewingApp.reference_no}</span>
                 </div>
+                <h1 className="text-2xl font-bold tracking-tight">{fullName(reviewingApp)}</h1>
+                <p className="text-xs text-slate-400 mt-1">{reviewingApp.assistance_type} &bull; Applied on {formatDate(reviewingApp.created_at)}</p>
               </div>
 
-                            {}
-              <div style={{ borderTopColor: DESIGN.colors.border }} className="mt-8 pt-8 border-t flex gap-4">
-                    <button
-                          onClick={() => updateStatus('approved')}
-                          disabled={actionLoading || reviewingApp.status !== 'pending'}
-                          style={{
-                            backgroundColor: '#10b981',
-                            color: 'white',
-                            borderRadius: DESIGN.radius.card,
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            padding: '16px 24px',
-                            flex: 1,
-                            opacity: (actionLoading || reviewingApp.status !== 'pending') ? 0.5 : 1,
-                            cursor: reviewingApp.status !== 'pending' ? 'not-allowed' : 'pointer',
-                          }}
-                          className="hover:opacity-90 transition transform hover:scale-105"
-                        >
-                          ✓ Approve Application
-                        </button>
-                        <button
-                          onClick={() => updateStatus('rejected')}
-                          disabled={actionLoading || reviewingApp.status !== 'pending'}
-                          style={{
-                            backgroundColor: '#ef4444',
-                            color: 'white',
-                            borderRadius: DESIGN.radius.card,
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            padding: '16px 24px',
-                            flex: 1,
-                            opacity: (actionLoading || reviewingApp.status !== 'pending') ? 0.5 : 1,
-                            cursor: reviewingApp.status !== 'pending' ? 'not-allowed' : 'pointer',
-                          }}
-                          className="hover:opacity-90 transition transform hover:scale-105"
-                        >
-                          ✕ Reject Application
-                    </button>
-                    {(reviewingApp.assistance_type?.toLowerCase().includes('medical') || reviewingApp.status === 'approved' || reviewingApp.status === 'completed') && (
-                      <button
-                        onClick={() => setGlApp(reviewingApp)}
-                        style={{
-                          backgroundColor: '#6366f1',
-                          color: 'white',
-                          borderRadius: DESIGN.radius.card,
-                          fontSize: '14px',
-                          fontWeight: 600,
-                          padding: '16px 24px',
-                          flex: 1,
-                          cursor: 'pointer',
-                        }}
-                        className="hover:opacity-90 transition transform hover:scale-105"
-                      >
-                        📄 Print Guarantee Letter (GL)
-                      </button>
-                    )}
+              <div className="flex items-center gap-3">
+                <span className={`inline-flex items-center gap-2 text-xs font-bold px-3.5 py-1.5 rounded-xl border bg-white/10 text-white border-white/20 backdrop-blur-xs`}>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Current: {badge.label}
+                </span>
+
                 <button
+                  type="button"
                   onClick={() => {
                     setCurrentView('dashboard')
                     setReviewingApp(null)
                     setReviewingDocs([])
                   }}
-                  style={{
-                    backgroundColor: DESIGN.colors.muted,
-                    color: DESIGN.colors.foreground,
-                    borderRadius: DESIGN.radius.card,
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    padding: '16px 24px',
-                    flex: 1,
-                  }}
-                  className="hover:opacity-80 transition"
+                  className="px-3.5 py-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition cursor-pointer"
                 >
-                  Back
+                  Back to List
                 </button>
               </div>
+            </div>
+
+            {/* Visual 7-Stage Flow Progress Indicator */}
+            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 overflow-x-auto">
+              <div className="flex items-center justify-between min-w-[650px] text-xs">
+                {[
+                  { key: 'submit_pending', label: '1. Submitted' },
+                  { key: 'waiting_approval', label: '2. Screening' },
+                  { key: 'scheduled', label: '3. Scheduled' },
+                  { key: 'under_review', label: '4. Under Review' },
+                  { key: 'outcome', label: '5. Decision / Referral' },
+                ].map((st, idx) => {
+                  let isDone = false
+                  let isCurrent = false
+
+                  if (st.key === 'submit_pending') {
+                    isDone = true
+                    if (currentStatus === 'submit_pending' || currentStatus === 'pending') isCurrent = true
+                  } else if (st.key === 'waiting_approval') {
+                    if (['waiting_approval', 'scheduled', 'under_review', 'approved', 'for_referral', 'referred', 'completed'].includes(currentStatus)) isDone = true
+                    if (currentStatus === 'waiting_approval') isCurrent = true
+                  } else if (st.key === 'scheduled') {
+                    if (['scheduled', 'under_review', 'approved', 'for_referral', 'referred', 'completed'].includes(currentStatus)) isDone = true
+                    if (currentStatus === 'scheduled') isCurrent = true
+                  } else if (st.key === 'under_review') {
+                    if (['under_review', 'approved', 'for_referral', 'referred', 'completed'].includes(currentStatus)) isDone = true
+                    if (currentStatus === 'under_review') isCurrent = true
+                  } else if (st.key === 'outcome') {
+                    if (['approved', 'for_referral', 'referred', 'rejected', 'completed'].includes(currentStatus)) {
+                      isDone = true
+                      isCurrent = true
+                    }
+                  }
+
+                  return (
+                    <div key={st.key} className="flex items-center gap-2">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] ${
+                        isCurrent 
+                          ? 'bg-blue-600 text-white ring-4 ring-blue-100' 
+                          : isDone 
+                          ? 'bg-emerald-500 text-white' 
+                          : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        {idx + 1}
+                      </div>
+                      <span className={`font-semibold ${isCurrent ? 'text-blue-700 font-bold' : isDone ? 'text-slate-800' : 'text-slate-400'}`}>
+                        {st.label}
+                      </span>
+                      {idx < 4 && <div className={`w-8 h-0.5 ${isDone ? 'bg-emerald-300' : 'bg-slate-200'}`} />}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="p-6 sm:p-8">
+              {/* Dynamic Action Bar based on current stage */}
+              <div className="mb-8 p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">Next Action for Social Worker:</span>
+                    <p className="text-sm font-semibold text-slate-900 mt-0.5">
+                      {currentStatus === 'submit_pending' || currentStatus === 'pending'
+                        ? 'New Application: Pre-approve requirements to proceed to scheduling.'
+                        : currentStatus === 'waiting_approval'
+                        ? 'Ready for Schedule: Set the appointment date and venue for the interview.'
+                        : currentStatus === 'scheduled'
+                        ? `Interview Scheduled: (${details.appointmentDate || 'Confirmed'}). Click to begin Case Assessment.`
+                        : currentStatus === 'under_review'
+                        ? 'Assessment Active: Evaluate socio-economic profile and make final decision (Approve, Refer, or Reject).'
+                        : `Final Outcome Reached: ${badge.label}`}
+                    </p>
+                  </div>
+
+                  {/* Realtime Action Buttons */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Stage 1 -> 2: Pre-Approve */}
+                    {(currentStatus === 'submit_pending' || currentStatus === 'pending') && (
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => updateStatus('waiting_approval')}
+                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <UserCheck className="w-4 h-4" />
+                        <span>✓ Pre-Approve for Scheduling</span>
+                      </button>
+                    )}
+
+                    {/* Stage 2 -> 3: Set Schedule */}
+                    {(currentStatus === 'waiting_approval' || currentStatus === 'submit_pending' || currentStatus === 'pending') && (
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => setShowScheduleModal(true)}
+                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        <span>📅 Set Appointment Schedule</span>
+                      </button>
+                    )}
+
+                    {/* Stage 3 -> 4: Start Assessment */}
+                    {currentStatus === 'scheduled' && (
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => updateStatus('under_review')}
+                        className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span>🔍 Start Case Assessment / Interview</span>
+                      </button>
+                    )}
+
+                    {/* Stage 4 -> Outcomes (Approve / Refer / Reject) */}
+                    {(currentStatus === 'under_review' || currentStatus === 'scheduled') && (
+                      <>
+                        <button
+                          type="button"
+                          disabled={actionLoading}
+                          onClick={() => updateStatus('approved')}
+                          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>✓ Approve QC Assistance</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={actionLoading}
+                          onClick={() => setShowReferralModal(true)}
+                          className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Building2 className="w-4 h-4" />
+                          <span>🏛️ Refer to Agency (PCSO/DSWD)</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={actionLoading}
+                          onClick={() => setShowRejectModal(true)}
+                          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          <span>✕ Reject / Deny</span>
+                        </button>
+                      </>
+                    )}
+
+                    {/* Print Guarantee Letter if Approved */}
+                    {(currentStatus === 'approved' || currentStatus === 'completed') && (
+                      <button
+                        type="button"
+                        onClick={() => setGlApp(reviewingApp)}
+                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Printer className="w-4 h-4" />
+                        <span>📄 Print Guarantee Letter (GL)</span>
+                      </button>
+                    )}
+
+                    {/* Print Referral Letter if Referred */}
+                    {(currentStatus === 'for_referral' || currentStatus === 'referred') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRefLetterApp({
+                            controlNo: `QC-SSDD-REF-2026-${String(reviewingApp.id).padStart(6, '0')}`,
+                            applicationRef: reviewingApp.reference_no,
+                            patientName: fullName(reviewingApp),
+                            qcidNumber: reviewingApp.qc_id || reviewingApp.reference_no,
+                            barangay: reviewingApp.address?.split(',')[1]?.trim() || (reviewingApp.details as any)?.beneficiaryBarangay || 'Commonwealth',
+                            district: '2',
+                            age: reviewingApp.age || '45',
+                            gender: reviewingApp.gender || 'Female',
+                            diagnosis: (reviewingApp.details as any)?.medicalDiagnosis || 'Chronic Kidney Disease / Surgical Intervention',
+                            hospitalName: (reviewingApp.details as any)?.partnerHospital || (reviewingApp.details as any)?.partnerHospitalOther || 'East Avenue Medical Center',
+                            targetAgency: (reviewingApp.details as any)?.referralAgency || 'PCSO',
+                            referralReason: (reviewingApp.details as any)?.referralNotes || 'Total financial requirement exceeds local budget capacity. Respectfully endorsed for partner agency financial assistance.',
+                          })
+                        }}
+                        className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Printer className="w-4 h-4" />
+                        <span>🏛️ Print Official Referral Letter</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Applicant & Case Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* Applicant Bio */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3.5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">1. Personal & Resident Info</h3>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-200 border border-slate-300 flex items-center justify-center shrink-0">
+                      {getSavedProfilePhoto(reviewingApp.qc_id) ? (
+                        <img src={getSavedProfilePhoto(reviewingApp.qc_id)!} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="font-bold text-slate-600 text-sm">
+                          {reviewingApp.first_name?.charAt(0)}{reviewingApp.last_name?.charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-semibold">QC ID NUMBER</p>
+                      <p className="font-mono font-bold text-slate-900 text-sm">{reviewingApp.qc_id || '—'}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200">
+                    <div>
+                      <span className="text-slate-400 font-medium">Age & Gender:</span>
+                      <p className="font-semibold text-slate-800">{reviewingApp.age || '—'} yrs &bull; {reviewingApp.gender || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Civil Status:</span>
+                      <p className="font-semibold text-slate-800">{reviewingApp.civil_status || '—'}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-slate-400 font-medium">Address:</span>
+                      <p className="font-semibold text-slate-800">{reviewingApp.address || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Phone:</span>
+                      <p className="font-semibold text-slate-800">{reviewingApp.phone || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Email:</span>
+                      <p className="font-semibold text-slate-800">{reviewingApp.email || '—'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assistance / Medical Specifics */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3.5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. Assistance & Medical Details</h3>
+                  
+                  <div className="space-y-2 text-xs">
+                    <div>
+                      <span className="text-slate-400 font-medium">Assistance Type / Sub-Type:</span>
+                      <p className="font-bold text-slate-900 text-sm">{reviewingApp.assistance_type}</p>
+                      {details.medicalAssistanceSubType && (
+                        <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-semibold text-[11px] mt-1">
+                          {details.medicalAssistanceSubType}
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <span className="text-slate-400 font-medium">Partner Hospital / Facility:</span>
+                      <p className="font-semibold text-slate-800">
+                        {details.partnerHospital === 'Other' 
+                          ? `Other: ${details.partnerHospitalOther || 'Unspecified'}` 
+                          : details.partnerHospital || '—'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-slate-400 font-medium">Medical Condition / Diagnosis:</span>
+                      <p className="font-semibold text-slate-800 bg-white p-2 rounded-lg border border-slate-200 mt-0.5">
+                        {details.medicalDiagnosis || '—'}
+                      </p>
+                    </div>
+
+                    {/* Secondary Parties if available */}
+                    <div className="pt-2 flex flex-wrap gap-2">
+                      {details.informantFirstName && (
+                        <button
+                          type="button"
+                          onClick={() => setShowInformantInfo(true)}
+                          className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg font-semibold text-[11px] cursor-pointer"
+                        >
+                          👤 View Informant Info
+                        </button>
+                      )}
+                      {details.deceasedFirstName && (
+                        <button
+                          type="button"
+                          onClick={() => setShowDeceasedInfo(true)}
+                          className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg font-semibold text-[11px] cursor-pointer"
+                        >
+                          ⚰️ View Deceased Info
+                        </button>
+                      )}
+                      {details.beneficiaryFirstName && (
+                        <button
+                          type="button"
+                          onClick={() => setShowBeneficiaryInfo(true)}
+                          className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg font-semibold text-[11px] cursor-pointer"
+                        >
+                          🎓 View Student / Beneficiary Info
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Uploaded Documents Gallery */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">3. Uploaded Documentary Requirements</h3>
+                    <p className="text-xs text-slate-500">Click any document to preview or zoom in high resolution</p>
+                  </div>
+                  <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+                    {reviewingDocs.length} Document(s) Attached
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {reviewingDocs.map((doc) => (
+                    <div
+                      key={doc.id}
+                      onClick={() => setViewingDoc(doc)}
+                      className="p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-blue-50/50 hover:border-blue-300 transition-all cursor-pointer group flex flex-col justify-between"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span className="text-xs font-bold text-slate-800 truncate group-hover:text-blue-700">
+                          {doc.document_label}
+                        </span>
+                      </div>
+                      
+                      <div className="w-full h-24 rounded-lg bg-white border border-slate-200 overflow-hidden flex items-center justify-center text-slate-400">
+                        {doc.file_type?.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(doc.original_filename || '') ? (
+                          <img
+                            src={`${API_BASE}/documents/${doc.id}/file`}
+                            alt={doc.document_label}
+                            className="w-full h-full object-cover group-hover:scale-105 transition"
+                            onError={(e) => {
+                              const lbl = (doc.document_label || '').toLowerCase();
+                              let fb = '/samples/sample_valid_id.png';
+                              if (lbl.includes('indigen')) fb = '/samples/BARANGAY CERTIFICATE OF INDIGENCY.jpg';
+                              else if (lbl.includes('barangay')) fb = '/samples/BARANGAY CERTIFICATE.webp';
+                              else if (lbl.includes('medical')) fb = '/samples/MEDICAL CERTIFICATE.jpg';
+                              else if (lbl.includes('death')) fb = '/samples/sample_death_certificate.png';
+                              else if (lbl.includes('burial')) fb = '/samples/sample_burial_contract.png';
+                              else if (lbl.includes('birth') || lbl.includes('psa')) fb = '/samples/BIRTH CERTIFICATE OF MINOR.jpg';
+                              else if (lbl.includes('reseta')) fb = '/samples/RESETA NG GAMOT.jpg';
+                              (e.currentTarget as HTMLImageElement).src = fb;
+                            }}
+                          />
+                        ) : (
+                          <span className="text-xs font-semibold">📄 PDF/DOC</span>
+                        )}
+                      </div>
+                      
+                      <span className="text-[10px] text-slate-400 mt-2 truncate">{doc.original_filename}</span>
+                    </div>
+                  ))}
+
+                  {reviewingDocs.length === 0 && (
+                    <div className="col-span-4 py-8 text-center text-slate-400 text-xs">
+                      Walang nakitang documentary attachments.
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
 
+        {/* ========================================== */}
+        {/* POPUP MODAL 1: SET APPOINTMENT SCHEDULE    */}
+        {/* ========================================== */}
+        {showScheduleModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-indigo-600" />
+                  <h3 className="font-bold text-slate-900 text-base">Set Interview Schedule</h3>
+                </div>
+                <button onClick={() => setShowScheduleModal(false)} className="text-slate-400 hover:text-slate-700">✕</button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Appointment Date *</label>
+                  <input
+                    type="date"
+                    value={scheduleDate}
+                    onChange={(e) => setScheduleDate(e.target.value)}
+                    className="w-full h-10 px-3 border border-slate-300 rounded-lg font-medium text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Time Slot *</label>
+                  <select
+                    value={scheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    className="w-full h-10 px-3 border border-slate-300 rounded-lg font-medium text-slate-800"
+                  >
+                    <option value="08:30 AM - 10:00 AM">08:30 AM - 10:00 AM (Morning Batch 1)</option>
+                    <option value="10:00 AM - 11:30 AM">10:00 AM - 11:30 AM (Morning Batch 2)</option>
+                    <option value="01:00 PM - 02:30 PM">01:00 PM - 02:30 PM (Afternoon Batch 1)</option>
+                    <option value="02:30 PM - 04:00 PM">02:30 PM - 04:00 PM (Afternoon Batch 2)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Assessment Venue / District Office *</label>
+                  <select
+                    value={scheduleVenue}
+                    onChange={(e) => setScheduleVenue(e.target.value)}
+                    className="w-full h-10 px-3 border border-slate-300 rounded-lg font-medium text-slate-800"
+                  >
+                    <option value="Quezon City Hall Complex - SSDD Assessment Area">Quezon City Hall Complex - SSDD Assessment Area</option>
+                    <option value="District 1 Action Center - San Antonio">District 1 Action Center - San Antonio</option>
+                    <option value="District 2 Action Center - Batasan Hills">District 2 Action Center - Batasan Hills</option>
+                    <option value="District 3 Action Center - Marilag">District 3 Action Center - Marilag</option>
+                    <option value="District 4 Action Center - Kamuning">District 4 Action Center - Kamuning</option>
+                    <option value="District 5 Action Center - Novaliches">District 5 Action Center - Novaliches</option>
+                    <option value="District 6 Action Center - Talipapa">District 6 Action Center - Talipapa</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowScheduleModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowScheduleModal(false)
+                    updateStatus('scheduled', {
+                      appointmentDate: `${scheduleDate} (${scheduleTime})`,
+                      appointmentVenue: scheduleVenue,
+                    })
+                  }}
+                  className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm"
+                >
+                  Confirm & Lock Schedule
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================== */}
+        {/* POPUP MODAL 2: INTER-AGENCY REFERRAL       */}
+        {/* ========================================== */}
+        {showReferralModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-bold text-slate-900 text-base">Inter-Agency Referral Endorsement</h3>
+                </div>
+                <button onClick={() => setShowReferralModal(false)} className="text-slate-400 hover:text-slate-700">✕</button>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Piliin ang ahensya kung saan ie-endorso ang pasyente. Awtomatikong bubuo ang system ng opisyal na <strong>QC SSDD Referral Letter</strong>.
+              </p>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Target Welfare / Health Agency *</label>
+                  <select
+                    value={referralAgency}
+                    onChange={(e) => setReferralAgency(e.target.value)}
+                    className="w-full h-10 px-3 border border-slate-300 rounded-lg font-medium text-slate-800"
+                  >
+                    <option value="PCSO">Philippine Charity Sweepstakes Office (PCSO - Medical Assistance)</option>
+                    <option value="DSWD">Department of Social Welfare & Development (DSWD Central / CIU)</option>
+                    <option value="DOH">Department of Health - Malasakit Program Office (DOH)</option>
+                    <option value="Charity Hospital">Accredited Charity & Tertiary Specialty Hospital</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Social Worker Assessment / Justification *</label>
+                  <textarea
+                    rows={3}
+                    value={referralNotes}
+                    onChange={(e) => setReferralNotes(e.target.value)}
+                    placeholder="e.g. Total medical requirement exceeds local assistance ceiling. Endorsed for PCSO/DSWD financial augmentation."
+                    className="w-full p-3 border border-slate-300 rounded-lg font-medium text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowReferralModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReferralModal(false)
+                    updateStatus('referred', {
+                      referralAgency,
+                      referralNotes: referralNotes || 'Endorsed for financial augmentation under partner agency mandate.',
+                    })
+                  }}
+                  className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm"
+                >
+                  ✓ Endorse & Generate Referral Letter
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================== */}
+        {/* POPUP MODAL 3: REJECT WITH REASON          */}
+        {/* ========================================== */}
+        {showRejectModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-red-600" />
+                  <h3 className="font-bold text-slate-900 text-base">Reject / Disqualify Application</h3>
+                </div>
+                <button onClick={() => setShowRejectModal(false)} className="text-slate-400 hover:text-slate-700">✕</button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Dahilan ng Pag-reject *</label>
+                  <select
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    className="w-full h-10 px-3 border border-slate-300 rounded-lg font-medium text-slate-800"
+                  >
+                    <option value="Non-resident of Quezon City / Unverified Residency Documents">Non-resident of Quezon City / Unverified Residency</option>
+                    <option value="Incomplete or Falsified Documentary Requirements">Incomplete or Falsified Documentary Requirements</option>
+                    <option value="Duplicate active assistance claim within cooldown period">Duplicate active claim within cooldown period</option>
+                    <option value="Failure to attend scheduled assessment without notice">Failure to attend scheduled assessment</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowRejectModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRejectModal(false)
+                    updateStatus('rejected', { rejectionReason: rejectReason })
+                  }}
+                  className="px-5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm"
+                >
+                  Confirm Rejection
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Document Viewer Modal */}
         {viewingDoc && (
           <div
-            style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)' }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs"
             onClick={() => setViewingDoc(null)}
           >
             <div
-              style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card, maxWidth: '800px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+              className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div style={{ padding: '16px 20px', borderBottom: `1px solid ${DESIGN.colors.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, color: DESIGN.colors.foreground }}>{viewingDoc.document_label}</h3>
-                <button
-                  onClick={() => setViewingDoc(null)}
-                  style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: DESIGN.colors.foreground, opacity: 0.6, lineHeight: 1 }}
-                >
-                  ✕
-                </button>
+              <div className="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <h3 className="text-sm font-bold text-slate-900">{viewingDoc.document_label}</h3>
+                <button onClick={() => setViewingDoc(null)} className="text-slate-400 hover:text-slate-800 text-lg font-bold">✕</button>
               </div>
 
-              <div style={{ padding: '20px', overflow: 'auto', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {viewingDoc.file_type?.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(viewingDoc.original_filename || '') ? (
-                    <img
-                      src={`${API_BASE}/documents/${viewingDoc.id}/file`}
-                      alt={viewingDoc.document_label}
-                      onError={(e) => {
-                        const lbl = (viewingDoc.document_label || '').toLowerCase();
-                        let fb = '/samples/sample_valid_id.png';
-                        if (lbl.includes('indigen')) fb = '/samples/BARANGAY CERTIFICATE OF INDIGENCY.jpg';
-                        else if (lbl.includes('barangay')) fb = '/samples/BARANGAY CERTIFICATE.webp';
-                        else if (lbl.includes('medical')) fb = '/samples/MEDICAL CERTIFICATE.jpg';
-                        else if (lbl.includes('death')) fb = '/samples/sample_death_certificate.png';
-                        else if (lbl.includes('burial')) fb = '/samples/sample_burial_contract.png';
-                        else if (lbl.includes('birth') || lbl.includes('psa')) fb = '/samples/BIRTH CERTIFICATE OF MINOR.jpg';
-                        else if (lbl.includes('reseta')) fb = '/samples/RESETA NG GAMOT.jpg';
-                        (e.currentTarget as HTMLImageElement).src = fb;
-                      }}
-                      style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: '8px', objectFit: 'contain' }}
-                    />
-                  ) : (
-                  <div style={{ textAlign: 'center', padding: '40px' }}>
-                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>📄</div>
-                    <p style={{ fontSize: '13px', color: DESIGN.colors.foreground, opacity: 0.7, marginBottom: '16px' }}>
-                      Hindi ma-preview ang file type na ito sa browser. ({viewingDoc.original_filename})
-                    </p>
+              <div className="p-6 overflow-auto flex items-center justify-center bg-slate-100/50 min-h-[300px]">
+                {viewingDoc.file_type?.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(viewingDoc.original_filename || '') ? (
+                  <img
+                    src={`${API_BASE}/documents/${viewingDoc.id}/file`}
+                    alt={viewingDoc.document_label}
+                    className="max-h-[65vh] max-w-full rounded-lg shadow-sm object-contain"
+                    onError={(e) => {
+                      const lbl = (viewingDoc.document_label || '').toLowerCase();
+                      let fb = '/samples/sample_valid_id.png';
+                      if (lbl.includes('indigen')) fb = '/samples/BARANGAY CERTIFICATE OF INDIGENCY.jpg';
+                      else if (lbl.includes('barangay')) fb = '/samples/BARANGAY CERTIFICATE.webp';
+                      else if (lbl.includes('medical')) fb = '/samples/MEDICAL CERTIFICATE.jpg';
+                      else if (lbl.includes('death')) fb = '/samples/sample_death_certificate.png';
+                      else if (lbl.includes('burial')) fb = '/samples/sample_burial_contract.png';
+                      else if (lbl.includes('birth') || lbl.includes('psa')) fb = '/samples/BIRTH CERTIFICATE OF MINOR.jpg';
+                      else if (lbl.includes('reseta')) fb = '/samples/RESETA NG GAMOT.jpg';
+                      (e.currentTarget as HTMLImageElement).src = fb;
+                    }}
+                  />
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-sm text-slate-500">File: {viewingDoc.original_filename}</p>
                   </div>
                 )}
               </div>
 
-              <div style={{ padding: '16px 20px', borderTop: `1px solid ${DESIGN.colors.border}`, display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                {viewingDoc.id && (
-            <a
-              href={`${API_BASE}/documents/${viewingDoc.id}/file`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ padding: '10px 20px', borderRadius: DESIGN.radius.lg, backgroundColor: DESIGN.colors.muted, color: DESIGN.colors.foreground, fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}
-            >
-              Open in new tab
-            </a>
-          )}
-          <button
-            onClick={() => setViewingDoc(null)}
-            style={{ padding: '10px 20px', borderRadius: DESIGN.radius.lg, backgroundColor: DESIGN.colors.primary, color: 'white', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer' }}
-          >
-            Close
-          </button>
-
-        </div>
-      </div>
-    </div>
-        )}
-              {showInformantInfo && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)' }}
-          onClick={() => setShowInformantInfo(false)}
-        >
-          <div
-            style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card, maxWidth: '480px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ padding: '16px 20px', borderBottom: `1px solid ${DESIGN.colors.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: DESIGN.colors.foreground }}>Informant Information</h3>
-              <button
-                onClick={() => setShowInformantInfo(false)}
-                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: DESIGN.colors.foreground, opacity: 0.6, lineHeight: 1 }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div style={{ padding: '20px', overflow: 'auto', flex: 1 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Relasyon sa Pasyente</label>
-                  <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.informantRelation || '—'}</p>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Buong Pangalan</label>
-                  <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>
-                    {[details.informantFirstName, details.informantMiddleName, details.informantLastName].filter(Boolean).join(' ') || '—'}
-                  </p>
-                </div>
-                <div>
-                  <label style={labelStyle}>Gender</label>
-                  <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.informantGender || '—'}</p>
-                </div>
-                <div>
-                  <label style={labelStyle}>Age</label>
-                  <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.informantAge || '—'}</p>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Birth Date</label>
-                  <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.informantBirthDate || '—'}</p>
-                </div>
-                                <div>
-                  <label style={labelStyle}>House/Building number</label>
-                  <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.informantHouseNumber || '—'}</p>
-                </div>
-                <div>
-                  <label style={labelStyle}>Street name</label>
-                  <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.informantStreetName || '—'}</p>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Barangay</label>
-                  <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.informantBarangay || '—'}</p>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ padding: '16px 20px', borderTop: `1px solid ${DESIGN.colors.border}`, display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowInformantInfo(false)}
-                style={{ padding: '10px 20px', borderRadius: DESIGN.radius.lg, backgroundColor: DESIGN.colors.primary, color: 'white', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer' }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-              {showDeceasedInfo && (
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)' }}
-            onClick={() => setShowDeceasedInfo(false)}
-          >
-            <div
-              style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card, maxWidth: '480px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{ padding: '16px 20px', borderBottom: `1px solid ${DESIGN.colors.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 700, color: DESIGN.colors.foreground }}>Deceased Information</h3>
-                <button onClick={() => setShowDeceasedInfo(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: DESIGN.colors.foreground, opacity: 0.6, lineHeight: 1 }}>✕</button>
-              </div>
-
-              <div style={{ padding: '20px', overflow: 'auto', flex: 1 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Buong Pangalan</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>
-                      {[details.deceasedFirstName, details.deceasedMiddleName, details.deceasedLastName].filter(Boolean).join(' ') || '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Gender</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.deceasedGender || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Age</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.deceasedAge || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Birth Date</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.deceasedBirthDate || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Death Date</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.deceasedDeathDate || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>House/Building number</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.deceasedHouseNumber || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Street name</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.deceasedStreetName || '—'}</p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Barangay</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.deceasedBarangay || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Cremation/Burial</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.cremationOrBurial || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Place of Death</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.placeOfDeath || '—'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ padding: '16px 20px', borderTop: `1px solid ${DESIGN.colors.border}`, display: 'flex', justifyContent: 'flex-end' }}>
-                <button onClick={() => setShowDeceasedInfo(false)} style={{ padding: '10px 20px', borderRadius: DESIGN.radius.lg, backgroundColor: DESIGN.colors.primary, color: 'white', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Close</button>
+              <div className="px-5 py-3 border-t border-slate-200 flex justify-end gap-2 bg-slate-50">
+                <a
+                  href={`${API_BASE}/documents/${viewingDoc.id}/file`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-lg"
+                >
+                  Open Full File
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setViewingDoc(null)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
         )}
 
+        {/* Informant Info Modal */}
+        {showInformantInfo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowInformantInfo(false)}>
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-bold text-slate-900 border-b pb-2">Informant / Representative Info</h3>
+              <p><strong>Name:</strong> {[details.informantFirstName, details.informantMiddleName, details.informantLastName].filter(Boolean).join(' ')}</p>
+              <p><strong>Relation:</strong> {details.informantRelation || '—'}</p>
+              <p><strong>Gender & Age:</strong> {details.informantGender || '—'} &bull; {details.informantAge || '—'} yrs</p>
+              <p><strong>Address:</strong> {[details.informantHouseNumber, details.informantStreetName, details.informantBarangay].filter(Boolean).join(', ')}</p>
+              <div className="pt-3 flex justify-end"><button onClick={() => setShowInformantInfo(false)} className="px-4 py-1.5 bg-slate-800 text-white rounded-lg font-bold">Close</button></div>
+            </div>
+          </div>
+        )}
+
+        {/* Deceased Info Modal */}
+        {showDeceasedInfo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowDeceasedInfo(false)}>
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-bold text-slate-900 border-b pb-2">Deceased Person Information</h3>
+              <p><strong>Name:</strong> {[details.deceasedFirstName, details.deceasedMiddleName, details.deceasedLastName].filter(Boolean).join(' ')}</p>
+              <p><strong>Age & Death Date:</strong> {details.deceasedAge || '—'} yrs &bull; {details.deceasedDeathDate || '—'}</p>
+              <p><strong>Place of Death:</strong> {details.placeOfDeath || '—'}</p>
+              <p><strong>Cremation/Burial:</strong> {details.cremationOrBurial || '—'}</p>
+              <div className="pt-3 flex justify-end"><button onClick={() => setShowDeceasedInfo(false)} className="px-4 py-1.5 bg-slate-800 text-white rounded-lg font-bold">Close</button></div>
+            </div>
+          </div>
+        )}
+
+        {/* Beneficiary / Student Info Modal */}
         {showBeneficiaryInfo && (
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)' }}
-            onClick={() => setShowBeneficiaryInfo(false)}
-          >
-            <div
-              style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card, maxWidth: '480px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{ padding: '16px 20px', borderBottom: `1px solid ${DESIGN.colors.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 700, color: DESIGN.colors.foreground }}>Beneficiary Information</h3>
-                <button onClick={() => setShowBeneficiaryInfo(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: DESIGN.colors.foreground, opacity: 0.6, lineHeight: 1 }}>✕</button>
-              </div>
-
-              <div style={{ padding: '20px', overflow: 'auto', flex: 1 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Relasyon sa Benepisyaryo</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.beneficiaryRelation || '—'}</p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Buong Pangalan</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>
-                      {[details.beneficiaryFirstName, details.beneficiaryMiddleName, details.beneficiaryLastName].filter(Boolean).join(' ') || '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Gender</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.beneficiaryGender || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Age</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.beneficiaryAge || '—'}</p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Birth Date</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.beneficiaryBirthDate || '—'}</p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Disability Type</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.disabilityType || '—'}</p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>School Name</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.schoolName || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>House/Building number</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.beneficiaryHouseNumber || '—'}</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Street name</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.beneficiaryStreetName || '—'}</p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Barangay</label>
-                    <p style={{ color: DESIGN.colors.foreground, fontSize: '14px', fontWeight: 600, marginTop: '6px' }}>{details.beneficiaryBarangay || '—'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ padding: '16px 20px', borderTop: `1px solid ${DESIGN.colors.border}`, display: 'flex', justifyContent: 'flex-end' }}>
-                <button onClick={() => setShowBeneficiaryInfo(false)} style={{ padding: '10px 20px', borderRadius: DESIGN.radius.lg, backgroundColor: DESIGN.colors.primary, color: 'white', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Close</button>
-              </div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowBeneficiaryInfo(false)}>
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-bold text-slate-900 border-b pb-2">Beneficiary / Student Information</h3>
+              <p><strong>Name:</strong> {[details.beneficiaryFirstName, details.beneficiaryMiddleName, details.beneficiaryLastName].filter(Boolean).join(' ')}</p>
+              <p><strong>School Name:</strong> {details.schoolName || '—'}</p>
+              <p><strong>Disability Type:</strong> {details.disabilityType || '—'}</p>
+              <p><strong>Relation:</strong> {details.beneficiaryRelation || '—'}</p>
+              <div className="pt-3 flex justify-end"><button onClick={() => setShowBeneficiaryInfo(false)} className="px-4 py-1.5 bg-slate-800 text-white rounded-lg font-bold">Close</button></div>
             </div>
           </div>
         )}
 
+        {/* Guarantee Letter Modal */}
         {glApp && (
           <OfficialGuaranteeLetterModal
             data={{
@@ -947,14 +1398,24 @@ export default function AICS() {
               qcidNumber: glApp.qc_id || glApp.reference_no,
               barangay: glApp.barangay,
               district: glApp.district,
-              diagnosis: (typeof glApp.details === 'object' ? glApp.details?.medicalDiagnosis : null) || 'Chronic Kidney Disease (Stage 5) / Hemodialysis',
-              hospitalName: (typeof glApp.details === 'object' ? glApp.details?.partnerHospital : null) || 'EAST AVENUE MEDICAL CENTER (EAMC)',
+              diagnosis: (typeof glApp.details === 'object' ? glApp.details?.medicalDiagnosis : null) || 'Medical Confinement / Specialty Care',
+              hospitalName: (typeof glApp.details === 'object' ? (glApp.details?.partnerHospital === 'Other' ? glApp.details?.partnerHospitalOther : glApp.details?.partnerHospital) : null) || 'EAST AVENUE MEDICAL CENTER (EAMC)',
               amount: FIXED_ASSISTANCE_AMOUNTS['Medical Assistance'] || 25000,
             }}
             onClose={() => setGlApp(null)}
             canPrint={true}
           />
         )}
+
+        {/* Official Referral Letter Modal */}
+        {refLetterApp && (
+          <OfficialReferralLetterModal
+            data={refLetterApp}
+            onClose={() => setRefLetterApp(null)}
+            canPrint={true}
+          />
+        )}
+
       </div>
     )
   }

@@ -324,21 +324,47 @@ exports.getApplicationByReference = async (req, res) => {
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, rejectionReason, referralAgency, referralNotes, appointmentDate, appointmentVenue } = req.body;
 
-    const validStatuses = ['pending', 'approved', 'rejected', 'completed'];
+    const validStatuses = [
+      'pending',
+      'submit_pending',
+      'waiting_approval',
+      'scheduled',
+      'under_review',
+      'approved',
+      'for_referral',
+      'referred',
+      'rejected',
+      'completed'
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: 'Invalid na status.' });
     }
 
-    const result = await db.query(
-      `UPDATE aics_applications SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
-      [status, id]
-    );
-
-    if (result.rows.length === 0) {
+    const existingResult = await db.query('SELECT * FROM aics_applications WHERE id = $1', [id]);
+    if (existingResult.rows.length === 0) {
       return res.status(404).json({ error: 'Walang nahanap na application.' });
     }
+
+    const currentDetails = existingResult.rows[0].details || {};
+    const updatedDetails = {
+      ...currentDetails,
+      ...(rejectionReason ? { rejectionReason } : {}),
+      ...(referralAgency ? { referralAgency } : {}),
+      ...(referralNotes ? { referralNotes } : {}),
+      ...(appointmentDate ? { appointmentDate } : {}),
+      ...(appointmentVenue ? { appointmentVenue } : {}),
+      statusHistory: [
+        ...(currentDetails.statusHistory || []),
+        { status, timestamp: new Date().toISOString() }
+      ]
+    };
+
+    const result = await db.query(
+      `UPDATE aics_applications SET status = $1, details = $2, updated_at = NOW() WHERE id = $3 RETURNING *`,
+      [status, updatedDetails, id]
+    );
 
     const app = result.rows[0];
     const fullName = [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(' ');
@@ -399,17 +425,15 @@ exports.updateApplicationStatus = async (req, res) => {
       await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref = $1`, [app.reference_no]);
     }
 
-    if (status === 'approved' || status === 'rejected') {
-      await logActivity({
-        actor: 'Admin User',
-        actorRole: 'Social Worker',
-        action: status,
-        module: 'AICS',
-        referenceNo: app.reference_no,
-        subject: fullName,
-        detail: `${app.assistance_type} application ${status}.`,
-      });
-    }
+    await logActivity({
+      actor: 'Admin User',
+      actorRole: 'Social Worker',
+      action: status,
+      module: 'AICS',
+      referenceNo: app.reference_no,
+      subject: fullName,
+      detail: `${app.assistance_type} application updated to ${status}.`,
+    });
 
     res.json({ message: 'Na-update ang status.', application: app });
   } catch (err) {
