@@ -366,24 +366,16 @@ function AppointmentCard({
 }
 
 function getAppointmentDeduplicationKey(a: { id?: string; referenceNo?: string; applicantName?: string; concern?: string; module?: string }): string {
-  const cleanRef = String(a.referenceNo || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim()
-  const cleanConcern = String(a.concern || "")
-    .toLowerCase()
-    .replace(/assistance/g, "")
-    .replace(/social/g, "")
-    .replace(/program/g, "")
-    .replace(/capital/g, "")
-    .replace(/[^a-z0-9]/g, "")
-    .trim()
-  if (cleanRef) {
-    return `ref_${cleanRef}_${cleanConcern}`
+  const ref = String(a.referenceNo || "").toLowerCase().trim()
+  const id = String(a.id || "").toLowerCase().trim()
+  if (ref) {
+    return `ref_${ref}`
   }
-  const cleanId = String(a.id || "").toLowerCase().trim()
-  if (cleanId) {
-    return `id_${cleanId}_${cleanConcern}`
+  if (id) {
+    return `id_${id}`
   }
   const cleanName = String(a.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
-  return `name_${cleanName}_${cleanConcern}`
+  return `name_${cleanName}_${Date.now()}`
 }
 
 export default function Appointments() {

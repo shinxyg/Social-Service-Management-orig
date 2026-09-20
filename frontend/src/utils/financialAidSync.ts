@@ -386,12 +386,9 @@ export function syncAppointmentToFinancialAid(params: {
   } catch {}
 
   const updatedDisbursements = currentDisbursements.map((d) => {
-    const isSameRef = d.applicationRef === params.referenceNo
-    const isSameName = d.applicantName.toLowerCase().trim() === params.applicantName.toLowerCase().trim()
-    const matchesConcern = d.assistanceType.toLowerCase().includes(rawConcern.toLowerCase()) || rawConcern.toLowerCase().includes(d.assistanceType.toLowerCase().replace(/\s*assistance/gi, "").trim())
-    const singleForRef = currentDisbursements.filter((x) => x.applicationRef === params.referenceNo).length === 1
+    const isExactRef = d.applicationRef && d.applicationRef.trim().toLowerCase() === params.referenceNo.trim().toLowerCase()
 
-    if ((isSameRef && (matchesConcern || singleForRef)) || (isSameName && d.status === "PENDING" && matchesConcern)) {
+    if (isExactRef) {
       found = true
       return {
         ...d,
