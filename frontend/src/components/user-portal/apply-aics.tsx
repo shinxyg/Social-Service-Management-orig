@@ -261,7 +261,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
     ? Boolean(checklistDeceasedResident === "yes" && checklistRelation && checklistFuneralHome)
     : isEducationalAssistance
     ? eduEligResident && eduEligAge && eduEligSchool && eduEligIndigent
-    : checklistResident && checklistPatient
+    : Boolean(partnerHospital && (partnerHospital !== "Other" || partnerHospitalOther.trim()) && medicalDiagnosis.trim())
 
   useEffect(() => {
     const syncProfile = () => {
@@ -971,18 +971,20 @@ const handleFinalSubmit = async () => {
           </div>
 
           <div className="p-6 sm:p-8 space-y-7">
-            {}
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
-              <div>
-                <p className="text-sm font-semibold text-blue-900 dark:text-white">
-                  {t("primaryReqAlertTitle").replace("{type}", type.toUpperCase())}
-                </p>
-                <p className="text-xs text-blue-700 dark:text-slate-200 mt-0.5">
-                  {t("primaryReqAlertDesc")}
-                </p>
+            {/* Top alert banner for Educational and Funeral only */}
+            {(isEducationalAssistance || isFuneralAssistance) && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900 dark:text-white">
+                    {t("primaryReqAlertTitle").replace("{type}", type.toUpperCase())}
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-slate-200 mt-0.5">
+                    {t("primaryReqAlertDesc")}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {isEducationalAssistance ? (
               <>
@@ -1111,138 +1113,51 @@ const handleFinalSubmit = async () => {
                 </div>
               </>
             ) : (
-              <>
+              <div className="space-y-4">
                 <div>
-                  <h2 className="text-base font-bold text-gray-900 dark:text-white tracking-wide uppercase">{t("medicalRequirementsTitle")}</h2>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Accredited Partner Hospital / Healthcare Facility *
+                  </label>
+                  <select
+                    value={partnerHospital}
+                    onChange={(e) => setPartnerHospital(e.target.value)}
+                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                  >
+                    <option value="Quezon City General Hospital (QCGH)">Quezon City General Hospital (QCGH)</option>
+                    <option value="Lung Center of the Philippines">Lung Center of the Philippines</option>
+                    <option value="National Children’s Hospital">National Children’s Hospital</option>
+                    <option value="National Kidney and Transplant Institute (NKTI)">National Kidney and Transplant Institute (NKTI)</option>
+                    <option value="Heart Center of the Philippines">Heart Center of the Philippines</option>
+                    <option value="East Avenue Medical Center">East Avenue Medical Center</option>
+                    <option value="Philippine Children’s Medical Center (PCMC)">Philippine Children’s Medical Center (PCMC)</option>
+                    <option value="Quirino Memorial Medical Center (QMMC)">Quirino Memorial Medical Center (QMMC)</option>
+                    <option value="St. Luke’s Medical Center – Quezon City">St. Luke’s Medical Center – Quezon City</option>
+                    <option value="Other">Other Accredited Health Facility</option>
+                  </select>
                 </div>
 
-                <div className="space-y-4">
-                  <CustomCheckbox
-                    checked={checklistResident}
-                    onChange={setChecklistResident}
-                    label={`${t("qcResidentQuestion")} *`}
-                  />
-                  <CustomCheckbox
-                    checked={checklistPatient}
-                    onChange={setChecklistPatient}
-                    label={`${t("qcPatientQuestion")} *`}
-                  />
-                </div>
-
-                <div>
-                  <p className="text-sm text-gray-800 dark:text-white mb-3">
-                    {t("priorAidQuestion")} *
-                  </p>
-                  <div className="flex items-center gap-8">
-                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-white cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="priorAid"
-                        checked={checklistPriorAid === "yes"}
-                        onChange={() => setChecklistPriorAid("yes")}
-                        className="h-4 w-4 accent-[#3b82f6]"
-                      />
-                      {t("priorAidYes")}
-                    </label>
-                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-white cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="priorAid"
-                        checked={checklistPriorAid === "no"}
-                        onChange={() => {
-                          setChecklistPriorAid("no")
-                          setPriorAidOffice("")
-                          setPriorAidType("")
-                        }}
-                        className="h-4 w-4 accent-[#3b82f6]"
-                      />
-                      {t("priorAidNo")}
-                    </label>
-                  </div>
-
-                  {checklistPriorAid === "yes" && (
-                    <div className="mt-4 space-y-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t("priorAidOfficeLabel")}</label>
-                        <input
-                          value={priorAidOffice}
-                          onChange={(e) => setPriorAidOffice(e.target.value)}
-                          placeholder={t("priorAidOfficePlaceholder")}
-                          className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t("priorAidTypeLabel")}</label>
-                        <select
-                          value={priorAidType}
-                          onChange={(e) => setPriorAidType(e.target.value)}
-                          className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                        >
-                          <option value="" disabled>{t("priorAidTypeLabel")}</option>
-                          <option value="cash">{t("priorAidCash")}</option>
-                          <option value="guarantee_letter">{t("priorAidGuaranteeLetter")}</option>
-                          <option value="gamot">{t("priorAidMedicine")}</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-2 tracking-wide uppercase">{t("clickAssistanceType")}</h3>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t("chooseAssistanceType")} **</label>
-                  <div className="w-full h-11 rounded-lg border border-gray-300 bg-gray-50 px-3.5 flex items-center text-sm font-medium text-gray-800">
-                    {t("medicinesMedicalSupplies")}
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 pt-4 space-y-4">
+                {partnerHospital === "Other" && (
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                      Accredited Partner Hospital / Healthcare Facility *
-                    </label>
-                    <select
-                      value={partnerHospital}
-                      onChange={(e) => setPartnerHospital(e.target.value)}
-                      className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                    >
-                      <option value="Quezon City General Hospital (QCGH)">Quezon City General Hospital (QCGH)</option>
-                      <option value="Lung Center of the Philippines">Lung Center of the Philippines</option>
-                      <option value="National Children’s Hospital">National Children’s Hospital</option>
-                      <option value="National Kidney and Transplant Institute (NKTI)">National Kidney and Transplant Institute (NKTI)</option>
-                      <option value="Heart Center of the Philippines">Heart Center of the Philippines</option>
-                      <option value="East Avenue Medical Center">East Avenue Medical Center</option>
-                      <option value="Philippine Children’s Medical Center (PCMC)">Philippine Children’s Medical Center (PCMC)</option>
-                      <option value="Quirino Memorial Medical Center (QMMC)">Quirino Memorial Medical Center (QMMC)</option>
-                      <option value="St. Luke’s Medical Center – Quezon City">St. Luke’s Medical Center – Quezon City</option>
-                      <option value="Other">Other Accredited Health Facility</option>
-                    </select>
-                  </div>
-
-                  {partnerHospital === "Other" && (
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">Specify Hospital / Facility Name *</label>
-                      <input
-                        value={partnerHospitalOther}
-                        onChange={(e) => setPartnerHospitalOther(e.target.value)}
-                        placeholder="e.g. Philippine General Hospital (PGH)"
-                        className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Medical Condition / Diagnosis *</label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Specify Hospital / Facility Name *</label>
                     <input
-                      value={medicalDiagnosis}
-                      onChange={(e) => setMedicalDiagnosis(e.target.value)}
-                      placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
+                      value={partnerHospitalOther}
+                      onChange={(e) => setPartnerHospitalOther(e.target.value)}
+                      placeholder="e.g. Philippine General Hospital (PGH)"
                       className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                     />
                   </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Medical Condition / Diagnosis *</label>
+                  <input
+                    value={medicalDiagnosis}
+                    onChange={(e) => setMedicalDiagnosis(e.target.value)}
+                    placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
+                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                  />
                 </div>
-              </>
+              </div>
             )}
           </div>
 
