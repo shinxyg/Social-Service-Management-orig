@@ -1167,11 +1167,15 @@ export default function AICS() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowInformantInfo(false)}>
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-sm font-bold text-slate-900 border-b pb-2">Informant / Representative Info</h3>
-              <p><strong>Name:</strong> {[details.informantFirstName, details.informantMiddleName, details.informantLastName].filter(Boolean).join(' ')}</p>
-              <p><strong>Relation:</strong> {details.informantRelation || '—'}</p>
-              <p><strong>Gender & Age:</strong> {details.informantGender || '—'} &bull; {details.informantAge || '—'} yrs</p>
-              <p><strong>Address:</strong> {[details.informantHouseNumber, details.informantStreetName, details.informantBarangay].filter(Boolean).join(', ')}</p>
-              <div className="pt-3 flex justify-end"><button onClick={() => setShowInformantInfo(false)} className="px-4 py-1.5 bg-slate-800 text-white rounded-lg font-bold">Close</button></div>
+              <p><strong>Name:</strong> {[details.informantFirstName, details.informantMiddleName, details.informantLastName].filter(Boolean).join(' ') || '—'}</p>
+              <p><strong>Relation to Patient:</strong> {details.informantRelation || 'Sarili'}</p>
+              <p><strong>Gender & Age:</strong> {details.informantGender || '—'} &bull; {details.informantAge ? `${details.informantAge} yrs` : '—'}</p>
+              {details.informantBirthDate && <p><strong>Birth Date:</strong> {details.informantBirthDate}</p>}
+              <p><strong>Address:</strong> {details.informantAddress || [details.informantHouseNumber, details.informantStreetName, details.informantBarangay].filter(Boolean).join(', ') || '—'}</p>
+              {details.priorAidOffice && (
+                <p><strong>Prior Aid Received:</strong> {details.priorAidOffice} ({details.priorAidType || 'N/A'})</p>
+              )}
+              <div className="pt-3 flex justify-end"><button onClick={() => setShowInformantInfo(false)} className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold cursor-pointer">Close</button></div>
             </div>
           </div>
         )}
