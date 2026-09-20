@@ -1164,46 +1164,270 @@ export default function AICS() {
 
         {/* Informant Info Modal */}
         {showInformantInfo && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowInformantInfo(false)}>
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-sm font-bold text-slate-900 border-b pb-2">Informant / Representative Info</h3>
-              <p><strong>Name:</strong> {[details.informantFirstName, details.informantMiddleName, details.informantLastName].filter(Boolean).join(' ') || '—'}</p>
-              <p><strong>Relation to Patient:</strong> {details.informantRelation || 'Sarili'}</p>
-              <p><strong>Gender & Age:</strong> {details.informantGender || '—'} &bull; {details.informantAge ? `${details.informantAge} yrs` : '—'}</p>
-              {details.informantBirthDate && <p><strong>Birth Date:</strong> {details.informantBirthDate}</p>}
-              <p><strong>Address:</strong> {details.informantAddress || [details.informantHouseNumber, details.informantStreetName, details.informantBarangay].filter(Boolean).join(', ') || '—'}</p>
-              {details.priorAidOffice && (
-                <p><strong>Prior Aid Received:</strong> {details.priorAidOffice} ({details.priorAidType || 'N/A'})</p>
-              )}
-              <div className="pt-3 flex justify-end"><button onClick={() => setShowInformantInfo(false)} className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold cursor-pointer">Close</button></div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" onClick={() => setShowInformantInfo(false)}>
+            <div className="bg-slate-900 text-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl space-y-4 border border-slate-800" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight text-white">Informant information</h3>
+                  <p className="text-xs text-slate-400">Representative & Applicant details filed</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowInformantInfo(false)}
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center font-bold text-sm transition cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Relationship to Patient */}
+              <div>
+                <label className="text-[11px] font-semibold text-slate-400 block mb-1">Relasyon sa Pasyente *</label>
+                <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-blue-400">
+                  {details.informantRelation || 'Sarili'}
+                </div>
+              </div>
+
+              {/* Names Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">First name *</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white truncate">
+                    {details.informantFirstName || reviewingApp.first_name || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Middle name</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white truncate">
+                    {details.informantMiddleName || reviewingApp.middle_name || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Last name *</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white truncate">
+                    {details.informantLastName || reviewingApp.last_name || '—'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Demographics Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Suffix</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-300">
+                    {details.informantSuffix || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Gender *</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.informantGender || reviewingApp.gender || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Date of birth *</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.informantBirthDate || '—'}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-slate-400 block mb-1">Age *</label>
+                <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white w-24">
+                  {details.informantAge || reviewingApp.age || '—'}
+                </div>
+              </div>
+
+              {/* Address Fields */}
+              <div className="pt-2 border-t border-slate-800 space-y-3">
+                <div className="text-xs font-semibold text-blue-400 flex items-center gap-2">
+                  <span>✓</span>
+                  <span>Address Details</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-400 block mb-1">House/Building number *</label>
+                    <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                      {details.informantHouseNumber || '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-400 block mb-1">Street name *</label>
+                    <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                      {details.informantStreetName || '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-400 block mb-1">Barangay *</label>
+                    <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                      {details.informantBarangay || reviewingApp.barangay || '—'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowInformantInfo(false)}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {/* Deceased Info Modal */}
         {showDeceasedInfo && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowDeceasedInfo(false)}>
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-sm font-bold text-slate-900 border-b pb-2">Deceased Person Information</h3>
-              <p><strong>Name:</strong> {[details.deceasedFirstName, details.deceasedMiddleName, details.deceasedLastName].filter(Boolean).join(' ')}</p>
-              <p><strong>Age & Death Date:</strong> {details.deceasedAge || '—'} yrs &bull; {details.deceasedDeathDate || '—'}</p>
-              <p><strong>Place of Death:</strong> {details.placeOfDeath || '—'}</p>
-              <p><strong>Cremation/Burial:</strong> {details.cremationOrBurial || '—'}</p>
-              <div className="pt-3 flex justify-end"><button onClick={() => setShowDeceasedInfo(false)} className="px-4 py-1.5 bg-slate-800 text-white rounded-lg font-bold">Close</button></div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" onClick={() => setShowDeceasedInfo(false)}>
+            <div className="bg-slate-900 text-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl space-y-4 border border-slate-800" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight text-white">Deceased Person Information</h3>
+                  <p className="text-xs text-slate-400">Funeral & burial assistance records</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDeceasedInfo(false)}
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center font-bold text-sm transition cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">First name *</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.deceasedFirstName || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Middle name</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.deceasedMiddleName || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Last name *</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.deceasedLastName || '—'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Age at Death</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.deceasedAge ? `${details.deceasedAge} yrs` : '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Date of Death</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.deceasedDeathDate || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Place of Death</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.placeOfDeath || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Cremation or Burial</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.cremationOrBurial || '—'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowDeceasedInfo(false)}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {/* Beneficiary / Student Info Modal */}
         {showBeneficiaryInfo && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowBeneficiaryInfo(false)}>
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-3 text-xs" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-sm font-bold text-slate-900 border-b pb-2">Beneficiary / Student Information</h3>
-              <p><strong>Name:</strong> {[details.beneficiaryFirstName, details.beneficiaryMiddleName, details.beneficiaryLastName].filter(Boolean).join(' ')}</p>
-              <p><strong>School Name:</strong> {details.schoolName || '—'}</p>
-              <p><strong>Disability Type:</strong> {details.disabilityType || '—'}</p>
-              <p><strong>Relation:</strong> {details.beneficiaryRelation || '—'}</p>
-              <div className="pt-3 flex justify-end"><button onClick={() => setShowBeneficiaryInfo(false)} className="px-4 py-1.5 bg-slate-800 text-white rounded-lg font-bold">Close</button></div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" onClick={() => setShowBeneficiaryInfo(false)}>
+            <div className="bg-slate-900 text-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl space-y-4 border border-slate-800" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight text-white">Beneficiary / Student Information</h3>
+                  <p className="text-xs text-slate-400">Educational / student assistance profile</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowBeneficiaryInfo(false)}
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center font-bold text-sm transition cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">First name *</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.beneficiaryFirstName || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Middle name</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.beneficiaryMiddleName || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Last name *</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.beneficiaryLastName || '—'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">School Name</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.schoolName || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Disability Type / Note</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.disabilityType || '—'}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">Relationship to Applicant</label>
+                  <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white">
+                    {details.beneficiaryRelation || '—'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowBeneficiaryInfo(false)}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
