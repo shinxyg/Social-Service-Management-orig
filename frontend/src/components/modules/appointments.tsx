@@ -996,10 +996,29 @@ export default function Appointments() {
         }),
       })).catch(() => {})
 
+      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(appt.referenceNo || targetId)}`, {
+        method: 'DELETE',
+      }).catch(() => {})
+
+      const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
+      const localMap = JSON.parse(raw)
+      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "rejected" }
+      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "rejected" }
+      localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
+
+      pushUserNotification({
+        userId: appt.referenceNo || 'all',
+        title: 'AICS: Application REJECTED / DISQUALIFIED',
+        message: `Ikinalulungkot naming ipabatid na hindi naaprubahan ang inyong aplikasyon (${appt.concern}). Dahilan: ${reason}`,
+        type: 'aics',
+        link: '/portal/aics',
+      })
+
       setAppointments(prev => prev.filter(a => a.id !== appt.id && a.referenceNo !== appt.referenceNo))
       notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
+      window.dispatchEvent(new Event("user_notifications_updated"))
     } catch (err) {
       console.error(err)
     }
