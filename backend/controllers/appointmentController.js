@@ -361,7 +361,24 @@ exports.scheduleAppointment = async (req, res) => {
 
     await syncAppointmentWithDisbursement(appt);
 
-    res.json({ message: 'Appointment scheduled and synced with Financial Aid.', appointment: appt });
+    try {
+      await db.query(
+        `UPDATE aics_applications
+         SET status = 'under_review',
+             details = COALESCE(details, '{}'::jsonb) || jsonb_build_object(
+               'appointmentDate', $1::text,
+               'appointmentTime', $2::text,
+               'appointmentVenue', $3::text
+             ),
+             updated_at = NOW()
+         WHERE reference_no = $4 OR qc_id = $4 OR id::text = $4`,
+        [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', cleanId]
+      );
+    } catch (aicsSyncErr) {
+      console.warn('Could not update aics_applications status to under_review:', aicsSyncErr.message);
+    }
+
+    res.json({ message: 'Appointment scheduled and synced with Financial Aid and AICS case review.', appointment: appt });
   } catch (err) {
     console.error('Error scheduling appointment:', err);
     res.status(500).json({ error: 'Failed to schedule appointment.', details: err.message });

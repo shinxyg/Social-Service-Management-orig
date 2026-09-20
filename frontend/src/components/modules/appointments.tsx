@@ -823,6 +823,31 @@ export default function Appointments() {
             concern: targetAppt.concern,
           }),
         })
+
+        // Also notify AICS and Citizen User Portal
+        const targetAppId = targetAppt.rawAppId || targetAppt.id.replace('aics-appt-', '').replace('db-appt-', '')
+        await fetch(`${API_BASE}/applications/${targetAppId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'under_review',
+            appointmentDate: date,
+            appointmentVenue: location,
+          }),
+        }).catch(() => {})
+
+        pushUserNotification({
+          userId: targetAppt.referenceNo || 'all',
+          title: 'AICS: Interview Scheduled — Under Review',
+          message: `Nakatakda ang inyong interview sa ${date} (${time}) sa ${location}. Ang inyong aplikasyon ay kasalukuyang under review.`,
+          type: 'appointment',
+          link: '/portal/aics',
+        })
+
+        notifyApplicationChange('STATUS_CHANGED', 'aics', targetAppt.referenceNo)
+        window.dispatchEvent(new Event("aics_applications_updated"))
+        window.dispatchEvent(new Event("appointments_updated"))
+        window.dispatchEvent(new Event("user_notifications_updated"))
       } catch (err) {
         console.warn("Backend schedule PUT error:", err)
       }
