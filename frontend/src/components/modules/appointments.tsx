@@ -326,24 +326,14 @@ function AppointmentCard({
           <div className="flex flex-wrap items-center gap-1.5 mt-2 justify-end">
             {/* 1. Pending Schedule Stage */}
             {appt.status === "pending" && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onSchedule(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>📅 Set Schedule</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onReject?.(appt)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  <span>Reject</span>
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => onSchedule(appt)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                <span>📅 Set Schedule</span>
+              </button>
             )}
 
             {/* 2. Scheduled Interview / Under Review Stage */}
