@@ -35,7 +35,15 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
     t("wizardReview")?.toUpperCase() || "REVIEW & SUBMIT",
   ]
 
-  const SAMPLE_DOCUMENTS = [
+  const MEDICINE_SAMPLE_DOCUMENTS = [
+    "MEDICAL CERTIFICATE / CLINICAL ABSTRACT",
+    "RESETA NG GAMOT",
+    "BARANGAY CERTIFICATE OF INDIGENCY",
+    "QC ID NG PASYENTE",
+    "AUTHORIZATION / PERSONAL LETTER",
+  ]
+
+  const MEDICAL_BILL_SAMPLE_DOCUMENTS = [
     "MEDICAL CERTIFICATE / CLINICAL ABSTRACT",
     "HOSPITAL BILL / SOA",
     "BARANGAY CERTIFICATE OF INDIGENCY",
@@ -176,6 +184,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [pPhoneNumber, setPPhoneNumber] = useState("")
   const [pEmail, setPEmail] = useState("")
   const [isSelfPatient, setIsSelfPatient] = useState(false)
+  const [medicalAssistanceSubType, setMedicalAssistanceSubType] = useState("Medicines / Medical Supplies")
   const [partnerHospital, setPartnerHospital] = useState("")
   const [partnerHospitalOther, setPartnerHospitalOther] = useState("")
   const [medicalDiagnosis, setMedicalDiagnosis] = useState("")
@@ -463,7 +472,9 @@ const canProceedPersonal = Boolean(
     ? FUNERAL_SAMPLE_DOCUMENTS
     : isEducationalAssistance
     ? EDUCATIONAL_SAMPLE_DOCUMENTS
-    : SAMPLE_DOCUMENTS
+    : medicalAssistanceSubType === "Medical Bill Assistance"
+    ? MEDICAL_BILL_SAMPLE_DOCUMENTS
+    : MEDICINE_SAMPLE_DOCUMENTS
 
   const isFormDirty =
     step === "personal" ||
@@ -833,6 +844,7 @@ const handleFinalSubmit = async () => {
           priorAidType,
           partnerHospital: partnerHospital === "Other" ? (partnerHospitalOther || "Accredited Health Facility") : partnerHospital,
           medicalDiagnosis,
+          assistanceSubType: medicalAssistanceSubType,
           hospitalBillEstimate,
         }
 
@@ -1112,11 +1124,25 @@ const handleFinalSubmit = async () => {
                 </div>
               </>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Accredited Partner Hospital / Healthcare Facility *
-                  </label>
+                  <h3 className="text-sm font-bold text-gray-900 mb-2 tracking-wide uppercase">CLICK THE TYPE OF ASSISTANCE</h3>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Choose the type of assistance **</label>
+                  <select
+                    value={medicalAssistanceSubType}
+                    onChange={(e) => setMedicalAssistanceSubType(e.target.value)}
+                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                  >
+                    <option value="Medicines / Medical Supplies">Medicines / Medical Supplies</option>
+                    <option value="Medical Bill Assistance">Medical Bill Assistance</option>
+                  </select>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4 space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                      Accredited Partner Hospital / Healthcare Facility *
+                    </label>
                   <select
                     value={partnerHospital}
                     onChange={(e) => setPartnerHospital(e.target.value)}
@@ -1158,7 +1184,8 @@ const handleFinalSubmit = async () => {
                   />
                 </div>
               </div>
-            )}
+            </div>
+          )}
           </div>
 
           <div className="px-6 sm:px-8 pb-6 sm:pb-8 flex justify-end">
