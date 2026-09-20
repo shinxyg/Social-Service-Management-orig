@@ -1127,7 +1127,6 @@ const handleFinalSubmit = async () => {
               <div className="space-y-5">
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-2 tracking-wide uppercase">CLICK THE TYPE OF ASSISTANCE</h3>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Choose the type of assistance **</label>
                   <select
                     value={medicalAssistanceSubType}
                     onChange={(e) => setMedicalAssistanceSubType(e.target.value)}
@@ -1148,7 +1147,7 @@ const handleFinalSubmit = async () => {
                     onChange={(e) => setPartnerHospital(e.target.value)}
                     className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                   >
-                    <option value="" disabled>-- Select Accredited Partner Hospital / Healthcare Facility --</option>
+                    <option value="" disabled>Select Accredited Partner Hospital / Healthcare Facility</option>
                     <option value="Quezon City General Hospital (QCGH)">Quezon City General Hospital (QCGH)</option>
                     <option value="Lung Center of the Philippines">Lung Center of the Philippines</option>
                     <option value="National Children’s Hospital">National Children’s Hospital</option>
