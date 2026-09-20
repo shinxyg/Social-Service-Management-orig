@@ -82,18 +82,40 @@ async function syncAndCleanAppointments() {
     const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
 
+    // 1. Clean up AICS appointments that are still in pending intake OR have been rejected
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND reference_no IN (
-        SELECT reference_no FROM aics_applications WHERE status IN ('rejected')
+        SELECT reference_no FROM aics_applications 
+        WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'for_screening', 'rejected', 'denied', 'disapproved')
+      )
+    `).catch(() => {});
+
+    // 2. Clean up rejected applications for other modules
+    await db.query(`
+      DELETE FROM appointments
+      WHERE module IN ('PWD', 'Senior Citizen') AND reference_no IN (
+        SELECT reference_number FROM pwd_senior_applications WHERE status IN ('rejected', 'denied', 'disapproved')
       )
     `).catch(() => {});
 
     await db.query(`
       DELETE FROM appointments
-      WHERE module IN ('PWD', 'Senior Citizen') AND reference_no IN (
-        SELECT reference_number FROM pwd_senior_applications WHERE status IN ('rejected')
+      WHERE module = 'Livelihood' AND reference_no IN (
+        SELECT reference_number FROM livelihood_applications WHERE application_status IN ('rejected', 'disapproved')
       )
+    `).catch(() => {});
+
+    await db.query(`
+      DELETE FROM appointments
+      WHERE module = 'Child Welfare' AND reference_no IN (
+        SELECT reference_number FROM child_welfare_applications WHERE application_status IN ('rejected', 'disapproved')
+      )
+    `).catch(() => {});
+
+    await db.query(`
+      DELETE FROM appointments
+      WHERE status IN ('rejected', 'denied', 'disapproved')
     `).catch(() => {});
 
     await db.query(`
@@ -116,10 +138,11 @@ async function syncAndCleanAppointments() {
         AND status NOT IN ('rejected', 'referred')
     `).catch(() => {});
 
+    // Only import AICS applications that have been APPROVED or already SCHEDULED / UNDER REVIEW
     const activeAics = await db.query(
       `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix, status
        FROM aics_applications
-       WHERE status NOT IN ('rejected')`
+       WHERE status IN ('approved', 'completed', 'scheduled', 'under_review', 'for_referral', 'referred')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeAics.rows) {
@@ -129,11 +152,12 @@ async function syncAndCleanAppointments() {
       const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
       const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
       const isReferred = ['for_referral', 'referred'].includes(row.status);
-      const initStatus = isReferred ? 'referred' : 'pending';
+      const isSched = ['scheduled', 'under_review'].includes(row.status);
+      const initStatus = isReferred ? 'referred' : isSched ? 'scheduled' : 'pending';
       await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling.'
+         SELECT $1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang AICS aplikasyon para sa scheduling.'
          WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
         [refNo, fullName, cleanType, initStatus]
       ).catch(() => {});

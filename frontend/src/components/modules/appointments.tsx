@@ -478,6 +478,7 @@ export default function Appointments() {
             if (dataDb.appointments && Array.isArray(dataDb.appointments)) {
               const mapped = dataDb.appointments
                 .filter((a: any) => {
+                  const status = String(a.status || '').toLowerCase()
                   const concern = String(a.concern || '').toLowerCase()
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || '').trim().toLowerCase()
                   const rawId = String(a.id || '').trim().toLowerCase()
@@ -485,6 +486,9 @@ export default function Appointments() {
                     return false
                   }
                   if (concern.includes('id card') || concern.includes('issuance') || concern.includes('replacement') || concern.includes('renewal')) {
+                    return false
+                  }
+                  if (status === 'rejected' || status === 'denied' || status === 'disapproved') {
                     return false
                   }
                   return true
@@ -542,7 +546,17 @@ export default function Appointments() {
             const data = await resAicsSettled.value.json()
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
-                if (app.status !== "rejected") {
+                const rawAppStatus = String(app.status || '').toLowerCase()
+                // Only show in Appointments if APPROVED (or already scheduled / under review / referred / completed).
+                // Do NOT show if still pending initial review or if rejected!
+                if (
+                  rawAppStatus === 'approved' ||
+                  rawAppStatus === 'completed' ||
+                  rawAppStatus === 'scheduled' ||
+                  rawAppStatus === 'under_review' ||
+                  rawAppStatus === 'for_referral' ||
+                  rawAppStatus === 'referred'
+                ) {
                   const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                   const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
                   const ref = String(app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
@@ -553,13 +567,10 @@ export default function Appointments() {
                   const hasDate = Boolean(schedDate)
                   
                   let apptStatus: AppointmentStatus = 'pending'
-                  const rawAppStatus = String(app.status || '').toLowerCase()
-                  if (rawAppStatus === 'approved' || rawAppStatus === 'completed' || cached?.status === 'approved' || cached?.status === 'completed') {
-                    apptStatus = 'approved'
+                  if (rawAppStatus === 'completed' || cached?.status === 'completed') {
+                    apptStatus = 'completed'
                   } else if (rawAppStatus === 'for_referral' || rawAppStatus === 'referred' || cached?.status === 'referred') {
                     apptStatus = 'referred'
-                  } else if (rawAppStatus === 'rejected' || cached?.status === 'rejected') {
-                    apptStatus = 'rejected'
                   } else if (hasDate || rawAppStatus === 'scheduled' || rawAppStatus === 'under_review' || cached?.status === 'scheduled') {
                     apptStatus = 'scheduled'
                   } else {
@@ -744,7 +755,9 @@ export default function Appointments() {
           }
         })
 
-        const finalAppts = Array.from(dedupedMap.values())
+        const finalAppts = Array.from(dedupedMap.values()).filter(
+          (a) => a.status !== 'rejected' && (a.status as string) !== 'denied' && (a.status as string) !== 'disapproved'
+        )
         setAppointments(finalAppts)
         try {
           localStorage.setItem("cached_appointments_list", JSON.stringify(finalAppts))
