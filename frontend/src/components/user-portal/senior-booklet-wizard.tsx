@@ -15,7 +15,6 @@ import {
 } from "lucide-react"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
-import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
 import { fetchPwdSeniorApplications } from "../../utils/cachedApiFetch"
@@ -135,8 +134,7 @@ export default function SeniorBookletWizard({
 
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
-  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
-  const [attemptedNext, setAttemptedNext] = useState(false)
+    const [attemptedNext, setAttemptedNext] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -2012,16 +2010,7 @@ export default function SeniorBookletWizard({
       </div>
 
       {}
-      <PreFillupPrivacyModal
-        isOpen={showPrePrivacyModal}
-        onAccept={() => setShowPrePrivacyModal(false)}
-        onCancel={() => {
-          if (onBack) onBack()
-          else window.history.back()
-        }}
-        moduleName={title || "Senior Citizen Booklet Application"}
-      />
-
+      
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}

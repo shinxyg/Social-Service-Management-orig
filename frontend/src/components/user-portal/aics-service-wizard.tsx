@@ -16,7 +16,6 @@ import {
 } from "lucide-react"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
-import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE } from "../../config/api"
 import { FIXED_ASSISTANCE_AMOUNTS } from "../modules/financial-aid-disbursement"
@@ -211,8 +210,7 @@ export default function AICSServiceWizard({
   }, [isReapplying])
 
   const [currentStep, setCurrentStep] = useState<number>(1)
-  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
-  const [returnToReview, setReturnToReview] = useState(false)
+    const [returnToReview, setReturnToReview] = useState(false)
   const [redirectCountdown, setRedirectCountdown] = useState<number>(3)
 
   const [isBlocked, setIsBlocked] = useState(false)
@@ -2321,34 +2319,7 @@ export default function AICSServiceWizard({
           />
         )}
 
-        <PreFillupPrivacyModal
-          isOpen={showPrePrivacyModal}
-          onAccept={() => setShowPrePrivacyModal(false)}
-          onCancel={() => {
-            if (onBack) onBack()
-            else window.history.back()
-          }}
-          moduleName={
-            language === "en"
-              ? serviceType === "material"
-                ? "AICS - Material Assistance"
-                : serviceType === "food"
-                ? "AICS - Food Assistance"
-                : "AICS - Transportation Assistance"
-              : language === "bis"
-              ? serviceType === "material"
-                ? "AICS - Tabang Pang-Materyal"
-                : serviceType === "food"
-                ? "AICS - Tabang sa Pagkaon"
-                : "AICS - Tabang sa Plete / Transportasyon"
-              : serviceType === "material"
-              ? "AICS - Tulong Pang-Materyal"
-              : serviceType === "food"
-              ? "AICS - Tulong sa Pagkain"
-              : "AICS - Tulong sa Pamasahe / Transportasyon"
-          }
-        />
-      </div>
+              </div>
     </div>
   )
 }

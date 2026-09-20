@@ -19,7 +19,6 @@ import {
   Trash2,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
-import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 import { API_BASE } from "../../config/api"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
@@ -144,8 +143,7 @@ export default function LivelihoodApplicationWizard({
 }: LivelihoodWizardProps) {
   const { t } = useLanguage()
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
-  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
-  const [returnToReview, setReturnToReview] = useState(false)
+    const [returnToReview, setReturnToReview] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isEditingInfo, setIsEditingInfo] = useState(false)
@@ -1956,16 +1954,7 @@ export default function LivelihoodApplicationWizard({
         )}
       </div>
 
-      <PreFillupPrivacyModal
-        isOpen={showPrePrivacyModal}
-        onAccept={() => setShowPrePrivacyModal(false)}
-        onCancel={() => {
-          if (onCancel) onCancel()
-          else window.history.back()
-        }}
-        moduleName="Livelihood Assistance Program (Tindahan / Negosyo)"
-      />
-
+      
       {previewModalDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-150">
           <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">

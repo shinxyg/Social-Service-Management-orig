@@ -20,7 +20,6 @@ import {
 import { useLanguage } from "../ui/language-context"
 import { DataPrivacyConsent } from "../ui/data-privacy-consent"
 import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
-import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 import { getCurrentUserProfile } from "../../utils/userProfile"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { API_BASE, getAuthHeaders, getAuthToken } from "../../config/api"
@@ -727,8 +726,7 @@ export default function ChildWelfareApplicationWizard({
   ]
 
   const [step, setStep] = useState(1)
-  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
-  const [returnToReview, setReturnToReview] = useState(false)
+    const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -2626,16 +2624,7 @@ export default function ChildWelfareApplicationWizard({
       )}
 
       {}
-      <PreFillupPrivacyModal
-        isOpen={showPrePrivacyModal}
-        onAccept={() => setShowPrePrivacyModal(false)}
-        onCancel={() => {
-          if (onBack) onBack()
-          else window.history.back()
-        }}
-        moduleName={selectedProgram?.title || "Child Welfare Assistance Program"}
-      />
-
+      
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}

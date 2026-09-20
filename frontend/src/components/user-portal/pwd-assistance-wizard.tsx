@@ -16,7 +16,6 @@ import {
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
-import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 import { API_BASE } from "../../config/api"
 import { fetchPwdSeniorApplications } from "../../utils/cachedApiFetch"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
@@ -516,8 +515,7 @@ export default function PWDSocialAssistanceWizard({
     { id: 4, label: t("wizardReview").toUpperCase() },
   ]
   const [step, setStep] = useState(1)
-  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
-  const [returnToReview, setReturnToReview] = useState(false)
+    const [returnToReview, setReturnToReview] = useState(false)
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [cameraDoc, setCameraDoc] = useState<RequiredDocument | null>(null)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
@@ -1730,16 +1728,7 @@ export default function PWDSocialAssistanceWizard({
         confirmText="YES, SUBMIT APPLICATION"
       />
 
-      <PreFillupPrivacyModal
-        isOpen={showPrePrivacyModal}
-        onAccept={() => setShowPrePrivacyModal(false)}
-        onCancel={() => {
-          if (onBack) onBack()
-          else window.history.back()
-        }}
-        moduleName="PWD Social Assistance Program"
-      />
-
+      
       {}
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}

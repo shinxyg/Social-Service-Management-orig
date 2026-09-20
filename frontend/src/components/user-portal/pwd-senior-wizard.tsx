@@ -4,7 +4,6 @@ import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { DataPrivacyConsent } from "../ui/data-privacy-consent"
 import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
-import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 import { API_BASE } from "../../config/api"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
@@ -607,8 +606,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
   ]
 
   const [step, setStep] = useState(1)
-  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
-  const [returnToReview, setReturnToReview] = useState(false)
+    const [returnToReview, setReturnToReview] = useState(false)
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle")
@@ -3262,16 +3260,7 @@ export default function PWDApplicationWizard({ onBack, userProfile: propUserProf
         </div>
       </div>
 
-      <PreFillupPrivacyModal
-        isOpen={showPrePrivacyModal}
-        onAccept={() => setShowPrePrivacyModal(false)}
-        onCancel={() => {
-          if (onBack) onBack()
-          else window.history.back()
-        }}
-        moduleName="Persons with Disability (PWD) ID Application"
-      />
-
+      
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}

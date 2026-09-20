@@ -11,7 +11,6 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import { DataPrivacyConsent } from "../ui/data-privacy-consent"
-import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 
 function generateReference(qcid?: string) {
   if (qcid && qcid.trim()) return qcid.trim()
@@ -371,8 +370,7 @@ export default function TrainingProgramWizard({ onBack }: TrainingProgramWizardP
     }
   }, [])
   const [attempted, setAttempted] = useState(false)
-  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
-  const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
+    const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
   const [stage, setStage] = useState<"form" | "submitting" | "pending">("form")
   const [reference, setReference] = useState("")
   const [isBlocked, setIsBlocked] = useState(false)
@@ -668,15 +666,6 @@ export default function TrainingProgramWizard({ onBack }: TrainingProgramWizardP
         }}
       />
 
-      <PreFillupPrivacyModal
-        isOpen={showPrePrivacyModal}
-        onAccept={() => setShowPrePrivacyModal(false)}
-        onCancel={() => {
-          if (onBack) onBack()
-          else window.history.back()
-        }}
-        moduleName="Skills Training Program Application"
-      />
-    </div>
+          </div>
   )
 }

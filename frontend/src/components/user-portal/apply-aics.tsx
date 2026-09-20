@@ -3,7 +3,6 @@ import { X, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, AlertCircl
 import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
-import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 
 function formatFileSize(bytes: number) {
   if (!bytes) return "0.0 KB"
@@ -28,8 +27,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const { t, language } = useLanguage()
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [showPrePrivacyModal, setShowPrePrivacyModal] = useState(true)
-
+  
   const WIZARD_TABS = [
     t("wizardChecklist")?.toUpperCase() || "COMPLETE CHECKLIST",
     t("wizardPersonal")?.toUpperCase() || "PERSONAL INFORMATION",
@@ -886,16 +884,7 @@ const handleFinalSubmit = async () => {
 
   const renderTopRequirementsBanner = () => (
     <>
-      <PreFillupPrivacyModal
-        isOpen={showPrePrivacyModal}
-        onAccept={() => setShowPrePrivacyModal(false)}
-        onCancel={() => {
-          if (onBack) onBack()
-          else window.location.href = "/portal/overview"
-        }}
-        moduleName={currentAssistanceTitle}
-      />
-
+      
       <div className="mb-4">
         <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -1297,16 +1286,7 @@ const handleFinalSubmit = async () => {
   if (step === "personal") {
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
-        <PreFillupPrivacyModal
-          isOpen={showPrePrivacyModal}
-          onAccept={() => setShowPrePrivacyModal(false)}
-          onCancel={() => {
-            if (onBack) onBack()
-            else window.location.href = "/portal/overview"
-          }}
-          moduleName={currentAssistanceTitle}
-        />
-        <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
+                <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
           <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
               <div key={i} className="flex items-center flex-1 last:flex-none">
@@ -2013,16 +1993,7 @@ const handleFinalSubmit = async () => {
   if (step === "documents") {
     return (
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
-        <PreFillupPrivacyModal
-          isOpen={showPrePrivacyModal}
-          onAccept={() => setShowPrePrivacyModal(false)}
-          onCancel={() => {
-            if (onBack) onBack()
-            else window.location.href = "/portal/overview"
-          }}
-          moduleName={currentAssistanceTitle}
-        />
-        <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
+                <div className="border border-border rounded-2xl overflow-hidden shadow-soft bg-card relative">
           <div className="flex items-center px-6 pt-6 pb-4">
             {WIZARD_TABS.map((_, i) => (
               <div key={i} className="flex items-center flex-1 last:flex-none">
@@ -2531,16 +2502,7 @@ const handleFinalSubmit = async () => {
           />
         )}
 
-        <PreFillupPrivacyModal
-          isOpen={showPrePrivacyModal}
-          onAccept={() => setShowPrePrivacyModal(false)}
-          onCancel={() => {
-            if (onBack) onBack()
-            else window.location.href = "/portal/overview"
-          }}
-          moduleName={currentAssistanceTitle}
-        />
-      </div>
+              </div>
     )
   }
 

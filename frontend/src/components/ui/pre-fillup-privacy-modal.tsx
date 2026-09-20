@@ -76,15 +76,15 @@ export function PreFillupPrivacyModal({
             <p className="text-blue-900 dark:text-blue-300 text-xs leading-relaxed font-medium">
               {isEn ? (
                 <>
-                  Before starting your online application for <strong className="text-slate-900 dark:text-white font-bold">{moduleName}</strong>, your formal consent is required under the Data Privacy Act (RA 10173) to collect, process, and verify your personal information and uploaded supporting documents for social welfare assessment and assistance eligibility.
+                  Before accessing and submitting applications for <strong className="text-slate-900 dark:text-white font-bold">{moduleName}</strong>, your formal consent is required under the Data Privacy Act (RA 10173) to collect, process, and verify your personal information and uploaded supporting documents for social welfare assessment and assistance eligibility.
                 </>
               ) : isBis ? (
                 <>
-                  Sa dili pa magsugod sa pag-fill up sa imong online application para sa <strong className="text-slate-900 dark:text-white font-bold">{moduleName}</strong>, gikinahanglan ang imong pormal nga pagtugot subay sa Data Privacy Act (RA 10173) aron makolekta ug maproseso ang imong personal nga impormasyon ug mga kalakip nga dokumento para sa social welfare evaluation ug financial assistance.
+                  Sa dili pa mopadayon ug mo-apply sa <strong className="text-slate-900 dark:text-white font-bold">{moduleName}</strong>, gikinahanglan ang imong pormal nga pagtugot subay sa Data Privacy Act (RA 10173) aron makolekta ug maproseso ang imong personal nga impormasyon ug mga kalakip nga dokumento para sa social welfare evaluation ug financial assistance.
                 </>
               ) : (
                 <>
-                  Bago simulan ang pag-fill up ng iyong online application para sa <strong className="text-slate-900 dark:text-white font-bold">{moduleName}</strong>, kinakailangan ang inyong pormal na pahintulot alinsunod sa Data Privacy Act (RA 10173) upang makolekta at maproseso ang inyong personal na impormasyon at mga kalakip na dokumento para sa social welfare evaluation at financial assistance.
+                  Bago magpatuloy at mag-apply sa <strong className="text-slate-900 dark:text-white font-bold">{moduleName}</strong>, kinakailangan ang inyong pormal na pahintulot alinsunod sa Data Privacy Act (RA 10173) upang makolekta at maproseso ang inyong personal na impormasyon at mga kalakip na dokumento para sa social welfare evaluation at financial assistance.
                 </>
               )}
             </p>
@@ -267,7 +267,7 @@ export function PreFillupPrivacyModal({
                 : "bg-slate-300 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none"
             }`}
           >
-            <span>{isEn ? "Agree & Proceed to Form" : isBis ? "Uyon ug Padayon sa Form" : "Pumapayag at Magpatuloy sa Form"}</span>
+            <span>{isEn ? "Agree & Proceed" : isBis ? "Uyon ug Padayon" : "Pumapayag at Magpatuloy"}</span>
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>

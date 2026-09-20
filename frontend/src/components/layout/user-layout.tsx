@@ -27,6 +27,7 @@ import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProf
 import { API_BASE } from "../../config/api"
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { getInitialTheme, applyTheme, getThemePreference, getEffectiveTheme, setThemeMode } from "../../utils/theme"
+import { PreFillupPrivacyModal } from "../ui/pre-fillup-privacy-modal"
 
 function WheelchairIcon({ className, ...props }: React.ComponentProps<"svg">) {
   return (
@@ -1060,6 +1061,33 @@ export default function UserLayout() {
     return () => window.removeEventListener("popstate", handlePopState)
   }, [t])
 
+  const [showLoginConsent, setShowLoginConsent] = useState(() => {
+    try {
+      const qcid = getLoggedInUserQcid() || "user"
+      const sessionAccepted = sessionStorage.getItem("govserve_user_privacy_consent_accepted")
+      const localAccepted = localStorage.getItem(`govserve_user_privacy_consent_accepted_${qcid}`)
+      return !(sessionAccepted === "true" || localAccepted === "true")
+    } catch {
+      return false
+    }
+  })
+
+  const handleAcceptLoginConsent = () => {
+    try {
+      const qcid = getLoggedInUserQcid() || "user"
+      sessionStorage.setItem("govserve_user_privacy_consent_accepted", "true")
+      localStorage.setItem(`govserve_user_privacy_consent_accepted_${qcid}`, "true")
+    } catch {}
+    setShowLoginConsent(false)
+  }
+
+  const handleDeclineLoginConsent = () => {
+    sessionStorage.clear()
+    localStorage.removeItem("currentUser")
+    localStorage.removeItem("sessionToken")
+    window.location.href = "/login"
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <ResidentSidebar open={sidebarOpen} onToggle={() => setSidebarOpen((v) => !v)} />
@@ -1076,6 +1104,13 @@ export default function UserLayout() {
           <Outlet />
         </main>
       </div>
+
+      <PreFillupPrivacyModal
+        isOpen={showLoginConsent}
+        onAccept={handleAcceptLoginConsent}
+        onCancel={handleDeclineLoginConsent}
+        moduleName="Quezon City Social Welfare & GovServe Services"
+      />
     </div>
   )
 }
