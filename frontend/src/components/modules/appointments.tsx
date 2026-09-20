@@ -25,7 +25,7 @@ type ModuleKey =
   | "Child Welfare"
   | "Livelihood"
 
-type AppointmentStatus = "pending" | "scheduled" | "completed" | "approved" | "referred" | "rejected"
+type AppointmentStatus = "pending" | "scheduled" | "under_review" | "completed" | "approved" | "referred" | "rejected"
 
 interface AppointmentRequest {
   id: string
@@ -74,7 +74,13 @@ const statusTheme: Record<AppointmentStatus, { card: string; chip: string; icon:
     card: "bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40",
     chip: "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60",
     icon: <Calendar className="h-3.5 w-3.5" />,
-    label: "Scheduled",
+    label: "Under Review",
+  },
+  under_review: {
+    card: "bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40",
+    chip: "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60",
+    icon: <Calendar className="h-3.5 w-3.5" />,
+    label: "Under Review",
   },
   approved: {
     card: "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40",
@@ -113,7 +119,7 @@ function getAppointmentStatusTheme(status?: string) {
   if (!status) return DEFAULT_APPT_STATUS_THEME
   const s = String(status).toLowerCase() as AppointmentStatus
   if (statusTheme[s]) return statusTheme[s]
-  if (s.includes("sched")) return statusTheme.scheduled
+  if (s.includes("sched") || s.includes("under") || s.includes("review")) return statusTheme.scheduled
   if (s.includes("appr")) return statusTheme.approved
   if (s.includes("ref")) return statusTheme.referred
   if (s.includes("rej") || s.includes("den")) return statusTheme.rejected
@@ -307,8 +313,8 @@ function AppointmentCard({
               </>
             )}
 
-            {/* 2. Scheduled Interview Stage */}
-            {appt.status === "scheduled" && (
+            {/* 2. Scheduled Interview / Under Review Stage */}
+            {(appt.status === "scheduled" || (appt.status as string) === "under_review") && (
               <>
                 <button
                   type="button"
@@ -1054,7 +1060,7 @@ export default function Appointments() {
         {[
           { label: "Total Requests", value: stats.total },
           { label: "Pending Schedule", value: stats.pending },
-          { label: "Scheduled Interview", value: stats.scheduled },
+          { label: "Under Review", value: stats.scheduled },
           { label: "Approved / Done", value: stats.completed },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl p-4 bg-card border border-border shadow-xs">
@@ -1103,7 +1109,7 @@ export default function Appointments() {
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
-              <option value="scheduled">Scheduled</option>
+              <option value="scheduled">Under Review / Scheduled</option>
               <option value="approved">Approved</option>
               <option value="referred">Referred</option>
               <option value="completed">Completed</option>
