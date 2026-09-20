@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react"
-import { X, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, AlertCircle, RotateCcw, Clock } from "lucide-react"
+import { X, Info, FileText, Pencil, ChevronUp, Check, Upload, Camera, AlertCircle, RotateCcw, Clock, Building2, Calendar, MapPin } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import RequirementsModal, { AICS_REQUIREMENTS } from "./Requirements-modal"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -78,8 +78,11 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [name] = useState("")
   const [type] = useState(initialType || assistanceTypes[0])
   const [reference, setReference] = useState("")
-  const [appStatus, setAppStatus] = useState<"pending" | "approved" | "rejected" | "completed">("pending")
+  const [appStatus, setAppStatus] = useState<"pending" | "under_review" | "approved" | "referred" | "rejected" | "completed">("pending")
   const [rejectionReason, setRejectionReason] = useState("")
+  const [referralAgency, setReferralAgency] = useState("")
+  const [referralNotes, setReferralNotes] = useState("")
+  const [appointmentInfo, setAppointmentInfo] = useState<{ date?: string; time?: string; venue?: string } | null>(null)
 
   const isFuneralAssistance =
     initialTypeKey === "aicsFuneral" ||
@@ -620,11 +623,14 @@ const canProceedPersonal = Boolean(
           return (
             s === "pending" ||
             s === "under_review" ||
+            s === "scheduled" ||
             s === "for_assessment" ||
             s === "assessment" ||
             s === "approved" ||
             s === "completed" ||
             s === "for_release" ||
+            s === "referred" ||
+            s === "for_referral" ||
             s === "rejected" ||
             s === "disapproved"
           )
@@ -634,8 +640,25 @@ const canProceedPersonal = Boolean(
           const ref = activeApp.reference_no || activeApp.reference_number || activeApp.qc_id || (activeApp.id ? `AICS-2026-${String(activeApp.id).padStart(4, "0")}` : "")
           setReference(ref)
           const rawSt = String(activeApp.status || "pending").toLowerCase()
-          setAppStatus((rawSt === "disapproved" ? "rejected" : rawSt) as any)
-          setRejectionReason(activeApp.rejection_reason || activeApp.rejectionReason || activeApp.remarks || activeApp.admin_notes || activeApp.reason || "")
+          let cleanSt: any = "pending"
+          if (rawSt === "approved" || rawSt === "completed") cleanSt = "approved"
+          else if (rawSt === "for_referral" || rawSt === "referred") cleanSt = "referred"
+          else if (rawSt === "rejected" || rawSt === "disapproved") cleanSt = "rejected"
+          else if (rawSt === "under_review" || rawSt === "scheduled" || rawSt === "for_assessment") cleanSt = "under_review"
+          else cleanSt = "pending"
+
+          setAppStatus(cleanSt)
+          const details = activeApp.details || {}
+          setRejectionReason(activeApp.rejection_reason || activeApp.rejectionReason || details.rejectionReason || activeApp.remarks || activeApp.admin_notes || activeApp.reason || "")
+          setReferralAgency(activeApp.referral_agency || activeApp.referralAgency || details.referralAgency || "PCSO")
+          setReferralNotes(activeApp.referral_notes || activeApp.referralNotes || details.referralNotes || "")
+          if (details.appointmentDate || activeApp.appointment_date) {
+            setAppointmentInfo({
+              date: details.appointmentDate || activeApp.appointment_date,
+              time: details.appointmentTime || activeApp.appointment_time,
+              venue: details.appointmentVenue || activeApp.appointment_venue || "Quezon City Hall",
+            })
+          }
           setStep("pending")
           if (activeApp.first_name) setPFirstName(activeApp.first_name)
           if (activeApp.last_name) setPLastName(activeApp.last_name)
@@ -647,12 +670,13 @@ const canProceedPersonal = Boolean(
     }
 
     checkActiveAicsApplication()
-    const interval = setInterval(checkActiveAicsApplication, 4000)
+    const interval = setInterval(checkActiveAicsApplication, 3000)
 
     const handleUpdate = () => checkActiveAicsApplication()
     window.addEventListener("aics_applications_updated", handleUpdate)
     window.addEventListener("govserve_realtime_event", handleUpdate)
     window.addEventListener("applications_updated", handleUpdate)
+    window.addEventListener("appointments_updated", handleUpdate)
     window.addEventListener("storage", handleUpdate)
 
     return () => {
@@ -661,6 +685,7 @@ const canProceedPersonal = Boolean(
       window.removeEventListener("aics_applications_updated", handleUpdate)
       window.removeEventListener("govserve_realtime_event", handleUpdate)
       window.removeEventListener("applications_updated", handleUpdate)
+      window.removeEventListener("appointments_updated", handleUpdate)
       window.removeEventListener("storage", handleUpdate)
     }
   }, [type, resolvedTypeKey])
@@ -675,16 +700,30 @@ const canProceedPersonal = Boolean(
         const data = await res.json()
         const app = data.application || data
         const status = app?.status
-        const reason = app?.rejection_reason || app?.rejectionReason || app?.remarks || app?.admin_notes || ""
         if (status) {
           const rawSt = status.toLowerCase()
-          const cleanSt = rawSt === "disapproved" ? "rejected" : rawSt
-          if (cleanSt !== appStatus) {
-            setAppStatus(cleanSt as any)
-          }
+          let cleanSt: any = "pending"
+          if (rawSt === "approved" || rawSt === "completed") cleanSt = "approved"
+          else if (rawSt === "for_referral" || rawSt === "referred") cleanSt = "referred"
+          else if (rawSt === "rejected" || rawSt === "disapproved") cleanSt = "rejected"
+          else if (rawSt === "under_review" || rawSt === "scheduled") cleanSt = "under_review"
+          else cleanSt = "pending"
+
+          setAppStatus(cleanSt)
         }
-        if (reason) {
-          setRejectionReason(reason)
+        const details = app?.details || {}
+        const reason = app?.rejection_reason || app?.rejectionReason || details.rejectionReason || app?.remarks || app?.admin_notes || ""
+        if (reason) setRejectionReason(reason)
+        const refAgency = app?.referral_agency || app?.referralAgency || details.referralAgency
+        if (refAgency) setReferralAgency(refAgency)
+        const refNotes = app?.referral_notes || app?.referralNotes || details.referralNotes
+        if (refNotes) setReferralNotes(refNotes)
+        if (details.appointmentDate || app?.appointment_date) {
+          setAppointmentInfo({
+            date: details.appointmentDate || app?.appointment_date,
+            time: details.appointmentTime || app?.appointment_time,
+            venue: details.appointmentVenue || app?.appointment_venue || "Quezon City Hall",
+          })
         }
       } catch (err) {
         console.warn("Status check skipped/offline:", err)
@@ -692,7 +731,7 @@ const canProceedPersonal = Boolean(
     }
 
     checkStatus()
-    const interval = setInterval(checkStatus, 4000)
+    const interval = setInterval(checkStatus, 3000)
     return () => clearInterval(interval)
   }, [step, reference, appStatus])
 
@@ -2436,7 +2475,6 @@ const handleFinalSubmit = async () => {
   }
 
   if (step === "pending") {
-
     if (appStatus === "rejected") {
       return (
         <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
@@ -2444,7 +2482,10 @@ const handleFinalSubmit = async () => {
             <div className="h-14 w-14 rounded-2xl bg-red-50 dark:bg-red-500/15 flex items-center justify-center text-red-500 ring-8 ring-red-50/50 dark:ring-red-500/10">
               <X className="h-7 w-7" strokeWidth={2.5} />
             </div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30">
+              ❌ Disqualified / Rejected
+            </span>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
               {language === "en"
                 ? "Application Disapproved"
                 : language === "bis"
@@ -2453,28 +2494,22 @@ const handleFinalSubmit = async () => {
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm">
               {language === "en"
-                ? `We regret to inform you that your application for ${type} was not approved. You may contact the Quezon City Social Welfare Office for more details or submit a new application.`
+                ? `We regret to inform you that your application for ${type} was not approved based on Social Worker case evaluation.`
                 : language === "bis"
-                ? `Gikasubo namo nga wala na-aprobahan ang imong aplikasyon para sa ${type}. Mahimo kang makig-alayon sa Quezon City Social Welfare Office o mag-apply pag-usab.`
-                : `Paumanhin, hindi na-approve ang iyong aplikasyon para sa ${type.toLowerCase()}. Maaari kang makipag-ugnayan sa Quezon City Social Welfare Office para sa karagdagang detalye o mag-apply muli kung may mga dokumentong kailangang ayusin.`}
+                ? `Gikasubo namo nga wala na-aprobahan ang imong aplikasyon para sa ${type} base sa ebalwasyon sa Social Worker.`
+                : `Paumanhin, hindi na-approve ang iyong aplikasyon para sa ${type.toLowerCase()} batay sa opisyal na pagsusuri ng Social Worker.`}
             </p>
             <div className="mt-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-slate-200 dark:border-slate-700/60">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700/60">
-                <span className="text-slate-500 dark:text-slate-400">
-                  {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
-                </span>
+                <span className="text-slate-500 dark:text-slate-400">Reference Number</span>
                 <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-sm">{reference}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 dark:text-slate-400">
-                  {language === "en" ? "Service" : language === "bis" ? "Serbisyo" : "Serbisyo"}
-                </span>
+                <span className="text-slate-500 dark:text-slate-400">Service</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{type}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 dark:text-slate-400">
-                  {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
-                </span>
+                <span className="text-slate-500 dark:text-slate-400">Applicant Name</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
               </div>
             </div>
@@ -2482,7 +2517,7 @@ const handleFinalSubmit = async () => {
             {rejectionReason && (
               <div className="w-full bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl p-3.5 text-xs text-red-800 dark:text-red-300 text-left space-y-1">
                 <span className="font-bold uppercase tracking-wider block text-[10px] text-red-600 dark:text-red-400">
-                  {language === "en" ? "Social Worker Evaluation Notes / Reason:" : language === "bis" ? "Rason sa Pagbalibad (Social Worker):" : "Dahilan ng Hindi Pag-apruba (Social Worker):"}
+                  Dahilan ng Diskwalipikasyon / Rejection Reason:
                 </span>
                 <p className="font-medium leading-relaxed">{rejectionReason}</p>
               </div>
@@ -2501,7 +2536,7 @@ const handleFinalSubmit = async () => {
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
               >
-                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+                VIEW IN APPLICATION HISTORY
               </button>
               <button
                 type="button"
@@ -2509,9 +2544,73 @@ const handleFinalSubmit = async () => {
                 className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
               >
                 <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                <span>
-                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-                </span>
+                <span>MAG-APPLY MULI (RE-APPLY)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (appStatus === "referred") {
+      return (
+        <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-2xl bg-purple-50 dark:bg-purple-500/15 flex items-center justify-center text-purple-600 dark:text-purple-400 ring-8 ring-purple-50/50 dark:ring-purple-500/10">
+              <Building2 className="h-7 w-7" strokeWidth={2.5} />
+            </div>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30">
+              🏛️ Endorsed / Referred to Partner Agency
+            </span>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Application Endorsed to Partner Welfare Agency
+            </h2>
+            <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm">
+              Ang inyong aplikasyon ay opisyal nang inendorso ng Quezon City SSDD sa aming partner welfare agency para sa karagdagang tulong-pinansyal at serbisyo.
+            </p>
+
+            <div className="mt-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-slate-200 dark:border-slate-700/60">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700/60">
+                <span className="text-slate-500 dark:text-slate-400">Reference Number</span>
+                <span className="font-mono font-bold text-purple-700 dark:text-purple-400 text-sm">{reference}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400">Service</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{type}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400">Endorsed Agency</span>
+                <span className="font-bold text-purple-700 dark:text-purple-300 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">{referralAgency || "PCSO"}</span>
+              </div>
+              {referralNotes && (
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-700/60">
+                  <span className="text-slate-500 dark:text-slate-400 block text-[11px] mb-0.5 font-semibold">Endorsement Notes / Remarks:</span>
+                  <p className="font-medium text-slate-800 dark:text-slate-200 text-xs">{referralNotes}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="w-full bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 rounded-xl p-3.5 text-xs text-purple-900 dark:text-purple-200 text-left flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+              <p>
+                Maaari ninyong ipakita ang inyong Reference Number at dalhin ang inyong orihinal na Valid ID at Medical Abstract sa pinakamalapit na sangay ng <strong>{referralAgency || "PCSO"}</strong>.
+              </p>
+            </div>
+
+            <div className="w-full flex flex-col gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
+                    localStorage.removeItem("aics_reapplying")
+                  } catch {}
+                  ;(window as any).__isFormDirty = false
+                  window.location.href = "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+              >
+                VIEW IN APPLICATION HISTORY
               </button>
             </div>
           </div>
@@ -2526,55 +2625,38 @@ const handleFinalSubmit = async () => {
             <div className="h-14 w-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 ring-8 ring-emerald-50/50 dark:ring-emerald-500/10">
               <Check className="h-7 w-7" strokeWidth={3} />
             </div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              {language === "en"
-                ? "Application Approved!"
-                : language === "bis"
-                ? "Na-aprobahan ang Aplikasyon!"
-                : "Na-approve ang Application!"}
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30">
+              ✓ Approved & Ready for Guarantee Letter
+            </span>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Application Approved!
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm">
-              {language === "en"
-                ? `Your application for ${type} has been officially approved by the Quezon City Social Services Development Department.`
-                : language === "bis"
-                ? `Ang imong aplikasyon para sa ${type} opisyal nga na-aprobahan sa Quezon City Social Services Development Department.`
-                : `Ang inyong aplikasyon para sa ${type} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.`}
+              Ang inyong aplikasyon para sa {type} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.
             </p>
             <div className="mt-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-slate-200 dark:border-slate-700/60">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700/60">
-                <span className="text-slate-500 dark:text-slate-400">
-                  {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
-                </span>
+                <span className="text-slate-500 dark:text-slate-400">Reference Number</span>
                 <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-sm">{reference}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 dark:text-slate-400">
-                  {language === "en" ? "Service" : language === "bis" ? "Serbisyo" : "Serbisyo"}
-                </span>
+                <span className="text-slate-500 dark:text-slate-400">Service</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{type}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 dark:text-slate-400">
-                  {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
-                </span>
+                <span className="text-slate-500 dark:text-slate-400">Applicant Name</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 dark:text-slate-400">
-                  {language === "en" ? "Date" : language === "bis" ? "Petsa" : "Petsa"}
-                </span>
+                <span className="text-slate-500 dark:text-slate-400">Date</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">
                   {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-              {language === "en"
-                ? "You may check your release schedule, appointment, or claim instructions in your Application History."
-                : language === "bis"
-                ? "Mahimo nimong subayon ang iskedyul sa pagpagawas, appointment, o instruksyon sa pag-claim sa Kasaysayan sa Aplikasyon."
-                : "Maaari mo nang subaybayan ang release schedule, appointment, o claim instructions sa inyong Application History at Notifications."}
+            <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/60">
+              Maaari ninyong subaybayan ang disbursement release schedule at i-download ang inyong Guarantee Letter sa inyong Application History.
             </p>
 
             <div className="w-full flex flex-col gap-2 mt-2">
@@ -2590,17 +2672,85 @@ const handleFinalSubmit = async () => {
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
               >
-                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+                VIEW IN APPLICATION HISTORY
               </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (appStatus === "under_review" || appointmentInfo?.date) {
+      return (
+        <div className="max-w-xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900/50 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-5">
+            <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto ring-8 ring-blue-50/60 dark:ring-blue-500/10 shadow-xs">
+              <Calendar className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30">
+                <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Interview Scheduled — Under Review
+              </span>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Assessment Interview Scheduled
+              </h2>
+              <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                Naitakda na ang inyong interview sa Social Worker para sa case assessment ng inyong {type}.
+              </p>
+            </div>
+
+            {appointmentInfo?.date && (
+              <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 text-left space-y-2">
+                <div className="font-bold text-xs text-blue-900 dark:text-blue-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Detalye ng Inyong Appointment:</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Petsa:</span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">{appointmentInfo.date}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Oras:</span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">{appointmentInfo.time || "Regular Office Hours"}</span>
+                  </div>
+                </div>
+                <div className="pt-1 text-xs">
+                  <span className="text-slate-500 block text-[11px]">Lugar / Venue:</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                    {appointmentInfo.venue || "Quezon City Hall"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 max-w-md mx-auto space-y-2 text-left bg-slate-50/90 dark:bg-slate-800/60 text-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700/60">
+                <span className="text-slate-500 dark:text-slate-400">Reference Number</span>
+                <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-sm">{reference}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400">Applicant Name</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{[pFirstName, pLastName].filter(Boolean).join(" ") || name || "Applicant"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400">Status</span>
+                <span className="font-bold text-blue-700 dark:text-blue-300">Under Review & Case Assessment</span>
+              </div>
+            </div>
+
+            <div className="w-full max-w-md mx-auto flex flex-col gap-2 pt-1">
               <button
                 type="button"
-                onClick={handleReapply}
-                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                onClick={() => {
+                  ;(window as any).__isFormDirty = false
+                  window.location.href = "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
               >
-                <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                <span>
-                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-                </span>
+                VIEW IN APPLICATION HISTORY
               </button>
             </div>
           </div>
@@ -2609,7 +2759,7 @@ const handleFinalSubmit = async () => {
     }
 
     return (
-      <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
+      <div className="max-w-xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
           <div className="w-16 h-16 bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-50/60 dark:ring-amber-500/10 shadow-xs">
             <Clock className="w-8 h-8" />
@@ -2617,17 +2767,16 @@ const handleFinalSubmit = async () => {
 
           <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
-              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Pending Review
+              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Pending Schedule
             </span>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Application Under Review
+              Application Submitted — Pending Schedule
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-              Your application for {type} has been submitted and is currently being evaluated by a Social Worker.
+              Your application for {type} has been submitted. Please wait while the Social Worker evaluates your documents and assigns your interview schedule.
             </p>
           </div>
 
-          {}
           <div className="border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-slate-50/90 dark:bg-slate-800/60">
             <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-200 dark:border-slate-700/60">
               <span className="font-semibold text-slate-500 dark:text-slate-400">{t("appRefNoLabel")}</span>
@@ -2650,7 +2799,7 @@ const handleFinalSubmit = async () => {
             <div className="flex justify-between items-center text-xs pt-0.5">
               <span className="text-slate-500 dark:text-slate-400">Status</span>
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
-                Pending Review
+                Pending Schedule
               </span>
             </div>
           </div>
@@ -2658,7 +2807,7 @@ const handleFinalSubmit = async () => {
           <div className="bg-amber-50/70 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/25 dark:text-amber-200 rounded-xl p-4 text-xs text-amber-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
             <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <p>
-              Please wait for the social worker's evaluation. You will receive updates in your Application History and Notifications.
+              Please wait for the social worker's schedule. You will receive real-time updates in your Application History and Notifications.
             </p>
           </div>
 
