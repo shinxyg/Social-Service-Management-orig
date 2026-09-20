@@ -22,16 +22,24 @@ export interface GuaranteeLetterData {
 }
 
 export const PARTNER_HOSPITAL_ADDRESSES: Record<string, string> = {
-  "East Avenue Medical Center (EAMC)": "East Avenue, Diliman, Quezon City",
   "Quezon City General Hospital (QCGH)": "Seminary Road, Project 8, Quezon City",
-  "Philippine Heart Center (PHC)": "East Avenue, Diliman, Quezon City",
-  "National Kidney and Transplant Institute (NKTI)": "East Avenue, Diliman, Quezon City",
+  "Lung Center of the Philippines": "Quezon Avenue, Diliman, Quezon City",
   "Lung Center of the Philippines (LCP)": "Quezon Avenue, Diliman, Quezon City",
+  "National Children’s Hospital": "264 E. Rodriguez Sr. Ave., Quezon City",
+  "National Children's Hospital": "264 E. Rodriguez Sr. Ave., Quezon City",
+  "National Kidney and Transplant Institute (NKTI)": "East Avenue, Diliman, Quezon City",
+  "Heart Center of the Philippines": "East Avenue, Diliman, Quezon City",
+  "Philippine Heart Center (PHC)": "East Avenue, Diliman, Quezon City",
+  "East Avenue Medical Center": "East Avenue, Diliman, Quezon City",
+  "East Avenue Medical Center (EAMC)": "East Avenue, Diliman, Quezon City",
+  "Philippine Children’s Medical Center (PCMC)": "Quezon Avenue cor. BIR Road, Diliman, Quezon City",
   "Philippine Children's Medical Center (PCMC)": "Quezon Avenue cor. BIR Road, Diliman, Quezon City",
   "Quirino Memorial Medical Center (QMMC)": "JP Rizal cor. Katipunan Ave., Project 4, Quezon City",
+  "St. Luke’s Medical Center – Quezon City": "279 E. Rodriguez Sr. Ave., Kalusugan, Quezon City",
+  "St. Luke's Medical Center – Quezon City": "279 E. Rodriguez Sr. Ave., Kalusugan, Quezon City",
+  "St. Luke's Medical Center (SLMC - QC)": "279 E. Rodriguez Sr. Ave., Kalusugan, Quezon City",
   "Novaliches District Hospital (NDH)": "Quirino Highway, San Bartolome, Novaliches, Quezon City",
   "Rosario Maclang Bautista General Hospital (RMBGH)": "Batasan Road, Batasan Hills, Quezon City",
-  "St. Luke's Medical Center (SLMC - QC)": "279 E. Rodriguez Sr. Ave., Kalusugan, Quezon City",
 }
 
 export function amountInWords(amount: number): string {

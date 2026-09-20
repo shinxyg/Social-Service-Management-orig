@@ -176,7 +176,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [pPhoneNumber, setPPhoneNumber] = useState("")
   const [pEmail, setPEmail] = useState("")
   const [isSelfPatient, setIsSelfPatient] = useState(false)
-  const [partnerHospital, setPartnerHospital] = useState("East Avenue Medical Center (EAMC)")
+  const [partnerHospital, setPartnerHospital] = useState("Quezon City General Hospital (QCGH)")
   const [partnerHospitalOther, setPartnerHospitalOther] = useState("")
   const [medicalDiagnosis, setMedicalDiagnosis] = useState("")
   const [hospitalBillEstimate, setHospitalBillEstimate] = useState("")
@@ -1206,16 +1206,15 @@ const handleFinalSubmit = async () => {
                       onChange={(e) => setPartnerHospital(e.target.value)}
                       className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                     >
-                      <option value="East Avenue Medical Center (EAMC)">East Avenue Medical Center (EAMC)</option>
                       <option value="Quezon City General Hospital (QCGH)">Quezon City General Hospital (QCGH)</option>
+                      <option value="Lung Center of the Philippines">Lung Center of the Philippines</option>
+                      <option value="National Children’s Hospital">National Children’s Hospital</option>
                       <option value="National Kidney and Transplant Institute (NKTI)">National Kidney and Transplant Institute (NKTI)</option>
-                      <option value="Philippine Heart Center (PHC)">Philippine Heart Center (PHC)</option>
-                      <option value="Lung Center of the Philippines (LCP)">Lung Center of the Philippines (LCP)</option>
+                      <option value="Heart Center of the Philippines">Heart Center of the Philippines</option>
+                      <option value="East Avenue Medical Center">East Avenue Medical Center</option>
                       <option value="Philippine Children’s Medical Center (PCMC)">Philippine Children’s Medical Center (PCMC)</option>
                       <option value="Quirino Memorial Medical Center (QMMC)">Quirino Memorial Medical Center (QMMC)</option>
                       <option value="St. Luke’s Medical Center – Quezon City">St. Luke’s Medical Center – Quezon City</option>
-                      <option value="Novaliches District Hospital (NDH)">Novaliches District Hospital (NDH)</option>
-                      <option value="Rosario Maclang Bautista General Hospital (RMBGH)">Rosario Maclang Bautista General Hospital (RMBGH)</option>
                       <option value="Other">Other Accredited Health Facility</option>
                     </select>
                   </div>
