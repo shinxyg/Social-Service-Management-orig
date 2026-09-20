@@ -176,7 +176,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [pPhoneNumber, setPPhoneNumber] = useState("")
   const [pEmail, setPEmail] = useState("")
   const [isSelfPatient, setIsSelfPatient] = useState(false)
-  const [partnerHospital, setPartnerHospital] = useState("Quezon City General Hospital (QCGH)")
+  const [partnerHospital, setPartnerHospital] = useState("")
   const [partnerHospitalOther, setPartnerHospitalOther] = useState("")
   const [medicalDiagnosis, setMedicalDiagnosis] = useState("")
   const [hospitalBillEstimate, setHospitalBillEstimate] = useState("")
@@ -1122,6 +1122,7 @@ const handleFinalSubmit = async () => {
                     onChange={(e) => setPartnerHospital(e.target.value)}
                     className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                   >
+                    <option value="" disabled>-- Select Accredited Partner Hospital / Healthcare Facility --</option>
                     <option value="Quezon City General Hospital (QCGH)">Quezon City General Hospital (QCGH)</option>
                     <option value="Lung Center of the Philippines">Lung Center of the Philippines</option>
                     <option value="National Children’s Hospital">National Children’s Hospital</option>
