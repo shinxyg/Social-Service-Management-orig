@@ -81,7 +81,7 @@ export default function AICSUser() {
   // If no specific service type selected, render the Card Grid matching Pic 1
   if (!selectedProgram) {
     return (
-      <div className="py-4 space-y-6 max-w-7xl mx-auto">
+      <div className="py-8 px-6 sm:px-10 max-w-5xl mx-auto space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {AICS_PROGRAMS.map((program) => (
             <div
@@ -89,12 +89,12 @@ export default function AICSUser() {
               className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group"
             >
               {/* Dark navy blue top banner matching pic1 */}
-              <div className="bg-[#1e3a5f] text-white py-3 px-5 font-bold text-center text-sm md:text-base tracking-wide select-none">
+              <div className="bg-[#1e3a5f] text-white py-3 px-4 font-bold text-center text-sm md:text-base tracking-wide select-none">
                 {language === "en" ? program.titleEn : program.title}
               </div>
 
               {/* Card Body */}
-              <div className="p-6 flex flex-col justify-between flex-1 gap-6">
+              <div className="p-5 sm:p-6 flex flex-col justify-between flex-1 gap-5">
                 <p className="text-slate-600 dark:text-slate-300 text-xs md:text-sm leading-relaxed text-justify">
                   {language === "en" ? program.descEn : program.desc}
                 </p>
@@ -129,7 +129,7 @@ export default function AICSUser() {
     selectedProgram.id === "transportation"
 
   return (
-    <div className="py-2 space-y-3">
+    <div className="py-6 px-6 sm:px-10 max-w-5xl mx-auto space-y-4">
       {/* Back button to return to Card Grid */}
       <div className="flex items-center justify-between">
         <button
