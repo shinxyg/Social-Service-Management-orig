@@ -36,6 +36,7 @@ interface AppointmentRequest {
   submittedAt: string
   concern: string
   status: AppointmentStatus
+  decision?: "approved" | "referred" | "rejected"
   scheduledDate?: string
   scheduledTime?: string
   officeLocation?: string
@@ -312,6 +313,20 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
   )
 }
 
+export function getApptEffectiveStatus(a: AppointmentRequest): AppointmentStatus {
+  // 1. Explicit admin decisions made during appointment assessment
+  if (a.decision === "approved") return "approved"
+  if (a.decision === "referred") return "referred"
+  if (a.decision === "rejected") return "rejected"
+
+  // 2. Pending schedule (no date set yet)
+  if (!a.scheduledDate) return "pending"
+
+  // 3. Time-based status: Scheduled before date/time, Under Review on/after date/time
+  const isDue = isAppointmentDue(a.scheduledDate, a.scheduledTime)
+  return isDue ? "under_review" : "scheduled"
+}
+
 function AppointmentCard({
   appt,
   onSchedule,
@@ -331,19 +346,7 @@ function AppointmentCard({
   onPrintReferral?: (a: AppointmentRequest) => void
   onDelete?: (id: string, ref: string) => void
 }) {
-  const isDue = isAppointmentDue(appt.scheduledDate, appt.scheduledTime)
-  const isPendingSched = appt.status === "pending" || !appt.scheduledDate
-  const effectiveStatus: AppointmentStatus = isPendingSched
-    ? "pending"
-    : (appt.status === "approved" || appt.status === "completed")
-    ? "approved"
-    : appt.status === "referred"
-    ? "referred"
-    : appt.status === "rejected"
-    ? "rejected"
-    : isDue
-    ? "under_review"
-    : "scheduled"
+  const effectiveStatus: AppointmentStatus = getApptEffectiveStatus(appt)
   const st = getAppointmentStatusTheme(effectiveStatus)
 
   return (
@@ -390,7 +393,7 @@ function AppointmentCard({
 
           <div className="flex flex-wrap items-center gap-1.5 mt-2 justify-end">
             {/* 1. Pending Schedule Stage (No date set yet) */}
-            {isPendingSched && (
+            {effectiveStatus === "pending" && (
               <button
                 type="button"
                 onClick={() => onSchedule(appt)}
@@ -402,7 +405,7 @@ function AppointmentCard({
             )}
 
             {/* 2. Scheduled Stage (Schedule is set, waiting for date/time to arrive) */}
-            {!isPendingSched && !isDue && effectiveStatus === "scheduled" && (
+            {effectiveStatus === "scheduled" && (
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold">
                   <Calendar className="h-3.5 w-3.5" />
@@ -419,8 +422,8 @@ function AppointmentCard({
               </div>
             )}
 
-            {/* 3. Under Review Stage (Date & Time is reached / ongoing case assessment) */}
-            {!isPendingSched && isDue && effectiveStatus === "under_review" && (
+            {/* 3. Under Review Stage (Date & Time is reached / waiting for Admin choice) */}
+            {effectiveStatus === "under_review" && (
               <>
                 <button
                   type="button"
@@ -451,8 +454,8 @@ function AppointmentCard({
               </>
             )}
 
-            {/* 4. Approved / Completed Stage */}
-            {(effectiveStatus === "approved" || effectiveStatus === "completed") && (
+            {/* 4. Approved / Completed Stage (Admin clicked Approve) */}
+            {effectiveStatus === "approved" && (
               <button
                 type="button"
                 onClick={() => onPrintGL?.(appt)}
@@ -463,7 +466,7 @@ function AppointmentCard({
               </button>
             )}
 
-            {/* 5. Referred Stage */}
+            {/* 5. Referred Stage (Admin clicked Refer) */}
             {effectiveStatus === "referred" && (
               <button
                 type="button"
@@ -583,24 +586,15 @@ export default function Appointments() {
                   const schedDate = cleanDate(a.scheduled_date || cached?.scheduledDate)
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
+                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
                   
                   let statusVal: AppointmentStatus = 'pending'
-                  if (hasDate) {
-                    if (a.status === 'completed' || cached?.status === 'completed' || cached?.status === 'approved') {
-                      statusVal = 'completed'
-                    } else if (a.status === 'referred' || a.status === 'for_referral' || cached?.status === 'referred') {
-                      statusVal = 'referred'
-                    } else if (a.status === 'rejected' || cached?.status === 'rejected') {
-                      statusVal = 'rejected'
-                    } else {
-                      statusVal = 'scheduled'
-                    }
+                  if (cachedDecision) {
+                    statusVal = cachedDecision
+                  } else if (hasDate) {
+                    statusVal = 'scheduled'
                   } else {
-                    if (a.status === 'rejected' || cached?.status === 'rejected') {
-                      statusVal = 'rejected'
-                    } else {
-                      statusVal = 'pending'
-                    }
+                    statusVal = 'pending'
                   }
 
                   return {
@@ -611,6 +605,7 @@ export default function Appointments() {
                     submittedAt: a.created_at || new Date().toISOString(),
                     concern: a.concern,
                     status: statusVal,
+                    decision: cachedDecision,
                     scheduledDate: schedDate,
                     scheduledTime: schedTime,
                     officeLocation: cached?.officeLocation || a.office_location || "Quezon City Hall",
@@ -648,13 +643,12 @@ export default function Appointments() {
                   const schedDate = cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
                   const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
+                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
                   
                   let apptStatus: AppointmentStatus = 'pending'
-                  if (rawAppStatus === 'completed' || cached?.status === 'completed') {
-                    apptStatus = 'completed'
-                  } else if (rawAppStatus === 'for_referral' || rawAppStatus === 'referred' || cached?.status === 'referred') {
-                    apptStatus = 'referred'
-                  } else if (hasDate || rawAppStatus === 'scheduled' || rawAppStatus === 'under_review' || cached?.status === 'scheduled') {
+                  if (cachedDecision) {
+                    apptStatus = cachedDecision
+                  } else if (hasDate) {
                     apptStatus = 'scheduled'
                   } else {
                     apptStatus = 'pending'
@@ -669,6 +663,7 @@ export default function Appointments() {
                     submittedAt: app.created_at || new Date().toISOString(),
                     concern: cleanType,
                     status: apptStatus,
+                    decision: cachedDecision,
                     scheduledDate: schedDate,
                     scheduledTime: schedTime,
                     officeLocation: cached?.officeLocation || (app.details as any)?.appointmentVenue || "Quezon City Hall",
@@ -710,6 +705,7 @@ export default function Appointments() {
               const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`]
               const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY"
               const isDone = app.status === "completed" || app.status === "released" || cached?.status === "completed"
+              const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
               appts.push({
                 id: apptId,
                 referenceNo: ref,
@@ -718,6 +714,7 @@ export default function Appointments() {
                 submittedAt: app.submittedAt || app.created_at || new Date().toISOString(),
                 concern,
                 status: isDone ? "completed" : ((cached?.status || "pending") as AppointmentStatus),
+                decision: cachedDecision,
                 scheduledDate: cached?.scheduledDate,
                 scheduledTime: cached?.scheduledTime,
                 officeLocation: cached?.officeLocation || "Quezon City Hall",
@@ -738,6 +735,7 @@ export default function Appointments() {
                   const concern = "Livelihood Capital Assistance"
                   const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`]
                   const fullName = `${l.first_name || ""} ${l.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY"
+                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
                   appts.push({
                     id: apptId,
                     referenceNo: ref,
@@ -746,6 +744,7 @@ export default function Appointments() {
                     submittedAt: l.created_at || new Date().toISOString(),
                     concern,
                     status: (cached?.status || "pending") as AppointmentStatus,
+                    decision: cachedDecision,
                     scheduledDate: cached?.scheduledDate,
                     scheduledTime: cached?.scheduledTime,
                     officeLocation: cached?.officeLocation || "Quezon City Hall - SSDD Livelihood Center",
@@ -770,6 +769,7 @@ export default function Appointments() {
                 const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`]
                 const fullName = [c.guardian_first_name, c.guardian_last_name].filter(Boolean).join(" ").trim().toUpperCase() || (c.child_name || "").toUpperCase() || "BENEFICIARY"
                 const isDone = st === "released" || st === "completed" || cached?.status === "completed"
+                const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
                 appts.push({
                   id: apptId,
                   referenceNo: ref,
@@ -778,6 +778,7 @@ export default function Appointments() {
                   submittedAt: c.created_at || new Date().toISOString(),
                   concern,
                   status: isDone ? "completed" : ((cached?.status || "pending") as AppointmentStatus),
+                  decision: cachedDecision,
                   scheduledDate: cached?.scheduledDate,
                   scheduledTime: cached?.scheduledTime,
                   officeLocation: cached?.officeLocation || "Quezon City Hall - SSDD Child Welfare Section",
@@ -812,6 +813,9 @@ export default function Appointments() {
             const exPrio = statusPriority[existing.status] || 1
 
             const merged: AppointmentRequest = { ...existing }
+            if (a.decision) {
+              merged.decision = a.decision
+            }
             if (a.scheduledDate && (!merged.scheduledDate || curPrio >= exPrio)) {
               merged.scheduledDate = a.scheduledDate
               merged.scheduledTime = a.scheduledTime
@@ -885,6 +889,7 @@ export default function Appointments() {
           ? {
               ...a,
               status: "scheduled" as const,
+              decision: undefined,
               scheduledDate: date,
               scheduledTime: time,
               officeLocation: location,
@@ -901,6 +906,7 @@ export default function Appointments() {
         const localScheduledMap = raw ? JSON.parse(raw) : {}
         const schedObj = {
           status: "scheduled",
+          decision: undefined,
           scheduledDate: date,
           scheduledTime: time,
           officeLocation: location,
@@ -1028,11 +1034,11 @@ export default function Appointments() {
 
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
       const localMap = JSON.parse(raw)
-      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "approved" }
-      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "approved" }
+      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "approved", decision: "approved" }
+      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "approved", decision: "approved" }
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
 
-      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "approved" as const } : a))
+      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "approved" as const, decision: "approved" as const } : a))
 
       pushUserNotification({
         userId: appt.referenceNo || 'all',
@@ -1075,11 +1081,11 @@ export default function Appointments() {
 
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
       const localMap = JSON.parse(raw)
-      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "referred" }
-      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "referred" }
+      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "referred", decision: "referred" }
+      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "referred", decision: "referred" }
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
 
-      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "referred" as const } : a))
+      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "referred" as const, decision: "referred" as const } : a))
 
       pushUserNotification({
         userId: appt.referenceNo || 'all',
@@ -1145,8 +1151,8 @@ export default function Appointments() {
 
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
       const localMap = JSON.parse(raw)
-      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "rejected" }
-      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "rejected" }
+      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "rejected", decision: "rejected" }
+      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "rejected", decision: "rejected" }
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
 
       pushUserNotification({
@@ -1214,22 +1220,6 @@ export default function Appointments() {
       dateIssued: new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
       socialWorkerName: 'MARIA SANTOS, RSW',
     })
-  }
-
-  const getApptEffectiveStatus = (a: AppointmentRequest): AppointmentStatus => {
-    const isDue = isAppointmentDue(a.scheduledDate, a.scheduledTime)
-    const isPendingSched = a.status === "pending" || !a.scheduledDate
-    return isPendingSched
-      ? "pending"
-      : (a.status === "approved" || a.status === "completed")
-      ? "approved"
-      : a.status === "referred"
-      ? "referred"
-      : a.status === "rejected"
-      ? "rejected"
-      : isDue
-      ? "under_review"
-      : "scheduled"
   }
 
   const filtered = appointments.filter((a) => {
