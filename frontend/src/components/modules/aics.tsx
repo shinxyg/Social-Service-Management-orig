@@ -442,7 +442,6 @@ export default function AICS() {
       all: applications.length,
       pending: applications.filter(a => ['submit_pending', 'pending', 'waiting_approval', 'scheduled', 'under_review'].includes(String(a.status || '').toLowerCase())).length,
       approved: applications.filter(a => a.status === 'approved' || a.status === 'completed').length,
-      referred: applications.filter(a => a.status === 'for_referral' || a.status === 'referred').length,
       rejected: applications.filter(a => a.status === 'rejected').length,
     }
   }, [applications])
@@ -512,18 +511,18 @@ export default function AICS() {
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">QC Approved Aid</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Approved Aid</span>
                 <p className="text-xl font-extrabold text-slate-800">{tabCounts.approved}</p>
               </div>
             </div>
 
             <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-4 shadow-2xs border border-slate-100 flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-                <Building2 className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                <XCircle className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Referred (PCSO/DSWD)</span>
-                <p className="text-xl font-extrabold text-slate-800">{tabCounts.referred}</p>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Disqualified / Rejected</span>
+                <p className="text-xl font-extrabold text-slate-800">{tabCounts.rejected}</p>
               </div>
             </div>
           </div>
@@ -532,9 +531,8 @@ export default function AICS() {
           <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
             {[
               { key: 'all', label: 'All Applications', count: tabCounts.all },
-              { key: 'pending', label: 'Pending / For Review', count: tabCounts.pending },
-              { key: 'approved', label: 'Approved (In Appointments)', count: tabCounts.approved },
-              { key: 'referred', label: 'Referred (PCSO / DSWD)', count: tabCounts.referred },
+              { key: 'pending', label: 'Pending', count: tabCounts.pending },
+              { key: 'approved', label: 'Approved', count: tabCounts.approved },
               { key: 'rejected', label: 'Rejected', count: tabCounts.rejected },
             ].map((tab) => {
               const active = selectedTab === tab.key
