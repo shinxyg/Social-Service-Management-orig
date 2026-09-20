@@ -427,10 +427,7 @@ export default function AICS() {
       if (!matchesSearch) return false
 
       if (selectedTab === 'all') return true
-      if (selectedTab === 'submit_pending') return app.status === 'submit_pending' || app.status === 'pending'
-      if (selectedTab === 'waiting_approval') return app.status === 'waiting_approval'
-      if (selectedTab === 'scheduled') return app.status === 'scheduled'
-      if (selectedTab === 'under_review') return app.status === 'under_review'
+      if (selectedTab === 'pending') return app.status === 'submit_pending' || app.status === 'pending' || app.status === 'waiting_approval' || app.status === 'scheduled' || app.status === 'under_review'
       if (selectedTab === 'approved') return app.status === 'approved' || app.status === 'completed'
       if (selectedTab === 'referred') return app.status === 'for_referral' || app.status === 'referred'
       if (selectedTab === 'rejected') return app.status === 'rejected'
@@ -443,10 +440,7 @@ export default function AICS() {
   const tabCounts = useMemo(() => {
     return {
       all: applications.length,
-      submit_pending: applications.filter(a => a.status === 'submit_pending' || a.status === 'pending').length,
-      waiting_approval: applications.filter(a => a.status === 'waiting_approval').length,
-      scheduled: applications.filter(a => a.status === 'scheduled').length,
-      under_review: applications.filter(a => a.status === 'under_review').length,
+      pending: applications.filter(a => ['submit_pending', 'pending', 'waiting_approval', 'scheduled', 'under_review'].includes(String(a.status || '').toLowerCase())).length,
       approved: applications.filter(a => a.status === 'approved' || a.status === 'completed').length,
       referred: applications.filter(a => a.status === 'for_referral' || a.status === 'referred').length,
       rejected: applications.filter(a => a.status === 'rejected').length,
@@ -502,24 +496,14 @@ export default function AICS() {
           )}
 
           {/* Quick Metrics Summary */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
             <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-4 shadow-2xs border border-slate-100 flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Intake / Pending</span>
-                <p className="text-xl font-extrabold text-slate-800">{tabCounts.submit_pending}</p>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: DESIGN.colors.card, borderRadius: DESIGN.radius.card }} className="p-4 shadow-2xs border border-slate-100 flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Scheduled / Review</span>
-                <p className="text-xl font-extrabold text-slate-800">{tabCounts.scheduled + tabCounts.under_review}</p>
+                <p className="text-xl font-extrabold text-slate-800">{tabCounts.pending}</p>
               </div>
             </div>
 
@@ -545,30 +529,27 @@ export default function AICS() {
           </div>
 
           {/* Workflow Status Filter Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
             {[
               { key: 'all', label: 'All Applications', count: tabCounts.all },
-              { key: 'submit_pending', label: '1. Submit Pending', count: tabCounts.submit_pending },
-              { key: 'waiting_approval', label: '2. Waiting to Approve', count: tabCounts.waiting_approval },
-              { key: 'scheduled', label: '3. Scheduled', count: tabCounts.scheduled },
-              { key: 'under_review', label: '4. Under Review', count: tabCounts.under_review },
-              { key: 'approved', label: '5. Approved', count: tabCounts.approved },
-              { key: 'referred', label: '6. For Referral / Referred', count: tabCounts.referred },
-              { key: 'rejected', label: '7. Rejected', count: tabCounts.rejected },
+              { key: 'pending', label: 'Pending / For Review', count: tabCounts.pending },
+              { key: 'approved', label: 'Approved (In Appointments)', count: tabCounts.approved },
+              { key: 'referred', label: 'Referred (PCSO / DSWD)', count: tabCounts.referred },
+              { key: 'rejected', label: 'Rejected', count: tabCounts.rejected },
             ].map((tab) => {
               const active = selectedTab === tab.key
               return (
                 <button
                   key={tab.key}
                   onClick={() => setSelectedTab(tab.key)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer shadow-2xs ${
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer shadow-2xs ${
                     active
                       ? 'bg-blue-600 text-white shadow-blue-200'
                       : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
                   }`}
                 >
                   <span>{tab.label}</span>
-                  <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
                     active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
                   }`}>
                     {tab.count}
