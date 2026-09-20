@@ -342,12 +342,26 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(400).json({ error: 'Invalid na status.' });
     }
 
-    const existingResult = await db.query('SELECT * FROM aics_applications WHERE id = $1', [id]);
+    let existingResult = await db.query(
+      'SELECT * FROM aics_applications WHERE id::text = $1 OR reference_no = $1 OR qc_id = $1',
+      [id]
+    ).catch(() => ({ rows: [] }));
+
+    if (existingResult.rows.length === 0) {
+      existingResult = await db.query(
+        'SELECT * FROM aics_applications WHERE reference_no ILIKE $1 OR qc_id ILIKE $1',
+        [`%${id}%`]
+      ).catch(() => ({ rows: [] }));
+    }
+
     if (existingResult.rows.length === 0) {
       return res.status(404).json({ error: 'Walang nahanap na application.' });
     }
 
-    const currentDetails = existingResult.rows[0].details || {};
+    const appRow = existingResult.rows[0];
+    const appId = appRow.id;
+
+    const currentDetails = appRow.details || {};
     const updatedDetails = {
       ...currentDetails,
       ...(rejectionReason ? { rejectionReason } : {}),
@@ -363,7 +377,7 @@ exports.updateApplicationStatus = async (req, res) => {
 
     const result = await db.query(
       `UPDATE aics_applications SET status = $1, details = $2, updated_at = NOW() WHERE id = $3 RETURNING *`,
-      [status, updatedDetails, id]
+      [status, updatedDetails, appId]
     );
 
     const app = result.rows[0];

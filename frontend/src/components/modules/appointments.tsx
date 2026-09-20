@@ -887,10 +887,18 @@ export default function Appointments() {
   const handleApproveAid = async (appt: AppointmentRequest) => {
     try {
       const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
-      await fetch(`${API_BASE}/applications/${targetId}/status`, {
+      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetId)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'approved' }),
+      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetId)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'approved' }),
+      })).catch(() => {})
+
+      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(appt.referenceNo || targetId)}/complete`, {
+        method: 'PUT',
       }).catch(() => {})
 
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
@@ -912,8 +920,6 @@ export default function Appointments() {
       notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
-
-      handlePrintGL(appt)
     } catch (err) {
       console.error(err)
     }
@@ -924,7 +930,7 @@ export default function Appointments() {
     const appt = referralApp
     try {
       const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
-      await fetch(`${API_BASE}/applications/${targetId}/status`, {
+      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetId)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -932,7 +938,15 @@ export default function Appointments() {
           referralAgency: selectedAgency,
           referralNotes: referralNotes,
         }),
-      }).catch(() => {})
+      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetId)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: 'referred',
+          referralAgency: selectedAgency,
+          referralNotes: referralNotes,
+        }),
+      })).catch(() => {})
 
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
       const localMap = JSON.parse(raw)
@@ -955,7 +969,6 @@ export default function Appointments() {
       window.dispatchEvent(new Event("aics_applications_updated"))
 
       setReferralApp(null)
-      handlePrintReferral(appt, selectedAgency, referralNotes)
     } catch (err) {
       console.error(err)
       setReferralApp(null)
@@ -968,14 +981,21 @@ export default function Appointments() {
 
     try {
       const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
-      await fetch(`${API_BASE}/applications/${targetId}/status`, {
+      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetId)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           status: 'rejected',
           rejectionReason: reason,
         }),
-      }).catch(() => {})
+      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetId)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: 'rejected',
+          rejectionReason: reason,
+        }),
+      })).catch(() => {})
 
       setAppointments(prev => prev.filter(a => a.id !== appt.id && a.referenceNo !== appt.referenceNo))
       notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
