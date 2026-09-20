@@ -285,8 +285,8 @@ function AppointmentCard({
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 mt-2 justify-end">
-            {/* Schedule Button */}
-            {(appt.status === "pending" || appt.status === "scheduled") && (
+            {/* Schedule Button: Always available so admin can set or edit the appointment schedule */}
+            {appt.status !== "rejected" && (
               <button
                 type="button"
                 onClick={() => onSchedule(appt)}
@@ -298,7 +298,7 @@ function AppointmentCard({
             )}
 
             {/* Direct Approve Button in Appointments */}
-            {appt.status !== "approved" && appt.status !== "completed" && appt.status !== "referred" && appt.status !== "rejected" && (
+            {appt.status !== "approved" && appt.status !== "completed" && appt.status !== "rejected" && (
               <button
                 type="button"
                 onClick={() => onApprove?.(appt)}
@@ -311,7 +311,7 @@ function AppointmentCard({
             )}
 
             {/* Direct Refer Button in Appointments */}
-            {appt.status !== "referred" && appt.status !== "approved" && appt.status !== "completed" && appt.status !== "rejected" && (
+            {appt.status !== "referred" && appt.status !== "rejected" && (
               <button
                 type="button"
                 onClick={() => onRefer?.(appt)}
@@ -324,7 +324,7 @@ function AppointmentCard({
             )}
 
             {/* Direct Reject Button */}
-            {appt.status !== "rejected" && appt.status !== "approved" && appt.status !== "completed" && (
+            {appt.status !== "rejected" && appt.status !== "completed" && (
               <button
                 type="button"
                 onClick={() => onReject?.(appt)}
@@ -379,18 +379,7 @@ function getAppointmentDeduplicationKey(a: { id?: string; referenceNo?: string; 
 }
 
 export default function Appointments() {
-  const [appointments, setAppointments] = useState<AppointmentRequest[]>(() => {
-    try {
-      const cached = localStorage.getItem("cached_appointments_list")
-      if (cached) {
-        const parsed = JSON.parse(cached)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed
-        }
-      }
-    } catch {}
-    return MOCK_APPOINTMENTS
-  })
+  const [appointments, setAppointments] = useState<AppointmentRequest[]>([])
   const [schedulingAppt, setSchedulingAppt] = useState<AppointmentRequest | null>(null)
   const [filterModule, setFilterModule] = useState<"all" | ModuleKey>("all")
   const [filterStatus, setFilterStatus] = useState<"all" | AppointmentStatus>("all")
@@ -462,9 +451,11 @@ export default function Appointments() {
                 })
                 .map((a: any) => {
                   const apptId = `db-appt-${a.id}`
-                  const ref = a.qc_id || a.qcid || a.reference_no || a.reference_number || ""
-                  const cached = localScheduledMap[apptId] || (ref && ref.includes('-') ? localScheduledMap[ref] : undefined) || localScheduledMap[`${ref}_${a.concern}`]
-                  const hasDate = Boolean(cached?.scheduledDate || a.scheduled_date)
+                  const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || "").trim()
+                  const cached = localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined)
+                  const schedDate = a.scheduled_date || cached?.scheduledDate || null
+                  const schedTime = a.scheduled_time || cached?.scheduledTime || null
+                  const hasDate = Boolean(schedDate && schedDate !== "")
                   
                   let statusVal: AppointmentStatus = 'pending'
                   if (a.status === 'completed' || cached?.status === 'completed') {
@@ -475,7 +466,7 @@ export default function Appointments() {
                     statusVal = 'referred'
                   } else if (a.status === 'rejected' || cached?.status === 'rejected') {
                     statusVal = 'rejected'
-                  } else if (hasDate) {
+                  } else if (hasDate || a.status === 'scheduled') {
                     statusVal = 'scheduled'
                   } else {
                     statusVal = 'pending'
@@ -489,9 +480,9 @@ export default function Appointments() {
                     submittedAt: a.created_at || new Date().toISOString(),
                     concern: a.concern,
                     status: statusVal,
-                    scheduledDate: cached?.scheduledDate || a.scheduled_date,
-                    scheduledTime: cached?.scheduledTime || a.scheduled_time,
-                    officeLocation: cached?.officeLocation || a.office_location,
+                    scheduledDate: schedDate,
+                    scheduledTime: schedTime,
+                    officeLocation: cached?.officeLocation || a.office_location || "Quezon City Hall",
                     notes: cached?.notes || a.notes,
                   }
                 })
@@ -508,15 +499,17 @@ export default function Appointments() {
                 if (app.status !== "rejected") {
                   const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                   const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
-                  const ref = app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`
+                  const ref = String(app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
                   const apptId = `aics-appt-${app.id || ref}`
-                  const cached = localScheduledMap[apptId] || (ref && ref.includes('-') ? localScheduledMap[ref] : undefined) || localScheduledMap[`${ref}_${cleanType}`]
-                  const hasDate = Boolean(cached?.scheduledDate || (app.details as any)?.appointmentDate)
+                  const cached = localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined)
+                  const schedDate = (app.details as any)?.appointmentDate || cached?.scheduledDate || null
+                  const schedTime = (app.details as any)?.appointmentTime || cached?.scheduledTime || null
+                  const hasDate = Boolean(schedDate && schedDate !== "")
                   
                   let apptStatus: AppointmentStatus = 'pending'
-                  if (app.status === "completed" || app.status === "released" || cached?.status === "completed") {
+                  if (cached?.status === "completed") {
                     apptStatus = "completed"
-                  } else if (app.status === "approved" || cached?.status === "approved") {
+                  } else if (cached?.status === "approved") {
                     apptStatus = "approved"
                   } else if (app.status === "for_referral" || app.status === "referred" || cached?.status === "referred") {
                     apptStatus = "referred"
@@ -535,8 +528,8 @@ export default function Appointments() {
                     submittedAt: app.created_at || new Date().toISOString(),
                     concern: cleanType,
                     status: apptStatus,
-                    scheduledDate: cached?.scheduledDate || (app.details as any)?.appointmentDate,
-                    scheduledTime: cached?.scheduledTime || (app.details as any)?.appointmentTime,
+                    scheduledDate: schedDate,
+                    scheduledTime: schedTime,
                     officeLocation: cached?.officeLocation || (app.details as any)?.appointmentVenue || "Quezon City Hall",
                     notes: cached?.notes,
                     rawApp: app,

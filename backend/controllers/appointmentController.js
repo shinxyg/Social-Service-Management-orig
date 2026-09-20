@@ -121,13 +121,12 @@ async function syncAndCleanAppointments() {
       const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
       const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
       const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
-      const isApproved = ['approved', 'completed', 'for_release'].includes(row.status);
       const isReferred = ['for_referral', 'referred'].includes(row.status);
-      const initStatus = isApproved ? 'approved' : (isReferred ? 'referred' : 'pending');
+      const initStatus = isReferred ? 'referred' : 'pending';
       await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon.'
+         SELECT $1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling.'
          WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
         [refNo, fullName, cleanType, initStatus]
       ).catch(() => {});
