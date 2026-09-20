@@ -677,12 +677,16 @@ const canProceedPersonal = Boolean(
           setRejectionReason(activeApp.rejection_reason || activeApp.rejectionReason || details.rejectionReason || activeApp.remarks || activeApp.admin_notes || activeApp.reason || "")
           setReferralAgency(activeApp.referral_agency || activeApp.referralAgency || details.referralAgency || "PCSO")
           setReferralNotes(activeApp.referral_notes || activeApp.referralNotes || details.referralNotes || "")
-          if (details.appointmentDate || activeApp.appointment_date) {
-            setAppointmentInfo({
-              date: details.appointmentDate || activeApp.appointment_date,
-              time: details.appointmentTime || activeApp.appointment_time,
-              venue: details.appointmentVenue || activeApp.appointment_venue || "Quezon City Hall",
-            })
+          if (cleanSt === "under_review" || cleanSt === "approved" || cleanSt === "completed") {
+            if (details.appointmentDate || activeApp.appointment_date) {
+              setAppointmentInfo({
+                date: details.appointmentDate || activeApp.appointment_date,
+                time: details.appointmentTime || activeApp.appointment_time,
+                venue: details.appointmentVenue || activeApp.appointment_venue || "Quezon City Hall",
+              })
+            }
+          } else {
+            setAppointmentInfo(null)
           }
           setStep("pending")
           if (activeApp.first_name) setPFirstName(activeApp.first_name)
@@ -725,13 +729,13 @@ const canProceedPersonal = Boolean(
         const data = await res.json()
         const app = data.application || data
         const status = app?.status
+        let cleanSt: any = "pending"
         if (status) {
           const rawSt = status.toLowerCase()
-          let cleanSt: any = "pending"
           if (rawSt === "approved" || rawSt === "completed") cleanSt = "approved"
           else if (rawSt === "for_referral" || rawSt === "referred") cleanSt = "referred"
           else if (rawSt === "rejected" || rawSt === "disapproved") cleanSt = "rejected"
-          else if (rawSt === "under_review" || rawSt === "scheduled") cleanSt = "under_review"
+          else if (rawSt === "under_review" || rawSt === "scheduled" || rawSt === "for_assessment") cleanSt = "under_review"
           else cleanSt = "pending"
 
           setAppStatus(cleanSt)
@@ -743,12 +747,16 @@ const canProceedPersonal = Boolean(
         if (refAgency) setReferralAgency(refAgency)
         const refNotes = app?.referral_notes || app?.referralNotes || details.referralNotes
         if (refNotes) setReferralNotes(refNotes)
-        if (details.appointmentDate || app?.appointment_date) {
-          setAppointmentInfo({
-            date: details.appointmentDate || app?.appointment_date,
-            time: details.appointmentTime || app?.appointment_time,
-            venue: details.appointmentVenue || app?.appointment_venue || "Quezon City Hall",
-          })
+        if (cleanSt === "under_review" || cleanSt === "approved" || cleanSt === "completed") {
+          if (details.appointmentDate || app?.appointment_date) {
+            setAppointmentInfo({
+              date: details.appointmentDate || app?.appointment_date,
+              time: details.appointmentTime || app?.appointment_time,
+              venue: details.appointmentVenue || app?.appointment_venue || "Quezon City Hall",
+            })
+          }
+        } else {
+          setAppointmentInfo(null)
         }
       } catch (err) {
         console.warn("Status check skipped/offline:", err)
@@ -935,18 +943,37 @@ const handleFinalSubmit = async () => {
         const data = await response.json()
         const assignedRef = data.application?.reference_no || qcId || "110000116932100"
         setReference(assignedRef)
+        setAppStatus("pending")
+        setAppointmentInfo(null)
+        setRejectionReason("")
+        setReferralAgency("")
+        setReferralNotes("")
         try {
+          localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
+          localStorage.removeItem("aics_reapplying")
+          setIsReapplying(false)
+          isReapplyingRef.current = false
           localStorage.setItem('aics_application_submitted', String(Date.now()))
           window.dispatchEvent(new CustomEvent('aics_application_submitted'))
         } catch {}
         notifyApplicationChange("APPLICATION_SUBMITTED", "aics", assignedRef)
       } else {
         setReference(qcId || "110000116932100")
+        setAppStatus("pending")
+        setAppointmentInfo(null)
+        setRejectionReason("")
+        setReferralAgency("")
+        setReferralNotes("")
         notifyApplicationChange("APPLICATION_SUBMITTED", "aics", qcId || "110000116932100")
       }
     } catch (err) {
       console.warn("Backend unavailable, generating reference:", err)
       setReference(qcId || "110000116932100")
+      setAppStatus("pending")
+      setAppointmentInfo(null)
+      setRejectionReason("")
+      setReferralAgency("")
+      setReferralNotes("")
       notifyApplicationChange("APPLICATION_SUBMITTED", "aics", qcId || "110000116932100")
     }
 
@@ -954,6 +981,8 @@ const handleFinalSubmit = async () => {
   } catch (err) {
     console.error("Submit error:", err)
     setReference(qcId || "110000116932100")
+    setAppStatus("pending")
+    setAppointmentInfo(null)
     setStep("pending")
   }
 }
@@ -2725,7 +2754,7 @@ const handleFinalSubmit = async () => {
       )
     }
 
-    if (appStatus === "under_review" || appointmentInfo?.date) {
+    if (appStatus === "under_review") {
       return (
         <div className="max-w-xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900/50 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-5">
