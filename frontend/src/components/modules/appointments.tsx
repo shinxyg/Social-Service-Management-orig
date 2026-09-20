@@ -96,23 +96,70 @@ const STANDARD_REJECTION_REASONS = [
   },
 ]
 
+export function isAppointmentDue(scheduledDate?: string, scheduledTime?: string): boolean {
+  if (!scheduledDate) return false
+  try {
+    const now = new Date()
+    let year = now.getFullYear()
+    let month = now.getMonth()
+    let day = now.getDate()
+
+    const isoMatch = scheduledDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+    if (isoMatch) {
+      year = parseInt(isoMatch[1], 10)
+      month = parseInt(isoMatch[2], 10) - 1
+      day = parseInt(isoMatch[3], 10)
+    } else {
+      const d = new Date(scheduledDate)
+      if (!isNaN(d.getTime())) {
+        year = d.getFullYear()
+        month = d.getMonth()
+        day = d.getDate()
+      }
+    }
+
+    let targetHour = 0
+    let targetMin = 0
+
+    if (scheduledTime) {
+      const timeMatch = scheduledTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i)
+      if (timeMatch) {
+        let h = parseInt(timeMatch[1], 10)
+        const m = parseInt(timeMatch[2], 10)
+        const ampm = timeMatch[3]?.toUpperCase()
+        if (ampm === "PM" && h < 12) h += 12
+        if (ampm === "AM" && h === 12) h = 0
+        targetHour = h
+        targetMin = m
+      }
+    }
+
+    const apptDateTime = new Date(year, month, day, targetHour, targetMin, 0, 0)
+    if (isNaN(apptDateTime.getTime())) return false
+
+    return now.getTime() >= apptDateTime.getTime()
+  } catch {
+    return false
+  }
+}
+
 const statusTheme: Record<AppointmentStatus, { card: string; chip: string; icon: ReactElement; label: string }> = {
   pending: {
     card: "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40",
     chip: "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60",
     icon: <Clock className="h-3.5 w-3.5" />,
-    label: "Pending",
+    label: "Pending Schedule",
   },
   scheduled: {
-    card: "bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40",
-    chip: "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60",
+    card: "bg-indigo-50/70 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/40",
+    chip: "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60",
     icon: <Calendar className="h-3.5 w-3.5" />,
-    label: "Under Review",
+    label: "Scheduled",
   },
   under_review: {
     card: "bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40",
     chip: "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60",
-    icon: <Calendar className="h-3.5 w-3.5" />,
+    icon: <Clock className="h-3.5 w-3.5" />,
     label: "Under Review",
   },
   approved: {
@@ -145,14 +192,15 @@ const DEFAULT_APPT_STATUS_THEME = {
   card: "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40",
   chip: "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60",
   icon: <Clock className="h-3.5 w-3.5" />,
-  label: "Pending",
+  label: "Pending Schedule",
 }
 
 function getAppointmentStatusTheme(status?: string) {
   if (!status) return DEFAULT_APPT_STATUS_THEME
   const s = String(status).toLowerCase() as AppointmentStatus
   if (statusTheme[s]) return statusTheme[s]
-  if (s.includes("sched") || s.includes("under") || s.includes("review")) return statusTheme.scheduled
+  if (s === "scheduled") return statusTheme.scheduled
+  if (s.includes("under") || s.includes("review")) return statusTheme.under_review
   if (s.includes("appr")) return statusTheme.approved
   if (s.includes("ref")) return statusTheme.referred
   if (s.includes("rej") || s.includes("den")) return statusTheme.rejected
@@ -283,7 +331,21 @@ function AppointmentCard({
   onPrintReferral?: (a: AppointmentRequest) => void
   onDelete?: (id: string, ref: string) => void
 }) {
-  const st = getAppointmentStatusTheme(appt.status)
+  const isDue = isAppointmentDue(appt.scheduledDate, appt.scheduledTime)
+  const isPendingSched = appt.status === "pending" || !appt.scheduledDate
+  const effectiveStatus: AppointmentStatus = isPendingSched
+    ? "pending"
+    : (appt.status === "approved" || appt.status === "completed")
+    ? "approved"
+    : appt.status === "referred"
+    ? "referred"
+    : appt.status === "rejected"
+    ? "rejected"
+    : isDue
+    ? "under_review"
+    : "scheduled"
+  const st = getAppointmentStatusTheme(effectiveStatus)
+
   return (
     <div className={`border rounded-xl p-4 ${st?.card || 'bg-slate-50/60 border-slate-200'}`}>
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -327,8 +389,8 @@ function AppointmentCard({
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 mt-2 justify-end">
-            {/* 1. Pending Schedule Stage */}
-            {appt.status === "pending" && (
+            {/* 1. Pending Schedule Stage (No date set yet) */}
+            {isPendingSched && (
               <button
                 type="button"
                 onClick={() => onSchedule(appt)}
@@ -339,8 +401,26 @@ function AppointmentCard({
               </button>
             )}
 
-            {/* 2. Scheduled Interview / Under Review Stage */}
-            {(appt.status === "scheduled" || (appt.status as string) === "under_review") && (
+            {/* 2. Scheduled Stage (Schedule is set, waiting for date/time to arrive) */}
+            {!isPendingSched && !isDue && effectiveStatus === "scheduled" && (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Scheduled (Upcoming Interview)</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onSchedule(appt)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
+                  title="Reschedule Appointment"
+                >
+                  <span>Edit</span>
+                </button>
+              </div>
+            )}
+
+            {/* 3. Under Review Stage (Date & Time is reached / ongoing case assessment) */}
+            {!isPendingSched && isDue && effectiveStatus === "under_review" && (
               <>
                 <button
                   type="button"
@@ -371,8 +451,8 @@ function AppointmentCard({
               </>
             )}
 
-            {/* 3. Approved / Completed Stage */}
-            {(appt.status === "approved" || appt.status === "completed") && (
+            {/* 4. Approved / Completed Stage */}
+            {(effectiveStatus === "approved" || effectiveStatus === "completed") && (
               <button
                 type="button"
                 onClick={() => onPrintGL?.(appt)}
@@ -383,8 +463,8 @@ function AppointmentCard({
               </button>
             )}
 
-            {/* 4. Referred Stage */}
-            {appt.status === "referred" && (
+            {/* 5. Referred Stage */}
+            {effectiveStatus === "referred" && (
               <button
                 type="button"
                 onClick={() => onPrintReferral?.(appt)}
@@ -1138,9 +1218,32 @@ export default function Appointments() {
     })
   }
 
+  const getApptEffectiveStatus = (a: AppointmentRequest): AppointmentStatus => {
+    const isDue = isAppointmentDue(a.scheduledDate, a.scheduledTime)
+    const isPendingSched = a.status === "pending" || !a.scheduledDate
+    return isPendingSched
+      ? "pending"
+      : (a.status === "approved" || a.status === "completed")
+      ? "approved"
+      : a.status === "referred"
+      ? "referred"
+      : a.status === "rejected"
+      ? "rejected"
+      : isDue
+      ? "under_review"
+      : "scheduled"
+  }
+
   const filtered = appointments.filter((a) => {
+    const eff = getApptEffectiveStatus(a)
     const matchModule = filterModule === "all" || a.module === filterModule
-    const matchStatus = filterStatus === "all" || a.status === filterStatus
+    const matchStatus =
+      filterStatus === "all" ||
+      eff === filterStatus ||
+      a.status === filterStatus ||
+      (filterStatus === "scheduled" && (eff === "scheduled" || eff === "under_review")) ||
+      (filterStatus === "under_review" && eff === "under_review") ||
+      (filterStatus === "completed" && (eff === "completed" || eff === "approved"))
     const matchSearch =
       searchTerm === "" ||
       a.applicantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1150,9 +1253,10 @@ export default function Appointments() {
 
   const stats = {
     total: appointments.length,
-    pending: appointments.filter((a) => a.status === "pending").length,
-    scheduled: appointments.filter((a) => a.status === "scheduled").length,
-    completed: appointments.filter((a) => a.status === "completed" || a.status === "approved").length,
+    pending: appointments.filter((a) => getApptEffectiveStatus(a) === "pending").length,
+    scheduled: appointments.filter((a) => getApptEffectiveStatus(a) === "scheduled").length,
+    underReview: appointments.filter((a) => getApptEffectiveStatus(a) === "under_review").length,
+    completed: appointments.filter((a) => ["approved", "completed", "referred"].includes(getApptEffectiveStatus(a))).length,
   }
 
   return (
@@ -1163,11 +1267,12 @@ export default function Appointments() {
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: "Total Requests", value: stats.total },
           { label: "Pending Schedule", value: stats.pending },
-          { label: "Under Review", value: stats.scheduled },
+          { label: "Scheduled (Upcoming)", value: stats.scheduled },
+          { label: "Under Review (Due)", value: stats.underReview },
           { label: "Approved / Done", value: stats.completed },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl p-4 bg-card border border-border shadow-xs">
@@ -1215,11 +1320,13 @@ export default function Appointments() {
               className="mt-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 block"
             >
               <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="scheduled">Under Review / Scheduled</option>
+              <option value="pending">Pending Schedule</option>
+              <option value="scheduled">Scheduled (Upcoming)</option>
+              <option value="under_review">Under Review (Due)</option>
               <option value="approved">Approved</option>
               <option value="referred">Referred</option>
               <option value="completed">Completed</option>
+              <option value="rejected">Rejected</option>
             </select>
           </div>
         </div>

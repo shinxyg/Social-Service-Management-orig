@@ -22,6 +22,7 @@ type Step = "requirements" | "checklist" | "personal" | "documents" | "review" |
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, toISODateString } from "../../utils/userProfile"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
+import { isAppointmentDue } from "../modules/appointments"
 
 export default function ApplyAICS({ initialType, initialTypeKey, onBack }: ApplyAICSProps) {
   const { t, language } = useLanguage()
@@ -2733,6 +2734,8 @@ const handleFinalSubmit = async () => {
     }
 
     if (appStatus === "under_review") {
+      const isDue = appointmentInfo?.date ? isAppointmentDue(appointmentInfo.date, appointmentInfo.time) : true
+
       return (
         <div className="max-w-xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900/50 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-5">
@@ -2742,13 +2745,16 @@ const handleFinalSubmit = async () => {
 
             <div className="space-y-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30">
-                <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Interview Scheduled — Under Review
+                <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                {isDue ? "Under Review & Evaluation" : "Interview Scheduled — Upcoming"}
               </span>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Assessment Interview Scheduled
+                {isDue ? "Case Assessment Under Review" : "Assessment Interview Scheduled"}
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-                Naitakda na ang inyong interview sa Social Worker para sa case assessment ng inyong {type}.
+                {isDue
+                  ? `Kasalukuyang sinusuri ng Social Worker ang inyong case assessment at mga dokumento para sa ${type}.`
+                  : `Naitakda na ang inyong interview sa Social Worker para sa case assessment ng inyong ${type}.`}
               </p>
             </div>
 
@@ -2789,7 +2795,9 @@ const handleFinalSubmit = async () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 dark:text-slate-400">Status</span>
-                <span className="font-bold text-blue-700 dark:text-blue-300">Under Review & Case Assessment</span>
+                <span className="font-bold text-blue-700 dark:text-blue-300">
+                  {isDue ? "Under Review & Case Assessment" : "Interview Scheduled (Upcoming)"}
+                </span>
               </div>
             </div>
 
