@@ -285,78 +285,110 @@ function AppointmentCard({
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 mt-2 justify-end">
-            {/* Schedule Button: Always available so admin can set or edit the appointment schedule */}
-            {appt.status !== "rejected" && (
-              <button
-                type="button"
-                onClick={() => onSchedule(appt)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
-              >
-                <Calendar className="h-3.5 w-3.5" />
-                <span>{appt.scheduledDate ? "Edit Schedule" : "📅 Set Schedule"}</span>
-              </button>
+            {/* 1. Pending Schedule Stage */}
+            {appt.status === "pending" && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onSchedule(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>📅 Set Schedule</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onReject?.(appt)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  <span>Reject</span>
+                </button>
+              </>
             )}
 
-            {/* Direct Approve Button in Appointments */}
-            {appt.status !== "approved" && appt.status !== "completed" && appt.status !== "rejected" && (
-              <button
-                type="button"
-                onClick={() => onApprove?.(appt)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
-                title="Approve QC Assistance & generate Guarantee Letter"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>✓ Approve</span>
-              </button>
+            {/* 2. Scheduled Interview Stage */}
+            {appt.status === "scheduled" && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onSchedule(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Edit Schedule</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onApprove?.(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
+                  title="Approve QC Assistance & generate Guarantee Letter"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>✓ Approve</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRefer?.(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
+                  title="Endorse to partner agency (PCSO / DSWD / DOH)"
+                >
+                  <Building2 className="h-3.5 w-3.5" />
+                  <span>🏛️ Refer</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onReject?.(appt)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  <span>Reject</span>
+                </button>
+              </>
             )}
 
-            {/* Direct Refer Button in Appointments */}
-            {appt.status !== "referred" && appt.status !== "rejected" && (
-              <button
-                type="button"
-                onClick={() => onRefer?.(appt)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
-                title="Endorse to partner agency (PCSO / DSWD / DOH)"
-              >
-                <Building2 className="h-3.5 w-3.5" />
-                <span>🏛️ Refer</span>
-              </button>
-            )}
-
-            {/* Direct Reject Button */}
-            {appt.status !== "rejected" && appt.status !== "completed" && (
-              <button
-                type="button"
-                onClick={() => onReject?.(appt)}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
-              >
-                <XCircle className="h-3.5 w-3.5" />
-                <span>Reject</span>
-              </button>
-            )}
-
-            {/* Print Guarantee Letter if Approved */}
+            {/* 3. Approved / Completed Stage */}
             {(appt.status === "approved" || appt.status === "completed") && (
-              <button
-                type="button"
-                onClick={() => onPrintGL?.(appt)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                <span>📄 Print GL</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => onSchedule(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Edit Schedule</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onPrintGL?.(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>📄 Print GL</span>
+                </button>
+              </>
             )}
 
-            {/* Print Referral Letter if Referred */}
+            {/* 4. Referred Stage */}
             {appt.status === "referred" && (
-              <button
-                type="button"
-                onClick={() => onPrintReferral?.(appt)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                <span>🏛️ Print Referral</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => onSchedule(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Edit Schedule</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onPrintReferral?.(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>🏛️ Print Referral</span>
+                </button>
+              </>
             )}
           </div>
         </div>

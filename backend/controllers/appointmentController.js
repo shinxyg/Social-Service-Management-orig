@@ -109,6 +109,13 @@ async function syncAndCleanAppointments() {
          OR (module IN ('PWD', 'Senior Citizen', 'Solo Parent') AND LOWER(COALESCE(concern, '')) NOT LIKE '%assist%')
     `).catch(() => {});
 
+    await db.query(`
+      UPDATE appointments
+      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
+      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%' OR scheduled_date IS NULL OR scheduled_date = '')
+        AND status NOT IN ('rejected', 'referred')
+    `).catch(() => {});
+
     const activeAics = await db.query(
       `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix, status
        FROM aics_applications
