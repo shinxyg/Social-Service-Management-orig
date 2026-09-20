@@ -618,6 +618,13 @@ const canProceedPersonal = Boolean(
         }
 
         const matchingApps = allApps.filter((a) => matchService(a) && isUserMatch(a))
+        matchingApps.sort((a, b) => {
+          const timeA = new Date(a.created_at || a.submitted_at || a.date || 0).getTime()
+          const timeB = new Date(b.created_at || b.submitted_at || b.date || 0).getTime()
+          if (timeB !== timeA) return timeB - timeA
+          return (Number(b.id) || 0) - (Number(a.id) || 0)
+        })
+
         const activeApp = matchingApps.find((a) => {
           const s = String(a.status || "pending").toLowerCase()
           return (
@@ -646,6 +653,20 @@ const canProceedPersonal = Boolean(
           else if (rawSt === "rejected" || rawSt === "disapproved") cleanSt = "rejected"
           else if (rawSt === "under_review" || rawSt === "scheduled" || rawSt === "for_assessment") cleanSt = "under_review"
           else cleanSt = "pending"
+
+          try {
+            const rawSched = localStorage.getItem("all_appointments_scheduled")
+            if (rawSched) {
+              const parsed = JSON.parse(rawSched)
+              const localSched = parsed[ref] || parsed[`aics-appt-${activeApp.id}`]
+              if (localSched?.status) {
+                const schedSt = String(localSched.status).toLowerCase()
+                if (schedSt === "approved" || schedSt === "completed") cleanSt = "approved"
+                else if (schedSt === "referred") cleanSt = "referred"
+                else if (schedSt === "rejected") cleanSt = "rejected"
+              }
+            }
+          } catch {}
 
           setAppStatus(cleanSt)
           const details = activeApp.details || {}
