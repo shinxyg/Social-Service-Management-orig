@@ -229,6 +229,13 @@ exports.getAppointments = async (req, res) => {
   try {
     triggerAppointmentSyncIfStale();
 
+    await db.query(`
+      UPDATE appointments
+      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
+      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%' OR scheduled_date IS NULL OR scheduled_date = '')
+        AND status NOT IN ('rejected', 'referred')
+    `).catch(() => {});
+
     const [deletedRes, result] = await Promise.all([
       db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] })),
       db.query(

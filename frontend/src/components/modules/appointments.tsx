@@ -461,6 +461,13 @@ export default function Appointments() {
           }),
         ])
 
+        const cleanDate = (d: any) => {
+          if (!d) return null
+          const s = String(d).trim()
+          if (!s || s.toLowerCase().includes('sep 19') || s.includes('2026-09-19')) return null
+          return s
+        }
+
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
           try {
             const dataDb = await resDbSettled.value.json()
@@ -485,23 +492,29 @@ export default function Appointments() {
                   const apptId = `db-appt-${a.id}`
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || "").trim()
                   const cached = localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined)
-                  const schedDate = a.scheduled_date || cached?.scheduledDate || null
-                  const schedTime = a.scheduled_time || cached?.scheduledTime || null
-                  const hasDate = Boolean(schedDate && schedDate !== "")
+                  const schedDate = cleanDate(a.scheduled_date || cached?.scheduledDate)
+                  const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
+                  const hasDate = Boolean(schedDate)
                   
                   let statusVal: AppointmentStatus = 'pending'
-                  if (a.status === 'completed' || cached?.status === 'completed') {
-                    statusVal = 'completed'
-                  } else if (a.status === 'approved' || cached?.status === 'approved') {
-                    statusVal = 'approved'
-                  } else if (a.status === 'referred' || a.status === 'for_referral' || cached?.status === 'referred') {
-                    statusVal = 'referred'
-                  } else if (a.status === 'rejected' || cached?.status === 'rejected') {
-                    statusVal = 'rejected'
-                  } else if (hasDate || a.status === 'scheduled') {
-                    statusVal = 'scheduled'
+                  if (hasDate) {
+                    if (a.status === 'completed' || cached?.status === 'completed') {
+                      statusVal = 'completed'
+                    } else if (a.status === 'approved' || cached?.status === 'approved') {
+                      statusVal = 'approved'
+                    } else if (a.status === 'referred' || a.status === 'for_referral' || cached?.status === 'referred') {
+                      statusVal = 'referred'
+                    } else if (a.status === 'rejected' || cached?.status === 'rejected') {
+                      statusVal = 'rejected'
+                    } else {
+                      statusVal = 'scheduled'
+                    }
                   } else {
-                    statusVal = 'pending'
+                    if (a.status === 'rejected' || cached?.status === 'rejected') {
+                      statusVal = 'rejected'
+                    } else {
+                      statusVal = 'pending'
+                    }
                   }
 
                   return {
@@ -534,19 +547,21 @@ export default function Appointments() {
                   const ref = String(app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
                   const apptId = `aics-appt-${app.id || ref}`
                   const cached = localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined)
-                  const schedDate = (app.details as any)?.appointmentDate || cached?.scheduledDate || null
-                  const schedTime = (app.details as any)?.appointmentTime || cached?.scheduledTime || null
-                  const hasDate = Boolean(schedDate && schedDate !== "")
+                  const schedDate = cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
+                  const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
+                  const hasDate = Boolean(schedDate)
                   
                   let apptStatus: AppointmentStatus = 'pending'
-                  if (cached?.status === "completed") {
-                    apptStatus = "completed"
-                  } else if (cached?.status === "approved") {
-                    apptStatus = "approved"
-                  } else if (app.status === "for_referral" || app.status === "referred" || cached?.status === "referred") {
-                    apptStatus = "referred"
-                  } else if (hasDate) {
-                    apptStatus = "scheduled"
+                  if (hasDate) {
+                    if (cached?.status === "completed") {
+                      apptStatus = "completed"
+                    } else if (cached?.status === "approved") {
+                      apptStatus = "approved"
+                    } else if (app.status === "for_referral" || app.status === "referred" || cached?.status === "referred") {
+                      apptStatus = "referred"
+                    } else {
+                      apptStatus = "scheduled"
+                    }
                   } else {
                     apptStatus = "pending"
                   }
@@ -703,14 +718,18 @@ export default function Appointments() {
             const exPrio = statusPriority[existing.status] || 1
 
             const merged: AppointmentRequest = { ...existing }
-            if (curPrio > exPrio) {
-              merged.status = a.status
-            }
             if (a.scheduledDate && (!merged.scheduledDate || curPrio >= exPrio)) {
               merged.scheduledDate = a.scheduledDate
               merged.scheduledTime = a.scheduledTime
               merged.officeLocation = a.officeLocation
               merged.notes = a.notes || merged.notes
+            }
+            if (merged.scheduledDate) {
+              if (curPrio > exPrio) {
+                merged.status = a.status
+              }
+            } else {
+              merged.status = (a.status === 'rejected' || existing.status === 'rejected') ? 'rejected' : 'pending'
             }
             if (a.id.startsWith('db-appt-')) {
               merged.id = a.id
