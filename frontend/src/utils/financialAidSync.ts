@@ -218,6 +218,7 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
             !["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"].includes(p.id) &&
             !isIdOrDocumentService(p.assistanceType) &&
             !isTrainingService(p.assistanceType) &&
+            !/-\d{4}$/.test(p.applicationRef || "") &&
             !deletedKeys.has(p.id) &&
             !deletedKeys.has(p.disbursementId) &&
             !deletedKeys.has(p.applicationRef)
@@ -546,6 +547,8 @@ export const TARGET_TEST_MATCHES = [
   "topher",
   "110000872276939",
   "110000572516915",
+  "-8943",
+  "disb-2026-0008",
   "renz",
   "millares",
   "renzoe09062",
