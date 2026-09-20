@@ -6,15 +6,14 @@ import { useLanguage } from "./language-context"
 interface PreFillupPrivacyModalProps {
   isOpen: boolean
   onAccept: () => void
-  onCancel: () => void
+  onCancel?: () => void
   moduleName?: string
 }
 
 export function PreFillupPrivacyModal({
   isOpen,
   onAccept,
-  onCancel,
-  moduleName = "Social Welfare Assistance Program",
+  moduleName = "Quezon City Social Welfare Services",
 }: PreFillupPrivacyModalProps) {
   const { language } = useLanguage()
   const isEn = language === "en"
@@ -248,23 +247,15 @@ export function PreFillupPrivacyModal({
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 flex items-center justify-between gap-3 shrink-0 flex-wrap sm:flex-nowrap">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-          >
-            {isEn ? "Back" : isBis ? "Balik" : "Bumalik"}
-          </button>
-
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 flex items-center justify-end shrink-0">
           <button
             type="button"
             onClick={handleProceed}
             disabled={!agreed}
-            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
+            className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-md cursor-pointer ${
               agreed
-                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 active:scale-95"
-                : "bg-slate-300 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none"
+                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 active:scale-[0.98]"
+                : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none"
             }`}
           >
             <span>{isEn ? "Agree & Proceed" : isBis ? "Uyon ug Padayon" : "Pumapayag at Magpatuloy"}</span>
