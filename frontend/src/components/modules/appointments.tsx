@@ -586,10 +586,8 @@ export default function Appointments() {
                   
                   let statusVal: AppointmentStatus = 'pending'
                   if (hasDate) {
-                    if (a.status === 'completed' || cached?.status === 'completed') {
+                    if (a.status === 'completed' || cached?.status === 'completed' || cached?.status === 'approved') {
                       statusVal = 'completed'
-                    } else if (a.status === 'approved' || cached?.status === 'approved') {
-                      statusVal = 'approved'
                     } else if (a.status === 'referred' || a.status === 'for_referral' || cached?.status === 'referred') {
                       statusVal = 'referred'
                     } else if (a.status === 'rejected' || cached?.status === 'rejected') {
