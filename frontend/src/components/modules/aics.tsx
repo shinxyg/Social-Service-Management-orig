@@ -852,18 +852,18 @@ export default function AICS() {
 
               {/* Bottom Action Footer */}
               <div className="mt-8 pt-5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                {/* Left Side: Approve and Reject Actions */}
+                {/* Left Side: Approve for Scheduling and Reject Actions */}
                 <div className="flex items-center gap-3">
-                  {currentStatus !== 'approved' && currentStatus !== 'completed' && currentStatus !== 'rejected' && (
+                  {currentStatus !== 'approved' && currentStatus !== 'completed' && currentStatus !== 'rejected' && currentStatus !== 'waiting_approval' && currentStatus !== 'scheduled' && currentStatus !== 'under_review' && (
                     <>
                       <button
                         type="button"
                         disabled={actionLoading}
-                        onClick={() => updateStatus('approved')}
-                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                        onClick={() => updateStatus('waiting_approval')}
+                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
                       >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Approve</span>
+                        <Calendar className="w-4 h-4" />
+                        <span>Approve for Scheduling</span>
                       </button>
 
                       <button
@@ -877,10 +877,16 @@ export default function AICS() {
                       </button>
                     </>
                   )}
+                  {(currentStatus === 'waiting_approval' || currentStatus === 'scheduled' || currentStatus === 'under_review') && (
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+                      <Calendar className="w-4 h-4 text-blue-600" />
+                      <span>Screened & Queued in Appointments for Scheduling</span>
+                    </span>
+                  )}
                   {(currentStatus === 'approved' || currentStatus === 'completed') && (
                     <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Case Approved & Queued in Appointments</span>
+                      <span>Case Evaluated & Approved</span>
                     </span>
                   )}
                   {currentStatus === 'rejected' && (

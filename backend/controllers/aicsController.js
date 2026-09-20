@@ -383,7 +383,24 @@ exports.updateApplicationStatus = async (req, res) => {
     const app = result.rows[0];
     const fullName = [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(' ');
 
-    if (status === 'approved') {
+    const rawType = (app.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
+    const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
+
+    if (status === 'waiting_approval' || status === 'for_scheduling' || status === 'under_review') {
+      const apptCheck = await db.query(
+        'SELECT id FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3',
+        [app.reference_no, 'AICS', cleanType]
+      );
+      if (apptCheck.rows.length === 0) {
+        await db.query(
+          `INSERT INTO appointments
+            (reference_no, module, applicant_name, concern, status, office_location, notes)
+           VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-screen na AICS aplikasyon para sa scheduling.')
+           ON CONFLICT DO NOTHING`,
+          [app.reference_no, fullName.toUpperCase(), cleanType]
+        );
+      }
+    } else if (status === 'approved') {
       const FIXED_AMOUNTS = {
         'Medical Assistance': 5000,
         'Funeral Assistance': 10000,
@@ -394,9 +411,7 @@ exports.updateApplicationStatus = async (req, res) => {
         'PWD Social Assistance': 2000,
         'Senior Social Assistance': 2000,
       };
-      const rawType = (app.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
-      const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
-      const fixedAmount = FIXED_AMOUNTS[cleanType] || FIXED_AMOUNTS[app.assistance_type] || 1000;
+      const fixedAmount = FIXED_AMOUNTS[cleanType] || FIXED_AMOUNTS[app.assistance_type] || 5000;
       const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
       const disbCheck = await db.query(
@@ -418,20 +433,6 @@ exports.updateApplicationStatus = async (req, res) => {
             fixedAmount,
             new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
           ]
-        );
-      }
-
-      const apptCheck = await db.query(
-        'SELECT id FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3',
-        [app.reference_no, 'AICS', cleanType]
-      );
-      if (apptCheck.rows.length === 0) {
-        await db.query(
-          `INSERT INTO appointments
-            (reference_no, module, applicant_name, concern, status, office_location, notes)
-           VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang aplikasyon para sa scheduling.')
-           ON CONFLICT DO NOTHING`,
-          [app.reference_no, fullName.toUpperCase(), cleanType]
         );
       }
     } else if (status === 'rejected') {
