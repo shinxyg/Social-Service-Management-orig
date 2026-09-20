@@ -1017,18 +1017,18 @@ export default function Appointments() {
 
   const handleApproveAid = async (appt: AppointmentRequest) => {
     try {
-      const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
-      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetId)}/status`, {
+      const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
+      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'approved' }),
-      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetId)}/status`, {
+      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetRef)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'approved' }),
       })).catch(() => {})
 
-      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(appt.referenceNo || targetId)}/complete`, {
+      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(appt.referenceNo || targetRef)}/complete`, {
         method: 'PUT',
       }).catch(() => {})
 
@@ -1060,8 +1060,8 @@ export default function Appointments() {
     if (!referralApp) return
     const appt = referralApp
     try {
-      const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
-      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetId)}/status`, {
+      const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
+      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1069,7 +1069,7 @@ export default function Appointments() {
           referralAgency: selectedAgency,
           referralNotes: referralNotes,
         }),
-      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetId)}/status`, {
+      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetRef)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1128,15 +1128,15 @@ export default function Appointments() {
     }
 
     try {
-      const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
-      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetId)}/status`, {
+      const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
+      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           status: 'rejected',
           rejectionReason: finalReason,
         }),
-      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetId)}/status`, {
+      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetRef)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1145,7 +1145,7 @@ export default function Appointments() {
         }),
       })).catch(() => {})
 
-      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(appt.referenceNo || targetId)}`, {
+      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(appt.referenceNo || targetRef)}`, {
         method: 'DELETE',
       }).catch(() => {})
 
