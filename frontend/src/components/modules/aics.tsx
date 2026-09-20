@@ -406,7 +406,7 @@ export default function AICS() {
 
     } catch (err) {
       console.error('Status update failed:', err)
-      alert('May error sa pag-update ng status. Pakisubukan ulit.')
+      alert('Failed to update status. Please try again.')
       fetchApplications()
     } finally {
       setActionLoading(false)
@@ -626,7 +626,7 @@ export default function AICS() {
                     <tr>
                       <td colSpan={6} className="py-12 text-center text-slate-400 text-sm">
                         <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
-                        Walang nahanap na aplikasyon sa ilalim ng napiling status filter.
+                        No applications found under the selected status filter.
                       </td>
                     </tr>
                   )}
