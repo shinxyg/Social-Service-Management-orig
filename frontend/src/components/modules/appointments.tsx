@@ -312,14 +312,6 @@ function AppointmentCard({
               <>
                 <button
                   type="button"
-                  onClick={() => onSchedule(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Edit Schedule</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => onApprove?.(appt)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
                   title="Approve QC Assistance & generate Guarantee Letter"
