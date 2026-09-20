@@ -474,6 +474,13 @@ exports.completeAppointment = async (req, res) => {
     );
 
     try {
+      await db.query(
+        `UPDATE aics_applications SET status = 'approved', updated_at = NOW() WHERE reference_no = $1 OR qc_id = $1 OR id::text = $1`,
+        [cleanId]
+      );
+    } catch (_) {}
+
+    try {
       await db.query(`
         DELETE FROM appointments a
         USING appointments b

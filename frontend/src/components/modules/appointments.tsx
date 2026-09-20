@@ -530,18 +530,17 @@ export default function Appointments() {
                   const hasDate = Boolean(schedDate)
                   
                   let apptStatus: AppointmentStatus = 'pending'
-                  if (hasDate) {
-                    if (cached?.status === "completed") {
-                      apptStatus = "completed"
-                    } else if (cached?.status === "approved") {
-                      apptStatus = "approved"
-                    } else if (app.status === "for_referral" || app.status === "referred" || cached?.status === "referred") {
-                      apptStatus = "referred"
-                    } else {
-                      apptStatus = "scheduled"
-                    }
+                  const rawAppStatus = String(app.status || '').toLowerCase()
+                  if (rawAppStatus === 'approved' || rawAppStatus === 'completed' || cached?.status === 'approved' || cached?.status === 'completed') {
+                    apptStatus = 'approved'
+                  } else if (rawAppStatus === 'for_referral' || rawAppStatus === 'referred' || cached?.status === 'referred') {
+                    apptStatus = 'referred'
+                  } else if (rawAppStatus === 'rejected' || cached?.status === 'rejected') {
+                    apptStatus = 'rejected'
+                  } else if (hasDate || rawAppStatus === 'scheduled' || rawAppStatus === 'under_review' || cached?.status === 'scheduled') {
+                    apptStatus = 'scheduled'
                   } else {
-                    apptStatus = "pending"
+                    apptStatus = 'pending'
                   }
 
                   appts.push({
