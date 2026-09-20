@@ -3349,9 +3349,26 @@ export default function MyApplications() {
           }
 
           if (isAicsMedicalApplication(selectedApp)) {
-            const isClaimed = selectedApp.status === "Released" || selectedApp.status === "Completed"
-            const isGLIssued = selectedApp.status === "Approved" || selectedApp.status === "For Release" || isClaimed
-            const isAssessmentDone = isGLIssued || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment"
+            const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+            const schedMap = rawSched ? JSON.parse(rawSched) : {}
+            const refKey = String(selectedApp.applicationNo || selectedApp.id || selectedApp.referenceNumber || "").trim()
+            const cachedAppt =
+              schedMap[refKey] ||
+              schedMap[selectedApp.id] ||
+              schedMap[`appt_${refKey}`] ||
+              schedMap[selectedApp.applicantName?.toLowerCase()?.trim()]
+
+            const isApprovedDecision =
+              selectedApp.status === "Approved" ||
+              selectedApp.status === "Completed" ||
+              selectedApp.status === "Released" ||
+              cachedAppt?.decision === "approved" ||
+              cachedAppt?.status === "approved" ||
+              cachedAppt?.status === "completed"
+
+            const isClaimed = isApprovedDecision || selectedApp.status === "Released" || selectedApp.status === "Completed"
+            const isGLIssued = isApprovedDecision || selectedApp.status === "For Release" || isClaimed
+            const isAssessmentDone = isGLIssued || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment" || cachedAppt?.decision === "referred"
             const partnerHospital =
               selectedApp.details?.partnerHospital ||
               selectedApp.formData?.partnerHospital ||
@@ -3364,8 +3381,8 @@ export default function MyApplications() {
               selectedApp.extra_data?.medicalDiagnosis ||
               selectedApp.medicalDiagnosis ||
               "Medical Assistance & Hospitalization"
-            const appDateStr = selectedApp.appointmentDate || selectedApp.formData?.appointmentDate || "September 24, 2026"
-            const appTimeStr = selectedApp.appointmentTime || selectedApp.formData?.appointmentTime || "09:00 AM"
+            const appDateStr = cachedAppt?.scheduledDate || selectedApp.appointmentDate || selectedApp.formData?.appointmentDate || "September 21, 2026"
+            const appTimeStr = cachedAppt?.scheduledTime || selectedApp.appointmentTime || selectedApp.formData?.appointmentTime || "01:08 AM"
 
             return (
               <div className="bg-slate-50 dark:bg-slate-900 border border-blue-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-5">
@@ -3439,9 +3456,9 @@ export default function MyApplications() {
                       : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
                   }`}>
                     <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">STAGE 4</span>
-                    <p className="text-xs font-bold">Claimed at Hospital</p>
+                    <p className="text-xs font-bold">{isClaimed ? "Completed & Approved" : "Claimed at Hospital"}</p>
                     <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                      {isClaimed ? "✓ Deducted from Hospital SOA" : "Pending Hospital Billing"}
+                      {isClaimed ? "✓ Aid Approved & Guarantee Letter Released" : "Pending Hospital Billing"}
                     </p>
                   </div>
                 </div>
@@ -3902,17 +3919,34 @@ export default function MyApplications() {
                   }
 
                   if (isAicsMedicalApplication(app)) {
-                    const isClaimed = app.status === "Released" || app.status === "Completed"
-                    const isGLIssued = app.status === "Approved" || app.status === "For Release" || isClaimed
-                    const isAssessmentDone = isGLIssued || app.status === "Under Review" || app.status === "For Assessment"
+                    const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+                    const schedMap = rawSched ? JSON.parse(rawSched) : {}
+                    const refKey = String(app.applicationNo || app.id || app.referenceNumber || "").trim()
+                    const cachedAppt =
+                      schedMap[refKey] ||
+                      schedMap[app.id] ||
+                      schedMap[`appt_${refKey}`] ||
+                      schedMap[app.applicantName?.toLowerCase()?.trim()]
+
+                    const isApprovedDecision =
+                      app.status === "Approved" ||
+                      app.status === "Completed" ||
+                      app.status === "Released" ||
+                      cachedAppt?.decision === "approved" ||
+                      cachedAppt?.status === "approved" ||
+                      cachedAppt?.status === "completed"
+
+                    const isClaimed = isApprovedDecision || app.status === "Released" || app.status === "Completed"
+                    const isGLIssued = isApprovedDecision || app.status === "For Release" || isClaimed
+                    const isAssessmentDone = isGLIssued || app.status === "Under Review" || app.status === "For Assessment" || cachedAppt?.decision === "referred"
                     const partnerHospital =
                       app.details?.partnerHospital ||
                       app.formData?.partnerHospital ||
                       app.extra_data?.partnerHospital ||
                       app.partnerHospital ||
                       "East Avenue Medical Center (EAMC)"
-                    const appDateStr = app.appointmentDate || app.formData?.appointmentDate || "Sep 24, 2026"
-                    const appTimeStr = app.appointmentTime || app.formData?.appointmentTime || "09:00 AM"
+                    const appDateStr = cachedAppt?.scheduledDate || app.appointmentDate || app.formData?.appointmentDate || "Sep 21, 2026"
+                    const appTimeStr = cachedAppt?.scheduledTime || app.appointmentTime || app.formData?.appointmentTime || "01:08 AM"
 
                     return (
                       <div className="bg-slate-50 dark:bg-slate-800/80 border border-blue-200 dark:border-slate-700/80 rounded-xl p-3.5 space-y-3 shadow-2xs">
@@ -3959,14 +3993,21 @@ export default function MyApplications() {
                               ? "bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-300 text-emerald-900 dark:text-emerald-200 font-bold"
                               : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
                           }`}>
-                            <span className="block font-black">{isClaimed ? "4. CLAIMED" : "4. HOSPITAL BILL"}</span>
-                            <span className="text-[9px] block">{isClaimed ? "Applied to Hospital" : "Pending Billing"}</span>
+                            <span className="block font-black">{isClaimed ? "4. COMPLETED" : "4. HOSPITAL BILL"}</span>
+                            <span className="text-[9px] block">{isClaimed ? "✓ Aid Approved & Issued" : "Pending Billing"}</span>
                           </div>
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1 border-t border-blue-100 dark:border-slate-700/60 flex-wrap">
                           <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
-                            * Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview.
+                            {isGLIssued ? (
+                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Naaprubahan na ang tulong. I-click ang &quot;View GL&quot; upang makita ang Guarantee Letter.
+                              </span>
+                            ) : (
+                              "* Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview."
+                            )}
                           </p>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {isGLIssued && (
