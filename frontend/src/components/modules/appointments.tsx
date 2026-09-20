@@ -798,7 +798,7 @@ export default function Appointments() {
 
         // Also notify AICS and Citizen User Portal
         const targetAppId = targetAppt.rawAppId || targetAppt.id.replace('aics-appt-', '').replace('db-appt-', '')
-        await fetch(`${API_BASE}/applications/${targetAppId}/status`, {
+        await fetch(`${API_BASE}/api/aics/applications/${targetAppId}/status`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -806,7 +806,15 @@ export default function Appointments() {
             appointmentDate: date,
             appointmentVenue: location,
           }),
-        }).catch(() => {})
+        }).catch(() => fetch(`${API_BASE}/applications/${targetAppId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'under_review',
+            appointmentDate: date,
+            appointmentVenue: location,
+          }),
+        })).catch(() => {})
 
         pushUserNotification({
           userId: targetAppt.referenceNo || 'all',

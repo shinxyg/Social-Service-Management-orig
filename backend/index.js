@@ -152,6 +152,7 @@ app.use('/api', (req, res, next) => {
 });
 
 app.use('/api/aics', aicsRoutes);
+app.use('/applications', aicsRoutes);
 app.use('/api/activity-log', activityLogRoutes);
 app.use('/activity-log', activityLogRoutes);
 app.use('/api/activity_log', activityLogRoutes);
