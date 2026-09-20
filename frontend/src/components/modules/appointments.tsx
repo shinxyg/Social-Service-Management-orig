@@ -249,7 +249,10 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
             type="button"
             disabled={!canSave}
             onClick={() => {
-              if (canSave) onSave(appointment.id, date, time, location, autoNotes)
+              if (canSave) {
+                onClose()
+                onSave(appointment.id, date, time, location, autoNotes)
+              }
             }}
             className="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
@@ -795,10 +798,26 @@ export default function Appointments() {
     }
   }, [])
 
-  const handleSaveSchedule = async (id: string, date: string, time: string, location: string, notes: string) => {
+  const handleSaveSchedule = (id: string, date: string, time: string, location: string, notes: string) => {
+    // 1. Immediately close modal & update UI state optimistically
+    setSchedulingAppt(null)
+    setAppointments((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              status: "scheduled" as const,
+              scheduledDate: date,
+              scheduledTime: time,
+              officeLocation: location,
+              notes,
+            }
+          : a
+      )
+    )
+
     const targetAppt = appointments.find((a) => a.id === id)
     if (targetAppt) {
-
       try {
         const raw = localStorage.getItem("all_appointments_scheduled")
         const localScheduledMap = raw ? JSON.parse(raw) : {}
@@ -825,72 +844,59 @@ export default function Appointments() {
         notes,
       })
 
-      try {
-        await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetAppt.referenceNo)}/schedule`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            scheduledDate: date,
-            scheduledTime: time,
-            officeLocation: location,
-            notes,
-            applicantName: targetAppt.applicantName,
-            concern: targetAppt.concern,
-          }),
-        })
+      // Run network calls in background
+      ;(async () => {
+        try {
+          const targetAppId = targetAppt.rawAppId || targetAppt.id.replace('aics-appt-', '').replace('db-appt-', '')
+          await Promise.allSettled([
+            fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetAppt.referenceNo)}/schedule`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                scheduledDate: date,
+                scheduledTime: time,
+                officeLocation: location,
+                notes,
+                applicantName: targetAppt.applicantName,
+                concern: targetAppt.concern,
+              }),
+            }),
+            fetch(`${API_BASE}/api/aics/applications/${targetAppId}/status`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                status: 'under_review',
+                appointmentDate: date,
+                appointmentVenue: location,
+              }),
+            }).catch(() => fetch(`${API_BASE}/applications/${targetAppId}/status`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                status: 'under_review',
+                appointmentDate: date,
+                appointmentVenue: location,
+              }),
+            })),
+          ])
 
-        // Also notify AICS and Citizen User Portal
-        const targetAppId = targetAppt.rawAppId || targetAppt.id.replace('aics-appt-', '').replace('db-appt-', '')
-        await fetch(`${API_BASE}/api/aics/applications/${targetAppId}/status`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: 'under_review',
-            appointmentDate: date,
-            appointmentVenue: location,
-          }),
-        }).catch(() => fetch(`${API_BASE}/applications/${targetAppId}/status`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: 'under_review',
-            appointmentDate: date,
-            appointmentVenue: location,
-          }),
-        })).catch(() => {})
+          pushUserNotification({
+            userId: targetAppt.referenceNo || 'all',
+            title: 'AICS: Interview Scheduled — Under Review',
+            message: `Nakatakda ang inyong interview sa ${date} (${time}) sa ${location}. Ang inyong aplikasyon ay kasalukuyang under review.`,
+            type: 'appointment',
+            link: '/portal/aics',
+          })
 
-        pushUserNotification({
-          userId: targetAppt.referenceNo || 'all',
-          title: 'AICS: Interview Scheduled — Under Review',
-          message: `Nakatakda ang inyong interview sa ${date} (${time}) sa ${location}. Ang inyong aplikasyon ay kasalukuyang under review.`,
-          type: 'appointment',
-          link: '/portal/aics',
-        })
-
-        notifyApplicationChange('STATUS_CHANGED', 'aics', targetAppt.referenceNo)
-        window.dispatchEvent(new Event("aics_applications_updated"))
-        window.dispatchEvent(new Event("appointments_updated"))
-        window.dispatchEvent(new Event("user_notifications_updated"))
-      } catch (err) {
-        console.warn("Backend schedule PUT error:", err)
-      }
+          notifyApplicationChange('STATUS_CHANGED', 'aics', targetAppt.referenceNo)
+          window.dispatchEvent(new Event("aics_applications_updated"))
+          window.dispatchEvent(new Event("appointments_updated"))
+          window.dispatchEvent(new Event("user_notifications_updated"))
+        } catch (err) {
+          console.warn("Backend schedule error:", err)
+        }
+      })()
     }
-
-    setAppointments((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? {
-              ...a,
-              status: "scheduled" as const,
-              scheduledDate: date,
-              scheduledTime: time,
-              officeLocation: location,
-              notes,
-            }
-          : a
-      )
-    )
-    setSchedulingAppt(null)
   }
 
   const handleMarkCompleted = async (id: string) => {
