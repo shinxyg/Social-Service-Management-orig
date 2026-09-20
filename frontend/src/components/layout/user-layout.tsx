@@ -74,16 +74,9 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
     },
     {
       id: "aics",
-      label: t("navAICSAssistance"),
+      path: "/portal/aics",
+      label: t("navAICSAssistance") || "AICS Assistance",
       icon: ShieldAlert,
-      children: [
-        { path: "/portal/aics?type=medical", label: t("aicsMedical") },
-        { path: "/portal/aics?type=funeral", label: t("aicsFuneral") },
-        { path: "/portal/aics?type=educational", label: t("assistEducational") },
-        { path: "/portal/aics?type=material", label: t("aicsMaterial") },
-        { path: "/portal/aics?type=food", label: t("aicsFood") },
-        { path: "/portal/aics?type=transportation", label: t("aicsTransportation") },
-      ],
     },
     {
       id: "pwd",
