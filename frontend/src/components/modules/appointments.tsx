@@ -63,6 +63,39 @@ const moduleColors: Record<ModuleKey, string> = {
   Livelihood: "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60",
 }
 
+const STANDARD_REJECTION_REASONS = [
+  {
+    id: "cooldown",
+    title: "Double Availment (3-Month Rule Violation)",
+    desc: "Kamakailan lamang nakatanggap ng AICS Assistance sa loob ng nakaraang 3 buwan (AICS Cooldown Guidelines).",
+  },
+  {
+    id: "expired_docs",
+    title: "Incomplete / Expired Medical Documents",
+    desc: "Lampas na sa 3 buwan (Expired) ang Medical Abstract / Reseta / Billing o hindi orihinal ang dokumento.",
+  },
+  {
+    id: "discrepancy",
+    title: "Discrepancy in Identification / Patient Records",
+    desc: "Hindi tumutugma ang impormasyon sa QCID / Valid ID o hindi beripikado ang billing sa ospital.",
+  },
+  {
+    id: "not_indigent",
+    title: "Above Poverty / Indigency Threshold",
+    desc: "Batay sa Case Assessment ng Social Worker, may sapat na kapasidad at hindi pasok sa indigent category.",
+  },
+  {
+    id: "no_show",
+    title: "Failure to Appear on Interview",
+    desc: "Hindi sumipot ang aplikante sa takdang araw at oras ng interview nang walang pabatid.",
+  },
+  {
+    id: "other",
+    title: "Iba pang Partikular na Dahilan",
+    desc: "Manu-manong ilagay ang partikular na dahilan ng diskwalipikasyon.",
+  },
+]
+
 const statusTheme: Record<AppointmentStatus, { card: string; chip: string; icon: ReactElement; label: string }> = {
   pending: {
     card: "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40",
@@ -883,6 +916,10 @@ export default function Appointments() {
   const [selectedAgency, setSelectedAgency] = useState('PCSO')
   const [referralNotes, setReferralNotes] = useState('Total financial requirement exceeds local budget capacity. Endorsed for assistance.')
 
+  const [rejectingAppt, setRejectingAppt] = useState<AppointmentRequest | null>(null)
+  const [selectedRejectReasonId, setSelectedRejectReasonId] = useState("cooldown")
+  const [customRejectReason, setCustomRejectReason] = useState("")
+
   const handleApproveAid = async (appt: AppointmentRequest) => {
     try {
       const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
@@ -974,9 +1011,26 @@ export default function Appointments() {
     }
   }
 
-  const handleRejectAid = async (appt: AppointmentRequest) => {
-    const reason = prompt("Pakilagay ang dahilan ng disqualification / rejection:", "Non-resident of Quezon City / Unverified Residency Documents")
-    if (reason === null) return
+  const handleRejectAid = (appt: AppointmentRequest) => {
+    setRejectingAppt(appt)
+    setSelectedRejectReasonId("cooldown")
+    setCustomRejectReason("")
+  }
+
+  const handleConfirmReject = async () => {
+    if (!rejectingAppt) return
+    const appt = rejectingAppt
+
+    let finalReason = ""
+    const found = STANDARD_REJECTION_REASONS.find((r) => r.id === selectedRejectReasonId)
+    if (selectedRejectReasonId === "other") {
+      finalReason = customRejectReason.trim() || "Disqualified based on social worker case evaluation."
+    } else {
+      finalReason = found ? `${found.title} — ${found.desc}` : "Disqualified based on AICS guidelines."
+      if (customRejectReason.trim()) {
+        finalReason += ` (${customRejectReason.trim()})`
+      }
+    }
 
     try {
       const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
@@ -985,14 +1039,14 @@ export default function Appointments() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           status: 'rejected',
-          rejectionReason: reason,
+          rejectionReason: finalReason,
         }),
       }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetId)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           status: 'rejected',
-          rejectionReason: reason,
+          rejectionReason: finalReason,
         }),
       })).catch(() => {})
 
@@ -1009,7 +1063,7 @@ export default function Appointments() {
       pushUserNotification({
         userId: appt.referenceNo || 'all',
         title: 'AICS: Application REJECTED / DISQUALIFIED',
-        message: `Ikinalulungkot naming ipabatid na hindi naaprubahan ang inyong aplikasyon (${appt.concern}). Dahilan: ${reason}`,
+        message: `Ikinalulungkot naming ipabatid na hindi naaprubahan ang inyong aplikasyon (${appt.concern}). Dahilan: ${finalReason}`,
         type: 'aics',
         link: '/portal/aics',
       })
@@ -1019,8 +1073,12 @@ export default function Appointments() {
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
       window.dispatchEvent(new Event("user_notifications_updated"))
+
+      setRejectingAppt(null)
+      setCustomRejectReason("")
     } catch (err) {
       console.error(err)
+      setRejectingAppt(null)
     }
   }
 
@@ -1324,6 +1382,98 @@ export default function Appointments() {
               >
                 <Building2 className="w-3.5 h-3.5" />
                 <span>Confirm & Issue Referral Letter</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject / Disqualification Modal */}
+      {rejectingAppt && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative animate-in fade-in zoom-in-95 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                  <XCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Disqualify / Reject Application</h3>
+                  <p className="text-xs text-slate-500">{rejectingAppt.applicantName} ({rejectingAppt.referenceNo})</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRejectingAppt(null)}
+                className="text-slate-400 hover:text-slate-600 text-xl font-light cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Piliin ang Pangunahing Dahilan ng Diskwalipikasyon *
+                </label>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {STANDARD_REJECTION_REASONS.map((r) => (
+                    <label
+                      key={r.id}
+                      onClick={() => setSelectedRejectReasonId(r.id)}
+                      className={`block p-3 rounded-xl border text-left transition cursor-pointer ${
+                        selectedRejectReasonId === r.id
+                          ? 'border-rose-600 bg-rose-50/80 text-rose-950 ring-2 ring-rose-200'
+                          : 'border-slate-200 hover:border-rose-300 bg-white text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <input
+                          type="radio"
+                          name="reject_reason"
+                          checked={selectedRejectReasonId === r.id}
+                          onChange={() => setSelectedRejectReasonId(r.id)}
+                          className="mt-0.5 text-rose-600 focus:ring-rose-500"
+                        />
+                        <div>
+                          <div className="font-bold text-xs">{r.title}</div>
+                          <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">{r.desc}</div>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Karagdagang Paliwanag / Social Worker Assessment Notes (Opsyonal)
+                </label>
+                <textarea
+                  rows={2}
+                  value={customRejectReason}
+                  onChange={(e) => setCustomRejectReason(e.target.value)}
+                  className="w-full text-xs p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                  placeholder="Hal. Isinumite ang expired na prescription noong June 2026..."
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
+              <button
+                type="button"
+                onClick={() => setRejectingAppt(null)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 rounded-xl transition cursor-pointer"
+              >
+                Kanselahin
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReject}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                <span>Kumpirmahin ang Disqualify / Reject</span>
               </button>
             </div>
           </div>
