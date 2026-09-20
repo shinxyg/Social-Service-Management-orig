@@ -568,7 +568,6 @@ export default function AICS() {
                     <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-left py-3 px-4 uppercase tracking-wider">Assistance Type</th>
                     <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-left py-3 px-4 uppercase tracking-wider">Date Filed</th>
                     <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-left py-3 px-4 uppercase tracking-wider">Current Status</th>
-                    <th style={{ fontSize: '12px', fontWeight: 700 }} className="text-right py-3 px-4 uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -590,7 +589,7 @@ export default function AICS() {
                           />
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-bold text-slate-900 text-sm">{fullName(app)}</div>
+                          <div className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">{fullName(app)}</div>
                           <div className="text-[11px] text-slate-400 font-medium">QC ID: {app.qc_id || '—'}</div>
                         </td>
                         <td className="py-3 px-4 text-xs font-semibold text-slate-700">
@@ -605,26 +604,13 @@ export default function AICS() {
                             {badge.label}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              openReview(app)
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 rounded-lg transition-all"
-                          >
-                            <span>Review Case</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
                       </tr>
                     )
                   })}
 
                   {filteredApplications.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-slate-400 text-sm">
+                      <td colSpan={5} className="py-12 text-center text-slate-400 text-sm">
                         <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
                         No applications found under the selected status filter.
                       </td>
