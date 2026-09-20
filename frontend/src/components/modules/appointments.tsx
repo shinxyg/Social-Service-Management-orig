@@ -471,13 +471,23 @@ export default function Appointments() {
                 .map((a: any) => {
                   const apptId = `db-appt-${a.id}`
                   const ref = a.qc_id || a.qcid || a.reference_no || a.reference_number || ""
-                  const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${a.concern}`]
+                  const cached = localScheduledMap[apptId] || (ref && ref.includes('-') ? localScheduledMap[ref] : undefined) || localScheduledMap[`${ref}_${a.concern}`]
                   const hasDate = Boolean(cached?.scheduledDate || a.scheduled_date)
-                  const statusVal: AppointmentStatus = a.status === 'completed' || cached?.status === 'completed'
-                    ? 'completed'
-                    : hasDate
-                    ? 'scheduled'
-                    : 'pending'
+                  
+                  let statusVal: AppointmentStatus = 'pending'
+                  if (a.status === 'completed' || cached?.status === 'completed') {
+                    statusVal = 'completed'
+                  } else if (a.status === 'approved' || cached?.status === 'approved') {
+                    statusVal = 'approved'
+                  } else if (a.status === 'referred' || a.status === 'for_referral' || cached?.status === 'referred') {
+                    statusVal = 'referred'
+                  } else if (a.status === 'rejected' || cached?.status === 'rejected') {
+                    statusVal = 'rejected'
+                  } else if (hasDate) {
+                    statusVal = 'scheduled'
+                  } else {
+                    statusVal = 'pending'
+                  }
 
                   return {
                     id: apptId,
@@ -508,20 +518,21 @@ export default function Appointments() {
                   const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
                   const ref = app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`
                   const apptId = `aics-appt-${app.id || ref}`
-                  const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${cleanType}`]
-                  const isDone = app.status === "completed" || app.status === "released" || cached?.status === "completed"
-                  const isAppr = app.status === "approved" || cached?.status === "approved"
-                  const isRef = app.status === "for_referral" || app.status === "referred" || cached?.status === "referred"
+                  const cached = localScheduledMap[apptId] || (ref && ref.includes('-') ? localScheduledMap[ref] : undefined) || localScheduledMap[`${ref}_${cleanType}`]
                   const hasDate = Boolean(cached?.scheduledDate || (app.details as any)?.appointmentDate)
-                  const apptStatus: AppointmentStatus = isDone 
-                    ? "completed" 
-                    : isAppr
-                    ? "approved"
-                    : isRef
-                    ? "referred"
-                    : hasDate
-                    ? "scheduled"
-                    : "pending"
+                  
+                  let apptStatus: AppointmentStatus = 'pending'
+                  if (app.status === "completed" || app.status === "released" || cached?.status === "completed") {
+                    apptStatus = "completed"
+                  } else if (app.status === "approved" || cached?.status === "approved") {
+                    apptStatus = "approved"
+                  } else if (app.status === "for_referral" || app.status === "referred" || cached?.status === "referred") {
+                    apptStatus = "referred"
+                  } else if (hasDate) {
+                    apptStatus = "scheduled"
+                  } else {
+                    apptStatus = "pending"
+                  }
 
                   appts.push({
                     id: apptId,
@@ -659,7 +670,7 @@ export default function Appointments() {
         })
 
         const dedupedMap = new Map<string, AppointmentRequest>()
-        const statusPriority: Record<AppointmentStatus, number> = { completed: 3, scheduled: 2, pending: 1 }
+        const statusPriority: Record<AppointmentStatus, number> = { completed: 5, approved: 4, referred: 3, scheduled: 2, pending: 1, rejected: 1 }
 
         appts.forEach((a) => {
           const c = (a.concern || '').toLowerCase()

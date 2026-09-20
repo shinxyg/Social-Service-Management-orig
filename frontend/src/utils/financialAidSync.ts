@@ -540,47 +540,8 @@ export function parseAppointmentDateTime(dateStr?: string, timeStr?: string): Da
 }
 
 export function checkAndAutoReleaseScheduledDisbursements(): number {
-  const currentDisbursements = getSavedDisbursements()
-  const now = new Date()
-  let releasedCount = 0
-
-  const updated = currentDisbursements.map((d) => {
-    if (d.status === "PENDING" && d.appointmentDate) {
-      const scheduledDt = parseAppointmentDateTime(d.appointmentDate, d.appointmentTime)
-      if (scheduledDt && now.getTime() >= scheduledDt.getTime()) {
-        releasedCount++
-        const formattedReleaseDate = now.toLocaleDateString("en-PH", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-        const finalReleaseTime = d.appointmentTime || now.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })
-
-        pushUserNotification({
-          title: "Financial Aid Released",
-          desc: `Your Financial Aid (${d.assistanceType} — ₱${d.fixedAmount.toLocaleString()}) has been automatically released at the scheduled appointment time (${d.appointmentDate} – ${finalReleaseTime}).`,
-          applicationRef: d.applicationRef,
-          assistanceType: d.assistanceType,
-          amount: d.fixedAmount,
-        })
-
-        return {
-          ...d,
-          status: "RELEASED" as DisbursementStage,
-          releasedDate: `${formattedReleaseDate} ${finalReleaseTime}`,
-          releasedBy: "Automated Scheduled Payout System / Disbursing Officer",
-          remarks: `Automatically released at scheduled appointment time (${d.appointmentDate} - ${finalReleaseTime}).`,
-        }
-      }
-    }
-    return d
-  })
-
-  if (releasedCount > 0) {
-    saveDisbursements(updated)
-  }
-
-  return releasedCount
+  // Do not auto-complete appointments/disbursements without explicit admin action
+  return 0
 }
 
 export const TARGET_TEST_MATCHES = [
