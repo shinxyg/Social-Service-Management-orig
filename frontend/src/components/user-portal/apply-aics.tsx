@@ -153,26 +153,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [priorAidOffice, setPriorAidOffice] = useState("")
   const [priorAidType, setPriorAidType] = useState("")
 
-  const handleReapply = () => {
-    setIsReapplying(true)
-    isReapplyingRef.current = true
-    setStep(hasRequirements ? "checklist" : "form")
-    setReference("")
-    setAppStatus("pending")
-    setUploadedDocs({})
-    setChecklistResident(false)
-    setChecklistPatient(false)
-    setChecklistPriorAid("no")
-    setEduEligResident(false)
-    setEduEligAge(false)
-    setEduEligSchool(false)
-    setEduEligIndigent(false)
-    setChecklistDeceasedResident("")
-    try {
-      ;(window as any).__isFormDirty = false
-    } catch {}
-  }
-
   const [eduEligResident, setEduEligResident] = useState(false)
   const [eduEligAge, setEduEligAge] = useState(false)
   const [eduEligSchool, setEduEligSchool] = useState(false)
@@ -181,12 +161,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [checklistDeceasedResident, setChecklistDeceasedResident] = useState<"yes" | "no" | "">("")
   const [checklistRelation, setChecklistRelation] = useState("")
   const [checklistFuneralHome, setChecklistFuneralHome] = useState("")
-
-  const canProceedChecklist = isFuneralAssistance
-    ? Boolean(checklistDeceasedResident === "yes" && checklistRelation && checklistFuneralHome)
-    : isEducationalAssistance
-    ? eduEligResident && eduEligAge && eduEligSchool && eduEligIndigent
-    : checklistResident && checklistPatient
 
   const [qcId] = useState(() => getLoggedInUserQcid())
   const [pFirstName, setPFirstName] = useState("")
@@ -201,6 +175,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [pHouseNumber, setPHouseNumber] = useState("")
   const [pStreetName, setPStreetName] = useState("")
   const [pBarangay, setPBarangay] = useState("")
+  const [pPhoneNumber, setPPhoneNumber] = useState("")
   const [pEmail, setPEmail] = useState("")
   const [isSelfPatient, setIsSelfPatient] = useState(false)
   const [partnerHospital, setPartnerHospital] = useState("East Avenue Medical Center (EAMC)")
@@ -258,6 +233,36 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [dHouseNumber, setDHouseNumber] = useState("")
   const [dStreetName, setDStreetName] = useState("")
   const [dBarangay, setDBarangay] = useState("")
+
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
+  const [cameraDoc, setCameraDoc] = useState<string | null>(null)
+  const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
+
+  const handleReapply = () => {
+    setIsReapplying(true)
+    isReapplyingRef.current = true
+    setStep(hasRequirements ? "checklist" : "form")
+    setReference("")
+    setAppStatus("pending")
+    setUploadedDocs({})
+    setChecklistResident(false)
+    setChecklistPatient(false)
+    setChecklistPriorAid("no")
+    setEduEligResident(false)
+    setEduEligAge(false)
+    setEduEligSchool(false)
+    setEduEligIndigent(false)
+    setChecklistDeceasedResident("")
+    try {
+      ;(window as any).__isFormDirty = false
+    } catch {}
+  }
+
+  const canProceedChecklist = isFuneralAssistance
+    ? Boolean(checklistDeceasedResident === "yes" && checklistRelation && checklistFuneralHome)
+    : isEducationalAssistance
+    ? eduEligResident && eduEligAge && eduEligSchool && eduEligIndigent
+    : checklistResident && checklistPatient
 
   useEffect(() => {
     const syncProfile = () => {
@@ -461,10 +466,6 @@ const canProceedPersonal = Boolean(
     : isEducationalAssistance
     ? EDUCATIONAL_SAMPLE_DOCUMENTS
     : SAMPLE_DOCUMENTS
-
-  const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
-  const [cameraDoc, setCameraDoc] = useState<string | null>(null)
-  const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
   const isFormDirty =
     step === "personal" ||
