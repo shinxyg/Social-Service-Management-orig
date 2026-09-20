@@ -2830,16 +2830,6 @@ const handleFinalSubmit = async () => {
               >
                 VIEW IN APPLICATION HISTORY
               </button>
-              <button
-                type="button"
-                onClick={handleReapply}
-                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-              >
-                <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                <span>
-                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-                </span>
-              </button>
             </div>
           </div>
         </div>
@@ -2913,16 +2903,6 @@ const handleFinalSubmit = async () => {
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
               {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
-            </button>
-            <button
-              type="button"
-              onClick={handleReapply}
-              className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-            >
-              <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-              <span>
-                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-              </span>
             </button>
           </div>
         </div>
