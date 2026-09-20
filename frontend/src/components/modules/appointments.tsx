@@ -195,7 +195,7 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
 function AppointmentCard({
   appt,
   onSchedule,
-  onMarkCompleted: _onMarkCompleted,
+  onMarkCompleted,
   onDelete: _onDelete,
 }: {
   appt: AppointmentRequest
@@ -253,6 +253,35 @@ function AppointmentCard({
             >
               <Calendar className="h-3.5 w-3.5" />
               Set Schedule
+            </button>
+          )}
+
+          {appt.status === "scheduled" && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <button
+                onClick={() => onMarkCompleted?.(appt.id)}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors cursor-pointer"
+                title="Mark this appointment as Completed"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Complete
+              </button>
+              <button
+                onClick={() => onSchedule(appt)}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-300 transition-colors cursor-pointer"
+                title="Edit Date or Time"
+              >
+                Edit
+              </button>
+            </div>
+          )}
+
+          {appt.status === "completed" && (
+            <button
+              onClick={() => onSchedule(appt)}
+              className="mt-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-medium hover:bg-slate-200 transition-colors cursor-pointer"
+            >
+              Reschedule
             </button>
           )}
         </div>
