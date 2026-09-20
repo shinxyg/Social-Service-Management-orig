@@ -338,11 +338,6 @@ export function OfficialGuaranteeLetterModal({
             >
               Close
             </button>
-            {!canPrint && (
-              <span className="text-[11px] text-gray-500 font-medium hidden sm:inline-block">
-                🔒 Para sa pagsusuri lamang. Ang opisyal na kopya na may dry seal at pirma ay kukunin sa SSDD.
-              </span>
-            )}
           </div>
 
           {canPrint && (
