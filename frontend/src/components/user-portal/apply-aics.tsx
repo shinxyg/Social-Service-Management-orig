@@ -249,6 +249,10 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
   const handleReapply = () => {
+    try {
+      localStorage.setItem(`aics_reapplying_${resolvedTypeKey}`, "true")
+      localStorage.setItem("aics_reapplying", "true")
+    } catch {}
     setIsReapplying(true)
     isReapplyingRef.current = true
     setStep(hasRequirements ? "checklist" : "form")
@@ -2633,6 +2637,16 @@ const handleFinalSubmit = async () => {
               >
                 VIEW IN APPLICATION HISTORY
               </button>
+              <button
+                type="button"
+                onClick={handleReapply}
+                className="w-full py-2.5 px-4 rounded-xl border border-purple-200 dark:border-purple-800/60 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -2694,6 +2708,16 @@ const handleFinalSubmit = async () => {
                 className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
               >
                 VIEW IN APPLICATION HISTORY
+              </button>
+              <button
+                type="button"
+                onClick={handleReapply}
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
               </button>
             </div>
           </div>
@@ -2766,12 +2790,26 @@ const handleFinalSubmit = async () => {
               <button
                 type="button"
                 onClick={() => {
+                  try {
+                    localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
+                    localStorage.removeItem("aics_reapplying")
+                  } catch {}
                   ;(window as any).__isFormDirty = false
                   window.location.href = "/portal/my-applications"
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
               >
                 VIEW IN APPLICATION HISTORY
+              </button>
+              <button
+                type="button"
+                onClick={handleReapply}
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                <span>
+                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+                </span>
               </button>
             </div>
           </div>
@@ -2836,12 +2874,26 @@ const handleFinalSubmit = async () => {
             <button
               type="button"
               onClick={() => {
+                try {
+                  localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
+                  localStorage.removeItem("aics_reapplying")
+                } catch {}
                 ;(window as any).__isFormDirty = false
                 window.location.href = "/portal/my-applications"
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
               {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+            </button>
+            <button
+              type="button"
+              onClick={handleReapply}
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+              <span>
+                {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
+              </span>
             </button>
           </div>
         </div>
