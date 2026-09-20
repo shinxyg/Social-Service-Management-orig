@@ -578,16 +578,8 @@ const canProceedPersonal = Boolean(
           if (!Array.isArray(localApps)) localApps = []
         } catch {}
 
-        const allApps: any[] = [...remoteApps]
-        for (const la of localApps) {
-          const exists = allApps.some((a) => {
-            if (a.id && la.id && a.id === la.id) return true
-            const aRef = String(a.reference_no || a.reference_number || a.qc_id || "").trim()
-            const laRef = String(la.reference_no || la.reference_number || la.qc_id || "").trim()
-            return aRef && laRef && aRef === laRef
-          })
-          if (!exists) allApps.push(la)
-        }
+        // Remote database is the primary source of truth. Fallback to local only if remote is empty.
+        const allApps: any[] = remoteApps.length > 0 ? remoteApps : localApps
 
         const matchService = (a: any) => {
           if (!a) return false
@@ -658,28 +650,12 @@ const canProceedPersonal = Boolean(
           else if (rawSt === "under_review" || rawSt === "scheduled" || rawSt === "for_assessment") cleanSt = "under_review"
           else cleanSt = "pending"
 
-          try {
-            const rawSched = localStorage.getItem("all_appointments_scheduled")
-            if (rawSched) {
-              const parsed = JSON.parse(rawSched)
-              const exactKey = activeApp.reference_no || (activeApp.id ? `aics-appt-${activeApp.id}` : "")
-              const localSched = exactKey ? (parsed[exactKey] || (activeApp.id ? parsed[`aics-appt-${activeApp.id}`] : null)) : null
-              if (localSched?.status && rawSt === "pending") {
-                const schedSt = String(localSched.status).toLowerCase()
-                if (schedSt === "approved" || schedSt === "completed") cleanSt = "approved"
-                else if (schedSt === "referred") cleanSt = "referred"
-                else if (schedSt === "rejected") cleanSt = "rejected"
-                else if (schedSt === "scheduled" || schedSt === "under_review") cleanSt = "under_review"
-              }
-            }
-          } catch {}
-
           setAppStatus(cleanSt)
           const details = activeApp.details || {}
           setRejectionReason(activeApp.rejection_reason || activeApp.rejectionReason || details.rejectionReason || activeApp.remarks || activeApp.admin_notes || activeApp.reason || "")
           setReferralAgency(activeApp.referral_agency || activeApp.referralAgency || details.referralAgency || "PCSO")
           setReferralNotes(activeApp.referral_notes || activeApp.referralNotes || details.referralNotes || "")
-          if (cleanSt === "under_review" || cleanSt === "approved" || cleanSt === "completed") {
+          if (cleanSt === "under_review") {
             if (details.appointmentDate || activeApp.appointment_date) {
               setAppointmentInfo({
                 date: details.appointmentDate || activeApp.appointment_date,
@@ -749,7 +725,7 @@ const canProceedPersonal = Boolean(
         if (refAgency) setReferralAgency(refAgency)
         const refNotes = app?.referral_notes || app?.referralNotes || details.referralNotes
         if (refNotes) setReferralNotes(refNotes)
-        if (cleanSt === "under_review" || cleanSt === "approved" || cleanSt === "completed") {
+        if (cleanSt === "under_review") {
           if (details.appointmentDate || app?.appointment_date) {
             setAppointmentInfo({
               date: details.appointmentDate || app?.appointment_date,
@@ -768,7 +744,7 @@ const canProceedPersonal = Boolean(
     checkStatus()
     const interval = setInterval(checkStatus, 3000)
     return () => clearInterval(interval)
-  }, [step, reference, appStatus])
+  }, [step, reference])
 
 const checkDuplicateBeneficiary = async () => {
   const patientInfo = isFuneralAssistance
