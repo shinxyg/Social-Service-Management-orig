@@ -5,10 +5,17 @@ import {
   CheckCircle2,
   Search,
   MapPin,
+  Building2,
+  Printer,
+  XCircle,
+  Sparkles,
 } from "lucide-react"
 
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
+import { pushUserNotification, syncAppointmentToFinancialAid } from "../../utils/financialAidSync"
 import { API_BASE } from "../../config/api"
+import { OfficialGuaranteeLetterModal, type GuaranteeLetterData } from "../ui/official-guarantee-letter-modal"
+import { OfficialReferralLetterModal, type ReferralLetterData } from "../ui/official-referral-letter-modal"
 
 type ModuleKey =
   | "AICS"
@@ -18,10 +25,11 @@ type ModuleKey =
   | "Child Welfare"
   | "Livelihood"
 
-type AppointmentStatus = "pending" | "scheduled" | "completed"
+type AppointmentStatus = "pending" | "scheduled" | "completed" | "approved" | "referred" | "rejected"
 
 interface AppointmentRequest {
   id: string
+  rawAppId?: string | number
   referenceNo: string
   module: ModuleKey
   applicantName: string
@@ -32,6 +40,7 @@ interface AppointmentRequest {
   scheduledTime?: string
   officeLocation?: string
   notes?: string
+  rawApp?: any
 }
 
 const MOCK_APPOINTMENTS: AppointmentRequest[] = []
@@ -67,11 +76,29 @@ const statusTheme: Record<AppointmentStatus, { card: string; chip: string; icon:
     icon: <Calendar className="h-3.5 w-3.5" />,
     label: "Scheduled",
   },
+  approved: {
+    card: "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40",
+    chip: "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60",
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+    label: "Approved",
+  },
   completed: {
     card: "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40",
     chip: "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60",
     icon: <CheckCircle2 className="h-3.5 w-3.5" />,
     label: "Completed",
+  },
+  referred: {
+    card: "bg-purple-50/70 dark:bg-purple-950/20 border-purple-200 dark:border-purple-900/40",
+    chip: "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60",
+    icon: <Building2 className="h-3.5 w-3.5" />,
+    label: "Referred",
+  },
+  rejected: {
+    card: "bg-rose-50/70 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40",
+    chip: "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60",
+    icon: <XCircle className="h-3.5 w-3.5" />,
+    label: "Rejected",
   },
 }
 
@@ -87,6 +114,9 @@ function getAppointmentStatusTheme(status?: string) {
   const s = String(status).toLowerCase() as AppointmentStatus
   if (statusTheme[s]) return statusTheme[s]
   if (s.includes("sched")) return statusTheme.scheduled
+  if (s.includes("appr")) return statusTheme.approved
+  if (s.includes("ref")) return statusTheme.referred
+  if (s.includes("rej") || s.includes("den")) return statusTheme.rejected
   if (s.includes("comp") || s.includes("done")) return statusTheme.completed
   return {
     card: "bg-slate-50/60 border-slate-200",
@@ -195,42 +225,50 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
 function AppointmentCard({
   appt,
   onSchedule,
-  onMarkCompleted,
+  onApprove,
+  onRefer,
+  onReject,
+  onPrintGL,
+  onPrintReferral,
   onDelete: _onDelete,
 }: {
   appt: AppointmentRequest
   onSchedule: (a: AppointmentRequest) => void
-  onMarkCompleted?: (id: string) => void
+  onApprove?: (a: AppointmentRequest) => void
+  onRefer?: (a: AppointmentRequest) => void
+  onReject?: (a: AppointmentRequest) => void
+  onPrintGL?: (a: AppointmentRequest) => void
+  onPrintReferral?: (a: AppointmentRequest) => void
   onDelete?: (id: string, ref: string) => void
 }) {
   const st = getAppointmentStatusTheme(appt.status)
   return (
     <div className={`border rounded-xl p-4 ${st?.card || 'bg-slate-50/60 border-slate-200'}`}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <p className="text-sm font-semibold text-foreground">{appt.applicantName}</p>
-            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${getAppointmentModuleColor(appt.module)}`}>
+            <p className="text-sm font-bold text-foreground">{appt.applicantName}</p>
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${getAppointmentModuleColor(appt.module)}`}>
               {appt.module}
             </span>
           </div>
           <p className="text-xs text-muted-foreground mb-1 font-mono">Ref: {appt.referenceNo}</p>
-          <p className="text-sm text-foreground mb-2">{appt.concern}</p>
+          <p className="text-sm text-foreground mb-1 font-medium">{appt.concern}</p>
           <p className="text-xs text-muted-foreground">Requested: {formatDateTime(appt.submittedAt)}</p>
 
-          {appt.status !== "pending" && appt.scheduledDate && (
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-foreground bg-white/70 dark:bg-slate-900/60 rounded-lg px-3 py-2 border border-border/70 dark:border-slate-800">
-              <span className="inline-flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+          {appt.scheduledDate && (
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-foreground bg-white/80 dark:bg-slate-900/60 rounded-lg px-3 py-2 border border-border/70 dark:border-slate-800">
+              <span className="inline-flex items-center gap-1.5 font-semibold">
+                <Calendar className="h-3.5 w-3.5 text-blue-600" />
                 {new Date(appt.scheduledDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="inline-flex items-center gap-1.5 font-semibold">
+                <Clock className="h-3.5 w-3.5 text-blue-600" />
                 {appt.scheduledTime}
               </span>
               {appt.officeLocation && (
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="inline-flex items-center gap-1.5 text-slate-600">
+                  <MapPin className="h-3.5 w-3.5 text-slate-500" />
                   {appt.officeLocation}
                 </span>
               )}
@@ -246,44 +284,81 @@ function AppointmentCard({
             </span>
           </div>
 
-          {appt.status === "pending" && (
-            <button
-              onClick={() => onSchedule(appt)}
-              className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors cursor-pointer"
-            >
-              <Calendar className="h-3.5 w-3.5" />
-              Set Schedule
-            </button>
-          )}
-
-          {appt.status === "scheduled" && (
-            <div className="flex items-center gap-1.5 mt-1">
+          <div className="flex flex-wrap items-center gap-1.5 mt-2 justify-end">
+            {/* Schedule Button */}
+            {(appt.status === "pending" || appt.status === "scheduled") && (
               <button
-                onClick={() => onMarkCompleted?.(appt.id)}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors cursor-pointer"
-                title="Mark this appointment as Completed"
+                type="button"
+                onClick={() => onSchedule(appt)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                <span>{appt.scheduledDate ? "Edit Schedule" : "📅 Set Schedule"}</span>
+              </button>
+            )}
+
+            {/* Direct Approve Button in Appointments */}
+            {appt.status !== "approved" && appt.status !== "completed" && appt.status !== "referred" && appt.status !== "rejected" && (
+              <button
+                type="button"
+                onClick={() => onApprove?.(appt)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
+                title="Approve QC Assistance & generate Guarantee Letter"
               >
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Complete
+                <span>✓ Approve</span>
               </button>
-              <button
-                onClick={() => onSchedule(appt)}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-300 transition-colors cursor-pointer"
-                title="Edit Date or Time"
-              >
-                Edit
-              </button>
-            </div>
-          )}
+            )}
 
-          {appt.status === "completed" && (
-            <button
-              onClick={() => onSchedule(appt)}
-              className="mt-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-medium hover:bg-slate-200 transition-colors cursor-pointer"
-            >
-              Reschedule
-            </button>
-          )}
+            {/* Direct Refer Button in Appointments */}
+            {appt.status !== "referred" && appt.status !== "approved" && appt.status !== "completed" && appt.status !== "rejected" && (
+              <button
+                type="button"
+                onClick={() => onRefer?.(appt)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
+                title="Endorse to partner agency (PCSO / DSWD / DOH)"
+              >
+                <Building2 className="h-3.5 w-3.5" />
+                <span>🏛️ Refer</span>
+              </button>
+            )}
+
+            {/* Direct Reject Button */}
+            {appt.status !== "rejected" && appt.status !== "approved" && appt.status !== "completed" && (
+              <button
+                type="button"
+                onClick={() => onReject?.(appt)}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                <span>Reject</span>
+              </button>
+            )}
+
+            {/* Print Guarantee Letter if Approved */}
+            {(appt.status === "approved" || appt.status === "completed") && (
+              <button
+                type="button"
+                onClick={() => onPrintGL?.(appt)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>📄 Print GL</span>
+              </button>
+            )}
+
+            {/* Print Referral Letter if Referred */}
+            {appt.status === "referred" && (
+              <button
+                type="button"
+                onClick={() => onPrintReferral?.(appt)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>🏛️ Print Referral</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -428,20 +503,29 @@ export default function Appointments() {
             const data = await resAicsSettled.value.json()
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
-                if (app.status === "approved" || app.status === "completed" || app.status === "for_release" || app.status === "released") {
+                if (app.status !== "rejected") {
                   const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                   const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
                   const ref = app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`
                   const apptId = `aics-appt-${app.id || ref}`
                   const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${cleanType}`]
                   const isDone = app.status === "completed" || app.status === "released" || cached?.status === "completed"
+                  const isAppr = app.status === "approved" || cached?.status === "approved"
+                  const isRef = app.status === "for_referral" || app.status === "referred" || cached?.status === "referred"
                   const hasDate = Boolean(cached?.scheduledDate || (app.details as any)?.appointmentDate)
                   const apptStatus: AppointmentStatus = isDone 
                     ? "completed" 
-                    : (hasDate ? "scheduled" : "pending")
+                    : isAppr
+                    ? "approved"
+                    : isRef
+                    ? "referred"
+                    : hasDate
+                    ? "scheduled"
+                    : "pending"
 
                   appts.push({
                     id: apptId,
+                    rawAppId: app.id,
                     referenceNo: ref,
                     module: "AICS",
                     applicantName: `${app.first_name || ""} ${app.middle_name || ""} ${app.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY APPLICANT",
@@ -452,6 +536,7 @@ export default function Appointments() {
                     scheduledTime: cached?.scheduledTime || (app.details as any)?.appointmentTime,
                     officeLocation: cached?.officeLocation || (app.details as any)?.appointmentVenue || "Quezon City Hall",
                     notes: cached?.notes,
+                    rawApp: app,
                   })
                 }
               })
@@ -735,6 +820,159 @@ export default function Appointments() {
     } catch {}
   }
 
+  const [glModalData, setGlModalData] = useState<GuaranteeLetterData | null>(null)
+  const [refLetterModalData, setRefLetterModalData] = useState<ReferralLetterData | null>(null)
+  const [referralApp, setReferralApp] = useState<AppointmentRequest | null>(null)
+  const [selectedAgency, setSelectedAgency] = useState('PCSO')
+  const [referralNotes, setReferralNotes] = useState('Total financial requirement exceeds local budget capacity. Endorsed for assistance.')
+
+  const handleApproveAid = async (appt: AppointmentRequest) => {
+    try {
+      const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
+      await fetch(`${API_BASE}/applications/${targetId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'approved' }),
+      }).catch(() => {})
+
+      const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
+      const localMap = JSON.parse(raw)
+      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "approved" }
+      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "approved" }
+      localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
+
+      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "approved" as const } : a))
+
+      pushUserNotification({
+        userId: appt.referenceNo || 'all',
+        title: 'AICS: Application APPROVED',
+        message: `Malugod naming ipinababatid na APPROVED ang inyong ${appt.concern}. Ang inyong Guarantee Letter ay handa na.`,
+        type: 'payout',
+        link: '/portal/aics',
+      })
+
+      notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
+      window.dispatchEvent(new Event("appointments_updated"))
+      window.dispatchEvent(new Event("aics_applications_updated"))
+
+      handlePrintGL(appt)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleConfirmReferral = async () => {
+    if (!referralApp) return
+    const appt = referralApp
+    try {
+      const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
+      await fetch(`${API_BASE}/applications/${targetId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: 'referred',
+          referralAgency: selectedAgency,
+          referralNotes: referralNotes,
+        }),
+      }).catch(() => {})
+
+      const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
+      const localMap = JSON.parse(raw)
+      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "referred" }
+      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "referred" }
+      localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
+
+      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "referred" as const } : a))
+
+      pushUserNotification({
+        userId: appt.referenceNo || 'all',
+        title: `AICS: Endorsed to ${selectedAgency}`,
+        message: `Ang inyong ${appt.concern} ay inendorso sa ${selectedAgency}. Maaari ninyong i-download ang inyong Referral Letter.`,
+        type: 'aics',
+        link: '/portal/aics',
+      })
+
+      notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
+      window.dispatchEvent(new Event("appointments_updated"))
+      window.dispatchEvent(new Event("aics_applications_updated"))
+
+      setReferralApp(null)
+      handlePrintReferral(appt, selectedAgency, referralNotes)
+    } catch (err) {
+      console.error(err)
+      setReferralApp(null)
+    }
+  }
+
+  const handleRejectAid = async (appt: AppointmentRequest) => {
+    const reason = prompt("Pakilagay ang dahilan ng disqualification / rejection:", "Non-resident of Quezon City / Unverified Residency Documents")
+    if (reason === null) return
+
+    try {
+      const targetId = appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
+      await fetch(`${API_BASE}/applications/${targetId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: 'rejected',
+          rejectionReason: reason,
+        }),
+      }).catch(() => {})
+
+      setAppointments(prev => prev.filter(a => a.id !== appt.id && a.referenceNo !== appt.referenceNo))
+      notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
+      window.dispatchEvent(new Event("appointments_updated"))
+      window.dispatchEvent(new Event("aics_applications_updated"))
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handlePrintGL = (appt: AppointmentRequest) => {
+    const raw = appt.rawApp || {}
+    const rawDetails = raw.details || {}
+    setGlModalData({
+      controlNo: `QC-SSDD-GL-2026-${String(appt.rawAppId || appt.id).padStart(6, '0')}`,
+      applicationRef: appt.referenceNo,
+      patientName: appt.applicantName,
+      qcidNumber: raw.qc_id || appt.referenceNo,
+      barangay: raw.address?.split(',')[1]?.trim() || rawDetails.beneficiaryBarangay || 'Commonwealth',
+      district: '2',
+      age: raw.age || '42',
+      gender: raw.gender || 'Female',
+      address: raw.address || 'Quezon City',
+      diagnosis: rawDetails.medicalDiagnosis || `${appt.concern} — SSDD Evaluated Assistance`,
+      hospitalName: rawDetails.partnerHospital || rawDetails.partnerHospitalOther || 'East Avenue Medical Center',
+      amount: 5000,
+      dateIssued: new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+    })
+  }
+
+  const handlePrintReferral = (appt: AppointmentRequest, agencyOverride?: string, notesOverride?: string) => {
+    const raw = appt.rawApp || {}
+    const rawDetails = raw.details || {}
+    const targetAgency = agencyOverride || rawDetails.referralAgency || selectedAgency || 'PCSO'
+    const refNotes = notesOverride || rawDetails.referralNotes || 'Total financial requirement exceeds local budget capacity. Respectfully endorsed for partner agency financial assistance.'
+
+    setRefLetterModalData({
+      controlNo: `QC-SSDD-REF-2026-${String(appt.rawAppId || appt.id).padStart(6, '0')}`,
+      applicationRef: appt.referenceNo,
+      patientName: appt.applicantName,
+      qcidNumber: raw.qc_id || appt.referenceNo,
+      barangay: raw.address?.split(',')[1]?.trim() || rawDetails.beneficiaryBarangay || 'Commonwealth',
+      district: '2',
+      age: raw.age || '42',
+      gender: raw.gender || 'Female',
+      address: raw.address || 'Quezon City',
+      diagnosis: rawDetails.medicalDiagnosis || `${appt.concern} Support`,
+      hospitalName: rawDetails.partnerHospital || rawDetails.partnerHospitalOther || 'East Avenue Medical Center',
+      targetAgency,
+      referralReason: refNotes,
+      dateIssued: new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+      socialWorkerName: 'MARIA SANTOS, RSW',
+    })
+  }
+
   const filtered = appointments.filter((a) => {
     const matchModule = filterModule === "all" || a.module === filterModule
     const matchStatus = filterStatus === "all" || a.status === filterStatus
@@ -749,22 +987,23 @@ export default function Appointments() {
     total: appointments.length,
     pending: appointments.filter((a) => a.status === "pending").length,
     scheduled: appointments.filter((a) => a.status === "scheduled").length,
-    completed: appointments.filter((a) => a.status === "completed").length,
+    completed: appointments.filter((a) => a.status === "completed" || a.status === "approved").length,
   }
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Appointments</h1>
+        <h1 className="text-3xl font-bold text-foreground">Appointments & Case Scheduling</h1>
+        <p className="text-xs text-muted-foreground mt-1">Set schedules, conduct assessments, approve aid vouchers, and issue partner agency referrals.</p>
       </div>
 
-      {}
+      {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Requests", value: stats.total },
-          { label: "Pending", value: stats.pending },
-          { label: "Scheduled", value: stats.scheduled },
-          { label: "Completed", value: stats.completed },
+          { label: "Pending Schedule", value: stats.pending },
+          { label: "Scheduled Interview", value: stats.scheduled },
+          { label: "Approved / Done", value: stats.completed },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl p-4 bg-card border border-border shadow-xs">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{stat.label}</p>
@@ -773,7 +1012,7 @@ export default function Appointments() {
         ))}
       </div>
 
-      {}
+      {/* Filters */}
       <div className="bg-card border border-border rounded-lg p-4 space-y-4">
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
@@ -813,16 +1052,18 @@ export default function Appointments() {
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
               <option value="scheduled">Scheduled</option>
+              <option value="approved">Approved</option>
+              <option value="referred">Referred</option>
               <option value="completed">Completed</option>
             </select>
           </div>
         </div>
       </div>
 
-      {}
+      {/* List */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-foreground">Requests ({filtered.length})</h2>
+          <h2 className="text-lg font-semibold text-foreground">Appointments ({filtered.length})</h2>
         </div>
 
         {filtered.length === 0 ? (
@@ -837,7 +1078,11 @@ export default function Appointments() {
                 key={appt.id}
                 appt={appt}
                 onSchedule={setSchedulingAppt}
-                onMarkCompleted={handleMarkCompleted}
+                onApprove={handleApproveAid}
+                onRefer={(a) => setReferralApp(a)}
+                onReject={handleRejectAid}
+                onPrintGL={handlePrintGL}
+                onPrintReferral={(a) => handlePrintReferral(a)}
                 onDelete={async (id, ref) => {
                   if (confirm(`Burahin ang appointment request para kay ${appt.applicantName}?`)) {
                     const cleanRef = String(ref || '').trim()
@@ -893,11 +1138,115 @@ export default function Appointments() {
         )}
       </div>
 
+      {/* Schedule Modal */}
       {schedulingAppt && (
         <ScheduleModal
           appointment={schedulingAppt}
           onClose={() => setSchedulingAppt(null)}
           onSave={handleSaveSchedule}
+        />
+      )}
+
+      {/* Referral Agency Selection Modal */}
+      {referralApp && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Refer to Partner Agency</h3>
+                  <p className="text-xs text-slate-500">{referralApp.applicantName} ({referralApp.referenceNo})</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReferralApp(null)}
+                className="text-slate-400 hover:text-slate-600 text-xl font-light cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Select Partner Welfare Agency *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'PCSO', name: 'PCSO', desc: 'Philippine Charity Sweepstakes Office' },
+                    { id: 'DSWD', name: 'DSWD', desc: 'Crisis Intervention Unit (CIU)' },
+                    { id: 'DOH', name: 'DOH', desc: 'Malasakit Program Office' },
+                    { id: 'Charity Hospital', name: 'Charity Hosp.', desc: 'Medical Social Services' },
+                  ].map((ag) => (
+                    <button
+                      key={ag.id}
+                      type="button"
+                      onClick={() => setSelectedAgency(ag.id)}
+                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                        selectedAgency === ag.id
+                          ? 'border-purple-600 bg-purple-50 text-purple-900 ring-2 ring-purple-200'
+                          : 'border-slate-200 hover:border-purple-300 bg-white text-slate-700'
+                      }`}
+                    >
+                      <div className="font-bold text-xs">{ag.name}</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{ag.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Endorsement & Social Worker Remarks
+                </label>
+                <textarea
+                  rows={3}
+                  value={referralNotes}
+                  onChange={(e) => setReferralNotes(e.target.value)}
+                  className="w-full text-xs p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  placeholder="Ilagay ang dahilan ng endorsement..."
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
+              <button
+                type="button"
+                onClick={() => setReferralApp(null)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReferral}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Confirm & Issue Referral Letter</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Official Guarantee Letter Modal */}
+      {glModalData && (
+        <OfficialGuaranteeLetterModal
+          data={glModalData}
+          onClose={() => setGlModalData(null)}
+        />
+      )}
+
+      {/* Official Referral Letter Modal */}
+      {refLetterModalData && (
+        <OfficialReferralLetterModal
+          data={refLetterModalData}
+          onClose={() => setRefLetterModalData(null)}
         />
       )}
     </div>

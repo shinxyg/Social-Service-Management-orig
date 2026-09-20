@@ -85,14 +85,14 @@ async function syncAndCleanAppointments() {
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND reference_no IN (
-        SELECT reference_no FROM aics_applications WHERE status NOT IN ('approved', 'completed', 'for_release')
+        SELECT reference_no FROM aics_applications WHERE status IN ('rejected')
       )
     `).catch(() => {});
 
     await db.query(`
       DELETE FROM appointments
       WHERE module IN ('PWD', 'Senior Citizen') AND reference_no IN (
-        SELECT reference_number FROM pwd_senior_applications WHERE status NOT IN ('approved', 'completed', 'for_release')
+        SELECT reference_number FROM pwd_senior_applications WHERE status IN ('rejected')
       )
     `).catch(() => {});
 
@@ -109,24 +109,27 @@ async function syncAndCleanAppointments() {
          OR (module IN ('PWD', 'Senior Citizen', 'Solo Parent') AND LOWER(COALESCE(concern, '')) NOT LIKE '%assist%')
     `).catch(() => {});
 
-    const approvedAics = await db.query(
-      `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix
+    const activeAics = await db.query(
+      `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix, status
        FROM aics_applications
-       WHERE status IN ('approved', 'completed', 'for_release')`
+       WHERE status NOT IN ('rejected')`
     ).catch(() => ({ rows: [] }));
 
-    for (const row of approvedAics.rows) {
+    for (const row of activeAics.rows) {
       const refNo = String(row.reference_no || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
       const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
       const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
       const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
+      const isApproved = ['approved', 'completed', 'for_release'].includes(row.status);
+      const isReferred = ['for_referral', 'referred'].includes(row.status);
+      const initStatus = isApproved ? 'approved' : (isReferred ? 'referred' : 'pending');
       await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang AICS aplikasyon para sa scheduling.'
+         SELECT $1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon.'
          WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
-        [refNo, fullName, cleanType]
+        [refNo, fullName, cleanType, initStatus]
       ).catch(() => {});
     }
 
