@@ -768,72 +768,32 @@ export default function AICS() {
               <div className="mb-8 p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">Next Action for Social Worker:</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">Action & Decision:</span>
                     <p className="text-sm font-semibold text-slate-900 mt-0.5">
-                      {currentStatus === 'submit_pending' || currentStatus === 'pending'
-                        ? 'New Application: Pre-approve requirements to proceed to scheduling.'
-                        : currentStatus === 'waiting_approval'
-                        ? 'Ready for Schedule: Set the appointment date and venue for the interview.'
-                        : currentStatus === 'scheduled'
-                        ? `Interview Scheduled: (${details.appointmentDate || 'Confirmed'}). Click to begin Case Assessment.`
-                        : currentStatus === 'under_review'
-                        ? 'Assessment Active: Evaluate socio-economic profile and make final decision (Approve, Refer, or Reject).'
-                        : `Final Outcome Reached: ${badge.label}`}
+                      {currentStatus === 'approved' || currentStatus === 'completed'
+                        ? '✓ Approved: Case is active and queued in the Appointments module (sidebar).'
+                        : currentStatus === 'for_referral' || currentStatus === 'referred'
+                        ? '🏛️ Inter-Agency Referral: Official endorsement letter issued.'
+                        : currentStatus === 'rejected'
+                        ? '✕ Disqualified / Denied: Reason recorded.'
+                        : 'Review applicant documents and decide: Approve, Refer to Agency, or Reject.'}
                     </p>
                   </div>
 
-                  {/* Realtime Action Buttons */}
+                  {/* Action Buttons */}
                   <div className="flex flex-wrap items-center gap-2">
-                    {/* Stage 1 -> 2: Pre-Approve */}
-                    {(currentStatus === 'submit_pending' || currentStatus === 'pending') && (
-                      <button
-                        type="button"
-                        disabled={actionLoading}
-                        onClick={() => updateStatus('waiting_approval')}
-                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <UserCheck className="w-4 h-4" />
-                        <span>✓ Pre-Approve for Scheduling</span>
-                      </button>
-                    )}
-
-                    {/* Stage 2 -> 3: Set Schedule */}
-                    {(currentStatus === 'waiting_approval' || currentStatus === 'submit_pending' || currentStatus === 'pending') && (
-                      <button
-                        type="button"
-                        disabled={actionLoading}
-                        onClick={() => setShowScheduleModal(true)}
-                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Calendar className="w-4 h-4" />
-                        <span>📅 Set Appointment Schedule</span>
-                      </button>
-                    )}
-
-                    {/* Stage 3 -> 4: Start Assessment */}
-                    {currentStatus === 'scheduled' && (
-                      <button
-                        type="button"
-                        disabled={actionLoading}
-                        onClick={() => updateStatus('under_review')}
-                        className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        <span>🔍 Start Case Assessment / Interview</span>
-                      </button>
-                    )}
-
-                    {/* Stage 4 -> Outcomes (Approve / Refer / Reject) */}
-                    {(currentStatus === 'under_review' || currentStatus === 'scheduled') && (
+                    {/* Primary Decision Actions when not yet finalized */}
+                    {currentStatus !== 'approved' && currentStatus !== 'completed' && currentStatus !== 'for_referral' && currentStatus !== 'referred' && currentStatus !== 'rejected' && (
                       <>
                         <button
                           type="button"
                           disabled={actionLoading}
                           onClick={() => updateStatus('approved')}
                           className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                          title="Approves assistance and automatically adds to Appointments module in the sidebar"
                         >
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>✓ Approve QC Assistance</span>
+                          <span>✓ Approve Application</span>
                         </button>
 
                         <button
@@ -853,21 +813,27 @@ export default function AICS() {
                           className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                         >
                           <XCircle className="w-4 h-4" />
-                          <span>✕ Reject / Deny</span>
+                          <span>✕ Reject Application</span>
                         </button>
                       </>
                     )}
 
                     {/* Print Guarantee Letter if Approved */}
                     {(currentStatus === 'approved' || currentStatus === 'completed') && (
-                      <button
-                        type="button"
-                        onClick={() => setGlApp(reviewingApp)}
-                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Printer className="w-4 h-4" />
-                        <span>📄 Print Guarantee Letter (GL)</span>
-                      </button>
+                      <>
+                        <div className="px-3 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>Queued in Appointments (Sidebar)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setGlApp(reviewingApp)}
+                          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Printer className="w-4 h-4" />
+                          <span>📄 Print Guarantee Letter (GL)</span>
+                        </button>
+                      </>
                     )}
 
                     {/* Print Referral Letter if Referred */}
