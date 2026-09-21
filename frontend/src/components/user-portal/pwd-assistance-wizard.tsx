@@ -66,7 +66,8 @@ export interface FamilyMember {
   age: string
   occupation: string
   income: string
-  otherInfo: string
+  hasDisability?: string
+  otherInfo?: string
 }
 
 const ASSISTANCE_TYPES = [
@@ -885,6 +886,7 @@ export default function PWDSocialAssistanceWizard({
       age: "",
       occupation: "",
       income: "",
+      hasDisability: "",
       otherInfo: "",
     }
     setFormData((prev) => ({
@@ -1692,12 +1694,15 @@ export default function PWDSocialAssistanceWizard({
 
                           <div>
                             <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                              Iba Pang Impormasyon (Other Info)
+                              Has a Disability
                             </label>
-                            <TextInput
-                              value={member.otherInfo}
-                              onChange={(v) => updateFamilyMember(idx, "otherInfo", v)}
-                              placeholder="Hal. May kapansanan din"
+                            <SelectInput
+                              value={member.hasDisability || member.otherInfo || ""}
+                              onChange={(v) => {
+                                updateFamilyMember(idx, "hasDisability", v)
+                                updateFamilyMember(idx, "otherInfo", v)
+                              }}
+                              options={["Yes", "No"]}
                             />
                           </div>
                         </div>
@@ -1974,11 +1979,12 @@ export default function PWDSocialAssistanceWizard({
                       </p>
                       <div className="divide-y divide-border dark:divide-slate-800">
                         {formData.familyMembers.map((m, idx) => (
-                          <div key={idx} className="py-2 text-xs grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <div key={idx} className="py-2 text-xs grid grid-cols-2 sm:grid-cols-5 gap-2">
                             <div><span className="text-muted-foreground">Pangalan:</span> <span className="font-semibold">{m.name}</span></div>
                             <div><span className="text-muted-foreground">Relasyon:</span> <span className="font-medium">{m.relationship}</span></div>
                             <div><span className="text-muted-foreground">Edad:</span> <span className="font-medium">{m.age}</span></div>
                             <div><span className="text-muted-foreground">Hanapbuhay/Kita:</span> <span className="font-medium">{m.occupation || "—"} ({m.income || "—"})</span></div>
+                            <div><span className="text-muted-foreground">Has a Disability:</span> <span className="font-medium">{m.hasDisability || m.otherInfo || "—"}</span></div>
                           </div>
                         ))}
                       </div>
