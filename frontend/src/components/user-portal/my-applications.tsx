@@ -3794,13 +3794,23 @@ export default function MyApplications() {
                       schedMap[`appt_${refKey}`] ||
                       schedMap[app.applicantName?.toLowerCase()?.trim()]
 
+                    const isExplicitlyPending =
+                      app.status === "Pending" ||
+                      app.status === "Submit Pending" ||
+                      app.status === "Waiting to Approve" ||
+                      app.status === "Under Review" ||
+                      app.status === "Scheduled" ||
+                      app.status === "For Assessment"
+
                     const isApprovedDecision =
-                      app.status === "Approved" ||
-                      app.status === "Completed" ||
-                      app.status === "Released" ||
-                      cachedAppt?.decision === "approved" ||
-                      cachedAppt?.status === "approved" ||
-                      cachedAppt?.status === "completed"
+                      !isExplicitlyPending &&
+                      (app.status === "Approved" ||
+                        app.status === "Completed" ||
+                        app.status === "Released" ||
+                        app.status === "For Release" ||
+                        cachedAppt?.decision === "approved" ||
+                        cachedAppt?.status === "approved" ||
+                        cachedAppt?.status === "completed")
 
                     const savedDisbs = getSavedDisbursements()
                     const matchDisb = savedDisbs.find(
@@ -3809,9 +3819,9 @@ export default function MyApplications() {
                         (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName?.toLowerCase()?.trim())
                     )
 
-                    const isClaimed = app.status === "Released" || app.status === "Completed" || matchDisb?.status === "RELEASED"
-                    const isGLIssued = isApprovedDecision || app.status === "For Release" || isClaimed
-                    const isAssessmentDone = isGLIssued || app.status === "Under Review" || app.status === "For Assessment" || cachedAppt?.decision === "referred"
+                    const isClaimed = !isExplicitlyPending && (app.status === "Released" || app.status === "Completed" || matchDisb?.status === "RELEASED")
+                    const isGLIssued = isApprovedDecision || (!isExplicitlyPending && app.status === "For Release") || isClaimed
+                    const isUnderReview = app.status === "Under Review" || app.status === "For Assessment"
                     const partnerHospital =
                       app.details?.partnerHospital ||
                       app.formData?.partnerHospital ||
@@ -3844,23 +3854,23 @@ export default function MyApplications() {
                           </div>
 
                           <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isAssessmentDone
+                            isApprovedDecision
                               ? "bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold"
+                              : isUnderReview
+                              ? "bg-amber-100 dark:bg-amber-950/60 border-amber-300 text-amber-900 dark:text-amber-200 font-bold"
                               : "bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 text-blue-800 dark:text-blue-300 font-bold"
                           }`}>
-                            <span className="block font-black">{isAssessmentDone ? "2. EVALUATION DONE" : "2. APPOINTMENT / EVAL"}</span>
-                            <span className="text-[9px] block">{isAssessmentDone ? "Assessment Done" : "Appointment Set"}</span>
+                            <span className="block font-black">{isApprovedDecision ? "2. EVALUATED" : isUnderReview ? "2. UNDER REVIEW" : "2. APPOINTMENT"}</span>
+                            <span className="text-[9px] block">{isApprovedDecision ? "✓ Assessment Done" : isUnderReview ? "Interview in Progress" : "Appointment Set"}</span>
                           </div>
 
                           <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isApprovedDecision || isGLIssued
+                            isApprovedDecision
                               ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
-                              : isAssessmentDone
-                              ? "bg-amber-100/80 dark:bg-amber-950/60 border-amber-300 text-amber-900 dark:text-amber-200 font-bold"
                               : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
                           }`}>
                             <span className="block font-black">3. APPROVAL / ENDORSEMENT</span>
-                            <span className="text-[9px] block">{isApprovedDecision || isGLIssued ? "Approved & Endorsed" : "Under Evaluation"}</span>
+                            <span className="text-[9px] block">{isApprovedDecision ? "✓ Approved & Endorsed" : "Pending Decision"}</span>
                           </div>
 
                           <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
@@ -3869,7 +3879,7 @@ export default function MyApplications() {
                               : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
                           }`}>
                             <span className="block font-black">4. ASSISTANCE PROCESSING</span>
-                            <span className="text-[9px] block">{isGLIssued ? "GL / Voucher Ready" : "Awaiting Approval"}</span>
+                            <span className="text-[9px] block">{isGLIssued ? "✓ GL / Voucher Ready" : "Awaiting Approval"}</span>
                           </div>
 
                           <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
