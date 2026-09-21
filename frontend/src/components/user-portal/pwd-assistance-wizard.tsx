@@ -53,12 +53,12 @@ export interface UserProfile {
 }
 
 const ASSISTANCE_TYPES = [
-  "Bedridden (Nakaratay)",
-  "Severe Health Condition (May Malubhang Karamdaman)",
-  "Solo Parent (Solong Magulang)",
-  "Jobless with 2+ Minor Dependents (Walang Trabaho na may 2+ menor de edad)",
-  "Living Alone (Nakatira Mag-isa)",
-  "Living with Senior Citizen Parent (Nakatira kasama ang Magulang na Senior Citizen)",
+  "Bedridden",
+  "Severe Health Condition",
+  "Solo Parent",
+  "Jobless with 2+ Minor Dependents",
+  "Living Alone",
+  "Living with Senior Citizen Parent",
 ]
 
 const MONTHLY_INCOME_RANGES = [
