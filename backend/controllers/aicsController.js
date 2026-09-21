@@ -623,3 +623,116 @@ exports.cleanupUserAics = async (req, res) => {
     res.status(500).json({ error: 'Failed to clear user AICS records', details: err.message });
   }
 };
+
+exports.updateApplicationStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      status,
+      applicantName,
+      appointmentDate,
+      appointmentVenue,
+      rejectionReason,
+      referralAgency,
+      referralNotes,
+      remarks,
+    } = req.body;
+
+    const rawId = String(id || '').trim();
+    const cleanId = rawId.replace(/^aics-appt-/, '').replace(/^db-appt-/, '').trim();
+    const unhyphenated = cleanId.replace(/[^a-zA-Z0-9]/g, '');
+    const newStatus = String(status || 'approved').toLowerCase();
+
+    const appUpdate = await db.query(
+      `UPDATE aics_applications
+       SET status = $1,
+           updated_at = NOW()
+       WHERE id::text = $2
+          OR reference_no = $2
+          OR qc_id = $2
+          OR id::text = $3
+          OR reference_no = $3
+          OR qc_id = $3
+          OR REPLACE(reference_no, '-', '') = $4
+          OR REPLACE(qc_id, '-', '') = $4
+          OR ($5 != '' AND LOWER(first_name || ' ' || last_name) = LOWER($5))
+       RETURNING *`,
+      [newStatus, rawId, cleanId, unhyphenated, applicantName || '']
+    );
+
+    // Update details JSON with appointment info / referral info if provided
+    if (appUpdate.rows.length > 0 && (appointmentDate || rejectionReason || referralAgency || remarks)) {
+      const app = appUpdate.rows[0];
+      const details = app.details || {};
+      if (appointmentDate) details.appointmentDate = appointmentDate;
+      if (appointmentVenue) details.appointmentVenue = appointmentVenue;
+      if (rejectionReason) details.rejectionReason = rejectionReason;
+      if (referralAgency) details.referralAgency = referralAgency;
+      if (referralNotes) details.referralNotes = referralNotes;
+      if (remarks) details.remarks = remarks;
+
+      await db.query(
+        `UPDATE aics_applications SET details = $1, updated_at = NOW() WHERE id = $2`,
+        [details, app.id]
+      ).catch(() => {});
+    }
+
+    // Sync appointments table status
+    await db.query(
+      `UPDATE appointments
+       SET status = $1,
+           updated_at = NOW()
+       WHERE reference_no = $2
+          OR reference_no = $3
+          OR REPLACE(reference_no, '-', '') = $4
+          OR ($5 != '' AND applicant_name ILIKE $5)`,
+      [newStatus, rawId, cleanId, unhyphenated, applicantName ? `%${applicantName}%` : '']
+    ).catch(() => {});
+
+    // Sync financial_aid_disbursements if approved
+    if (newStatus === 'approved' || newStatus === 'completed' || newStatus === 'for_release') {
+      const appRow = appUpdate.rows[0];
+      const targetRef = appRow?.reference_no || appRow?.qc_id || cleanId;
+      const targetName = [appRow?.first_name, appRow?.middle_name, appRow?.last_name, appRow?.suffix].filter(Boolean).join(' ').trim().toUpperCase() || (applicantName || 'BENEFICIARY').toUpperCase();
+      const rawType = (appRow?.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
+      const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
+
+      const existingDisb = await db.query(
+        `SELECT id FROM financial_aid_disbursements
+         WHERE application_ref = $1
+            OR application_ref = $2
+            OR REPLACE(application_ref, '-', '') = $3
+            OR (applicant_name ILIKE $4 AND status != 'RELEASED')`,
+        [rawId, targetRef, unhyphenated, `%${targetName}%`]
+      );
+
+      if (existingDisb.rows.length === 0) {
+        const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        await db.query(
+          `INSERT INTO financial_aid_disbursements (
+            disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+            date_approved, status, venue, remarks
+          ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'Quezon City Hall', 'Approved AICS assistance ready for release.')
+          ON CONFLICT DO NOTHING`,
+          [
+            disbId,
+            targetRef,
+            targetName,
+            cleanType,
+            5000,
+            new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+          ]
+        ).catch(() => {});
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `AICS application status updated to ${newStatus}.`,
+      application: appUpdate.rows[0] || null,
+    });
+  } catch (err) {
+    console.error('Error updating AICS status:', err);
+    res.status(500).json({ success: false, error: 'Failed to update AICS status.', details: err.message });
+  }
+};

@@ -259,10 +259,14 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         localScheduledMap[d.applicationRef]
       const apptStatus = String(appt?.status || cachedSched?.status || "").toLowerCase()
       const apptDecision = String(appt?.decision || cachedSched?.decision || "").toLowerCase()
+      if (apptStatus === "rejected" || apptStatus === "referred" || apptDecision === "rejected" || apptDecision === "referred") {
+        return false
+      }
+      if (apptStatus === "approved" || apptDecision === "approved" || d.id.startsWith("db-") || d.id.startsWith("remote-appt-") || d.id.startsWith("local-appt-")) {
+        return true
+      }
       if (apptStatus === "pending" || apptStatus === "scheduled" || apptStatus === "under_review" || apptStatus === "for_scheduling") {
-        if (apptDecision !== "approved") {
-          return false
-        }
+        return false
       }
       return true
     })
@@ -771,10 +775,14 @@ export default function FinancialAidDisbursement() {
 
           const apptStatus = String(appt?.status || cachedSched?.status || "").toLowerCase()
           const apptDecision = String(appt?.decision || cachedSched?.decision || "").toLowerCase()
+          if (apptStatus === "rejected" || apptStatus === "referred" || apptDecision === "rejected" || apptDecision === "referred") {
+            return false
+          }
+          if (apptStatus === "approved" || apptDecision === "approved" || d.id.startsWith("db-") || d.id.startsWith("remote-appt-") || d.id.startsWith("local-appt-")) {
+            return true
+          }
           if (apptStatus === "pending" || apptStatus === "scheduled" || apptStatus === "under_review" || apptStatus === "for_scheduling") {
-            if (apptDecision !== "approved") {
-              return false
-            }
+            return false
           }
           return true
         })

@@ -656,3 +656,113 @@ exports.deleteUserAppointments = async (req, res) => {
     res.status(500).json({ error: 'Failed to clear appointments.' });
   }
 };
+
+exports.updateAppointmentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, decision, applicantName, notes } = req.body;
+    const rawId = String(id || '').trim();
+    const cleanId = rawId.replace(/^db-appt-/, '').replace(/^aics-appt-/, '').replace(/^pwd-senior-appt-/, '').replace(/^cw-appt-/, '').replace(/^appt_/, '').trim();
+    const unhyphenated = cleanId.replace(/[^a-zA-Z0-9]/g, '');
+    const newStatus = String(status || decision || 'approved').toLowerCase();
+
+    // 1. Update appointments table
+    const apptUpdate = await db.query(
+      `UPDATE appointments
+       SET status = $1,
+           notes = COALESCE($2, notes),
+           updated_at = NOW()
+       WHERE id::text = $3
+          OR reference_no = $3
+          OR id::text = $4
+          OR reference_no = $4
+          OR REPLACE(reference_no, '-', '') = $5
+          OR ($6 != '' AND applicant_name ILIKE $6)
+       RETURNING *`,
+      [newStatus, notes || null, rawId, cleanId, unhyphenated, applicantName ? `%${applicantName}%` : '']
+    );
+
+    // 2. Also update corresponding aics_applications status
+    await db.query(
+      `UPDATE aics_applications
+       SET status = $1,
+           updated_at = NOW()
+       WHERE id::text = $2
+          OR reference_no = $2
+          OR qc_id = $2
+          OR id::text = $3
+          OR reference_no = $3
+          OR qc_id = $3
+          OR REPLACE(reference_no, '-', '') = $4
+          OR REPLACE(qc_id, '-', '') = $4
+          OR ($5 != '' AND LOWER(first_name || ' ' || last_name) = LOWER($5))`,
+      [newStatus, rawId, cleanId, unhyphenated, applicantName || '']
+    ).catch(() => {});
+
+    // 3. If approved, make sure it is inserted into financial_aid_disbursements table
+    if (newStatus === 'approved' || newStatus === 'completed' || newStatus === 'for_release') {
+      const apptRow = apptUpdate.rows[0];
+      const targetRef = apptRow?.reference_no || cleanId;
+      const targetName = (apptRow?.applicant_name || applicantName || 'BENEFICIARY').toUpperCase();
+      const targetConcern = apptRow?.concern || 'Medical Assistance';
+      const fixedAmount = resolveFixedAmount(targetConcern);
+
+      const existingDisb = await db.query(
+        `SELECT id FROM financial_aid_disbursements
+         WHERE application_ref = $1
+            OR application_ref = $2
+            OR REPLACE(application_ref, '-', '') = $3
+            OR (applicant_name ILIKE $4 AND status != 'RELEASED')`,
+        [rawId, targetRef, unhyphenated, `%${targetName}%`]
+      );
+
+      if (existingDisb.rows.length === 0) {
+        const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        await db.query(
+          `INSERT INTO financial_aid_disbursements (
+            disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+            date_approved, status, appointment_date, appointment_time, venue, remarks
+          ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10)
+          ON CONFLICT DO NOTHING`,
+          [
+            disbId,
+            targetRef,
+            targetName,
+            targetConcern,
+            fixedAmount,
+            new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+            apptRow?.scheduled_date || null,
+            apptRow?.scheduled_time || null,
+            apptRow?.office_location || 'Quezon City Hall',
+            apptRow?.notes || 'Approved appointment ready for payout release.',
+          ]
+        ).catch(() => {});
+      }
+    } else if (newStatus === 'rejected') {
+      await db.query(
+        `DELETE FROM financial_aid_disbursements
+         WHERE application_ref = $1 OR application_ref = $2 OR REPLACE(application_ref, '-', '') = $3`,
+        [rawId, cleanId, unhyphenated]
+      ).catch(() => {});
+    }
+
+    await logActivity({
+      actor: 'Admin / Social Worker',
+      actorRole: 'Appointment Officer',
+      action: newStatus.toUpperCase(),
+      module: 'Appointments',
+      referenceNo: cleanId,
+      subject: applicantName || cleanId,
+      detail: `Updated appointment status to ${newStatus}.`,
+    }).catch(() => {});
+
+    res.json({
+      success: true,
+      message: `Status updated to ${newStatus}.`,
+      appointment: apptUpdate.rows[0] || null,
+    });
+  } catch (err) {
+    console.error('Error updating appointment status:', err);
+    res.status(500).json({ success: false, error: 'Failed to update appointment status.', details: err.message });
+  }
+};
