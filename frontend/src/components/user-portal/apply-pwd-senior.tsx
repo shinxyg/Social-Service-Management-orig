@@ -186,83 +186,6 @@ function evaluateActiveAppBlockedState(
     return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
   }
 
-  const idApps = relevantApps.filter((a) => {
-    const t = String(a.type || a.service || "").toLowerCase()
-    const isSub = t.includes("booklet") || t.includes("medicine") || t.includes("movie") || t.includes("assistance")
-    return !isSub
-  })
-
-  const anyApprovedId = idApps.find((a) => {
-    const s = String(a.status || "").toLowerCase()
-    return s === "approved" || s === "completed" || s === "for_release"
-  })
-  const approvedNew = idApps.find((a) => {
-    const s = String(a.status || "").toLowerCase()
-    const t = String(a.type || "new").toLowerCase()
-    return (s === "approved" || s === "completed" || s === "for_release") && t !== "renewal" && t !== "loss" && t !== "replacement"
-  })
-  const approvedRenewal = idApps.find((a) => {
-    const s = String(a.status || "").toLowerCase()
-    const t = String(a.type || "").toLowerCase()
-    return (s === "approved" || s === "completed" || s === "for_release") && t === "renewal"
-  })
-  const approvedLoss = idApps.find((a) => {
-    const s = String(a.status || "").toLowerCase()
-    const t = String(a.type || "").toLowerCase()
-    return (s === "approved" || s === "completed" || s === "for_release") && (t === "loss" || t === "replacement")
-  })
-
-  const pendingNew = idApps.find((a) => {
-    const s = String(a.status || "pending").toLowerCase()
-    const t = String(a.type || "new").toLowerCase()
-    return (s === "pending" || s === "under_review") && t !== "renewal" && t !== "loss" && t !== "replacement"
-  })
-  const pendingRenewal = idApps.find((a) => {
-    const s = String(a.status || "pending").toLowerCase()
-    const t = String(a.type || "").toLowerCase()
-    return (s === "pending" || s === "under_review") && t === "renewal"
-  })
-  const pendingLoss = idApps.find((a) => {
-    const s = String(a.status || "pending").toLowerCase()
-    const t = String(a.type || "").toLowerCase()
-    return (s === "pending" || s === "under_review") && (t === "loss" || t === "replacement")
-  })
-
-  const rejectedNew = idApps.find((a) => {
-    const s = String(a.status || "").toLowerCase()
-    const t = String(a.type || "new").toLowerCase()
-    return (s === "rejected" || s === "disapproved") && t !== "renewal" && t !== "loss" && t !== "replacement"
-  })
-  const rejectedRenewal = idApps.find((a) => {
-    const s = String(a.status || "").toLowerCase()
-    const t = String(a.type || "").toLowerCase()
-    return (s === "rejected" || s === "disapproved") && t === "renewal"
-  })
-  const rejectedLoss = idApps.find((a) => {
-    const s = String(a.status || "").toLowerCase()
-    const t = String(a.type || "").toLowerCase()
-    return (s === "rejected" || s === "disapproved") && (t === "loss" || t === "replacement")
-  })
-
-  if (urlType === "new" || !urlType) {
-    if (approvedNew || anyApprovedId) return { isBlocked: true, blockedApp: approvedNew || anyApprovedId, hasApprovedApp: true }
-    if (pendingNew) return { isBlocked: true, blockedApp: pendingNew, hasApprovedApp: false }
-    if (rejectedNew) return { isBlocked: true, blockedApp: rejectedNew, hasApprovedApp: false }
-    return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
-  }
-  if (urlType === "renewal") {
-    if (approvedRenewal) return { isBlocked: true, blockedApp: approvedRenewal, hasApprovedApp: true }
-    if (pendingRenewal) return { isBlocked: true, blockedApp: pendingRenewal, hasApprovedApp: false }
-    if (rejectedRenewal) return { isBlocked: true, blockedApp: rejectedRenewal, hasApprovedApp: false }
-    return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
-  }
-  if (urlType === "loss") {
-    if (approvedLoss) return { isBlocked: true, blockedApp: approvedLoss, hasApprovedApp: true }
-    if (pendingLoss) return { isBlocked: true, blockedApp: pendingLoss, hasApprovedApp: false }
-    if (rejectedLoss) return { isBlocked: true, blockedApp: rejectedLoss, hasApprovedApp: false }
-    return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
-  }
-
   return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
 }
 
@@ -422,7 +345,7 @@ export default function ApplyPWDSenior() {
       window.removeEventListener("financial_disbursements_updated", handleUpdated)
       window.removeEventListener("storage", handleUpdated)
     }
-  }, [urlCategory, urlType, isSenior, isAssistance, isSeniorSocial, isSeniorMedicine, isSeniorMovie, isSeniorId])
+  }, [urlCategory, urlType, isSenior, isAssistance, isSeniorSocial, isSeniorMedicine, isSeniorMovie])
 
   useEffect(() => {
     try {
@@ -524,20 +447,6 @@ export default function ApplyPWDSenior() {
     t("seniorMovieReq2"),
     t("seniorMovieReq3"),
     t("seniorMovieReq4"),
-  ]
-
-  const seniorLossRequirements = [
-    t("seniorLossReq1"),
-    t("seniorLossReq2"),
-    t("seniorMedReq3"),
-    t("seniorMedReq4"),
-  ]
-
-  const seniorRenewalRequirements = [
-    t("seniorRenewalReq1"),
-    t("seniorMedReq3"),
-    t("seniorRenewalReq3"),
-    t("seniorRenewalReq4"),
   ]
 
   const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
@@ -1133,155 +1042,46 @@ export default function ApplyPWDSenior() {
               )}
 
               {}
-              {!isSenior && !isAssistance && (
+              {isAssistance && !isSenior && (
                 <>
                   <div className="space-y-3">
-                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
+                    <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
                       <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">{t("importantReminder")}</p>
-                        <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">{t("pwdGeneralReminderDesc")}</p>
+                        <p className="text-sm font-semibold text-blue-900 dark:text-white">{t("importantReminder")}</p>
+                        <p className="text-sm text-blue-800 dark:text-slate-200 mt-1">
+                          {t("pwdAssistanceReminderDesc")}
+                        </p>
                       </div>
                     </div>
 
-                    <div className={`rounded-xl p-4 flex items-start gap-3 border ${
-                      urlType === "renewal"
-                        ? "bg-amber-500/10 border-amber-500/30"
-                        : urlType === "loss"
-                        ? "bg-orange-500/10 border-orange-500/30"
-                        : "bg-emerald-500/10 border-emerald-500/30"
-                    }`}>
-                      <RefreshCw className={`h-5 w-5 shrink-0 mt-0.5 ${
-                        urlType === "renewal" ? "text-amber-600 dark:text-amber-400" : urlType === "loss" ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
-                      }`} />
-                      <p className={`text-sm font-semibold ${
-                        urlType === "renewal" ? "text-amber-900 dark:text-amber-200" : urlType === "loss" ? "text-orange-900 dark:text-orange-200" : "text-emerald-900 dark:text-emerald-200"
-                      }`}>
-                        {urlType === "renewal"
-                          ? t("pwdRenewalAlert")
-                          : urlType === "loss"
-                          ? "PAGPAPALIT NG NAWALA O NASIRANG PWD ID — Ihanda ang Affidavit of Loss o larawan ng sirang ID."
-                          : t("pwdNewAlert")}
+                    <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
+                      <HeartHandshake className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                      <p className="text-sm font-semibold text-blue-950 dark:text-white">
+                        {t("pwdAssistanceBanner")}
                       </p>
                     </div>
                   </div>
 
-                  {}
                   <div>
-                    <h3 className="text-base font-bold text-foreground mb-3">{t("pwdNewRenewalHeading")}</h3>
-                    <ul className="space-y-1.5 mb-6">
-                      {generalPwdRequirements.map((req, idx) => (
-                        <li key={idx} className="flex gap-2 text-sm text-foreground">
-                          <span className="text-blue-600">•</span>
+                    <h3 className="text-base font-bold text-foreground mb-3 uppercase tracking-wide">
+                      {t("requiredDocumentsHeading")}
+                    </h3>
+                    <ul className="space-y-2 mb-4">
+                      {pwdSocialAssistanceRequirements.map((req, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground bg-gray-50 dark:bg-slate-900/60 border border-border/80 rounded-xl p-3">
+                          <span className="text-blue-600 dark:text-blue-400 font-bold mt-0.5">☑</span>
                           <div>
-                            <span className="font-semibold">{req.title}</span>
-                            {req.desc && <p className="text-muted-foreground text-xs">{req.desc}</p>}
+                            <span className="font-bold text-foreground">{req.title}</span>
+                            {req.desc && <p className="text-muted-foreground text-xs mt-0.5">{req.desc}</p>}
                           </div>
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  {}
-                  <div>
-                    <h3 className="text-base font-bold text-foreground mb-3">{t("apparentDisabilityHeading")}</h3>
-                    <ul className="space-y-1.5 mb-6">
-                      {apparentDisabilityRequirements.map((req, idx) => (
-                        <li key={idx} className="flex gap-2 text-sm text-foreground">
-                          <span className="text-blue-600">•</span>
-                          <div>
-                            <span className="font-semibold">{req.title}</span>
-                            <p className="text-muted-foreground text-xs">{req.desc}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {}
-                  <div>
-                    <h3 className="text-base font-bold text-foreground mb-3">{t("nonApparentDisabilityHeading")}</h3>
-                    <p className="text-xs text-muted-foreground mb-3 italic">
-                      {t("nonApparentSubtitle")}
-                    </p>
-                    <ul className="space-y-1.5">
-                      {nonApparentDisabilityRequirements.map((req, idx) => (
-                        <li key={idx} className="flex gap-2 text-sm text-foreground">
-                          <span className="text-blue-600">•</span>
-                          <div>
-                            <span className="font-semibold">{req.title}</span>
-                            <p className="text-muted-foreground text-xs">{req.desc}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <p className="text-sm text-muted-foreground italic">
-                    {t("pwdBringDocumentsVerificationNote")}
-                  </p>
-                </>
-              )}
-
-              {}
-              {isSeniorId && (
-                <>
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                    <p className="text-sm text-amber-900 dark:text-amber-200">
-                      {t("seniorDualCitizenshipNote")}
-                    </p>
-                  </div>
-
-                  <div className={`rounded-xl p-4 flex items-start gap-3 border ${
-                    urlType === "loss"
-                      ? "bg-orange-500/10 border-orange-500/30"
-                      : urlType === "renewal"
-                      ? "bg-amber-500/10 border-amber-500/30"
-                      : "bg-emerald-500/10 border-emerald-500/30"
-                  }`}>
-                    <RefreshCw className={`h-5 w-5 shrink-0 mt-0.5 ${
-                      urlType === "loss"
-                        ? "text-orange-600 dark:text-orange-400"
-                        : urlType === "renewal"
-                        ? "text-amber-600 dark:text-amber-400"
-                        : "text-emerald-600 dark:text-emerald-400"
-                    }`} />
-                    <p className={`text-sm font-semibold ${
-                      urlType === "loss"
-                        ? "text-orange-900 dark:text-orange-200"
-                        : urlType === "renewal"
-                        ? "text-amber-900 dark:text-amber-200"
-                        : "text-emerald-900 dark:text-emerald-200"
-                    }`}>
-                      {urlType === "loss"
-                        ? t("seniorLossAlert") || "Paalala: Para sa pagpapalit ng nawala o nasirang Senior Citizen ID. Ihanda ang Notarized Affidavit of Loss at valid ID."
-                        : urlType === "renewal"
-                        ? t("seniorRenewalReminder") || "Paalala: Para sa pag-renew ng expired o nag-eexpire na Senior Citizen / OSCA ID."
-                        : t("seniorNewAlert")}
-                    </p>
-                  </div>
-
-                  {}
-                  <div>
-                    <h3 className="text-base font-bold text-foreground mb-3">{t("seniorRequirementsHeading")}</h3>
-                    <ul className="space-y-2.5">
-                      {(urlType === "loss"
-                        ? seniorLossRequirements
-                        : urlType === "renewal"
-                        ? seniorRenewalRequirements
-                        : seniorCitizenRequirements
-                      ).map((req, idx) => (
-                        <li key={idx} className="flex gap-2 text-sm text-foreground">
-                          <span className="text-blue-600">•</span>
-                          <span>{req}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <p className="text-sm text-muted-foreground italic">
-                    {t("seniorSocialWorkerVisitNote")}
+                  <p className="text-xs text-muted-foreground italic">
+                    {t("pwdPhotoClearNote")}
                   </p>
                 </>
               )}
