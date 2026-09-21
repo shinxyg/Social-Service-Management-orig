@@ -101,21 +101,13 @@ exports.getDisbursements = async (req, res) => {
 
     try {
       await db.query(`
-        UPDATE financial_aid_disbursements
-        SET status = 'PENDING', released_date = NULL, released_by = NULL
-        WHERE (
-          released_by ILIKE '%Automated%'
-          OR released_by ILIKE '%Appointment%'
-          OR released_by ILIKE '%Social Worker%'
-          OR released_by IS NULL
-          OR released_by = ''
-          OR application_ref IN (
-            SELECT reference_no FROM appointments WHERE status IN ('pending', 'scheduled', 'under_review')
-          )
-          OR application_ref IN (
-            SELECT reference_no FROM aics_applications WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'scheduled', 'under_review')
-          )
-        ) AND status = 'RELEASED'
+        DELETE FROM financial_aid_disbursements
+        WHERE application_ref IN (
+          SELECT reference_no FROM appointments WHERE status IN ('pending', 'scheduled', 'under_review')
+        )
+        OR application_ref IN (
+          SELECT reference_no FROM aics_applications WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'scheduled', 'under_review', 'for_screening')
+        )
       `);
     } catch (_) {}
 

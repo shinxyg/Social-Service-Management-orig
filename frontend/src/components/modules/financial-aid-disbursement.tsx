@@ -224,7 +224,23 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       }
     })
 
-    return processed
+    const filtered = processed.filter((d) => {
+      const appt = appointmentsMap[d.applicationRef]
+      const cachedSched =
+        localScheduledMap[d.id] ||
+        localScheduledMap[d.disbursementId] ||
+        localScheduledMap[d.applicationRef]
+      const apptStatus = String(appt?.status || cachedSched?.status || "").toLowerCase()
+      const apptDecision = String(appt?.decision || cachedSched?.decision || "").toLowerCase()
+      if (apptStatus === "pending" || apptStatus === "scheduled" || apptStatus === "under_review" || apptStatus === "for_scheduling") {
+        if (apptDecision !== "approved" && apptStatus !== "approved") {
+          return false
+        }
+      }
+      return true
+    })
+
+    return filtered
   } catch {}
   return []
 }
@@ -683,8 +699,34 @@ export default function FinancialAidDisbursement() {
           }
         })
 
-        setDisbursements(merged)
-        saveDisbursements(merged)
+        const approvedOnly = merged.filter((d) => {
+          const baseRef = (d.applicationRef || "").split("-")[0].trim()
+          const cleanAssistance = String(d.assistanceType).toLowerCase().replace(/assistance/g, "").replace(/social/g, "").trim()
+          const appt =
+            appointmentsMap[`${d.applicationRef}_${cleanAssistance}`] ||
+            appointmentsMap[`${baseRef}_${cleanAssistance}`] ||
+            appointmentsMap[d.applicationRef] ||
+            appointmentsMap[baseRef]
+          const cachedSched =
+            localScheduledMap[d.id] ||
+            localScheduledMap[d.disbursementId] ||
+            localScheduledMap[`${d.applicationRef}_${d.assistanceType}`] ||
+            localScheduledMap[`${baseRef}_${d.assistanceType}`] ||
+            localScheduledMap[d.applicationRef] ||
+            localScheduledMap[baseRef]
+
+          const apptStatus = String(appt?.status || cachedSched?.status || "").toLowerCase()
+          const apptDecision = String(appt?.decision || cachedSched?.decision || "").toLowerCase()
+          if (apptStatus === "pending" || apptStatus === "scheduled" || apptStatus === "under_review" || apptStatus === "for_scheduling") {
+            if (apptDecision !== "approved" && apptStatus !== "approved") {
+              return false
+            }
+          }
+          return true
+        })
+
+        setDisbursements(approvedOnly)
+        saveDisbursements(approvedOnly)
       } finally {
         isSyncing = false
       }

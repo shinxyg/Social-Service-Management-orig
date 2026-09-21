@@ -925,16 +925,6 @@ export default function Appointments() {
         localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
       } catch {}
 
-      syncAppointmentToFinancialAid({
-        referenceNo: targetAppt.referenceNo,
-        applicantName: targetAppt.applicantName,
-        concern: targetAppt.concern,
-        date,
-        time,
-        location,
-        notes,
-      })
-
       // Run network calls in background
       ;(async () => {
         try {
@@ -1029,9 +1019,20 @@ export default function Appointments() {
         link: '/portal/aics',
       })
 
+      syncAppointmentToFinancialAid({
+        referenceNo: appt.referenceNo,
+        applicantName: appt.applicantName,
+        concern: appt.concern,
+        date: appt.scheduledDate || new Date().toLocaleDateString("en-PH"),
+        time: appt.scheduledTime || "10:00 AM",
+        location: appt.officeLocation || "Quezon City Hall",
+        notes: appt.notes || "Approved appointment for financial aid payout.",
+      })
+
       notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
+      window.dispatchEvent(new Event("financial_disbursements_updated"))
     } catch (err) {
       console.error(err)
     }
