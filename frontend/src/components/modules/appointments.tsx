@@ -1163,7 +1163,6 @@ export default function Appointments() {
       const rawStored = localStorage.getItem("printed_gl_applications") || "{}"
       const stored = JSON.parse(rawStored)
       if (appt.referenceNo) stored[appt.referenceNo.toLowerCase().trim()] = true
-      if (appt.applicantName) stored[appt.applicantName.toLowerCase().trim()] = true
       if (appt.id) stored[appt.id.toLowerCase().trim()] = true
       localStorage.setItem("printed_gl_applications", JSON.stringify(stored))
       window.dispatchEvent(new Event("printed_gl_applications_updated"))

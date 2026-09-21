@@ -3405,16 +3405,14 @@ export default function MyApplications() {
               cachedAppt?.status === "approved"
 
             const savedDisbs = getSavedDisbursements()
-            const selAppApplicantName = (selectedApp.applicantName || "").toLowerCase().trim()
             const selAppRefNo = String(selectedApp.applicationNo || selectedApp.id || "").toLowerCase().trim()
             const matchDisb = savedDisbs.find(
               (d) =>
                 (d.applicationRef && (d.applicationRef.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.applicationRef.toLowerCase().trim()))) ||
-                (d.disbursementId && (d.disbursementId.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.disbursementId.toLowerCase().trim()))) ||
-                (isApprovedDecision && d.applicantName && selAppApplicantName && (d.applicantName.toLowerCase().trim() === selAppApplicantName || selAppApplicantName.includes(d.applicantName.toLowerCase().trim())))
+                (d.disbursementId && (d.disbursementId.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.disbursementId.toLowerCase().trim())))
             )
 
-            const isDisbClaimed = matchDisb ? (isDisbursementManuallyReleased(matchDisb) || matchDisb.status === "RELEASED") : false
+            const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
             const isClaimed = isApprovedDecision && (selectedApp.status === "Released" || selectedApp.status === "Completed" || isDisbClaimed)
             const isGLIssued = isApprovedDecision || (isApprovedDecision && selectedApp.status === "For Release") || isClaimed
             const isAssessmentDone = isApprovedDecision || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment" || cachedAppt?.decision === "referred"
@@ -3852,16 +3850,14 @@ export default function MyApplications() {
                         cachedAppt?.status === "approved")
 
                     const savedDisbs = getSavedDisbursements()
-                    const appApplicantName = (app.applicantName || "").toLowerCase().trim()
                     const appRefNo = String(app.applicationNo || app.id || app.referenceNumber || "").toLowerCase().trim()
                     const matchDisb = savedDisbs.find(
                       (d) =>
                         (d.applicationRef && (d.applicationRef.toLowerCase().trim() === appRefNo || appRefNo.includes(d.applicationRef.toLowerCase().trim()) || d.applicationRef.toLowerCase().includes(appRefNo))) ||
-                        (d.disbursementId && (d.disbursementId.toLowerCase().trim() === appRefNo || appRefNo.includes(d.disbursementId.toLowerCase().trim()))) ||
-                        (isApprovedDecision && d.applicantName && appApplicantName && (d.applicantName.toLowerCase().trim() === appApplicantName || appApplicantName.includes(d.applicantName.toLowerCase().trim())))
+                        (d.disbursementId && (d.disbursementId.toLowerCase().trim() === appRefNo || appRefNo.includes(d.disbursementId.toLowerCase().trim())))
                     )
 
-                    const isDisbClaimed = matchDisb ? (isDisbursementManuallyReleased(matchDisb) || matchDisb.status === "RELEASED") : false
+                    const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
                     const isExplicitlyReleased =
                       isApprovedDecision &&
                       (app.status === "Released" ||
@@ -3872,12 +3868,9 @@ export default function MyApplications() {
                     const isUnderReview = app.status === "Under Review" || app.status === "For Assessment"
 
                     const appKey = (app.applicationNo || app.id || app.referenceNo || "").toLowerCase().trim()
-                    const applicantNameKey = (app.applicantName || "").toLowerCase().trim()
                     const isGLPrinted = Boolean(
                       isApprovedDecision &&
-                      ((appKey && printedGLMap[appKey]) ||
-                        (applicantNameKey && printedGLMap[applicantNameKey]) ||
-                        isExplicitlyReleased)
+                      ((appKey && printedGLMap[appKey]) || isExplicitlyReleased)
                     )
 
                     const partnerHospital =

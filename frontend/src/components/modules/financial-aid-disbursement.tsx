@@ -180,12 +180,11 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
     } catch {}
 
     const processed = records.map((d) => {
-      const appt = appointmentsMap[d.applicationRef] || appointmentsMap[d.applicantName.toLowerCase().trim()]
+      const appt = appointmentsMap[d.applicationRef]
       const cachedSched =
         localScheduledMap[d.id] ||
         localScheduledMap[d.disbursementId] ||
-        localScheduledMap[d.applicationRef] ||
-        localScheduledMap[d.applicantName.toLowerCase().trim()]
+        localScheduledMap[d.applicationRef]
 
       let finalApptDate = d.appointmentDate
       let finalApptTime = d.appointmentTime
@@ -624,26 +623,22 @@ export default function FinancialAidDisbursement() {
           const appt =
             appointmentsMap[`${d.applicationRef}_${cleanAssistance}`] ||
             appointmentsMap[`${baseRef}_${cleanAssistance}`] ||
-            appointmentsMap[`${d.applicantName.toLowerCase().trim()}_${cleanAssistance}`] ||
             appointmentsMap[d.applicationRef] ||
-            appointmentsMap[baseRef] ||
-            appointmentsMap[d.applicantName.toLowerCase().trim()]
+            appointmentsMap[baseRef]
 
           const cachedSched =
             localScheduledMap[d.id] ||
             localScheduledMap[d.disbursementId] ||
             localScheduledMap[`${d.applicationRef}_${d.assistanceType}`] ||
             localScheduledMap[`${baseRef}_${d.assistanceType}`] ||
-            localScheduledMap[`${d.applicantName.toLowerCase().trim()}_${d.assistanceType}`] ||
             localScheduledMap[d.applicationRef] ||
-            localScheduledMap[baseRef] ||
-            localScheduledMap[d.applicantName.toLowerCase().trim()]
+            localScheduledMap[baseRef]
 
           const existingSaved = localDisbursements.find(
             (x) =>
-              ((x.applicationRef && (x.applicationRef === d.applicationRef || x.applicationRef === baseRef)) ||
-                (x.applicantName && x.applicantName.toLowerCase().trim() === d.applicantName.toLowerCase().trim())) &&
-              (x.assistanceType === d.assistanceType || x.disbursementId === d.disbursementId)
+              (x.applicationRef && (x.applicationRef === d.applicationRef || x.applicationRef === baseRef)) ||
+              (x.disbursementId && x.disbursementId === d.disbursementId) ||
+              (x.id && x.id === d.id)
           )
 
           const hasValidAppt = Boolean(appt?.scheduled_date && appt?.status !== "pending")

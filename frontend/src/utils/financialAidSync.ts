@@ -204,23 +204,49 @@ export async function deleteFinancialAidDisbursement(record: {
   window.dispatchEvent(new Event("storage"))
 }
 
+export function resetManualDisbursementRelease(refOrId?: string) {
+  if (!refOrId) return
+  try {
+    const target = String(refOrId).toLowerCase().trim()
+    const raw = localStorage.getItem("manually_released_disbursements")
+    if (raw) {
+      const list = JSON.parse(raw)
+      if (Array.isArray(list)) {
+        const next = list.filter((k: any) => String(k).toLowerCase().trim() !== target)
+        localStorage.setItem("manually_released_disbursements", JSON.stringify(next))
+      }
+    }
+    const rawGL = localStorage.getItem("printed_gl_applications")
+    if (rawGL) {
+      const map = JSON.parse(rawGL)
+      if (typeof map === "object" && map !== null) {
+        delete map[target]
+        localStorage.setItem("printed_gl_applications", JSON.stringify(map))
+      }
+    }
+  } catch {}
+}
+
 export function getManuallyReleasedKeys(): Set<string> {
   try {
     const raw = localStorage.getItem("manually_released_disbursements")
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return new Set(parsed.map(k => String(k).toLowerCase().trim()))
-      if (typeof parsed === "object") return new Set(Object.keys(parsed).map(k => String(k).toLowerCase().trim()))
+      const list = Array.isArray(parsed) ? parsed : Object.keys(parsed)
+      const validRefKeys = list
+        .map(k => String(k).toLowerCase().trim())
+        .filter(k => k.startsWith("disb") || k.startsWith("1100") || k.startsWith("db-") || k.startsWith("remote-") || /\d{5,}/.test(k))
+      return new Set(validRefKeys)
     }
   } catch {}
   return new Set()
 }
 
-export function markDisbursementAsManuallyReleased(record: { id?: string; disbursementId?: string; applicationRef?: string; applicantName?: string }) {
+export function markDisbursementAsManuallyReleased(record: { id?: string; disbursementId?: string; applicationRef?: string }) {
   try {
     const raw = localStorage.getItem("manually_released_disbursements")
     const list: string[] = raw ? JSON.parse(raw) : []
-    const keysToAdd = [record.id, record.disbursementId, record.applicationRef, record.applicantName]
+    const keysToAdd = [record.id, record.disbursementId, record.applicationRef]
       .filter(Boolean)
       .map(k => String(k).toLowerCase().trim())
     keysToAdd.forEach(k => {
@@ -236,14 +262,14 @@ export function isDisbursementManuallyReleased(record: { id?: string; disburseme
   if (record.releasedBy && (record.releasedBy.includes("Automated") || record.releasedBy.includes("Appointment") || record.releasedBy.includes("Social Worker"))) {
     return false
   }
-  if (record.releasedBy === "MANUAL_DISBURSING_OFFICER" || record.releasedBy === "Disbursing Officer") {
-    return true
-  }
   const manualKeys = getManuallyReleasedKeys()
-  if (record.id && manualKeys.has(String(record.id).toLowerCase().trim())) return true
-  if (record.disbursementId && manualKeys.has(String(record.disbursementId).toLowerCase().trim())) return true
-  if (record.applicationRef && manualKeys.has(String(record.applicationRef).toLowerCase().trim())) return true
-  if (record.applicantName && manualKeys.has(String(record.applicantName).toLowerCase().trim())) return true
+  const cleanId = String(record.id || "").toLowerCase().trim()
+  const cleanDisbId = String(record.disbursementId || "").toLowerCase().trim()
+  const cleanAppRef = String(record.applicationRef || "").toLowerCase().trim()
+
+  if (cleanId && manualKeys.has(cleanId)) return true
+  if (cleanDisbId && manualKeys.has(cleanDisbId)) return true
+  if (cleanAppRef && manualKeys.has(cleanAppRef)) return true
   return false
 }
 
