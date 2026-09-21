@@ -553,8 +553,8 @@ const canProceedPersonal = Boolean(
           if (!Array.isArray(localApps)) localApps = []
         } catch {}
 
-        // Remote database is the primary source of truth. Fallback to local only if remote is empty.
-        const allApps: any[] = remoteApps.length > 0 ? remoteApps : localApps
+        // Combine both remote database and local storage to ensure no active application is missed
+        const allApps: any[] = [...remoteApps, ...localApps]
 
         const matchService = (a: any) => {
           if (!a) return false
@@ -573,18 +573,24 @@ const canProceedPersonal = Boolean(
           return aType.includes(resolvedTypeKey.replace("aics", "").toLowerCase()) || aType.includes(type.toLowerCase())
         }
 
+        const cleanUserQcid = userQcid.replace(/[^a-zA-Z0-9]/g, "")
         const isUserMatch = (a: any) => {
           if (!a) return false
           const appQc = String(a.qc_id || a.reference_no || a.reference_number || "").trim().toLowerCase()
+          const cleanAppQc = appQc.replace(/[^a-zA-Z0-9]/g, "")
           const appEmail = String(a.email || "").trim().toLowerCase()
           const appName = String(a.full_name || `${a.first_name || ""} ${a.last_name || ""}`).trim().toLowerCase()
           const appFirst = String(a.first_name || "").trim().toLowerCase()
           const appLast = String(a.last_name || "").trim().toLowerCase()
 
-          if (userQcid && appQc && userQcid.length >= 10 && appQc === userQcid) return true
+          if (cleanUserQcid && cleanAppQc && (cleanUserQcid === cleanAppQc || (cleanUserQcid.length >= 8 && cleanAppQc.includes(cleanUserQcid)) || (cleanAppQc.length >= 8 && cleanUserQcid.includes(cleanAppQc)))) return true
+          if (userQcid && appQc && (userQcid === appQc || appQc.includes(userQcid) || userQcid.includes(appQc))) return true
           if (userEmail && appEmail && appEmail === userEmail) return true
+          if (userFirst && appFirst && userFirst === appFirst) return true
+          if (userFirst && appName && appName.includes(userFirst)) return true
+          if (userLast && appLast && userLast === appLast && userLast !== "cruz" && userLast !== "dela cruz") return true
           if (userFirst && userLast && appFirst && appLast && appFirst === userFirst && appLast === userLast) return true
-          if (userFirst && userLast && appName && (appName === `${userFirst} ${userLast}` || (appName.startsWith(userFirst + " ") && appName.endsWith(" " + userLast)))) return true
+          if (userFirst && userLast && appName && ((appName.includes(userFirst) && appName.includes(userLast)) || appName === `${userFirst} ${userLast}`)) return true
           return false
         }
 
