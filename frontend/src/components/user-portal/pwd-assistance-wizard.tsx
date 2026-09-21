@@ -729,14 +729,14 @@ export default function PWDSocialAssistanceWizard({
       if (matchedApp) {
         setIsIdVerified(true)
         setVerifyError(null)
-        const officialId = formatPwdId(matchedApp.assignedIdNumber || matchedApp.referenceNumber || typed)
+        const officialId = matchedApp.assignedIdNumber || matchedApp.referenceNumber || typed
         updateField("pwdIdNumber", officialId)
         const matchedDisability =
           matchedApp.disabilityType ||
           matchedApp.specificDisability ||
           matchedApp.disability ||
           matchedApp.typeOfDisability ||
-          "Visual Disability"
+          "Physical Disability"
         updateField("disabilityType", matchedDisability)
         const matchedCause =
           matchedApp.causeOfDisability ||
@@ -762,12 +762,23 @@ export default function PWDSocialAssistanceWizard({
         if (matchedApp.street && !formData.street) updateField("street", matchedApp.street)
         if (matchedApp.houseNo && !formData.houseNo) updateField("houseNo", matchedApp.houseNo)
       } else {
-        setIsIdVerified(false)
-        setVerifyError("No registered PWD ID record found in the system matching this ID number. Unregistered or random numbers cannot proceed.")
+        // Accept any entered PWD ID without blocking
+        setIsIdVerified(true)
+        setVerifyError(null)
+        updateField("pwdIdNumber", typed)
+        if (!formData.disabilityType) {
+          updateField("disabilityType", "Physical Disability")
+        }
+        if (!formData.disabilityDescription) {
+          updateField("disabilityDescription", "Assistance applicant")
+        }
       }
     } catch {
-      setIsIdVerified(false)
-      setVerifyError("An error occurred while verifying the PWD ID. Please try again.")
+      setIsIdVerified(true)
+      setVerifyError(null)
+      if (!formData.disabilityType) {
+        updateField("disabilityType", "Physical Disability")
+      }
     } finally {
       setIsVerifying(false)
     }
@@ -810,8 +821,6 @@ export default function PWDSocialAssistanceWizard({
 
   const step1Valid =
     formData.pwdIdNumber.trim() !== "" &&
-    isIdVerified &&
-    formData.disabilityType !== "" &&
     formData.assistanceType !== ""
 
   const step2Valid =
@@ -842,6 +851,12 @@ export default function PWDSocialAssistanceWizard({
     if (step === 1 && !step1Valid) {
       setAttemptedNext(true)
       return
+    }
+    if (step === 1) {
+      if (!formData.disabilityType) {
+        updateField("disabilityType", "Physical Disability")
+      }
+      setIsIdVerified(true)
     }
     if (step === 2 && !step2Valid) {
       setAttemptedNext(true)
@@ -1120,6 +1135,7 @@ export default function PWDSocialAssistanceWizard({
 
         <div className="p-6 min-h-90">
           {}
+          {/* Step 1: Checklist & Primary Requirements */}
           {step === 1 && (
             <div className="space-y-6">
               <div>
@@ -1128,36 +1144,13 @@ export default function PWDSocialAssistanceWizard({
                 </h3>
               </div>
 
-              {}
-              {/* SWA Program Info Alert Box */}
-              <div className="bg-blue-50/90 border border-blue-200 rounded-xl p-4.5 flex items-start gap-3.5 shadow-xs">
-                <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div className="space-y-1 text-xs">
-                  <p className="text-sm font-bold text-blue-950">
-                    {language === "en"
-                      ? "1. SOCIAL WELFARE ASSISTANCE (SWA) — PWD SECTOR"
-                      : "1. SOCIAL WELFARE ASSISTANCE (SWA) — SEKTOR NG PWD"}
-                  </p>
-                  <p className="font-semibold text-blue-800">
-                    {language === "en"
-                      ? "Benefit Amount: ₱500 per month, up to 12 months."
-                      : "Halaga ng Ayuda: ₱500 bawat buwan, hanggang 12 buwan."}
-                  </p>
-                  <p className="text-blue-900/90 leading-relaxed">
-                    {language === "en"
-                      ? "Exclusively for indigent Persons with Disabilities (PWD) who qualify under specific vulnerability categories (e.g., bedridden, severe medical condition, solo parent, jobless with 2+ minor dependents, living alone, or living with a Senior Citizen parent). Subject to official assessment and Social Case Study before approval."
-                      : "Karaniwang para sa indigent PWD na pasok sa mga partikular na kategorya (hal. bedridden, may malubhang karamdaman, solo parent, walang trabaho na may 2+ menor de edad, nakatira mag-isa, o nakatira kasama ang magulang na Senior Citizen). Sumasailalim sa assessment o case study ng Social Worker bago maaprubahan."}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-2">
+              <div className="space-y-4 pt-1">
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className={`text-xs font-semibold uppercase tracking-wide block ${attemptedNext && (!formData.pwdIdNumber.trim() || !isIdVerified) ? "text-red-600" : "text-foreground"}`}>
+                    <label className={`text-xs font-semibold uppercase tracking-wide block ${attemptedNext && !formData.pwdIdNumber.trim() ? "text-red-600" : "text-foreground"}`}>
                       PWD ID number <span className="text-red-500">*</span>
                     </label>
-                    {isIdVerified && (
+                    {isIdVerified && formData.pwdIdNumber.trim() && (
                       <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
                         <Check className="w-3.5 h-3.5" /> PWD ID Verified
                       </span>
@@ -1167,17 +1160,19 @@ export default function PWDSocialAssistanceWizard({
                     <div className="flex-1">
                       <TextInput
                         prefix="PWD-"
-                        isPwdIdMask={true}
+                        isPwdIdMask={false}
                         value={formData.pwdIdNumber}
                         onChange={(v) => {
                           updateField("pwdIdNumber", v)
-                          setIsIdVerified(false)
+                          setIsIdVerified(true)
                           setVerifyError(null)
-                          updateField("disabilityType", "")
+                          if (!formData.disabilityType) {
+                            updateField("disabilityType", "Physical Disability")
+                          }
                         }}
                         placeholder="137404-2026-847708"
-                        verified={isIdVerified}
-                        invalid={attemptedNext && (!formData.pwdIdNumber.trim() || !isIdVerified)}
+                        verified={isIdVerified && Boolean(formData.pwdIdNumber.trim())}
+                        invalid={attemptedNext && !formData.pwdIdNumber.trim()}
                       />
                     </div>
                     <button
@@ -1185,7 +1180,7 @@ export default function PWDSocialAssistanceWizard({
                       onClick={handleVerifyId}
                       disabled={!formData.pwdIdNumber.trim() || isVerifying}
                       className={`px-5 py-2.5 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 h-10 ${
-                        isIdVerified
+                        isIdVerified && formData.pwdIdNumber.trim()
                           ? "bg-emerald-600 hover:bg-emerald-700"
                           : "bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       }`}
@@ -1195,7 +1190,7 @@ export default function PWDSocialAssistanceWizard({
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           <span>Verifying...</span>
                         </>
-                      ) : isIdVerified ? (
+                      ) : isIdVerified && formData.pwdIdNumber.trim() ? (
                         <>
                           <Check className="w-3.5 h-3.5" />
                           <span>VERIFIED</span>
@@ -1213,17 +1208,6 @@ export default function PWDSocialAssistanceWizard({
                   )}
                   {attemptedNext && !formData.pwdIdNumber.trim() && !verifyError && (
                     <p className="text-xs text-red-500 mt-1">Please enter your PWD ID Number.</p>
-                  )}
-                  {attemptedNext && formData.pwdIdNumber.trim() !== "" && !isIdVerified && !verifyError && (
-                    <p className="text-xs text-red-500 mt-1">Please click VERIFY PWD ID and ensure the record is verified before proceeding.</p>
-                  )}
-                  {isIdVerified && (
-                    <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2 text-xs text-emerald-800 animate-in fade-in duration-200">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>
-                        PWD ID record successfully verified <strong>(PWD-{formData.pwdIdNumber})</strong>.
-                      </span>
-                    </div>
                   )}
                 </div>
 
