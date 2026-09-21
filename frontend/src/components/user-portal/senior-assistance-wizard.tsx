@@ -136,20 +136,6 @@ function ReviewSection({
   )
 }
 
-function ReviewCheckItem({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <div className="flex items-start gap-2.5 py-2 text-xs md:text-sm text-foreground">
-      <span
-        className={`flex items-center justify-center h-4 w-4 rounded-full shrink-0 mt-0.5 ${
-          ok ? "bg-emerald-500" : "bg-red-500"
-        }`}
-      >
-        {ok ? <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} /> : <X className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
-      </span>
-      <span>{label}</span>
-    </div>
-  )
-}
 
 function ReviewField({ label, value }: { label: string; value: string }) {
   return (
