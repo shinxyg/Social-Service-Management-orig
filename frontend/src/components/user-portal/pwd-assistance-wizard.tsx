@@ -153,9 +153,9 @@ const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   {
     id: "casePhoto",
     label: "REQUIRED PHOTO / DOCUMENTATION ACCORDING TO CASE",
-    description: "2×2 ID picture or case-specific documentation (e.g., whole-body photo with calendar for bedridden beneficiaries, Solo Parent ID/Cert, or proof of vulnerability).",
+    description: "Case-specific documentation (e.g., whole-body photo with calendar for bedridden beneficiaries, Solo Parent ID/Cert, or proof of vulnerability).",
     note: "If bedridden: Whole-body photo with a calendar showing the current date.",
-    images: ["/samples/1X1 PICTURE.png"],
+    images: ["/samples/WHOLE BODY.jpg"],
     required: true,
   },
 ]
