@@ -3782,8 +3782,143 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                {}
+                {/* Specialized Preview Sections (Pipeline for AICS, ID cards for PWD/Senior, etc.) */}
                 {(() => {
+                  if (isAicsMedicalApplication(app)) {
+                    const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+                    const schedMap = rawSched ? JSON.parse(rawSched) : {}
+                    const refKey = String(app.applicationNo || app.id || app.referenceNumber || "").trim()
+                    const cachedAppt =
+                      schedMap[refKey] ||
+                      schedMap[app.id] ||
+                      schedMap[`appt_${refKey}`] ||
+                      schedMap[app.applicantName?.toLowerCase()?.trim()]
+
+                    const isApprovedDecision =
+                      app.status === "Approved" ||
+                      app.status === "Completed" ||
+                      app.status === "Released" ||
+                      cachedAppt?.decision === "approved" ||
+                      cachedAppt?.status === "approved" ||
+                      cachedAppt?.status === "completed"
+
+                    const savedDisbs = getSavedDisbursements()
+                    const matchDisb = savedDisbs.find(
+                      (d) =>
+                        d.applicationRef === app.applicationNo ||
+                        (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName?.toLowerCase()?.trim())
+                    )
+
+                    const isClaimed = app.status === "Released" || app.status === "Completed" || matchDisb?.status === "RELEASED"
+                    const isGLIssued = isApprovedDecision || app.status === "For Release" || isClaimed
+                    const isAssessmentDone = isGLIssued || app.status === "Under Review" || app.status === "For Assessment" || cachedAppt?.decision === "referred"
+                    const partnerHospital =
+                      app.details?.partnerHospital ||
+                      app.formData?.partnerHospital ||
+                      app.extra_data?.partnerHospital ||
+                      app.partnerHospital ||
+                      "East Avenue Medical Center (EAMC)"
+                    const appDateStr = cachedAppt?.scheduledDate || app.appointmentDate || app.formData?.appointmentDate || "Sep 21, 2026"
+                    const appTimeStr = cachedAppt?.scheduledTime || app.appointmentTime || app.formData?.appointmentTime || "01:08 AM"
+
+                    return (
+                      <div className="bg-slate-50 dark:bg-slate-800/80 border border-blue-200 dark:border-slate-700/80 rounded-xl p-3.5 space-y-3 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-100 dark:border-slate-700 pb-2">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            <span className="text-xs font-bold text-gray-900 dark:text-white">
+                              Partner Facility: <strong className="text-blue-700 dark:text-blue-300">{partnerHospital}</strong>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
+                            <Clock className="w-3.5 h-3.5 text-blue-600" />
+                            <span>SSDD Intake: <strong>{appDateStr} ({appTimeStr})</strong></span>
+                          </div>
+                        </div>
+
+                        {/* 5-Stage Visual Pipeline */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-0.5">
+                          <div className="p-2 rounded-lg border text-center text-[10px] space-y-0.5 bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold">
+                            <span className="block text-blue-600 dark:text-blue-400 font-black">1. GENERAL REQUIREMENTS</span>
+                            <span className="text-[9px] block">Verified &amp; Intake Done</span>
+                          </div>
+
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
+                            isAssessmentDone
+                              ? "bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold"
+                              : "bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 text-blue-800 dark:text-blue-300 font-bold"
+                          }`}>
+                            <span className="block font-black">{isAssessmentDone ? "2. EVALUATION DONE" : "2. APPOINTMENT / EVAL"}</span>
+                            <span className="text-[9px] block">{isAssessmentDone ? "Assessment Done" : "Appointment Set"}</span>
+                          </div>
+
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
+                            isApprovedDecision || isGLIssued
+                              ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
+                              : isAssessmentDone
+                              ? "bg-amber-100/80 dark:bg-amber-950/60 border-amber-300 text-amber-900 dark:text-amber-200 font-bold"
+                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block font-black">3. APPROVAL / ENDORSEMENT</span>
+                            <span className="text-[9px] block">{isApprovedDecision || isGLIssued ? "Approved & Endorsed" : "Under Evaluation"}</span>
+                          </div>
+
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
+                            isGLIssued
+                              ? "bg-indigo-100/80 dark:bg-indigo-950/60 border-indigo-300 text-indigo-900 dark:text-indigo-200 font-bold"
+                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block font-black">4. ASSISTANCE PROCESSING</span>
+                            <span className="text-[9px] block">{isGLIssued ? "GL / Voucher Ready" : "Awaiting Approval"}</span>
+                          </div>
+
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
+                            isClaimed
+                              ? "bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-300 text-emerald-900 dark:text-emerald-200 font-bold"
+                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block font-black">5. RELEASED / AVAILED</span>
+                            <span className="text-[9px] block">{isClaimed ? "✓ Aid Released & Availed" : "Pending Payout"}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1 border-t border-blue-100 dark:border-slate-700/60 flex-wrap">
+                          {!isGLIssued ? (
+                            <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                              * Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview.
+                            </p>
+                          ) : <div />}
+                          <div className="flex items-center gap-1.5 flex-wrap ml-auto">
+                            {isGLIssued && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setGuaranteeLetterApp(app)
+                                }}
+                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>View GL</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setAppointmentSlipApp(app)
+                              }}
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              <span>View Slip</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   const isApprovedOrReleased =
                     app.status === "Approved" || app.status === "For Release" || app.status === "Released"
 
@@ -3936,141 +4071,6 @@ export default function MyApplications() {
                               Approved Package
                             </span>
                           )}
-                        </div>
-                      </div>
-                    )
-                  }
-
-                  if (isAicsMedicalApplication(app)) {
-                    const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
-                    const schedMap = rawSched ? JSON.parse(rawSched) : {}
-                    const refKey = String(app.applicationNo || app.id || app.referenceNumber || "").trim()
-                    const cachedAppt =
-                      schedMap[refKey] ||
-                      schedMap[app.id] ||
-                      schedMap[`appt_${refKey}`] ||
-                      schedMap[app.applicantName?.toLowerCase()?.trim()]
-
-                    const isApprovedDecision =
-                      app.status === "Approved" ||
-                      app.status === "Completed" ||
-                      app.status === "Released" ||
-                      cachedAppt?.decision === "approved" ||
-                      cachedAppt?.status === "approved" ||
-                      cachedAppt?.status === "completed"
-
-                    const savedDisbs = getSavedDisbursements()
-                    const matchDisb = savedDisbs.find(
-                      (d) =>
-                        d.applicationRef === app.applicationNo ||
-                        (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName?.toLowerCase()?.trim())
-                    )
-
-                    const isClaimed = app.status === "Released" || app.status === "Completed" || matchDisb?.status === "RELEASED"
-                    const isGLIssued = isApprovedDecision || app.status === "For Release" || isClaimed
-                    const isAssessmentDone = isGLIssued || app.status === "Under Review" || app.status === "For Assessment" || cachedAppt?.decision === "referred"
-                    const partnerHospital =
-                      app.details?.partnerHospital ||
-                      app.formData?.partnerHospital ||
-                      app.extra_data?.partnerHospital ||
-                      app.partnerHospital ||
-                      "East Avenue Medical Center (EAMC)"
-                    const appDateStr = cachedAppt?.scheduledDate || app.appointmentDate || app.formData?.appointmentDate || "Sep 21, 2026"
-                    const appTimeStr = cachedAppt?.scheduledTime || app.appointmentTime || app.formData?.appointmentTime || "01:08 AM"
-
-                    return (
-                      <div className="bg-slate-50 dark:bg-slate-800/80 border border-blue-200 dark:border-slate-700/80 rounded-xl p-3.5 space-y-3 shadow-2xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-100 dark:border-slate-700 pb-2">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            <span className="text-xs font-bold text-gray-900 dark:text-white">
-                              Partner Facility: <strong className="text-blue-700 dark:text-blue-300">{partnerHospital}</strong>
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
-                            <Clock className="w-3.5 h-3.5 text-blue-600" />
-                            <span>SSDD Intake: <strong>{appDateStr} ({appTimeStr})</strong></span>
-                          </div>
-                        </div>
-
-                        {/* 5-Stage Visual Pipeline */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-0.5">
-                          <div className="p-2 rounded-lg border text-center text-[10px] space-y-0.5 bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold">
-                            <span className="block text-blue-600 dark:text-blue-400 font-black">1. GENERAL REQUIREMENTS</span>
-                            <span className="text-[9px] block">Verified &amp; Intake Done</span>
-                          </div>
-
-                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isAssessmentDone
-                              ? "bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold"
-                              : "bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 text-blue-800 dark:text-blue-300 font-bold"
-                          }`}>
-                            <span className="block font-black">{isAssessmentDone ? "2. EVALUATION DONE" : "2. APPOINTMENT / EVAL"}</span>
-                            <span className="text-[9px] block">{isAssessmentDone ? "Assessment Done" : "Appointment Set"}</span>
-                          </div>
-
-                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isApprovedDecision || isGLIssued
-                              ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
-                              : isAssessmentDone
-                              ? "bg-amber-100/80 dark:bg-amber-950/60 border-amber-300 text-amber-900 dark:text-amber-200 font-bold"
-                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
-                          }`}>
-                            <span className="block font-black">3. APPROVAL / ENDORSEMENT</span>
-                            <span className="text-[9px] block">{isApprovedDecision || isGLIssued ? "Approved & Endorsed" : "Under Evaluation"}</span>
-                          </div>
-
-                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isGLIssued
-                              ? "bg-indigo-100/80 dark:bg-indigo-950/60 border-indigo-300 text-indigo-900 dark:text-indigo-200 font-bold"
-                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
-                          }`}>
-                            <span className="block font-black">4. ASSISTANCE PROCESSING</span>
-                            <span className="text-[9px] block">{isGLIssued ? "GL / Voucher Ready" : "Awaiting Approval"}</span>
-                          </div>
-
-                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isClaimed
-                              ? "bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-300 text-emerald-900 dark:text-emerald-200 font-bold"
-                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
-                          }`}>
-                            <span className="block font-black">5. RELEASED / AVAILED</span>
-                            <span className="text-[9px] block">{isClaimed ? "✓ Aid Released & Availed" : "Pending Payout"}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1 border-t border-blue-100 dark:border-slate-700/60 flex-wrap">
-                          {!isGLIssued ? (
-                            <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
-                              * Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview.
-                            </p>
-                          ) : <div />}
-                          <div className="flex items-center gap-1.5 flex-wrap ml-auto">
-                            {isGLIssued && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setGuaranteeLetterApp(app)
-                                }}
-                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
-                              >
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>View GL</span>
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setAppointmentSlipApp(app)
-                              }}
-                              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                              <span>View Slip</span>
-                            </button>
-                          </div>
                         </div>
                       </div>
                     )
