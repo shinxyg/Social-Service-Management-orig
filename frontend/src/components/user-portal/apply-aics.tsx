@@ -259,11 +259,14 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack: _onBack
     } catch {}
   }
 
+  const isMedicalBill = medicalAssistanceSubType === "Medical Bill Assistance"
   const canProceedChecklist = isFuneralAssistance
     ? Boolean(checklistDeceasedResident === "yes" && checklistRelation && checklistFuneralHome)
     : isEducationalAssistance
     ? eduEligResident && eduEligAge && eduEligSchool && eduEligIndigent
-    : Boolean(partnerHospital && (partnerHospital !== "Other" || partnerHospitalOther.trim()) && medicalDiagnosis.trim())
+    : isMedicalBill
+    ? Boolean(partnerHospital && (partnerHospital !== "Other" || partnerHospitalOther.trim()) && medicalDiagnosis.trim())
+    : true
 
   useEffect(() => {
     const syncProfile = () => {
@@ -1227,64 +1230,90 @@ const handleFinalSubmit = async () => {
             ) : (
               <div className="space-y-5">
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-2 tracking-wide uppercase">CLICK THE TYPE OF ASSISTANCE</h3>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2 tracking-wide uppercase">
+                    CLICK THE TYPE OF ASSISTANCE
+                  </h3>
                   <select
                     value={medicalAssistanceSubType}
-                    onChange={(e) => setMedicalAssistanceSubType(e.target.value)}
-                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setMedicalAssistanceSubType(val)
+                      if (val !== "Medical Bill Assistance") {
+                        setPartnerHospital("")
+                        setPartnerHospitalOther("")
+                        setMedicalDiagnosis("")
+                      }
+                    }}
+                    className="w-full h-11 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                   >
                     <option value="Medicines / Medical Supplies">Medicines / Medical Supplies</option>
                     <option value="Medical Bill Assistance">Medical Bill Assistance</option>
                   </select>
                 </div>
 
-                <div className="border-t border-gray-200 pt-4 space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                      Accredited Partner Hospital / Healthcare Facility *
-                    </label>
-                  <select
-                    value={partnerHospital}
-                    onChange={(e) => setPartnerHospital(e.target.value)}
-                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                  >
-                    <option value="" disabled>Select Accredited Partner Hospital / Healthcare Facility</option>
-                    <option value="Quezon City General Hospital (QCGH)">Quezon City General Hospital (QCGH)</option>
-                    <option value="Lung Center of the Philippines">Lung Center of the Philippines</option>
-                    <option value="National Children’s Hospital">National Children’s Hospital</option>
-                    <option value="National Kidney and Transplant Institute (NKTI)">National Kidney and Transplant Institute (NKTI)</option>
-                    <option value="Heart Center of the Philippines">Heart Center of the Philippines</option>
-                    <option value="East Avenue Medical Center">East Avenue Medical Center</option>
-                    <option value="Philippine Children’s Medical Center (PCMC)">Philippine Children’s Medical Center (PCMC)</option>
-                    <option value="Quirino Memorial Medical Center (QMMC)">Quirino Memorial Medical Center (QMMC)</option>
-                    <option value="St. Luke’s Medical Center – Quezon City">St. Luke’s Medical Center – Quezon City</option>
-                    <option value="Other">Other Accredited Health Facility</option>
-                  </select>
-                </div>
+                {medicalAssistanceSubType === "Medical Bill Assistance" ? (
+                  <div className="border-t border-gray-200 dark:border-slate-800 pt-4 space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                        Accredited Partner Hospital / Healthcare Facility *
+                      </label>
+                      <select
+                        value={partnerHospital}
+                        onChange={(e) => setPartnerHospital(e.target.value)}
+                        className="w-full h-11 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                      >
+                        <option value="" disabled>Select Accredited Partner Hospital / Healthcare Facility</option>
+                        <option value="Quezon City General Hospital (QCGH)">Quezon City General Hospital (QCGH)</option>
+                        <option value="Lung Center of the Philippines">Lung Center of the Philippines</option>
+                        <option value="National Children’s Hospital">National Children’s Hospital</option>
+                        <option value="National Kidney and Transplant Institute (NKTI)">National Kidney and Transplant Institute (NKTI)</option>
+                        <option value="Heart Center of the Philippines">Heart Center of the Philippines</option>
+                        <option value="East Avenue Medical Center">East Avenue Medical Center</option>
+                        <option value="Philippine Children’s Medical Center (PCMC)">Philippine Children’s Medical Center (PCMC)</option>
+                        <option value="Quirino Memorial Medical Center (QMMC)">Quirino Memorial Medical Center (QMMC)</option>
+                        <option value="St. Luke’s Medical Center – Quezon City">St. Luke’s Medical Center – Quezon City</option>
+                        <option value="Other">Other Accredited Health Facility</option>
+                      </select>
+                    </div>
 
-                {partnerHospital === "Other" && (
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Specify Hospital / Facility Name *</label>
-                    <input
-                      value={partnerHospitalOther}
-                      onChange={(e) => setPartnerHospitalOther(e.target.value)}
-                      placeholder="e.g. Philippine General Hospital (PGH)"
-                      className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                    />
+                    {partnerHospital === "Other" && (
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                          Specify Hospital / Facility Name *
+                        </label>
+                        <input
+                          value={partnerHospitalOther}
+                          onChange={(e) => setPartnerHospitalOther(e.target.value)}
+                          placeholder="e.g. Philippine General Hospital (PGH)"
+                          className="w-full h-11 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                        Medical Condition / Diagnosis *
+                      </label>
+                      <input
+                        value={medicalDiagnosis}
+                        onChange={(e) => setMedicalDiagnosis(e.target.value)}
+                        placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
+                        className="w-full h-11 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
+                    <span className="text-base shrink-0">💊</span>
+                    <div>
+                      <p className="font-bold mb-0.5">Paunawa para sa Medicines / Medical Supplies:</p>
+                      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Hindi kinakailangan ang hospital affiliation para sa gamot. Mangyaring ihanda ang opisyal na <strong>Doctor&apos;s Prescription (Reseta)</strong> at <strong>Medical Certificate / Clinical Abstract</strong> para sa pag-upload sa susunod na hakbang.
+                      </p>
+                    </div>
                   </div>
                 )}
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Medical Condition / Diagnosis *</label>
-                  <input
-                    value={medicalDiagnosis}
-                    onChange={(e) => setMedicalDiagnosis(e.target.value)}
-                    placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
-                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                  />
-                </div>
               </div>
-            </div>
           )}
           </div>
 
