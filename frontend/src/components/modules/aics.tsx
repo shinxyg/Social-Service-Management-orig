@@ -725,34 +725,53 @@ export default function AICS() {
 
                 {/* Assistance / Medical Specifics */}
                 <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3.5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. Assistance & Medical Details</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. Assistance & Case Details</h3>
                   
-                  <div className="space-y-2 text-xs">
+                  <div className="space-y-2.5 text-xs">
                     <div>
-                      <span className="text-slate-400 font-medium">Assistance Type / Sub-Type:</span>
+                      <span className="text-slate-400 font-medium">Assistance Type:</span>
                       <p className="font-bold text-slate-900 text-sm">{reviewingApp.assistance_type}</p>
-                      {details.medicalAssistanceSubType && (
-                        <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-semibold text-[11px] mt-1">
+                      {details.medicalAssistanceSubType ? (
+                        <span className="inline-block px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-md font-semibold text-[11px] mt-1">
                           {details.medicalAssistanceSubType}
                         </span>
-                      )}
+                      ) : details.assistanceSubType ? (
+                        <span className="inline-block px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-md font-semibold text-[11px] mt-1">
+                          {details.assistanceSubType}
+                        </span>
+                      ) : null}
                     </div>
 
-                    <div>
-                      <span className="text-slate-400 font-medium">Partner Hospital / Facility:</span>
-                      <p className="font-semibold text-slate-800">
-                        {details.partnerHospital === 'Other' 
-                          ? `Other: ${details.partnerHospitalOther || 'Unspecified'}` 
-                          : details.partnerHospital || '—'}
-                      </p>
-                    </div>
+                    {/* Show Partner Hospital and Medical Diagnosis ONLY for Medical Bill Assistance */}
+                    {details.partnerHospital && details.partnerHospital !== '—' && (
+                      <div>
+                        <span className="text-slate-400 font-medium">Partner Hospital / Facility:</span>
+                        <p className="font-semibold text-slate-800">
+                          {details.partnerHospital === 'Other' 
+                            ? `Other: ${details.partnerHospitalOther || 'Unspecified'}` 
+                            : details.partnerHospital}
+                        </p>
+                      </div>
+                    )}
 
-                    <div>
-                      <span className="text-slate-400 font-medium">Medical Condition / Diagnosis:</span>
-                      <p className="font-semibold text-slate-800 bg-white p-2 rounded-lg border border-slate-200 mt-0.5">
-                        {details.medicalDiagnosis || '—'}
-                      </p>
-                    </div>
+                    {details.medicalDiagnosis && details.medicalDiagnosis !== '—' && (
+                      <div>
+                        <span className="text-slate-400 font-medium">Medical Condition / Diagnosis:</span>
+                        <p className="font-semibold text-slate-800 bg-white p-2 rounded-lg border border-slate-200 mt-0.5">
+                          {details.medicalDiagnosis}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* For Medicines / Medical Supplies, show medicine tag / note */}
+                    {(details.medicalAssistanceSubType === 'Medicines / Medical Supplies' ||
+                      details.assistanceSubType === 'Medicines / Medical Supplies' ||
+                      (!details.partnerHospital && !details.medicalDiagnosis && reviewingDocs.some(d => (d.document_label || '').toLowerCase().includes('reseta')))) && (
+                      <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium flex items-center gap-1.5">
+                        <span>💊</span>
+                        <span>Saklaw: Tulong sa Gamot / Reseta at Medical Supplies</span>
+                      </div>
+                    )}
 
                     {/* Secondary Parties if available */}
                     <div className="pt-2 flex flex-wrap gap-2">
