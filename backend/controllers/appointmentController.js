@@ -82,12 +82,12 @@ async function syncAndCleanAppointments() {
     const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
 
-    // 1. Clean up AICS appointments that are still in pending intake OR have been rejected
+    // 1. Clean up AICS appointments that are still in initial submit_pending/pending intake OR have been rejected
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND reference_no IN (
         SELECT reference_no FROM aics_applications 
-        WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'for_screening', 'rejected', 'denied', 'disapproved')
+        WHERE status IN ('pending', 'submit_pending', 'rejected', 'denied', 'disapproved')
       )
     `).catch(() => {});
 
@@ -140,21 +140,12 @@ async function syncAndCleanAppointments() {
         AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
     `).catch(() => {});
 
-    // Ensure any AICS application that is still in pending/intake status has its appointment clean and pending
-    await db.query(`
-      UPDATE appointments
-      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
-      WHERE module = 'AICS' AND reference_no IN (
-        SELECT reference_no FROM aics_applications 
-        WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'for_scheduling')
-      )
-    `).catch(() => {});
-
-    // Import active and pending AICS applications for scheduling & social worker review
+    // Import screened/approved AICS applications (waiting_approval, for_screening, for_scheduling, scheduled, under_review, for_referral, referred, approved, completed)
+    // NOTE: 'pending' and 'submit_pending' are NOT imported until the admin in AICS reviews and approves for scheduling.
     const activeAics = await db.query(
       `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix, status
        FROM aics_applications
-       WHERE status IN ('approved', 'completed', 'scheduled', 'under_review', 'for_referral', 'referred', 'pending', 'waiting_approval', 'for_scheduling')`
+       WHERE status IN ('approved', 'completed', 'scheduled', 'under_review', 'for_referral', 'referred', 'waiting_approval', 'for_scheduling', 'for_screening')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeAics.rows) {
@@ -170,7 +161,7 @@ async function syncAndCleanAppointments() {
       await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
-         SELECT $1, 'AICS', $2, $3, $4, NULL, NULL, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.'
+         SELECT $1, 'AICS', $2, $3, $4, NULL, NULL, 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-screen na AICS aplikasyon para sa scheduling at assessment.'
          WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
         [refNo, fullName, cleanType, initStatus]
       ).catch(() => {});
@@ -276,11 +267,10 @@ exports.getAppointments = async (req, res) => {
     `).catch(() => {});
 
     await db.query(`
-      UPDATE appointments
-      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
+      DELETE FROM appointments
       WHERE module = 'AICS' AND reference_no IN (
         SELECT reference_no FROM aics_applications 
-        WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'for_scheduling')
+        WHERE status IN ('pending', 'submit_pending', 'rejected', 'denied', 'disapproved')
       )
     `).catch(() => {});
 

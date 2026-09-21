@@ -579,6 +579,23 @@ export default function Appointments() {
           return s
         }
 
+        let unacceptedAicsRefs = new Set<string>()
+        if (resAicsSettled.status === "fulfilled" && resAicsSettled.value.ok) {
+          try {
+            const aicsClone = await resAicsSettled.value.clone().json()
+            if (aicsClone.applications && Array.isArray(aicsClone.applications)) {
+              aicsClone.applications.forEach((app: any) => {
+                const s = String(app.status || '').toLowerCase()
+                if (s === 'pending' || s === 'submit_pending' || s === 'rejected' || s === 'denied' || s === 'disapproved') {
+                  if (app.reference_no) unacceptedAicsRefs.add(String(app.reference_no).trim().toLowerCase())
+                  if (app.qc_id) unacceptedAicsRefs.add(String(app.qc_id).trim().toLowerCase())
+                  if (app.id) unacceptedAicsRefs.add(String(app.id).trim().toLowerCase())
+                }
+              })
+            }
+          } catch {}
+        }
+
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
           try {
             const dataDb = await resDbSettled.value.json()
@@ -592,7 +609,12 @@ export default function Appointments() {
                   const concern = String(a.concern || '').toLowerCase()
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || '').trim().toLowerCase()
                   const rawId = String(a.id || '').trim().toLowerCase()
+                  const mod = String(a.module || '').toUpperCase()
+
                   if (dismissedSet.has(ref) || dismissedSet.has(rawId) || dismissedSet.has(`db-appt-${rawId}`)) {
+                    return false
+                  }
+                  if (mod === 'AICS' && (unacceptedAicsRefs.has(ref) || unacceptedAicsRefs.has(rawId))) {
                     return false
                   }
                   if (concern.includes('id card') || concern.includes('issuance') || concern.includes('replacement') || concern.includes('renewal')) {
@@ -649,13 +671,12 @@ export default function Appointments() {
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
                 const rawAppStatus = String(app.status || '').toLowerCase()
-                // Only show in Appointments if APPROVED for scheduling (or already scheduled / under review / referred / completed / pending).
-                // Do NOT show if rejected!
+                // Only show in Appointments if APPROVED for scheduling by admin in AICS module (or already scheduled / under review / referred / completed).
+                // Do NOT show if still in initial intake (submit_pending / pending) or rejected!
                 if (
                   rawAppStatus === 'waiting_approval' ||
                   rawAppStatus === 'for_scheduling' ||
-                  rawAppStatus === 'pending' ||
-                  rawAppStatus === 'submit_pending' ||
+                  rawAppStatus === 'for_screening' ||
                   rawAppStatus === 'approved' ||
                   rawAppStatus === 'completed' ||
                   rawAppStatus === 'scheduled' ||

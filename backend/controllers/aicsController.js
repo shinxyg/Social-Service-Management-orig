@@ -183,23 +183,6 @@ exports.createApplication = async (req, res) => {
       }).catch(() => {});
     } catch {}
 
-    try {
-      const applicantFullName = [finalFirstName, middleName, finalLastName, suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-      await db.query(
-        `DELETE FROM appointments WHERE reference_no = $1 OR reference_no = $2`,
-        [referenceNo, qcId || '']
-      ).catch(() => {});
-
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
-         VALUES ($1, 'AICS', $2, $3, 'pending', NULL, NULL, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.')`,
-        [referenceNo, applicantFullName, finalAssistanceType]
-      ).catch(() => {});
-    } catch (e) {
-      console.warn('Failed to register clean pending appointment:', e.message);
-    }
-
     res.status(201).json({
       message: 'Matagumpay na na-submit ang application.',
       application,
