@@ -12,6 +12,13 @@ import {
   Loader2,
   Info,
   RotateCcw,
+  Plus,
+  Trash2,
+  Users,
+  Briefcase,
+  GraduationCap,
+  Receipt,
+  HelpCircle,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
@@ -52,6 +59,16 @@ export interface UserProfile {
   emergencyAddress?: string
 }
 
+export interface FamilyMember {
+  id: string
+  name: string
+  relationship: string
+  age: string
+  occupation: string
+  income: string
+  otherInfo: string
+}
+
 const ASSISTANCE_TYPES = [
   "Bedridden",
   "Severe Health Condition",
@@ -70,6 +87,41 @@ const MONTHLY_INCOME_RANGES = [
   "Above ₱25,000",
 ]
 
+const EMPLOYMENT_STATUS_OPTIONS = [
+  "Employed (Full-Time)",
+  "Employed (Part-Time)",
+  "Self-Employed / Business",
+  "Freelancer / Informal Sector",
+  "Unemployed / Jobless",
+  "Unable to Work due to Disability",
+  "Retired / Pensioner",
+]
+
+const EDUCATIONAL_ATTAINMENT_OPTIONS = [
+  "Elementary Level / Graduate",
+  "Junior High School Level / Graduate",
+  "Senior High School Level / Graduate",
+  "Vocational / Technical Course",
+  "College Level / Undergraduate",
+  "College Graduate / Bachelor's Degree",
+  "Post-Graduate / Masteral / Doctorate",
+  "No Formal Education",
+]
+
+const FAMILY_RELATIONSHIP_OPTIONS = [
+  "Spouse / Asawa",
+  "Son / Anak na Lalaki",
+  "Daughter / Anak na Babae",
+  "Mother / Ina",
+  "Father / Ama",
+  "Brother / Kapatid na Lalaki",
+  "Sister / Kapatid na Babae",
+  "Grandchild / Apo",
+  "Parent / Magulang",
+  "Other Relative / Ibang Kamag-anak",
+  "Guardian / Tagapangalaga",
+]
+
 interface RequiredDocument {
   id: string
   label: string
@@ -80,13 +132,6 @@ interface RequiredDocument {
 }
 
 const REQUIRED_DOCUMENTS: RequiredDocument[] = [
-  {
-    id: "pwdQcId",
-    label: "VALID QC ID – PWD SECTOR",
-    description: "Malinaw na litrato ng iyong QCitizen ID (PWD Sector) harapan at likod.",
-    images: ["/samples/QC ID.png"],
-    required: true,
-  },
   {
     id: "barangayIndigency",
     label: "BARANGAY CERTIFICATE OF INDIGENCY",
@@ -102,9 +147,16 @@ const REQUIRED_DOCUMENTS: RequiredDocument[] = [
     required: true,
   },
   {
-    id: "idPhoto",
-    label: "2×2 PICTURE",
-    description: "2×2 ID picture na may puting background, o Whole-body picture na may kasamang kalendaryo kung bedridden ang aplikante.",
+    id: "pwdQcId",
+    label: "QC PWD ID / APPLICABLE IDENTIFICATION",
+    description: "Malinaw na litrato ng iyong QCitizen ID (PWD Sector) o anumang applicable identification card.",
+    images: ["/samples/QC ID.png"],
+    required: true,
+  },
+  {
+    id: "casePhoto",
+    label: "REQUIRED PHOTO / DOCUMENTATION DEPENDE SA CASE",
+    description: "2×2 ID picture o litrato/dokumento depende sa case (hal. litratong nakahiga kasama ang kalendaryo para sa bedridden, Solo Parent ID/Cert, o patunay ng vulnerability).",
     note: "Kung bedridden: Whole-body picture na may katabing kalendaryo na kita ang kasalukuyang petsa.",
     images: ["/samples/1X1 PICTURE.png"],
     required: true,
@@ -119,12 +171,12 @@ function formatFileSize(bytes: number) {
 }
 
 interface FormData {
-
   isResident: boolean
   hasDisability: boolean
   isIndigent: boolean
   applyingFor: "myself" | "family"
 
+  // 1. Personal Information
   firstName: string
   middleName: string
   lastName: string
@@ -134,6 +186,8 @@ interface FormData {
   dobDay: string
   age: string
   sex: string
+  civilStatus: string
+  nationality: string
   pwdIdNumber: string
   contactNumber: string
   email: string
@@ -143,6 +197,29 @@ interface FormData {
   barangay: string
   cityMunicipality: string
 
+  // 2. Occupation / Employment
+  employmentStatus: string
+  occupation: string
+  sourceOfIncome: string
+  monthlyHouseholdIncome: string
+
+  // 3. Educational Background
+  educationalAttainment: string
+  otherEducationInfo: string
+
+  // 4. Family Composition
+  familyMembers: FamilyMember[]
+  isLivingAlone: boolean
+
+  // 5. Estimate Monthly Expenses (5 digits max)
+  monthlyHouseholdExpenses: string
+
+  // 6. Additional Information
+  assistanceType: string
+  reasonForRequest: string
+  additionalAssessmentInfo: string
+
+  // Disability Details (auto/pre-filled)
   disabilityType: string
   disabilityTypeOther: string
   causeOfDisability: string
@@ -150,12 +227,7 @@ interface FormData {
   disabilityDescription: string
 
   householdMembersCount: string
-  monthlyHouseholdIncome: string
-  monthlyHouseholdExpenses: string
-
-  assistanceType: string
   assistanceTypeOther: string
-  reasonForRequest: string
 
   isCertified: boolean
   signatureName: string
@@ -176,6 +248,8 @@ const EMPTY_FORM: FormData = {
   dobDay: "",
   age: "",
   sex: "Male",
+  civilStatus: "Single",
+  nationality: "FILIPINO",
   pwdIdNumber: "",
   contactNumber: "",
   email: "",
@@ -185,28 +259,41 @@ const EMPTY_FORM: FormData = {
   barangay: "",
   cityMunicipality: "QUEZON CITY",
 
+  employmentStatus: "Unemployed / Jobless",
+  occupation: "",
+  sourceOfIncome: "",
+  monthlyHouseholdIncome: "No Regular Income",
+
+  educationalAttainment: "High School Level / Graduate",
+  otherEducationInfo: "",
+
+  familyMembers: [],
+  isLivingAlone: false,
+
+  monthlyHouseholdExpenses: "",
+
+  assistanceType: "",
+  reasonForRequest: "",
+  additionalAssessmentInfo: "",
+
   disabilityType: "",
   disabilityTypeOther: "",
   causeOfDisability: "",
   causeOfDisabilityOther: "",
   disabilityDescription: "",
 
-  householdMembersCount: "",
-  monthlyHouseholdIncome: "",
-  monthlyHouseholdExpenses: "",
-
-  assistanceType: "",
+  householdMembersCount: "0",
   assistanceTypeOther: "",
-  reasonForRequest: "",
 
   isCertified: false,
   signatureName: "",
 }
 
-function SectionHeader({ title }: { title: string }) {
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="border-b border-border pb-2">
-      <h4 className="text-sm font-bold text-foreground tracking-wide">{title}</h4>
+    <div className="border-b border-border dark:border-slate-800 pb-2">
+      <h4 className="text-sm font-bold text-foreground tracking-wide flex items-center gap-2">{title}</h4>
+      {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
     </div>
   )
 }
@@ -230,7 +317,7 @@ function Field({
 }) {
   return (
     <div className={span === 2 ? "sm:col-span-2" : span === 3 ? "sm:col-span-3" : span === 4 ? "sm:col-span-4" : ""}>
-      <label className={`text-xs font-semibold ${invalid ? "text-red-600" : "text-muted-foreground"}`}>
+      <label className={`text-xs font-semibold ${invalid ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div className="mt-1">{children}</div>
@@ -302,17 +389,17 @@ function TextInput({
     return (
       <div className={`flex items-center w-full rounded-lg border overflow-hidden transition-all focus-within:ring-2 ${
         disabled
-          ? "border-border bg-gray-100 cursor-not-allowed opacity-60"
+          ? "border-border bg-gray-100 dark:bg-slate-800 cursor-not-allowed opacity-60"
           : verified
-          ? "border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20"
+          ? "border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 ring-2 ring-emerald-500/20"
           : invalid
-          ? "border-red-400 focus-within:ring-red-300 bg-red-50"
-          : "border-border focus-within:ring-blue-400 bg-white"
+          ? "border-red-400 focus-within:ring-red-300 bg-red-50 dark:bg-red-950/30"
+          : "border-border dark:border-slate-700 focus-within:ring-blue-400 bg-white dark:bg-slate-900"
       }`}>
         <span className={`inline-flex items-center justify-center px-3.5 py-2.5 border-r text-xs font-bold select-none tracking-wider shrink-0 font-mono transition-colors ${
           verified
-            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-            : "bg-slate-100 border-border text-slate-700"
+            ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
+            : "bg-slate-100 dark:bg-slate-800 border-border dark:border-slate-700 text-slate-700 dark:text-slate-300"
         }`}>
           {prefix}
         </span>
@@ -324,7 +411,7 @@ function TextInput({
           onChange={handleChange}
           disabled={disabled}
           maxLength={isPwdIdMask ? 18 : maxLength}
-          className="w-full px-3 py-2 text-sm bg-transparent focus:outline-none font-mono placeholder:font-sans text-foreground"
+          className="w-full px-3 py-2 text-sm bg-transparent focus:outline-none font-mono placeholder:font-sans text-foreground placeholder:text-muted-foreground"
         />
       </div>
     )
@@ -339,12 +426,12 @@ function TextInput({
       maxLength={maxLength}
       onChange={handleChange}
       disabled={disabled}
-      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-colors ${
         disabled
-          ? "border-border bg-gray-100 text-muted-foreground cursor-not-allowed"
+          ? "border-border dark:border-slate-700 bg-gray-100 dark:bg-slate-800 text-muted-foreground cursor-not-allowed"
           : invalid
-          ? "border-red-400 focus:ring-red-300 bg-red-50"
-          : "border-border focus:ring-blue-400"
+          ? "border-red-400 focus:ring-red-300 bg-red-50 dark:bg-red-950/30 text-foreground"
+          : "border-border dark:border-slate-700 bg-white dark:bg-slate-900 text-foreground placeholder:text-muted-foreground focus:ring-blue-400"
       }`}
     />
   )
@@ -368,17 +455,17 @@ function SelectInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className={`w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 ${
+      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-colors ${
         disabled
-          ? "border-border bg-gray-100 text-muted-foreground cursor-not-allowed"
+          ? "border-border dark:border-slate-700 bg-gray-100 dark:bg-slate-800 text-muted-foreground cursor-not-allowed"
           : invalid
-          ? "border-red-400 focus:ring-red-300 bg-red-50"
-          : "border-border focus:ring-blue-400"
+          ? "border-red-400 focus:ring-red-300 bg-red-50 dark:bg-red-950/30 text-foreground"
+          : "border-border dark:border-slate-700 bg-white dark:bg-slate-900 text-foreground focus:ring-blue-400"
       }`}
     >
       <option value="">Select...</option>
       {options.map((opt) => (
-        <option key={opt} value={opt}>
+        <option key={opt} value={opt} className="bg-white dark:bg-slate-900 text-foreground">
           {opt}
         </option>
       ))}
@@ -405,8 +492,10 @@ function TextArea({
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-        invalid ? "border-red-400 focus:ring-red-300 bg-red-50" : "border-border focus:ring-blue-400"
+      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-colors ${
+        invalid
+          ? "border-red-400 focus:ring-red-300 bg-red-50 dark:bg-red-950/30 text-foreground"
+          : "border-border dark:border-slate-700 bg-white dark:bg-slate-900 text-foreground placeholder:text-muted-foreground focus:ring-blue-400"
       }`}
     />
   )
@@ -414,7 +503,7 @@ function TextArea({
 
 function LockedField({ value, placeholder }: { value?: string; placeholder?: string }) {
   return (
-    <div className="w-full border border-border bg-gray-100 rounded-lg px-3 py-2 text-sm text-foreground select-none cursor-not-allowed">
+    <div className="w-full border border-border dark:border-slate-800 bg-gray-100 dark:bg-slate-800/80 rounded-lg px-3 py-2 text-sm text-foreground select-none cursor-not-allowed">
       {value || <span className="text-muted-foreground">{placeholder || "—"}</span>}
     </div>
   )
@@ -431,12 +520,12 @@ function AccordionSection({
 }) {
   const [open, setOpen] = useState(true)
   return (
-    <div className="border border-border rounded-xl overflow-hidden bg-card">
-      <div className="flex items-center justify-between bg-muted/40 px-4 py-3">
+    <div className="border border-border dark:border-slate-800 rounded-xl overflow-hidden bg-card dark:bg-slate-900/60 shadow-xs">
+      <div className="flex items-center justify-between bg-muted/40 dark:bg-slate-800/60 px-4 py-3">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2 text-sm font-bold text-foreground text-left"
+          className="flex items-center gap-2 text-sm font-bold text-foreground text-left cursor-pointer"
         >
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`} />
           <span>{title}</span>
@@ -444,13 +533,13 @@ function AccordionSection({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline cursor-pointer"
         >
           <Pencil className="h-3 w-3" />
           I-EDIT
         </button>
       </div>
-      {open && <div className="p-4 border-t border-border">{children}</div>}
+      {open && <div className="p-4 border-t border-border dark:border-slate-800">{children}</div>}
     </div>
   )
 }
@@ -788,6 +877,45 @@ export default function PWDSocialAssistanceWizard({
     setFormData((prev) => ({ ...prev, [key]: value }))
   }
 
+  const addFamilyMember = () => {
+    const newMember: FamilyMember = {
+      id: String(Date.now() + Math.random()),
+      name: "",
+      relationship: "Spouse / Asawa",
+      age: "",
+      occupation: "",
+      income: "",
+      otherInfo: "",
+    }
+    setFormData((prev) => ({
+      ...prev,
+      isLivingAlone: false,
+      familyMembers: [...prev.familyMembers, newMember],
+      householdMembersCount: String(prev.familyMembers.length + 1),
+    }))
+  }
+
+  const updateFamilyMember = (index: number, field: keyof FamilyMember, val: string) => {
+    setFormData((prev) => {
+      const list = [...prev.familyMembers]
+      if (list[index]) {
+        list[index] = { ...list[index], [field]: val }
+      }
+      return { ...prev, familyMembers: list }
+    })
+  }
+
+  const removeFamilyMember = (index: number) => {
+    setFormData((prev) => {
+      const list = prev.familyMembers.filter((_, i) => i !== index)
+      return {
+        ...prev,
+        familyMembers: list,
+        householdMembersCount: String(list.length),
+      }
+    })
+  }
+
   const handleFileUpload = (docId: string, files: File[]) => {
     if (!files || files.length === 0) return
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
@@ -824,9 +952,6 @@ export default function PWDSocialAssistanceWizard({
     formData.assistanceType !== ""
 
   const step2Valid =
-    Boolean((formData.disabilityDescription || "").trim()) &&
-    Boolean((formData.householdMembersCount || "").trim()) &&
-    Boolean((formData.monthlyHouseholdIncome || "").trim()) &&
     Boolean((formData.monthlyHouseholdExpenses || "").trim()) &&
     Boolean((formData.reasonForRequest || "").trim())
 
@@ -916,14 +1041,16 @@ export default function PWDSocialAssistanceWizard({
       pwdIdNumber: formData?.pwdIdNumber || "",
       category: "PWD",
       type: "assistance",
-      firstName: formData.firstName || userProfile?.firstName || "Ricardo",
+      firstName: formData.firstName || userProfile?.firstName || "Jefferson",
       middleName: formData.middleName || userProfile?.middleName || "",
-      lastName: formData.lastName || userProfile?.lastName || "Dimal",
+      lastName: formData.lastName || userProfile?.lastName || "Lee",
       suffix: formData.suffix || "",
+      nationality: formData.nationality || userProfile?.nationality || "FILIPINO",
       dateOfBirth: `${formData.dobYear || "2000"}-${(formData.dobMonth || "01").padStart(2, "0")}-${(formData.dobDay || "01").padStart(2, "0")}`,
-      age: formData.age || userProfile?.age || "24",
+      age: formData.age || userProfile?.age || "22",
       sex: userProfile?.sex || (userProfile as any)?.gender || formData.sex || "Male",
-      civilStatus: "Single",
+      gender: userProfile?.sex || (userProfile as any)?.gender || formData.sex || "Male",
+      civilStatus: formData.civilStatus || userProfile?.civilStatus || "Single",
       contactNo: formData.contactNumber || userProfile?.contactNo || "09123456789",
       cellphoneNo: formData.contactNumber || userProfile?.contactNo || "09123456789",
       email: formData.email || userProfile?.email || "applicant@example.com",
@@ -932,19 +1059,43 @@ export default function PWDSocialAssistanceWizard({
       barangay: formData.barangay || "",
       city: formData.cityMunicipality || "QUEZON CITY",
       address: `${formData.houseNo || ""} ${formData.street || ""} ${formData.barangay || ""}, ${formData.cityMunicipality || "QUEZON CITY"}`.trim(),
-      disabilityType: formData.disabilityType || "Visual Disability",
+      
+      // 2. Occupation / Employment
+      employmentStatus: formData.employmentStatus || "",
+      occupation: formData.occupation || "",
+      sourceOfIncome: formData.sourceOfIncome || "",
+      monthlyIncome: formData.monthlyHouseholdIncome || "",
+      monthlyHouseholdIncome: formData.monthlyHouseholdIncome || "",
+
+      // 3. Educational Background
+      educationalAttainment: formData.educationalAttainment || "",
+      otherEducationInfo: formData.otherEducationInfo || "",
+
+      // 4. Family Composition
+      familyMembers: formData.familyMembers || [],
+      family_members: formData.familyMembers || [],
+      familyMembersCount: String(formData.familyMembers?.length || 0),
+      householdMembersCount: String(formData.familyMembers?.length || 0),
+      householdMembers: String(formData.familyMembers?.length || 0),
+      numberOfHouseholdMembers: String(formData.familyMembers?.length || 0),
+      isLivingAlone: formData.isLivingAlone || formData.familyMembers?.length === 0,
+
+      // 5. Estimate Monthly Expenses
+      monthlyHouseholdExpenses: formData.monthlyHouseholdExpenses || "",
+
+      // 6. Additional Information
+      assistanceType: formData.assistanceType || "Bedridden",
+      qualifyingCategory: formData.assistanceType || "Bedridden",
+      reasonForRequest: formData.reasonForRequest || "Assistance Request",
+      additionalAssessmentInfo: formData.additionalAssessmentInfo || "",
+
+      // Disability info
+      disabilityType: formData.disabilityType || "Physical Disability",
       disabilityClass: "non-apparent",
-      causeOfDisability: formData.causeOfDisability || "Acquired",
+      causeOfDisability: formData.causeOfDisability || "Congenital / Inborn",
       disabilityDescription: formData.disabilityDescription || "",
       briefDescription: formData.disabilityDescription || "",
       description: formData.disabilityDescription || "",
-      householdMembersCount: formData.householdMembersCount || "",
-      householdMembers: formData.householdMembersCount || "",
-      numberOfHouseholdMembers: formData.householdMembersCount || "",
-      assistanceType: formData.assistanceType || "Educational Assistance",
-      reasonForRequest: formData.reasonForRequest || "Support",
-      monthlyHouseholdIncome: formData.monthlyHouseholdIncome || "",
-      monthlyHouseholdExpenses: formData.monthlyHouseholdExpenses || "",
       applyingFor: "myself",
       documents: docItems,
       status: "pending",
@@ -1262,36 +1413,42 @@ export default function PWDSocialAssistanceWizard({
           )}
 
           {}
+          {/* Step 2: Form Details (1 to 6) */}
           {step === 2 && (
             <div className="space-y-6">
-              {}
-              <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+              {/* Important Reminder */}
+              <div className="flex items-start gap-3 bg-blue-500/10 dark:bg-blue-950/40 border border-blue-500/30 dark:border-blue-800/60 rounded-xl p-4">
+                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-semibold text-blue-600">IMPORTANT REMINDER</p>
-                  <p className="text-blue-600/90 mt-0.5 text-xs">
+                  <p className="font-bold text-blue-900 dark:text-blue-200">IMPORTANT REMINDER</p>
+                  <p className="text-blue-800/90 dark:text-blue-300/90 mt-0.5 text-xs leading-relaxed">
                     Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service.
                   </p>
                 </div>
               </div>
 
-              {}
-              <div className="space-y-4">
+              {/* 1. Personal Information */}
+              <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
+                <SectionHeader
+                  title="1. PERSONAL INFORMATION"
+                  subtitle="Pangunahing impormasyon ng aplikante mula sa QCID / Profile"
+                />
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="QC ID *">
-                    <LockedField value={userProfile?.qcidNo || "110000572516915"} />
+                    <LockedField value={userProfile?.qcidNo || "110000262304143"} />
                   </Field>
                   <Field label="First name *">
-                    <LockedField value={formData.firstName || userProfile?.firstName || "RENZ"} placeholder="First name" />
+                    <LockedField value={formData.firstName || userProfile?.firstName || "JEFFERSON"} placeholder="First name" />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label="Middle name">
-                    <LockedField value={formData.middleName || userProfile?.middleName || "MAHINAY"} placeholder="Middle name" />
+                    <LockedField value={formData.middleName || userProfile?.middleName || "FERNANDO"} placeholder="Middle name" />
                   </Field>
                   <Field label="Last name *">
-                    <LockedField value={formData.lastName || userProfile?.lastName || "MILLARES"} placeholder="Last name" />
+                    <LockedField value={formData.lastName || userProfile?.lastName || "LEE"} placeholder="Last name" />
                   </Field>
                   <Field label="Suffix (Jr., Sr., III, etc.)">
                     <LockedField value={formData.suffix || userProfile?.suffix || ""} placeholder="Suffix (Jr., Sr., III, etc.)" />
@@ -1300,7 +1457,7 @@ export default function PWDSocialAssistanceWizard({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Field label="Nationality *">
-                    <LockedField value={userProfile?.nationality || userProfile?.citizenship || "FILIPINO"} placeholder="Nationality" />
+                    <LockedField value={formData.nationality || userProfile?.nationality || userProfile?.citizenship || "FILIPINO"} placeholder="Nationality" />
                   </Field>
                   <Field label="Date of birth *">
                     <LockedField
@@ -1309,21 +1466,21 @@ export default function PWDSocialAssistanceWizard({
                           ? `${formData.dobMonth.padStart(2, "0")}/${formData.dobDay.padStart(2, "0")}/${formData.dobYear}`
                           : userProfile?.dobMonth && userProfile?.dobDay && userProfile?.dobYear
                           ? `${userProfile.dobMonth.padStart(2, "0")}/${userProfile.dobDay.padStart(2, "0")}/${userProfile.dobYear}`
-                          : "06/09/2005"
+                          : "09/27/2004"
                       }
                     />
                   </Field>
                   <Field label="Age *">
-                    <LockedField value={formData.age || userProfile?.age || "21"} placeholder="Age" />
+                    <LockedField value={formData.age || userProfile?.age || "22"} placeholder="Age" />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Field label="Gender *">
+                  <Field label="Gender / Sex *">
                     <LockedField value={userProfile?.sex || (userProfile as any)?.gender || formData.sex || "Male"} />
                   </Field>
                   <Field label="Civil status *">
-                    <LockedField value={userProfile?.civilStatus || "Single"} />
+                    <LockedField value={formData.civilStatus || userProfile?.civilStatus || "Single"} />
                   </Field>
                   <Field label="House/Building number *">
                     <LockedField
@@ -1343,106 +1500,316 @@ export default function PWDSocialAssistanceWizard({
                   <Field label="Barangay *">
                     <LockedField value={formData.barangay || userProfile?.addressBarangay || "SAUYO"} placeholder="Barangay" />
                   </Field>
-                  <Field label="Phone number *">
+                  <Field label="Contact / Phone number *">
                     <LockedField value={formData.contactNumber || userProfile?.contactNo || "09155212353"} placeholder="0900 000 0000" />
                   </Field>
                 </div>
               </div>
 
-              {}
-              <div className="space-y-4">
-                <SectionHeader title="DISABILITY INFORMATION" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Disability Type *">
-                    <LockedField value={formData.disabilityType || "Psychosocial Disability"} />
-                  </Field>
-                  <Field label="Cause of Disability *">
-                    <LockedField value={formData.causeOfDisability || "Congenital / Inborn"} />
-                  </Field>
-                </div>
-                <Field
-                  label="Brief Description of Disability *"
-                  required
-                  invalid={attemptedNext && formData.disabilityDescription.trim() === ""}
-                >
-                  <TextArea
-                    value={formData.disabilityDescription}
-                    onChange={(v) => updateField("disabilityDescription", v)}
-                    placeholder="Describe your condition or disability in detail..."
-                    rows={2}
-                    invalid={attemptedNext && formData.disabilityDescription.trim() === ""}
-                  />
-                </Field>
-              </div>
+              {/* 2. Occupation / Employment */}
+              <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
+                <SectionHeader
+                  title="2. OCCUPATION / EMPLOYMENT"
+                  subtitle="Impormasyon ukol sa kasalukuyang estado sa paghahanapbuhay at kita"
+                />
 
-              {}
-              <div className="space-y-4">
-                <SectionHeader title="HOUSEHOLD & SOCIO-ECONOMIC INFORMATION" />
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Field label="Number of Household Members" required invalid={attemptedNext && formData.householdMembersCount.trim() === ""}>
-                    <TextInput
-                      value={formData.householdMembersCount}
-                      onChange={(v) => updateField("householdMembersCount", v)}
-                      numbersOnly
-                      maxLength={2}
-                      placeholder="4"
-                      invalid={attemptedNext && formData.householdMembersCount.trim() === ""}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Employment Status *">
+                    <SelectInput
+                      value={formData.employmentStatus}
+                      onChange={(v) => updateField("employmentStatus", v)}
+                      options={EMPLOYMENT_STATUS_OPTIONS}
                     />
                   </Field>
-                  <Field label="Total Monthly Household Income" required invalid={attemptedNext && formData.monthlyHouseholdIncome === ""}>
+                  <Field label="Occupation / Hanapbuhay">
+                    <TextInput
+                      value={formData.occupation}
+                      onChange={(v) => updateField("occupation", v)}
+                      placeholder="Hal. Helper, Vendor, N/A"
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Source of Income / Pinagkukunang Kita">
+                    <TextInput
+                      value={formData.sourceOfIncome}
+                      onChange={(v) => updateField("sourceOfIncome", v)}
+                      placeholder="Hal. Tulong ng Pamilya, Remittance, Allowance, Wala"
+                    />
+                  </Field>
+                  <Field label="Approximate Monthly Income *">
                     <SelectInput
                       value={formData.monthlyHouseholdIncome}
                       onChange={(v) => updateField("monthlyHouseholdIncome", v)}
                       options={MONTHLY_INCOME_RANGES}
-                      invalid={attemptedNext && formData.monthlyHouseholdIncome === ""}
-                    />
-                  </Field>
-                  <Field label="Total Monthly Household Expenses (₱)" required invalid={attemptedNext && formData.monthlyHouseholdExpenses.trim() === ""}>
-                    <TextInput
-                      value={formData.monthlyHouseholdExpenses}
-                      onChange={(v) => updateField("monthlyHouseholdExpenses", v)}
-                      numbersOnly
-                      placeholder="8000"
-                      invalid={attemptedNext && formData.monthlyHouseholdExpenses.trim() === ""}
                     />
                   </Field>
                 </div>
               </div>
 
-              {}
-              <div className="space-y-4">
-                <SectionHeader title="ASSISTANCE DETAILS" />
-                <Field label="Type of Assistance Requested *">
-                  <LockedField value={formData.assistanceType || "Emergency Assistance"} />
-                </Field>
-                <Field label="Reason for Request" required invalid={attemptedNext && formData.reasonForRequest.trim() === ""}>
-                  <TextArea
-                    value={formData.reasonForRequest}
-                    onChange={(v) => updateField("reasonForRequest", v)}
-                    placeholder="Explain why this assistance is needed..."
-                    rows={3}
-                    invalid={attemptedNext && formData.reasonForRequest.trim() === ""}
-                  />
-                </Field>
+              {/* 3. Educational Background */}
+              <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
+                <SectionHeader
+                  title="3. EDUCATIONAL BACKGROUND"
+                  subtitle="Antas ng pinag-aralan ng aplikante"
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Highest Educational Attainment *">
+                    <SelectInput
+                      value={formData.educationalAttainment}
+                      onChange={(v) => updateField("educationalAttainment", v)}
+                      options={EDUCATIONAL_ATTAINMENT_OPTIONS}
+                    />
+                  </Field>
+                  <Field label="Other Relevant Education Information">
+                    <TextInput
+                      value={formData.otherEducationInfo}
+                      onChange={(v) => updateField("otherEducationInfo", v)}
+                      placeholder="Hal. SPED, Vocational Training, o Wala"
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* 4. Family Composition */}
+              <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border dark:border-slate-800 pb-2">
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground tracking-wide flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      4. FAMILY COMPOSITION
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Para malaman kung sino ang kasama at umaasa sa applicant
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addFamilyMember}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Magdagdag ng Miyembro (Add Member)</span>
+                  </button>
+                </div>
+
+                {formData.familyMembers.length === 0 ? (
+                  <div className="p-4 rounded-xl border border-dashed border-border dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/30 text-center space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Walang miyembro ng pamilyang nailagay. Kung nakatira mag-isa (Living Alone), maaari itong iwanang blangko o i-click ang button sa itaas kung may kasama sa bahay.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={addFamilyMember}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-foreground hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-blue-600" />
+                      <span>+ Maglagay ng Kasama sa Bahay</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.familyMembers.map((member, idx) => (
+                      <div
+                        key={member.id || idx}
+                        className="p-3.5 rounded-xl border border-border dark:border-slate-700 bg-white dark:bg-slate-900/90 shadow-xs space-y-3 relative"
+                      >
+                        <div className="flex items-center justify-between border-b border-border dark:border-slate-800 pb-2">
+                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                            Miyembro #{idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeFamilyMember(idx)}
+                            className="inline-flex items-center gap-1 text-[11px] text-red-600 hover:text-red-700 font-semibold cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Alisin</span>
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                              Pangalan ng Family Member *
+                            </label>
+                            <TextInput
+                              value={member.name}
+                              onChange={(v) => updateFamilyMember(idx, "name", v)}
+                              placeholder="Buong pangalan"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                              Relasyon (Relationship) *
+                            </label>
+                            <SelectInput
+                              value={member.relationship}
+                              onChange={(v) => updateFamilyMember(idx, "relationship", v)}
+                              options={FAMILY_RELATIONSHIP_OPTIONS}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                              Edad (Age) *
+                            </label>
+                            <TextInput
+                              value={member.age}
+                              onChange={(v) => updateFamilyMember(idx, "age", v)}
+                              numbersOnly
+                              maxLength={3}
+                              placeholder="Hal. 25"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                              Hanapbuhay / Occupation
+                            </label>
+                            <TextInput
+                              value={member.occupation}
+                              onChange={(v) => updateFamilyMember(idx, "occupation", v)}
+                              placeholder="Hal. Estudyante, Vendor"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                              Income / Source of Support
+                            </label>
+                            <TextInput
+                              value={member.income}
+                              onChange={(v) => updateFamilyMember(idx, "income", v)}
+                              placeholder="Hal. ₱5,000 / Wala"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                              Iba Pang Impormasyon (Other Info)
+                            </label>
+                            <TextInput
+                              value={member.otherInfo}
+                              onChange={(v) => updateFamilyMember(idx, "otherInfo", v)}
+                              placeholder="Hal. May kapansanan din"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Estimate Monthly Expenses */}
+              <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
+                <SectionHeader
+                  title="5. ESTIMATE MONTHLY EXPENSES"
+                  subtitle="Tantiya o kabuuang buwanang gastusin ng pamilya/aplikante sa bahay"
+                />
+
+                <div className="max-w-md">
+                  <Field
+                    label="Estimated Monthly Expenses (₱) *"
+                    required
+                    invalid={attemptedNext && !formData.monthlyHouseholdExpenses.trim()}
+                    hint="Number only (hanggang 5 digit lamang, hal. 5000)"
+                  >
+                    <TextInput
+                      value={formData.monthlyHouseholdExpenses}
+                      onChange={(v) => updateField("monthlyHouseholdExpenses", v.replace(/\D/g, "").slice(0, 5))}
+                      numbersOnly
+                      maxLength={5}
+                      prefix="₱"
+                      placeholder="5000"
+                      invalid={attemptedNext && !formData.monthlyHouseholdExpenses.trim()}
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* 6. Additional Information */}
+              <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
+                <SectionHeader
+                  title="6. ADDITIONAL INFORMATION & SWA CATEGORY"
+                  subtitle="Impormasyon para ma-assess ang applicant at ang dahilan kung bakit nangangailangan ng tulong"
+                />
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-foreground uppercase tracking-wide block mb-1.5">
+                      Qualifying Category (PWD SWA) <span className="text-red-500">*</span>
+                    </label>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Pumili ng isang qualifying category na naaangkop sa sitwasyon ng aplikante:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {ASSISTANCE_TYPES.map((cat) => {
+                        const isSelected = formData.assistanceType === cat
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => updateField("assistanceType", cat)}
+                            className={`p-3 rounded-xl border text-left text-xs font-semibold transition-all flex items-center justify-between cursor-pointer ${
+                              isSelected
+                                ? "bg-blue-50 dark:bg-blue-950/60 border-blue-500 text-blue-950 dark:text-blue-200 ring-2 ring-blue-500/20"
+                                : "bg-white dark:bg-slate-900 border-border dark:border-slate-800 text-foreground hover:bg-gray-50 dark:hover:bg-slate-800"
+                            }`}
+                          >
+                            <span>{cat}</span>
+                            {isSelected && (
+                              <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <Field
+                    label="Reason for Assistance / Assessment Details *"
+                    required
+                    invalid={attemptedNext && !formData.reasonForRequest.trim()}
+                    hint="Ipaliwanag kung bakit nangangailangan ng tulong ang aplikante at anumang karagdagang detalye para sa assessment ng Social Worker."
+                  >
+                    <TextArea
+                      value={formData.reasonForRequest}
+                      onChange={(v) => updateField("reasonForRequest", v)}
+                      placeholder="Hal. Kailangan ng buwanang suporta para sa gamot at gastusin dahil walang permanenteng trabaho..."
+                      rows={3}
+                      invalid={attemptedNext && !formData.reasonForRequest.trim()}
+                    />
+                  </Field>
+                </div>
               </div>
 
               {attemptedNext && !step2Valid && (
-                <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700">
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>Please complete all required information in Step 2 before proceeding to the next step.</span>
+                <div className="flex items-center gap-2.5 p-3.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-xs font-semibold text-red-700 dark:text-red-300">
+                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                  <span>Mangyaring punan ang Estimate Monthly Expenses at Reason for Request bago magpatuloy.</span>
                 </div>
               )}
             </div>
           )}
 
-          {}
-          {}
+          {/* Step 3: Documentary Requirements / Uploads (7) */}
           {step === 3 && (
             <div className="space-y-4">
-              <h3 className="text-base font-bold text-foreground">{t("fileUploadHeader") || "File upload"}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {t("fileUploadDesc1") || "Make sure to upload the appropriate documents for each category and verify that all details match the information on your QC ID."}
-              </p>
+              <div className="border-b border-border dark:border-slate-800 pb-2">
+                <h3 className="text-base font-bold text-foreground">7. DOCUMENTARY REQUIREMENTS / UPLOADS</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  I-upload ang mga sumusunod na kinakailangang dokumento (JPG, JPEG, PNG, o Camera capture lamang).
+                </p>
+              </div>
 
               <div className="space-y-6 pt-2">
                 {REQUIRED_DOCUMENTS.map((doc) => {
@@ -1453,14 +1820,13 @@ export default function PWDSocialAssistanceWizard({
 
                   return (
                     <div key={doc.id}>
-
                       <div
                         className={`border rounded-xl p-5 transition-colors ${
                           isUploaded
                             ? "border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-950/30 dark:border-emerald-500/30"
                             : missing
                             ? "border-red-500/40 bg-red-500/10 dark:bg-red-950/30 dark:border-red-500/30"
-                            : "border-border bg-card/60 dark:bg-slate-900/40"
+                            : "border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40"
                         }`}
                       >
                         <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
@@ -1474,13 +1840,13 @@ export default function PWDSocialAssistanceWizard({
 
                         <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
                         {doc.note && (
-                          <p className="text-xs text-amber-800 dark:text-amber-200 bg-amber-500/10 rounded-lg p-2 mt-1.5 border border-amber-500/30">
+                          <p className="text-xs text-amber-800 dark:text-amber-200 bg-amber-500/10 dark:bg-amber-950/40 rounded-lg p-2 mt-1.5 border border-amber-500/30 dark:border-amber-800/40">
                             {doc.note}
                           </p>
                         )}
 
                         <p className="text-xs text-muted-foreground mt-2">
-                          {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)"}
+                          Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
                         </p>
 
                         <div className="mt-3 flex flex-wrap items-center gap-2.5">
@@ -1501,7 +1867,7 @@ export default function PWDSocialAssistanceWizard({
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
                           >
                             <Upload className="h-3.5 w-3.5" />
-                            {t("uploadPhotoBtn") || "UPLOAD PHOTO"}
+                            <span>UPLOAD PHOTO</span>
                           </label>
 
                           <button
@@ -1510,7 +1876,7 @@ export default function PWDSocialAssistanceWizard({
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
                           >
                             <Camera className="h-3.5 w-3.5" />
-                            {t("takePhotoCameraBtn") || "KUMUHA NG LARAWAN (CAMERA)"}
+                            <span>KUMUHA NG LARAWAN (CAMERA)</span>
                           </button>
                         </div>
 
@@ -1519,7 +1885,7 @@ export default function PWDSocialAssistanceWizard({
                             {files.map((file, i) => (
                               <div
                                 key={`${file.name}-${i}`}
-                                className="relative w-40 border border-border rounded-lg bg-card dark:bg-slate-900/90 shadow-sm p-3 flex flex-col items-center text-center shadow-xs"
+                                className="relative w-40 border border-border dark:border-slate-800 rounded-lg bg-card dark:bg-slate-900 shadow-xs p-3 flex flex-col items-center text-center"
                               >
                                 <button
                                   type="button"
@@ -1529,7 +1895,7 @@ export default function PWDSocialAssistanceWizard({
                                 >
                                   <X className="h-3 w-3" />
                                 </button>
-                                <div className="h-12 w-12 rounded-md overflow-hidden border border-border mb-2 flex items-center justify-center bg-muted/40 dark:bg-slate-800">
+                                <div className="h-12 w-12 rounded-md overflow-hidden border border-border dark:border-slate-700 mb-2 flex items-center justify-center bg-muted/40 dark:bg-slate-800">
                                   <FileThumbnail file={file} className="h-full w-full object-cover" />
                                 </div>
                                 <p className="text-xs font-medium text-foreground truncate w-full">{file.name}</p>
@@ -1541,7 +1907,7 @@ export default function PWDSocialAssistanceWizard({
 
                         {missing && (
                           <p className="text-xs text-red-500 mt-2">
-                            {t("pwdStillNeedsUploadNote") || "Kailangan pang mag-upload ng dokumento para sa kinakailangang item na ito."}
+                            Kailangan pang mag-upload ng dokumento para sa kinakailangang item na ito.
                           </p>
                         )}
                       </div>
@@ -1552,12 +1918,12 @@ export default function PWDSocialAssistanceWizard({
             </div>
           )}
 
-          {}
+          {/* Step 4: Review & Submit */}
           {step === 4 && (
             <div className="space-y-5">
               <div>
-                <h3 className="text-base font-bold text-foreground">{(t("pwdReviewHeader") || "REVIEW INFORMATION").toUpperCase()}</h3>
-                <p className="text-sm text-muted-foreground">{t("pwdReviewDesc") || "Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon."}</p>
+                <h3 className="text-base font-bold text-foreground">REVIEW APPLICATION INFORMATION</h3>
+                <p className="text-sm text-muted-foreground">Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon.</p>
               </div>
 
               <div className="space-y-3">
@@ -1569,36 +1935,69 @@ export default function PWDSocialAssistanceWizard({
                   </div>
                 </AccordionSection>
 
-                <AccordionSection title="Personal & Address Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                <AccordionSection title="1. Personal Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <ReviewField label="Buong Pangalan" value={fullApplicantName} />
                     <ReviewField label="Date of Birth" value={`${formData.dobMonth} ${formData.dobDay}, ${formData.dobYear}`} />
                     <ReviewField label="Edad / Kasarian" value={`${formData.age || "—"} / ${formData.sex}`} />
+                    <ReviewField label="Civil Status" value={formData.civilStatus} />
                     <ReviewField label="Contact Number" value={formData.contactNumber} />
                     <ReviewField label="House No. / Street" value={`${formData.houseNo} ${formData.street}`.trim()} />
                     <ReviewField label="Barangay" value={formData.barangay} />
                     <ReviewField label="Lungsod" value={formData.cityMunicipality} />
-                    <ReviewField label="Dahilan ng Kapansanan" value={formData.causeOfDisability} />
                   </div>
-                  {formData.disabilityDescription && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <ReviewField label="Maikling Paglalarawan ng Kapansanan" value={formData.disabilityDescription} />
+                </AccordionSection>
+
+                <AccordionSection title="2. Occupation & Employment" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <ReviewField label="Employment Status" value={formData.employmentStatus} />
+                    <ReviewField label="Occupation" value={formData.occupation || "N/A"} />
+                    <ReviewField label="Source of Income" value={formData.sourceOfIncome || "N/A"} />
+                    <ReviewField label="Monthly Income" value={formData.monthlyHouseholdIncome} />
+                  </div>
+                </AccordionSection>
+
+                <AccordionSection title="3. Educational Background" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <ReviewField label="Highest Educational Attainment" value={formData.educationalAttainment} />
+                    <ReviewField label="Other Relevant Education" value={formData.otherEducationInfo || "None"} />
+                  </div>
+                </AccordionSection>
+
+                <AccordionSection title="4. Family Composition" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                  {formData.familyMembers.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">Living Alone (Walang nakatalang kasama sa bahay)</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                        {formData.familyMembers.length} Miyembro ng Pamilya:
+                      </p>
+                      <div className="divide-y divide-border dark:divide-slate-800">
+                        {formData.familyMembers.map((m, idx) => (
+                          <div key={idx} className="py-2 text-xs grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div><span className="text-muted-foreground">Pangalan:</span> <span className="font-semibold">{m.name}</span></div>
+                            <div><span className="text-muted-foreground">Relasyon:</span> <span className="font-medium">{m.relationship}</span></div>
+                            <div><span className="text-muted-foreground">Edad:</span> <span className="font-medium">{m.age}</span></div>
+                            <div><span className="text-muted-foreground">Hanapbuhay/Kita:</span> <span className="font-medium">{m.occupation || "—"} ({m.income || "—"})</span></div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </AccordionSection>
 
-                <AccordionSection title="Household & Assistance Details" onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <ReviewField label="Bilang ng Miyembro sa Bahay" value={`${formData.householdMembersCount} miyembro`} />
-                    <ReviewField label="Buwanang Kita" value={formData.monthlyHouseholdIncome} />
-                    <ReviewField label="Buwanang Gastusin" value={formData.monthlyHouseholdExpenses ? `₱${formData.monthlyHouseholdExpenses}` : "—"} />
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-border">
-                    <ReviewField label="Dahilan ng Kahilingan" value={formData.reasonForRequest} />
+                <AccordionSection title="5. Estimate Monthly Expenses" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                  <ReviewField label="Estimated Monthly Expenses" value={formData.monthlyHouseholdExpenses ? `₱${formData.monthlyHouseholdExpenses}` : "—"} />
+                </AccordionSection>
+
+                <AccordionSection title="6. Additional Information & Assessment" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                  <div className="space-y-3">
+                    <ReviewField label="Qualifying Category (PWD SWA)" value={formData.assistanceType} />
+                    <ReviewField label="Dahilan ng Pag-apply / Assessment Notes" value={formData.reasonForRequest} />
                   </div>
                 </AccordionSection>
 
-                <AccordionSection title="Uploaded Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>
+                <AccordionSection title="7. Uploaded Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>
                   <div className="space-y-4">
                     {REQUIRED_DOCUMENTS.map((doc) => {
                       const files = uploadedDocs[doc.id] || []
@@ -1623,12 +2022,12 @@ export default function PWDSocialAssistanceWizard({
                                   key={`${file.name}-${i}`}
                                   type="button"
                                   onClick={() => setPreviewDocModal({ title: doc.label, file })}
-                                  className="w-full max-w-md border border-border hover:border-blue-400 rounded-lg overflow-hidden text-left bg-white cursor-pointer transition-colors shadow-xs"
+                                  className="w-full max-w-md border border-border dark:border-slate-700 hover:border-blue-400 rounded-lg overflow-hidden text-left bg-white dark:bg-slate-900 cursor-pointer transition-colors shadow-xs"
                                 >
-                                  <div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                                  <div className="h-28 w-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                                     <FileThumbnail file={file} className="h-full w-full object-cover" />
                                   </div>
-                                  <div className="px-3 py-2 text-center border-t border-border bg-white">
+                                  <div className="px-3 py-2 text-center border-t border-border dark:border-slate-800 bg-white dark:bg-slate-900">
                                     <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
                                     <p className="text-[10px] text-muted-foreground mt-0.5">{formatFileSize(file.size)}</p>
                                   </div>
@@ -1636,7 +2035,7 @@ export default function PWDSocialAssistanceWizard({
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-red-500 mt-1">{t("noFileUploadedYet") || "Walang nai-upload na dokumento"}</p>
+                            <p className="text-xs text-red-500 mt-1">Walang nai-upload na dokumento</p>
                           )}
                         </div>
                       )
@@ -1645,10 +2044,9 @@ export default function PWDSocialAssistanceWizard({
                 </AccordionSection>
               </div>
 
-              {}
-              <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-700">
+              <div className="flex items-start gap-3 bg-blue-500/10 dark:bg-blue-950/40 border border-blue-500/30 dark:border-blue-800/60 rounded-xl p-4">
+                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-blue-800 dark:text-blue-300">
                   Ang lahat ng impormasyon at dokumentong inyong isinumite ay susuriin ng Social Worker alinsunod sa mga patakaran ng Quezon City Government.
                 </p>
               </div>
