@@ -180,10 +180,16 @@ export default function AICSUser() {
                     <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 text-xs space-y-1">
                       <div className="flex items-center gap-1.5 font-bold">
                         <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span>Na-avail na (Approved &amp; Recorded)</span>
+                        <span>
+                          {language === "en"
+                            ? "Already Availed (Approved & Recorded)"
+                            : "Na-avail na (Approved & Recorded)"}
+                        </span>
                       </div>
                       <p className="text-[11px] text-emerald-800/90 dark:text-emerald-300/90">
-                        Mayroon ka nang aprubadong Guarantee Letter para sa tulong na ito. Hindi na kailangang mag-apply muli.
+                        {language === "en"
+                          ? "You already have an approved Guarantee Letter for this assistance. No need to apply again."
+                          : "Mayroon ka nang aprubadong Guarantee Letter para sa tulong na ito. Hindi na kailangang mag-apply muli."}
                       </p>
                     </div>
                   )}
@@ -192,10 +198,16 @@ export default function AICSUser() {
                     <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs space-y-1">
                       <div className="flex items-center gap-1.5 font-bold">
                         <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                        <span>Kasalukuyang Pinoproseso (Active Request)</span>
+                        <span>
+                          {language === "en"
+                            ? "Application In Progress (Active Request)"
+                            : "Kasalukuyang Pinoproseso (Active Request)"}
+                        </span>
                       </div>
                       <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90">
-                        Nakasumite na ang inyong aplikasyon para sa programang ito at nasa ilalim ng pagsusuri ng Social Worker.
+                        {language === "en"
+                          ? "Your application for this assistance has been submitted and is currently being assessed by a Social Worker."
+                          : "Nakasumite na ang inyong aplikasyon para sa programang ito at nasa ilalim ng pagsusuri ng Social Worker."}
                       </p>
                     </div>
                   )}
@@ -212,7 +224,11 @@ export default function AICSUser() {
                             : "bg-blue-600 hover:bg-blue-700 text-white"
                         }`}
                       >
-                        <span>{isApproved ? "TINGNAN SA APPLICATION HISTORY" : "SUBAYBAYAN ANG STATUS"}</span>
+                        <span>
+                          {isApproved
+                            ? (language === "en" ? "VIEW IN APPLICATION HISTORY" : "TINGNAN SA APPLICATION HISTORY")
+                            : (language === "en" ? "TRACK APPLICATION STATUS" : "SUBAYBAYAN ANG STATUS")}
+                        </span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     ) : (
@@ -221,7 +237,7 @@ export default function AICSUser() {
                         onClick={() => setSearchParams({ type: program.id })}
                         className="text-[#0066cc] dark:text-sky-400 hover:text-[#004c99] dark:hover:text-sky-300 font-extrabold text-xs md:text-sm tracking-widest uppercase cursor-pointer hover:underline transition-colors py-1 px-4"
                       >
-                        APPLY NOW
+                        {language === "en" ? "APPLY NOW" : "MAG-APPLY NGAYON"}
                       </button>
                     )}
                   </div>
