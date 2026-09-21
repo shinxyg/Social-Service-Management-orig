@@ -916,9 +916,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 <h3 className="text-base font-bold text-foreground">
                   SOCIAL WELFARE ASSISTANCE (SWA) — SENIOR CITIZEN SECTOR
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Pakilagay at i-verify ang inyong Senior Citizen / OSCA ID number upang magpatuloy.
-                </p>
               </div>
 
               {attemptedNext && !isStep1Valid && (
