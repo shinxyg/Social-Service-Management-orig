@@ -53,11 +53,12 @@ export interface UserProfile {
 }
 
 const ASSISTANCE_TYPES = [
-  "Financial Assistance / Cash Aid",
-  "Medical & Medicine Support",
-  "Assistive Device / Mobility",
-  "Educational Assistance",
-  "Emergency Assistance",
+  "Bedridden (Nakaratay)",
+  "Severe Health Condition (May Malubhang Karamdaman)",
+  "Solo Parent (Solong Magulang)",
+  "Jobless with 2+ Minor Dependents (Walang Trabaho na may 2+ menor de edad)",
+  "Living Alone (Nakatira Mag-isa)",
+  "Living with Senior Citizen Parent (Nakatira kasama ang Magulang na Senior Citizen)",
 ]
 
 const MONTHLY_INCOME_RANGES = [
@@ -1162,12 +1163,24 @@ export default function PWDSocialAssistanceWizard({
               </div>
 
               {}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+              {/* SWA Program Info Alert Box */}
+              <div className="bg-blue-50/90 border border-blue-200 rounded-xl p-4.5 flex items-start gap-3.5 shadow-xs">
                 <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-bold text-blue-900">PWD SOCIAL ASSISTANCE — SIMPLIFIED APPLICATION</p>
-                  <p className="text-xs text-blue-700 mt-1">
-                    Financial, medical, assistive device, and emergency assistance support for Persons with Disabilities in Quezon City.
+                <div className="space-y-1 text-xs">
+                  <p className="text-sm font-bold text-blue-950">
+                    {language === "en"
+                      ? "1. SOCIAL WELFARE ASSISTANCE (SWA) — PWD SECTOR"
+                      : "1. SOCIAL WELFARE ASSISTANCE (SWA) — SEKTOR NG PWD"}
+                  </p>
+                  <p className="font-semibold text-blue-800">
+                    {language === "en"
+                      ? "Benefit Amount: ₱500 per month, up to 12 months."
+                      : "Halaga ng Ayuda: ₱500 bawat buwan, hanggang 12 buwan."}
+                  </p>
+                  <p className="text-blue-900/90 leading-relaxed">
+                    {language === "en"
+                      ? "Exclusively for indigent Persons with Disabilities (PWD) who qualify under specific vulnerability categories (e.g., bedridden, severe medical condition, solo parent, jobless with 2+ minor dependents, living alone, or living with a Senior Citizen parent). Subject to official assessment and Social Case Study before approval."
+                      : "Karaniwang para sa indigent PWD na pasok sa mga partikular na kategorya (hal. bedridden, may malubhang karamdaman, solo parent, walang trabaho na may 2+ menor de edad, nakatira mag-isa, o nakatira kasama ang magulang na Senior Citizen). Sumasailalim sa assessment o case study ng Social Worker bago maaprubahan."}
                   </p>
                 </div>
               </div>
@@ -1262,8 +1275,8 @@ export default function PWDSocialAssistanceWizard({
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-blue-700 uppercase tracking-wide block mb-1">
-                    TYPE OF ASSISTANCE REQUESTED <span className="text-red-500">**</span>
+                  <label className={`text-xs font-semibold uppercase tracking-wide block mb-1 ${attemptedNext && !formData.assistanceType ? "text-red-600" : "text-blue-700"}`}>
+                    TYPE OF ASSISTANCE REQUESTED (SWA CATEGORY) <span className="text-red-500">**</span>
                   </label>
                   <SelectInput
                     value={formData.assistanceType}
@@ -1271,6 +1284,13 @@ export default function PWDSocialAssistanceWizard({
                     options={ASSISTANCE_TYPES}
                     invalid={attemptedNext && formData.assistanceType === ""}
                   />
+                  {attemptedNext && !formData.assistanceType && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {language === "en"
+                        ? "Please select your vulnerability category / assistance request."
+                        : "Mangyaring pumili ng kategorya ng tulong na hinihiling."}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

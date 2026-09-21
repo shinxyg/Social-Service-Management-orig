@@ -566,16 +566,30 @@ function ResidentHeader({
   }
 
   if (currentTitle === "Welcome") {
-    for (const item of residentNav) {
-      if (item.path === location.pathname) {
-        currentTitle = item.label
-        break
+    if (
+      location.pathname === "/portal/pwd" ||
+      (location.pathname === "/portal/apply-pwd-senior" &&
+        (location.search.includes("category=pwd") || !location.search.includes("category=")))
+    ) {
+      if (location.search.includes("type=assistance")) {
+        currentTitle = `${t("navPWDServices") || "PWD Services"} — PWD Social Assistance`
+      } else if (location.search.includes("type=new")) {
+        currentTitle = `${t("navPWDServices") || "PWD Services"} — PWD ID Application`
+      } else {
+        currentTitle = t("navPWDServices") || "PWD Services"
       }
-      if (item.children) {
-        const baseChild = item.children.find((c) => c.path.split("?")[0] === location.pathname)
-        if (baseChild) {
+    } else {
+      for (const item of residentNav) {
+        if (item.path === location.pathname) {
           currentTitle = item.label
           break
+        }
+        if (item.children) {
+          const baseChild = item.children.find((c) => c.path.split("?")[0] === location.pathname)
+          if (baseChild) {
+            currentTitle = item.label
+            break
+          }
         }
       }
     }
