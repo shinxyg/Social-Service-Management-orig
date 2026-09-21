@@ -228,13 +228,8 @@ interface ScheduleModalProps {
 }
 
 function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
-  const todayStr = new Date().toISOString().split("T")[0]
-  const currentHour = new Date().getHours().toString().padStart(2, "0")
-  const currentMin = (Math.ceil(new Date().getMinutes() / 15) * 15 % 60).toString().padStart(2, "0")
-  const defaultTimeStr = `${currentHour}:${currentMin}`
-
-  const [date, setDate] = useState(appointment.scheduledDate || todayStr)
-  const [time, setTime] = useState(appointment.scheduledTime || defaultTimeStr || "10:00")
+  const [date, setDate] = useState(appointment.scheduledDate || "")
+  const [time, setTime] = useState(appointment.scheduledTime || "")
   const location = appointment.officeLocation || "Quezon City Hall"
 
   const canSave = date.trim() !== "" && time.trim() !== ""
@@ -244,18 +239,12 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
       ? appointment.notes
       : `Mangyaring magtungo sa ${location} sa itinakdang petsa at oras. Dalhin ang orihinal na QCID / Valid ID para sa transaksyon sa ${appointment.concern}.`
 
-  const setQuickDate = (daysFromToday: number) => {
-    const d = new Date()
-    d.setDate(d.getDate() + daysFromToday)
-    setDate(d.toISOString().split("T")[0])
-  }
-
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg my-8">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-foreground">Set / Reschedule Appointment</h2>
+            <h2 className="text-lg font-bold text-foreground">Set Appointment Schedule</h2>
             <p className="text-sm text-muted-foreground mt-0.5">{appointment.applicantName} — {appointment.referenceNo}</p>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-2xl font-light cursor-pointer">
@@ -264,38 +253,6 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="flex items-center gap-1.5 flex-wrap pb-1">
-            <span className="text-[11px] font-bold text-slate-500 uppercase mr-1">Quick Select:</span>
-            <button
-              type="button"
-              onClick={() => setQuickDate(0)}
-              className="px-2.5 py-1 text-xs rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition-colors cursor-pointer"
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              onClick={() => setQuickDate(1)}
-              className="px-2.5 py-1 text-xs rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
-            >
-              Tomorrow
-            </button>
-            <button
-              type="button"
-              onClick={() => setTime("09:00")}
-              className="px-2.5 py-1 text-xs rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
-            >
-              09:00 AM
-            </button>
-            <button
-              type="button"
-              onClick={() => setTime("14:00")}
-              className="px-2.5 py-1 text-xs rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
-            >
-              02:00 PM
-            </button>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-muted-foreground">Date *</label>
