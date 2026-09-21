@@ -16,7 +16,7 @@ export interface GuaranteeLetterData {
   hospitalCaseNo?: string
   claimantName?: string
   claimantRelation?: string
-  amount: number
+  amount?: number
   dateIssued?: string
   validUntil?: string
 }
@@ -292,29 +292,29 @@ export function OfficialGuaranteeLetterModal({
             </div>
           </div>
 
-          {/* Section 2: Approved Financial Coverage */}
+          {/* Section 2: Approved Financial / Medical Coverage */}
           <div className="border border-black rounded-lg p-3.5 bg-slate-50/50 space-y-1.5 font-sans">
             <div className="text-center pb-1.5 border-b border-gray-300">
               <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-800">
-                APPROVED FINANCIAL COVERAGE
+                APPROVED FINANCIAL / MEDICAL COVERAGE
               </h3>
             </div>
             <div className="space-y-1 text-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <p>
-                  <span className="font-bold text-gray-600">GUARANTEED AMOUNT : </span>
+                  <span className="font-bold text-gray-600">ASSISTANCE SCHEME: </span>
                   <span className="font-black text-black text-sm sm:text-base">
-                    ₱ {data.amount.toLocaleString()}.00
+                    DIRECT HOSPITAL BILLING GUARANTEE (NON-CASH)
                   </span>
                 </p>
                 <p className="text-[11px] font-bold text-slate-700">
-                  <span className="font-bold text-gray-500">AMOUNT IN WORDS: </span>
-                  {amountInWords(data.amount)}
+                  <span className="font-bold text-gray-500">COVERAGE STATUS: </span>
+                  <span className="text-emerald-700 font-extrabold uppercase">OFFICIALLY GUARANTEED &amp; APPROVED</span>
                 </p>
               </div>
 
               <div className="pt-2 border-t border-gray-200">
-                <p className="font-bold text-gray-600 mb-1">COVERED EXPENSES:</p>
+                <p className="font-bold text-gray-600 mb-1">COVERED EXPENSES (ON-SITE ASSESSED):</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[11px] text-gray-800">
                   {isMedicineGL ? (
                     <>
@@ -349,21 +349,21 @@ export function OfficialGuaranteeLetterModal({
           {/* Section 3: Billing & Claim Instructions */}
           <div className="border border-black rounded-lg p-3 bg-gray-50/60 font-sans text-[11px] space-y-1 text-gray-800">
             <p className="font-bold uppercase tracking-wider text-slate-900">
-              BILLING &amp; CLAIM INSTRUCTIONS:
+              BILLING &amp; CLAIM INSTRUCTIONS (ON-SITE PROCESSING):
             </p>
             <ol className="list-decimal pl-4 space-y-0.5 leading-relaxed">
               <li>
                 {isMedicineGL
-                  ? `Please dispense the prescribed medicines and deduct up to the guaranteed amount of ₱${data.amount.toLocaleString()}.00.`
-                  : `Please deduct the guaranteed amount of ₱${data.amount.toLocaleString()}.00 from the patient's final Statement of Account.`}
+                  ? "Please dispense the doctor-prescribed medicines and medical supplies covered under the Quezon City SSDD healthcare assistance program."
+                  : "Please honor this Official Guarantee Letter (GL) and credit the approved medical and hospitalization charges from the patient's final Statement of Account (SOA)."}
               </li>
               <li>
                 {isMedicineGL
                   ? "The Pharmacy / Health Facility Billing shall submit the official billing invoice/receipt attached with this original GL to the City Accounting & Treasurer's Office of Quezon City for direct payment processing."
-                  : "The Hospital Billing Department shall submit the Billing Statement attached with this original GL to the City Accounting & Treasurer's Office of Quezon City for direct payment processing."}
+                  : "The Hospital Billing Department & Medical Social Service shall submit the Statement of Account (SOA) attached with this original GL to the City Accounting & Treasurer's Office of Quezon City for direct institutional settlement."}
               </li>
               <li>
-                This Guarantee Letter is non-transferable and valid within thirty (30) days from issuance.
+                This Guarantee Letter is non-transferable, valid within thirty (30) days from issuance, and subject to on-site hospital verification alongside the patient's valid QC ID.
               </li>
             </ol>
           </div>
