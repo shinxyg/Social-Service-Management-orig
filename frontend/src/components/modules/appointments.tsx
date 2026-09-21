@@ -8,7 +8,6 @@ import {
   Building2,
   Printer,
   XCircle,
-  Sparkles,
 } from "lucide-react"
 
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
@@ -43,8 +42,6 @@ interface AppointmentRequest {
   notes?: string
   rawApp?: any
 }
-
-const MOCK_APPOINTMENTS: AppointmentRequest[] = []
 
 const MODULE_OPTIONS: ModuleKey[] = [
   "AICS",
@@ -797,7 +794,7 @@ export default function Appointments() {
         })
 
         const dedupedMap = new Map<string, AppointmentRequest>()
-        const statusPriority: Record<AppointmentStatus, number> = { completed: 5, approved: 4, referred: 3, scheduled: 2, pending: 1, rejected: 1 }
+        const statusPriority: Record<AppointmentStatus, number> = { completed: 5, approved: 4, referred: 3, scheduled: 2, under_review: 2, pending: 1, rejected: 1 }
 
         appts.forEach((a) => {
           const c = (a.concern || '').toLowerCase()
@@ -981,28 +978,6 @@ export default function Appointments() {
         }
       })()
     }
-  }
-
-  const handleMarkCompleted = async (id: string) => {
-    const targetAppt = appointments.find((a) => a.id === id)
-    const ref = targetAppt?.referenceNo || id.replace('db-appt-', '')
-    try {
-      const raw = localStorage.getItem("all_appointments_scheduled")
-      const localScheduledMap = raw ? JSON.parse(raw) : {}
-      const compObj = { status: "completed" }
-      localScheduledMap[id] = compObj
-      if (targetAppt) {
-        localScheduledMap[`${targetAppt.referenceNo}_${targetAppt.concern}`] = compObj
-      }
-      localScheduledMap[ref] = compObj
-      localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
-    } catch {}
-
-    setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: "completed" as const } : a)))
-
-    try {
-      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(ref)}/complete`, { method: "PUT" })
-    } catch {}
   }
 
   const [glModalData, setGlModalData] = useState<GuaranteeLetterData | null>(null)

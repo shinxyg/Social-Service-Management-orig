@@ -295,7 +295,11 @@ export function saveDisbursements(records: SyncedDisbursementRecord[]) {
 
 export function pushUserNotification(notif: {
   title: string
-  desc: string
+  desc?: string
+  message?: string
+  userId?: string
+  type?: string
+  link?: string
   applicationRef?: string
   assistanceType?: string
   amount?: number
@@ -304,10 +308,13 @@ export function pushUserNotification(notif: {
     const raw = localStorage.getItem("all_user_notifications")
     const existing: UserNotificationItem[] = raw ? JSON.parse(raw) : []
 
-    if (notif.applicationRef) {
+    const notifDesc = notif.desc || notif.message || ""
+    const appRef = notif.applicationRef || notif.userId
+
+    if (appRef && appRef !== "all") {
       const isDuplicate = existing.some(
         (e) =>
-          String(e.applicationRef || "").trim() === String(notif.applicationRef || "").trim() &&
+          String(e.applicationRef || "").trim() === String(appRef).trim() &&
           e.title === notif.title
       )
       if (isDuplicate) return
@@ -316,10 +323,10 @@ export function pushUserNotification(notif: {
     const newNotif: UserNotificationItem = {
       id: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       title: notif.title,
-      desc: notif.desc,
+      desc: notifDesc,
       time: new Date().toLocaleString("en-PH"),
       unread: true,
-      applicationRef: notif.applicationRef,
+      applicationRef: appRef,
       assistanceType: notif.assistanceType,
       amount: notif.amount,
     }
