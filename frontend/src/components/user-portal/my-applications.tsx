@@ -3954,13 +3954,7 @@ export default function MyApplications() {
                         app.status === "Completed" ||
                         isDisbClaimed)
 
-                    const isGLIssued = isApprovedDecision || (app.status === "For Release") || isExplicitlyReleased
-
                     const appKey = (app.applicationNo || app.id || app.referenceNo || "").toLowerCase().trim()
-                    const isGLPrinted = Boolean(
-                      isApprovedDecision &&
-                      ((appKey && printedGLMap[appKey]) || isExplicitlyReleased)
-                    )
 
                     const partnerHospital =
                       app.details?.partnerHospital ||
