@@ -1726,6 +1726,21 @@ export default function MyApplications() {
     })
   }
 
+  useEffect(() => {
+    const handleGLUpdate = () => {
+      try {
+        const stored = localStorage.getItem("printed_gl_applications")
+        if (stored) setPrintedGLMap(JSON.parse(stored))
+      } catch {}
+    }
+    window.addEventListener("printed_gl_applications_updated", handleGLUpdate)
+    window.addEventListener("storage", handleGLUpdate)
+    return () => {
+      window.removeEventListener("printed_gl_applications_updated", handleGLUpdate)
+      window.removeEventListener("storage", handleGLUpdate)
+    }
+  }, [])
+
   const [appToDelete, setAppToDelete] = useState<ApplicationRecord | null>(null)
   const [appToPermanentDelete, setAppToPermanentDelete] = useState<ApplicationRecord | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)

@@ -1178,6 +1178,18 @@ export default function Appointments() {
   }
 
   const handlePrintGL = (appt: AppointmentRequest) => {
+    try {
+      const rawStored = localStorage.getItem("printed_gl_applications") || "{}"
+      const stored = JSON.parse(rawStored)
+      if (appt.referenceNo) stored[appt.referenceNo.toLowerCase().trim()] = true
+      if (appt.applicantName) stored[appt.applicantName.toLowerCase().trim()] = true
+      if (appt.id) stored[appt.id.toLowerCase().trim()] = true
+      localStorage.setItem("printed_gl_applications", JSON.stringify(stored))
+      window.dispatchEvent(new Event("printed_gl_applications_updated"))
+      window.dispatchEvent(new Event("aics_applications_updated"))
+      window.dispatchEvent(new Event("appointments_updated"))
+    } catch {}
+
     const raw = appt.rawApp || {}
     const rawDetails = raw.details || {}
     setGlModalData({
