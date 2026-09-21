@@ -649,6 +649,25 @@ const canProceedPersonal = Boolean(
           else if (rawSt === "under_review" || rawSt === "scheduled" || rawSt === "for_assessment") cleanSt = "under_review"
           else cleanSt = "pending"
 
+          // Check if admin approved or printed GL in local cache/events
+          try {
+            const rawSched = localStorage.getItem("all_appointments_scheduled")
+            const schedMap = rawSched ? JSON.parse(rawSched) : {}
+            const rawGL = localStorage.getItem("printed_gl_applications")
+            const glMap = rawGL ? JSON.parse(rawGL) : {}
+            const targetRef = String(ref || "").toLowerCase().trim()
+            const isApprovedInSched = targetRef && (
+              schedMap[targetRef]?.decision === "approved" ||
+              schedMap[targetRef]?.status === "approved" ||
+              schedMap[`appt_${targetRef}`]?.decision === "approved" ||
+              schedMap[`appt_${targetRef}`]?.status === "approved"
+            )
+            const isGLPrinted = targetRef && (glMap[targetRef] || (activeApp.id && glMap[String(activeApp.id).toLowerCase().trim()]))
+            if (isApprovedInSched || isGLPrinted) {
+              cleanSt = "approved"
+            }
+          } catch {}
+
           setAppStatus(cleanSt)
           const details = activeApp.details || {}
           setRejectionReason(activeApp.rejection_reason || activeApp.rejectionReason || details.rejectionReason || activeApp.remarks || activeApp.admin_notes || activeApp.reason || "")
@@ -680,6 +699,7 @@ const canProceedPersonal = Boolean(
 
     const handleUpdate = () => checkActiveAicsApplication()
     window.addEventListener("aics_applications_updated", handleUpdate)
+    window.addEventListener("printed_gl_applications_updated", handleUpdate)
     window.addEventListener("govserve_realtime_event", handleUpdate)
     window.addEventListener("applications_updated", handleUpdate)
     window.addEventListener("appointments_updated", handleUpdate)
@@ -689,6 +709,7 @@ const canProceedPersonal = Boolean(
       isMounted = false
       clearInterval(interval)
       window.removeEventListener("aics_applications_updated", handleUpdate)
+      window.removeEventListener("printed_gl_applications_updated", handleUpdate)
       window.removeEventListener("govserve_realtime_event", handleUpdate)
       window.removeEventListener("applications_updated", handleUpdate)
       window.removeEventListener("appointments_updated", handleUpdate)
@@ -714,6 +735,21 @@ const canProceedPersonal = Boolean(
           else if (rawSt === "rejected" || rawSt === "disapproved") cleanSt = "rejected"
           else if (rawSt === "under_review" || rawSt === "scheduled" || rawSt === "for_assessment") cleanSt = "under_review"
           else cleanSt = "pending"
+
+          try {
+            const rawSched = localStorage.getItem("all_appointments_scheduled")
+            const schedMap = rawSched ? JSON.parse(rawSched) : {}
+            const rawGL = localStorage.getItem("printed_gl_applications")
+            const glMap = rawGL ? JSON.parse(rawGL) : {}
+            const targetRef = String(reference || "").toLowerCase().trim()
+            if (
+              schedMap[targetRef]?.decision === "approved" ||
+              schedMap[targetRef]?.status === "approved" ||
+              glMap[targetRef]
+            ) {
+              cleanSt = "approved"
+            }
+          } catch {}
 
           setAppStatus(cleanSt)
         }

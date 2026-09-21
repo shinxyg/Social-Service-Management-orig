@@ -2875,85 +2875,179 @@ export default function MyApplications() {
           </div>
         </div>
 
-        {}
-        <div className="space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-            {t("applicationDetailsTitle") || "View Application Details"}
-          </span>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            {selectedApp.assistance}
-          </h1>
-          <p className="text-sm text-gray-500">
-            Detailed information and official status of your submitted social service request.
-          </p>
-        </div>
-
-        {}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
-            <div>
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
-                Reference / QC ID Number
-              </span>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xl sm:text-2xl font-mono font-black text-blue-700">
-                  <MaskedText value={selectedApp.applicationNo} type="id" showButtonLabel />
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span
-                className={`text-xs font-bold px-3 py-1.5 rounded-xl border ${
-                  isTrainingApplication(selectedApp) || selectedApp.assistanceCategory === "Livelihood"
-                    ? "bg-blue-100 text-blue-800 border-blue-200"
-                    : "bg-gray-100 text-gray-700 border-gray-200"
-                }`}
-              >
-                {isTrainingApplication(selectedApp) ? "Training Program" : selectedApp.assistanceCategory}
-              </span>
-              <span className="text-xs text-gray-400">
-                Date Applied: <strong>{selectedApp.dateApplied}</strong>
-              </span>
-            </div>
-          </div>
-
-          {}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs pt-2">
-            <div>
-              <span className="text-gray-400 block font-medium">Full Name:</span>
-              <span className="font-bold text-gray-900 text-sm uppercase">{selectedApp.applicantName}</span>
-            </div>
-            <div>
-              <span className="text-gray-400 block font-medium">Date of Birth:</span>
-              <span className="font-medium text-gray-900">
-                <MaskedText value={selectedApp.dateOfBirth} type="birthdate" showButtonLabel />
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-400 block font-medium">Contact Number:</span>
-              <span className="font-mono font-medium text-gray-900">
-                <MaskedText value={selectedApp.contactNumber} type="phone" showButtonLabel />
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-400 block font-medium">Email Address:</span>
-              <span className="font-medium text-gray-900 truncate block">
-                <MaskedText value={selectedApp.email} type="email" showButtonLabel />
-              </span>
-            </div>
-          </div>
-
-          <div className="text-xs pt-2 border-t border-gray-100">
-            <span className="text-gray-400 block font-medium">Address:</span>
-            <span className="font-medium text-gray-900">{selectedApp.address}</span>
-          </div>
-        </div>
-
-        {}
         {(() => {
+          const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+          const schedMap = rawSched ? JSON.parse(rawSched) : {}
+          const cachedAppt = findCachedAppointmentRecord(schedMap, selectedApp)
+
+          const rawGL = typeof window !== "undefined" ? localStorage.getItem("printed_gl_applications") : null
+          const glMap = rawGL ? JSON.parse(rawGL) : {}
+          const cleanRef = String(selectedApp.applicationNo || selectedApp.id || selectedApp.referenceNumber || "").toLowerCase().trim()
+          const isGLPrinted = !!(cleanRef && (glMap[cleanRef] || (selectedApp.id && glMap[String(selectedApp.id).toLowerCase().trim()])))
+
+          const isNewIntake =
+            selectedApp.status === "Pending" ||
+            selectedApp.status === "Submit Pending" ||
+            selectedApp.status === "Waiting to Approve" ||
+            (selectedApp.status as any) === "submit_pending" ||
+            (selectedApp.status as any) === "waiting_approval" ||
+            (selectedApp.status as any) === "pending"
+
+          const isAppApproved =
+            isGLPrinted ||
+            (!isNewIntake &&
+              (selectedApp.status === "Approved" ||
+                selectedApp.status === "Completed" ||
+                selectedApp.status === "Released" ||
+                selectedApp.status === "For Release" ||
+                cachedAppt?.decision === "approved" ||
+                cachedAppt?.status === "approved"))
+
+          const isAppReferred =
+            !isNewIntake &&
+            (selectedApp.status === "Referred" ||
+              selectedApp.status === "For Referral" ||
+              cachedAppt?.decision === "referred" ||
+              cachedAppt?.status === "referred")
+
+          const isAppRejected =
+            selectedApp.status === "Rejected" ||
+            cachedAppt?.decision === "rejected" ||
+            cachedAppt?.status === "rejected"
+
+          const effectiveAppStatus: ApplicationStatus = isAppApproved
+            ? "Approved"
+            : isAppReferred
+            ? "Referred"
+            : isAppRejected
+            ? "Rejected"
+            : selectedApp.status
+
+          const badge = getStatusBadge(effectiveAppStatus)
+
+          return (
+            <>
+              {/* Header Title */}
+              <div className="space-y-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                  {t("applicationDetailsTitle") || "View Application Details"}
+                </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    {selectedApp.assistance}
+                  </h1>
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shrink-0 ${badge.bg}`}
+                  >
+                    {badge.icon}
+                    {badge.label}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Detailed information and official status of your submitted social service request.
+                </p>
+              </div>
+
+              {/* Top Reference Card */}
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                  <div>
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
+                      Reference / QC ID Number
+                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xl sm:text-2xl font-mono font-black text-blue-700">
+                        <MaskedText value={selectedApp.applicationNo} type="id" showButtonLabel />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl border ${
+                        isTrainingApplication(selectedApp) || selectedApp.assistanceCategory === "Livelihood"
+                          ? "bg-blue-100 text-blue-800 border-blue-200"
+                          : "bg-gray-100 text-gray-700 border-gray-200"
+                      }`}
+                    >
+                      {isTrainingApplication(selectedApp) ? "Training Program" : selectedApp.assistanceCategory}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      Date Applied: <strong>{selectedApp.dateApplied}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs pt-2">
+                  <div>
+                    <span className="text-gray-400 block font-medium">Full Name:</span>
+                    <span className="font-bold text-gray-900 text-sm uppercase">{selectedApp.applicantName}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block font-medium">Date of Birth:</span>
+                    <span className="font-medium text-gray-900">
+                      <MaskedText value={selectedApp.dateOfBirth} type="birthdate" showButtonLabel />
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block font-medium">Contact Number:</span>
+                    <span className="font-mono font-medium text-gray-900">
+                      <MaskedText value={selectedApp.contactNumber} type="phone" showButtonLabel />
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block font-medium">Email Address:</span>
+                    <span className="font-medium text-gray-900 truncate block">
+                      <MaskedText value={selectedApp.email} type="email" showButtonLabel />
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-xs pt-2 border-t border-gray-100">
+                  <span className="text-gray-400 block font-medium">Address:</span>
+                  <span className="font-medium text-gray-900">{selectedApp.address}</span>
+                </div>
+              </div>
+            </>
+          )
+        })()}
+
+        {/* Specialized Preview Sections (Pipeline for AICS, ID cards for PWD/Senior, etc.) */}
+        {(() => {
+          const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+          const schedMap = rawSched ? JSON.parse(rawSched) : {}
+          const cachedAppt = findCachedAppointmentRecord(schedMap, selectedApp)
+
+          const rawGL = typeof window !== "undefined" ? localStorage.getItem("printed_gl_applications") : null
+          const glMap = rawGL ? JSON.parse(rawGL) : {}
+          const cleanRef = String(selectedApp.applicationNo || selectedApp.id || selectedApp.referenceNumber || "").toLowerCase().trim()
+          const isGLPrinted = !!(cleanRef && (glMap[cleanRef] || (selectedApp.id && glMap[String(selectedApp.id).toLowerCase().trim()])))
+
+          const isNewIntake =
+            selectedApp.status === "Pending" ||
+            selectedApp.status === "Submit Pending" ||
+            selectedApp.status === "Waiting to Approve" ||
+            (selectedApp.status as any) === "submit_pending" ||
+            (selectedApp.status as any) === "waiting_approval" ||
+            (selectedApp.status as any) === "pending"
+
+          const isAppApproved =
+            isGLPrinted ||
+            (!isNewIntake &&
+              (selectedApp.status === "Approved" ||
+                selectedApp.status === "Completed" ||
+                selectedApp.status === "Released" ||
+                selectedApp.status === "For Release" ||
+                cachedAppt?.decision === "approved" ||
+                cachedAppt?.status === "approved"))
+
           const isApprovedOrReleased =
-            selectedApp.status === "Approved" || selectedApp.status === "For Release" || selectedApp.status === "Released"
+            isAppApproved ||
+            selectedApp.status === "Approved" ||
+            selectedApp.status === "For Release" ||
+            selectedApp.status === "Released" ||
+            selectedApp.status === "Completed"
           const isTrainingApp = isTrainingApplication(selectedApp)
           const isIdApp = isIdOrDocumentApplication(selectedApp)
 
@@ -3488,12 +3582,12 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                {/* 5-Stage Progress Pipeline */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                {/* 4-Stage Progress Pipeline */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="p-3 rounded-xl border bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 space-y-1">
                     <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400">STAGE 1</span>
                     <p className="text-xs font-bold">General Requirements</p>
-                    <p className="text-[10px] text-blue-800/80 dark:text-blue-300/80">Documents Verified &amp; Intake Complete</p>
+                    <p className="text-[10px] text-blue-800/80 dark:text-blue-300/80">✓ Verified &amp; Intake Complete</p>
                   </div>
 
                   <div className={`p-3 rounded-xl border space-y-1 ${
@@ -3523,26 +3617,14 @@ export default function MyApplications() {
                   </div>
 
                   <div className={`p-3 rounded-xl border space-y-1 ${
-                    isGLIssued
-                      ? "bg-indigo-100/80 dark:bg-indigo-950/60 border-indigo-300 text-indigo-900 dark:text-indigo-200 font-bold"
-                      : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
-                  }`}>
-                    <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400">STAGE 4</span>
-                    <p className="text-xs font-bold">Assistance Processing</p>
-                    <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                      {isGLIssued ? (isMedicineApp ? "✓ Medicine Voucher Prepared" : "✓ GL / Voucher Prepared") : "Awaiting Approval"}
-                    </p>
-                  </div>
-
-                  <div className={`p-3 rounded-xl border space-y-1 ${
-                    isClaimed
+                    isGLIssued || isApprovedDecision
                       ? "bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-300 text-emerald-900 dark:text-emerald-200 font-bold"
                       : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
                   }`}>
-                    <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">STAGE 5</span>
-                    <p className="text-xs font-bold">Released / Availed</p>
+                    <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">STAGE 4</span>
+                    <p className="text-xs font-bold">Guarantee Letter / Released</p>
                     <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                      {isClaimed ? (isMedicineApp ? "✓ Medicine Aid Released" : "✓ Aid Released & Availed") : "Pending Claim / Payout"}
+                      {isGLIssued || isApprovedDecision ? "✓ Ready for Hospital Claim" : "Pending Approval / Release"}
                     </p>
                   </div>
                 </div>
@@ -3800,6 +3882,11 @@ export default function MyApplications() {
             const schedMap = rawSched ? JSON.parse(rawSched) : {}
             const cachedAppt = findCachedAppointmentRecord(schedMap, app)
 
+            const rawGL = typeof window !== "undefined" ? localStorage.getItem("printed_gl_applications") : null
+            const glMap = rawGL ? JSON.parse(rawGL) : {}
+            const cleanRef = String(app.applicationNo || app.id || app.referenceNumber || "").toLowerCase().trim()
+            const isGLPrinted = !!(cleanRef && (glMap[cleanRef] || (app.id && glMap[String(app.id).toLowerCase().trim()])))
+
             const isNewIntake =
               app.status === "Pending" ||
               app.status === "Submit Pending" ||
@@ -3809,13 +3896,14 @@ export default function MyApplications() {
               (app.status as any) === "pending"
 
             const isAppApproved =
-              !isNewIntake &&
-              (app.status === "Approved" ||
-                app.status === "Completed" ||
-                app.status === "Released" ||
-                app.status === "For Release" ||
-                cachedAppt?.decision === "approved" ||
-                cachedAppt?.status === "approved")
+              isGLPrinted ||
+              (!isNewIntake &&
+                (app.status === "Approved" ||
+                  app.status === "Completed" ||
+                  app.status === "Released" ||
+                  app.status === "For Release" ||
+                  cachedAppt?.decision === "approved" ||
+                  cachedAppt?.status === "approved"))
 
             const isAppReferred =
               !isNewIntake &&
@@ -3929,7 +4017,7 @@ export default function MyApplications() {
                     const appDateStr = cachedAppt?.scheduledDate || app.appointmentDate || app.formData?.appointmentDate || "Sep 21, 2026"
                     const appTimeStr = cachedAppt?.scheduledTime || app.appointmentTime || app.formData?.appointmentTime || "01:08 AM"
 
-                    // Determine states for each of the 5 stages: 'completed' | 'current' | 'pending'
+                    // Determine states for each of the 4 stages: 'completed' | 'current' | 'pending'
                     const s1State: "completed" | "current" | "pending" = "completed"
 
                     let s2State: "completed" | "current" | "pending" = "pending"
@@ -3959,29 +4047,19 @@ export default function MyApplications() {
                     }
 
                     let s4State: "completed" | "current" | "pending" = "pending"
-                    let s4Title = "4. PROCESSING"
-                    let s4Sub = "○ Awaiting Approval"
+                    let s4Title = "4. GL RELEASED"
+                    let s4Sub = "○ Pending Release"
                     if (isExplicitlyReleased || isApprovedDecision) {
                       s4State = "completed"
-                      s4Title = "4. PROCESSING"
-                      s4Sub = "✓ GL Processed"
+                      s4Title = "4. GL RELEASED"
+                      s4Sub = "✓ Ready for Hospital Claim"
                     }
 
-                    let s5State: "completed" | "current" | "pending" = "pending"
-                    let s5Title = "5. RELEASED"
-                    let s5Sub = "○ Pending Release"
-                    if (isExplicitlyReleased || isApprovedDecision) {
-                      s5State = "completed"
-                      s5Title = "5. RELEASED"
-                      s5Sub = "✓ Ready for Hospital Claim"
-                    }
-
-                    const isProgress1to5Done =
+                    const isProgressDone =
                       s1State === "completed" &&
                       s2State === "completed" &&
                       s3State === "completed" &&
-                      s4State === "completed" &&
-                      s5State === "completed"
+                      s4State === "completed"
 
                     const getStageBoxClass = (st: "completed" | "current" | "pending") => {
                       if (st === "completed") {
@@ -4010,11 +4088,11 @@ export default function MyApplications() {
 
                         {/* Process Flow Header */}
                         <div className="flex items-center justify-between gap-2 flex-wrap text-[10px] text-gray-500 dark:text-slate-400 font-medium">
-                          <span className="font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider text-[9.5px]">5-Stage Process Flow</span>
+                          <span className="font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider text-[9.5px]">4-Stage Process Flow</span>
                         </div>
 
-                        {/* 5-Stage Visual Pipeline */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-0.5">
+                        {/* 4-Stage Visual Pipeline */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-0.5">
                           <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s1State)}`}>
                             <span className="block font-black">1. REQUIREMENTS</span>
                             <span className="text-[9px] block">✓ Verified &amp; Intake Done</span>
@@ -4034,21 +4112,16 @@ export default function MyApplications() {
                             <span className="block font-black">{s4Title}</span>
                             <span className="text-[9px] block">{s4Sub}</span>
                           </div>
-
-                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s5State)}`}>
-                            <span className="block font-black">{s5Title}</span>
-                            <span className="text-[9px] block">{s5Sub}</span>
-                          </div>
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1 border-t border-blue-100 dark:border-slate-700/60 flex-wrap">
-                          {!isProgress1to5Done ? (
+                          {!isProgressDone ? (
                             <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
                               * Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview.
                             </p>
                           ) : <div />}
                           <div className="flex items-center gap-1.5 flex-wrap ml-auto">
-                            {isProgress1to5Done && (
+                            {isProgressDone && (
                               <button
                                 type="button"
                                 onClick={(e) => {

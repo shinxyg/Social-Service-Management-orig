@@ -1278,17 +1278,65 @@ export default function Appointments() {
     }
   }
 
-  const handlePrintGL = (appt: AppointmentRequest) => {
+  const handlePrintGL = async (appt: AppointmentRequest) => {
     try {
       const rawStored = localStorage.getItem("printed_gl_applications") || "{}"
       const stored = JSON.parse(rawStored)
-      if (appt.referenceNo) stored[appt.referenceNo.toLowerCase().trim()] = true
-      if (appt.id) stored[appt.id.toLowerCase().trim()] = true
+      const cleanRef = String(appt.referenceNo || "").toLowerCase().trim()
+      const cleanId = String(appt.id || "").toLowerCase().trim()
+      const rawAppId = String(appt.rawAppId || "").toLowerCase().trim()
+
+      if (cleanRef) stored[cleanRef] = true
+      if (cleanId) stored[cleanId] = true
+      if (rawAppId) stored[rawAppId] = true
       localStorage.setItem("printed_gl_applications", JSON.stringify(stored))
+
+      // Also ensure all_appointments_scheduled has approved status
+      const rawSched = localStorage.getItem("all_appointments_scheduled") || "{}"
+      const localMap = JSON.parse(rawSched)
+      const approvedPayload = {
+        status: "approved",
+        decision: "approved",
+        scheduledDate: appt.scheduledDate,
+        scheduledTime: appt.scheduledTime,
+        officeLocation: appt.officeLocation,
+        applicantName: appt.applicantName,
+        referenceNo: appt.referenceNo,
+        concern: appt.concern,
+      }
+      if (appt.id) localMap[appt.id] = approvedPayload
+      if (appt.referenceNo) {
+        localMap[appt.referenceNo] = approvedPayload
+        localMap[`appt_${appt.referenceNo}`] = approvedPayload
+      }
+      if (appt.rawAppId) localMap[String(appt.rawAppId)] = approvedPayload
+      localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
+
+      const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
+      await Promise.allSettled([
+        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetRef)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'approved', decision: 'approved', applicantName: appt.applicantName }),
+        }),
+        fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'approved', applicantName: appt.applicantName }),
+        }),
+      ])
+
+      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "approved" as const, decision: "approved" as const } : a))
+
       window.dispatchEvent(new Event("printed_gl_applications_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
       window.dispatchEvent(new Event("appointments_updated"))
-    } catch {}
+      window.dispatchEvent(new Event("applications_updated"))
+      window.dispatchEvent(new Event("financial_disbursements_updated"))
+      window.dispatchEvent(new Event("storage"))
+    } catch (err) {
+      console.error("[handlePrintGL] error:", err)
+    }
 
     const raw = appt.rawApp || {}
     const rawDetails = raw.details || {}
