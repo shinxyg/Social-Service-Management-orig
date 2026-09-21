@@ -566,7 +566,16 @@ export default function Appointments() {
         const cleanDate = (d: any) => {
           if (!d) return null
           const s = String(d).trim()
-          if (!s || s.toLowerCase().includes('sep 19') || s.includes('2026-09-19')) return null
+          const lower = s.toLowerCase()
+          if (
+            !s ||
+            lower.includes('sep 19') ||
+            s.includes('2026-09-19') ||
+            lower.includes('sep 15') ||
+            s.includes('2026-09-15')
+          ) {
+            return null
+          }
           return s
         }
 
@@ -597,11 +606,13 @@ export default function Appointments() {
                 .map((a: any) => {
                   const apptId = `db-appt-${a.id}`
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || "").trim()
-                  const cached = localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined)
-                  const schedDate = cleanDate(a.scheduled_date || cached?.scheduledDate)
+                  const rawStatus = String(a.status || '').toLowerCase()
+                  const isExplicitPending = rawStatus === 'pending' || !a.scheduled_date
+                  const cached = (isExplicitPending && !localScheduledMap[apptId]?.savedInSession) ? undefined : (localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined))
+                  const schedDate = (isExplicitPending && !cached?.savedInSession) ? null : cleanDate(a.scheduled_date || cached?.scheduledDate)
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
-                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
+                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || (['approved', 'completed'].includes(rawStatus) ? 'approved' : rawStatus === 'referred' ? 'referred' : rawStatus === 'rejected' ? 'rejected' : undefined)
                   
                   let statusVal: AppointmentStatus = 'pending'
                   if (cachedDecision) {
@@ -638,11 +649,13 @@ export default function Appointments() {
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
                 const rawAppStatus = String(app.status || '').toLowerCase()
-                // Only show in Appointments if APPROVED for scheduling (or already scheduled / under review / referred / completed).
-                // Do NOT show if still in initial submit_pending or if rejected!
+                // Only show in Appointments if APPROVED for scheduling (or already scheduled / under review / referred / completed / pending).
+                // Do NOT show if rejected!
                 if (
                   rawAppStatus === 'waiting_approval' ||
                   rawAppStatus === 'for_scheduling' ||
+                  rawAppStatus === 'pending' ||
+                  rawAppStatus === 'submit_pending' ||
                   rawAppStatus === 'approved' ||
                   rawAppStatus === 'completed' ||
                   rawAppStatus === 'scheduled' ||
@@ -654,11 +667,12 @@ export default function Appointments() {
                   const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
                   const ref = String(app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
                   const apptId = `aics-appt-${app.id || ref}`
-                  const cached = localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined)
-                  const schedDate = cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
+                  const isAicsPending = ['pending', 'submit_pending', 'waiting_approval', 'for_scheduling'].includes(rawAppStatus)
+                  const cached = (isAicsPending && !localScheduledMap[apptId]?.savedInSession) ? undefined : (localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined))
+                  const schedDate = (isAicsPending && !cached?.savedInSession) ? null : cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
                   const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
-                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
+                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || (['approved', 'completed'].includes(rawAppStatus) ? 'approved' : ['for_referral', 'referred'].includes(rawAppStatus) ? 'referred' : undefined)
                   
                   let apptStatus: AppointmentStatus = 'pending'
                   if (cachedDecision) {
@@ -921,6 +935,7 @@ export default function Appointments() {
         const localScheduledMap = raw ? JSON.parse(raw) : {}
         const schedObj = {
           status: "scheduled",
+          savedInSession: true,
           decision: undefined,
           scheduledDate: date,
           scheduledTime: time,

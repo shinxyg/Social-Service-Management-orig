@@ -134,8 +134,20 @@ async function syncAndCleanAppointments() {
     await db.query(`
       UPDATE appointments
       SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
-      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%')
-        AND status NOT IN ('approved', 'completed', 'scheduled', 'under_review', 'rejected', 'referred')
+      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%'
+          OR scheduled_date = '2026-09-15' OR scheduled_date ILIKE '%Sep 15%' OR scheduled_date ILIKE '%2026-09-15%'
+          OR scheduled_date IS NULL OR scheduled_date = '')
+        AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
+    `).catch(() => {});
+
+    // Ensure any AICS application that is still in pending/intake status has its appointment clean and pending
+    await db.query(`
+      UPDATE appointments
+      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
+      WHERE module = 'AICS' AND reference_no IN (
+        SELECT reference_no FROM aics_applications 
+        WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'for_scheduling')
+      )
     `).catch(() => {});
 
     // Import active and pending AICS applications for scheduling & social worker review
@@ -157,8 +169,8 @@ async function syncAndCleanAppointments() {
       const initStatus = isApproved ? 'approved' : isReferred ? 'referred' : isSched ? 'scheduled' : 'pending';
       await db.query(
         `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.'
+          (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
+         SELECT $1, 'AICS', $2, $3, $4, NULL, NULL, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.'
          WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
         [refNo, fullName, cleanType, initStatus]
       ).catch(() => {});
@@ -257,8 +269,19 @@ exports.getAppointments = async (req, res) => {
     await db.query(`
       UPDATE appointments
       SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
-      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%' OR scheduled_date IS NULL OR scheduled_date = '')
-        AND status NOT IN ('rejected', 'referred')
+      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%'
+          OR scheduled_date = '2026-09-15' OR scheduled_date ILIKE '%Sep 15%' OR scheduled_date ILIKE '%2026-09-15%'
+          OR scheduled_date IS NULL OR scheduled_date = '')
+        AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
+    `).catch(() => {});
+
+    await db.query(`
+      UPDATE appointments
+      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
+      WHERE module = 'AICS' AND reference_no IN (
+        SELECT reference_no FROM aics_applications 
+        WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'for_scheduling')
+      )
     `).catch(() => {});
 
     const [deletedRes, result] = await Promise.all([

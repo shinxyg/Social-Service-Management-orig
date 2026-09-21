@@ -931,11 +931,20 @@ const handleFinalSubmit = async () => {
             const localSched = JSON.parse(rawSched)
             delete localSched[assignedRef]
             delete localSched[`appt_${assignedRef}`]
+            delete localSched[`aics-appt-${assignedRef}`]
             if (qcId) {
+              const cleanQc = qcId.replace(/[^a-zA-Z0-9]/g, "")
               delete localSched[qcId]
               delete localSched[`appt_${qcId}`]
-              delete localSched[qcId.replace(/[^a-zA-Z0-9]/g, "")]
+              delete localSched[`aics-appt-${qcId}`]
+              delete localSched[cleanQc]
+              delete localSched[`appt_${cleanQc}`]
             }
+            Object.keys(localSched).forEach((k) => {
+              if (k.includes(assignedRef) || (qcId && k.includes(qcId))) {
+                delete localSched[k]
+              }
+            })
             localStorage.setItem("all_appointments_scheduled", JSON.stringify(localSched))
           }
           const rawGL = localStorage.getItem("printed_gl_applications")
@@ -949,6 +958,10 @@ const handleFinalSubmit = async () => {
             localStorage.setItem("printed_gl_applications", JSON.stringify(glMap))
           }
 
+          localStorage.removeItem("cached_appointments_list")
+          localStorage.removeItem("all_appointments")
+          localStorage.removeItem("appointments")
+          window.dispatchEvent(new CustomEvent('appointments_updated'))
           window.dispatchEvent(new CustomEvent('aics_application_submitted'))
         } catch {}
         notifyApplicationChange("APPLICATION_SUBMITTED", "aics", assignedRef)
