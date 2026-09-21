@@ -157,6 +157,43 @@ export function getStatusBadgeInfo(status: string) {
   }
 }
 
+export function getEffectiveAppStatus(app?: AicsApplication | null): string {
+  if (!app) return 'pending'
+  try {
+    const rawGL = typeof window !== 'undefined' ? localStorage.getItem("printed_gl_applications") : null
+    const glMap = rawGL ? JSON.parse(rawGL) : {}
+    const cleanRef = String(app.reference_no || '').toLowerCase().trim()
+    const cleanQc = String(app.qc_id || '').toLowerCase().trim()
+    const cleanId = String(app.id || '').toLowerCase().trim()
+
+    if (
+      (cleanRef && glMap[cleanRef]) ||
+      (cleanQc && glMap[cleanQc]) ||
+      (cleanId && glMap[cleanId])
+    ) {
+      return 'approved'
+    }
+
+    const rawSched = typeof window !== 'undefined' ? localStorage.getItem("all_appointments_scheduled") : null
+    const schedMap = rawSched ? JSON.parse(rawSched) : {}
+
+    const cached =
+      (cleanRef && schedMap[cleanRef]) ||
+      (cleanQc && schedMap[cleanQc]) ||
+      (cleanId && schedMap[cleanId]) ||
+      (cleanRef && schedMap[`appt_${cleanRef}`]) ||
+      (cleanQc && schedMap[`appt_${cleanQc}`]) ||
+      (cleanId && schedMap[`aics-appt-${cleanId}`]) ||
+      (cleanRef && schedMap[`aics-appt-${cleanRef}`])
+
+    if (cached?.status === 'approved' || cached?.decision === 'approved') return 'approved'
+    if (cached?.status === 'referred' || cached?.decision === 'referred') return 'referred'
+    if (cached?.status === 'rejected' || cached?.decision === 'rejected') return 'rejected'
+  } catch {}
+
+  return String(app.status || 'pending').toLowerCase()
+}
+
 export default function AICS() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'admin-review'>('dashboard')
   const [selectedTab, setSelectedTab] = useState<string>('all')
@@ -229,6 +266,9 @@ export default function AICS() {
     window.addEventListener('storage', handleSync)
     window.addEventListener('aics_application_submitted', handleSync)
     window.addEventListener('aics_applications_updated', handleSync)
+    window.addEventListener('appointments_updated', handleSync)
+    window.addEventListener('printed_gl_applications_updated', handleSync)
+    window.addEventListener('applications_updated', handleSync)
     window.addEventListener('focus', handleSync)
 
     return () => {
@@ -236,6 +276,9 @@ export default function AICS() {
       window.removeEventListener('storage', handleSync)
       window.removeEventListener('aics_application_submitted', handleSync)
       window.removeEventListener('aics_applications_updated', handleSync)
+      window.removeEventListener('appointments_updated', handleSync)
+      window.removeEventListener('printed_gl_applications_updated', handleSync)
+      window.removeEventListener('applications_updated', handleSync)
       window.removeEventListener('focus', handleSync)
     }
   }, [fetchApplications])
@@ -421,11 +464,13 @@ export default function AICS() {
 
       if (!matchesSearch) return false
 
+      const effStatus = getEffectiveAppStatus(app)
+
       if (selectedTab === 'all') return true
-      if (selectedTab === 'pending') return app.status === 'submit_pending' || app.status === 'pending' || app.status === 'waiting_approval' || app.status === 'scheduled' || app.status === 'under_review'
-      if (selectedTab === 'approved') return app.status === 'approved' || app.status === 'completed'
-      if (selectedTab === 'referred') return app.status === 'for_referral' || app.status === 'referred'
-      if (selectedTab === 'rejected') return app.status === 'rejected'
+      if (selectedTab === 'pending') return effStatus === 'submit_pending' || effStatus === 'pending' || effStatus === 'waiting_approval' || effStatus === 'scheduled' || effStatus === 'under_review'
+      if (selectedTab === 'approved') return effStatus === 'approved' || effStatus === 'completed'
+      if (selectedTab === 'referred') return effStatus === 'for_referral' || effStatus === 'referred'
+      if (selectedTab === 'rejected') return effStatus === 'rejected'
 
       return true
     })
@@ -435,9 +480,12 @@ export default function AICS() {
   const tabCounts = useMemo(() => {
     return {
       all: applications.length,
-      pending: applications.filter(a => ['submit_pending', 'pending', 'waiting_approval', 'scheduled', 'under_review'].includes(String(a.status || '').toLowerCase())).length,
-      approved: applications.filter(a => a.status === 'approved' || a.status === 'completed').length,
-      rejected: applications.filter(a => a.status === 'rejected').length,
+      pending: applications.filter(a => ['submit_pending', 'pending', 'waiting_approval', 'scheduled', 'under_review'].includes(getEffectiveAppStatus(a))).length,
+      approved: applications.filter(a => {
+        const st = getEffectiveAppStatus(a)
+        return st === 'approved' || st === 'completed'
+      }).length,
+      rejected: applications.filter(a => getEffectiveAppStatus(a) === 'rejected').length,
     }
   }, [applications])
 
@@ -567,7 +615,8 @@ export default function AICS() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredApplications.map((app) => {
-                    const badge = getStatusBadgeInfo(app.status)
+                    const effStatus = getEffectiveAppStatus(app)
+                    const badge = getStatusBadgeInfo(effStatus)
                     return (
                       <tr
                         key={app.id}
@@ -625,8 +674,9 @@ export default function AICS() {
   // ==========================================
   if (currentView === 'admin-review' && reviewingApp) {
     const details = reviewingApp.details || {}
-    const badge = getStatusBadgeInfo(reviewingApp.status)
-    const currentStatus = String(reviewingApp.status || '').toLowerCase()
+    const effStatus = getEffectiveAppStatus(reviewingApp)
+    const badge = getStatusBadgeInfo(effStatus)
+    const currentStatus = String(effStatus || '').toLowerCase()
 
     return (
       <div style={{ backgroundColor: DESIGN.colors.canvas, minHeight: '100vh' }} className="py-8">

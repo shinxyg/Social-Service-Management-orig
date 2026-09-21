@@ -237,6 +237,22 @@ async function enrichApplicationWithSuffix(app) {
 
 exports.getApplications = async (req, res) => {
   try {
+    // Proactively sync aics_applications status with appointments table
+    await db.query(`
+      UPDATE aics_applications a
+      SET status = appt.status, updated_at = NOW()
+      FROM appointments appt
+      WHERE (appt.reference_no = a.reference_no 
+             OR appt.reference_no = a.qc_id 
+             OR REPLACE(COALESCE(appt.reference_no,''), '-', '') = REPLACE(COALESCE(a.reference_no,''), '-', '')
+             OR REPLACE(COALESCE(appt.reference_no,''), '-', '') = REPLACE(COALESCE(a.qc_id,''), '-', '')
+             OR (appt.applicant_name IS NOT NULL AND LOWER(appt.applicant_name) = LOWER(CONCAT(a.first_name, ' ', a.last_name))))
+        AND LOWER(appt.status) IN ('approved', 'completed', 'referred', 'rejected')
+        AND LOWER(COALESCE(a.status, '')) != LOWER(appt.status)
+    `).catch((syncErr) => {
+      console.warn('[aicsController.getApplications] sync warning:', syncErr.message);
+    });
+
     const { status, qcId, email } = req.query;
     let query = 'SELECT * FROM aics_applications';
     const conditions = [];
