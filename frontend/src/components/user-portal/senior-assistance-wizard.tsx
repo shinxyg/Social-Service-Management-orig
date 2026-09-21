@@ -935,7 +935,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
             <div className="space-y-6">
               <div className="border-b border-border pb-3">
                 <h3 className="text-base font-bold text-foreground">
-                  MGA KINAKAILANGAN AT KWALIPIKASYON (ELIGIBILITY CHECKLIST)
+                  SOCIAL WELFARE ASSISTANCE (SWA) — SENIOR CITIZEN SECTOR
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Pakisagot ang mga katanungan sa ibaba upang maberipika ang inyong kwalipikasyon para sa Senior Citizen Social Assistance.
@@ -949,17 +949,12 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               )}
 
-              {}
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">
-                    Tulong Panlipunan ng Quezon City SSDD at OSCA
-                  </h4>
-                  <p className="text-xs text-blue-700 mt-1 leading-relaxed">
-                    Ang programang ito ay naglalayong magkaloob ng ayuda, gamot, assistive devices, at suportang medikal sa mga kapus-palad o nangangailangang senior citizens ng lungsod.
-                  </p>
-                </div>
+              {/* Info box */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 text-blue-900 dark:text-slate-100">
+                <Info className="h-4 w-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
+                <p className="text-xs leading-relaxed">
+                  <span className="font-bold text-blue-950 dark:text-white">Senior Citizen Sector:</span> Qualified indigent Senior Citizens aged 60 and above may receive the assistance, subject to validation and assessment.
+                </p>
               </div>
 
               {}
