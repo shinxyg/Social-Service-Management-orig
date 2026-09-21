@@ -2229,8 +2229,9 @@ export default function MyApplications() {
                 applicantName: appApplicantName,
               })
 
-              const isAppApproved = app.status === "approved" || app.status === "completed" || cachedAppt?.decision === "approved" || cachedAppt?.status === "approved"
-              const isAppReferred = app.status === "referred" || app.status === "for_referral" || cachedAppt?.decision === "referred" || cachedAppt?.status === "referred"
+              const isNewIntake = app.status === "pending" || app.status === "submit_pending" || app.status === "waiting_approval" || app.status === "for_screening"
+              const isAppApproved = !isNewIntake && (app.status === "approved" || app.status === "completed" || cachedAppt?.decision === "approved" || cachedAppt?.status === "approved")
+              const isAppReferred = !isNewIntake && (app.status === "referred" || app.status === "for_referral" || cachedAppt?.decision === "referred" || cachedAppt?.status === "referred")
               const isAppRejected = app.status === "rejected" || cachedAppt?.decision === "rejected" || cachedAppt?.status === "rejected"
 
               const resolvedStatus: ApplicationStatus = isAppApproved
@@ -3808,19 +3809,29 @@ export default function MyApplications() {
             const schedMap = rawSched ? JSON.parse(rawSched) : {}
             const cachedAppt = findCachedAppointmentRecord(schedMap, app)
 
+            const isNewIntake =
+              app.status === "Pending" ||
+              app.status === "Submit Pending" ||
+              app.status === "Waiting to Approve" ||
+              (app.status as any) === "submit_pending" ||
+              (app.status as any) === "waiting_approval" ||
+              (app.status as any) === "pending"
+
             const isAppApproved =
-              app.status === "Approved" ||
-              app.status === "Completed" ||
-              app.status === "Released" ||
-              app.status === "For Release" ||
-              cachedAppt?.decision === "approved" ||
-              cachedAppt?.status === "approved"
+              !isNewIntake &&
+              (app.status === "Approved" ||
+                app.status === "Completed" ||
+                app.status === "Released" ||
+                app.status === "For Release" ||
+                cachedAppt?.decision === "approved" ||
+                cachedAppt?.status === "approved")
 
             const isAppReferred =
-              app.status === "Referred" ||
-              app.status === "For Referral" ||
-              cachedAppt?.decision === "referred" ||
-              cachedAppt?.status === "referred"
+              !isNewIntake &&
+              (app.status === "Referred" ||
+                app.status === "For Referral" ||
+                cachedAppt?.decision === "referred" ||
+                cachedAppt?.status === "referred")
 
             const isAppRejected =
               app.status === "Rejected" ||

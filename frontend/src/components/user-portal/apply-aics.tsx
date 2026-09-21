@@ -933,6 +933,30 @@ const handleFinalSubmit = async () => {
           setIsReapplying(false)
           isReapplyingRef.current = false
           localStorage.setItem('aics_application_submitted', String(Date.now()))
+
+          const rawSched = localStorage.getItem("all_appointments_scheduled")
+          if (rawSched) {
+            const localSched = JSON.parse(rawSched)
+            delete localSched[assignedRef]
+            delete localSched[`appt_${assignedRef}`]
+            if (qcId) {
+              delete localSched[qcId]
+              delete localSched[`appt_${qcId}`]
+              delete localSched[qcId.replace(/[^a-zA-Z0-9]/g, "")]
+            }
+            localStorage.setItem("all_appointments_scheduled", JSON.stringify(localSched))
+          }
+          const rawGL = localStorage.getItem("printed_gl_applications")
+          if (rawGL) {
+            const glMap = JSON.parse(rawGL)
+            delete glMap[assignedRef.toLowerCase().trim()]
+            if (qcId) {
+              delete glMap[qcId.toLowerCase().trim()]
+              delete glMap[qcId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim()]
+            }
+            localStorage.setItem("printed_gl_applications", JSON.stringify(glMap))
+          }
+
           window.dispatchEvent(new CustomEvent('aics_application_submitted'))
         } catch {}
         notifyApplicationChange("APPLICATION_SUBMITTED", "aics", assignedRef)
