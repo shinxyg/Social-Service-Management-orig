@@ -102,13 +102,9 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
     },
     {
       id: "childWelfare",
+      path: "/portal/apply-solo-parent?category=child-welfare",
       label: t("navChildWelfareServices"),
       icon: HeartHandshake,
-      children: [
-        { path: "/portal/apply-solo-parent?category=child-welfare&program=nutritional-assistance", label: t("navChildNutritional") || "Nutritional Assistance" },
-        { path: "/portal/apply-solo-parent?category=child-welfare&program=child-protection", label: t("navChildProtection") || "Child Protection Assistance" },
-        { path: "/portal/apply-solo-parent?category=child-welfare&program=emergency-assistance", label: t("navChildEmergency") || "Emergency Assistance" },
-      ],
     },
     {
       id: "livelihood",
@@ -471,6 +467,12 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
                       (location.pathname === "/portal/apply-pwd-senior" && location.search.includes("category=senior"))
                     )
                   }
+                  if (item.id === "childWelfare") {
+                    return (
+                      location.pathname === "/portal/child-welfare" ||
+                      (location.pathname === "/portal/apply-solo-parent" && location.search.includes("category=child-welfare"))
+                    )
+                  }
                   if (path.includes("?")) {
                     const [pBase, pQuery] = path.split("?")
                     return location.pathname === pBase && location.search.includes(pQuery)
@@ -596,6 +598,20 @@ function ResidentHeader({
         currentTitle = `${seniorLabel} — Replacement / Lost Senior ID`
       } else {
         currentTitle = seniorLabel
+      }
+    } else if (
+      location.pathname === "/portal/child-welfare" ||
+      (location.pathname === "/portal/apply-solo-parent" && location.search.includes("category=child-welfare"))
+    ) {
+      const cwLabel = t("navChildWelfareServices") || "Child Welfare Services"
+      if (location.search.includes("program=nutritional-assistance")) {
+        currentTitle = `${cwLabel} — Nutritional Assistance`
+      } else if (location.search.includes("program=child-protection")) {
+        currentTitle = `${cwLabel} — Child Protection Assistance`
+      } else if (location.search.includes("program=emergency-assistance")) {
+        currentTitle = `${cwLabel} — Emergency Assistance`
+      } else {
+        currentTitle = cwLabel
       }
     } else {
       for (const item of residentNav) {

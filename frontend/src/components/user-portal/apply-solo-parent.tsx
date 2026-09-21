@@ -1,6 +1,19 @@
 import { useState, useEffect, useRef } from "react"
-import { useSearchParams } from "react-router-dom"
-import { AlertCircle, FileText, X, RefreshCw, HeartHandshake, Info, CheckCircle2, RotateCcw } from "lucide-react"
+import { useSearchParams, useNavigate } from "react-router-dom"
+import {
+  AlertCircle,
+  FileText,
+  X,
+  RefreshCw,
+  HeartHandshake,
+  Info,
+  CheckCircle2,
+  RotateCcw,
+  Lock,
+  Clock,
+  ArrowRight,
+  ChevronLeft,
+} from "lucide-react"
 import SoloParentApplicationWizard from "./solo-parent-wizard"
 import ChildWelfareApplicationWizard, { getLocalizedChildWelfarePrograms } from "./child-welfare-wizard"
 import { useLanguage } from "../ui/language-context"
@@ -256,6 +269,119 @@ function getLocalSoloParentApplications(): any[] {
   return collected
 }
 
+function getLocalChildWelfareApplications(): any[] {
+  const localKeys = [
+    "child_welfare_applications",
+    "all_user_applications",
+    "applications",
+    "active_applications",
+  ]
+  const collected: any[] = []
+  for (const k of localKeys) {
+    try {
+      const raw = localStorage.getItem(k)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (item && typeof item === "object") {
+              const itemRef = item.id || item.reference_number || item.referenceNumber
+              if (itemRef && !collected.some((c) => (c.id || c.reference_number || c.referenceNumber) === itemRef)) {
+                collected.push(item)
+              }
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+  return collected
+}
+
+function evaluateChildWelfareCardState(
+  allApps: any[],
+  programKey: string,
+  userProf: any,
+  currentQcid: string
+): { isApproved: boolean; isOngoing: boolean } {
+  const uid = userProf?.id || (userProf as any)?.userId || ""
+  const currentEmail = (userProf?.email || "").toLowerCase().trim()
+  const cleanUserQcid = String(currentQcid || userProf?.qcidNo || userProf?.qcidNumber || "110000572516915").replace(/\D/g, "")
+
+  const userApps = allApps.filter((a) => {
+    if (!a) return false
+    const mod = String(a.module_type || a.moduleType || a.category || "").toLowerCase()
+    const srv = String(a.service || a.service_name || a.program_name || a.program || "").toLowerCase()
+    const isCW = mod.includes("child") || srv.includes("child") || srv.includes("nutrition") || srv.includes("emergency") || srv.includes("protection")
+    if (!isCW && mod && !mod.includes("child")) return false
+
+    const appRef = String(a.reference_number || a.referenceNumber || a.qcid_number || a.qcidNumber || a.qcid || a.form_data?.qcidNumber || "").trim().replace(/\D/g, "")
+    const appEmail = String(a.email || a.form_data?.email || "").toLowerCase().trim()
+    const appUid = String(a.user_id || a.userId || "").trim()
+
+    if (uid && appUid && String(uid) === appUid && String(uid) !== "0") return true
+    if (cleanUserQcid && appRef && (cleanUserQcid === appRef || cleanUserQcid.includes(appRef) || appRef.includes(cleanUserQcid))) return true
+    if (currentEmail && appEmail && currentEmail === appEmail) return true
+    return false
+  })
+
+  const programApps = userApps.filter((a) => {
+    const srv = String(a.service || a.service_name || a.program_name || a.program || a.programKey || a.type || "").toLowerCase()
+    if (programKey === "nutritional-assistance") return srv.includes("nutrition") || srv.includes("nutrisyon")
+    if (programKey === "child-protection") return srv.includes("protection") || srv.includes("proteksyon")
+    if (programKey === "emergency-assistance") return srv.includes("emergency") || srv.includes("kagipitan") || srv.includes("sakuna")
+    return false
+  })
+
+  const approved = programApps.find((a) => {
+    const s = String(a.application_status || a.status || "").toLowerCase()
+    return s === "approved" || s === "completed" || s === "for_release" || s === "active"
+  })
+
+  const pending = programApps.find((a) => {
+    const s = String(a.application_status || a.status || "pending").toLowerCase()
+    return s === "pending" || s === "draft" || s === "under_review"
+  })
+
+  return { isApproved: Boolean(approved), isOngoing: Boolean(pending && !approved) }
+}
+
+interface ChildWelfareCardItem {
+  id: string
+  key: string
+  title: string
+  titleEn: string
+  desc: string
+  descEn: string
+}
+
+const CHILD_WELFARE_CARDS: ChildWelfareCardItem[] = [
+  {
+    id: "nutritional-assistance",
+    key: "nutritional-assistance",
+    title: "Nutritional Assistance",
+    titleEn: "Nutritional Assistance",
+    desc: "Nagbibigay ng suporta sa nutrisyon para sa mga batang nangangailangan ng masustansyang pagkain, supplementary feeding, gatas o infant nutrition, nutritional supplements, at gabay sa nutrisyon.",
+    descEn: "Provides nutritional support for children in need of nutritious food, supplementary feeding, milk or infant nutrition, nutritional supplements, and dietary guidance.",
+  },
+  {
+    id: "child-protection",
+    key: "child-protection",
+    title: "Child Protection Assistance",
+    titleEn: "Child Protection Assistance",
+    desc: "Nagbibigay ng proteksyon, intervention, legal at case referral, at psychosocial support para sa mga batang nakakaranas o nasa panganib ng abuse, neglect, karahasan, o safety concerns.",
+    descEn: "Provides comprehensive protection, intervention, legal and case referral, and psychosocial support for children facing abuse, neglect, exploitation, violence, or urgent welfare concerns.",
+  },
+  {
+    id: "emergency-assistance",
+    key: "emergency-assistance",
+    title: "Emergency Assistance",
+    titleEn: "Emergency Assistance",
+    desc: "Nagbibigay ng agarang tulong at mabilisang interbensyon para sa mga batang nasa krisis, kagipitan, sakuna, medikal na emerhensiya, o kritikal na kalagayan sa kaligtasan.",
+    descEn: "Delivers urgent intervention and rapid response relief for children caught in crisis, medical emergencies, disasters, or critical safety situations.",
+  },
+]
+
 function evaluateSoloParentBlockedState(
   allApps: any[],
   typeParam: string,
@@ -329,11 +455,13 @@ function evaluateSoloParentBlockedState(
 
 export default function ApplySoloParent() {
   const { t, language } = useLanguage()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
 
   const categoryParam = searchParams.get("category")?.toLowerCase() || "solo-parent"
   const typeParam = searchParams.get("type")?.toLowerCase() || "new"
-  const programParam = searchParams.get("program")?.toLowerCase() || "nutritional-assistance"
+  const rawProgramParam = searchParams.get("program")?.toLowerCase()
+  const programParam = rawProgramParam || "nutritional-assistance"
   const isChildWelfare = categoryParam === "child-welfare"
 
   const currentCwPrograms = getLocalizedChildWelfarePrograms(language)
@@ -536,6 +664,123 @@ export default function ApplySoloParent() {
   const isAppRejected =
     String(blockedApp?.application_status || blockedApp?.status || "").toLowerCase() === "rejected" ||
     String(blockedApp?.application_status || blockedApp?.status || "").toLowerCase() === "disapproved"
+
+  // Child Welfare Card Overview (when category is child-welfare and no program selected)
+  if (isChildWelfare && !rawProgramParam) {
+    const currentQcid = getLoggedInUserQcid() || "110000572516915"
+    const userProf = getCurrentUserProfile()
+    const localCwApps = getLocalChildWelfareApplications()
+
+    return (
+      <div className="py-8 px-6 sm:px-10 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-150">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {CHILD_WELFARE_CARDS.map((program) => {
+            const ev = evaluateChildWelfareCardState(localCwApps, program.key, userProf, currentQcid)
+            const isApproved = ev.isApproved
+            const isOngoing = ev.isOngoing
+
+            return (
+              <div
+                key={program.id}
+                className={`bg-white dark:bg-slate-900 rounded-xl border shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
+                  isApproved
+                    ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-400/30"
+                    : isOngoing
+                    ? "border-amber-300 dark:border-amber-800 ring-1 ring-amber-400/30"
+                    : "border-slate-200 dark:border-slate-800"
+                }`}
+              >
+                {/* Dark navy blue top banner matching Senior / PWD */}
+                <div
+                  className={`text-white py-3 px-4 font-bold text-center text-sm md:text-base tracking-wide select-none flex items-center justify-center gap-2 ${
+                    isApproved ? "bg-emerald-800" : isOngoing ? "bg-slate-800" : "bg-[#1e3a5f]"
+                  }`}
+                >
+                  {isApproved && <CheckCircle2 className="w-4 h-4 text-emerald-300" />}
+                  {isOngoing && <Clock className="w-4 h-4 text-amber-300" />}
+                  <span>{language === "en" ? program.titleEn : program.title}</span>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5 sm:p-6 flex flex-col justify-between flex-1 gap-4">
+                  <p className="text-slate-600 dark:text-slate-300 text-xs md:text-sm leading-relaxed text-justify">
+                    {language === "en" ? program.descEn : program.desc}
+                  </p>
+
+                  {/* Status Badges */}
+                  {isApproved && (
+                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>
+                          {language === "en"
+                            ? "Already Availed (Approved & Recorded)"
+                            : "Na-avail na (Approved & Recorded)"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-emerald-800/90 dark:text-emerald-300/90">
+                        {language === "en"
+                          ? "You already have an approved record for this program."
+                          : "Mayroon ka nang aprubadong talaan para sa programang ito."}
+                      </p>
+                    </div>
+                  )}
+
+                  {isOngoing && (
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>
+                          {language === "en"
+                            ? "Application In Progress (Active Request)"
+                            : "Kasalukuyang Pinoproseso (Active Request)"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90">
+                        {language === "en"
+                          ? "Your application has been submitted and is currently being assessed by a Social Worker."
+                          : "Nakasumite na ang inyong aplikasyon at nasa ilalim ng pagsusuri ng Social Worker."}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  <div className="pt-2 flex justify-center">
+                    {isApproved || isOngoing ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate("/portal/my-applications")}
+                        className={`font-bold text-xs md:text-sm tracking-wider uppercase cursor-pointer transition-colors py-2 px-4 rounded-xl flex items-center gap-2 shadow-xs ${
+                          isApproved
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
+                      >
+                        <span>
+                          {isApproved
+                            ? (language === "en" ? "VIEW IN APPLICATION HISTORY" : "TINGNAN SA APPLICATION HISTORY")
+                            : (language === "en" ? "TRACK APPLICATION STATUS" : "SUBAYBAYAN ANG STATUS")}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setSearchParams({ category: "child-welfare", program: program.key })}
+                        className="text-[#0066cc] dark:text-sky-400 hover:text-[#004c99] dark:hover:text-sky-300 font-extrabold text-xs md:text-sm tracking-widest uppercase cursor-pointer hover:underline transition-colors py-1 px-4"
+                      >
+                        {language === "en" ? "APPLY NOW" : "MAG-APPLY NGAYON"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
 
   if (isBlocked && (!bypassedBlock || isAppApproved) && !isChildWelfare) {
 
@@ -826,13 +1071,28 @@ export default function ApplySoloParent() {
         </div>
       )}
 
-      {}
+      {/* Back to Child Welfare Services button */}
+      {isChildWelfare && rawProgramParam && (
+        <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3">
+          <button
+            type="button"
+            onClick={() => setSearchParams({ category: "child-welfare" })}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer uppercase tracking-wider bg-white dark:bg-slate-900 border border-border px-3 py-1.5 rounded-lg shadow-xs"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>{language === "en" ? "Back to Child Welfare Services" : "Bumalik sa Child Welfare Services"}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Forms & Wizards */}
       {isChildWelfare ? (
         <ChildWelfareApplicationWizard
           key={`child-welfare-${matchedCwProgram.key}`}
           userProfile={activeProfile as any}
           initialProgramId={matchedCwProgram.id}
           initialProgramKey={matchedCwProgram.key}
+          onBack={() => setSearchParams({ category: "child-welfare" })}
           onStepChange={setCurrentStep}
           onSubmissionStageChange={(stage) => setCwSubmissionStage(stage)}
         />
