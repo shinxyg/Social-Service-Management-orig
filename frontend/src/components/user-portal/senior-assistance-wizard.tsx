@@ -221,10 +221,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
   const bypassedActiveAppRef = useRef(false)
   const dismissedAppRefCurrent = useRef<string | null>(null)
 
-  const [isResident, setIsResident] = useState(false)
-  const [isSenior, setIsSenior] = useState(false)
-  const [hasSeniorId, setHasSeniorId] = useState(false)
-  const [isIndigentOrInNeed, setIsIndigentOrInNeed] = useState(false)
+
 
   const [formData, setFormData] = useState(() => {
     const prof: any = propUserProfile || getCurrentUserProfile() || {}
@@ -618,10 +615,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
   }
 
   const isStep1Valid =
-    isResident &&
-    isSenior &&
-    hasSeniorId &&
-    isIndigentOrInNeed &&
     formData.seniorIdNumber.trim() !== "" &&
     isIdVerified
 
@@ -938,14 +931,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                   SOCIAL WELFARE ASSISTANCE (SWA) — SENIOR CITIZEN SECTOR
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Pakisagot ang mga katanungan sa ibaba upang maberipika ang inyong kwalipikasyon para sa Senior Citizen Social Assistance.
+                  Pakilagay at i-verify ang inyong Senior Citizen / OSCA ID number upang magpatuloy.
                 </p>
               </div>
 
               {attemptedNext && !isStep1Valid && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-red-700">
                   <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>Kailangang kumpirmahin ang lahat ng katanungan at i-verify ang inyong Senior Citizen / OSCA ID number.</span>
+                  <span>Kailangang ilagay at i-verify ang inyong Senior Citizen / OSCA ID number.</span>
                 </div>
               )}
 
@@ -955,57 +948,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 <p className="text-xs leading-relaxed">
                   <span className="font-bold text-blue-950 dark:text-white">Senior Citizen Sector:</span> Qualified indigent Senior Citizens aged 60 and above may receive the assistance, subject to validation and assessment.
                 </p>
-              </div>
-
-              {}
-              <div className="space-y-3 bg-gray-50/60 border border-border rounded-xl p-5">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isResident}
-                    onChange={(e) => setIsResident(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 text-blue-600 rounded"
-                  />
-                  <span className={`text-sm ${attemptedNext && !isResident ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    Ikaw ba ay isang lehitimong residente ng Quezon City? <span className="text-red-500">*</span>
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isSenior}
-                    onChange={(e) => setIsSenior(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 text-blue-600 rounded"
-                  />
-                  <span className={`text-sm ${attemptedNext && !isSenior ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    Ikaw ba ay 60 taong gulang na pataas? <span className="text-red-500">*</span>
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={hasSeniorId}
-                    onChange={(e) => setHasSeniorId(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 text-blue-600 rounded"
-                  />
-                  <span className={`text-sm ${attemptedNext && !hasSeniorId ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    Mayroon ka na bang opisyal na QC Senior Citizen / OSCA ID? <span className="text-red-500">*</span>
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isIndigentOrInNeed}
-                    onChange={(e) => setIsIndigentOrInNeed(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 text-blue-600 rounded"
-                  />
-                  <span className={`text-sm ${attemptedNext && !isIndigentOrInNeed ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    Kabilang ka ba sa kapus-palad o indigent na sektor na nangangailangan ng agarang tulong? <span className="text-red-500">*</span>
-                  </span>
-                </label>
               </div>
 
               {}
@@ -1651,13 +1593,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 <p className="text-sm text-muted-foreground">{t("pwdReviewDesc") || "Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon."}</p>
               </div>
 
-              {}
-              <ReviewSection title="Mga Kinakailangan at Tulong na Hinihiling" onEdit={() => { setReturnToReview(true); setStep(1) }}>
-                <div className="divide-y divide-border">
-                  <ReviewCheckItem ok={isResident} label="Lehitimong residente ng Quezon City" />
-                  <ReviewCheckItem ok={isSenior} label="60 taong gulang na pataas (Senior Citizen)" />
-                  <ReviewCheckItem ok={hasSeniorId} label={`May QC Senior Citizen / OSCA ID: ${formData.seniorIdNumber}`} />
-                  <ReviewCheckItem ok={isIndigentOrInNeed} label="Kabilang sa kapus-palad o nangangailangang sektor" />
+              {/* Step 1 Review */}
+              <ReviewSection title="Senior Citizen / OSCA ID Verification" onEdit={() => { setReturnToReview(true); setStep(1) }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <ReviewField label="Senior Citizen / OSCA ID" value={formData.seniorIdNumber} />
+                  <ReviewField label="Status ng ID" value={isIdVerified ? "Verified" : "Unverified"} />
                 </div>
               </ReviewSection>
 
