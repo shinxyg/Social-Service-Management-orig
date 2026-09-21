@@ -14,8 +14,6 @@ import {
   ArrowRight,
   ChevronLeft,
 } from "lucide-react"
-import PWDApplicationWizard from "./pwd-senior-wizard"
-import SeniorCitizenApplicationWizard from "./Senior-citizen-wizard"
 import PWDSocialAssistanceWizard from "./pwd-assistance-wizard"
 import SeniorBookletWizard from "./senior-booklet-wizard"
 import SeniorSocialAssistanceWizard from "./senior-assistance-wizard"
@@ -269,7 +267,7 @@ function evaluateActiveAppBlockedState(
 }
 
 interface ProgramCard {
-  id: "new" | "assistance" | "social-assistance" | "medicine-booklet" | "movie-booklet"
+  id: "assistance" | "social-assistance" | "medicine-booklet" | "movie-booklet"
   title: string
   titleEn: string
   desc: string
@@ -278,14 +276,6 @@ interface ProgramCard {
 }
 
 const PWD_PROGRAMS: ProgramCard[] = [
-  {
-    id: "new",
-    title: "Aplikasyon para sa PWD ID Card",
-    titleEn: "Persons with Disability (PWD) ID Application",
-    desc: "Ang PWD ID Application Program ay nagbibigay ng opisyal na pagkakakilanlan ng pamahalaan para sa mga kwalipikadong may kapansanan (PWD) sa Lungsod Quezon. Ang mga rehistradong miyembro ay may karapatan sa 20% diskwento at VAT exemption sa gamot, bilihin, pamasahe, pagkain, at mga serbisyong panlipunan alinsunod sa RA 10754 at mga ordinansa ng lungsod.",
-    descEn: "The Persons with Disability (PWD) ID Application Program provides official government identification for qualified PWD residents in Quezon City. Registered cardholders receive mandated 20% discounts and 12% VAT exemption on medicines, medical supplies, transit fares, dining, and priority social protection services under RA 10754.",
-    key: "pwdId",
-  },
   {
     id: "assistance",
     title: "PWD Social Assistance Program",
@@ -297,14 +287,6 @@ const PWD_PROGRAMS: ProgramCard[] = [
 ]
 
 const SENIOR_PROGRAMS: ProgramCard[] = [
-  {
-    id: "new",
-    title: "Aplikasyon para sa Senior Citizen ID",
-    titleEn: "Senior Citizen ID Application",
-    desc: "Ang Senior Citizen ID Application Program ay nagbibigay ng opisyal na pagkakakilanlan ng pamahalaan para sa mga Senior Citizen (60 taong gulang pataas) sa Lungsod Quezon. Ang mga rehistradong miyembro ay may karapatan sa 20% diskwento at 12% VAT exemption sa gamot, bilihin, pamasahe, pagkain, at mga serbisyong panlipunan alinsunod sa RA 9994.",
-    descEn: "The Senior Citizen ID Application Program provides official government identification for Senior Citizens (60 years old and above) residing in Quezon City. Registered cardholders receive mandated 20% discounts and 12% VAT exemption on basic necessities, medicines, transit fares, and priority social protection services under RA 9994.",
-    key: "seniorId",
-  },
   {
     id: "social-assistance",
     title: "Senior Citizen Social Assistance Program",
@@ -338,16 +320,15 @@ export default function ApplyPWDSenior() {
 
   const urlCategory = searchParams.get("category")?.toLowerCase()
   const rawTypeParam = searchParams.get("type")?.toLowerCase()
-  const rawType = rawTypeParam || "new"
-  const urlType = rawType as "new" | "renewal" | "loss" | "assistance" | "medicine-booklet" | "movie-booklet" | "social-assistance"
-
   const isSenior = urlCategory === "senior"
+  const rawType = rawTypeParam || (isSenior ? "social-assistance" : "assistance")
+  const urlType = rawType as "assistance" | "medicine-booklet" | "movie-booklet" | "social-assistance"
+
   const isOverview = !rawTypeParam
   const isSeniorMedicine = isSenior && urlType === "medicine-booklet"
   const isSeniorMovie = isSenior && urlType === "movie-booklet"
   const isSeniorSocial = isSenior && urlType === "social-assistance"
-  const isSeniorId = isSenior && !isSeniorMedicine && !isSeniorMovie && !isSeniorSocial
-  const isAssistance = !isSenior && urlType === "assistance"
+  const isAssistance = !isSenior || urlType === "assistance"
 
   const [initialBlockedState] = useState(() => {
     try {
@@ -469,15 +450,7 @@ export default function ApplyPWDSenior() {
     ? { label: t("badgeMedicineBooklet"), color: "bg-blue-100 text-blue-700 border-blue-200" }
     : isSeniorMovie
     ? { label: t("badgeMovieBooklet"), color: "bg-blue-100 text-blue-700 border-blue-200" }
-    : isSeniorSocial
-    ? { label: t("badgeSocialAssistance"), color: "bg-blue-100 text-blue-700 border-blue-200" }
-    : isAssistance
-    ? { label: t("badgeSocialAssistance"), color: "bg-blue-100 text-blue-700 border-blue-200" }
-    : urlType === "new"
-    ? { label: t("badgeNewApplication"), color: "bg-green-100 text-green-700 border-green-200" }
-    : urlType === "loss"
-    ? { label: "Replacement / Lost ID", color: "bg-orange-100 text-orange-700 border-orange-200" }
-    : { label: t("badgeRenewal"), color: "bg-amber-100 text-amber-700 border-amber-200" }
+    : { label: t("badgeSocialAssistance"), color: "bg-blue-100 text-blue-700 border-blue-200" }
 
   const serviceCleanTitle = isSeniorMedicine
     ? "Medicine Discount Booklet"
@@ -485,11 +458,7 @@ export default function ApplyPWDSenior() {
     ? "Free Movie Booklet"
     : isSeniorSocial
     ? "Senior Citizen Social Assistance"
-    : isSeniorId
-    ? "Senior Citizen ID"
-    : isAssistance
-    ? "PWD Social Assistance"
-    : "PWD ID"
+    : "PWD Social Assistance"
 
   const modalTitle = isSeniorMedicine
     ? t("seniorMedicineReqTitle")
@@ -497,11 +466,7 @@ export default function ApplyPWDSenior() {
     ? t("seniorMovieReqTitle")
     : isSeniorSocial
     ? t("seniorSocialReqTitle")
-    : isSeniorId
-    ? t("seniorIdReqTitle")
-    : isAssistance
-    ? t("pwdAssistanceReqTitle")
-    : t("pwdIdReqTitle")
+    : t("pwdAssistanceReqTitle")
 
   const pwdSocialAssistanceRequirements = [
     { title: t("pwdSocialReq1Title"), desc: t("pwdSocialReq1Desc") },
@@ -970,23 +935,9 @@ export default function ApplyPWDSenior() {
           <SeniorBookletWizard key="senior-movie" bookletType="movie" userProfile={activeProfile as any} onStepChange={setCurrentStep} />
         ) : isSeniorSocial ? (
           <SeniorSocialAssistanceWizard key="senior-social" userProfile={activeProfile as any} onStepChange={setCurrentStep} />
-        ) : isSenior ? (
-          <SeniorCitizenApplicationWizard
-            key={`senior-${urlType}`}
-            initialIdStatus={urlType as "new" | "renewal" | "loss"}
-            userProfile={activeProfile as any}
-            onStepChange={setCurrentStep}
-          />
-        ) : isAssistance ? (
+        ) : (
           <PWDSocialAssistanceWizard
             key="pwd-assistance"
-            userProfile={activeProfile as any}
-            onStepChange={setCurrentStep}
-          />
-        ) : (
-          <PWDApplicationWizard
-            key={`pwd-${urlType}`}
-            initialIdStatus={urlType as "new" | "renewal" | "loss"}
             userProfile={activeProfile as any}
             onStepChange={setCurrentStep}
           />
