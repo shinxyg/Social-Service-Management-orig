@@ -894,10 +894,10 @@ export default function ApplyPWDSenior() {
 
       {currentStep === 1 && !isBlocked && !blockedApp && !hasApprovedApp && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3 animate-in fade-in duration-150">
-          <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                isSenior ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                isSenior ? "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400" : "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400"
               }`}>
                 <FileText className="w-5 h-5" />
               </div>

@@ -1115,8 +1115,8 @@ export default function PWDSocialAssistanceWizard({
           ))}
         </div>
 
-        {}
-        <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
+        {/* Step indicators */}
+        <div className="flex gap-2 border-b border-border bg-gray-50 dark:bg-slate-900/60 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
               key={s.id}
@@ -1145,11 +1145,18 @@ export default function PWDSocialAssistanceWizard({
               </div>
 
               {/* PWD Sector Notice */}
-              <div className="bg-blue-50/90 border border-blue-200 rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
-                <AlertCircle className="h-4.5 w-4.5 text-blue-600 shrink-0" />
-                <p className="text-xs md:text-sm font-semibold text-blue-950">
-                  PWD Sector: Qualified beneficiaries may receive the assistance provided.
-                </p>
+              <div className="bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3.5 shadow-xs">
+                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div className="space-y-1 text-xs">
+                  <p className="text-xs md:text-sm font-bold text-blue-950 dark:text-blue-200">
+                    PWD Sector: Qualified beneficiaries may receive the assistance provided.
+                  </p>
+                  <p className="text-blue-900/90 dark:text-blue-300/90 leading-relaxed">
+                    {language === "en"
+                      ? "Exclusively for indigent Persons with Disabilities (PWD) who qualify under specific vulnerability categories (e.g., bedridden, severe medical condition, solo parent, jobless with 2+ minor dependents, living alone, or living with a Senior Citizen parent). Subject to official assessment and Social Case Study before approval."
+                      : "Para sa mga indigent Persons with Disabilities (PWD) na pasok sa mga partikular na kategorya (hal. bedridden, may malubhang karamdaman, solo parent, walang trabaho na may 2+ menor de edad, nakatira mag-isa, o nakatira kasama ang magulang na Senior Citizen). Sumasailalim sa assessment o case study ng Social Worker bago maaprubahan."}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-4 pt-1">
@@ -1649,14 +1656,14 @@ export default function PWDSocialAssistanceWizard({
           )}
         </div>
 
-        {}
-        <div className="flex items-center justify-between border-t border-border bg-gray-50 px-6 py-4">
+        {/* Footer Navigation */}
+        <div className="flex items-center justify-between border-t border-border bg-gray-50 dark:bg-slate-900/60 px-6 py-4">
           <button
             type="button"
             onClick={goBack}
             disabled={step === 1 && !onBack}
             className={`px-5 py-2 rounded-lg text-xs font-semibold transition-colors ${
-              step === 1 && !onBack ? "invisible" : "bg-white border border-border text-foreground hover:bg-gray-100 cursor-pointer"
+              step === 1 && !onBack ? "invisible" : "bg-white dark:bg-slate-800 border border-border dark:border-slate-700 text-foreground hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer"
             }`}
           >
             PREV
