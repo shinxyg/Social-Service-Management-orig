@@ -171,7 +171,7 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack: _onBack
   const [pPhoneNumber, setPPhoneNumber] = useState("")
   const [pEmail, setPEmail] = useState("")
   const [isSelfPatient, setIsSelfPatient] = useState(false)
-  const [medicalAssistanceSubType, setMedicalAssistanceSubType] = useState("Medicines / Medical Supplies")
+  const [medicalAssistanceSubType, setMedicalAssistanceSubType] = useState("")
   const [partnerHospital, setPartnerHospital] = useState("")
   const [partnerHospitalOther, setPartnerHospitalOther] = useState("")
   const [medicalDiagnosis, setMedicalDiagnosis] = useState("")
@@ -260,13 +260,16 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack: _onBack
   }
 
   const isMedicalBill = medicalAssistanceSubType === "Medical Bill Assistance"
+  const isMedicine = medicalAssistanceSubType === "Medicines / Medical Supplies"
   const canProceedChecklist = isFuneralAssistance
     ? Boolean(checklistDeceasedResident === "yes" && checklistRelation && checklistFuneralHome)
     : isEducationalAssistance
     ? eduEligResident && eduEligAge && eduEligSchool && eduEligIndigent
     : isMedicalBill
     ? Boolean(partnerHospital && (partnerHospital !== "Other" || partnerHospitalOther.trim()) && medicalDiagnosis.trim())
-    : true
+    : isMedicine
+    ? true
+    : Boolean(medicalAssistanceSubType)
 
   useEffect(() => {
     const syncProfile = () => {
@@ -1246,12 +1249,13 @@ const handleFinalSubmit = async () => {
                     }}
                     className="w-full h-11 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                   >
+                    <option value="" disabled>Select Type of Assistance</option>
                     <option value="Medicines / Medical Supplies">Medicines / Medical Supplies</option>
                     <option value="Medical Bill Assistance">Medical Bill Assistance</option>
                   </select>
                 </div>
 
-                {medicalAssistanceSubType === "Medical Bill Assistance" ? (
+                {medicalAssistanceSubType === "Medical Bill Assistance" && (
                   <div className="border-t border-gray-200 dark:border-slate-800 pt-4 space-y-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
@@ -1300,16 +1304,6 @@ const handleFinalSubmit = async () => {
                         placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
                         className="w-full h-11 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
                       />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
-                    <span className="text-base shrink-0">💊</span>
-                    <div>
-                      <p className="font-bold mb-0.5">Paunawa para sa Medicines / Medical Supplies:</p>
-                      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                        Hindi kinakailangan ang hospital affiliation para sa gamot. Mangyaring ihanda ang opisyal na <strong>Doctor&apos;s Prescription (Reseta)</strong> at <strong>Medical Certificate / Clinical Abstract</strong> para sa pag-upload sa susunod na hakbang.
-                      </p>
                     </div>
                   </div>
                 )}
