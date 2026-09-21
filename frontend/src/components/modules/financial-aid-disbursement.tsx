@@ -796,13 +796,13 @@ export default function FinancialAidDisbursement() {
           return true
         })
 
-        // Deduplicate records by applicant + assistance type and clean reference
+        // Deduplicate records strictly by applicant name + assistance type
         const dedupedMap = new Map<string, SyncedDisbursementRecord>()
         approvedOnly.forEach((d) => {
           const cleanName = String(d.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
           const cleanType = String(d.assistanceType || "").toLowerCase().replace(/\s*assistance/gi, "").trim()
           const cleanRef = String(d.applicationRef || "").replace(/[^a-zA-Z0-9]/g, "")
-          const dedupKey = cleanRef ? `ref_${cleanRef}` : `person_${cleanName}_${cleanType}`
+          const dedupKey = cleanName ? `person_${cleanName}_${cleanType}` : `ref_${cleanRef}`
 
           if (!dedupedMap.has(dedupKey)) {
             dedupedMap.set(dedupKey, d)
@@ -825,6 +825,7 @@ export default function FinancialAidDisbursement() {
               ...d,
               id: existing.id.startsWith("db-") ? existing.id : d.id,
               disbursementId: existing.disbursementId || d.disbursementId,
+              applicationRef: (cleanRef.length > String(existing.applicationRef || "").length) ? d.applicationRef : existing.applicationRef,
               appointmentDate: bestDate,
               appointmentTime: bestTime,
               venue: bestVenue,

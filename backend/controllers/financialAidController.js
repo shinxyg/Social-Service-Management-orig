@@ -270,16 +270,22 @@ exports.getDisbursements = async (req, res) => {
       for (const row of approvedAics.rows) {
         const ref = row.reference_no || row.qc_id || `AICS-2026-${row.id}`;
         const cleanRef = String(ref).trim();
+        const unhyphenated = cleanRef.replace(/[^a-zA-Z0-9]/g, '');
+        const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+        const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
+        const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
+
         const disbCheck = await db.query(
           `SELECT id FROM financial_aid_disbursements 
-           WHERE application_ref = $1 OR application_ref = $2 OR (application_ref = $3 AND $3 <> '')`,
-          [cleanRef, row.reference_no || '', row.qc_id || '']
+           WHERE application_ref = $1 
+              OR application_ref = $2 
+              OR (application_ref = $3 AND $3 <> '')
+              OR REPLACE(application_ref, '-', '') = $4
+              OR (LOWER(TRIM(applicant_name)) = LOWER(TRIM($5)) AND LOWER(TRIM(assistance_type)) = LOWER(TRIM($6)))`,
+          [cleanRef, row.reference_no || '', row.qc_id || '', unhyphenated, fullName, cleanType]
         );
         if (disbCheck.rows.length === 0) {
           const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-          const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
-          const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
           const fixedAmount = resolveFixedAmount(cleanType);
           await db.query(
             `INSERT INTO financial_aid_disbursements (
@@ -310,12 +316,15 @@ exports.getDisbursements = async (req, res) => {
         const ref = String(appt.reference_no || '').trim();
         if (!ref) continue;
         const unhyphenated = ref.replace(/[^a-zA-Z0-9]/g, '');
+        const fullName = String(appt.applicant_name || '').trim().toUpperCase();
+        const cleanType = String(appt.concern || 'Medical Assistance').trim();
+
         const disbCheck = await db.query(
           `SELECT id FROM financial_aid_disbursements 
            WHERE application_ref = $1 
               OR REPLACE(application_ref, '-', '') = $2
-              OR (applicant_name ILIKE $3 AND status != 'RELEASED')`,
-          [ref, unhyphenated, `%${appt.applicant_name}%`]
+              OR (LOWER(TRIM(applicant_name)) = LOWER(TRIM($3)) AND LOWER(TRIM(assistance_type)) = LOWER(TRIM($4)))`,
+          [ref, unhyphenated, fullName, cleanType]
         );
         if (disbCheck.rows.length === 0) {
           const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -329,8 +338,8 @@ exports.getDisbursements = async (req, res) => {
             [
               disbId,
               ref,
-              appt.applicant_name.toUpperCase(),
-              appt.concern,
+              fullName,
+              cleanType,
               fixedAmount,
               new Date(appt.updated_at || appt.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
               appt.scheduled_date || null,
@@ -339,6 +348,18 @@ exports.getDisbursements = async (req, res) => {
               appt.notes || 'Approved appointment payout.',
             ]
           );
+        } else {
+          // If already exists, update appointment schedule if available
+          if (appt.scheduled_date) {
+            await db.query(
+              `UPDATE financial_aid_disbursements
+               SET appointment_date = COALESCE(appointment_date, $1),
+                   appointment_time = COALESCE(appointment_time, $2),
+                   venue = COALESCE(venue, $3)
+               WHERE id = $4`,
+              [appt.scheduled_date, appt.scheduled_time, appt.office_location || 'Quezon City Hall', disbCheck.rows[0].id]
+            ).catch(() => {});
+          }
         }
       }
     } catch (_) {}
