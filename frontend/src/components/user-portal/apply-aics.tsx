@@ -24,7 +24,7 @@ import { getCurrentUserProfile, getLoggedInUserQcid, toISODateString } from "../
 import { notifyApplicationChange } from "../../utils/realtimeSync"
 import { isAppointmentDue } from "../modules/appointments"
 
-export default function ApplyAICS({ initialType, initialTypeKey, onBack }: ApplyAICSProps) {
+export default function ApplyAICS({ initialType, initialTypeKey, onBack: _onBack }: ApplyAICSProps) {
   const { t, language } = useLanguage()
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -96,28 +96,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
     type?.toLowerCase().includes("educational") ||
     type?.toLowerCase().includes("aral")
 
-  const currentAssistanceTitle = (() => {
-    if (isFuneralAssistance) {
-      return language === "en"
-        ? "AICS - Funeral Assistance"
-        : language === "bis"
-        ? "AICS - Tabang sa Paglubong (Funeral Assistance)"
-        : "AICS - Tulong sa Pagpapalibing (Funeral Assistance)"
-    }
-    if (isEducationalAssistance) {
-      return language === "en"
-        ? "AICS - Educational Assistance"
-        : language === "bis"
-        ? "AICS - Tabang sa Edukasyon (Educational Assistance)"
-        : "AICS - Tulong Pang-Edukasyon (Educational Assistance)"
-    }
-    return language === "en"
-      ? "AICS - Medical Assistance"
-      : language === "bis"
-      ? "AICS - Tabang Medikal (Medical Assistance)"
-      : "AICS - Tulong Medikal (Medical Assistance)"
-  })()
-
   const resolvedTypeKey =
     initialTypeKey ||
     (isFuneralAssistance
@@ -159,9 +137,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
 
   const [checklistResident, setChecklistResident] = useState(false)
   const [checklistPatient, setChecklistPatient] = useState(false)
-  const [checklistPriorAid, setChecklistPriorAid] = useState<"yes" | "no">("no")
-  const [priorAidOffice, setPriorAidOffice] = useState("")
-  const [priorAidType, setPriorAidType] = useState("")
 
   const [eduEligResident, setEduEligResident] = useState(false)
   const [eduEligAge, setEduEligAge] = useState(false)
@@ -192,7 +167,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack }: Apply
   const [partnerHospital, setPartnerHospital] = useState("")
   const [partnerHospitalOther, setPartnerHospitalOther] = useState("")
   const [medicalDiagnosis, setMedicalDiagnosis] = useState("")
-  const [hospitalBillEstimate, setHospitalBillEstimate] = useState("")
 
   const [iRelation, setIRelation] = useState("")
   const [iFirstName, setIFirstName] = useState("")
