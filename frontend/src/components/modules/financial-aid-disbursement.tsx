@@ -1032,29 +1032,6 @@ export default function FinancialAidDisbursement() {
                               <span>Release</span>
                             </button>
                           )}
-                          {d.assistanceType.toLowerCase().includes("medical") && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                try {
-                                  const rawStored = localStorage.getItem("printed_gl_applications") || "{}"
-                                  const stored = JSON.parse(rawStored)
-                                  if (d.applicationRef) stored[d.applicationRef.toLowerCase().trim()] = true
-                                  if (d.applicantName) stored[d.applicantName.toLowerCase().trim()] = true
-                                  if (d.id) stored[d.id.toLowerCase().trim()] = true
-                                  localStorage.setItem("printed_gl_applications", JSON.stringify(stored))
-                                  window.dispatchEvent(new Event("printed_gl_applications_updated"))
-                                  window.dispatchEvent(new Event("aics_applications_updated"))
-                                } catch {}
-                                setGlModalRecord(d)
-                              }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
-                              title="Print Official Guarantee Letter (GL)"
-                            >
-                              <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                              <span>Print GL</span>
-                            </button>
-                          )}
                           <button
                             type="button"
                             onClick={() => setSelectedDetailsRecord(d)}
