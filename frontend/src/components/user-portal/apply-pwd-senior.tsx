@@ -268,8 +268,8 @@ function evaluateActiveAppBlockedState(
   return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
 }
 
-interface PWDProgramCard {
-  id: "new" | "assistance"
+interface ProgramCard {
+  id: "new" | "assistance" | "social-assistance" | "medicine-booklet" | "movie-booklet"
   title: string
   titleEn: string
   desc: string
@@ -277,7 +277,7 @@ interface PWDProgramCard {
   key: string
 }
 
-const PWD_PROGRAMS: PWDProgramCard[] = [
+const PWD_PROGRAMS: ProgramCard[] = [
   {
     id: "new",
     title: "Aplikasyon para sa PWD ID Card",
@@ -296,6 +296,41 @@ const PWD_PROGRAMS: PWDProgramCard[] = [
   },
 ]
 
+const SENIOR_PROGRAMS: ProgramCard[] = [
+  {
+    id: "new",
+    title: "Aplikasyon para sa Senior Citizen ID",
+    titleEn: "Senior Citizen ID Application",
+    desc: "Ang Senior Citizen ID Application Program ay nagbibigay ng opisyal na pagkakakilanlan ng pamahalaan para sa mga Senior Citizen (60 taong gulang pataas) sa Lungsod Quezon. Ang mga rehistradong miyembro ay may karapatan sa 20% diskwento at 12% VAT exemption sa gamot, bilihin, pamasahe, pagkain, at mga serbisyong panlipunan alinsunod sa RA 9994.",
+    descEn: "The Senior Citizen ID Application Program provides official government identification for Senior Citizens (60 years old and above) residing in Quezon City. Registered cardholders receive mandated 20% discounts and 12% VAT exemption on basic necessities, medicines, transit fares, and priority social protection services under RA 9994.",
+    key: "seniorId",
+  },
+  {
+    id: "social-assistance",
+    title: "Senior Citizen Social Assistance Program",
+    titleEn: "Senior Citizen Social Assistance Program",
+    desc: "Ang Senior Citizen Social Assistance Program ay nagbibigay ng direktang tulong-pinansyal, suporta sa kalusugan, at agarang tulong-panlipunan para sa mga kapus-palad at nangangailangang Senior Citizens sa Lungsod Quezon upang maibsan ang kanilang krisis.",
+    descEn: "The Senior Citizen Social Assistance Program provides specialized financial aid, healthcare subsidies, and emergency social safety nets for indigent Senior Citizens and their families to address senior-related vulnerabilities.",
+    key: "seniorAssistance",
+  },
+  {
+    id: "medicine-booklet",
+    title: "Medicine Discount Booklet",
+    titleEn: "Medicine Discount Booklet",
+    desc: "Opisyal na purchase booklet mula sa OSCA para sa pagtatala ng mga binibiling gamot at medical supplies upang magamit ang 20% discount at VAT exemption ng Senior Citizen sa mga botika alinsunod sa batas.",
+    descEn: "Official purchase booklet issued by OSCA for recording purchases of essential medicines and medical supplies to avail mandated senior citizen discounts in partner pharmacies.",
+    key: "seniorMedicineBooklet",
+  },
+  {
+    id: "movie-booklet",
+    title: "Free Movie Booklet",
+    titleEn: "Free Movie Booklet",
+    desc: "Espesyal na booklet na nagbibigay ng libreng panonood ng pelikula sa mga sinehan sa Lungsod Quezon para sa mga rehistradong Senior Citizens sa mga itinakdang screening schedules.",
+    descEn: "Special pass booklet entitling qualified Quezon City Senior Citizens to free admission at participating cinemas and movie theaters in Quezon City during designated schedules.",
+    key: "seniorMovieBooklet",
+  },
+]
+
 export default function ApplyPWDSenior() {
   const { t, language } = useLanguage()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -307,7 +342,9 @@ export default function ApplyPWDSenior() {
   const urlType = rawType as "new" | "renewal" | "loss" | "assistance" | "medicine-booklet" | "movie-booklet" | "social-assistance"
 
   const isSenior = urlCategory === "senior"
+  const isOverview = !rawTypeParam
   const isPWDOverview = !isSenior && !rawTypeParam
+  const isSeniorOverview = isSenior && !rawTypeParam
   const isSeniorMedicine = isSenior && urlType === "medicine-booklet"
   const isSeniorMovie = isSenior && urlType === "movie-booklet"
   const isSeniorSocial = isSenior && urlType === "social-assistance"
@@ -544,20 +581,18 @@ export default function ApplyPWDSenior() {
   const isAppRejected = String(blockedApp?.status || "").toLowerCase() === "rejected" || String(blockedApp?.status || "").toLowerCase() === "disapproved"
   const rejectionReason = blockedApp?.rejection_reason || blockedApp?.rejectionReason || blockedApp?.admin_notes || blockedApp?.remarks || ""
 
-  // If category is PWD and no specific program type is chosen, render the Card Grid matching Pic 2
-  if (isPWDOverview) {
+  // If category is PWD or SENIOR and no specific program type is chosen, render the Card Grid matching Pic 2
+  if (isOverview) {
     const currentQcid = getLoggedInUserQcid() || "110000572516915"
     const userProf = getCurrentUserProfile()
     const localApps = getLocalApplications()
-
-    const idEval = evaluateActiveAppBlockedState(localApps, "pwd", "new", userProf, currentQcid)
-    const astEval = evaluateActiveAppBlockedState(localApps, "pwd", "assistance", userProf, currentQcid)
+    const programs = isSenior ? SENIOR_PROGRAMS : PWD_PROGRAMS
 
     return (
       <div className="py-8 px-6 sm:px-10 max-w-5xl mx-auto space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {PWD_PROGRAMS.map((program) => {
-            const ev = program.id === "new" ? idEval : astEval
+          {programs.map((program) => {
+            const ev = evaluateActiveAppBlockedState(localApps, isSenior ? "senior" : "pwd", program.id, userProf, currentQcid)
             const isApproved = ev.hasApprovedApp
             const isOngoing = ev.isBlocked && !ev.hasApprovedApp
 
@@ -648,7 +683,7 @@ export default function ApplyPWDSenior() {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setSearchParams({ category: "pwd", type: program.id })}
+                        onClick={() => setSearchParams({ category: isSenior ? "senior" : "pwd", type: program.id })}
                         className="text-[#0066cc] dark:text-sky-400 hover:text-[#004c99] dark:hover:text-sky-300 font-extrabold text-xs md:text-sm tracking-widest uppercase cursor-pointer hover:underline transition-colors py-1 px-4"
                       >
                         {language === "en" ? "APPLY NOW" : "MAG-APPLY NGAYON"}
@@ -878,19 +913,19 @@ export default function ApplyPWDSenior() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {/* Back to PWD Services button */}
-      {!isSenior && (
-        <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3">
-          <button
-            type="button"
-            onClick={() => setSearchParams({ category: "pwd" })}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-primary bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            {language === "en" ? "Back to PWD Services" : "Bumalik sa mga Serbisyo ng PWD"}
-          </button>
-        </div>
-      )}
+      {/* Back to Services overview button */}
+      <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3">
+        <button
+          type="button"
+          onClick={() => setSearchParams({ category: isSenior ? "senior" : "pwd" })}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-primary bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {isSenior
+            ? (language === "en" ? "Back to Senior Citizen Services" : "Bumalik sa mga Serbisyo ng Senior Citizen")
+            : (language === "en" ? "Back to PWD Services" : "Bumalik sa mga Serbisyo ng PWD")}
+        </button>
+      </div>
 
       {currentStep === 1 && !isBlocked && !blockedApp && !hasApprovedApp && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3 animate-in fade-in duration-150">

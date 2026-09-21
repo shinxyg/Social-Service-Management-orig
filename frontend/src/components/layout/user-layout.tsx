@@ -86,16 +86,9 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
     },
     {
       id: "senior",
+      path: "/portal/apply-pwd-senior?category=senior",
       label: t("navSeniorServices"),
       icon: Users,
-      children: [
-        { path: "/portal/apply-pwd-senior?category=senior&type=new", label: t("navNewSeniorId") },
-        { path: "/portal/apply-pwd-senior?category=senior&type=renewal", label: t("navRenewalSeniorId") },
-        { path: "/portal/apply-pwd-senior?category=senior&type=loss", label: t("navLossSeniorId") },
-        { path: "/portal/apply-pwd-senior?category=senior&type=medicine-booklet", label: t("navSeniorMedicineBooklet") },
-        { path: "/portal/apply-pwd-senior?category=senior&type=movie-booklet", label: t("navSeniorMovieBooklet") },
-        { path: "/portal/apply-pwd-senior?category=senior&type=social-assistance", label: t("navSeniorSocialAssistance") },
-      ],
     },
     {
       id: "soloParent",
@@ -472,6 +465,12 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
                         (location.search.includes("category=pwd") || (!location.search.includes("category=senior") && !location.search.includes("category="))))
                     )
                   }
+                  if (item.id === "senior") {
+                    return (
+                      location.pathname === "/portal/senior" ||
+                      (location.pathname === "/portal/apply-pwd-senior" && location.search.includes("category=senior"))
+                    )
+                  }
                   if (path.includes("?")) {
                     const [pBase, pQuery] = path.split("?")
                     return location.pathname === pBase && location.search.includes(pQuery)
@@ -577,6 +576,26 @@ function ResidentHeader({
         currentTitle = `${t("navPWDServices") || "PWD Services"} — PWD ID Application`
       } else {
         currentTitle = t("navPWDServices") || "PWD Services"
+      }
+    } else if (
+      location.pathname === "/portal/senior" ||
+      (location.pathname === "/portal/apply-pwd-senior" && location.search.includes("category=senior"))
+    ) {
+      const seniorLabel = t("navSeniorServices") || "Senior Citizen Services"
+      if (location.search.includes("type=social-assistance")) {
+        currentTitle = `${seniorLabel} — Senior Citizen Social Assistance`
+      } else if (location.search.includes("type=medicine-booklet")) {
+        currentTitle = `${seniorLabel} — Medicine Discount Booklet`
+      } else if (location.search.includes("type=movie-booklet")) {
+        currentTitle = `${seniorLabel} — Free Movie Booklet`
+      } else if (location.search.includes("type=new")) {
+        currentTitle = `${seniorLabel} — Senior Citizen ID Application`
+      } else if (location.search.includes("type=renewal")) {
+        currentTitle = `${seniorLabel} — Renewal SENIOR ID`
+      } else if (location.search.includes("type=loss")) {
+        currentTitle = `${seniorLabel} — Replacement / Lost Senior ID`
+      } else {
+        currentTitle = seniorLabel
       }
     } else {
       for (const item of residentNav) {
