@@ -1737,26 +1737,7 @@ export default function MyApplications() {
   const [guaranteeLetterApp, setGuaranteeLetterApp] = useState<ApplicationRecord | null>(null)
   const [referralLetterApp, setReferralLetterApp] = useState<ReferralLetterData | null>(null)
 
-  const [printedGLMap, setPrintedGLMap] = useState<Record<string, boolean>>(() => {
-    try {
-      const stored = localStorage.getItem("printed_gl_applications")
-      return stored ? JSON.parse(stored) : {}
-    } catch {
-      return {}
-    }
-  })
 
-  const handleMarkGLPrinted = (appKey: string) => {
-    if (!appKey) return
-    const key = appKey.toLowerCase().trim()
-    setPrintedGLMap((prev) => {
-      const next = { ...prev, [key]: true }
-      try {
-        localStorage.setItem("printed_gl_applications", JSON.stringify(next))
-      } catch {}
-      return next
-    })
-  }
 
   useEffect(() => {
     const handleGLUpdate = () => {
@@ -3954,7 +3935,6 @@ export default function MyApplications() {
                         app.status === "Completed" ||
                         isDisbClaimed)
 
-                    const appKey = (app.applicationNo || app.id || app.referenceNo || "").toLowerCase().trim()
 
                     const partnerHospital =
                       app.details?.partnerHospital ||
@@ -4100,7 +4080,6 @@ export default function MyApplications() {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  if (appKey) handleMarkGLPrinted(appKey)
                                   setGuaranteeLetterApp(app)
                                 }}
                                 className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
