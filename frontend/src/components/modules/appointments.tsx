@@ -511,6 +511,14 @@ export default function Appointments() {
   const [filterStatus, setFilterStatus] = useState<"all" | AppointmentStatus>("all")
   const [searchTerm, setSearchTerm] = useState("")
   const isFetchingRef = useState({ current: false })[0]
+  const [, setClockTick] = useState(0)
+
+  useEffect(() => {
+    const clockTimer = setInterval(() => {
+      setClockTick((c) => (c + 1) % 100000)
+    }, 1000)
+    return () => clearInterval(clockTimer)
+  }, [])
 
   useEffect(() => {
     const fetchAppointments = async () => {

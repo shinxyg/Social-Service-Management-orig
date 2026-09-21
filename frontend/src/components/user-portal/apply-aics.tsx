@@ -84,6 +84,14 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack: _onBack
   const [referralAgency, setReferralAgency] = useState("")
   const [referralNotes, setReferralNotes] = useState("")
   const [appointmentInfo, setAppointmentInfo] = useState<{ date?: string; time?: string; venue?: string } | null>(null)
+  const [, setClockTick] = useState(0)
+
+  useEffect(() => {
+    const clockInterval = setInterval(() => {
+      setClockTick((c) => (c + 1) % 100000)
+    }, 1000)
+    return () => clearInterval(clockInterval)
+  }, [])
 
   const isFuneralAssistance =
     initialTypeKey === "aicsFuneral" ||
