@@ -3948,7 +3948,7 @@ export default function MyApplications() {
                       s2State = "current"
                       s2Title = "2. UNDER REVIEW"
                       s2Sub = "● Interview in Progress"
-                    } else if (app.status === "Scheduled" || isExplicitlyPending) {
+                    } else if (app.status === "Scheduled" || app.status === "Pending" || app.status === "Submit Pending") {
                       s2State = "current"
                       s2Title = "2. APPOINTMENT"
                       s2Sub = "● Scheduled Intake"
