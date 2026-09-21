@@ -1705,6 +1705,27 @@ export default function MyApplications() {
   const [guaranteeLetterApp, setGuaranteeLetterApp] = useState<ApplicationRecord | null>(null)
   const [referralLetterApp, setReferralLetterApp] = useState<ReferralLetterData | null>(null)
 
+  const [printedGLMap, setPrintedGLMap] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem("printed_gl_applications")
+      return stored ? JSON.parse(stored) : {}
+    } catch {
+      return {}
+    }
+  })
+
+  const handleMarkGLPrinted = (appKey: string) => {
+    if (!appKey) return
+    const key = appKey.toLowerCase().trim()
+    setPrintedGLMap((prev) => {
+      const next = { ...prev, [key]: true }
+      try {
+        localStorage.setItem("printed_gl_applications", JSON.stringify(next))
+      } catch {}
+      return next
+    })
+  }
+
   const [appToDelete, setAppToDelete] = useState<ApplicationRecord | null>(null)
   const [appToPermanentDelete, setAppToPermanentDelete] = useState<ApplicationRecord | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -3819,9 +3840,23 @@ export default function MyApplications() {
                         (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName?.toLowerCase()?.trim())
                     )
 
-                    const isClaimed = !isExplicitlyPending && (app.status === "Released" || app.status === "Completed" || matchDisb?.status === "RELEASED")
-                    const isGLIssued = isApprovedDecision || (!isExplicitlyPending && app.status === "For Release") || isClaimed
+                    const isExplicitlyReleased =
+                      !isExplicitlyPending &&
+                      (app.status === "Released" ||
+                        app.status === "Completed" ||
+                        (app.status !== "Approved" && matchDisb?.status === "RELEASED"))
+
+                    const isGLIssued = isApprovedDecision || (!isExplicitlyPending && app.status === "For Release") || isExplicitlyReleased
                     const isUnderReview = app.status === "Under Review" || app.status === "For Assessment"
+
+                    const appKey = (app.applicationNo || app.id || app.referenceNo || "").toLowerCase().trim()
+                    const applicantNameKey = (app.applicantName || "").toLowerCase().trim()
+                    const isGLPrinted = Boolean(
+                      (appKey && printedGLMap[appKey]) ||
+                      (applicantNameKey && printedGLMap[applicantNameKey]) ||
+                      isExplicitlyReleased
+                    )
+
                     const partnerHospital =
                       app.details?.partnerHospital ||
                       app.formData?.partnerHospital ||
@@ -3863,27 +3898,39 @@ export default function MyApplications() {
                     let s4State: "completed" | "current" | "pending" = "pending"
                     let s4Title = "4. PROCESSING"
                     let s4Sub = "○ Awaiting Approval"
-                    if (isClaimed) {
+                    if (isExplicitlyReleased) {
                       s4State = "completed"
                       s4Title = "4. PROCESSING"
-                      s4Sub = "✓ GL Issued & Processed"
+                      s4Sub = "✓ GL Claimed & Processed"
                     } else if (isGLIssued) {
-                      s4State = "current"
-                      s4Title = "4. PROCESSING"
-                      s4Sub = "● GL / Voucher Ready"
+                      if (isGLPrinted) {
+                        s4State = "completed"
+                        s4Title = "4. PROCESSING"
+                        s4Sub = "✓ GL Printed / Downloaded"
+                      } else {
+                        s4State = "current"
+                        s4Title = "4. PROCESSING"
+                        s4Sub = "● Click 'View GL' to Print"
+                      }
                     }
 
                     let s5State: "completed" | "current" | "pending" = "pending"
                     let s5Title = "5. RELEASED"
                     let s5Sub = "○ Pending Payout"
-                    if (isClaimed) {
+                    if (isExplicitlyReleased) {
                       s5State = "completed"
                       s5Title = "5. RELEASED"
                       s5Sub = "✓ Aid Claimed & Availed"
                     } else if (isGLIssued) {
-                      s5State = "current"
-                      s5Title = "5. RELEASED"
-                      s5Sub = "● Ready for Availment"
+                      if (isGLPrinted) {
+                        s5State = "current"
+                        s5Title = "5. RELEASED"
+                        s5Sub = "● Ready for Hospital Claim"
+                      } else {
+                        s5State = "pending"
+                        s5Title = "5. RELEASED"
+                        s5Sub = "○ Print GL First"
+                      }
                     }
 
                     const getStageBoxClass = (st: "completed" | "current" | "pending") => {
@@ -3967,6 +4014,8 @@ export default function MyApplications() {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation()
+                                  if (appKey) handleMarkGLPrinted(appKey)
+                                  if (applicantNameKey) handleMarkGLPrinted(applicantNameKey)
                                   setGuaranteeLetterApp(app)
                                 }}
                                 className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
