@@ -444,8 +444,27 @@ function AppointmentCard({
               </button>
             )}
 
-            {/* 2. Scheduled & Under Review Stage (Ready for Social Worker Evaluation / Approval / Reschedule) */}
-            {(effectiveStatus === "scheduled" || effectiveStatus === "under_review") && (
+            {/* 2. Scheduled Stage (Schedule is set, waiting for exact date & time to arrive) */}
+            {effectiveStatus === "scheduled" && (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Scheduled (Upcoming Interview)</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onSchedule(appt)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
+                  title="Reschedule Appointment"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Resched</span>
+                </button>
+              </div>
+            )}
+
+            {/* 3. Under Review Stage (Exact Date & Time reached — Ready for Social Worker Assessment) */}
+            {effectiveStatus === "under_review" && (
               <div className="flex flex-wrap items-center gap-1.5 justify-end">
                 <button
                   type="button"
