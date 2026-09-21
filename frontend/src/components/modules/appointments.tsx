@@ -228,8 +228,13 @@ interface ScheduleModalProps {
 }
 
 function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
-  const [date, setDate] = useState(appointment.scheduledDate || "")
-  const [time, setTime] = useState(appointment.scheduledTime || "")
+  const todayStr = new Date().toISOString().split("T")[0]
+  const currentHour = new Date().getHours().toString().padStart(2, "0")
+  const currentMin = (Math.ceil(new Date().getMinutes() / 15) * 15 % 60).toString().padStart(2, "0")
+  const defaultTimeStr = `${currentHour}:${currentMin}`
+
+  const [date, setDate] = useState(appointment.scheduledDate || todayStr)
+  const [time, setTime] = useState(appointment.scheduledTime || defaultTimeStr || "10:00")
   const location = appointment.officeLocation || "Quezon City Hall"
 
   const canSave = date.trim() !== "" && time.trim() !== ""
@@ -239,12 +244,18 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
       ? appointment.notes
       : `Mangyaring magtungo sa ${location} sa itinakdang petsa at oras. Dalhin ang orihinal na QCID / Valid ID para sa transaksyon sa ${appointment.concern}.`
 
+  const setQuickDate = (daysFromToday: number) => {
+    const d = new Date()
+    d.setDate(d.getDate() + daysFromToday)
+    setDate(d.toISOString().split("T")[0])
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg my-8">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-foreground">Set Appointment Schedule</h2>
+            <h2 className="text-lg font-bold text-foreground">Set / Reschedule Appointment</h2>
             <p className="text-sm text-muted-foreground mt-0.5">{appointment.applicantName} — {appointment.referenceNo}</p>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-2xl font-light cursor-pointer">
@@ -253,6 +264,38 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
         </div>
 
         <div className="p-6 space-y-4">
+          <div className="flex items-center gap-1.5 flex-wrap pb-1">
+            <span className="text-[11px] font-bold text-slate-500 uppercase mr-1">Quick Select:</span>
+            <button
+              type="button"
+              onClick={() => setQuickDate(0)}
+              className="px-2.5 py-1 text-xs rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition-colors cursor-pointer"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickDate(1)}
+              className="px-2.5 py-1 text-xs rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
+            >
+              Tomorrow
+            </button>
+            <button
+              type="button"
+              onClick={() => setTime("09:00")}
+              className="px-2.5 py-1 text-xs rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
+            >
+              09:00 AM
+            </button>
+            <button
+              type="button"
+              onClick={() => setTime("14:00")}
+              className="px-2.5 py-1 text-xs rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer"
+            >
+              02:00 PM
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-muted-foreground">Date *</label>
@@ -391,37 +434,15 @@ function AppointmentCard({
           <div className="flex flex-wrap items-center gap-1.5 mt-2 justify-end">
             {/* 1. Pending Schedule Stage (No date set yet) */}
             {effectiveStatus === "pending" && (
-              <button
-                type="button"
-                onClick={() => onSchedule(appt)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
-              >
-                <Calendar className="h-3.5 w-3.5" />
-                <span>📅 Set Schedule</span>
-              </button>
-            )}
-
-            {/* 2. Scheduled Stage (Schedule is set, waiting for date/time to arrive) */}
-            {effectiveStatus === "scheduled" && (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Scheduled (Upcoming Interview)</span>
-                </span>
+              <div className="flex flex-wrap items-center gap-1.5 justify-end">
                 <button
                   type="button"
                   onClick={() => onSchedule(appt)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
-                  title="Reschedule Appointment"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
                 >
-                  <span>Edit</span>
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>📅 Set Schedule</span>
                 </button>
-              </div>
-            )}
-
-            {/* 3. Under Review Stage (Date & Time is reached / waiting for Admin choice) */}
-            {effectiveStatus === "under_review" && (
-              <>
                 <button
                   type="button"
                   onClick={() => onApprove?.(appt)}
@@ -429,7 +450,22 @@ function AppointmentCard({
                   title="Approve QC Assistance & generate Guarantee Letter"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>✓ Approve</span>
+                  <span>✓ Approve Aid</span>
+                </button>
+              </div>
+            )}
+
+            {/* 2. Scheduled & Under Review Stage (Ready for Social Worker Evaluation / Approval / Reschedule) */}
+            {(effectiveStatus === "scheduled" || effectiveStatus === "under_review") && (
+              <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                <button
+                  type="button"
+                  onClick={() => onApprove?.(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
+                  title="Approve QC Assistance & generate Guarantee Letter"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>✓ Approve Aid</span>
                 </button>
                 <button
                   type="button"
@@ -442,13 +478,22 @@ function AppointmentCard({
                 </button>
                 <button
                   type="button"
+                  onClick={() => onSchedule(appt)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
+                  title="Reschedule Appointment"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Resched</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => onReject?.(appt)}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
                 >
                   <XCircle className="h-3.5 w-3.5" />
                   <span>Reject</span>
                 </button>
-              </>
+              </div>
             )}
 
             {/* 4. Approved / Completed Stage (Admin clicked Approve) */}
