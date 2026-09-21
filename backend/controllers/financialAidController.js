@@ -90,108 +90,8 @@ function parseDateTime(dateStr, timeStr) {
 }
 
 async function autoReleaseScheduledDisbursements() {
-  try {
-    const result = await db.query(
-      `SELECT f.*, COALESCE(a.scheduled_date, f.appointment_date) as final_appt_date, COALESCE(a.scheduled_time, f.appointment_time) as final_appt_time
-       FROM financial_aid_disbursements f
-       LEFT JOIN appointments a ON f.application_ref = a.reference_no
-       WHERE f.status = 'PENDING' OR a.status = 'scheduled'`
-    );
-
-    const now = new Date();
-    for (const d of result.rows) {
-      const apptDate = d.final_appt_date || d.appointment_date;
-      const apptTime = d.final_appt_time || d.appointment_time;
-
-      if (!apptDate) continue;
-
-      const scheduledDt = parseDateTime(apptDate, apptTime);
-      if (scheduledDt && now.getTime() >= scheduledDt.getTime()) {
-        const releaseTime = apptTime || now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
-        const releaseDate = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
-
-        if (d.status === 'PENDING') {
-          await db.query(
-            `UPDATE financial_aid_disbursements
-             SET status = 'RELEASED',
-                 released_date = $1,
-                 released_by = 'Automated Scheduled Payout System / Disbursing Officer',
-                 remarks = $2,
-                 updated_at = NOW()
-             WHERE id = $3`,
-            [`${releaseDate} ${releaseTime}`, `Awtomatikong na-release sa takdang oras ng appointment (${apptDate} - ${releaseTime}).`, d.id]
-          );
-
-          await db.query(
-            `INSERT INTO user_notifications (title, description, application_ref)
-             VALUES ($1, $2, $3)`,
-            [
-              'Financial Aid Released',
-              `Your Financial Aid (${d.assistance_type} — ₱${Number(d.fixed_amount).toLocaleString()}) has been automatically released at the scheduled appointment time (${apptDate} – ${releaseTime}).`,
-              d.application_ref,
-            ]
-          );
-
-          await logActivity({
-            actor: 'System Auto-Release',
-            actorRole: 'Automated Worker',
-            action: 'RELEASED',
-            module: 'Financial Aid',
-            referenceNo: d.application_ref,
-            subject: d.applicant_name,
-            detail: `Automated financial aid payout released for ${d.assistance_type} (₱${Number(d.fixed_amount).toLocaleString()}).`,
-          });
-
-          if (d.application_ref && (d.application_ref.startsWith('LP-') || (d.assistance_type && d.assistance_type.includes('Livelihood')))) {
-            await db.query(
-              `UPDATE livelihood_assistance
-               SET assistance_status = 'released',
-                   release_date = COALESCE(release_date, $1),
-                   release_time = COALESCE(release_time, $2),
-                   release_location = COALESCE(release_location, $3),
-                   released_at = NOW(),
-                   released_by = 'Automated Scheduled Payout System / Disbursing Officer',
-                   updated_at = NOW()
-               WHERE reference_number = $4`,
-              [apptDate, releaseTime, d.venue || 'Quezon City Hall - SSDD Livelihood Center', d.application_ref]
-            );
-
-            const appRes = await db.query('SELECT id FROM livelihood_applications WHERE reference_number = $1', [d.application_ref]);
-            if (appRes.rows.length > 0) {
-              const appId = appRes.rows[0].id;
-              const monCheck = await db.query('SELECT id FROM livelihood_monitoring WHERE application_id = $1', [appId]);
-              if (monCheck.rows.length === 0) {
-                await db.query(
-                  `INSERT INTO livelihood_monitoring (
-                    application_id, reference_number, monitoring_status, log_type,
-                    title, notes, officer_name, inspection_date
-                  ) VALUES ($1, $2, 'active', 'inspection', $3, $4, $5, $6)`,
-                  [
-                    appId,
-                    d.application_ref,
-                    'Initial Assistance Release & Monitoring Setup',
-                    `Capital / Materials assistance automatically released via Financial Aid appointment payout (${apptDate} – ${releaseTime}). Active monitoring initiated.`,
-                    'Automated Scheduled Payout System',
-                    now.toISOString().split('T')[0],
-                  ]
-                );
-              }
-            }
-          }
-        }
-
-        await db.query(
-          `UPDATE appointments
-           SET status = 'completed',
-               updated_at = NOW()
-           WHERE reference_no = $1 AND status != 'completed'`,
-          [d.application_ref]
-        );
-      }
-    }
-  } catch (err) {
-    console.warn('Auto-release worker check note:', err.message);
-  }
+  // Manual release only: Releases must be explicitly triggered by Admin action
+  return;
 }
 
 exports.getDisbursements = async (req, res) => {
@@ -380,12 +280,12 @@ exports.getDisbursements = async (req, res) => {
          f.assistance_type,
          CASE WHEN f.fixed_amount::numeric > 0 THEN f.fixed_amount::numeric ELSE 15000 END as fixed_amount,
          f.date_approved,
-         CASE WHEN a.status = 'completed' OR f.status = 'RELEASED' THEN 'RELEASED' ELSE f.status END as status,
+         f.status as status,
          COALESCE(a.scheduled_date, f.appointment_date) as appointment_date,
          COALESCE(a.scheduled_time, f.appointment_time) as appointment_time,
          COALESCE(a.office_location, f.venue) as venue,
-         COALESCE(f.released_date, CASE WHEN a.status = 'completed' THEN CONCAT(COALESCE(a.scheduled_date, f.appointment_date), ' ', COALESCE(a.scheduled_time, f.appointment_time)) ELSE NULL END) as released_date,
-         COALESCE(f.released_by, 'Automated Scheduled Payout System / Disbursing Officer') as released_by,
+         f.released_date,
+         f.released_by,
          f.remarks,
          f.created_at,
          f.updated_at
@@ -419,12 +319,12 @@ exports.getUserDisbursements = async (req, res) => {
          f.assistance_type,
          f.fixed_amount,
          f.date_approved,
-         CASE WHEN a.status = 'completed' OR f.status = 'RELEASED' THEN 'RELEASED' ELSE f.status END as status,
+         f.status as status,
          COALESCE(a.scheduled_date, f.appointment_date) as appointment_date,
          COALESCE(a.scheduled_time, f.appointment_time) as appointment_time,
          COALESCE(a.office_location, f.venue) as venue,
-         COALESCE(f.released_date, CASE WHEN a.status = 'completed' THEN CONCAT(COALESCE(a.scheduled_date, f.appointment_date), ' ', COALESCE(a.scheduled_time, f.appointment_time)) ELSE NULL END) as released_date,
-         COALESCE(f.released_by, 'Automated Scheduled Payout System / Disbursing Officer') as released_by,
+         f.released_date,
+         f.released_by,
          f.remarks,
          f.created_at,
          f.updated_at

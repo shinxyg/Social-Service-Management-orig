@@ -3845,8 +3845,7 @@ export default function MyApplications() {
                         app.status === "Released" ||
                         app.status === "For Release" ||
                         cachedAppt?.decision === "approved" ||
-                        cachedAppt?.status === "approved" ||
-                        cachedAppt?.status === "completed")
+                        cachedAppt?.status === "approved")
 
                     const savedDisbs = getSavedDisbursements()
                     const matchDisb = savedDisbs.find(
@@ -3857,9 +3856,11 @@ export default function MyApplications() {
 
                     const isExplicitlyReleased =
                       !isExplicitlyPending &&
+                      app.status !== "Approved" &&
+                      app.status !== "Under Review" &&
                       (app.status === "Released" ||
                         app.status === "Completed" ||
-                        (app.status !== "Approved" && matchDisb?.status === "RELEASED"))
+                        matchDisb?.status === "RELEASED")
 
                     const isGLIssued = isApprovedDecision || (!isExplicitlyPending && app.status === "For Release") || isExplicitlyReleased
                     const isUnderReview = app.status === "Under Review" || app.status === "For Assessment"

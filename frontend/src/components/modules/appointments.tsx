@@ -1003,10 +1003,6 @@ export default function Appointments() {
         body: JSON.stringify({ status: 'approved' }),
       })).catch(() => {})
 
-      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(appt.referenceNo || targetRef)}/complete`, {
-        method: 'PUT',
-      }).catch(() => {})
-
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
       const localMap = JSON.parse(raw)
       localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "approved", decision: "approved" }

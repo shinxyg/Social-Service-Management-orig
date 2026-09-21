@@ -105,7 +105,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
                 assistanceType: type,
                 fixedAmount: resolveFixedAmount(type),
                 dateApproved: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
-                status: (app.status === "released" || app.status === "completed") ? "RELEASED" : "PENDING",
+                status: String(app.status || "").toLowerCase() === "released" ? "RELEASED" : "PENDING",
                 venue: "Quezon City Hall",
                 remarks: "Automatically synced from AICS application.",
               })
@@ -140,7 +140,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
                 assistanceType: type,
                 fixedAmount: 2000,
                 dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
-                status: (app.status === "released" || app.status === "completed") ? "RELEASED" : "PENDING",
+                status: String(app.status || "").toLowerCase() === "released" ? "RELEASED" : "PENDING",
                 venue: "Quezon City Hall",
                 remarks: "Automatically synced from PWD/Senior application.",
               })
