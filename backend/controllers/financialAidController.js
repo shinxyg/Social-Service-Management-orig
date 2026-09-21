@@ -96,23 +96,15 @@ async function autoReleaseScheduledDisbursements() {
 
 exports.getDisbursements = async (req, res) => {
   try {
-
     autoReleaseScheduledDisbursements().catch(() => {});
 
     try {
       await db.query(`
         DELETE FROM financial_aid_disbursements
         WHERE application_ref IN (
-          SELECT reference_no FROM appointments WHERE status IN ('pending', 'scheduled', 'under_review') AND status != 'approved'
-        )
-        AND application_ref NOT IN (
-          SELECT reference_no FROM appointments WHERE status = 'approved'
-        )
-        AND application_ref NOT IN (
-          SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release', 'released')
-        )
-        AND application_ref NOT IN (
-          SELECT qc_id FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release', 'released') AND qc_id IS NOT NULL
+          SELECT reference_no FROM appointments WHERE status IN ('rejected', 'disapproved')
+        ) OR application_ref IN (
+          SELECT reference_no FROM aics_applications WHERE status IN ('rejected', 'disapproved')
         )
       `);
     } catch (_) {}
@@ -143,36 +135,9 @@ exports.getDisbursements = async (req, res) => {
       await db.query(`
         DELETE FROM financial_aid_disbursements f1
         USING financial_aid_disbursements f2
-        WHERE f1.id < f2.id AND f1.application_ref = f2.application_ref
-      `);
-    } catch (_) {}
-
-    try {
-      await db.query(`
-        DELETE FROM financial_aid_disbursements
-        WHERE (
-          application_ref NOT IN (
-            SELECT reference_number FROM pwd_senior_applications WHERE status IN ('approved', 'completed', 'for_release')
-          )
-          AND application_ref NOT IN (
-            SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
-          )
-          AND application_ref NOT IN (
-            SELECT qc_id FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release') AND qc_id IS NOT NULL
-          )
-          AND application_ref NOT IN (
-            SELECT reference_no FROM appointments WHERE status = 'approved'
-          )
-          AND application_ref NOT IN (
-            SELECT l.reference_number
-            FROM livelihood_applications l
-            INNER JOIN livelihood_assistance la ON l.reference_number = la.reference_number
-            WHERE (l.application_status = 'approved' OR l.status = 'approved')
-              AND la.assistance_status IN ('for_release', 'released', 'FOR RELEASE', 'RELEASED')
-          )
-          AND application_ref NOT IN (
-            SELECT reference_number FROM solo_parent_child_welfare_applications WHERE application_status = 'approved'
-          )
+        WHERE f1.id < f2.id AND (
+          f1.application_ref = f2.application_ref
+          OR REPLACE(f1.application_ref, '-', '') = REPLACE(f2.application_ref, '-', '')
         )
       `);
     } catch (_) {}
@@ -343,9 +308,13 @@ exports.getDisbursements = async (req, res) => {
       for (const appt of approvedAppts.rows) {
         const ref = String(appt.reference_no || '').trim();
         if (!ref) continue;
+        const unhyphenated = ref.replace(/[^a-zA-Z0-9]/g, '');
         const disbCheck = await db.query(
-          `SELECT id FROM financial_aid_disbursements WHERE application_ref = $1`,
-          [ref]
+          `SELECT id FROM financial_aid_disbursements 
+           WHERE application_ref = $1 
+              OR REPLACE(application_ref, '-', '') = $2
+              OR (applicant_name ILIKE $3 AND status != 'RELEASED')`,
+          [ref, unhyphenated, `%${appt.applicant_name}%`]
         );
         if (disbCheck.rows.length === 0) {
           const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
