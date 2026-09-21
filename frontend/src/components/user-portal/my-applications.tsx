@@ -3368,7 +3368,14 @@ export default function MyApplications() {
               cachedAppt?.status === "approved" ||
               cachedAppt?.status === "completed"
 
-            const isClaimed = isApprovedDecision || selectedApp.status === "Released" || selectedApp.status === "Completed"
+            const savedDisbs = getSavedDisbursements()
+            const matchDisb = savedDisbs.find(
+              (d) =>
+                d.applicationRef === selectedApp.applicationNo ||
+                (d.applicantName && d.applicantName.toLowerCase().trim() === selectedApp.applicantName?.toLowerCase()?.trim())
+            )
+
+            const isClaimed = selectedApp.status === "Released" || selectedApp.status === "Completed" || matchDisb?.status === "RELEASED"
             const isGLIssued = isApprovedDecision || selectedApp.status === "For Release" || isClaimed
             const isAssessmentDone = isGLIssued || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment" || cachedAppt?.decision === "referred"
             const partnerHospital =
@@ -3952,7 +3959,14 @@ export default function MyApplications() {
                       cachedAppt?.status === "approved" ||
                       cachedAppt?.status === "completed"
 
-                    const isClaimed = isApprovedDecision || app.status === "Released" || app.status === "Completed"
+                    const savedDisbs = getSavedDisbursements()
+                    const matchDisb = savedDisbs.find(
+                      (d) =>
+                        d.applicationRef === app.applicationNo ||
+                        (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName?.toLowerCase()?.trim())
+                    )
+
+                    const isClaimed = app.status === "Released" || app.status === "Completed" || matchDisb?.status === "RELEASED"
                     const isGLIssued = isApprovedDecision || app.status === "For Release" || isClaimed
                     const isAssessmentDone = isGLIssued || app.status === "Under Review" || app.status === "For Assessment" || cachedAppt?.decision === "referred"
                     const partnerHospital =

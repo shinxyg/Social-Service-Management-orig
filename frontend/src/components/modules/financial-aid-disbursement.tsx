@@ -207,17 +207,8 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         finalVenue = cachedSched.venue || cachedSched.location || finalVenue
       }
 
-      const isApptApprovedOrDone =
-        appt?.decision === "approved" ||
-        appt?.status === "approved" ||
-        appt?.status === "completed" ||
-        appt?.status === "released" ||
-        cachedSched?.decision === "approved" ||
-        cachedSched?.status === "approved" ||
-        cachedSched?.status === "completed" ||
-        cachedSched?.status === "released"
-
-      let finalStatus: DisbursementStage = (d.status === "RELEASED" || isApptApprovedOrDone) ? "RELEASED" : "PENDING"
+      const isExplicitlyReleased = d.status === "RELEASED"
+      let finalStatus: DisbursementStage = isExplicitlyReleased ? "RELEASED" : "PENDING"
       let finalReleasedDate = d.releasedDate
       let finalReleasedBy = d.releasedBy
 
@@ -645,18 +636,8 @@ export default function FinancialAidDisbursement() {
             d.venue ||
             "Quezon City Hall"
 
-          const isApptApprovedOrDone =
-            appt?.decision === "approved" ||
-            appt?.status === "approved" ||
-            appt?.status === "completed" ||
-            appt?.status === "released" ||
-            cachedSched?.decision === "approved" ||
-            cachedSched?.status === "approved" ||
-            cachedSched?.status === "completed" ||
-            cachedSched?.status === "released"
-
-          const wasAlreadyReleased = existingSaved?.status === "RELEASED" || d.status === "RELEASED"
-          const isReleased = wasAlreadyReleased || isApptApprovedOrDone
+          const isExplicitlyReleased = existingSaved?.status === "RELEASED" || d.status === "RELEASED"
+          const isReleased = isExplicitlyReleased
 
           return {
             ...d,
