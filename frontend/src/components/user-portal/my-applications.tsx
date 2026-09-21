@@ -4003,40 +4003,27 @@ export default function MyApplications() {
                     let s4State: "completed" | "current" | "pending" = "pending"
                     let s4Title = "4. PROCESSING"
                     let s4Sub = "○ Awaiting Approval"
-                    if (isExplicitlyReleased) {
+                    if (isExplicitlyReleased || isApprovedDecision) {
                       s4State = "completed"
                       s4Title = "4. PROCESSING"
-                      s4Sub = "✓ GL Claimed & Processed"
-                    } else if (isGLIssued) {
-                      if (isGLPrinted) {
-                        s4State = "completed"
-                        s4Title = "4. PROCESSING"
-                        s4Sub = "✓ GL Printed / Downloaded"
-                      } else {
-                        s4State = "current"
-                        s4Title = "4. PROCESSING"
-                        s4Sub = "● Click 'View GL' to Print"
-                      }
+                      s4Sub = "✓ GL Processed"
                     }
 
                     let s5State: "completed" | "current" | "pending" = "pending"
                     let s5Title = "5. RELEASED"
-                    let s5Sub = "○ Pending Payout"
-                    if (isExplicitlyReleased) {
+                    let s5Sub = "○ Pending Release"
+                    if (isExplicitlyReleased || isApprovedDecision) {
                       s5State = "completed"
                       s5Title = "5. RELEASED"
-                      s5Sub = "✓ Aid Claimed & Availed"
-                    } else if (isGLIssued) {
-                      if (isGLPrinted) {
-                        s5State = "current"
-                        s5Title = "5. RELEASED"
-                        s5Sub = "● Ready for Hospital Claim"
-                      } else {
-                        s5State = "pending"
-                        s5Title = "5. RELEASED"
-                        s5Sub = "○ Print GL First"
-                      }
+                      s5Sub = "✓ Ready for Hospital Claim"
                     }
+
+                    const isProgress1to5Done =
+                      s1State === "completed" &&
+                      s2State === "completed" &&
+                      s3State === "completed" &&
+                      s4State === "completed" &&
+                      s5State === "completed"
 
                     const getStageBoxClass = (st: "completed" | "current" | "pending") => {
                       if (st === "completed") {
@@ -4108,13 +4095,13 @@ export default function MyApplications() {
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1 border-t border-blue-100 dark:border-slate-700/60 flex-wrap">
-                          {!isGLIssued ? (
+                          {!isProgress1to5Done ? (
                             <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
                               * Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview.
                             </p>
                           ) : <div />}
                           <div className="flex items-center gap-1.5 flex-wrap ml-auto">
-                            {isGLIssued && (
+                            {isProgress1to5Done && (
                               <button
                                 type="button"
                                 onClick={(e) => {
