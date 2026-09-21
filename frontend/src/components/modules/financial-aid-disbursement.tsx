@@ -270,7 +270,30 @@ export default function FinancialAidDisbursement() {
       })
       localStorage.setItem("all_financial_disbursements", JSON.stringify(nextList))
     } catch {}
+
+    // Patch status to backend and dispatch events
+    ;(async () => {
+      try {
+        const ref = record.applicationRef || record.disbursementId
+        if (ref) {
+          await Promise.allSettled([
+            fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(ref)}/status`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "released" }),
+            }),
+            fetch(`${API_BASE}/api/appointments/${encodeURIComponent(ref)}/complete`, {
+              method: "PUT",
+            }),
+          ])
+        }
+      } catch {}
+    })()
+
     window.dispatchEvent(new Event("financial_disbursements_updated"))
+    window.dispatchEvent(new Event("aics_applications_updated"))
+    window.dispatchEvent(new Event("appointments_updated"))
+    window.dispatchEvent(new Event("storage"))
   }
 
   useEffect(() => {
