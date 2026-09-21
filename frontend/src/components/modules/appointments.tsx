@@ -434,25 +434,14 @@ function AppointmentCard({
           <div className="flex flex-wrap items-center gap-1.5 mt-2 justify-end">
             {/* 1. Pending Schedule Stage (No date set yet) */}
             {effectiveStatus === "pending" && (
-              <div className="flex flex-wrap items-center gap-1.5 justify-end">
-                <button
-                  type="button"
-                  onClick={() => onSchedule(appt)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>📅 Set Schedule</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onApprove?.(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
-                  title="Approve QC Assistance & generate Guarantee Letter"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>✓ Approve Aid</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => onSchedule(appt)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                <span>📅 Set Schedule</span>
+              </button>
             )}
 
             {/* 2. Scheduled & Under Review Stage (Ready for Social Worker Evaluation / Approval / Reschedule) */}
