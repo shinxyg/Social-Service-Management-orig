@@ -12,15 +12,8 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Building2, 
-  UserCheck, 
   XCircle, 
-  Search, 
-  FileText, 
-  Printer, 
-  Send,
-  X,
-  ChevronRight,
-  Sparkles
+  FileText 
 } from 'lucide-react'
 
 const API_BASE = `${APP_API_BASE}/api/aics`
@@ -84,6 +77,7 @@ interface AicsApplication {
   phone: string | null
   email: string | null
   address: string | null
+  barangay?: string | null
   details: Record<string, any> | null
   status: ApplicationStatus
   created_at: string
