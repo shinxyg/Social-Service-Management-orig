@@ -233,7 +233,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       const apptStatus = String(appt?.status || cachedSched?.status || "").toLowerCase()
       const apptDecision = String(appt?.decision || cachedSched?.decision || "").toLowerCase()
       if (apptStatus === "pending" || apptStatus === "scheduled" || apptStatus === "under_review" || apptStatus === "for_scheduling") {
-        if (apptDecision !== "approved" && apptStatus !== "approved") {
+        if (apptDecision !== "approved") {
           return false
         }
       }
@@ -718,7 +718,7 @@ export default function FinancialAidDisbursement() {
           const apptStatus = String(appt?.status || cachedSched?.status || "").toLowerCase()
           const apptDecision = String(appt?.decision || cachedSched?.decision || "").toLowerCase()
           if (apptStatus === "pending" || apptStatus === "scheduled" || apptStatus === "under_review" || apptStatus === "for_scheduling") {
-            if (apptDecision !== "approved" && apptStatus !== "approved") {
+            if (apptDecision !== "approved") {
               return false
             }
           }
