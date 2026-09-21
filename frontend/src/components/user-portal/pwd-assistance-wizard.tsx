@@ -106,17 +106,17 @@ const EDUCATIONAL_ATTAINMENT_OPTIONS = [
 ]
 
 const FAMILY_RELATIONSHIP_OPTIONS = [
-  "Spouse / Asawa",
-  "Son / Anak na Lalaki",
-  "Daughter / Anak na Babae",
-  "Mother / Ina",
-  "Father / Ama",
-  "Brother / Kapatid na Lalaki",
-  "Sister / Kapatid na Babae",
-  "Grandchild / Apo",
-  "Parent / Magulang",
-  "Other Relative / Ibang Kamag-anak",
-  "Guardian / Tagapangalaga",
+  "Spouse",
+  "Son",
+  "Daughter",
+  "Mother",
+  "Father",
+  "Brother",
+  "Sister",
+  "Grandchild",
+  "Parent",
+  "Other Relative",
+  "Guardian",
 ]
 
 interface RequiredDocument {
@@ -132,29 +132,29 @@ const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   {
     id: "barangayIndigency",
     label: "BARANGAY CERTIFICATE OF INDIGENCY",
-    description: "Kamakailang Certificate of Indigency mula sa Barangay Hall kung saan nakatira.",
+    description: "Recent Certificate of Indigency issued by the Barangay Hall of residence.",
     images: ["/samples/BARANGAY CERTIFICATE OF INDIGENCY.png"],
     required: true,
   },
   {
     id: "medicalCertificate",
     label: "MEDICAL CERTIFICATE",
-    description: "Medical Certificate / Clinical Abstract mula sa licensed physician o ospital.",
+    description: "Medical Certificate / Clinical Abstract from a licensed physician or hospital certifying the medical condition or disability.",
     images: ["/samples/MEDICAL CERTIFICATE.png"],
     required: true,
   },
   {
     id: "pwdQcId",
     label: "QC PWD ID / APPLICABLE IDENTIFICATION",
-    description: "Malinaw na litrato ng iyong QCitizen ID (PWD Sector) o anumang applicable identification card.",
+    description: "Clear photo of your QCitizen PWD ID or any applicable identification card (front and back).",
     images: ["/samples/QC ID.png"],
     required: true,
   },
   {
     id: "casePhoto",
-    label: "REQUIRED PHOTO / DOCUMENTATION DEPENDE SA CASE",
-    description: "2×2 ID picture o litrato/dokumento depende sa case (hal. litratong nakahiga kasama ang kalendaryo para sa bedridden, Solo Parent ID/Cert, o patunay ng vulnerability).",
-    note: "Kung bedridden: Whole-body picture na may katabing kalendaryo na kita ang kasalukuyang petsa.",
+    label: "REQUIRED PHOTO / DOCUMENTATION ACCORDING TO CASE",
+    description: "2×2 ID picture or case-specific documentation (e.g., whole-body photo with calendar for bedridden beneficiaries, Solo Parent ID/Cert, or proof of vulnerability).",
+    note: "If bedridden: Whole-body photo with a calendar showing the current date.",
     images: ["/samples/1X1 PICTURE.png"],
     required: true,
   },
@@ -878,7 +878,7 @@ export default function PWDSocialAssistanceWizard({
     const newMember: FamilyMember = {
       id: String(Date.now() + Math.random()),
       name: "",
-      relationship: "Spouse / Asawa",
+      relationship: "Spouse",
       age: "",
       occupation: "",
       income: "",
@@ -926,7 +926,7 @@ export default function PWDSocialAssistanceWizard({
 
     if (rejectedCount > 0) {
       alert(
-        `${rejectedCount} file(s) ang hindi tinanggap. Mga litrato o larawan (JPG, JPEG, PNG, WEBP) lamang ang maaaring i-upload. Bawal ang document/PDF file.`
+        `${rejectedCount} file(s) were not accepted. Only image files (JPG, JPEG, PNG, WEBP) are allowed. PDF and document files are not accepted.`
       )
     }
 
@@ -1429,7 +1429,7 @@ export default function PWDSocialAssistanceWizard({
               <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
                 <SectionHeader
                   title="1. PERSONAL INFORMATION"
-                  subtitle="Pangunahing impormasyon ng aplikante mula sa QCID / Profile"
+                  subtitle="Primary applicant information retrieved from QCID / Profile"
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1508,7 +1508,7 @@ export default function PWDSocialAssistanceWizard({
               <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
                 <SectionHeader
                   title="2. OCCUPATION / EMPLOYMENT"
-                  subtitle="Impormasyon ukol sa kasalukuyang estado sa paghahanapbuhay at kita"
+                  subtitle="Information regarding current employment status and household income"
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1519,21 +1519,21 @@ export default function PWDSocialAssistanceWizard({
                       options={EMPLOYMENT_STATUS_OPTIONS}
                     />
                   </Field>
-                  <Field label="Occupation / Hanapbuhay">
+                  <Field label="Occupation">
                     <TextInput
                       value={formData.occupation}
                       onChange={(v) => updateField("occupation", v)}
-                      placeholder="Hal. Helper, Vendor, N/A"
+                      placeholder="e.g. Helper, Vendor, N/A"
                     />
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Source of Income / Pinagkukunang Kita">
+                  <Field label="Source of Income">
                     <TextInput
                       value={formData.sourceOfIncome}
                       onChange={(v) => updateField("sourceOfIncome", v)}
-                      placeholder="Hal. Tulong ng Pamilya, Remittance, Allowance, Wala"
+                      placeholder="e.g. Family Support, Remittance, Allowance, None"
                     />
                   </Field>
                   <Field label="Approximate Monthly Income *">
@@ -1550,7 +1550,7 @@ export default function PWDSocialAssistanceWizard({
               <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
                 <SectionHeader
                   title="3. EDUCATIONAL BACKGROUND"
-                  subtitle="Antas ng pinag-aralan ng aplikante"
+                  subtitle="Educational attainment of the applicant"
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1565,7 +1565,7 @@ export default function PWDSocialAssistanceWizard({
                     <TextInput
                       value={formData.otherEducationInfo}
                       onChange={(v) => updateField("otherEducationInfo", v)}
-                      placeholder="Hal. SPED, Vocational Training, o Wala"
+                      placeholder="e.g. SPED, Vocational Training, or None"
                     />
                   </Field>
                 </div>
@@ -1580,7 +1580,7 @@ export default function PWDSocialAssistanceWizard({
                       4. FAMILY COMPOSITION
                     </h4>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Para malaman kung sino ang kasama at umaasa sa applicant
+                      To identify family members living with and dependent on the applicant
                     </p>
                   </div>
                   <button
@@ -1589,14 +1589,14 @@ export default function PWDSocialAssistanceWizard({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Magdagdag ng Miyembro (Add Member)</span>
+                    <span>+ Add Family Member</span>
                   </button>
                 </div>
 
                 {formData.familyMembers.length === 0 ? (
                   <div className="p-4 rounded-xl border border-dashed border-border dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/30 text-center space-y-2">
                     <p className="text-xs text-muted-foreground">
-                      Walang miyembro ng pamilyang nailagay. Kung nakatira mag-isa (Living Alone), maaari itong iwanang blangko o i-click ang button sa itaas kung may kasama sa bahay.
+                      No family members listed. If living alone, you may leave this blank or click the button above to add family members.
                     </p>
                     <button
                       type="button"
@@ -1604,7 +1604,7 @@ export default function PWDSocialAssistanceWizard({
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-foreground hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5 text-blue-600" />
-                      <span>+ Maglagay ng Kasama sa Bahay</span>
+                      <span>+ Add Family Member</span>
                     </button>
                   </div>
                 ) : (
@@ -1616,7 +1616,7 @@ export default function PWDSocialAssistanceWizard({
                       >
                         <div className="flex items-center justify-between border-b border-border dark:border-slate-800 pb-2">
                           <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                            Miyembro #{idx + 1}
+                            Member #{idx + 1}
                           </span>
                           <button
                             type="button"
@@ -1624,25 +1624,25 @@ export default function PWDSocialAssistanceWizard({
                             className="inline-flex items-center gap-1 text-[11px] text-red-600 hover:text-red-700 font-semibold cursor-pointer"
                           >
                             <Trash2 className="w-3 h-3" />
-                            <span>Alisin</span>
+                            <span>Remove</span>
                           </button>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
                             <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                              Pangalan ng Family Member *
+                              Family Member Name *
                             </label>
                             <TextInput
                               value={member.name}
                               onChange={(v) => updateFamilyMember(idx, "name", v)}
-                              placeholder="Buong pangalan"
+                              placeholder="Full name"
                             />
                           </div>
 
                           <div>
                             <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                              Relasyon (Relationship) *
+                              Relationship *
                             </label>
                             <SelectInput
                               value={member.relationship}
@@ -1653,14 +1653,14 @@ export default function PWDSocialAssistanceWizard({
 
                           <div>
                             <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                              Edad (Age) *
+                              Age *
                             </label>
                             <TextInput
                               value={member.age}
                               onChange={(v) => updateFamilyMember(idx, "age", v)}
                               numbersOnly
                               maxLength={3}
-                              placeholder="Hal. 25"
+                              placeholder="e.g. 25"
                             />
                           </div>
                         </div>
@@ -1668,12 +1668,12 @@ export default function PWDSocialAssistanceWizard({
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
                             <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                              Hanapbuhay / Occupation
+                              Occupation
                             </label>
                             <TextInput
                               value={member.occupation}
                               onChange={(v) => updateFamilyMember(idx, "occupation", v)}
-                              placeholder="Hal. Estudyante, Vendor"
+                              placeholder="e.g. Student, Vendor, N/A"
                             />
                           </div>
 
@@ -1684,7 +1684,7 @@ export default function PWDSocialAssistanceWizard({
                             <TextInput
                               value={member.income}
                               onChange={(v) => updateFamilyMember(idx, "income", v)}
-                              placeholder="Hal. ₱5,000 / Wala"
+                              placeholder="e.g. ₱5,000 / None"
                             />
                           </div>
 
@@ -1712,7 +1712,7 @@ export default function PWDSocialAssistanceWizard({
               <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
                 <SectionHeader
                   title="5. ESTIMATE MONTHLY EXPENSES"
-                  subtitle="Tantiya o kabuuang buwanang gastusin ng pamilya/aplikante sa bahay"
+                  subtitle="Estimated total monthly household expenses"
                 />
 
                 <div className="max-w-md">
@@ -1720,7 +1720,7 @@ export default function PWDSocialAssistanceWizard({
                     label="Estimated Monthly Expenses (₱) *"
                     required
                     invalid={attemptedNext && !formData.monthlyHouseholdExpenses.trim()}
-                    hint="Number only (hanggang 5 digit lamang, hal. 5000)"
+                    hint="Total monthly expenses for utilities, food, medicine, etc. (Number only, up to 5 digits only)"
                   >
                     <TextInput
                       value={formData.monthlyHouseholdExpenses}
@@ -1739,7 +1739,7 @@ export default function PWDSocialAssistanceWizard({
               <div className="space-y-4 bg-card dark:bg-slate-900/60 border border-border dark:border-slate-800 p-4 md:p-5 rounded-2xl shadow-xs">
                 <SectionHeader
                   title="6. ADDITIONAL INFORMATION & SWA CATEGORY"
-                  subtitle="Impormasyon para ma-assess ang applicant at ang dahilan kung bakit nangangailangan ng tulong"
+                  subtitle="Information needed to assess the applicant and reason for requesting assistance"
                 />
 
                 <div className="space-y-4">
@@ -1748,7 +1748,7 @@ export default function PWDSocialAssistanceWizard({
                       Qualifying Category (PWD SWA) <span className="text-red-500">*</span>
                     </label>
                     <p className="text-xs text-muted-foreground mb-3">
-                      Pumili ng isang qualifying category na naaangkop sa sitwasyon ng aplikante:
+                      Select the qualifying vulnerability category that applies to the applicant:
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {ASSISTANCE_TYPES.map((cat) => {
@@ -1780,12 +1780,12 @@ export default function PWDSocialAssistanceWizard({
                     label="Reason for Assistance / Assessment Details *"
                     required
                     invalid={attemptedNext && !formData.reasonForRequest.trim()}
-                    hint="Ipaliwanag kung bakit nangangailangan ng tulong ang aplikante at anumang karagdagang detalye para sa assessment ng Social Worker."
+                    hint="Explain why the applicant needs assistance and any other relevant case details for the Social Worker's assessment."
                   >
                     <TextArea
                       value={formData.reasonForRequest}
                       onChange={(v) => updateField("reasonForRequest", v)}
-                      placeholder="Hal. Kailangan ng buwanang suporta para sa gamot at gastusin dahil walang permanenteng trabaho..."
+                      placeholder="e.g. In need of monthly assistance for medicine and basic living expenses due to lack of steady income..."
                       rows={3}
                       invalid={attemptedNext && !formData.reasonForRequest.trim()}
                     />
@@ -1796,7 +1796,7 @@ export default function PWDSocialAssistanceWizard({
               {attemptedNext && !step2Valid && (
                 <div className="flex items-center gap-2.5 p-3.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-xs font-semibold text-red-700 dark:text-red-300">
                   <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-                  <span>Mangyaring punan ang Estimate Monthly Expenses at Reason for Request bago magpatuloy.</span>
+                  <span>Please complete Estimated Monthly Expenses and Reason for Assistance before proceeding.</span>
                 </div>
               )}
             </div>
@@ -1870,7 +1870,7 @@ export default function PWDSocialAssistanceWizard({
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
                           >
                             <Camera className="h-3.5 w-3.5" />
-                            <span>KUMUHA NG LARAWAN (CAMERA)</span>
+                            <span>TAKE PHOTO (CAMERA)</span>
                           </button>
                         </div>
 
@@ -1885,7 +1885,7 @@ export default function PWDSocialAssistanceWizard({
                                   type="button"
                                   onClick={() => handleRemoveFile(doc.id, i)}
                                   className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-slate-700 hover:bg-red-600 flex items-center justify-center text-white transition-colors z-10 cursor-pointer"
-                                  aria-label={`Alisin ang ${file.name}`}
+                                  aria-label={`Remove ${file.name}`}
                                 >
                                   <X className="h-3 w-3" />
                                 </button>
@@ -1901,7 +1901,7 @@ export default function PWDSocialAssistanceWizard({
 
                         {missing && (
                           <p className="text-xs text-red-500 mt-2">
-                            Kailangan pang mag-upload ng dokumento para sa kinakailangang item na ito.
+                            Document upload is required for this item.
                           </p>
                         )}
                       </div>
@@ -1917,28 +1917,28 @@ export default function PWDSocialAssistanceWizard({
             <div className="space-y-5">
               <div>
                 <h3 className="text-base font-bold text-foreground">REVIEW APPLICATION INFORMATION</h3>
-                <p className="text-sm text-muted-foreground">Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon.</p>
+                <p className="text-sm text-muted-foreground">Please review all information and uploaded documents carefully before submitting your application.</p>
               </div>
 
               <div className="space-y-3">
                 <AccordionSection title="Checklist & Primary Requirements" onEdit={() => { setReturnToReview(true); setStep(1) }}>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <ReviewField label="PWD ID Number" value={`PWD-${formData.pwdIdNumber}`} />
-                    <ReviewField label="Uri ng Kapansanan" value={formData.disabilityType} />
-                    <ReviewField label="Kategorya ng Tulong (SWA)" value={formData.assistanceType} />
+                    <ReviewField label="Type of Disability" value={formData.disabilityType} />
+                    <ReviewField label="Assistance Category (SWA)" value={formData.assistanceType} />
                   </div>
                 </AccordionSection>
 
                 <AccordionSection title="1. Personal Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <ReviewField label="Buong Pangalan" value={fullApplicantName} />
+                    <ReviewField label="Full Name" value={fullApplicantName} />
                     <ReviewField label="Date of Birth" value={`${formData.dobMonth} ${formData.dobDay}, ${formData.dobYear}`} />
-                    <ReviewField label="Edad / Kasarian" value={`${formData.age || "—"} / ${formData.sex}`} />
+                    <ReviewField label="Age / Sex" value={`${formData.age || "—"} / ${formData.sex}`} />
                     <ReviewField label="Civil Status" value={formData.civilStatus} />
                     <ReviewField label="Contact Number" value={formData.contactNumber} />
                     <ReviewField label="House No. / Street" value={`${formData.houseNo} ${formData.street}`.trim()} />
                     <ReviewField label="Barangay" value={formData.barangay} />
-                    <ReviewField label="Lungsod" value={formData.cityMunicipality} />
+                    <ReviewField label="City / Municipality" value={formData.cityMunicipality} />
                   </div>
                 </AccordionSection>
 
@@ -1960,19 +1960,19 @@ export default function PWDSocialAssistanceWizard({
 
                 <AccordionSection title="4. Family Composition" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                   {formData.familyMembers.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">Living Alone (Walang nakatalang kasama sa bahay)</p>
+                    <p className="text-xs text-muted-foreground italic">Living Alone (No family members listed)</p>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                        {formData.familyMembers.length} Miyembro ng Pamilya:
+                        {formData.familyMembers.length} Family Member(s):
                       </p>
                       <div className="divide-y divide-border dark:divide-slate-800">
                         {formData.familyMembers.map((m, idx) => (
                           <div key={idx} className="py-2 text-xs grid grid-cols-2 sm:grid-cols-5 gap-2">
-                            <div><span className="text-muted-foreground">Pangalan:</span> <span className="font-semibold">{m.name}</span></div>
-                            <div><span className="text-muted-foreground">Relasyon:</span> <span className="font-medium">{m.relationship}</span></div>
-                            <div><span className="text-muted-foreground">Edad:</span> <span className="font-medium">{m.age}</span></div>
-                            <div><span className="text-muted-foreground">Hanapbuhay/Kita:</span> <span className="font-medium">{m.occupation || "—"} ({m.income || "—"})</span></div>
+                            <div><span className="text-muted-foreground">Name:</span> <span className="font-semibold">{m.name}</span></div>
+                            <div><span className="text-muted-foreground">Relationship:</span> <span className="font-medium">{m.relationship}</span></div>
+                            <div><span className="text-muted-foreground">Age:</span> <span className="font-medium">{m.age}</span></div>
+                            <div><span className="text-muted-foreground">Occupation/Income:</span> <span className="font-medium">{m.occupation || "—"} ({m.income || "—"})</span></div>
                             <div><span className="text-muted-foreground">Has a Disability:</span> <span className="font-medium">{m.hasDisability || m.otherInfo || "—"}</span></div>
                           </div>
                         ))}
@@ -1988,7 +1988,7 @@ export default function PWDSocialAssistanceWizard({
                 <AccordionSection title="6. Additional Information & Assessment" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                   <div className="space-y-3">
                     <ReviewField label="Qualifying Category (PWD SWA)" value={formData.assistanceType} />
-                    <ReviewField label="Dahilan ng Pag-apply / Assessment Notes" value={formData.reasonForRequest} />
+                    <ReviewField label="Reason for Assistance / Assessment Notes" value={formData.reasonForRequest} />
                   </div>
                 </AccordionSection>
 
@@ -2030,7 +2030,7 @@ export default function PWDSocialAssistanceWizard({
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-red-500 mt-1">Walang nai-upload na dokumento</p>
+                            <p className="text-xs text-red-500 mt-1">No file uploaded</p>
                           )}
                         </div>
                       )
@@ -2042,7 +2042,7 @@ export default function PWDSocialAssistanceWizard({
               <div className="flex items-start gap-3 bg-blue-500/10 dark:bg-blue-950/40 border border-blue-500/30 dark:border-blue-800/60 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <p className="text-sm text-blue-800 dark:text-blue-300">
-                  Ang lahat ng impormasyon at dokumentong inyong isinumite ay susuriin ng Social Worker alinsunod sa mga patakaran ng Quezon City Government.
+                  All submitted information and documents will be assessed by a Social Worker in accordance with Quezon City Government guidelines.
                 </p>
               </div>
             </div>
