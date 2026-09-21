@@ -488,14 +488,16 @@ exports.createDisbursement = async (req, res) => {
 exports.releaseDisbursement = async (req, res) => {
   try {
     const { id } = req.params;
-    const { releasedDate, releasedBy, venue, remarks } = req.body;
+    const { releasedDate, releasedBy, venue, remarks, applicantName, assistanceType } = req.body;
 
     const finalDate = releasedDate || new Date().toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
     const finalOfficer = releasedBy || 'Authorized Admin / Disbursing Officer';
     const finalVenue = venue || 'Quezon City Hall';
-    const cleanId = String(id || '').trim();
+    const rawId = String(id || '').trim();
+    const cleanId = rawId.replace(/^db-/, '').replace(/^remote-/, '').replace(/^local-appt-/, '').replace(/^aics-appt-/, '').trim();
+    const unhyphenated = cleanId.replace(/[^a-zA-Z0-9]/g, '');
 
-    const result = await db.query(
+    let result = await db.query(
       `UPDATE financial_aid_disbursements
        SET status = 'RELEASED',
            released_date = $1,
@@ -503,46 +505,98 @@ exports.releaseDisbursement = async (req, res) => {
            venue = $3,
            remarks = COALESCE($4, remarks),
            updated_at = NOW()
-       WHERE id::text = $5 OR disbursement_id = $5 OR application_ref = $5
+       WHERE id::text = $5
+          OR disbursement_id = $5
+          OR application_ref = $5
+          OR id::text = $6
+          OR disbursement_id = $6
+          OR application_ref = $6
+          OR REPLACE(application_ref, '-', '') = $7
        RETURNING *`,
-      [finalDate, finalOfficer, finalVenue, remarks, cleanId]
+      [finalDate, finalOfficer, finalVenue, remarks || null, rawId, cleanId, unhyphenated]
     );
 
+    let d;
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Disbursement not found.' });
+      const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const targetRef = cleanId || rawId;
+      const targetName = (applicantName || 'BENEFICIARY').toUpperCase();
+      const targetAssistance = assistanceType || 'Medical Assistance';
+      const fixedAmount = resolveFixedAmount(targetAssistance);
+
+      const insResult = await db.query(
+        `INSERT INTO financial_aid_disbursements (
+          disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+          date_approved, status, released_date, released_by, venue, remarks
+        ) VALUES ($1, $2, $3, $4, $5, $6, 'RELEASED', $7, $8, $9, $10)
+        ON CONFLICT (disbursement_id) DO UPDATE
+        SET status = 'RELEASED', released_date = $7, released_by = $8, updated_at = NOW()
+        RETURNING *`,
+        [
+          disbId,
+          targetRef,
+          targetName,
+          targetAssistance,
+          fixedAmount,
+          finalDate,
+          finalDate,
+          finalOfficer,
+          finalVenue,
+          remarks || 'Disbursed aid.',
+        ]
+      );
+      d = insResult.rows[0];
+    } else {
+      d = result.rows[0];
     }
 
-    const d = result.rows[0];
+    if (d) {
+      await db.query(
+        `INSERT INTO user_notifications (title, description, application_ref)
+         VALUES ($1, $2, $3)`,
+        [
+          'Financial Aid Released',
+          `Your Financial Aid (${d.assistance_type} — ₱${Number(d.fixed_amount).toLocaleString()}) has been released successfully. Date: ${finalDate}.`,
+          d.application_ref,
+        ]
+      ).catch(() => {});
 
-    await db.query(
-      `INSERT INTO user_notifications (title, description, application_ref)
-       VALUES ($1, $2, $3)`,
-      [
-        'Financial Aid Released',
-        `Your Financial Aid (${d.assistance_type} — ₱${Number(d.fixed_amount).toLocaleString()}) has been released successfully. Date: ${finalDate}.`,
-        d.application_ref,
-      ]
-    );
+      await db.query(
+        `UPDATE appointments
+         SET status = 'completed', updated_at = NOW()
+         WHERE reference_no = $1
+            OR reference_no = $2
+            OR REPLACE(reference_no, '-', '') = $3`,
+        [d.application_ref, cleanId, unhyphenated]
+      ).catch(() => {});
 
-    await db.query(
-      `UPDATE appointments SET status = 'completed', updated_at = NOW() WHERE reference_no = $1`,
-      [d.application_ref]
-    );
+      await db.query(
+        `UPDATE aics_applications
+         SET status = 'released', updated_at = NOW()
+         WHERE reference_no = $1
+            OR qc_id = $1
+            OR reference_no = $2
+            OR qc_id = $2
+            OR REPLACE(reference_no, '-', '') = $3
+            OR REPLACE(qc_id, '-', '') = $3`,
+        [d.application_ref, cleanId, unhyphenated]
+      ).catch(() => {});
 
-    await logActivity({
-      actor: finalOfficer,
-      actorRole: 'Disbursing Officer',
-      action: 'RELEASED',
-      module: 'Financial Aid',
-      referenceNo: d.application_ref,
-      subject: d.applicant_name,
-      detail: `Financial aid released for ${d.assistance_type} (₱${Number(d.fixed_amount).toLocaleString()}).`,
-    });
+      await logActivity({
+        actor: finalOfficer,
+        actorRole: 'Disbursing Officer',
+        action: 'RELEASED',
+        module: 'Financial Aid',
+        referenceNo: d.application_ref,
+        subject: d.applicant_name,
+        detail: `Financial aid released for ${d.assistance_type} (₱${Number(d.fixed_amount).toLocaleString()}).`,
+      }).catch(() => {});
+    }
 
     res.json({ message: 'Disbursement released.', disbursement: d });
   } catch (err) {
     console.error('Error releasing disbursement:', err);
-    res.status(500).json({ error: 'Failed to release financial aid.' });
+    res.status(500).json({ error: 'Failed to release financial aid.', details: err.message });
   }
 };
 

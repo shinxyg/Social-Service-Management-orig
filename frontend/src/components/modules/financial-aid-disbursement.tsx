@@ -323,12 +323,20 @@ export default function FinancialAidDisbursement() {
           fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(dbCleanId)}/release`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ releasedBy: "MANUAL_DISBURSING_OFFICER" }),
+            body: JSON.stringify({
+              releasedBy: "MANUAL_DISBURSING_OFFICER",
+              applicantName: record.applicantName,
+              assistanceType: record.assistanceType,
+            }),
           }),
           ref ? fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(ref)}/release`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ releasedBy: "MANUAL_DISBURSING_OFFICER" }),
+            body: JSON.stringify({
+              releasedBy: "MANUAL_DISBURSING_OFFICER",
+              applicantName: record.applicantName,
+              assistanceType: record.assistanceType,
+            }),
           }) : Promise.resolve(),
           ref ? fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(ref)}/status`, {
             method: "PATCH",
