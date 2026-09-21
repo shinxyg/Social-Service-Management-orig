@@ -1693,6 +1693,37 @@ function getInitialDeletedApplications(): ApplicationRecord[] {
   return []
 }
 
+export function findCachedAppointmentRecord(
+  schedMap: Record<string, any>,
+  app: { applicationNo?: string; id?: any; rawAppId?: any; applicantName?: string; referenceNumber?: string; qc_id?: string; reference_no?: string; [key: string]: any }
+): any {
+  if (!schedMap || typeof schedMap !== "object") return undefined
+  const appNo = String(app.applicationNo || app.referenceNumber || app.reference_no || app.qc_id || "").trim()
+  const cleanRef = appNo.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim()
+  const rawId = String(app.id || app.rawAppId || "").trim()
+  const cleanName = String(app.applicantName || "").toLowerCase().trim()
+
+  if (appNo && schedMap[appNo]) return schedMap[appNo]
+  if (appNo && schedMap[`appt_${appNo}`]) return schedMap[`appt_${appNo}`]
+  if (rawId && schedMap[rawId]) return schedMap[rawId]
+  if (rawId && schedMap[`appt_${rawId}`]) return schedMap[`appt_${rawId}`]
+  if (cleanRef && schedMap[cleanRef]) return schedMap[cleanRef]
+  if (cleanRef && schedMap[`appt_${cleanRef}`]) return schedMap[`appt_${cleanRef}`]
+  if (cleanName && schedMap[cleanName]) return schedMap[cleanName]
+  if (cleanName && schedMap[`appt_${cleanName}`]) return schedMap[`appt_${cleanName}`]
+
+  for (const [key, val] of Object.entries(schedMap)) {
+    const kClean = key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim()
+    if (cleanRef && kClean && (kClean === cleanRef || (kClean.length >= 6 && cleanRef.includes(kClean)) || (cleanRef.length >= 6 && kClean.includes(cleanRef)))) {
+      return val
+    }
+    if (cleanName && kClean === cleanName) {
+      return val
+    }
+  }
+  return undefined
+}
+
 export default function MyApplications() {
   const { t } = useLanguage()
   const navigate = useNavigate()
@@ -2188,35 +2219,50 @@ export default function MyApplications() {
                 app.updated_at
               const appDate = extractAnyDateFromApp(app)
 
+              const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+              const schedMap = rawSched ? JSON.parse(rawSched) : {}
+              const appApplicantName = app.full_name || [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`
+              const appNo = app.qc_id || app.reference_no || app.reference_number || qcId
+              const cachedAppt = findCachedAppointmentRecord(schedMap, {
+                ...app,
+                applicationNo: appNo,
+                applicantName: appApplicantName,
+              })
+
+              const isAppApproved = app.status === "approved" || app.status === "completed" || cachedAppt?.decision === "approved" || cachedAppt?.status === "approved"
+              const isAppReferred = app.status === "referred" || app.status === "for_referral" || cachedAppt?.decision === "referred" || cachedAppt?.status === "referred"
+              const isAppRejected = app.status === "rejected" || cachedAppt?.decision === "rejected" || cachedAppt?.status === "rejected"
+
+              const resolvedStatus: ApplicationStatus = isAppApproved
+                ? "Approved"
+                : app.status === "released"
+                ? "Released"
+                : app.status === "for_release"
+                ? "For Release"
+                : isAppReferred
+                ? "Referred"
+                : isAppRejected
+                ? "Rejected"
+                : app.status === "scheduled"
+                ? "Scheduled"
+                : app.status === "waiting_approval"
+                ? "Waiting to Approve"
+                : app.status === "submit_pending"
+                ? "Submit Pending"
+                : app.status === "assessment" || app.status === "under_review"
+                ? "Under Review"
+                : "Pending"
+
               return {
-                applicationNo: app.qc_id || app.reference_no || app.reference_number || qcId,
+                id: app.id,
+                rawAppId: app.id,
+                applicationNo: appNo,
                 assistance: cleanAssistance,
                 assistanceCategory: "AICS",
                 rawTimestamp: appDate.getTime(),
                 dateApplied: formatAppDate(rawDate, app),
-                status:
-                  app.status === "approved" || app.status === "completed"
-                    ? "Approved"
-                    : app.status === "released"
-                    ? "Released"
-                    : app.status === "for_release"
-                    ? "For Release"
-                    : app.status === "scheduled"
-                    ? "Scheduled"
-                    : app.status === "waiting_approval"
-                    ? "Waiting to Approve"
-                    : app.status === "submit_pending"
-                    ? "Submit Pending"
-                    : app.status === "for_referral"
-                    ? "For Referral"
-                    : app.status === "referred"
-                    ? "Referred"
-                    : app.status === "rejected"
-                    ? "Rejected"
-                    : app.status === "assessment" || app.status === "under_review"
-                    ? "Under Review"
-                    : "Pending",
-                applicantName: app.full_name || [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`,
+                status: resolvedStatus,
+                applicantName: appApplicantName,
                 dateOfBirth: app.birth_date || userProfile.birthDateDisplay,
                 address:
                   app.address ||
@@ -2224,15 +2270,17 @@ export default function MyApplications() {
                 contactNumber: app.phone || app.contact_number || userProfile.mobileNumber,
                 email: app.email || userProfile.email,
                 details: app.details || {},
+                appointmentDate: cachedAppt?.scheduledDate || app.details?.appointmentDate,
+                appointmentTime: cachedAppt?.scheduledTime || app.details?.appointmentTime,
                 remarks:
-                  app.status === "referred" || app.status === "for_referral"
-                    ? `Referred to ${app.details?.referralAgency || "PCSO / DSWD"} (Official Referral Endorsement Released)`
-                    : app.status === "scheduled"
-                    ? `Nakatakda ang interview sa ${app.details?.appointmentDate || "Scheduled Date"}`
-                    : app.status === "approved"
+                  isAppApproved
                     ? "Aprubado ang tulong pinansyal / Guarantee Letter mula sa QC"
-                    : app.status === "rejected"
-                    ? `Tinanggihan: ${app.details?.rejectionReason || "Hindi kwalipikado"}`
+                    : isAppReferred
+                    ? `Referred to ${app.details?.referralAgency || "PCSO / DSWD"} (Official Referral Endorsement Released)`
+                    : isAppRejected
+                    ? `Tinanggihan: ${cachedAppt?.rejectionReason || app.details?.rejectionReason || "Hindi kwalipikado"}`
+                    : app.status === "scheduled"
+                    ? `Nakatakda ang interview sa ${cachedAppt?.scheduledDate || app.details?.appointmentDate || "Scheduled Date"}`
                     : "Kasalukuyang pinoproseso sa ilalim ng SSDD Social Worker evaluation",
               }
             })
@@ -2700,6 +2748,7 @@ export default function MyApplications() {
     })
 
     window.addEventListener("storage", handleUpdate)
+    window.addEventListener("aics_applications_updated", handleUpdate)
     window.addEventListener("pwd_senior_applications_updated", handleUpdate)
     window.addEventListener("solo_parent_applications_updated", handleUpdate)
     window.addEventListener("livelihood_status_updated", handleUpdate)
@@ -2716,6 +2765,7 @@ export default function MyApplications() {
       clearInterval(interval)
       unsubscribe()
       window.removeEventListener("storage", handleUpdate)
+      window.removeEventListener("aics_applications_updated", handleUpdate)
       window.removeEventListener("pwd_senior_applications_updated", handleUpdate)
       window.removeEventListener("solo_parent_applications_updated", handleUpdate)
       window.removeEventListener("livelihood_status_updated", handleUpdate)
@@ -3390,12 +3440,7 @@ export default function MyApplications() {
           if (isAicsMedicalApplication(selectedApp)) {
             const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
             const schedMap = rawSched ? JSON.parse(rawSched) : {}
-            const refKey = String(selectedApp.applicationNo || selectedApp.id || selectedApp.referenceNumber || "").trim()
-            const cachedAppt =
-              schedMap[refKey] ||
-              schedMap[selectedApp.id] ||
-              schedMap[`appt_${refKey}`] ||
-              schedMap[selectedApp.applicantName?.toLowerCase()?.trim()]
+            const cachedAppt = findCachedAppointmentRecord(schedMap, selectedApp)
 
             const isApprovedDecision =
               selectedApp.status === "Approved" ||
@@ -3758,13 +3803,44 @@ export default function MyApplications() {
             </p>
           </div>
         ) : (
-          filteredApplications.map((app) => {
-            const badge = getStatusBadge(app.status)
+          filteredApplications.map((app, index) => {
+            const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+            const schedMap = rawSched ? JSON.parse(rawSched) : {}
+            const cachedAppt = findCachedAppointmentRecord(schedMap, app)
+
+            const isAppApproved =
+              app.status === "Approved" ||
+              app.status === "Completed" ||
+              app.status === "Released" ||
+              app.status === "For Release" ||
+              cachedAppt?.decision === "approved" ||
+              cachedAppt?.status === "approved"
+
+            const isAppReferred =
+              app.status === "Referred" ||
+              app.status === "For Referral" ||
+              cachedAppt?.decision === "referred" ||
+              cachedAppt?.status === "referred"
+
+            const isAppRejected =
+              app.status === "Rejected" ||
+              cachedAppt?.decision === "rejected" ||
+              cachedAppt?.status === "rejected"
+
+            const effectiveAppStatus: ApplicationStatus = isAppApproved
+              ? "Approved"
+              : isAppReferred
+              ? "Referred"
+              : isAppRejected
+              ? "Rejected"
+              : app.status
+
+            const badge = getStatusBadge(effectiveAppStatus)
             const isDeleted = activeTab === "deleted"
 
             return (
               <div
-                key={app.applicationNo + app.assistance}
+                key={app.applicationNo + index}
                 className={`bg-white dark:bg-slate-900 border rounded-2xl p-5 sm:p-6 shadow-xs transition-all space-y-4 ${
                   isDeleted ? "border-red-200/80 dark:border-red-900/60 hover:border-red-300 bg-red-50/10 dark:bg-red-950/10" : "border-gray-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-600/50 hover:shadow-md"
                 }`}
@@ -3823,31 +3899,8 @@ export default function MyApplications() {
                 {/* Specialized Preview Sections (Pipeline for AICS, ID cards for PWD/Senior, etc.) */}
                 {(() => {
                   if (isAicsMedicalApplication(app)) {
-                    const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
-                    const schedMap = rawSched ? JSON.parse(rawSched) : {}
-                    const refKey = String(app.applicationNo || app.id || app.referenceNumber || "").trim()
-                    const cachedAppt =
-                      schedMap[refKey] ||
-                      schedMap[app.id] ||
-                      schedMap[`appt_${refKey}`] ||
-                      schedMap[app.applicantName?.toLowerCase()?.trim()]
-
-                    const isExplicitlyPending =
-                      app.status === "Pending" ||
-                      app.status === "Submit Pending" ||
-                      app.status === "Waiting to Approve" ||
-                      app.status === "Under Review" ||
-                      app.status === "Scheduled" ||
-                      app.status === "For Assessment"
-
-                    const isApprovedDecision =
-                      !isExplicitlyPending &&
-                      (app.status === "Approved" ||
-                        app.status === "Completed" ||
-                        app.status === "Released" ||
-                        app.status === "For Release" ||
-                        cachedAppt?.decision === "approved" ||
-                        cachedAppt?.status === "approved")
+                    const isApprovedDecision = isAppApproved
+                    const isUnderReview = !isApprovedDecision && (app.status === "Under Review" || app.status === "For Assessment" || cachedAppt?.status === "under_review")
 
                     const savedDisbs = getSavedDisbursements()
                     const appRefNo = String(app.applicationNo || app.id || app.referenceNumber || "").toLowerCase().trim()
@@ -3864,8 +3917,7 @@ export default function MyApplications() {
                         app.status === "Completed" ||
                         isDisbClaimed)
 
-                    const isGLIssued = isApprovedDecision || (!isExplicitlyPending && app.status === "For Release") || isExplicitlyReleased
-                    const isUnderReview = app.status === "Under Review" || app.status === "For Assessment"
+                    const isGLIssued = isApprovedDecision || (app.status === "For Release") || isExplicitlyReleased
 
                     const appKey = (app.applicationNo || app.id || app.referenceNo || "").toLowerCase().trim()
                     const isGLPrinted = Boolean(

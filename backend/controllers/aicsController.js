@@ -324,7 +324,7 @@ exports.getApplicationByReference = async (req, res) => {
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, rejectionReason, referralAgency, referralNotes, appointmentDate, appointmentVenue } = req.body;
+    const { status, rejectionReason, referralAgency, referralNotes, appointmentDate, appointmentVenue, applicantName } = req.body;
 
     const validStatuses = [
       'pending',
@@ -342,15 +342,24 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(400).json({ error: 'Invalid na status.' });
     }
 
+    const cleanParam = String(id || '').trim();
+    const cleanNoDash = cleanParam.replace(/[^a-zA-Z0-9]/g, '');
+
     let existingResult = await db.query(
-      'SELECT * FROM aics_applications WHERE id::text = $1 OR reference_no = $1 OR qc_id = $1',
-      [id]
+      `SELECT * FROM aics_applications
+       WHERE id::text = $1
+          OR reference_no = $1
+          OR qc_id = $1
+          OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
+          OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = $2
+          OR ($3 <> '' AND LOWER(CONCAT(first_name, ' ', last_name)) = LOWER($3))`,
+      [cleanParam, cleanNoDash, applicantName || '']
     ).catch(() => ({ rows: [] }));
 
     if (existingResult.rows.length === 0) {
       existingResult = await db.query(
         'SELECT * FROM aics_applications WHERE reference_no ILIKE $1 OR qc_id ILIKE $1',
-        [`%${id}%`]
+        [`%${cleanParam}%`]
       ).catch(() => ({ rows: [] }));
     }
 
@@ -401,6 +410,15 @@ exports.updateApplicationStatus = async (req, res) => {
         );
       }
     } else if (status === 'approved') {
+      await db.query(
+        `UPDATE appointments
+         SET status = 'approved', updated_at = NOW()
+         WHERE reference_no = $1
+            OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
+            OR applicant_name ILIKE $3`,
+        [app.reference_no, cleanNoDash, fullName]
+      ).catch(() => {});
+
       const FIXED_AMOUNTS = {
         'Medical Assistance': 5000,
         'Funeral Assistance': 10000,

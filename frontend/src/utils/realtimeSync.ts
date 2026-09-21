@@ -47,8 +47,11 @@ export function notifyApplicationChange(
     window.dispatchEvent(new CustomEvent("govserve_realtime_event", { detail: msg }))
     window.dispatchEvent(new Event("pwd_senior_applications_updated"))
     window.dispatchEvent(new Event("solo_parent_applications_updated"))
+    window.dispatchEvent(new Event("aics_applications_updated"))
+    window.dispatchEvent(new Event("applications_updated"))
     window.dispatchEvent(new Event("financial_disbursements_updated"))
     window.dispatchEvent(new Event("appointments_updated"))
+    window.dispatchEvent(new Event("storage"))
   }
 }
 

@@ -383,7 +383,8 @@ exports.scheduleAppointment = async (req, res) => {
       appt = result.rows[0];
     }
 
-    await syncAppointmentWithDisbursement(appt);
+    // Note: Do NOT sync with financial_aid_disbursements on schedule alone.
+    // Financial Aid disbursement is strictly created only upon Social Worker APPROVAL.
 
     try {
       await db.query(
@@ -395,17 +396,95 @@ exports.scheduleAppointment = async (req, res) => {
                'appointmentVenue', $3::text
              ),
              updated_at = NOW()
-         WHERE reference_no = $4 OR id::text = $4`,
+         WHERE reference_no = $4 OR id::text = $4 OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = REPLACE(REPLACE($4, '-', ''), ' ', '') OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = REPLACE(REPLACE($4, '-', ''), ' ', '')`,
         [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', cleanId]
       );
     } catch (aicsSyncErr) {
       console.warn('Could not update aics_applications status to under_review:', aicsSyncErr.message);
     }
 
-    res.json({ message: 'Appointment scheduled and synced with Financial Aid and AICS case review.', appointment: appt });
+    res.json({ message: 'Appointment scheduled and synced with AICS case review.', appointment: appt });
   } catch (err) {
     console.error('Error scheduling appointment:', err);
     res.status(500).json({ error: 'Failed to schedule appointment.', details: err.message });
+  }
+};
+
+exports.updateAppointmentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, decision, applicantName, notes } = req.body;
+    const cleanId = String(id || '').trim();
+    const cleanNoDash = cleanId.replace(/[^a-zA-Z0-9]/g, '');
+    const finalStatus = status || decision || 'approved';
+
+    const result = await db.query(
+      `UPDATE appointments
+       SET status = $1,
+           notes = COALESCE($2, notes),
+           updated_at = NOW()
+       WHERE reference_no = $3
+          OR id::text = $3
+          OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $4
+          OR (applicant_name IS NOT NULL AND $5 <> '' AND LOWER(applicant_name) = LOWER($5))
+       RETURNING *`,
+      [finalStatus, notes || null, cleanId, cleanNoDash, applicantName || '']
+    );
+
+    // Also sync the status across individual module application tables
+    if (finalStatus === 'approved') {
+      await db.query(
+        `UPDATE aics_applications
+         SET status = 'approved', updated_at = NOW()
+         WHERE reference_no = $1
+            OR id::text = $1
+            OR qc_id = $1
+            OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
+            OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = $2
+            OR ($3 <> '' AND LOWER(CONCAT(first_name, ' ', last_name)) = LOWER($3))`,
+        [cleanId, cleanNoDash, applicantName || '']
+      ).catch(() => {});
+
+      await db.query(
+        `UPDATE pwd_senior_applications
+         SET status = 'approved', updated_at = NOW()
+         WHERE reference_number = $1
+            OR id::text = $1
+            OR REPLACE(REPLACE(COALESCE(reference_number, ''), '-', ''), ' ', '') = $2
+            OR ($3 <> '' AND LOWER(CONCAT(first_name, ' ', last_name)) = LOWER($3))`,
+        [cleanId, cleanNoDash, applicantName || '']
+      ).catch(() => {});
+    } else if (finalStatus === 'referred') {
+      await db.query(
+        `UPDATE aics_applications
+         SET status = 'referred', updated_at = NOW()
+         WHERE reference_no = $1
+            OR id::text = $1
+            OR qc_id = $1
+            OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
+            OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = $2`,
+        [cleanId, cleanNoDash]
+      ).catch(() => {});
+    } else if (finalStatus === 'rejected') {
+      await db.query(
+        `UPDATE aics_applications
+         SET status = 'rejected', updated_at = NOW()
+         WHERE reference_no = $1
+            OR id::text = $1
+            OR qc_id = $1
+            OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
+            OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = $2`,
+        [cleanId, cleanNoDash]
+      ).catch(() => {});
+    }
+
+    res.json({
+      message: `Appointment status updated to ${finalStatus}.`,
+      appointment: result.rows[0] || null,
+    });
+  } catch (err) {
+    console.error('Error updating appointment status:', err);
+    res.status(500).json({ error: 'Failed to update appointment status.', details: err.message });
   }
 };
 

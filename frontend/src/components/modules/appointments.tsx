@@ -993,20 +993,58 @@ export default function Appointments() {
   const handleApproveAid = async (appt: AppointmentRequest) => {
     try {
       const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
-      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'approved' }),
-      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetRef)}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'approved' }),
-      })).catch(() => {})
+      const cleanRef = String(appt.referenceNo || '').replace(/[^a-zA-Z0-9]/g, '')
+      const cleanName = String(appt.applicantName || '').toLowerCase().trim()
 
+      // 1. Call Backend Endpoints
+      await Promise.allSettled([
+        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetRef)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'approved', decision: 'approved', applicantName: appt.applicantName }),
+        }),
+        fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'approved', applicantName: appt.applicantName }),
+        }),
+        fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(targetRef)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'approved' }),
+        }),
+      ])
+
+      // 2. Comprehensive LocalStorage Cache with Multi-Key Aliases
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
       const localMap = JSON.parse(raw)
-      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "approved", decision: "approved" }
-      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "approved", decision: "approved" }
+      const approvedPayload = {
+        status: "approved",
+        decision: "approved",
+        scheduledDate: appt.scheduledDate,
+        scheduledTime: appt.scheduledTime,
+        officeLocation: appt.officeLocation,
+        applicantName: appt.applicantName,
+        referenceNo: appt.referenceNo,
+        concern: appt.concern,
+      }
+
+      localMap[appt.id] = approvedPayload
+      if (appt.referenceNo) {
+        localMap[appt.referenceNo] = approvedPayload
+        localMap[`appt_${appt.referenceNo}`] = approvedPayload
+      }
+      if (cleanRef) {
+        localMap[cleanRef] = approvedPayload
+        localMap[`appt_${cleanRef}`] = approvedPayload
+      }
+      if (cleanName) {
+        localMap[cleanName] = approvedPayload
+        localMap[`appt_${cleanName}`] = approvedPayload
+      }
+      if (appt.rawAppId) {
+        localMap[String(appt.rawAppId)] = approvedPayload
+      }
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
 
       setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "approved" as const, decision: "approved" as const } : a))
@@ -1029,10 +1067,12 @@ export default function Appointments() {
         notes: appt.notes || "Approved appointment for financial aid payout.",
       })
 
-      notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
+      notifyApplicationChange('APPLICATION_APPROVED', 'aics', appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
+      window.dispatchEvent(new Event("applications_updated"))
       window.dispatchEvent(new Event("financial_disbursements_updated"))
+      window.dispatchEvent(new Event("storage"))
     } catch (err) {
       console.error(err)
     }
@@ -1043,28 +1083,52 @@ export default function Appointments() {
     const appt = referralApp
     try {
       const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
-      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'referred',
-          referralAgency: selectedAgency,
-          referralNotes: referralNotes,
+      const cleanRef = String(appt.referenceNo || '').replace(/[^a-zA-Z0-9]/g, '')
+      const cleanName = String(appt.applicantName || '').toLowerCase().trim()
+
+      await Promise.allSettled([
+        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetRef)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'referred', decision: 'referred', applicantName: appt.applicantName }),
         }),
-      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetRef)}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'referred',
-          referralAgency: selectedAgency,
-          referralNotes: referralNotes,
+        fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            status: 'referred',
+            referralAgency: selectedAgency,
+            referralNotes: referralNotes,
+            applicantName: appt.applicantName,
+          }),
         }),
-      })).catch(() => {})
+      ])
 
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
       const localMap = JSON.parse(raw)
-      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "referred", decision: "referred" }
-      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "referred", decision: "referred" }
+      const referredPayload = {
+        status: "referred",
+        decision: "referred",
+        referralAgency: selectedAgency,
+        referralNotes: referralNotes,
+        scheduledDate: appt.scheduledDate,
+        scheduledTime: appt.scheduledTime,
+        applicantName: appt.applicantName,
+        referenceNo: appt.referenceNo,
+      }
+
+      localMap[appt.id] = referredPayload
+      if (appt.referenceNo) {
+        localMap[appt.referenceNo] = referredPayload
+        localMap[`appt_${appt.referenceNo}`] = referredPayload
+      }
+      if (cleanRef) {
+        localMap[cleanRef] = referredPayload
+        localMap[`appt_${cleanRef}`] = referredPayload
+      }
+      if (cleanName) {
+        localMap[cleanName] = referredPayload
+      }
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
 
       setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "referred" as const, decision: "referred" as const } : a))
@@ -1080,6 +1144,8 @@ export default function Appointments() {
       notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
+      window.dispatchEvent(new Event("applications_updated"))
+      window.dispatchEvent(new Event("storage"))
 
       setReferralApp(null)
     } catch (err) {
@@ -1111,48 +1177,66 @@ export default function Appointments() {
 
     try {
       const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
-      await fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'rejected',
-          rejectionReason: finalReason,
-        }),
-      }).catch(() => fetch(`${API_BASE}/applications/${encodeURIComponent(targetRef)}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'rejected',
-          rejectionReason: finalReason,
-        }),
-      })).catch(() => {})
+      const cleanRef = String(appt.referenceNo || '').replace(/[^a-zA-Z0-9]/g, '')
+      const cleanName = String(appt.applicantName || '').toLowerCase().trim()
 
-      await fetch(`${API_BASE}/api/appointments/${encodeURIComponent(appt.referenceNo || targetRef)}`, {
-        method: 'DELETE',
-      }).catch(() => {})
+      await Promise.allSettled([
+        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetRef)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'rejected', decision: 'rejected', applicantName: appt.applicantName }),
+        }),
+        fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            status: 'rejected',
+            rejectionReason: finalReason,
+            applicantName: appt.applicantName,
+          }),
+        }),
+      ])
 
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
       const localMap = JSON.parse(raw)
-      localMap[appt.id] = { ...(localMap[appt.id] || {}), status: "rejected", decision: "rejected" }
-      localMap[appt.referenceNo] = { ...(localMap[appt.referenceNo] || {}), status: "rejected", decision: "rejected" }
+      const rejectPayload = {
+        status: "rejected",
+        decision: "rejected",
+        rejectionReason: finalReason,
+        applicantName: appt.applicantName,
+        referenceNo: appt.referenceNo,
+      }
+
+      localMap[appt.id] = rejectPayload
+      if (appt.referenceNo) {
+        localMap[appt.referenceNo] = rejectPayload
+        localMap[`appt_${appt.referenceNo}`] = rejectPayload
+      }
+      if (cleanRef) {
+        localMap[cleanRef] = rejectPayload
+      }
+      if (cleanName) {
+        localMap[cleanName] = rejectPayload
+      }
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
+
+      setAppointments(prev => prev.filter(a => a.id !== appt.id))
 
       pushUserNotification({
         userId: appt.referenceNo || 'all',
-        title: 'AICS: Application REJECTED / DISQUALIFIED',
-        message: `Ikinalulungkot naming ipabatid na hindi naaprubahan ang inyong aplikasyon (${appt.concern}). Dahilan: ${finalReason}`,
+        title: 'AICS: Application Disapproved',
+        message: `Paumanhin, ang inyong ${appt.concern} ay hindi naaprubahan dahil sa sumusunod na dahilan: ${finalReason}`,
         type: 'aics',
         link: '/portal/aics',
       })
 
-      setAppointments(prev => prev.filter(a => a.id !== appt.id && a.referenceNo !== appt.referenceNo))
-      notifyApplicationChange('STATUS_CHANGED', 'aics', appt.referenceNo)
+      notifyApplicationChange('APPLICATION_REJECTED', 'aics', appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
-      window.dispatchEvent(new Event("user_notifications_updated"))
+      window.dispatchEvent(new Event("applications_updated"))
+      window.dispatchEvent(new Event("storage"))
 
       setRejectingAppt(null)
-      setCustomRejectReason("")
     } catch (err) {
       console.error(err)
       setRejectingAppt(null)
