@@ -4018,9 +4018,6 @@ export default function MyApplications() {
                             <span className="flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400">
                               <span className="w-2 h-2 rounded-full bg-amber-500 inline-block animate-pulse" /> 🟠 Current Step (Active)
                             </span>
-                            <span className="flex items-center gap-1 text-gray-400 dark:text-slate-500">
-                              <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-slate-700 inline-block" /> ⚪ Upcoming (Waiting)
-                            </span>
                           </div>
                         </div>
 
