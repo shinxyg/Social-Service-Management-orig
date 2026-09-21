@@ -808,7 +808,6 @@ export default function FinancialAidDisbursement() {
             dedupedMap.set(dedupKey, d)
           } else {
             const existing = dedupedMap.get(dedupKey)!
-            const hasExistingSched = Boolean(existing.appointmentDate)
             const hasCurrentSched = Boolean(d.appointmentDate)
 
             const isExistingReleased = existing.status === "RELEASED"
