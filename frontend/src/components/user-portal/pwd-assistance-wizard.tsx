@@ -132,7 +132,7 @@ const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   {
     id: "barangayIndigency",
     label: "BARANGAY CERTIFICATE OF INDIGENCY",
-    description: "Recent Certificate of Indigency issued by the Barangay Hall of residence.",
+    description: "Issued within 6 months, with purpose: “For Social Welfare Assistance.”",
     images: ["/samples/BARANGAY CERTIFICATE OF INDIGENCY.png"],
     required: true,
   },
