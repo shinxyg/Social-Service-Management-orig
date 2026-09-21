@@ -445,6 +445,7 @@ export function syncAppointmentToFinancialAid(params: {
   location: string
   notes?: string
 }) {
+  resetManualDisbursementRelease(params.referenceNo)
 
   if (isIdOrDocumentService(params.concern) || isTrainingService(params.concern)) {
     return

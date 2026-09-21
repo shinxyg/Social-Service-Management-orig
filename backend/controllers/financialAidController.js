@@ -109,6 +109,12 @@ exports.getDisbursements = async (req, res) => {
           OR released_by ILIKE '%Social Worker%'
           OR released_by IS NULL
           OR released_by = ''
+          OR application_ref IN (
+            SELECT reference_no FROM appointments WHERE status IN ('pending', 'scheduled', 'under_review')
+          )
+          OR application_ref IN (
+            SELECT reference_no FROM aics_applications WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'scheduled', 'under_review')
+          )
         ) AND status = 'RELEASED'
       `);
     } catch (_) {}

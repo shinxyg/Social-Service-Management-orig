@@ -207,7 +207,8 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         finalVenue = cachedSched.venue || cachedSched.location || finalVenue
       }
 
-      const isExplicitlyReleased = isDisbursementManuallyReleased(d)
+      const isApptNotApproved = appt && (appt.status === "pending" || appt.status === "scheduled" || appt.status === "under_review")
+      const isExplicitlyReleased = !isApptNotApproved && isDisbursementManuallyReleased(d)
       let finalStatus: DisbursementStage = isExplicitlyReleased ? "RELEASED" : "PENDING"
       let finalReleasedDate = isExplicitlyReleased ? d.releasedDate : undefined
       let finalReleasedBy = isExplicitlyReleased ? (d.releasedBy || "Disbursing Officer") : undefined
@@ -663,7 +664,8 @@ export default function FinancialAidDisbursement() {
             d.venue ||
             "Quezon City Hall"
 
-          const isExplicitlyReleased = isDisbursementManuallyReleased(d) || (existingSaved ? isDisbursementManuallyReleased(existingSaved) : false)
+          const isApptNotApproved = appt && (appt.status === "pending" || appt.status === "scheduled" || appt.status === "under_review")
+          const isExplicitlyReleased = !isApptNotApproved && (isDisbursementManuallyReleased(d) || (existingSaved ? isDisbursementManuallyReleased(existingSaved) : false))
           const isReleased = isExplicitlyReleased
 
           return {
