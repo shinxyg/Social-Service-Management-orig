@@ -146,6 +146,7 @@ export default function App() {
                 <Route path="/portal/overview" element={<CitizenGuideHub />} />
                 <Route path="/portal/guide" element={<CitizenGuideHub />} />
                 <Route path="/portal/aics" element={<AICSUser />} />
+                <Route path="/portal/pwd" element={<ApplyPWDSenior />} />
                 <Route path="/portal/apply-pwd-senior" element={<ApplyPWDSenior />} />
                 <Route path="/portal/apply-solo-parent" element={<ApplySoloParent />} />
                 <Route path="/portal/apply-livelihood" element={<ApplyLivelihood />} />

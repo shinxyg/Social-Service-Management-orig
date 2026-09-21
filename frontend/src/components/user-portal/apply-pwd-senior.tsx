@@ -1,6 +1,19 @@
 import { useState, useEffect, useRef } from "react"
-import { useSearchParams } from "react-router-dom"
-import { AlertCircle, RefreshCw, HeartHandshake, X, FileText, Info, CheckCircle2, RotateCcw } from "lucide-react"
+import { useSearchParams, useNavigate } from "react-router-dom"
+import {
+  AlertCircle,
+  RefreshCw,
+  HeartHandshake,
+  X,
+  FileText,
+  Info,
+  CheckCircle2,
+  RotateCcw,
+  Lock,
+  Clock,
+  ArrowRight,
+  ChevronLeft,
+} from "lucide-react"
 import PWDApplicationWizard from "./pwd-senior-wizard"
 import SeniorCitizenApplicationWizard from "./Senior-citizen-wizard"
 import PWDSocialAssistanceWizard from "./pwd-assistance-wizard"
@@ -255,15 +268,46 @@ function evaluateActiveAppBlockedState(
   return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
 }
 
+interface PWDProgramCard {
+  id: "new" | "assistance"
+  title: string
+  titleEn: string
+  desc: string
+  descEn: string
+  key: string
+}
+
+const PWD_PROGRAMS: PWDProgramCard[] = [
+  {
+    id: "new",
+    title: "Aplikasyon para sa PWD ID Card",
+    titleEn: "Persons with Disability (PWD) ID Application",
+    desc: "Ang PWD ID Application Program ay nagbibigay ng opisyal na pagkakakilanlan ng pamahalaan para sa mga kwalipikadong may kapansanan (PWD) sa Lungsod Quezon. Ang mga rehistradong miyembro ay may karapatan sa 20% diskwento at VAT exemption sa gamot, bilihin, pamasahe, pagkain, at mga serbisyong panlipunan alinsunod sa RA 10754 at mga ordinansa ng lungsod.",
+    descEn: "The Persons with Disability (PWD) ID Application Program provides official government identification for qualified PWD residents in Quezon City. Registered cardholders receive mandated 20% discounts and 12% VAT exemption on medicines, medical supplies, transit fares, dining, and priority social protection services under RA 10754.",
+    key: "pwdId",
+  },
+  {
+    id: "assistance",
+    title: "PWD Social Assistance Program",
+    titleEn: "PWD Social Assistance Program",
+    desc: "Ang PWD Social Assistance Program ay nagbibigay ng direktang tulong-pinansyal, suporta sa kalusugan, assistive devices (wheelchair, saklay, walker), at tulong-panlipunan para sa mga kapus-palad na Persons with Disabilities at kanilang pamilya upang maibsan ang krisis at matugunan ang kanilang pangangailangan.",
+    descEn: "The PWD Social Assistance Program provides specialized financial aid, healthcare subsidies, assistive devices (wheelchairs, crutches, walkers), and emergency social safety nets for indigent Persons with Disabilities and their families to address disability-related vulnerabilities.",
+    key: "pwdAssistance",
+  },
+]
+
 export default function ApplyPWDSenior() {
   const { t, language } = useLanguage()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
 
   const urlCategory = searchParams.get("category")?.toLowerCase()
-  const rawType = searchParams.get("type")?.toLowerCase() || "new"
+  const rawTypeParam = searchParams.get("type")?.toLowerCase()
+  const rawType = rawTypeParam || "new"
   const urlType = rawType as "new" | "renewal" | "loss" | "assistance" | "medicine-booklet" | "movie-booklet" | "social-assistance"
 
   const isSenior = urlCategory === "senior"
+  const isPWDOverview = !isSenior && !rawTypeParam
   const isSeniorMedicine = isSenior && urlType === "medicine-booklet"
   const isSeniorMovie = isSenior && urlType === "movie-booklet"
   const isSeniorSocial = isSenior && urlType === "social-assistance"
@@ -500,6 +544,126 @@ export default function ApplyPWDSenior() {
   const isAppRejected = String(blockedApp?.status || "").toLowerCase() === "rejected" || String(blockedApp?.status || "").toLowerCase() === "disapproved"
   const rejectionReason = blockedApp?.rejection_reason || blockedApp?.rejectionReason || blockedApp?.admin_notes || blockedApp?.remarks || ""
 
+  // If category is PWD and no specific program type is chosen, render the Card Grid matching Pic 2
+  if (isPWDOverview) {
+    const currentQcid = getLoggedInUserQcid() || "110000572516915"
+    const userProf = getCurrentUserProfile()
+    const localApps = getLocalApplications()
+
+    const idEval = evaluateActiveAppBlockedState(localApps, "pwd", "new", userProf, currentQcid)
+    const astEval = evaluateActiveAppBlockedState(localApps, "pwd", "assistance", userProf, currentQcid)
+
+    return (
+      <div className="py-8 px-6 sm:px-10 max-w-5xl mx-auto space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {PWD_PROGRAMS.map((program) => {
+            const ev = program.id === "new" ? idEval : astEval
+            const isApproved = ev.hasApprovedApp
+            const isOngoing = ev.isBlocked && !ev.hasApprovedApp
+
+            return (
+              <div
+                key={program.id}
+                className={`bg-white dark:bg-slate-900 rounded-xl border shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
+                  isApproved
+                    ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-400/30"
+                    : isOngoing
+                    ? "border-amber-300 dark:border-amber-800 ring-1 ring-amber-400/30"
+                    : "border-slate-200 dark:border-slate-800"
+                }`}
+              >
+                {/* Dark navy blue top banner matching Pic 2 */}
+                <div
+                  className={`text-white py-3 px-4 font-bold text-center text-sm md:text-base tracking-wide select-none flex items-center justify-center gap-2 ${
+                    isApproved ? "bg-emerald-800" : isOngoing ? "bg-slate-800" : "bg-[#1e3a5f]"
+                  }`}
+                >
+                  {isApproved && <CheckCircle2 className="w-4 h-4 text-emerald-300" />}
+                  {isOngoing && <Clock className="w-4 h-4 text-amber-300" />}
+                  <span>{language === "en" ? program.titleEn : program.title}</span>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5 sm:p-6 flex flex-col justify-between flex-1 gap-4">
+                  <p className="text-slate-600 dark:text-slate-300 text-xs md:text-sm leading-relaxed text-justify">
+                    {language === "en" ? program.descEn : program.desc}
+                  </p>
+
+                  {/* Blocked / Availed Status Banner */}
+                  {isApproved && (
+                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>
+                          {language === "en"
+                            ? "Already Availed (Approved & Recorded)"
+                            : "Na-avail na (Approved & Recorded)"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-emerald-800/90 dark:text-emerald-300/90">
+                        {language === "en"
+                          ? "You already have an approved record for this program. No need to apply again."
+                          : "Mayroon ka nang aprubadong talaan para sa programang ito. Hindi na kailangang mag-apply muli."}
+                      </p>
+                    </div>
+                  )}
+
+                  {isOngoing && (
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>
+                          {language === "en"
+                            ? "Application In Progress (Active Request)"
+                            : "Kasalukuyang Pinoproseso (Active Request)"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90">
+                        {language === "en"
+                          ? "Your application has been submitted and is currently being assessed by a Social Worker."
+                          : "Nakasumite na ang inyong aplikasyon at nasa ilalim ng pagsusuri ng Social Worker."}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  <div className="pt-2 flex justify-center">
+                    {isApproved || isOngoing ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate("/portal/my-applications")}
+                        className={`font-bold text-xs md:text-sm tracking-wider uppercase cursor-pointer transition-colors py-2 px-4 rounded-xl flex items-center gap-2 shadow-xs ${
+                          isApproved
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
+                      >
+                        <span>
+                          {isApproved
+                            ? (language === "en" ? "VIEW IN APPLICATION HISTORY" : "TINGNAN SA APPLICATION HISTORY")
+                            : (language === "en" ? "TRACK APPLICATION STATUS" : "SUBAYBAYAN ANG STATUS")}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setSearchParams({ category: "pwd", type: program.id })}
+                        className="text-[#0066cc] dark:text-sky-400 hover:text-[#004c99] dark:hover:text-sky-300 font-extrabold text-xs md:text-sm tracking-widest uppercase cursor-pointer hover:underline transition-colors py-1 px-4"
+                      >
+                        {language === "en" ? "APPLY NOW" : "MAG-APPLY NGAYON"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   if (isBlocked && !bypassedBlock) {
     const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || blockedApp?.id || blockedApp?.qc_id || blockedApp?.qcid || getLoggedInUserQcid() || "110000572516915"
     const assignedBookletNo = blockedApp?.assignedIdNumber || blockedApp?.assigned_id_number || blockedApp?.bookletNumber || blockedApp?.existingBookletNumber
@@ -714,7 +878,20 @@ export default function ApplyPWDSenior() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {}
+      {/* Back to PWD Services button */}
+      {!isSenior && (
+        <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3">
+          <button
+            type="button"
+            onClick={() => setSearchParams({ category: "pwd" })}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-primary bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            {language === "en" ? "Back to PWD Services" : "Bumalik sa mga Serbisyo ng PWD"}
+          </button>
+        </div>
+      )}
+
       {currentStep === 1 && !isBlocked && !blockedApp && !hasApprovedApp && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3 animate-in fade-in duration-150">
           <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">

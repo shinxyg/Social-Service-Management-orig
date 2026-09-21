@@ -80,14 +80,9 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
     },
     {
       id: "pwd",
+      path: "/portal/apply-pwd-senior?category=pwd",
       label: t("navPWDServices"),
       icon: WheelchairIcon,
-      children: [
-        { path: "/portal/apply-pwd-senior?category=pwd&type=new", label: t("navNewPwdId") },
-        { path: "/portal/apply-pwd-senior?category=pwd&type=renewal", label: t("navRenewalPwdId") },
-        { path: "/portal/apply-pwd-senior?category=pwd&type=loss", label: t("navLossPwdId") },
-        { path: "/portal/apply-pwd-senior?category=pwd&type=assistance", label: t("navPwdAssistance") },
-      ],
     },
     {
       id: "senior",
@@ -469,32 +464,42 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
                 }
 
                 const path = item.path || ""
+                const isItemActive = () => {
+                  if (item.id === "pwd") {
+                    return (
+                      location.pathname === "/portal/pwd" ||
+                      (location.pathname === "/portal/apply-pwd-senior" &&
+                        (location.search.includes("category=pwd") || (!location.search.includes("category=senior") && !location.search.includes("category="))))
+                    )
+                  }
+                  if (path.includes("?")) {
+                    const [pBase, pQuery] = path.split("?")
+                    return location.pathname === pBase && location.search.includes(pQuery)
+                  }
+                  return location.pathname === path
+                }
+                const active = isItemActive()
+
                 const link = (
                   <NavLink
                     key={path}
                     to={path}
                     onClick={(e) => handleNavClick(e, path)}
-                    className={({ isActive }) =>
-                      `group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
-                        !open && "justify-center px-0"
-                      } ${
-                        isActive
-                          ? "bg-sidebar-primary/15 text-sidebar-foreground shadow-soft"
-                          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                      }`
-                    }
+                    className={`group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                      !open && "justify-center px-0"
+                    } ${
+                      active
+                        ? "bg-sidebar-primary/15 text-sidebar-foreground shadow-soft"
+                        : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                    }`}
                   >
-                    {({ isActive }) => (
-                      <>
-                        <Icon
-                          className={`h-4.5 w-4.5 shrink-0 ${
-                            isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground"
-                          }`}
-                        />
-                        {open && (
-                          <span className="flex-1 text-left">{item.label}</span>
-                        )}
-                      </>
+                    <Icon
+                      className={`h-4.5 w-4.5 shrink-0 ${
+                        active ? "text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground"
+                      }`}
+                    />
+                    {open && (
+                      <span className="flex-1 text-left">{item.label}</span>
                     )}
                   </NavLink>
                 )
