@@ -1806,17 +1806,10 @@ export default function PWDSocialAssistanceWizard({
             </div>
           )}
 
-          {/* Step 3: Documentary Requirements / Uploads (7) */}
+          {/* Step 3: Documentary Requirements / Uploads */}
           {step === 3 && (
             <div className="space-y-4">
-              <div className="border-b border-border dark:border-slate-800 pb-2">
-                <h3 className="text-base font-bold text-foreground">7. DOCUMENTARY REQUIREMENTS / UPLOADS</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  I-upload ang mga sumusunod na kinakailangang dokumento (JPG, JPEG, PNG, o Camera capture lamang).
-                </p>
-              </div>
-
-              <div className="space-y-6 pt-2">
+              <div className="space-y-6 pt-1">
                 {REQUIRED_DOCUMENTS.map((doc) => {
                   const files = uploadedDocs[doc.id] || []
                   const isUploaded = files.length > 0
