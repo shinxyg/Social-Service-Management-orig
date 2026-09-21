@@ -24,6 +24,7 @@ import {
   checkAndAutoReleaseScheduledDisbursements,
   getDeletedDisbursementKeys,
   isIdOrDocumentService,
+  isNonCashOrGLService,
   isDisbursementManuallyReleased,
   markDisbursementAsManuallyReleased,
 } from "../../utils/financialAidSync"
@@ -648,9 +649,15 @@ export default function FinancialAidDisbursement() {
                 if (a.applicant_name) appointmentsMap[a.applicant_name.toLowerCase().trim()] = a
 
                 const isApptApproved = a.status === "approved" || a.decision === "approved"
-                if (isApptApproved && ref && !deletedKeys.has(ref)) {
+                const cleanType = a.concern || "Financial Assistance"
+                if (
+                  isApptApproved &&
+                  ref &&
+                  !deletedKeys.has(ref) &&
+                  !isNonCashOrGLService(cleanType) &&
+                  !isIdOrDocumentService(cleanType)
+                ) {
                   const disbId = `DISB-2026-${ref.slice(-4).padStart(4, "0")}`
-                  const cleanType = a.concern || "Medical Assistance"
                   if (!remoteRecords.some((rr) => rr.applicationRef === ref || rr.disbursementId === disbId)) {
                     remoteRecords.push({
                       id: `remote-appt-${a.id || ref}`,
@@ -694,7 +701,9 @@ export default function FinancialAidDisbursement() {
           (d) =>
             !deletedKeys.has(d.id) &&
             !deletedKeys.has(d.disbursementId) &&
-            !deletedKeys.has(d.applicationRef)
+            !deletedKeys.has(d.applicationRef) &&
+            !isNonCashOrGLService(d.assistanceType) &&
+            !isIdOrDocumentService(d.assistanceType)
         )
 
         merged = merged.map((d) => {

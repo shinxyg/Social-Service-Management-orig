@@ -1,7 +1,6 @@
 import { API_BASE } from "../config/api"
 
 export const FIXED_ASSISTANCE_AMOUNTS: Record<string, number> = {
-  "Medical Assistance": 5000,
   "Funeral Assistance": 10000,
   "Educational Assistance": 3000,
   "Burial Assistance": 10000,
@@ -91,15 +90,28 @@ export function isTrainingService(serviceOrConcern?: string): boolean {
   )
 }
 
+export function isNonCashOrGLService(serviceOrConcern?: string): boolean {
+  if (!serviceOrConcern) return false
+  const lower = serviceOrConcern.toLowerCase()
+  return (
+    lower.includes("medical") ||
+    lower.includes("hospital") ||
+    lower.includes("guarantee letter") ||
+    lower.includes("gamot") ||
+    lower.includes("reseta") ||
+    lower.includes("health")
+  )
+}
+
 export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
   if (!serviceOrConcern) return false
   if (isTrainingService(serviceOrConcern)) return false
+  if (isNonCashOrGLService(serviceOrConcern)) return true
   const lower = serviceOrConcern.toLowerCase()
   if (
     lower.includes("social assistance") ||
     lower.includes("financial assistance") ||
     lower.includes("cash assistance") ||
-    lower.includes("medical assistance") ||
     lower.includes("funeral assistance") ||
     lower.includes("educational assistance") ||
     lower.includes("food assistance") ||
@@ -287,6 +299,7 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
             !["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"].includes(p.id) &&
             !isIdOrDocumentService(p.assistanceType) &&
             !isTrainingService(p.assistanceType) &&
+            !isNonCashOrGLService(p.assistanceType) &&
             !/-\d{4}$/.test(p.applicationRef || "") &&
             !deletedKeys.has(p.id) &&
             !deletedKeys.has(p.disbursementId) &&
@@ -447,7 +460,11 @@ export function syncAppointmentToFinancialAid(params: {
 }) {
   resetManualDisbursementRelease(params.referenceNo)
 
-  if (isIdOrDocumentService(params.concern) || isTrainingService(params.concern)) {
+  if (
+    isIdOrDocumentService(params.concern) || 
+    isTrainingService(params.concern) || 
+    isNonCashOrGLService(params.concern)
+  ) {
     return
   }
 
