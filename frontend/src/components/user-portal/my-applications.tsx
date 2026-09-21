@@ -3406,14 +3406,17 @@ export default function MyApplications() {
               cachedAppt?.status === "completed"
 
             const savedDisbs = getSavedDisbursements()
+            const selAppApplicantName = (selectedApp.applicantName || "").toLowerCase().trim()
+            const selAppRefNo = String(selectedApp.applicationNo || selectedApp.id || "").toLowerCase().trim()
             const matchDisb = savedDisbs.find(
               (d) =>
-                d.applicationRef === selectedApp.applicationNo ||
-                (d.applicantName && d.applicantName.toLowerCase().trim() === selectedApp.applicantName?.toLowerCase()?.trim())
+                (d.applicationRef && (d.applicationRef.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.applicationRef.toLowerCase().trim()))) ||
+                (d.disbursementId && (d.disbursementId.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.disbursementId.toLowerCase().trim()))) ||
+                (d.applicantName && selAppApplicantName && (d.applicantName.toLowerCase().trim() === selAppApplicantName || selAppApplicantName.includes(d.applicantName.toLowerCase().trim())))
             )
 
-            const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
-            const isClaimed = selectedApp.status === "Released" || isDisbClaimed
+            const isDisbClaimed = matchDisb ? (isDisbursementManuallyReleased(matchDisb) || matchDisb.status === "RELEASED") : false
+            const isClaimed = selectedApp.status === "Released" || selectedApp.status === "Completed" || isDisbClaimed
             const isGLIssued = isApprovedDecision || selectedApp.status === "For Release" || isClaimed
             const isAssessmentDone = isGLIssued || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment" || cachedAppt?.decision === "referred"
             const partnerHospital =
@@ -3850,18 +3853,20 @@ export default function MyApplications() {
                         cachedAppt?.status === "approved")
 
                     const savedDisbs = getSavedDisbursements()
+                    const appApplicantName = (app.applicantName || "").toLowerCase().trim()
+                    const appRefNo = String(app.applicationNo || app.id || app.referenceNumber || "").toLowerCase().trim()
                     const matchDisb = savedDisbs.find(
                       (d) =>
-                        d.applicationRef === app.applicationNo ||
-                        (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName?.toLowerCase()?.trim())
+                        (d.applicationRef && (d.applicationRef.toLowerCase().trim() === appRefNo || appRefNo.includes(d.applicationRef.toLowerCase().trim()) || d.applicationRef.toLowerCase().includes(appRefNo))) ||
+                        (d.disbursementId && (d.disbursementId.toLowerCase().trim() === appRefNo || appRefNo.includes(d.disbursementId.toLowerCase().trim()))) ||
+                        (d.applicantName && appApplicantName && (d.applicantName.toLowerCase().trim() === appApplicantName || appApplicantName.includes(d.applicantName.toLowerCase().trim())))
                     )
 
-                    const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
+                    const isDisbClaimed = matchDisb ? (isDisbursementManuallyReleased(matchDisb) || matchDisb.status === "RELEASED") : false
                     const isExplicitlyReleased =
-                      !isExplicitlyPending &&
-                      app.status !== "Approved" &&
-                      app.status !== "Under Review" &&
-                      (app.status === "Released" || isDisbClaimed)
+                      app.status === "Released" ||
+                      app.status === "Completed" ||
+                      isDisbClaimed
 
                     const isGLIssued = isApprovedDecision || (!isExplicitlyPending && app.status === "For Release") || isExplicitlyReleased
                     const isUnderReview = app.status === "Under Review" || app.status === "For Assessment"
