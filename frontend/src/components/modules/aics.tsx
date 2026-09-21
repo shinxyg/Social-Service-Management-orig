@@ -13,7 +13,8 @@ import {
   AlertCircle, 
   Building2, 
   XCircle, 
-  FileText 
+  FileText,
+  Search
 } from 'lucide-react'
 
 const API_BASE = `${APP_API_BASE}/api/aics`
