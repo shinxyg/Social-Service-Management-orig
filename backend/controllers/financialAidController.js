@@ -138,6 +138,7 @@ exports.getDisbursements = async (req, res) => {
         WHERE f1.id < f2.id AND (
           f1.application_ref = f2.application_ref
           OR REPLACE(f1.application_ref, '-', '') = REPLACE(f2.application_ref, '-', '')
+          OR (LOWER(TRIM(f1.applicant_name)) = LOWER(TRIM(f2.applicant_name)) AND LOWER(TRIM(f1.assistance_type)) = LOWER(TRIM(f2.assistance_type)))
         )
       `);
     } catch (_) {}
@@ -364,8 +365,12 @@ exports.getDisbursements = async (req, res) => {
        LEFT JOIN (
          SELECT DISTINCT ON (reference_no) *
          FROM appointments
-         ORDER BY reference_no, created_at DESC
-       ) a ON f.application_ref = a.reference_no
+         ORDER BY reference_no, (CASE WHEN scheduled_date IS NOT NULL AND scheduled_date != '' THEN 1 ELSE 0 END) DESC, updated_at DESC
+       ) a ON (
+         f.application_ref = a.reference_no 
+         OR REPLACE(f.application_ref, '-', '') = REPLACE(a.reference_no, '-', '')
+         OR LOWER(TRIM(f.applicant_name)) = LOWER(TRIM(a.applicant_name))
+       )
        ORDER BY f.created_at DESC`
     );
 

@@ -796,8 +796,49 @@ export default function FinancialAidDisbursement() {
           return true
         })
 
-        setDisbursements(approvedOnly)
-        saveDisbursements(approvedOnly)
+        // Deduplicate records by applicant + assistance type and clean reference
+        const dedupedMap = new Map<string, SyncedDisbursementRecord>()
+        approvedOnly.forEach((d) => {
+          const cleanName = String(d.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
+          const cleanType = String(d.assistanceType || "").toLowerCase().replace(/\s*assistance/gi, "").trim()
+          const cleanRef = String(d.applicationRef || "").replace(/[^a-zA-Z0-9]/g, "")
+          const dedupKey = cleanRef ? `ref_${cleanRef}` : `person_${cleanName}_${cleanType}`
+
+          if (!dedupedMap.has(dedupKey)) {
+            dedupedMap.set(dedupKey, d)
+          } else {
+            const existing = dedupedMap.get(dedupKey)!
+            const hasExistingSched = Boolean(existing.appointmentDate)
+            const hasCurrentSched = Boolean(d.appointmentDate)
+
+            const isExistingReleased = existing.status === "RELEASED"
+            const isCurrentReleased = d.status === "RELEASED"
+            const mergedStatus: DisbursementStage = (isExistingReleased || isCurrentReleased) ? "RELEASED" : "PENDING"
+
+            const bestDate = hasCurrentSched ? d.appointmentDate : existing.appointmentDate
+            const bestTime = hasCurrentSched ? d.appointmentTime : existing.appointmentTime
+            const bestVenue = d.venue || existing.venue
+            const bestReleasedDate = (isCurrentReleased ? d.releasedDate : undefined) || (isExistingReleased ? existing.releasedDate : undefined)
+            const bestReleasedBy = (isCurrentReleased ? d.releasedBy : undefined) || (isExistingReleased ? existing.releasedBy : undefined)
+
+            dedupedMap.set(dedupKey, {
+              ...existing,
+              ...d,
+              id: existing.id.startsWith("db-") ? existing.id : d.id,
+              disbursementId: existing.disbursementId || d.disbursementId,
+              appointmentDate: bestDate,
+              appointmentTime: bestTime,
+              venue: bestVenue,
+              status: mergedStatus,
+              releasedDate: bestReleasedDate,
+              releasedBy: bestReleasedBy,
+            })
+          }
+        })
+
+        const finalDisbursements = Array.from(dedupedMap.values())
+        setDisbursements(finalDisbursements)
+        saveDisbursements(finalDisbursements)
       } finally {
         isSyncing = false
       }
