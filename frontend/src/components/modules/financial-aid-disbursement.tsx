@@ -179,7 +179,6 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       }
     } catch {}
 
-    const now = new Date()
     const processed = records.map((d) => {
       const appt = appointmentsMap[d.applicationRef] || appointmentsMap[d.applicantName.toLowerCase().trim()]
       const cachedSched =
@@ -597,8 +596,6 @@ export default function FinancialAidDisbursement() {
             }
           } catch {}
         }
-
-        const now = new Date()
 
         let localScheduledMap: Record<string, any> = {}
         try {
