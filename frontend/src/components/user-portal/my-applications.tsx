@@ -3831,6 +3831,71 @@ export default function MyApplications() {
                     const appDateStr = cachedAppt?.scheduledDate || app.appointmentDate || app.formData?.appointmentDate || "Sep 21, 2026"
                     const appTimeStr = cachedAppt?.scheduledTime || app.appointmentTime || app.formData?.appointmentTime || "01:08 AM"
 
+                    // Determine states for each of the 5 stages: 'completed' | 'current' | 'pending'
+                    const s1State: "completed" | "current" | "pending" = "completed"
+
+                    let s2State: "completed" | "current" | "pending" = "pending"
+                    let s2Title = "2. APPOINTMENT"
+                    let s2Sub = "○ Waiting"
+                    if (isApprovedDecision) {
+                      s2State = "completed"
+                      s2Title = "2. EVALUATION"
+                      s2Sub = "✓ Assessment Done"
+                    } else if (isUnderReview) {
+                      s2State = "current"
+                      s2Title = "2. UNDER REVIEW"
+                      s2Sub = "● Interview in Progress"
+                    } else if (app.status === "Scheduled" || isExplicitlyPending) {
+                      s2State = "current"
+                      s2Title = "2. APPOINTMENT"
+                      s2Sub = "● Scheduled Intake"
+                    }
+
+                    let s3State: "completed" | "current" | "pending" = "pending"
+                    let s3Title = "3. APPROVAL"
+                    let s3Sub = "○ Pending Decision"
+                    if (isApprovedDecision) {
+                      s3State = "completed"
+                      s3Title = "3. APPROVAL"
+                      s3Sub = "✓ Approved & Endorsed"
+                    }
+
+                    let s4State: "completed" | "current" | "pending" = "pending"
+                    let s4Title = "4. PROCESSING"
+                    let s4Sub = "○ Awaiting Approval"
+                    if (isClaimed) {
+                      s4State = "completed"
+                      s4Title = "4. PROCESSING"
+                      s4Sub = "✓ GL Issued & Processed"
+                    } else if (isGLIssued) {
+                      s4State = "current"
+                      s4Title = "4. PROCESSING"
+                      s4Sub = "● GL / Voucher Ready"
+                    }
+
+                    let s5State: "completed" | "current" | "pending" = "pending"
+                    let s5Title = "5. RELEASED"
+                    let s5Sub = "○ Pending Payout"
+                    if (isClaimed) {
+                      s5State = "completed"
+                      s5Title = "5. RELEASED"
+                      s5Sub = "✓ Aid Claimed & Availed"
+                    } else if (isGLIssued) {
+                      s5State = "current"
+                      s5Title = "5. RELEASED"
+                      s5Sub = "● Ready for Availment"
+                    }
+
+                    const getStageBoxClass = (st: "completed" | "current" | "pending") => {
+                      if (st === "completed") {
+                        return "bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700/80 text-emerald-900 dark:text-emerald-200 font-bold"
+                      }
+                      if (st === "current") {
+                        return "bg-amber-50 dark:bg-amber-950/60 border-amber-400 dark:border-amber-500 text-amber-950 dark:text-amber-100 ring-2 ring-amber-400/50 font-black shadow-xs"
+                      }
+                      return "bg-white/60 dark:bg-slate-900/30 border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-500"
+                    }
+
                     return (
                       <div className="bg-slate-50 dark:bg-slate-800/80 border border-blue-200 dark:border-slate-700/80 rounded-xl p-3.5 space-y-3 shadow-2xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-100 dark:border-slate-700 pb-2">
@@ -3846,49 +3911,47 @@ export default function MyApplications() {
                           </div>
                         </div>
 
+                        {/* Legend */}
+                        <div className="flex items-center justify-between gap-2 flex-wrap text-[10px] text-gray-500 dark:text-slate-400 font-medium">
+                          <span className="font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider text-[9.5px]">5-Stage Process Flow</span>
+                          <div className="flex items-center gap-2.5 text-[9px] flex-wrap">
+                            <span className="flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> 🟢 Completed (Done)
+                            </span>
+                            <span className="flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400">
+                              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block animate-pulse" /> 🟠 Current Step (Active)
+                            </span>
+                            <span className="flex items-center gap-1 text-gray-400 dark:text-slate-500">
+                              <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-slate-700 inline-block" /> ⚪ Upcoming (Waiting)
+                            </span>
+                          </div>
+                        </div>
+
                         {/* 5-Stage Visual Pipeline */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-0.5">
-                          <div className="p-2 rounded-lg border text-center text-[10px] space-y-0.5 bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold">
-                            <span className="block text-blue-600 dark:text-blue-400 font-black">1. GENERAL REQUIREMENTS</span>
-                            <span className="text-[9px] block">Verified &amp; Intake Done</span>
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s1State)}`}>
+                            <span className="block font-black">1. REQUIREMENTS</span>
+                            <span className="text-[9px] block">✓ Verified &amp; Intake Done</span>
                           </div>
 
-                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isApprovedDecision
-                              ? "bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold"
-                              : isUnderReview
-                              ? "bg-amber-100 dark:bg-amber-950/60 border-amber-300 text-amber-900 dark:text-amber-200 font-bold"
-                              : "bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 text-blue-800 dark:text-blue-300 font-bold"
-                          }`}>
-                            <span className="block font-black">{isApprovedDecision ? "2. EVALUATED" : isUnderReview ? "2. UNDER REVIEW" : "2. APPOINTMENT"}</span>
-                            <span className="text-[9px] block">{isApprovedDecision ? "✓ Assessment Done" : isUnderReview ? "Interview in Progress" : "Appointment Set"}</span>
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s2State)}`}>
+                            <span className="block font-black">{s2Title}</span>
+                            <span className="text-[9px] block">{s2Sub}</span>
                           </div>
 
-                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isApprovedDecision
-                              ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
-                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
-                          }`}>
-                            <span className="block font-black">3. APPROVAL / ENDORSEMENT</span>
-                            <span className="text-[9px] block">{isApprovedDecision ? "✓ Approved & Endorsed" : "Pending Decision"}</span>
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s3State)}`}>
+                            <span className="block font-black">{s3Title}</span>
+                            <span className="text-[9px] block">{s3Sub}</span>
                           </div>
 
-                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isGLIssued
-                              ? "bg-indigo-100/80 dark:bg-indigo-950/60 border-indigo-300 text-indigo-900 dark:text-indigo-200 font-bold"
-                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
-                          }`}>
-                            <span className="block font-black">4. ASSISTANCE PROCESSING</span>
-                            <span className="text-[9px] block">{isGLIssued ? "✓ GL / Voucher Ready" : "Awaiting Approval"}</span>
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s4State)}`}>
+                            <span className="block font-black">{s4Title}</span>
+                            <span className="text-[9px] block">{s4Sub}</span>
                           </div>
 
-                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
-                            isClaimed
-                              ? "bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-300 text-emerald-900 dark:text-emerald-200 font-bold"
-                              : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
-                          }`}>
-                            <span className="block font-black">5. RELEASED / AVAILED</span>
-                            <span className="text-[9px] block">{isClaimed ? "✓ Aid Released & Availed" : "Pending Payout"}</span>
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s5State)}`}>
+                            <span className="block font-black">{s5Title}</span>
+                            <span className="text-[9px] block">{s5Sub}</span>
                           </div>
                         </div>
 
