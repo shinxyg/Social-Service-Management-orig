@@ -443,15 +443,6 @@ function AppointmentCard({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onSchedule(appt)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
-                  title="Reschedule Appointment"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Resched</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => onReject?.(appt)}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
                 >
