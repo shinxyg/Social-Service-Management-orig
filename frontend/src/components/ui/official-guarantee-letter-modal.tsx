@@ -65,7 +65,7 @@ interface OfficialGuaranteeLetterModalProps {
 export function OfficialGuaranteeLetterModal({
   data,
   onClose,
-  canPrint = false,
+  canPrint = true,
 }: OfficialGuaranteeLetterModalProps) {
   const hospital = data.hospitalName || "EAST AVENUE MEDICAL CENTER (EAMC)"
   const hospitalAddress =
@@ -104,6 +104,30 @@ export function OfficialGuaranteeLetterModal({
         if (e.target === e.currentTarget) onClose()
       }}
     >
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #official-guarantee-letter-print-area, #official-guarantee-letter-print-area * {
+            visibility: visible;
+          }
+          #official-guarantee-letter-print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            box-shadow: none !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
       <div
         className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-4 overflow-hidden flex flex-col border border-gray-300 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -138,7 +162,7 @@ export function OfficialGuaranteeLetterModal({
         </div>
 
         {/* Official Guarantee Letter Document Body */}
-        <div className="p-6 sm:p-8 space-y-4 text-gray-900 bg-white text-xs leading-relaxed overflow-y-auto max-h-[82vh] font-serif print:max-h-none print:overflow-visible print:p-4">
+        <div id="official-guarantee-letter-print-area" className="p-6 sm:p-8 space-y-4 text-gray-900 bg-white text-xs leading-relaxed overflow-y-auto max-h-[82vh] font-serif print:max-h-none print:overflow-visible print:p-4">
           {/* Header Banner */}
           <div className="border-b-2 border-black pb-3 text-center space-y-0.5">
             <div className="flex items-center justify-center gap-4">

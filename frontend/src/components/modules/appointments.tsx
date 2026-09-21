@@ -1691,6 +1691,7 @@ export default function Appointments() {
         <OfficialGuaranteeLetterModal
           data={glModalData}
           onClose={() => setGlModalData(null)}
+          canPrint={true}
         />
       )}
 
@@ -1699,6 +1700,7 @@ export default function Appointments() {
         <OfficialReferralLetterModal
           data={refLetterModalData}
           onClose={() => setRefLetterModalData(null)}
+          canPrint={true}
         />
       )}
     </div>
