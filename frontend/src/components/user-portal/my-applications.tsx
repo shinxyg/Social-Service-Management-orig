@@ -4031,7 +4031,6 @@ export default function MyApplications() {
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   if (appKey) handleMarkGLPrinted(appKey)
-                                  if (applicantNameKey) handleMarkGLPrinted(applicantNameKey)
                                   setGuaranteeLetterApp(app)
                                 }}
                                 className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
