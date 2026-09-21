@@ -4008,17 +4008,9 @@ export default function MyApplications() {
                           </div>
                         </div>
 
-                        {/* Legend */}
+                        {/* Process Flow Header */}
                         <div className="flex items-center justify-between gap-2 flex-wrap text-[10px] text-gray-500 dark:text-slate-400 font-medium">
                           <span className="font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider text-[9.5px]">5-Stage Process Flow</span>
-                          <div className="flex items-center gap-2.5 text-[9px] flex-wrap">
-                            <span className="flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
-                              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> 🟢 Completed (Done)
-                            </span>
-                            <span className="flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400">
-                              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block animate-pulse" /> 🟠 Current Step (Active)
-                            </span>
-                          </div>
                         </div>
 
                         {/* 5-Stage Visual Pipeline */}
