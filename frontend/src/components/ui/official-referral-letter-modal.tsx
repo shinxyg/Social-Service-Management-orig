@@ -1,4 +1,4 @@
-import { Printer, X, Building2, ShieldCheck } from "lucide-react"
+import { X, Building2 } from "lucide-react"
 
 export interface ReferralLetterData {
   controlNo?: string
@@ -50,7 +50,6 @@ interface OfficialReferralLetterModalProps {
 export function OfficialReferralLetterModal({
   data,
   onClose,
-  canPrint = true,
 }: OfficialReferralLetterModalProps) {
   const agencyKey = Object.keys(TARGET_AGENCY_DETAILS).find((k) =>
     (data.targetAgency || "").toUpperCase().includes(k.toUpperCase())
