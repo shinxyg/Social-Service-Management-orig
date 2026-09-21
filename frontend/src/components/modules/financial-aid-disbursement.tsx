@@ -207,15 +207,11 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         finalVenue = cachedSched.venue || cachedSched.location || finalVenue
       }
 
-      const isExplicitlyReleased = d.status === "RELEASED"
+      const isAutoMarked = d.releasedBy && (d.releasedBy.includes("Automated") || d.releasedBy.includes("Appointment"))
+      const isExplicitlyReleased = d.status === "RELEASED" && !isAutoMarked
       let finalStatus: DisbursementStage = isExplicitlyReleased ? "RELEASED" : "PENDING"
-      let finalReleasedDate = d.releasedDate
-      let finalReleasedBy = d.releasedBy
-
-      if (finalStatus === "RELEASED" && !finalReleasedDate) {
-        finalReleasedDate = `${now.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })} ${finalApptTime || ""}`.trim()
-        finalReleasedBy = finalReleasedBy || "Approved via Appointment Assessment"
-      }
+      let finalReleasedDate = isExplicitlyReleased ? d.releasedDate : undefined
+      let finalReleasedBy = isExplicitlyReleased ? d.releasedBy : undefined
 
       return {
         ...d,
@@ -345,26 +341,30 @@ export default function FinancialAidDisbursement() {
                     !deletedKeys.has(d.application_ref)
                   )
                 })
-                .map((d: any) => ({
-                  id: `db-${d.id}`,
-                  disbursementId: d.disbursement_id,
-                  applicationRef: d.application_ref,
-                  applicantName: d.applicant_name,
-                  assistanceType: d.assistance_type,
-                  fixedAmount: Number(d.fixed_amount) > 0
-                    ? ((Number(d.fixed_amount) === 1000 && (String(d.assistance_type).toLowerCase().includes("nutrition") || String(d.assistance_type).toLowerCase().includes("child") || String(d.assistance_type).toLowerCase().includes("solo")))
-                        ? 5000
-                        : Number(d.fixed_amount))
-                    : resolveFixedAmount(d.assistance_type),
-                  dateApproved: d.date_approved,
-                  status: d.status as DisbursementStage,
-                  appointmentDate: d.appointment_date,
-                  appointmentTime: d.appointment_time,
-                  venue: d.venue,
-                  releasedDate: d.released_date,
-                  releasedBy: d.released_by,
-                  remarks: d.remarks,
-                }))
+                .map((d: any) => {
+                  const isAutoMarked = d.released_by && (d.released_by.includes("Automated") || d.released_by.includes("Appointment"))
+                  const actualStatus: DisbursementStage = (d.status === "RELEASED" && !isAutoMarked) ? "RELEASED" : "PENDING"
+                  return {
+                    id: `db-${d.id}`,
+                    disbursementId: d.disbursement_id,
+                    applicationRef: d.application_ref,
+                    applicantName: d.applicant_name,
+                    assistanceType: d.assistance_type,
+                    fixedAmount: Number(d.fixed_amount) > 0
+                      ? ((Number(d.fixed_amount) === 1000 && (String(d.assistance_type).toLowerCase().includes("nutrition") || String(d.assistance_type).toLowerCase().includes("child") || String(d.assistance_type).toLowerCase().includes("solo")))
+                          ? 5000
+                          : Number(d.fixed_amount))
+                      : resolveFixedAmount(d.assistance_type),
+                    dateApproved: d.date_approved,
+                    status: actualStatus,
+                    appointmentDate: d.appointment_date,
+                    appointmentTime: d.appointment_time,
+                    venue: d.venue,
+                    releasedDate: actualStatus === "RELEASED" ? d.released_date : undefined,
+                    releasedBy: actualStatus === "RELEASED" ? d.released_by : undefined,
+                    remarks: d.remarks,
+                  }
+                })
               remoteRecords.push(...dbRecords)
             }
           } catch {}

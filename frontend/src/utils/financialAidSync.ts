@@ -227,11 +227,14 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
         const recordMap = new Map<string, SyncedDisbursementRecord>()
         realOnes.forEach((r) => {
           const key = `${(r.applicationRef || r.disbursementId || r.id || "").trim()}_${(r.assistanceType || "").trim()}`
-          if (!key || key === "_") return
-
+          const isAuto = r.releasedBy && (r.releasedBy.includes("Automated") || r.releasedBy.includes("Appointment"))
+          const fixedStatus: DisbursementStage = (r.status === "RELEASED" && !isAuto) ? "RELEASED" : "PENDING"
           const correctAmount = resolveFixedAmount(r.assistanceType)
           const recordWithCorrectAmount: SyncedDisbursementRecord = {
             ...r,
+            status: fixedStatus,
+            releasedDate: fixedStatus === "RELEASED" ? r.releasedDate : undefined,
+            releasedBy: fixedStatus === "RELEASED" ? r.releasedBy : undefined,
             fixedAmount: (r.fixedAmount && r.fixedAmount !== 1000) ? r.fixedAmount : correctAmount,
           }
 
@@ -240,7 +243,7 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
           } else {
             const existing = recordMap.get(key)!
 
-            if (r.status === "RELEASED" && existing.status !== "RELEASED") {
+            if (fixedStatus === "RELEASED" && existing.status !== "RELEASED") {
               recordMap.set(key, { ...recordWithCorrectAmount, status: "RELEASED" })
             } else if (r.appointmentDate && !existing.appointmentDate) {
               recordMap.set(key, recordWithCorrectAmount)
