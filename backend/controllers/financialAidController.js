@@ -103,10 +103,16 @@ exports.getDisbursements = async (req, res) => {
       await db.query(`
         DELETE FROM financial_aid_disbursements
         WHERE application_ref IN (
-          SELECT reference_no FROM appointments WHERE status IN ('pending', 'scheduled', 'under_review')
+          SELECT reference_no FROM appointments WHERE status IN ('pending', 'scheduled', 'under_review') AND status != 'approved'
         )
-        OR application_ref IN (
-          SELECT reference_no FROM aics_applications WHERE status IN ('pending', 'submit_pending', 'waiting_approval', 'scheduled', 'under_review', 'for_screening')
+        AND application_ref NOT IN (
+          SELECT reference_no FROM appointments WHERE status = 'approved'
+        )
+        AND application_ref NOT IN (
+          SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release', 'released')
+        )
+        AND application_ref NOT IN (
+          SELECT qc_id FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release', 'released') AND qc_id IS NOT NULL
         )
       `);
     } catch (_) {}
@@ -150,6 +156,12 @@ exports.getDisbursements = async (req, res) => {
           )
           AND application_ref NOT IN (
             SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
+          )
+          AND application_ref NOT IN (
+            SELECT qc_id FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release') AND qc_id IS NOT NULL
+          )
+          AND application_ref NOT IN (
+            SELECT reference_no FROM appointments WHERE status = 'approved'
           )
           AND application_ref NOT IN (
             SELECT l.reference_number
@@ -277,6 +289,82 @@ exports.getDisbursements = async (req, res) => {
               new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
               'Quezon City Hall - SSDD Child Welfare Section',
               'Approved Child Welfare financial grant. Ready for Appointment scheduling and payout.',
+            ]
+          );
+        }
+      }
+    try {
+      const approvedAics = await db.query(
+        `SELECT id, reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, created_at, updated_at
+         FROM aics_applications
+         WHERE status IN ('approved', 'completed', 'for_release', 'released')`
+      );
+      for (const row of approvedAics.rows) {
+        const ref = row.reference_no || row.qc_id || `AICS-2026-${row.id}`;
+        const cleanRef = String(ref).trim();
+        const disbCheck = await db.query(
+          `SELECT id FROM financial_aid_disbursements 
+           WHERE application_ref = $1 OR application_ref = $2 OR (application_ref = $3 AND $3 <> '')`,
+          [cleanRef, row.reference_no || '', row.qc_id || '']
+        );
+        if (disbCheck.rows.length === 0) {
+          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+          const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
+          const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
+          const fixedAmount = resolveFixedAmount(cleanType);
+          await db.query(
+            `INSERT INTO financial_aid_disbursements (
+              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+              date_approved, status, venue, remarks
+            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'Quezon City Hall', 'Approved AICS assistance ready for release.')
+            ON CONFLICT DO NOTHING`,
+            [
+              disbId,
+              cleanRef,
+              fullName,
+              cleanType,
+              fixedAmount,
+              new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+            ]
+          );
+        }
+      }
+    } catch (_) {}
+
+    try {
+      const approvedAppts = await db.query(
+        `SELECT id, reference_no, module, applicant_name, concern, scheduled_date, scheduled_time, office_location, notes, created_at, updated_at
+         FROM appointments
+         WHERE status = 'approved'`
+      );
+      for (const appt of approvedAppts.rows) {
+        const ref = String(appt.reference_no || '').trim();
+        if (!ref) continue;
+        const disbCheck = await db.query(
+          `SELECT id FROM financial_aid_disbursements WHERE application_ref = $1`,
+          [ref]
+        );
+        if (disbCheck.rows.length === 0) {
+          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const fixedAmount = resolveFixedAmount(appt.concern);
+          await db.query(
+            `INSERT INTO financial_aid_disbursements (
+              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+              date_approved, status, appointment_date, appointment_time, venue, remarks
+            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10)
+            ON CONFLICT DO NOTHING`,
+            [
+              disbId,
+              ref,
+              appt.applicant_name.toUpperCase(),
+              appt.concern,
+              fixedAmount,
+              new Date(appt.updated_at || appt.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+              appt.scheduled_date || null,
+              appt.scheduled_time || null,
+              appt.office_location || 'Quezon City Hall',
+              appt.notes || 'Approved appointment payout.',
             ]
           );
         }

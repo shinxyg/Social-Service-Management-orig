@@ -88,6 +88,33 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       })
     }
 
+    if (localScheduledMap && typeof localScheduledMap === "object") {
+      Object.entries(localScheduledMap).forEach(([k, v]: [string, any]) => {
+        if (v && (v.status === "approved" || v.decision === "approved")) {
+          const ref = String(v.referenceNo || k).trim()
+          const cleanType = String(v.concern || "Medical Assistance")
+          const key = `${ref}_${cleanType}`
+          if (!seenKeys.has(key) && !deletedKeys.has(ref) && !ref.startsWith("db-appt-") && !ref.startsWith("aics-appt-") && !ref.startsWith("appt_")) {
+            seenKeys.add(key)
+            records.push({
+              id: `local-appt-${ref}`,
+              disbursementId: `DISB-2026-${ref.slice(-4).padStart(4, "0")}`,
+              applicationRef: ref,
+              applicantName: String(v.applicantName || "BENEFICIARY").toUpperCase(),
+              assistanceType: cleanType,
+              fixedAmount: resolveFixedAmount(cleanType),
+              dateApproved: new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
+              status: "PENDING",
+              appointmentDate: v.scheduledDate,
+              appointmentTime: v.scheduledTime,
+              venue: v.officeLocation || "Quezon City Hall",
+              remarks: v.notes || "Approved appointment ready for payout release.",
+            })
+          }
+        }
+      })
+    }
+
     try {
       const aics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
       if (Array.isArray(aics)) {
@@ -606,8 +633,35 @@ export default function FinancialAidDisbursement() {
             const dataAppts = await resApptsSettled.value.json()
             if (dataAppts.appointments && Array.isArray(dataAppts.appointments)) {
               dataAppts.appointments.forEach((a: any) => {
-                if (a.reference_no) appointmentsMap[a.reference_no] = a
+                const ref = String(a.reference_no || "").trim()
+                if (ref) appointmentsMap[ref] = a
                 if (a.applicant_name) appointmentsMap[a.applicant_name.toLowerCase().trim()] = a
+
+                const isApptApproved = a.status === "approved" || a.decision === "approved"
+                if (isApptApproved && ref && !deletedKeys.has(ref)) {
+                  const disbId = `DISB-2026-${ref.slice(-4).padStart(4, "0")}`
+                  const cleanType = a.concern || "Medical Assistance"
+                  if (!remoteRecords.some((rr) => rr.applicationRef === ref || rr.disbursementId === disbId)) {
+                    remoteRecords.push({
+                      id: `remote-appt-${a.id || ref}`,
+                      disbursementId: disbId,
+                      applicationRef: ref,
+                      applicantName: a.applicant_name ? a.applicant_name.toUpperCase() : "BENEFICIARY",
+                      assistanceType: cleanType,
+                      fixedAmount: resolveFixedAmount(cleanType),
+                      dateApproved: new Date(a.updated_at || a.created_at || Date.now()).toLocaleDateString("en-PH", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }),
+                      status: "PENDING" as DisbursementStage,
+                      appointmentDate: a.scheduled_date || undefined,
+                      appointmentTime: a.scheduled_time || undefined,
+                      venue: a.office_location || "Quezon City Hall",
+                      remarks: a.notes || "Approved appointment payout.",
+                    })
+                  }
+                }
               })
             }
           } catch {}
