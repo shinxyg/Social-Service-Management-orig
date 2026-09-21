@@ -134,15 +134,15 @@ async function syncAndCleanAppointments() {
     await db.query(`
       UPDATE appointments
       SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
-      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%' OR scheduled_date IS NULL OR scheduled_date = '')
-        AND status NOT IN ('rejected', 'referred')
+      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%')
+        AND status NOT IN ('approved', 'completed', 'scheduled', 'under_review', 'rejected', 'referred')
     `).catch(() => {});
 
-    // Only import AICS applications that have been APPROVED or already SCHEDULED / UNDER REVIEW
+    // Import active and pending AICS applications for scheduling & social worker review
     const activeAics = await db.query(
       `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix, status
        FROM aics_applications
-       WHERE status IN ('approved', 'completed', 'scheduled', 'under_review', 'for_referral', 'referred')`
+       WHERE status IN ('approved', 'completed', 'scheduled', 'under_review', 'for_referral', 'referred', 'pending', 'waiting_approval', 'for_scheduling')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeAics.rows) {
@@ -151,13 +151,14 @@ async function syncAndCleanAppointments() {
       const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
       const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
       const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
+      const isApproved = ['approved', 'completed', 'for_release', 'released'].includes(row.status);
       const isReferred = ['for_referral', 'referred'].includes(row.status);
       const isSched = ['scheduled', 'under_review'].includes(row.status);
-      const initStatus = isReferred ? 'referred' : isSched ? 'scheduled' : 'pending';
+      const initStatus = isApproved ? 'approved' : isReferred ? 'referred' : isSched ? 'scheduled' : 'pending';
       await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang AICS aplikasyon para sa scheduling.'
+         SELECT $1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.'
          WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
         [refNo, fullName, cleanType, initStatus]
       ).catch(() => {});
