@@ -343,8 +343,6 @@ export default function ApplyPWDSenior() {
 
   const isSenior = urlCategory === "senior"
   const isOverview = !rawTypeParam
-  const isPWDOverview = !isSenior && !rawTypeParam
-  const isSeniorOverview = isSenior && !rawTypeParam
   const isSeniorMedicine = isSenior && urlType === "medicine-booklet"
   const isSeniorMovie = isSenior && urlType === "movie-booklet"
   const isSeniorSocial = isSenior && urlType === "social-assistance"
