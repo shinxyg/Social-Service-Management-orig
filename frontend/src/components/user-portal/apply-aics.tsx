@@ -167,6 +167,10 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack: _onBack
   const [partnerHospital, setPartnerHospital] = useState("")
   const [partnerHospitalOther, setPartnerHospitalOther] = useState("")
   const [medicalDiagnosis, setMedicalDiagnosis] = useState("")
+  const [hospitalBillEstimate, setHospitalBillEstimate] = useState("")
+  const [checklistPriorAid, setChecklistPriorAid] = useState<"yes" | "no">("no")
+  const [priorAidOffice, setPriorAidOffice] = useState("")
+  const [priorAidType, setPriorAidType] = useState("")
 
   const [iRelation, setIRelation] = useState("")
   const [iFirstName, setIFirstName] = useState("")
