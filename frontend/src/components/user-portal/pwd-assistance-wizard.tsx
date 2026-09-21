@@ -809,8 +809,6 @@ export default function PWDSocialAssistanceWizard({
   }
 
   const step1Valid =
-    formData.isResident &&
-    formData.hasDisability &&
     formData.pwdIdNumber.trim() !== "" &&
     isIdVerified &&
     formData.disabilityType !== "" &&
@@ -1128,38 +1126,6 @@ export default function PWDSocialAssistanceWizard({
                 <h3 className="text-base font-bold text-foreground uppercase tracking-wide">
                   SERVICE AND PRIMARY REQUIREMENTS
                 </h3>
-              </div>
-
-              <div className="space-y-3">
-                <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={formData.isResident}
-                    onChange={(e) => updateField("isResident", e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className={`text-sm ${attemptedNext && !formData.isResident ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    Are you a legitimate resident of Quezon City? <span className="text-red-500">*</span>
-                  </span>
-                </label>
-                {attemptedNext && !formData.isResident && (
-                  <p className="text-xs text-red-500 ml-6">Kinakailangang residente ng Quezon City.</p>
-                )}
-
-                <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={formData.hasDisability}
-                    onChange={(e) => updateField("hasDisability", e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className={`text-sm ${attemptedNext && !formData.hasDisability ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    Do you have a registered PWD ID or valid proof of disability? <span className="text-red-500">*</span>
-                  </span>
-                </label>
-                {attemptedNext && !formData.hasDisability && (
-                  <p className="text-xs text-red-500 ml-6">Must have a disability or registered PWD ID.</p>
-                )}
               </div>
 
               {}
@@ -1597,12 +1563,10 @@ export default function PWDSocialAssistanceWizard({
 
               <div className="space-y-3">
                 <AccordionSection title="Checklist & Primary Requirements" onEdit={() => { setReturnToReview(true); setStep(1) }}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <ReviewField label="Residente ng QC" value={formData.isResident ? "Oo" : "Hindi"} />
-                    <ReviewField label="May Kapansanan" value={formData.hasDisability ? "Oo" : "Hindi"} />
-                    <ReviewField label="PWD ID Number" value={formData.pwdIdNumber} />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <ReviewField label="PWD ID Number" value={`PWD-${formData.pwdIdNumber}`} />
                     <ReviewField label="Uri ng Kapansanan" value={formData.disabilityType} />
-                    <ReviewField label="Uri ng Tulong" value={formData.assistanceType} />
+                    <ReviewField label="Kategorya ng Tulong (SWA)" value={formData.assistanceType} />
                   </div>
                 </AccordionSection>
 
