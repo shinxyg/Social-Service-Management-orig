@@ -95,7 +95,15 @@ export function OfficialGuaranteeLetterModal({
   const finalControlNo = data.controlNo || `QC-SSDD-GL-2026-${digits.padStart(6, "0")}`
   const finalSoaNo = data.hospitalCaseNo || `SOA-2026-${digits.padStart(6, "0")}`
 
-  const barangayStr = (data.barangay ? `BRGY. ${data.barangay.replace(/^brgy\.?\s*/i, "").toUpperCase()}` : "BRGY. COMMONWEALTH") + (data.district ? `, DISTRICT ${data.district}` : ", DISTRICT 2")
+  const barangayStr =
+    (data.barangay ? `BRGY. ${data.barangay.replace(/^brgy\.?\s*/i, "").toUpperCase()}` : "BRGY. COMMONWEALTH") +
+    (data.district ? `, DISTRICT ${data.district}` : ", DISTRICT 2")
+
+  const isMedicineGL =
+    String(data.diagnosis || "").toLowerCase().includes("medicine") ||
+    String(data.diagnosis || "").toLowerCase().includes("reseta") ||
+    String(data.hospitalName || "").toLowerCase().includes("pharmacy") ||
+    String(data.controlNo || "").toLowerCase().includes("med")
 
   return (
     <div
@@ -137,7 +145,9 @@ export function OfficialGuaranteeLetterModal({
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
             <span className="text-xs font-bold uppercase tracking-wider">
-              Quezon City SSDD • Official Guarantee Letter (GL)
+              {isMedicineGL
+                ? "Quezon City SSDD • Official Medicine Assistance Voucher / GL"
+                : "Quezon City SSDD • Official Guarantee Letter (GL)"}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -145,10 +155,10 @@ export function OfficialGuaranteeLetterModal({
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Print GL</span>
+                <span>{isMedicineGL ? "Print Voucher / GL" : "Print GL"}</span>
               </button>
             )}
             <button
@@ -212,7 +222,9 @@ export function OfficialGuaranteeLetterModal({
           {/* Addressee */}
           <div className="space-y-0.5 text-xs font-sans pt-1">
             <p className="font-bold text-gray-700 uppercase">
-              TO: THE MEDICAL SOCIAL SERVICES &amp; BILLING DEPARTMENT
+              {isMedicineGL
+                ? "TO: THE ACCREDITED PARTNER PHARMACY / HEALTH FACILITY"
+                : "TO: THE MEDICAL SOCIAL SERVICES & BILLING DEPARTMENT"}
             </p>
             <p className="font-black text-sm text-slate-900 uppercase">{hospital}</p>
             <p className="text-gray-600 text-[11px]">{hospitalAddress}</p>
@@ -221,10 +233,12 @@ export function OfficialGuaranteeLetterModal({
           {/* Document Title */}
           <div className="text-center py-1.5">
             <h2 className="text-base sm:text-lg font-black uppercase tracking-widest text-black underline underline-offset-4">
-              GUARANTEE LETTER
+              {isMedicineGL ? "GUARANTEE LETTER & MEDICINE VOUCHER" : "GUARANTEE LETTER"}
             </h2>
             <p className="text-[11px] font-bold text-gray-600 mt-0.5 font-sans">
-              (AICS - Medical &amp; Hospitalization Assistance)
+              {isMedicineGL
+                ? "(AICS - Medicines & Medical Supplies Assistance)"
+                : "(AICS - Medical & Hospitalization Assistance)"}
             </p>
           </div>
 
@@ -234,7 +248,7 @@ export function OfficialGuaranteeLetterModal({
             <p className="leading-relaxed">
               This is to certify that the <strong>QUEZON CITY GOVERNMENT</strong> through the{" "}
               <strong>Social Services Development Department (SSDD)</strong> hereby{" "}
-              <strong>GUARANTEES</strong> the payment for the medical/hospitalization expenses of the
+              <strong>GUARANTEES</strong> the payment for the {isMedicineGL ? "prescribed medicines & medical supplies" : "medical/hospitalization expenses"} of the
               patient specified below:
             </p>
           </div>
@@ -260,7 +274,7 @@ export function OfficialGuaranteeLetterModal({
                 <span>{data.age || "54"} Years Old / {data.gender || "Male"}</span>
               </p>
               <p>
-                <span className="font-bold text-gray-600">Hospital Case / SOA #: </span>
+                <span className="font-bold text-gray-600">{isMedicineGL ? "Prescription / SOA #: " : "Hospital Case / SOA #: "}</span>
                 <span className="font-mono font-semibold">{finalSoaNo}</span>
               </p>
               <p className="sm:col-span-2">
@@ -268,7 +282,7 @@ export function OfficialGuaranteeLetterModal({
                 <span>{data.address || `#12 Sampaguita St., ${barangayStr}, Quezon City`}</span>
               </p>
               <p className="sm:col-span-2">
-                <span className="font-bold text-gray-600">Medical Diagnosis: </span>
+                <span className="font-bold text-gray-600">{isMedicineGL ? "Medical Condition / Prescription: " : "Medical Diagnosis: "}</span>
                 <span className="font-semibold text-slate-900">{data.diagnosis || "Chronic Kidney Disease (Stage 5) / Hemodialysis"}</span>
               </p>
               <p className="sm:col-span-2">
@@ -302,15 +316,31 @@ export function OfficialGuaranteeLetterModal({
               <div className="pt-2 border-t border-gray-200">
                 <p className="font-bold text-gray-600 mb-1">COVERED EXPENSES:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[11px] text-gray-800">
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <span className="font-black text-black">[X]</span> Hospital Confinement / Room &amp; Board
-                  </span>
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <span className="font-black text-black">[X]</span> Dialysis / Diagnostic Tests
-                  </span>
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <span className="font-black text-black">[X]</span> Medicines &amp; Medical Supplies
-                  </span>
+                  {isMedicineGL ? (
+                    <>
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="font-black text-black">[X]</span> Doctor's Prescribed Medicines
+                      </span>
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="font-black text-black">[X]</span> Essential Medical Supplies
+                      </span>
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="font-black text-black">[X]</span> Maintenance &amp; Critical Drugs
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="font-black text-black">[X]</span> Hospital Confinement / Room &amp; Board
+                      </span>
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="font-black text-black">[X]</span> Dialysis / Diagnostic Tests
+                      </span>
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="font-black text-black">[X]</span> Medicines &amp; Medical Supplies
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -323,10 +353,14 @@ export function OfficialGuaranteeLetterModal({
             </p>
             <ol className="list-decimal pl-4 space-y-0.5 leading-relaxed">
               <li>
-                Please deduct the guaranteed amount of <strong>₱{data.amount.toLocaleString()}.00</strong> from the patient's final Statement of Account.
+                {isMedicineGL
+                  ? `Please dispense the prescribed medicines and deduct up to the guaranteed amount of ₱${data.amount.toLocaleString()}.00.`
+                  : `Please deduct the guaranteed amount of ₱${data.amount.toLocaleString()}.00 from the patient's final Statement of Account.`}
               </li>
               <li>
-                The Hospital Billing Department shall submit the Billing Statement attached with this original GL to the City Accounting &amp; Treasurer's Office of Quezon City for direct payment processing.
+                {isMedicineGL
+                  ? "The Pharmacy / Health Facility Billing shall submit the official billing invoice/receipt attached with this original GL to the City Accounting & Treasurer's Office of Quezon City for direct payment processing."
+                  : "The Hospital Billing Department shall submit the Billing Statement attached with this original GL to the City Accounting & Treasurer's Office of Quezon City for direct payment processing."}
               </li>
               <li>
                 This Guarantee Letter is non-transferable and valid within thirty (30) days from issuance.

@@ -3462,18 +3462,24 @@ export default function MyApplications() {
             const isClaimed = isApprovedDecision && (selectedApp.status === "Released" || selectedApp.status === "Completed" || isDisbClaimed)
             const isGLIssued = isApprovedDecision || (isApprovedDecision && selectedApp.status === "For Release") || isClaimed
             const isAssessmentDone = isApprovedDecision || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment" || cachedAppt?.decision === "referred"
+            const isMedicineApp =
+              String(selectedApp.assistance || "").toLowerCase().includes("medicine") ||
+              String(selectedApp.assistanceCategory || "").toLowerCase().includes("medicine") ||
+              String(selectedApp.details?.assistanceSubType || "").toLowerCase().includes("medicine") ||
+              String(selectedApp.formData?.assistanceSubType || "").toLowerCase().includes("medicine")
+
             const partnerHospital =
               selectedApp.details?.partnerHospital ||
               selectedApp.formData?.partnerHospital ||
               selectedApp.extra_data?.partnerHospital ||
               selectedApp.partnerHospital ||
-              "East Avenue Medical Center (EAMC)"
+              (isMedicineApp ? "QC SSDD Accredited Partner Pharmacy / Health Facility" : "East Avenue Medical Center (EAMC)")
             const diagnosis =
               selectedApp.details?.medicalDiagnosis ||
               selectedApp.formData?.medicalDiagnosis ||
               selectedApp.extra_data?.medicalDiagnosis ||
               selectedApp.medicalDiagnosis ||
-              "Medical Assistance & Hospitalization"
+              (isMedicineApp ? "Prescription Medicines & Medical Supplies" : "Medical Assistance & Hospitalization")
             const appDateStr = cachedAppt?.scheduledDate || selectedApp.appointmentDate || selectedApp.formData?.appointmentDate || "September 21, 2026"
             const appTimeStr = cachedAppt?.scheduledTime || selectedApp.appointmentTime || selectedApp.formData?.appointmentTime || "01:08 AM"
 
@@ -3484,9 +3490,15 @@ export default function MyApplications() {
                     <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <div>
                       <h3 className="text-sm font-bold text-blue-950 dark:text-white">
-                        AICS MEDICAL ASSISTANCE &amp; GUARANTEE LETTER LIFECYCLE
+                        {isMedicineApp
+                          ? "AICS MEDICINES & MEDICAL SUPPLIES ASSISTANCE LIFECYCLE"
+                          : "AICS MEDICAL BILL ASSISTANCE & GUARANTEE LETTER LIFECYCLE"}
                       </h3>
-                      <p className="text-[11px] text-slate-500">Accredited Hospital Assistance &amp; Direct Billing Protocol</p>
+                      <p className="text-[11px] text-slate-500">
+                        {isMedicineApp
+                          ? "Prescription Medicine Assistance & Pharmacy Support Protocol"
+                          : "Accredited Hospital Assistance & Direct Billing Protocol"}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -3497,7 +3509,7 @@ export default function MyApplications() {
                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                       >
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>View Guarantee Letter (GL)</span>
+                        <span>{isMedicineApp ? "View Medicine GL / Voucher" : "View Guarantee Letter (GL)"}</span>
                       </button>
                     )}
                     <button
@@ -3553,7 +3565,7 @@ export default function MyApplications() {
                     <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400">STAGE 4</span>
                     <p className="text-xs font-bold">Assistance Processing</p>
                     <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                      {isGLIssued ? "✓ GL / Voucher Prepared" : "Awaiting Approval"}
+                      {isGLIssued ? (isMedicineApp ? "✓ Medicine Voucher Prepared" : "✓ GL / Voucher Prepared") : "Awaiting Approval"}
                     </p>
                   </div>
 
@@ -3565,7 +3577,7 @@ export default function MyApplications() {
                     <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">STAGE 5</span>
                     <p className="text-xs font-bold">Released / Availed</p>
                     <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                      {isClaimed ? "✓ Aid Released & Availed" : "Pending Hospital Billing / Payout"}
+                      {isClaimed ? (isMedicineApp ? "✓ Medicine Aid Released" : "✓ Aid Released & Availed") : "Pending Claim / Payout"}
                     </p>
                   </div>
                 </div>
@@ -3573,14 +3585,24 @@ export default function MyApplications() {
                 {/* Case Particulars */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                   <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
-                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Accredited Partner Hospital</span>
-                    <span className="text-sm font-extrabold text-blue-950 dark:text-white block">{partnerHospital}</span>
-                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Direct Billing Partner Facility</p>
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">
+                      {isMedicineApp ? "Type of Assistance" : "Accredited Partner Hospital"}
+                    </span>
+                    <span className="text-sm font-extrabold text-blue-950 dark:text-white block">
+                      {isMedicineApp ? "Medicines / Medical Supplies" : partnerHospital}
+                    </span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">
+                      {isMedicineApp ? "Prescription & Reseta ng Gamot" : "Direct Billing Partner Facility"}
+                    </p>
                   </div>
 
                   <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
-                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Diagnosis / Case Info</span>
-                    <span className="text-sm font-extrabold text-gray-900 dark:text-white block">{diagnosis}</span>
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">
+                      {isMedicineApp ? "Prescription / Requirement" : "Diagnosis / Case Info"}
+                    </span>
+                    <span className="text-sm font-extrabold text-gray-900 dark:text-white block">
+                      {isMedicineApp ? "Doctor's Reseta & Clinical Abstract" : diagnosis}
+                    </span>
                     <p className="text-[10px] text-gray-500 dark:text-slate-400">Subject to Social Case Study verification</p>
                   </div>
 
@@ -3595,10 +3617,14 @@ export default function MyApplications() {
                 <div className="p-4 rounded-xl bg-amber-50/90 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800/60 text-xs text-amber-950 dark:text-amber-200 space-y-1">
                   <p className="font-bold flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                    Paalala sa Pag-release ng Guarantee Letter (GL):
+                    {isMedicineApp
+                      ? "Paalala sa Pag-release ng Tulong sa Gamot (Medicine Assistance):"
+                      : "Paalala sa Pag-release ng Guarantee Letter (GL):"}
                   </p>
                   <p className="leading-relaxed">
-                    Ang opisyal na Guarantee Letter na may dry seal at pirma ng lisensyadong Social Worker ay <strong>personal na ipinagkakaloob sa SSDD</strong> pagkatapos ng in-person assessment. Hindi ito direktang nada-download online upang mapanatili ang integridad ng financial assistance ng pamahalaan.
+                    {isMedicineApp
+                      ? "Dalhin ang orihinal na Reseta ng Gamot mula sa doktor, Medical Abstract/Certificate, Barangay Indigency, at QC ID sa itinakdang araw ng in-person claim o pagsusuri sa SSDD."
+                      : "Ang opisyal na Guarantee Letter na may dry seal at pirma ng lisensyadong Social Worker ay personal na ipinagkakaloob sa SSDD pagkatapos ng in-person assessment. Hindi ito direktang nada-download online upang mapanatili ang integridad ng financial assistance ng pamahalaan."}
                   </p>
                 </div>
               </div>

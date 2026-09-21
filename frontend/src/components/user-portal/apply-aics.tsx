@@ -1863,8 +1863,14 @@ const handleFinalSubmit = async () => {
 
              {!isFuneralAssistance && !isEducationalAssistance && (
             <div className="border-t border-border pt-6 space-y-4">
-              <h3 className="font-heading font-semibold text-foreground">{t("informantInfoHeader")}</h3>
-                            <Field label="Relasyon sa Pasyente *">
+              <h3 className="font-heading font-semibold text-foreground">
+                {isMedicine
+                  ? "Impormasyon ng Pasyente (Kukuhaan ng Gamot)"
+                  : isMedicalBill
+                  ? "Impormasyon ng Pasyente (Hospital Bill / Confinement)"
+                  : t("informantInfoHeader")}
+              </h3>
+              <Field label="Relasyon sa Pasyente *">
                 <select
                   value={iRelation}
                   onChange={(e) => setIRelation(e.target.value)}
@@ -2293,19 +2299,20 @@ const handleFinalSubmit = async () => {
                     <ReviewCheckItem ok={eduEligSchool} label={t("eduEligSchool")} />
                     <ReviewCheckItem ok={eduEligIndigent} label={t("eduEligIndigent")} />
                   </>
+                ) : isMedicine ? (
+                  <>
+                    <ReviewCheckItem ok={true} label="Type of Assistance: Medicines / Medical Supplies (Tulong sa Gamot / Reseta)" />
+                    <ReviewCheckItem ok={true} label="Kinakailangang Dokumento: Medical Certificate / Abstract at Reseta ng Gamot" />
+                  </>
+                ) : isMedicalBill ? (
+                  <>
+                    <ReviewCheckItem ok={true} label="Type of Assistance: Medical Bill Assistance (Hospital Bill / SOA)" />
+                    <ReviewCheckItem ok={Boolean(partnerHospital)} label={`Accredited Hospital: ${partnerHospital === "Other" ? (partnerHospitalOther || "Other Facility") : partnerHospital}`} />
+                    <ReviewCheckItem ok={Boolean(medicalDiagnosis)} label={`Medical Condition / Diagnosis: ${medicalDiagnosis}`} />
+                  </>
                 ) : (
                   <>
-                    <ReviewCheckItem ok={checklistResident} label={t("qcResidentQuestion")} />
-                    <ReviewCheckItem
-                      ok={checklistPatient}
-                      label={t("qcPatientQuestion")}
-                    />
-                    <ReviewCheckItem
-                      ok={true}
-                      label={t("priorAidQuestion")}
-                    />
-                    <ReviewCheckItem ok={hasPriorAidType} label={t("priorAidTypeCheckLabel")} />
-                    <ReviewCheckItem ok={true} label={t("assistanceTypeCheckLabel")} />
+                    <ReviewCheckItem ok={true} label={`Type of Assistance: ${medicalAssistanceSubType || "Medical Assistance"}`} />
                   </>
                 )}
               </div>
@@ -2396,7 +2403,13 @@ const handleFinalSubmit = async () => {
               ) : (
                 <>
                   <div className="px-4 pt-2">
-                    <h4 className="text-sm font-semibold text-foreground">{t("informantInfoHeader")}</h4>
+                    <h4 className="text-sm font-semibold text-foreground">
+                      {isMedicine
+                        ? "Impormasyon ng Pasyente (Kukuhaan ng Gamot)"
+                        : isMedicalBill
+                        ? "Impormasyon ng Pasyente (Hospital Bill / SOA)"
+                        : t("informantInfoHeader")}
+                    </h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 p-4">
                     <ReviewField label="Relasyon sa Pasyente" value={iRelation} />
