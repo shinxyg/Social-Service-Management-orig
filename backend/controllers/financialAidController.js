@@ -293,6 +293,8 @@ exports.getDisbursements = async (req, res) => {
           );
         }
       }
+    } catch (_) {}
+
     try {
       const approvedAics = await db.query(
         `SELECT id, reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, created_at, updated_at
