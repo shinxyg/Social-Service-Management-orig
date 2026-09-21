@@ -758,15 +758,6 @@ export default function AICS() {
                       </div>
                     )}
 
-                    {/* For Medicines / Medical Supplies, show medicine tag / note */}
-                    {(details.medicalAssistanceSubType === 'Medicines / Medical Supplies' ||
-                      details.assistanceSubType === 'Medicines / Medical Supplies' ||
-                      (!details.partnerHospital && !details.medicalDiagnosis && reviewingDocs.some(d => (d.document_label || '').toLowerCase().includes('reseta')))) && (
-                      <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium flex items-center gap-1.5">
-                        <span>💊</span>
-                        <span>Saklaw: Tulong sa Gamot / Reseta at Medical Supplies</span>
-                      </div>
-                    )}
 
                     {/* Secondary Parties if available */}
                     <div className="pt-2 flex flex-wrap gap-2">
