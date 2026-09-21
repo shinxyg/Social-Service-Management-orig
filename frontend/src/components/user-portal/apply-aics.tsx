@@ -2799,8 +2799,8 @@ const handleFinalSubmit = async () => {
               </div>
             </div>
 
-            <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/60">
-              Maaari ninyong subaybayan ang disbursement release schedule at i-download ang inyong Guarantee Letter sa inyong Application History.
+            <p className="text-xs text-emerald-800 dark:text-emerald-300 font-medium bg-emerald-50 dark:bg-emerald-950/40 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 leading-relaxed">
+              🔒 <strong>Nai-avail na (One-Time Only):</strong> Ang inyong aplikasyon para sa programang ito ay opisyal nang na-apruba at nai-release. Ang inyong Guarantee Letter at opisyal na record ay ligtas na nakatala sa inyong account.
             </p>
 
             <div className="w-full flex flex-col gap-2 mt-2">
@@ -2814,19 +2814,9 @@ const handleFinalSubmit = async () => {
                   ;(window as any).__isFormDirty = false
                   window.location.href = "/portal/my-applications"
                 }}
-                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
               >
-                VIEW IN APPLICATION HISTORY
-              </button>
-              <button
-                type="button"
-                onClick={handleReapply}
-                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-              >
-                <RotateCcw className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                <span>
-                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-                </span>
+                <span>TINGNAN SA APPLICATION HISTORY</span>
               </button>
             </div>
           </div>
