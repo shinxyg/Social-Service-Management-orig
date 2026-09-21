@@ -1,4 +1,4 @@
-import { X, Building2 } from "lucide-react"
+import { X, Building2, ShieldCheck } from "lucide-react"
 
 export interface ReferralLetterData {
   controlNo?: string
