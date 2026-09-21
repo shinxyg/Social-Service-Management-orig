@@ -25,6 +25,8 @@ import {
   X,
   Calendar,
   Building2,
+  Printer,
+  XCircle,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { cachedApiFetch } from "../../utils/cachedApiFetch"
@@ -3418,35 +3420,49 @@ export default function MyApplications() {
                   </div>
                 </div>
 
-                {/* 4-Stage Progress Pipeline */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                {/* 5-Stage Progress Pipeline */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   <div className="p-3 rounded-xl border bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 space-y-1">
                     <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400">STAGE 1</span>
-                    <p className="text-xs font-bold">Appointment Scheduled</p>
-                    <p className="text-[10px] text-blue-800/80 dark:text-blue-300/80">Online Form Submitted &amp; Schedule Set</p>
+                    <p className="text-xs font-bold">General Requirements</p>
+                    <p className="text-[10px] text-blue-800/80 dark:text-blue-300/80">Documents Verified &amp; Intake Complete</p>
                   </div>
 
                   <div className={`p-3 rounded-xl border space-y-1 ${
                     isAssessmentDone
                       ? "bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold"
-                      : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
+                      : "bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 text-blue-800 dark:text-blue-300 font-bold"
                   }`}>
                     <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400">STAGE 2</span>
-                    <p className="text-xs font-bold">In-Person Assessment</p>
+                    <p className="text-xs font-bold">Assessment / Evaluation</p>
                     <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                      {isAssessmentDone ? "✓ Case Evaluated at SSDD" : "Pending Social Worker Interview"}
+                      {isAssessmentDone ? "✓ Case Evaluated at SSDD" : "Appointment Set / Pending Interview"}
+                    </p>
+                  </div>
+
+                  <div className={`p-3 rounded-xl border space-y-1 ${
+                    isApprovedDecision || isGLIssued
+                      ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
+                      : isAssessmentDone
+                      ? "bg-amber-100/80 dark:bg-amber-950/60 border-amber-300 text-amber-900 dark:text-amber-200 font-bold"
+                      : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
+                  }`}>
+                    <span className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400">STAGE 3</span>
+                    <p className="text-xs font-bold">Approval / Endorsement</p>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">
+                      {isApprovedDecision || isGLIssued ? "✓ Approved & Endorsed" : "Under Evaluation"}
                     </p>
                   </div>
 
                   <div className={`p-3 rounded-xl border space-y-1 ${
                     isGLIssued
-                      ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
+                      ? "bg-indigo-100/80 dark:bg-indigo-950/60 border-indigo-300 text-indigo-900 dark:text-indigo-200 font-bold"
                       : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
                   }`}>
-                    <span className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400">STAGE 3</span>
-                    <p className="text-xs font-bold">Guarantee Letter Issued</p>
+                    <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400">STAGE 4</span>
+                    <p className="text-xs font-bold">Assistance Processing</p>
                     <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                      {isGLIssued ? "✓ Printed & Released at SSDD" : "Awaiting Evaluation Approval"}
+                      {isGLIssued ? "✓ GL / Voucher Prepared" : "Awaiting Approval"}
                     </p>
                   </div>
 
@@ -3455,10 +3471,10 @@ export default function MyApplications() {
                       ? "bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-300 text-emerald-900 dark:text-emerald-200 font-bold"
                       : "bg-white dark:bg-slate-800/60 border-gray-200 text-gray-500"
                   }`}>
-                    <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">STAGE 4</span>
-                    <p className="text-xs font-bold">{isClaimed ? "Completed & Approved" : "Claimed at Hospital"}</p>
+                    <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400">STAGE 5</span>
+                    <p className="text-xs font-bold">Released / Availed</p>
                     <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                      {isClaimed ? "✓ Aid Approved & Guarantee Letter Released" : "Pending Hospital Billing"}
+                      {isClaimed ? "✓ Aid Released & Availed" : "Pending Hospital Billing / Payout"}
                     </p>
                   </div>
                 </div>
@@ -3963,29 +3979,40 @@ export default function MyApplications() {
                           </div>
                         </div>
 
-                        {/* 4-Stage Visual Pipeline */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+                        {/* 5-Stage Visual Pipeline */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-0.5">
                           <div className="p-2 rounded-lg border text-center text-[10px] space-y-0.5 bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold">
-                            <span className="block text-blue-600 dark:text-blue-400 font-black">1. SCHEDULED</span>
-                            <span className="text-[9px] block">Appointment Set</span>
+                            <span className="block text-blue-600 dark:text-blue-400 font-black">1. GENERAL REQUIREMENTS</span>
+                            <span className="text-[9px] block">Verified &amp; Intake Done</span>
                           </div>
 
                           <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
                             isAssessmentDone
                               ? "bg-blue-100/80 dark:bg-blue-950/60 border-blue-300 text-blue-900 dark:text-blue-200 font-bold"
+                              : "bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 text-blue-800 dark:text-blue-300 font-bold"
+                          }`}>
+                            <span className="block font-black">{isAssessmentDone ? "2. EVALUATION DONE" : "2. APPOINTMENT / EVAL"}</span>
+                            <span className="text-[9px] block">{isAssessmentDone ? "Assessment Done" : "Appointment Set"}</span>
+                          </div>
+
+                          <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
+                            isApprovedDecision || isGLIssued
+                              ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
+                              : isAssessmentDone
+                              ? "bg-amber-100/80 dark:bg-amber-950/60 border-amber-300 text-amber-900 dark:text-amber-200 font-bold"
                               : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
                           }`}>
-                            <span className="block font-black">{isAssessmentDone ? "2. INTERVIEWED" : "2. ASSESSMENT"}</span>
-                            <span className="text-[9px] block">{isAssessmentDone ? "Assessment Done" : "Pending Interview"}</span>
+                            <span className="block font-black">3. APPROVAL / ENDORSEMENT</span>
+                            <span className="text-[9px] block">{isApprovedDecision || isGLIssued ? "Approved & Endorsed" : "Under Evaluation"}</span>
                           </div>
 
                           <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
                             isGLIssued
-                              ? "bg-purple-100/80 dark:bg-purple-950/60 border-purple-300 text-purple-900 dark:text-purple-200 font-bold"
+                              ? "bg-indigo-100/80 dark:bg-indigo-950/60 border-indigo-300 text-indigo-900 dark:text-indigo-200 font-bold"
                               : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
                           }`}>
-                            <span className="block font-black">{isGLIssued ? "3. GL ISSUED" : "3. GL ISSUANCE"}</span>
-                            <span className="text-[9px] block">{isGLIssued ? "Released at SSDD" : "Awaiting Approval"}</span>
+                            <span className="block font-black">4. ASSISTANCE PROCESSING</span>
+                            <span className="text-[9px] block">{isGLIssued ? "GL / Voucher Ready" : "Awaiting Approval"}</span>
                           </div>
 
                           <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${
@@ -3993,8 +4020,8 @@ export default function MyApplications() {
                               ? "bg-emerald-100/80 dark:bg-emerald-950/60 border-emerald-300 text-emerald-900 dark:text-emerald-200 font-bold"
                               : "bg-white dark:bg-slate-900/40 border-gray-200 text-gray-400"
                           }`}>
-                            <span className="block font-black">{isClaimed ? "4. COMPLETED" : "4. HOSPITAL BILL"}</span>
-                            <span className="text-[9px] block">{isClaimed ? "✓ Aid Approved & Issued" : "Pending Billing"}</span>
+                            <span className="block font-black">5. RELEASED / AVAILED</span>
+                            <span className="text-[9px] block">{isClaimed ? "✓ Aid Released & Availed" : "Pending Payout"}</span>
                           </div>
                         </div>
 

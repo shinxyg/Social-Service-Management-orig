@@ -22,7 +22,6 @@ import {
   getSavedDisbursements,
   saveDisbursements,
   checkAndAutoReleaseScheduledDisbursements,
-  parseAppointmentDateTime,
   getDeletedDisbursementKeys,
   isIdOrDocumentService,
 } from "../../utils/financialAidSync"
@@ -208,17 +207,23 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         finalVenue = cachedSched.venue || cachedSched.location || finalVenue
       }
 
-      let finalStatus: DisbursementStage = d.status
+      const isApptApprovedOrDone =
+        appt?.decision === "approved" ||
+        appt?.status === "approved" ||
+        appt?.status === "completed" ||
+        appt?.status === "released" ||
+        cachedSched?.decision === "approved" ||
+        cachedSched?.status === "approved" ||
+        cachedSched?.status === "completed" ||
+        cachedSched?.status === "released"
+
+      let finalStatus: DisbursementStage = (d.status === "RELEASED" || isApptApprovedOrDone) ? "RELEASED" : "PENDING"
       let finalReleasedDate = d.releasedDate
       let finalReleasedBy = d.releasedBy
 
-      if (finalStatus === "PENDING" && finalApptDate) {
-        const scheduledDt = parseAppointmentDateTime(finalApptDate, finalApptTime)
-        if (scheduledDt && now.getTime() >= scheduledDt.getTime()) {
-          finalStatus = "RELEASED"
-          finalReleasedDate = finalReleasedDate || `${now.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })} ${finalApptTime || ""}`
-          finalReleasedBy = finalReleasedBy || "Automated Scheduled Payout System / Disbursing Officer"
-        }
+      if (finalStatus === "RELEASED" && !finalReleasedDate) {
+        finalReleasedDate = `${now.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })} ${finalApptTime || ""}`.trim()
+        finalReleasedBy = finalReleasedBy || "Approved via Appointment Assessment"
       }
 
       return {
@@ -247,6 +252,34 @@ export default function FinancialAidDisbursement() {
 
   const toggleAmount = (id: string) => {
     setRevealedAmounts((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  const handleReleaseRecord = (record: SyncedDisbursementRecord) => {
+    const updated = disbursements.map((d) => {
+      if (d.id === record.id || d.disbursementId === record.disbursementId || d.applicationRef === record.applicationRef) {
+        return {
+          ...d,
+          status: "RELEASED" as DisbursementStage,
+          releasedDate: new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
+          releasedBy: "Disbursing Officer",
+        }
+      }
+      return d
+    })
+    setDisbursements(updated)
+    saveDisbursements(updated)
+    try {
+      const raw = localStorage.getItem("all_financial_disbursements")
+      const list = raw ? JSON.parse(raw) : []
+      const nextList = list.map((item: any) => {
+        if (item.id === record.id || item.disbursementId === record.disbursementId || item.applicationRef === record.applicationRef) {
+          return { ...item, status: "RELEASED", releasedDate: new Date().toISOString(), releasedBy: "Disbursing Officer" }
+        }
+        return item
+      })
+      localStorage.setItem("all_financial_disbursements", JSON.stringify(nextList))
+    } catch {}
+    window.dispatchEvent(new Event("financial_disbursements_updated"))
   }
 
   useEffect(() => {
@@ -612,17 +645,18 @@ export default function FinancialAidDisbursement() {
             d.venue ||
             "Quezon City Hall"
 
-          let isTimeReached = false
-          if (finalApptDate && finalApptTime) {
-            const dt = parseAppointmentDateTime(finalApptDate, finalApptTime)
-            if (dt && now.getTime() >= dt.getTime()) {
-              isTimeReached = true
-            }
-          }
+          const isApptApprovedOrDone =
+            appt?.decision === "approved" ||
+            appt?.status === "approved" ||
+            appt?.status === "completed" ||
+            appt?.status === "released" ||
+            cachedSched?.decision === "approved" ||
+            cachedSched?.status === "approved" ||
+            cachedSched?.status === "completed" ||
+            cachedSched?.status === "released"
 
-          const isApptDone = Boolean(finalApptDate) && (appt?.status === "completed" || cachedSched?.status === "completed")
           const wasAlreadyReleased = existingSaved?.status === "RELEASED" || d.status === "RELEASED"
-          const isReleased = wasAlreadyReleased || isApptDone || (Boolean(finalApptDate) && isTimeReached)
+          const isReleased = wasAlreadyReleased || isApptApprovedOrDone
 
           return {
             ...d,
@@ -634,7 +668,7 @@ export default function FinancialAidDisbursement() {
               ? d.releasedDate || existingSaved?.releasedDate || (finalApptDate && finalApptTime ? `${finalApptDate} ${finalApptTime}` : `${now.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })} ${finalApptTime || now.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}`)
               : undefined,
             releasedBy: isReleased
-              ? d.releasedBy || existingSaved?.releasedBy || "Automated Scheduled Payout System / Disbursing Officer"
+              ? d.releasedBy || existingSaved?.releasedBy || "Social Worker / Disbursing Officer"
               : undefined,
           }
         })
@@ -839,7 +873,7 @@ export default function FinancialAidDisbursement() {
                 Financial Aid Disbursement Records
               </h3>
               <p className="text-xs text-gray-500">
-                Automatically connected to appointments and auto-releases on the scheduled payout time.
+                Connected to Appointments. Disbursements become RELEASED upon Social Worker appointment approval or manual disbursement.
               </p>
             </div>
 
@@ -973,7 +1007,18 @@ export default function FinancialAidDisbursement() {
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-right">
-                        <div className="inline-flex items-center justify-end gap-1.5">
+                        <div className="inline-flex items-center justify-end gap-1.5 flex-wrap">
+                          {d.status === "PENDING" && (
+                            <button
+                              type="button"
+                              onClick={() => handleReleaseRecord(d)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
+                              title="Release Assistance Disbursement"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Release</span>
+                            </button>
+                          )}
                           {d.assistanceType.toLowerCase().includes("medical") && (
                             <button
                               type="button"
