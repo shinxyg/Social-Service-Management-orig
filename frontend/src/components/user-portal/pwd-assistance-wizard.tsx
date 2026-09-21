@@ -1144,6 +1144,14 @@ export default function PWDSocialAssistanceWizard({
                 </h3>
               </div>
 
+              {/* PWD Sector Notice */}
+              <div className="bg-blue-50/90 border border-blue-200 rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
+                <AlertCircle className="h-4.5 w-4.5 text-blue-600 shrink-0" />
+                <p className="text-xs md:text-sm font-semibold text-blue-950">
+                  PWD Sector: Qualified beneficiaries may receive the assistance provided.
+                </p>
+              </div>
+
               <div className="space-y-4 pt-1">
                 <div>
                   <div className="flex justify-between items-center mb-1">
