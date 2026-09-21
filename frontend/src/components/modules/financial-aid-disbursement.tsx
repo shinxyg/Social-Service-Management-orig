@@ -24,6 +24,8 @@ import {
   checkAndAutoReleaseScheduledDisbursements,
   getDeletedDisbursementKeys,
   isIdOrDocumentService,
+  isDisbursementManuallyReleased,
+  markDisbursementAsManuallyReleased,
 } from "../../utils/financialAidSync"
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import MaskedText from "../ui/masked-text"
@@ -207,11 +209,10 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         finalVenue = cachedSched.venue || cachedSched.location || finalVenue
       }
 
-      const isAutoMarked = d.releasedBy && (d.releasedBy.includes("Automated") || d.releasedBy.includes("Appointment"))
-      const isExplicitlyReleased = d.status === "RELEASED" && !isAutoMarked
+      const isExplicitlyReleased = isDisbursementManuallyReleased(d)
       let finalStatus: DisbursementStage = isExplicitlyReleased ? "RELEASED" : "PENDING"
       let finalReleasedDate = isExplicitlyReleased ? d.releasedDate : undefined
-      let finalReleasedBy = isExplicitlyReleased ? d.releasedBy : undefined
+      let finalReleasedBy = isExplicitlyReleased ? (d.releasedBy || "Disbursing Officer") : undefined
 
       return {
         ...d,
@@ -242,12 +243,14 @@ export default function FinancialAidDisbursement() {
   }
 
   const handleReleaseRecord = (record: SyncedDisbursementRecord) => {
+    markDisbursementAsManuallyReleased(record)
+    const releaseDateStr = new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
     const updated = disbursements.map((d) => {
       if (d.id === record.id || d.disbursementId === record.disbursementId || d.applicationRef === record.applicationRef) {
         return {
           ...d,
           status: "RELEASED" as DisbursementStage,
-          releasedDate: new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
+          releasedDate: releaseDateStr,
           releasedBy: "Disbursing Officer",
         }
       }
@@ -260,7 +263,7 @@ export default function FinancialAidDisbursement() {
       const list = raw ? JSON.parse(raw) : []
       const nextList = list.map((item: any) => {
         if (item.id === record.id || item.disbursementId === record.disbursementId || item.applicationRef === record.applicationRef) {
-          return { ...item, status: "RELEASED", releasedDate: new Date().toISOString(), releasedBy: "Disbursing Officer" }
+          return { ...item, status: "RELEASED", releasedDate: releaseDateStr, releasedBy: "Disbursing Officer" }
         }
         return item
       })
@@ -271,18 +274,27 @@ export default function FinancialAidDisbursement() {
     ;(async () => {
       try {
         const ref = record.applicationRef || record.disbursementId
-        if (ref) {
-          await Promise.allSettled([
-            fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(ref)}/status`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: "released" }),
-            }),
-            fetch(`${API_BASE}/api/appointments/${encodeURIComponent(ref)}/complete`, {
-              method: "PUT",
-            }),
-          ])
-        }
+        const dbCleanId = record.id.replace(/^db-/, "").replace(/^remote-/, "")
+        await Promise.allSettled([
+          fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(dbCleanId)}/release`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ releasedBy: "MANUAL_DISBURSING_OFFICER" }),
+          }),
+          ref ? fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(ref)}/release`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ releasedBy: "MANUAL_DISBURSING_OFFICER" }),
+          }) : Promise.resolve(),
+          ref ? fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(ref)}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "released" }),
+          }) : Promise.resolve(),
+          ref ? fetch(`${API_BASE}/api/appointments/${encodeURIComponent(ref)}/complete`, {
+            method: "PUT",
+          }) : Promise.resolve(),
+        ])
       } catch {}
     })()
 
@@ -659,7 +671,7 @@ export default function FinancialAidDisbursement() {
             d.venue ||
             "Quezon City Hall"
 
-          const isExplicitlyReleased = existingSaved?.status === "RELEASED" || d.status === "RELEASED"
+          const isExplicitlyReleased = isDisbursementManuallyReleased(d) || (existingSaved ? isDisbursementManuallyReleased(existingSaved) : false)
           const isReleased = isExplicitlyReleased
 
           return {
@@ -669,10 +681,10 @@ export default function FinancialAidDisbursement() {
             venue: finalVenue,
             status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
             releasedDate: isReleased
-              ? d.releasedDate || existingSaved?.releasedDate || (finalApptDate && finalApptTime ? `${finalApptDate} ${finalApptTime}` : `${now.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })} ${finalApptTime || now.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}`)
+              ? d.releasedDate || existingSaved?.releasedDate || new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
               : undefined,
             releasedBy: isReleased
-              ? d.releasedBy || existingSaved?.releasedBy || "Social Worker / Disbursing Officer"
+              ? d.releasedBy || existingSaved?.releasedBy || "Disbursing Officer"
               : undefined,
           }
         })

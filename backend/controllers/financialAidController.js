@@ -101,6 +101,20 @@ exports.getDisbursements = async (req, res) => {
 
     try {
       await db.query(`
+        UPDATE financial_aid_disbursements
+        SET status = 'PENDING', released_date = NULL, released_by = NULL
+        WHERE (
+          released_by ILIKE '%Automated%'
+          OR released_by ILIKE '%Appointment%'
+          OR released_by ILIKE '%Social Worker%'
+          OR released_by IS NULL
+          OR released_by = ''
+        ) AND status = 'RELEASED'
+      `);
+    } catch (_) {}
+
+    try {
+      await db.query(`
         DELETE FROM financial_aid_disbursements
         WHERE assistance_type ILIKE '%ID Card%' OR assistance_type ILIKE '%Issuance%'
       `);

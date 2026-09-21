@@ -40,6 +40,7 @@ import {
   isIdOrDocumentService,
   isTrainingService,
   purgeLegacyLocalTestData,
+  isDisbursementManuallyReleased,
 } from "../../utils/financialAidSync"
 import { useLanguage } from "../ui/language-context"
 import MaskedText from "../ui/masked-text"
@@ -3411,7 +3412,8 @@ export default function MyApplications() {
                 (d.applicantName && d.applicantName.toLowerCase().trim() === selectedApp.applicantName?.toLowerCase()?.trim())
             )
 
-            const isClaimed = selectedApp.status === "Released" || selectedApp.status === "Completed" || matchDisb?.status === "RELEASED"
+            const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
+            const isClaimed = selectedApp.status === "Released" || isDisbClaimed
             const isGLIssued = isApprovedDecision || selectedApp.status === "For Release" || isClaimed
             const isAssessmentDone = isGLIssued || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment" || cachedAppt?.decision === "referred"
             const partnerHospital =
@@ -3854,13 +3856,12 @@ export default function MyApplications() {
                         (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName?.toLowerCase()?.trim())
                     )
 
+                    const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
                     const isExplicitlyReleased =
                       !isExplicitlyPending &&
                       app.status !== "Approved" &&
                       app.status !== "Under Review" &&
-                      (app.status === "Released" ||
-                        app.status === "Completed" ||
-                        matchDisb?.status === "RELEASED")
+                      (app.status === "Released" || isDisbClaimed)
 
                     const isGLIssued = isApprovedDecision || (!isExplicitlyPending && app.status === "For Release") || isExplicitlyReleased
                     const isUnderReview = app.status === "Under Review" || app.status === "For Assessment"
