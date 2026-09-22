@@ -428,24 +428,24 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
   const [cameraDoc, setCameraDoc] = useState<RequiredDoc | null>(null)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
-  // 7. Documentary Requirements / Uploads (Para sa Senior SWA)
+  // Documentary Requirements / Uploads
   const requiredDocuments: RequiredDoc[] = [
     {
       id: "seniorQcId",
       label: "QCITIZEN ID / SENIOR CITIZEN ID",
-      description: "Malinaw na kopya ng inyong QCitizen ID o Senior Citizen / OSCA ID (harapan at likod).",
+      description: "Malinaw na kopya ng inyong QCitizen ID o Senior Citizen / OSCA ID.",
       required: true,
     },
     {
       id: "indigencyCertificate",
-      label: "CERTIFICATE OF INDIGENCY (FOR SOCIAL WELFARE ASSISTANCE)",
+      label: "CERTIFICATE OF INDIGENCY",
       description: "Certificate of Indigency mula sa Barangay na may layunin na 'For Social Welfare Assistance'.",
       required: true,
     },
     {
       id: "otherSupportingDocs",
       label: "OTHER SUPPORTING DOCUMENTS",
-      description: "Iba pang katibayan o dokumento kung kinakailangan batay sa kalagayan (hal. reseta ng gamot, medical abstract, bills, atbp.).",
+      description: "Iba pang katibayan o dokumento kung kinakailangan batay sa kalagayan.",
       required: false,
     },
   ]
@@ -1140,7 +1140,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <User className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    Personal Information (Personal na Impormasyon)
+                    Personal Information
                   </h3>
                 </div>
 
@@ -1204,7 +1204,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Suffix (Jr., Sr., III, etc.)</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Suffix</label>
                     <input
                       type="text"
                       value={formData.suffix}
@@ -1218,7 +1218,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Date of Birth (MM/DD/YYYY) *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Date of Birth *</label>
                     <div className="grid grid-cols-3 gap-1.5 mt-1">
                       <input
                         type="text"
@@ -1264,7 +1264,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Sex *</label>
                     <input
                       type="text"
-                      value={formData.sex === "Male" ? "Male (Lalaki)" : formData.sex === "Female" ? "Female (Babae)" : formData.sex}
+                      value={formData.sex}
                       disabled
                       readOnly
                       className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
@@ -1335,7 +1335,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <Briefcase className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    Occupation / Financial Information (Trabaho at Pananalapi)
+                    Occupation / Financial Information
                   </h3>
                 </div>
 
@@ -1347,11 +1347,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       onChange={(e) => updateField("employmentStatus", e.target.value)}
                       className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     >
-                      <option value="Retired / Pensioner">Retired / Pensioner (Pensyonado)</option>
-                      <option value="Unemployed">Unemployed (Walang Trabaho)</option>
-                      <option value="Self-employed / Small Business">Self-employed / Maliit na Negosyo</option>
+                      <option value="Retired / Pensioner">Retired / Pensioner</option>
+                      <option value="Unemployed">Unemployed</option>
+                      <option value="Self-employed / Small Business">Self-employed / Small Business</option>
                       <option value="Part-time Worker">Part-time Worker</option>
-                      <option value="Employed">Employed (May Trabaho)</option>
+                      <option value="Employed">Employed</option>
                     </select>
                   </div>
                   <div>
@@ -1391,7 +1391,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
 
                 <div>
                   <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-2">
-                    Pension / Benefits Received, if any (Natatanggap na Pensyon / Benepisyo):
+                    Pension / Benefits Received, if any:
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
@@ -1438,7 +1438,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         }}
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                       />
-                      <span>None (Walang Pensyon)</span>
+                      <span>None</span>
                     </label>
                   </div>
 
@@ -1448,7 +1448,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         type="text"
                         value={formData.pensionOtherSpecify}
                         onChange={(e) => updateField("pensionOtherSpecify", e.target.value)}
-                        placeholder="Pakitukoy ang ibang pensyon o benepisyo (e.g. Veteran, Private company pension)"
+                        placeholder="Pakitukoy ang ibang pensyon o benepisyo"
                         className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30"
                       />
                     </div>
@@ -1463,7 +1463,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     <Users className="h-4 w-4 text-blue-600" />
                     <div>
                       <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                        Family Composition (Komposisyon ng Pamilya)
+                        Family Composition
                       </h3>
                       <p className="text-[11px] text-muted-foreground">
                         Para malaman kung sino ang kasama at sumusuporta sa senior citizen.
@@ -1530,7 +1530,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                           </div>
                           <div>
                             <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
-                              Relasyon (Relationship) *
+                              Relationship *
                             </label>
                             <select
                               value={member.relationship}
@@ -1549,7 +1549,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                           </div>
                           <div>
                             <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
-                              Edad (Age) *
+                              Age *
                             </label>
                             <input
                               type="text"
@@ -1565,7 +1565,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
                             <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
-                              Trabaho / Hanapbuhay (Occupation)
+                              Occupation
                             </label>
                             <input
                               type="text"
@@ -1577,7 +1577,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                           </div>
                           <div>
                             <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
-                              Kita / Suporta (Income / Support)
+                              Income / Support
                             </label>
                             <input
                               type="text"
@@ -1589,7 +1589,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                           </div>
                           <div>
                             <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
-                              Iba pang Impormasyon (Other Info)
+                              Other Information
                             </label>
                             <input
                               type="text"
@@ -1611,13 +1611,13 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    Monthly Household Expenses (Buwanang Gastusin ng Sambahayan)
+                    Monthly Household Expenses
                   </h3>
                 </div>
 
                 <div className="max-w-md">
                   <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">
-                    Kabuuang Buwanang Gastusin (Total Monthly Expenses)
+                    Total Monthly Expenses
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-2.5 text-gray-500 font-bold text-sm">₱</span>
@@ -1625,7 +1625,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       type="text"
                       value={formData.totalMonthlyExpenses}
                       onChange={(e) => updateField("totalMonthlyExpenses", e.target.value)}
-                      placeholder="e.g. 6,500 (kuryente, tubig, pagkain, gamot)"
+                      placeholder="e.g. 6,500"
                       className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     />
                   </div>
@@ -1640,14 +1640,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <Home className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    Living Situation / Additional Information (Kalagayan sa Tirahan at Karagdagang Impormasyon)
+                    Living Situation / Additional Information
                   </h3>
                 </div>
 
                 {/* Living Arrangement */}
                 <div>
                   <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-2 uppercase tracking-wide">
-                    Living Arrangement (Kaayusan sa Tirahan):
+                    Living Arrangement:
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                     {[
@@ -1671,17 +1671,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                             onChange={() => toggleArrayItem("livingArrangements", item)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                           />
-                          <span>
-                            {item === "Living Alone"
-                              ? "Living Alone (Mag-isa)"
-                              : item === "Living with Spouse"
-                              ? "Living with Spouse (Kasama ang Asawa)"
-                              : item === "Living with Children"
-                              ? "Living with Children (Kasama ang mga Anak)"
-                              : item === "Living with Relatives"
-                              ? "Living with Relatives (Kasama ang mga Kamag-anak)"
-                              : "Other (Iba pa)"}
-                          </span>
+                          <span>{item}</span>
                         </label>
                       )
                     })}
@@ -1692,7 +1682,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         type="text"
                         value={formData.livingArrangementOther}
                         onChange={(e) => updateField("livingArrangementOther", e.target.value)}
-                        placeholder="Pakitukoy ang living arrangement (e.g. Kasama ang tagapag-alaga / boarding house)"
+                        placeholder="Pakitukoy ang living arrangement"
                         className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
                       />
                     </div>
@@ -1702,7 +1692,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 {/* Source of Financial Support */}
                 <div>
                   <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-2 uppercase tracking-wide">
-                    Source of Financial Support (Pinagkukunan ng Suportang Pinansyal):
+                    Source of Financial Support:
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                     {[
@@ -1725,15 +1715,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                             onChange={() => toggleArrayItem("financialSources", item)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                           />
-                          <span>
-                            {item === "Own Income"
-                              ? "Own Income (Sariling Kita)"
-                              : item === "Children/Family"
-                              ? "Children/Family (Mga Anak/Pamilya)"
-                              : item === "Pension"
-                              ? "Pension (Pensyon)"
-                              : "Other (Iba pa)"}
-                          </span>
+                          <span>{item}</span>
                         </label>
                       )
                     })}
@@ -1744,7 +1726,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         type="text"
                         value={formData.financialSourceOther}
                         onChange={(e) => updateField("financialSourceOther", e.target.value)}
-                        placeholder="Pakitukoy ang iba pang pinagkukunan ng suporta (e.g. Kapitbahay, Donasyon)"
+                        placeholder="Pakitukoy ang iba pang pinagkukunan ng suporta"
                         className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
                       />
                     </div>
@@ -1754,7 +1736,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 {/* Reason for Requesting Assistance */}
                 <div>
                   <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-2 uppercase tracking-wide">
-                    Reason for Requesting Assistance (Dahilan ng Paghingi ng Tulong):
+                    Reason for Requesting Assistance:
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                     {[
@@ -1779,19 +1761,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                             onChange={() => toggleArrayItem("reasonsForAssistance", item)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                           />
-                          <span>
-                            {item === "Insufficient Income"
-                              ? "Insufficient Income (Kulang ang Kita)"
-                              : item === "No Regular Income"
-                              ? "No Regular Income (Walang Regular na Kita)"
-                              : item === "High Household Expenses"
-                              ? "High Household Expenses (Mataas na Gastusin)"
-                              : item === "Medical/Medication Expenses"
-                              ? "Medical/Medication Expenses (Pambili ng Gamot / Pagpapagamot)"
-                              : item === "Food/Basic Needs"
-                              ? "Food/Basic Needs (Pagkain / Pangunahing Pangangailangan)"
-                              : "Other (Iba pa)"}
-                          </span>
+                          <span>{item}</span>
                         </label>
                       )
                     })}
@@ -1815,7 +1785,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <Gift className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    Other Assistance / Benefits Received (Iba Pang Tulong / Benepisyo)
+                    Other Assistance / Benefits Received
                   </h3>
                 </div>
 
@@ -1896,7 +1866,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       }}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                     />
-                    <span>None (Walang natatanggap)</span>
+                    <span>None</span>
                   </label>
                 </div>
 
@@ -1906,7 +1876,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       type="text"
                       value={formData.otherGovtAssistanceSpecify}
                       onChange={(e) => updateField("otherGovtAssistanceSpecify", e.target.value)}
-                      placeholder="Tukuyin ang Other Government Assistance (e.g. 4Ps, TUPAD, LGU Aid)"
+                      placeholder="Tukuyin ang Other Government Assistance"
                       className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
                     />
                   </div>
@@ -1918,7 +1888,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       type="text"
                       value={formData.otherFinancialAssistanceSpecify}
                       onChange={(e) => updateField("otherFinancialAssistanceSpecify", e.target.value)}
-                      placeholder="Tukuyin ang Other Financial Assistance (e.g. NGO Aid, Church assistance)"
+                      placeholder="Tukuyin ang Other Financial Assistance"
                       className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
                     />
                   </div>
@@ -1932,10 +1902,10 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
             <div className="space-y-4">
               <div className="border-b border-border pb-3">
                 <h3 className="text-base font-bold text-foreground">
-                  DOCUMENTARY REQUIREMENTS / UPLOADS (MGA KINAKAILANGANG DOKUMENTO)
+                  DOCUMENTARY REQUIREMENTS / UPLOADS
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Para sa Senior Social Welfare Assistance (SWA), mangyaring i-upload ang malinaw na larawan ng mga sumusunod:
+                  Para sa Senior Social Welfare Assistance, mangyaring i-upload ang malinaw na larawan ng mga sumusunod:
                 </p>
               </div>
 
@@ -1964,7 +1934,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         }`}
                       >
                         <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
-                          {doc.label} {doc.required ? <span className="text-red-500">*</span> : <span className="text-muted-foreground font-normal text-[10px] lowercase">(opsyonal)</span>}
+                          {doc.label} {doc.required ? <span className="text-red-500">*</span> : <span className="text-muted-foreground font-normal text-[10px] uppercase">Optional</span>}
                           {file && (
                             <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0">
                               <Check className="h-2.5 w-2.5 stroke-[3]" />
@@ -1975,7 +1945,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
 
                         <p className="text-xs text-muted-foreground mt-2">
-                          Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
+                          Allowed file types: JPG, JPEG, PNG, WEBP
                         </p>
 
                         <div className="mt-3 flex flex-wrap items-center gap-2.5">
@@ -2004,7 +1974,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
                           >
                             <Camera className="h-3.5 w-3.5" />
-                            KUMUHA NG LARAWAN (CAMERA)
+                            KUMUHA NG LARAWAN
                           </button>
                         </div>
 
@@ -2045,7 +2015,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
           {step === 4 && (
             <div className="space-y-5">
               <div>
-                <h3 className="text-base font-bold text-foreground">REVIEW & CONFIRM DETAILS (PAGSUSURI NG IMPORMASYON)</h3>
+                <h3 className="text-base font-bold text-foreground">REVIEW & CONFIRM DETAILS</h3>
                 <p className="text-sm text-muted-foreground">
                   Pakisuri nang mabuti ang lahat ng nakatalang impormasyon bago isumite ang inyong aplikasyon.
                 </p>
@@ -2099,9 +2069,9 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
               </ReviewSection>
 
               {/* Family Composition */}
-              <ReviewSection title={`Family Composition (${formData.familyMembers.length} Kasapi)`} onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              <ReviewSection title={`Family Composition - ${formData.familyMembers.length} Kasapi`} onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 {formData.familyMembers.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Walang nakatalang kasapi sa bahay (Living Alone / Mag-isa).</p>
+                  <p className="text-xs text-muted-foreground">Walang nakatalang kasapi sa bahay.</p>
                 ) : (
                   <div className="space-y-2">
                     {formData.familyMembers.map((m, i) => (
@@ -2112,7 +2082,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         </div>
                         <div>
                           <span className="text-gray-500 font-semibold block">Relasyon / Edad:</span>
-                          <span>{m.relationship} ({m.age || "—"} anyos)</span>
+                          <span>{m.relationship} - {m.age || "—"} anyos</span>
                         </div>
                         <div>
                           <span className="text-gray-500 font-semibold block">Trabaho:</span>
@@ -2280,7 +2250,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         }}
         isSubmitting={isSubmitting}
         title="Review Before Submission & Data Privacy Notice"
-        description="Please check all details and accept our Data Privacy Policy (RA 10173) before submitting your senior assistance application."
+        description="Please check all details and accept our Data Privacy Policy before submitting your senior assistance application."
         confirmText="YES, SUBMIT APPLICATION"
       />
 
