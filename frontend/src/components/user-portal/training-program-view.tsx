@@ -911,10 +911,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   a.status !== "rejected"
               )
 
-              const enrolledCount =
-                course.enrolledCount !== undefined
-                  ? course.enrolledCount
-                  : courseApps.length
+              const enrolledCount = Math.max(
+                courseApps.length,
+                course.enrolledCount || 0
+              )
               const totalSlots = course.totalSlots || 25
               const availableSlots = Math.max(0, totalSlots - enrolledCount)
               const slotPercent = Math.min(
