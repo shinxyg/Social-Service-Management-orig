@@ -355,10 +355,6 @@ export default function SoloParentApplicationWizard({
     }
   }, [userProfile])
 
-  const updateField = (field: string, val: string) => {
-    setFormData((prev) => ({ ...prev, [field]: val }))
-  }
-
   const handleVerifySoloParentId = () => {
     if (!soloParentIdNumber.trim()) return
     setIsVerifying(true)
