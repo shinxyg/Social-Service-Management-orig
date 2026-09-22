@@ -625,15 +625,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
     })
   }
 
-  // Array checkbox toggles
-  const toggleArrayItem = (field: "livingArrangements" | "financialSources" | "reasonsForAssistance", item: string) => {
-    setFormData((prev) => {
-      const current = prev[field] || []
-      const exists = current.includes(item)
-      const updated = exists ? current.filter((x) => x !== item) : [...current, item]
-      return { ...prev, [field]: updated }
-    })
-  }
 
   const handleFileUpload = (docId: string, file: File) => {
     setUploadedFiles((prev) => ({ ...prev, [docId]: file }))
