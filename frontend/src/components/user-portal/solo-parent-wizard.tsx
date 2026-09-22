@@ -334,6 +334,27 @@ export default function SoloParentApplicationWizard({
   const [receivingPension, setReceivingPension] = useState<"No" | "Yes" | "">("")
   const [pensionType, setPensionType] = useState("")
 
+  useEffect(() => {
+    if (userProfile) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: userProfile.firstName || prev.firstName,
+        middleName: userProfile.middleName || prev.middleName,
+        lastName: userProfile.lastName || prev.lastName,
+        suffix: userProfile.suffix || prev.suffix,
+        birthDate: userProfile.dob || userProfile.birthDate || prev.birthDate,
+        sex: userProfile.sex || userProfile.gender || prev.sex,
+        civilStatus: userProfile.civilStatus || prev.civilStatus,
+        addressStreet: userProfile.addressStreet || userProfile.addressHouseNo || prev.addressStreet,
+        addressBarangay: userProfile.addressBarangay || prev.addressBarangay,
+        addressCityMunicipality: userProfile.addressCityMunicipality || prev.addressCityMunicipality,
+        contactNo: userProfile.contactNo || prev.contactNo,
+        email: userProfile.email || prev.email,
+        qcidNumber: userProfile.qcidNo || userProfile.qcidNumber || prev.qcidNumber,
+      }))
+    }
+  }, [userProfile])
+
   const updateField = (field: string, val: string) => {
     setFormData((prev) => ({ ...prev, [field]: val }))
   }
@@ -855,8 +876,9 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="text"
                       value={formData.firstName}
-                      onChange={(e) => updateField("firstName", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -864,8 +886,9 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="text"
                       value={formData.middleName}
-                      onChange={(e) => updateField("middleName", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -873,8 +896,9 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="text"
                       value={formData.lastName}
-                      onChange={(e) => updateField("lastName", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -882,9 +906,10 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="text"
                       value={formData.suffix}
-                      onChange={(e) => updateField("suffix", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="e.g. Jr., III"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -894,30 +919,31 @@ export default function SoloParentApplicationWizard({
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Date of Birth (YYYY-MM-DD) *</label>
                     <input
-                      type="date"
+                      type="text"
                       value={formData.birthDate}
-                      onChange={(e) => updateField("birthDate", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Sex *</label>
-                    <select
+                    <input
+                      type="text"
                       value={formData.sex}
-                      onChange={(e) => updateField("sex", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors cursor-pointer"
-                    >
-                      <option value="Female">Female</option>
-                      <option value="Male">Male</option>
-                    </select>
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Civil Status *</label>
                     <input
                       type="text"
                       value={formData.civilStatus}
-                      onChange={(e) => updateField("civilStatus", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -929,9 +955,10 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="text"
                       value={formData.addressStreet}
-                      onChange={(e) => updateField("addressStreet", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="House / Unit / Street"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -939,8 +966,9 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="text"
                       value={formData.addressBarangay}
-                      onChange={(e) => updateField("addressBarangay", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -948,8 +976,9 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="text"
                       value={formData.addressCityMunicipality}
-                      onChange={(e) => updateField("addressCityMunicipality", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -961,9 +990,9 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="text"
                       value={formData.contactNo}
-                      onChange={(e) => updateField("contactNo", e.target.value.replace(/\D/g, "").slice(0, 11))}
-                      maxLength={11}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -971,8 +1000,9 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => updateField("email", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -980,8 +1010,9 @@ export default function SoloParentApplicationWizard({
                     <input
                       type="text"
                       value={formData.qcidNumber}
-                      onChange={(e) => updateField("qcidNumber", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-white dark:bg-slate-900 text-foreground transition-colors"
+                      disabled
+                      readOnly
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-gray-100 dark:bg-slate-800/80 text-foreground cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -991,7 +1022,7 @@ export default function SoloParentApplicationWizard({
                       value={soloParentIdNumber ? (soloParentIdNumber.startsWith("SP-") ? soloParentIdNumber : `SP-${soloParentIdNumber}`) : "—"}
                       readOnly
                       disabled
-                      className="w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
+                      className="w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-gray-100 dark:bg-slate-800/80 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
                     />
                   </div>
                 </div>
