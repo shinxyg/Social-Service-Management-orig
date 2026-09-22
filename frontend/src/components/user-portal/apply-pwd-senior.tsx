@@ -294,7 +294,7 @@ export default function ApplyPWDSenior() {
       window.removeEventListener("financial_disbursements_updated", handleUpdated)
       window.removeEventListener("storage", handleUpdated)
     }
-  }, [urlCategory, urlType, isSenior, isAssistance, isSeniorSocial, isSeniorMedicine, isSeniorMovie])
+  }, [urlCategory, urlType, isSenior, isAssistance, isSeniorSocial])
 
   useEffect(() => {
     try {
@@ -507,29 +507,11 @@ export default function ApplyPWDSenior() {
             </h2>
             <p className="text-xs text-gray-600 max-w-md mt-1 leading-relaxed">
               {isAppApproved
-                ? (isSeniorMedicine
-                    ? (language === "en"
-                        ? "Your application for Medicine Discount Booklet has been officially approved! Your official booklet number has been issued."
-                        : language === "bis"
-                        ? "Ang imong aplikasyon para sa Medicine Discount Booklet opisyal nang na-aprobahan."
-                        : "Ang inyong aplikasyon para sa Medicine Discount Booklet ay opisyal nang na-apruba ng Gov Service.")
-                    : isSeniorMovie
-                    ? (language === "en"
-                        ? "Your application for Free Movie Booklet has been officially approved! Your official booklet number has been issued."
-                        : language === "bis"
-                        ? "Ang imong aplikasyon para sa Free Movie Booklet opisyal nang na-aprobahan."
-                        : "Ang inyong aplikasyon para sa Free Movie Booklet ay opisyal nang na-apruba ng Gov Service.")
-                    : isAssistance || isSeniorSocial
-                    ? (language === "en"
-                        ? `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status.`
-                        : language === "bis"
-                        ? `Ang imong aplikasyon para sa ${serviceCleanTitle} opisyal nang na-aprobahan sa Gov Service.`
-                        : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay opisyal nang na-apruba ng Gov Service Social Services.`)
-                    : (language === "en"
-                        ? `Your application for ${serviceCleanTitle} has been officially approved! You already have an active ID.`
-                        : language === "bis"
-                        ? `Ang imong aplikasyon para sa ${serviceCleanTitle} opisyal nang na-aprobahan. Aduna ka nay aktibo nga ID.`
-                        : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay opisyal nang na-apruba ng Gov Service.`))
+                ? (language === "en"
+                    ? `Your application for ${serviceCleanTitle} has been officially approved! You can check your scheduled appointment or payout release status.`
+                    : language === "bis"
+                    ? `Ang imong aplikasyon para sa ${serviceCleanTitle} opisyal nang na-aprobahan sa Gov Service.`
+                    : `Ang inyong aplikasyon para sa ${serviceCleanTitle} ay opisyal nang na-apruba ng Gov Service Social Services.`)
                 : isAppRejected
                 ? (language === "en"
                     ? `Your application for ${serviceCleanTitle} was reviewed and not approved. You can review the reason below and submit a new application with updated documents.`
@@ -551,16 +533,6 @@ export default function ApplyPWDSenior() {
               </span>
               <span className="font-mono font-bold text-blue-600">{displayRef}</span>
             </div>
-            {(isSeniorMedicine || isSeniorMovie) && assignedBookletNo && (
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <span className="text-gray-500 font-medium">
-                  {language === "en" ? "Official Booklet Number:" : language === "bis" ? "Numero sa Booklet:" : "Numero ng Booklet:"}
-                </span>
-                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  {assignedBookletNo}
-                </span>
-              </div>
-            )}
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">Status:</span>
               {isAppApproved ? (
@@ -603,7 +575,7 @@ export default function ApplyPWDSenior() {
 
           <div className="w-full pt-2 flex flex-col gap-2">
             {}
-            {isAppApproved && !isAssistance && !isSeniorSocial && !isSeniorMedicine && !isSeniorMovie ? (
+            {isAppApproved && !isAssistance && !isSeniorSocial ? (
               <>
                 <button
                   type="button"
