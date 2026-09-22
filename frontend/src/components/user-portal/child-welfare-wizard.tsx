@@ -583,13 +583,6 @@ export default function ChildWelfareApplicationWizard({
   const [check2, setCheck2] = useState(false)
   const [check3, setCheck3] = useState(false)
   const [selectedSectors, setSelectedSectors] = useState<string[]>([])
-  const [selectedAssistanceType, setSelectedAssistanceType] = useState<string>("")
-
-  useEffect(() => {
-    if (selectedProgram && selectedAssistanceType && !selectedProgram.assistanceTypes.includes(selectedAssistanceType)) {
-      setSelectedAssistanceType("")
-    }
-  }, [selectedProgramId, language])
 
   const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -674,7 +667,6 @@ export default function ChildWelfareApplicationWizard({
     setCheck2(false)
     setCheck3(false)
     setSelectedSectors([])
-    setSelectedAssistanceType("")
     try {
       ;(window as any).__isFormDirty = false
     } catch {}
@@ -690,7 +682,6 @@ export default function ChildWelfareApplicationWizard({
       formData.familyNumStudying.trim() !== "" ||
       formData.is4PsBeneficiary !== "" ||
       selectedSectors.length > 0 ||
-      selectedAssistanceType !== "" ||
       check1 ||
       check2 ||
       check3 ||
@@ -800,10 +791,6 @@ export default function ChildWelfareApplicationWizard({
                 setSubmissionStage("pending")
                 setAppStatus(matched.application_status as any)
                 if (matched.reference_number) setReference(matched.reference_number)
-                if (matched.support_types && matched.support_types.length > 0) {
-                  const st = Array.isArray(matched.support_types) ? matched.support_types[0] : matched.support_types
-                  setSelectedAssistanceType(st)
-                }
               }
             }
           }
@@ -838,8 +825,7 @@ export default function ChildWelfareApplicationWizard({
     check1 &&
     check2 &&
     (!selectedProgram.checklists[2] || check3) &&
-    selectedSectors.length > 0 &&
-    selectedAssistanceType !== ""
+    selectedSectors.length > 0
 
   const step2Valid =
     // A. Applicant / Parent / Guardian Information
@@ -924,7 +910,7 @@ export default function ChildWelfareApplicationWizard({
       sector: selectedSectors.join(", "),
       sectors: selectedSectors,
       childName: childFullName,
-      supportTypes: [selectedAssistanceType],
+      supportTypes: selectedSectors.length > 0 ? selectedSectors : ["Educational Assistance"],
       documents: newDocItems,
       uploaded_documents: newDocItems,
     }
@@ -940,7 +926,7 @@ export default function ChildWelfareApplicationWizard({
         referenceNumber: ref,
         category: "Child Welfare",
         classification_title: selectedProgram.title,
-        application_type: selectedAssistanceType || "Educational Assistance",
+        application_type: "Educational Assistance",
         sector: selectedSectors.join(", "),
         sectors: selectedSectors,
         childName: childFullName,
@@ -981,7 +967,7 @@ export default function ChildWelfareApplicationWizard({
         programTitle: selectedProgram.title,
         selectedCategoryId: String(selectedProgram.id),
         selectedCategory: { id: selectedProgram.id, title: selectedProgram.title, key: selectedProgram.key },
-        selectedAssistanceType,
+        selectedAssistanceType: "Educational Assistance",
         documents: newDocItems,
         uploadedDocuments: newDocItems,
         formData: finalFormData,
@@ -1206,12 +1192,6 @@ export default function ChildWelfareApplicationWizard({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-500">
-              {language === "en" ? "Type of Assistance" : language === "bis" ? "Matang sa Tabang" : "Uri ng Tulong"}:
-            </span>
-            <span className="font-semibold text-gray-900">{selectedAssistanceType}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-500">
               Child / Beneficiary:
             </span>
             <span className="font-semibold text-gray-900">{formData.childFullName || "—"}</span>
@@ -1330,10 +1310,10 @@ export default function ChildWelfareApplicationWizard({
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>
                     {language === "tl"
-                      ? "Mangyaring lagyan ng check ang lahat ng aytem sa checklist, pumili ng sektor, at pumili ng uri ng tulong."
+                      ? "Mangyaring lagyan ng check ang lahat ng aytem sa checklist at pumili ng kahit isang sektor."
                       : language === "bis"
-                      ? "Palihug markahi ang tanang aytem sa checklist, pagpili og sektor, ug pagpili og matang sa tabang."
-                      : "Please check all items in the checklist, select at least one sector, and select the type of assistance."}
+                      ? "Palihug markahi ang tanang aytem sa checklist ug pagpili og bisan usa ka sektor."
+                      : "Please check all items in the checklist and select at least one sector."}
                   </span>
                 </div>
               )}
@@ -1394,35 +1374,6 @@ export default function ChildWelfareApplicationWizard({
                       : "Please select at least one sector."}
                   </p>
                 )}
-              </div>
-
-              <div className="pt-2">
-                <h3 className="text-sm font-bold text-gray-900 mb-1.5 tracking-wide uppercase">
-                  {language === "tl" ? "PUMILI NG URI NG TULONG" : language === "bis" ? "PAGPILI OG MATANG SA TABANG" : "CLICK THE TYPE OF ASSISTANCE"}
-                </h3>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                  {selectedProgram.assistanceTypeLabel || (language === "tl" ? "Pumili ng uri ng tulong *" : language === "bis" ? "Pagpili og matang sa tabang *" : "Choose the type of assistance *")}
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedAssistanceType}
-                    onChange={(e) => setSelectedAssistanceType(e.target.value)}
-                    className={`w-full h-11 rounded-lg border bg-white px-3.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6] font-medium ${
-                      attemptedNext && !selectedAssistanceType
-                        ? "border-red-500 bg-red-50/30"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    <option value="" disabled>
-                      {language === "tl" ? "Pumili ng Uri ng Tulong" : language === "bis" ? "Pagpili og Matang sa Tabang" : "Select Type of Assistance"}
-                    </option>
-                    {selectedProgram.assistanceTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
             </div>
           )}
@@ -1973,7 +1924,7 @@ export default function ChildWelfareApplicationWizard({
                 </p>
               </div>
 
-              {/* Program & Assistance Details */}
+              {/* Program & Sector Details */}
               <ReviewSection title="Program & Sector Details" onEdit={() => { setReturnToReview(true); setStep(1) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField
@@ -1983,10 +1934,6 @@ export default function ChildWelfareApplicationWizard({
                   <ReviewField
                     label="Sector"
                     value={selectedSectors.join(", ") || "—"}
-                  />
-                  <ReviewField
-                    label="Type of Assistance"
-                    value={selectedAssistanceType}
                   />
                   <ReviewField label="Residency Status" value="Residente ng Lungsod Quezon (Verified)" />
                 </div>
