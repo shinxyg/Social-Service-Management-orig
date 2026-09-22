@@ -451,8 +451,6 @@ export default function AICSServiceWizard({
   const FOOD_AGAIN_REASONS = [
     "Family Financial Hardship",
     "Loss of Income / Unemployment",
-    "Insufficient Food Supply",
-    "Emergency or Unexpected Expenses",
     "Large Number of Dependents",
     "Natural Disaster / Calamity",
   ]
