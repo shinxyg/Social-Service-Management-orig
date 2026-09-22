@@ -298,9 +298,9 @@ export default function SoloParentApplicationWizard({
   })
 
   // Step 2: Section B. Solo Parent Information
-  const [soloParentCategory, setSoloParentCategory] = useState("Unmarried parent")
-  const [numberOfDependents, setNumberOfDependents] = useState("2")
-  const [ageOfYoungestDependent, setAgeOfYoungestDependent] = useState("5")
+  const [soloParentCategory, setSoloParentCategory] = useState("")
+  const [numberOfDependents, setNumberOfDependents] = useState("")
+  const [ageOfYoungestDependent, setAgeOfYoungestDependent] = useState("")
 
   // Step 2: Section C. Employment & Income Information
   const [occupation, setOccupation] = useState("")
@@ -992,6 +992,7 @@ export default function SoloParentApplicationWizard({
                     <SelectInput
                       value={soloParentCategory}
                       onChange={setSoloParentCategory}
+                      placeholder="Select Solo Parent Category..."
                       options={[
                         { label: "Unmarried parent", value: "Unmarried parent" },
                         { label: "Widow / Widower", value: "Widow/Widower" },
@@ -1007,10 +1008,11 @@ export default function SoloParentApplicationWizard({
                       Number of Dependents *
                     </label>
                     <input
-                      type="number"
-                      min="1"
+                      type="text"
+                      inputMode="numeric"
                       value={numberOfDependents}
-                      onChange={(e) => setNumberOfDependents(e.target.value)}
+                      onChange={(e) => setNumberOfDependents(e.target.value.replace(/\D/g, ""))}
+                      placeholder="Enter number of dependents"
                       className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
                     />
                   </div>
@@ -1019,10 +1021,11 @@ export default function SoloParentApplicationWizard({
                       Age of Youngest Dependent *
                     </label>
                     <input
-                      type="number"
-                      min="0"
+                      type="text"
+                      inputMode="numeric"
                       value={ageOfYoungestDependent}
-                      onChange={(e) => setAgeOfYoungestDependent(e.target.value)}
+                      onChange={(e) => setAgeOfYoungestDependent(e.target.value.replace(/\D/g, ""))}
+                      placeholder="Enter age of youngest dependent"
                       className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
                     />
                   </div>
