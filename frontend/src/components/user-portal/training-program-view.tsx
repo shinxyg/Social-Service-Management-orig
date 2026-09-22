@@ -24,6 +24,13 @@ import {
   Target,
   Printer,
   Plus,
+  Coffee,
+  Headphones,
+  Home,
+  HeartPulse,
+  Flame,
+  ChefHat,
+  Building,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, type LoggedInUserProfile } from "../../utils/userProfile"
@@ -37,18 +44,23 @@ export interface TrainingCourse {
   title: string
   category: string
   description: string
-  date: string
-  time: string
-  location: string
-  landmark: string
+  duration: string // "18 working days" or "30 working days"
+  durationHours?: number
+  batch: string // "2nd Quarter 2026"
+  applicationOpens: string // "April 1, 2026"
+  applicationDeadline: string // "April 15, 2026"
+  trainingStarts: string // "May 2026"
+  date?: string
+  time?: string
+  location?: string
+  landmark?: string
   totalSlots: number
   availableSlots: number
   enrolledCount?: number
   percentFilled?: number
-  durationHours: number
-  instructor: string
-  prerequisites: string
-  materialsProvided: string
+  instructor?: string
+  prerequisites?: string
+  materialsProvided?: string
   icon?: string
 }
 
@@ -113,76 +125,234 @@ export interface TrainingApplicationRecord {
 
 const DEFAULT_COURSES: TrainingCourse[] = [
   {
-    id: "tr-sewing",
-    title: "Sewing Training",
+    id: "tr-bread-pastry",
+    title: "Bread and Pastry Making",
     category: "Livelihood & Skills Development",
-    description: "Learn pattern drafting, tailoring of garments and curtains, operating and maintaining sewing machines, and creating marketable products for the community.",
-    date: "September 15, 2026 - September 18, 2026",
-    time: "9:00 AM - 12:00 PM (3 Hours/Day)",
+    description: "Learn commercial bread and pastry production, baking techniques, measuring and mixing, pastry decorating, oven management, and food safety standards.",
+    duration: "18 working days",
+    durationHours: 54,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (18 working days)",
+    time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
-    landmark: "Beside Batasan Hills Barangay Hall / Across Puregold",
+    landmark: "Culinary & Bakery Lab, 3rd Floor",
     totalSlots: 25,
     availableSlots: 25,
     enrolledCount: 0,
     percentFilled: 0,
-    durationHours: 12,
-    instructor: "Mrs. Rosa Dimaculangan (Master Tailor)",
-    prerequisites: "Gov Services Resident (18 years old and above), interest in garment making.",
-    materialsProvided: "Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.",
+    instructor: "Chef Melissa Ramos (Master Baker & Pastry Chef)",
+    prerequisites: "Gov Services Resident (18 years old and above), interest in commercial baking & pastry production.",
+    materialsProvided: "Baking ingredients starter kit, apron, hairnet, baking tools set, and recipe module.",
   },
   {
-    id: "tr-cooking",
-    title: "Cooking Training",
+    id: "tr-barista",
+    title: "Barista",
     category: "Livelihood & Skills Development",
-    description: "Learn commercial cooking, food safety & sanitation, preparing popular snacks and dishes for eatery businesses, and proper food costing and pricing.",
-    date: "September 20, 2026 - September 23, 2026",
-    time: "1:00 PM - 4:00 PM (3 Hours/Day)",
+    description: "Master espresso extraction, milk steaming, latte art, coffee brewing methods, equipment maintenance, and coffee shop customer service.",
+    duration: "18 working days",
+    durationHours: 54,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (18 working days)",
+    time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
-    landmark: "3rd Floor Culinary Lab, near Batasan Hills Barangay Hall",
+    landmark: "Beverage & Coffee Training Hub, 2nd Floor",
     totalSlots: 25,
     availableSlots: 25,
     enrolledCount: 0,
     percentFilled: 0,
-    durationHours: 12,
-    instructor: "Chef Anthony Santos (Culinary Specialist)",
-    prerequisites: "Gov Services Resident, willing to follow kitchen hygiene & food safety guidelines.",
-    materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
+    instructor: "Mr. Dave Navarro (Certified Master Barista)",
+    prerequisites: "Gov Services Resident (18 years old and above), eager to work in cafes or start a coffee business.",
+    materialsProvided: "Specialty coffee beans, barista kit, frothing pitcher, tamper, and training handbook.",
   },
   {
-    id: "tr-beauty",
-    title: "Beauty Services Training",
+    id: "tr-computer-call-center",
+    title: "Basic Computer Literacy & Call Center Service",
     category: "Livelihood & Skills Development",
-    description: "Core skills in haircutting, hairstyling, manicure/pedicure with nail art, facial cleansing, and basic cosmetology for salon or home-service livelihood.",
-    date: "September 24, 2026 - September 27, 2026",
-    time: "9:00 AM - 12:00 PM (3 Hours/Day)",
+    description: "Practical training in computer operations, Microsoft Office tools, typing speed, English communication skills, call handling techniques, and BPO job preparation.",
+    duration: "18 working days",
+    durationHours: 54,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (18 working days)",
+    time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
-    landmark: "Ground Floor Wellness Studio, across Puregold Batasan",
-    totalSlots: 25,
-    availableSlots: 25,
-    enrolledCount: 0,
-    percentFilled: 0,
-    durationHours: 12,
-    instructor: "Ms. Cheryl Mendez (Certified Cosmetologist)",
-    prerequisites: "Gov Services Resident (18 years old and above), enthusiastic to learn beauty care.",
-    materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.",
-  },
-  {
-    id: "tr-computer",
-    title: "Basic Computer Training",
-    category: "Livelihood & Skills Development",
-    description: "Practical training in computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, and online job preparation.",
-    date: "September 28, 2026 - October 01, 2026",
-    time: "1:00 PM - 4:00 PM (3 Hours/Day)",
-    location: "Gov Services Skills Development Center, Batasan Hills",
-    landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
+    landmark: "IT & BPO Simulation Lab, 2nd Floor",
     totalSlots: 30,
     availableSlots: 30,
     enrolledCount: 0,
     percentFilled: 0,
-    durationHours: 12,
-    instructor: "Mr. Mark Villanueva (IT Skills Coordinator)",
-    prerequisites: "Gov Services Resident seeking to learn practical computer skills from basic navigation to office tools.",
-    materialsProvided: "Computer workstation with internet, digital handouts, practice USB drive.",
+    instructor: "Mr. Mark Villanueva (IT & BPO Skills Specialist)",
+    prerequisites: "Gov Services Resident seeking computer proficiency and customer service / BPO employment.",
+    materialsProvided: "Dedicated computer terminal, headset with mic, training modules, and practice software.",
+  },
+  {
+    id: "tr-hairdressing",
+    title: "Hairdressing",
+    category: "Livelihood & Skills Development",
+    description: "Hands-on training in hair cutting, hair styling, hair coloring, blowdrying, hair rebonding/perming, and salon sanitation management.",
+    duration: "30 working days",
+    durationHours: 90,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (30 working days)",
+    time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
+    location: "Gov Services Skills Development Center, Batasan Hills",
+    landmark: "Salon & Cosmetology Studio, Ground Floor",
+    totalSlots: 25,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    instructor: "Ms. Cheryl Mendez (Senior Hair Stylist & Cosmetologist)",
+    prerequisites: "Gov Services Resident (18 years old and above), interest in beauty and salon services.",
+    materialsProvided: "Professional shears, hair cutting kit, cape, comb sets, clips, and styling mannequins.",
+  },
+  {
+    id: "tr-beauty-care",
+    title: "Beauty Care",
+    category: "Livelihood & Skills Development",
+    description: "Learn manicure, pedicure, nail art application, basic facial treatments, day/evening makeup, and home-service/salon business management.",
+    duration: "30 working days",
+    durationHours: 90,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (30 working days)",
+    time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
+    location: "Gov Services Skills Development Center, Batasan Hills",
+    landmark: "Beauty & Wellness Studio, Ground Floor",
+    totalSlots: 25,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    instructor: "Ms. Jocelyn Cruz (Certified Esthetician & Nail Artist)",
+    prerequisites: "Gov Services Resident (18 years old and above), interested in beauty care and nail technology.",
+    materialsProvided: "Nail care grooming set, nail polishes, cuticle care tools, makeup starter kit, and sanitizer kit.",
+  },
+  {
+    id: "tr-dressmaking-sewing",
+    title: "Dressmaking / Sewing Craft",
+    category: "Livelihood & Skills Development",
+    description: "Learn body measurement, pattern drafting, fabric cutting, high-speed sewing machine operation, garment assembly, and sewing craft creation.",
+    duration: "30 working days",
+    durationHours: 90,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (30 working days)",
+    time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
+    location: "Gov Services Skills Development Center, Batasan Hills",
+    landmark: "Garment & Tailoring Workshop, 2nd Floor",
+    totalSlots: 25,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    instructor: "Mrs. Rosa Dimaculangan (Master Tailor & Dressmaker)",
+    prerequisites: "Gov Services Resident (18 years old and above), interest in sewing, dressmaking, or alterations.",
+    materialsProvided: "Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape, and tailoring scissors.",
+  },
+  {
+    id: "tr-housekeeping",
+    title: "Basic Housekeeping",
+    category: "Livelihood & Skills Development",
+    description: "Professional training in room cleaning, bed making, linen and laundry management, cleaning chemicals and sanitization, and hospitality guest service standards.",
+    duration: "30 working days",
+    durationHours: 90,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (30 working days)",
+    time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
+    location: "Gov Services Skills Development Center, Batasan Hills",
+    landmark: "Hospitality & Housekeeping Simulation Suite, 3rd Floor",
+    totalSlots: 25,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    instructor: "Mr. Ronald Garcia (Executive Housekeeper & TESDA Assessor)",
+    prerequisites: "Gov Services Resident (18 years old and above), willing to work in hotels, resorts, or commercial facilities.",
+    materialsProvided: "Housekeeping uniform/apron, cleaning essentials kit, microfibers, and service training manual.",
+  },
+  {
+    id: "tr-health-care",
+    title: "Health Care Provider",
+    category: "Livelihood & Skills Development",
+    description: "Foundational caregiving skills, patient vital signs measurement, elderly care, personal hygiene assistance, patient mobility, first aid, and emergency care basics.",
+    duration: "30 working days",
+    durationHours: 90,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (30 working days)",
+    time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
+    location: "Gov Services Skills Development Center, Batasan Hills",
+    landmark: "Healthcare & Caregiving Simulation Ward, 3rd Floor",
+    totalSlots: 25,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    instructor: "Nurse Elena Fernandez, RN (Certified Healthcare Trainer)",
+    prerequisites: "Gov Services Resident (18 years old and above), compassionate and willing to assist patients and seniors.",
+    materialsProvided: "BP apparatus with stethoscope, digital thermometer, caregiver scrub suit, and first-aid guide.",
+  },
+  {
+    id: "tr-welding",
+    title: "Basic Welding",
+    category: "Livelihood & Skills Development",
+    description: "Fundamental Shielded Metal Arc Welding (SMAW), welding safety standards, metal cutting, joint preparation, welding positions, and metal fabrication.",
+    duration: "30 working days",
+    durationHours: 90,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (30 working days)",
+    time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
+    location: "Gov Services Skills Development Center, Batasan Hills",
+    landmark: "Industrial Welding & Metal Fabrication Bay, Ground Floor",
+    totalSlots: 25,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    instructor: "Engr. Roberto Salazar (Certified SMAW Welding Instructor)",
+    prerequisites: "Gov Services Resident (18 years old and above), physically fit and willing to follow industrial safety.",
+    materialsProvided: "Welding helmet/mask, leather welding gloves, chipping hammer, safety goggles, and electrode kit.",
+  },
+  {
+    id: "tr-food-beverage-catering",
+    title: "Food, Beverage & Catering Services",
+    category: "Livelihood & Skills Development",
+    description: "Comprehensive training in food dining service, table setting, banquet catering operations, food safety standards, bar service, and catering event management.",
+    duration: "30 working days",
+    durationHours: 90,
+    batch: "2nd Quarter 2026",
+    applicationOpens: "April 1, 2026",
+    applicationDeadline: "April 15, 2026",
+    trainingStarts: "May 2026",
+    date: "May 2026 (30 working days)",
+    time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
+    location: "Gov Services Skills Development Center, Batasan Hills",
+    landmark: "Culinary Arts & Dining Banquet Hall, 3rd Floor",
+    totalSlots: 25,
+    availableSlots: 25,
+    enrolledCount: 0,
+    percentFilled: 0,
+    instructor: "Chef Anthony Santos & F&B Manager Carlo Reyes",
+    prerequisites: "Gov Services Resident (18 years old and above), passionate about culinary, dining, or catering business.",
+    materialsProvided: "Service apron, waiter corkscrew, table napkin set, banquet service manual, and food handler kit.",
   },
 ]
 
@@ -201,138 +371,13 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
   const getLocalizedCourse = (course: TrainingCourse) => {
-    if (isBis) {
-      if (course.id.includes("sewing")) {
-        return {
-          ...course,
-          title: "Sewing Training (Panahi)",
-          description: "Pagkat-on sa pattern drafting, panahi sa mga sinina ug kurtina, paggamit ug pag-atiman sa sewing machine, ug paghimo og mga produkto nga mabaligya.",
-          prerequisites: "Residente sa Gov Services (18 anyos pataas), interesado sa panahi.",
-          materialsProvided: "Panapton, thread kit, pattern paper, tracing wheel, measuring tape.",
-          landmark: "Tupad sa Batasan Hills Barangay Hall / Atbang sa Puregold",
-        }
-      }
-      if (course.id.includes("cooking")) {
-        return {
-          ...course,
-          title: "Cooking Training (Pagluto)",
-          description: "Pagkat-on sa commercial cooking, kalimpyo sa pagkaon, pag-andam og snacks ug pagkaon alang sa karenderya, ug hustong costing.",
-          prerequisites: "Residente sa Gov Services, andam mosunod sa food safety guidelines.",
-          materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
-          landmark: "3rd Floor Culinary Lab, duol sa Batasan Hills Barangay Hall",
-        }
-      }
-      if (course.id.includes("beauty")) {
-        return {
-          ...course,
-          title: "Beauty Services Training",
-          description: "Kahanas sa pagtupi, hairstyling, manicure/pedicure nga may nail art, facial cleansing ug basic cosmetology alang sa salon livelihood.",
-          prerequisites: "Residente sa Gov Services (18 anyos pataas), gusto makakat-on sa beauty care.",
-          materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer ug mga gamit sa manicure.",
-          landmark: "Ground Floor Wellness Studio, atbang sa Puregold Batasan",
-        }
-      }
-      if (course.id.includes("computer")) {
-        return {
-          ...course,
-          title: "Basic Computer Training",
-          description: "Pagbansay sa computer navigation, Microsoft Word typing, Excel spreadsheet budgeting, internet search, email, ug online job preparation.",
-          prerequisites: "Residente sa Gov Services nga gustong makakat-on og computer skills.",
-          materialsProvided: "Computer workstation nga may internet, digital handouts, practice USB drive.",
-          landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
-        }
-      }
-    } else if (language === "tl") {
-
-      if (course.id.includes("sewing")) {
-        return {
-          ...course,
-          title: "Sewing Training (Pananahi)",
-          description: "Matutunan ang pattern drafting, pananahi ng mga damit at kurtina, paggamit at pag-aalaga ng sewing machine, at paglikha ng mga produktong maaaring ibenta sa komunidad.",
-          prerequisites: "Gov Services Resident (18 taong gulang pataas), may interes sa pananahi.",
-          materialsProvided: "Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.",
-          landmark: "Tapat ng Puregold Batasan / Katabi ng Batasan Hills Barangay Hall",
-        }
-      }
-      if (course.id.includes("cooking")) {
-        return {
-          ...course,
-          title: "Cooking Training (Pagluluto)",
-          description: "Matutunan ang commercial cooking, food safety & sanitation, paghahanda ng merienda at lutong ulam na patok sa karenderya, at tamang costing at pagpepresyo.",
-          prerequisites: "Gov Services Resident, handang sumunod sa kitchen hygiene & food safety guidelines.",
-          materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
-          landmark: "3rd Floor Culinary Lab, malapit sa Batasan Hills Barangay Hall",
-        }
-      }
-      if (course.id.includes("beauty")) {
-        return {
-          ...course,
-          title: "Beauty Services Training",
-          description: "Pangunahing kasanayan sa haircutting at hairstyling, manicure/pedicure na may nail art, facial cleansing at basic cosmetology para sa salon o home-service livelihood.",
-          prerequisites: "Gov Services Resident (18 taong gulang pataas), masigasig matuto ng beauty care.",
-          materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.",
-          landmark: "Ground Floor Wellness Studio, tapat ng Puregold Batasan",
-        }
-      }
-      if (course.id.includes("computer")) {
-        return {
-          ...course,
-          title: "Basic Computer Training",
-          description: "Pagsasanay sa computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, at online job preparation.",
-          prerequisites: "Gov Services Resident na nais matuto ng computer mula sa basic navigation hanggang office tools.",
-          materialsProvided: "Computer workstation with internet, digital handouts, practice USB drive.",
-          landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
-        }
-      }
-    }
-
-    if (course.id.includes("sewing")) {
-      return {
-        ...course,
-        title: "Sewing Training",
-        description: "Learn pattern drafting, tailoring of garments and curtains, operating and maintaining sewing machines, and creating marketable products for the community.",
-        prerequisites: "Gov Services Resident (18 years old and above), interest in garment making.",
-        materialsProvided: "Sewing fabric, thread kit, pattern paper, tracing wheel, measuring tape.",
-        landmark: "Beside Batasan Hills Barangay Hall / Across Puregold",
-      }
-    }
-    if (course.id.includes("cooking")) {
-      return {
-        ...course,
-        title: "Cooking Training",
-        description: "Learn commercial cooking, food safety & sanitation, preparing popular snacks and dishes for eatery businesses, and proper food costing and pricing.",
-        prerequisites: "Gov Services Resident, willing to follow kitchen hygiene & food safety guidelines.",
-        materialsProvided: "Ingredients kit, cooking apron, hairnet, recipe guide booklet.",
-        landmark: "3rd Floor Culinary Lab, near Batasan Hills Barangay Hall",
-      }
-    }
-    if (course.id.includes("beauty")) {
-      return {
-        ...course,
-        title: "Beauty Services Training",
-        description: "Core skills in haircutting, hairstyling, manicure/pedicure with nail art, facial cleansing, and basic cosmetology for salon or home-service livelihood.",
-        prerequisites: "Gov Services Resident (18 years old and above), enthusiastic to learn beauty care.",
-        materialsProvided: "Nail grooming kit, salon cape, hair clips, sanitizer and manicure tools.",
-        landmark: "Ground Floor Wellness Studio, across Puregold Batasan",
-      }
-    }
-    if (course.id.includes("computer")) {
-      return {
-        ...course,
-        title: "Basic Computer Training",
-        description: "Practical training in computer navigation, Microsoft Word document typing, Excel spreadsheet budgeting, internet search, email communication, and online job preparation.",
-        prerequisites: "Gov Services Resident seeking to learn practical computer skills from basic navigation to office tools.",
-        materialsProvided: "Computer workstation with internet, digital handouts, practice USB drive.",
-        landmark: "2nd Floor Computer Laboratory, Batasan Hills Center",
-      }
-    }
     return course
   }
 
   const [activeApplication, setActiveApplication] = useState<TrainingApplicationRecord | null>(null)
   const [allUserApplications, setAllUserApplications] = useState<TrainingApplicationRecord[]>([])
 
-  const [applyCourseId, setApplyCourseId] = useState<string>("tr-sewing")
+  const [applyCourseId, setApplyCourseId] = useState<string>("tr-bread-pastry")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formStep, setFormStep] = useState<"select" | "profile" | "review">("select")
     const [isAttested, setIsAttested] = useState(false)
@@ -420,9 +465,16 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   }, [userQcid])
 
   const getCourseIcon = (id: string) => {
-    if (id.includes("sewing")) return <Scissors className="h-6 w-6 text-indigo-600" />
-    if (id.includes("cooking")) return <UtensilsCrossed className="h-6 w-6 text-amber-600" />
+    if (id.includes("bread") || id.includes("pastry")) return <ChefHat className="h-6 w-6 text-amber-600" />
+    if (id.includes("barista")) return <Coffee className="h-6 w-6 text-amber-700" />
+    if (id.includes("computer") || id.includes("call-center")) return <Headphones className="h-6 w-6 text-blue-600" />
+    if (id.includes("hairdressing")) return <Scissors className="h-6 w-6 text-purple-600" />
     if (id.includes("beauty")) return <Sparkles className="h-6 w-6 text-pink-600" />
+    if (id.includes("dressmaking") || id.includes("sewing")) return <Scissors className="h-6 w-6 text-indigo-600" />
+    if (id.includes("housekeeping")) return <Home className="h-6 w-6 text-emerald-600" />
+    if (id.includes("health")) return <HeartPulse className="h-6 w-6 text-rose-600" />
+    if (id.includes("welding")) return <Flame className="h-6 w-6 text-orange-600" />
+    if (id.includes("food") || id.includes("catering")) return <UtensilsCrossed className="h-6 w-6 text-emerald-600" />
     return <Laptop className="h-6 w-6 text-blue-600" />
   }
 
@@ -906,7 +958,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             )}
                           </div>
                           <span className="text-[11px] font-medium text-muted-foreground">
-                            {course.durationHours} {isEn ? "Hours Intensive Training" : isBis ? "Oras nga Masinsinang Pagbansay" : "Oras ng Masinsinang Pagsasanay"}
+                            {course.duration || "18 working days"}
                           </span>
                         </div>
                       </div>
@@ -932,19 +984,23 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       {course.description}
                     </p>
 
-                    {}
+                    {/* Training Schedule Details (Requested replacement) */}
                     <div className="space-y-1.5 pt-2 border-t border-border/60 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                        <span className="font-medium text-foreground">{course.date}</span>
+                        <span><strong className="text-foreground">Training Batch:</strong> {course.batch || "2nd Quarter 2026"}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Clock className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                        <span>{course.time}</span>
+                        <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span><strong className="text-foreground">Application Opens:</strong> {course.applicationOpens || "April 1, 2026"}</span>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0 mt-0.5" />
-                        <span className="line-clamp-1">{course.location} • <span className="italic text-[11px]">{course.landmark}</span></span>
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                        <span><strong className="text-foreground">Application Deadline:</strong> {course.applicationDeadline || "April 15, 2026"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+                        <span><strong className="text-foreground">Training Starts:</strong> {course.trainingStarts || "May 2026"}</span>
                       </div>
                     </div>
 
@@ -1297,7 +1353,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {selectedCourse.durationHours} {isEn ? "Hours Intensive Training" : isBis ? "Oras nga Pagbansay" : "Oras ng Pagsasanay"} • {selectedCourse.date} ({selectedCourse.time})
+                            {selectedCourse.duration || "18 working days"} • Training Batch: {selectedCourse.batch || "2nd Quarter 2026"} (Starts: {selectedCourse.trainingStarts || "May 2026"})
                           </p>
                         </div>
                       </div>
@@ -1403,11 +1459,12 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-2 text-xs">
                       <div className="flex justify-between font-bold text-sm text-foreground">
                         <span>{picked.title}</span>
-                        <span className="text-blue-600">{picked.durationHours} {isEn ? "Hours" : isBis ? "Oras" : "Oras"}</span>
+                        <span className="text-blue-600">{picked.duration || "18 working days"}</span>
                       </div>
-                      <p className="text-muted-foreground">{isEn ? "Date:" : isBis ? "Petsa:" : "Petsa:"} <strong className="text-foreground">{picked.date}</strong> ({picked.time})</p>
-                      <p className="text-muted-foreground">{isEn ? "Location:" : isBis ? "Lokasyon:" : "Lokasyon:"} <strong className="text-foreground">{picked.location}</strong></p>
-                      <p className="text-muted-foreground italic">Landmark: {picked.landmark}</p>
+                      <p className="text-muted-foreground"><strong className="text-foreground">Training Batch:</strong> {picked.batch || "2nd Quarter 2026"}</p>
+                      <p className="text-muted-foreground"><strong className="text-foreground">Application Period:</strong> {picked.applicationOpens || "April 1, 2026"} - {picked.applicationDeadline || "April 15, 2026"}</p>
+                      <p className="text-muted-foreground"><strong className="text-foreground">Training Starts:</strong> {picked.trainingStarts || "May 2026"}</p>
+                      <p className="text-muted-foreground"><strong className="text-foreground">Location:</strong> {picked.location} • <span className="italic">{picked.landmark}</span></p>
                     </div>
                   )
                 })()}
@@ -1421,10 +1478,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   />
                   <span className="text-xs text-muted-foreground">
                     {isEn
-                      ? "I hereby certify that all information provided is true and correct, and I commit to faithfully attend all 4 days (3 hours/day • 12 hours total) of the training program."
+                      ? "I hereby certify that all information provided is true and correct, and I commit to faithfully attend all scheduled training sessions for this course."
                       : isBis
-                      ? "Gipamatud-an nako nga tinuod ang tanang impormasyon ug ako matinud-anong motambong sa tanang 4 ka adlaw sa pagbansay."
-                      : "Pinatutunayan ko na totoo ang lahat ng impormasyong nakatala at ako ay tapat na dadalo sa lahat ng 4 na araw (3 oras bawat araw • 12 oras kabuuan) ng pagsasanay."}
+                      ? "Gipamatud-an nako nga tinuod ang tanang impormasyon ug ako matinud-anong motambong sa tanang adlaw sa pagbansay."
+                      : "Pinatutunayan ko na totoo ang lahat ng impormasyong nakatala at ako ay tapat na dadalo sa lahat ng takdang araw ng pagsasanay sa kursong ito."}
                   </span>
                 </label>
               </div>
@@ -1871,7 +1928,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-foreground">{selectedCourse.title}</h3>
-                  <p className="text-xs text-muted-foreground">{selectedCourse.durationHours} {isEn ? "Hours Skills Development Program" : "Hours Skills Development Program"}</p>
+                  <p className="text-xs text-muted-foreground">{selectedCourse.duration || "18 working days"} Skills Training Course</p>
                 </div>
               </div>
               <button
@@ -1891,12 +1948,24 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
                 <div>
-                  <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Date:" : isBis ? "Petsa:" : "Petsa:"}</span>
-                  <span className="font-bold text-foreground">{selectedCourse.date}</span>
+                  <span className="font-semibold text-muted-foreground block text-[11px]">Training Batch:</span>
+                  <span className="font-bold text-foreground">{selectedCourse.batch || "2nd Quarter 2026"}</span>
                 </div>
                 <div>
-                  <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Time:" : isBis ? "Oras:" : "Oras:"}</span>
-                  <span className="font-bold text-foreground">{selectedCourse.time}</span>
+                  <span className="font-semibold text-muted-foreground block text-[11px]">Duration:</span>
+                  <span className="font-bold text-foreground">{selectedCourse.duration || "18 working days"}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-muted-foreground block text-[11px]">Application Opens:</span>
+                  <span className="font-bold text-emerald-600">{selectedCourse.applicationOpens || "April 1, 2026"}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-muted-foreground block text-[11px]">Application Deadline:</span>
+                  <span className="font-bold text-amber-600">{selectedCourse.applicationDeadline || "April 15, 2026"}</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="font-semibold text-muted-foreground block text-[11px]">Training Starts:</span>
+                  <span className="font-bold text-blue-600">{selectedCourse.trainingStarts || "May 2026"}</span>
                 </div>
               </div>
 
