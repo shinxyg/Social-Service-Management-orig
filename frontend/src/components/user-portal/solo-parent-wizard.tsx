@@ -1550,11 +1550,7 @@ export default function SoloParentApplicationWizard({
               onClick={goNext}
               className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer shadow-xs"
             >
-              {step === 1
-                ? "NEXT: APPLICATION FORM"
-                : step === 2
-                ? "NEXT: REQUIRED DOCUMENTS"
-                : "NEXT: REVIEW & SUBMIT"}
+              NEXT
             </button>
           ) : (
             <button
