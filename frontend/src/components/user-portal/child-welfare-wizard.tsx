@@ -1577,24 +1577,20 @@ export default function ChildWelfareApplicationWizard({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !formData.childSex ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.childSex ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
                       Sex *
                     </label>
-                    <div className="flex items-center gap-6 mt-2">
-                      {["Male", "Female"].map((s) => (
-                        <label key={s} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="childSex"
-                            value={s}
-                            checked={formData.childSex === s}
-                            onChange={() => updateField("childSex", s)}
-                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                          />
-                          <span>{s}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <select
+                      value={formData.childSex}
+                      onChange={(e) => updateField("childSex", e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.childSex ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    >
+                      <option value="">Select Sex</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
                   </div>
                   <div>
                     <label className={`text-xs font-semibold ${attemptedNext && !formData.childSchoolName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
@@ -1627,24 +1623,20 @@ export default function ChildWelfareApplicationWizard({
                 </div>
 
                 <div>
-                  <label className={`block text-xs font-semibold mb-2 ${attemptedNext && !formData.childSchoolType ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                  <label className={`text-xs font-semibold ${attemptedNext && !formData.childSchoolType ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
                     Type of School *
                   </label>
-                  <div className="flex flex-wrap items-center gap-6">
-                    {["Public School", "Alternative Learning System (ALS)"].map((st) => (
-                      <label key={st} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="childSchoolType"
-                          value={st}
-                          checked={formData.childSchoolType === st}
-                          onChange={() => updateField("childSchoolType", st)}
-                          className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                        />
-                        <span>{st}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <select
+                    value={formData.childSchoolType}
+                    onChange={(e) => updateField("childSchoolType", e.target.value)}
+                    className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                      attemptedNext && !formData.childSchoolType ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                    }`}
+                  >
+                    <option value="">Select Type of School</option>
+                    <option value="Public School">Public School</option>
+                    <option value="Alternative Learning System (ALS)">Alternative Learning System (ALS)</option>
+                  </select>
                 </div>
               </div>
 
@@ -1690,81 +1682,57 @@ export default function ChildWelfareApplicationWizard({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                   {/* 4Ps Beneficiary? */}
-                  <div className={`p-3.5 rounded-xl border transition-colors ${
-                    attemptedNext && !formData.is4PsBeneficiary
-                      ? "border-red-400 bg-red-50/50 dark:bg-red-950/20"
-                      : "border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800/50"
-                  }`}>
-                    <label className={`block text-xs font-semibold mb-2 ${attemptedNext && !formData.is4PsBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-800 dark:text-slate-200"}`}>
+                  <div>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.is4PsBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
                       4Ps Beneficiary? *
                     </label>
-                    <div className="flex items-center gap-6">
-                      {["Yes", "No"].map((opt) => (
-                        <label key={opt} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="is4PsBeneficiary"
-                            value={opt}
-                            checked={formData.is4PsBeneficiary === opt}
-                            onChange={() => updateField("is4PsBeneficiary", opt)}
-                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                          />
-                          <span>{opt}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <select
+                      value={formData.is4PsBeneficiary}
+                      onChange={(e) => updateField("is4PsBeneficiary", e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.is4PsBeneficiary ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    >
+                      <option value="">Select Option</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
                   </div>
 
                   {/* Solo Parent Educational Assistance Beneficiary? */}
-                  <div className={`p-3.5 rounded-xl border transition-colors ${
-                    attemptedNext && !formData.isSoloParentEdBeneficiary
-                      ? "border-red-400 bg-red-50/50 dark:bg-red-950/20"
-                      : "border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800/50"
-                  }`}>
-                    <label className={`block text-xs font-semibold mb-2 ${attemptedNext && !formData.isSoloParentEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-800 dark:text-slate-200"}`}>
+                  <div>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.isSoloParentEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
                       Solo Parent Educational Assistance Beneficiary? *
                     </label>
-                    <div className="flex items-center gap-6">
-                      {["Yes", "No"].map((opt) => (
-                        <label key={opt} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="isSoloParentEdBeneficiary"
-                            value={opt}
-                            checked={formData.isSoloParentEdBeneficiary === opt}
-                            onChange={() => updateField("isSoloParentEdBeneficiary", opt)}
-                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                          />
-                          <span>{opt}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <select
+                      value={formData.isSoloParentEdBeneficiary}
+                      onChange={(e) => updateField("isSoloParentEdBeneficiary", e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.isSoloParentEdBeneficiary ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    >
+                      <option value="">Select Option</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
                   </div>
 
                   {/* PWD Educational Assistance Beneficiary? */}
-                  <div className={`p-3.5 rounded-xl border transition-colors ${
-                    attemptedNext && !formData.isPwdEdBeneficiary
-                      ? "border-red-400 bg-red-50/50 dark:bg-red-950/20"
-                      : "border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800/50"
-                  }`}>
-                    <label className={`block text-xs font-semibold mb-2 ${attemptedNext && !formData.isPwdEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-800 dark:text-slate-200"}`}>
+                  <div>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.isPwdEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
                       PWD Educational Assistance Beneficiary? *
                     </label>
-                    <div className="flex items-center gap-6">
-                      {["Yes", "No"].map((opt) => (
-                        <label key={opt} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="isPwdEdBeneficiary"
-                            value={opt}
-                            checked={formData.isPwdEdBeneficiary === opt}
-                            onChange={() => updateField("isPwdEdBeneficiary", opt)}
-                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                          />
-                          <span>{opt}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <select
+                      value={formData.isPwdEdBeneficiary}
+                      onChange={(e) => updateField("isPwdEdBeneficiary", e.target.value)}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.isPwdEdBeneficiary ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    >
+                      <option value="">Select Option</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
                   </div>
                 </div>
               </div>
