@@ -88,21 +88,41 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
       "Children with Disabilities (CWD) enrolled in formal or SPED classes.",
     ],
     childRequirements: [
-      "PSA Birth Certificate of the Child",
-      "Certificate of Enrollment / Registration Form / School ID",
+      "Certificate of Enrollment – Original",
+      "Recent School ID – if available",
     ],
     parentRequirements: [
-      "QCID or Valid Government ID of Parent / Guardian",
-      "Barangay Certificate of Indigency / Solo Parent ID / PWD ID",
+      "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+      "Valid Government ID / preferably QCitizen ID",
     ],
     specialRequirements: [
       "School Enrollment / Academic Record Assessment",
     ],
     documents: [
-      { id: "psaBirthCert", label: "PSA Birth Certificate of the Child", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-      { id: "certEnrollment", label: "Certificate of Enrollment / School ID", required: true, sampleImage: "/samples/sample_valid_id.png" },
-      { id: "parentId", label: "Valid ID of Parent / Guardian / QCitizen ID", required: true, sampleImage: "/samples/QC ID.png" },
-      { id: "proofIndigency", label: "Barangay Certificate of Indigency / Solo Parent ID / PWD ID", required: true, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
+      {
+        id: "barangayIndigency",
+        label: "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+        required: true,
+        sampleImage: "/samples/BARANGAY CERTIFICATE.webp",
+      },
+      {
+        id: "certEnrollment",
+        label: "Certificate of Enrollment – Original",
+        required: true,
+        sampleImage: "/samples/sample_valid_id.png",
+      },
+      {
+        id: "schoolId",
+        label: "Recent School ID – if available",
+        required: false,
+        sampleImage: "/samples/sample_valid_id.png",
+      },
+      {
+        id: "validGovId",
+        label: "Valid Government ID / preferably QCitizen ID",
+        required: true,
+        sampleImage: "/samples/QC ID.png",
+      },
     ],
     submitButtonText: "SUBMIT APPLICATION",
   },
@@ -137,21 +157,41 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
           "Mga Batang may Kapansanan (CWD) na naka-enroll sa pormal o SPED na klase.",
         ],
         childRequirements: [
-          "PSA Birth Certificate ng Bata",
-          "Certificate of Enrollment / School ID",
+          "Certificate of Enrollment – Original",
+          "Recent School ID – kung mayroon",
         ],
         parentRequirements: [
-          "QCID o Valid ID ng Magulang / Guardian",
-          "Barangay Certificate of Indigency / Solo Parent ID / PWD ID",
+          "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+          "Valid Government ID / mas mainam ang QCitizen ID",
         ],
         specialRequirements: [
           "School Enrollment / Academic Record Assessment",
         ],
         documents: [
-          { id: "psaBirthCert", label: "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "certEnrollment", label: "Certificate of Enrollment / School ID", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "parentId", label: "Valid ID ng Magulang / Guardian / QCID", required: true, sampleImage: "/samples/QC ID.png" },
-          { id: "proofIndigency", label: "Barangay Certificate of Indigency / Solo Parent ID / PWD ID", required: true, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
+          {
+            id: "barangayIndigency",
+            label: "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+            required: true,
+            sampleImage: "/samples/BARANGAY CERTIFICATE.webp",
+          },
+          {
+            id: "certEnrollment",
+            label: "Certificate of Enrollment – Original",
+            required: true,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "schoolId",
+            label: "Recent School ID – if available",
+            required: false,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "validGovId",
+            label: "Valid Government ID / preferably QCitizen ID",
+            required: true,
+            sampleImage: "/samples/QC ID.png",
+          },
         ],
         submitButtonText: "ISUMITE ANG APLIKASYON",
       },
@@ -186,21 +226,41 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
           "Mga Bata nga Adunay Kapansanan (CWD) nga naka-enroll sa pormal o SPED classes.",
         ],
         childRequirements: [
-          "PSA Birth Certificate sa Bata",
-          "Certificate of Enrollment / School ID",
+          "Certificate of Enrollment – Original",
+          "Recent School ID – kung anaa",
         ],
         parentRequirements: [
-          "QCID o Balido nga ID sa Ginikanan / Guardian",
-          "Barangay Certificate of Indigency / Solo Parent ID / PWD ID",
+          "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+          "Balido nga Government ID / QCID",
         ],
         specialRequirements: [
           "School Enrollment / Academic Record Assessment",
         ],
         documents: [
-          { id: "psaBirthCert", label: "PSA Birth Certificate sa Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "certEnrollment", label: "Certificate of Enrollment / School ID", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "parentId", label: "Balido nga ID sa Ginikanan / Guardian / QCID", required: true, sampleImage: "/samples/QC ID.png" },
-          { id: "proofIndigency", label: "Barangay Certificate of Indigency / Solo Parent ID / PWD ID", required: true, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
+          {
+            id: "barangayIndigency",
+            label: "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+            required: true,
+            sampleImage: "/samples/BARANGAY CERTIFICATE.webp",
+          },
+          {
+            id: "certEnrollment",
+            label: "Certificate of Enrollment – Original",
+            required: true,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "schoolId",
+            label: "Recent School ID – if available",
+            required: false,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "validGovId",
+            label: "Valid Government ID / preferably QCitizen ID",
+            required: true,
+            sampleImage: "/samples/QC ID.png",
+          },
         ],
         submitButtonText: "ISUMITE ANG APLIKASYON",
       },
@@ -410,6 +470,51 @@ export default function ChildWelfareApplicationWizard({
   const { t, language } = useLanguage()
   const [profile, setProfile] = useState(() => (propUserProfile || getCurrentUserProfile()) as any)
 
+  const getProfileData = (prof: any) => {
+    const p = prof || {}
+    const fullName = [p.firstName, p.middleName, p.lastName, p.suffix].filter(Boolean).join(" ").trim()
+    const fullAddress = [p.addressHouseNo || p.houseNo, p.addressStreet || p.street].filter(Boolean).join(" ").trim()
+    return {
+      parentFullName: fullName || "",
+      parentRelationship: "",
+      parentQcid: p.qcidNo || p.qcidNumber || p.qcid || "110000116932100",
+      parentContactNo: p.contactNo || p.mobileNumber || "",
+      parentEmail: p.email || "",
+      parentAddress: fullAddress || "",
+      parentBarangay: p.addressBarangay || p.barangay || "Sauyo",
+    }
+  }
+
+  const initialProfile = userProfile || getCurrentUserProfile() || ({} as any)
+  const initialData = getProfileData(initialProfile)
+
+  const [formData, setFormData] = useState({
+    // A. Applicant / Parent / Guardian Information
+    parentFullName: initialData.parentFullName,
+    parentRelationship: "",
+    parentQcid: initialData.parentQcid,
+    parentContactNo: initialData.parentContactNo,
+    parentEmail: initialData.parentEmail,
+    parentAddress: initialData.parentAddress,
+    parentBarangay: initialData.parentBarangay,
+
+    // B. Child / Beneficiary Information
+    childFullName: "",
+    childDob: "",
+    childAge: "",
+    childSex: "",
+    childSchoolName: "",
+    childGradeLevel: "",
+    childSchoolType: "",
+
+    // C. Family Information
+    familyNumChildren: "",
+    familyNumStudying: "",
+    is4PsBeneficiary: "",
+    isSoloParentEdBeneficiary: "",
+    isPwdEdBeneficiary: "",
+  })
+
   useEffect(() => {
     const handleProfileUpdate = () => {
       const p = getCurrentUserProfile() as any
@@ -418,23 +523,12 @@ export default function ChildWelfareApplicationWizard({
         const d = getProfileData(p)
         setFormData((prev) => ({
           ...prev,
-          qcidNumber: d.qcidNumber || prev.qcidNumber,
-          firstName: d.firstName || prev.firstName,
-          middleName: d.middleName || prev.middleName,
-          lastName: d.lastName || prev.lastName,
-          suffix: d.suffix || prev.suffix,
-          nationality: d.nationality || prev.nationality || "FILIPINO",
-          dobMonth: d.dobMonth || prev.dobMonth,
-          dobDay: d.dobDay || prev.dobDay,
-          dobYear: d.dobYear || prev.dobYear,
-          age: d.age || prev.age,
-          sex: d.sex || prev.sex,
-          civilStatus: d.civilStatus || prev.civilStatus,
-          addressHouseNo: d.addressHouseNo || prev.addressHouseNo,
-          addressStreet: d.addressStreet || prev.addressStreet,
-          barangay: d.barangay || prev.barangay,
-          city: d.city || prev.city,
-          contactNo: d.contactNo || prev.contactNo,
+          parentFullName: prev.parentFullName || d.parentFullName,
+          parentQcid: prev.parentQcid || d.parentQcid,
+          parentContactNo: prev.parentContactNo || d.parentContactNo,
+          parentEmail: prev.parentEmail || d.parentEmail,
+          parentAddress: prev.parentAddress || d.parentAddress,
+          parentBarangay: prev.parentBarangay || d.parentBarangay,
         }))
       }
     }
@@ -450,13 +544,13 @@ export default function ChildWelfareApplicationWizard({
 
   const STEPS = [
     { id: 1, label: "COMPLETE CHECKLIST" },
-    { id: 2, label: "PERSONAL INFORMATION" },
+    { id: 2, label: "APPLICATION FORM" },
     { id: 3, label: "UPLOAD DOCUMENTS" },
     { id: 4, label: "REVIEW & SUBMIT" },
   ]
 
   const [step, setStep] = useState(1)
-    const [returnToReview, setReturnToReview] = useState(false)
+  const [returnToReview, setReturnToReview] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -500,170 +594,6 @@ export default function ChildWelfareApplicationWizard({
       setSelectedAssistanceType("")
     }
   }, [selectedProgramId, language])
-
-  const parseProfileDob = (prof: any) => {
-    let month = prof?.dobMonth || ""
-    let day = prof?.dobDay || prof?.birthDay || ""
-    let year = prof?.dobYear || prof?.birthYear || ""
-
-    const rawDob = prof?.birthDateIso || prof?.birthDate || prof?.dateOfBirth || prof?.dob || ""
-    if (typeof rawDob === "string" && rawDob.trim()) {
-      if (rawDob.includes("-")) {
-        const parts = rawDob.split("-")
-        if (parts.length === 3) {
-          if (parts[0].length === 4) {
-            year = parts[0]
-            month = parts[1]
-            day = parts[2]
-          } else {
-            month = parts[0]
-            day = parts[1]
-            year = parts[2]
-          }
-        }
-      } else if (rawDob.includes("/")) {
-        const parts = rawDob.split("/")
-        if (parts.length === 3) {
-          if (parts[2].length === 4) {
-            month = parts[0]
-            day = parts[1]
-            year = parts[2]
-          } else if (parts[0].length === 4) {
-            year = parts[0]
-            month = parts[1]
-            day = parts[2]
-          }
-        }
-      }
-    } else if (prof?.birthMonth) {
-      const mStr = String(prof.birthMonth).toUpperCase()
-      const MONTHS_MAP: Record<string, string> = {
-        JANUARY: "01", JAN: "01", ENERO: "01",
-        FEBRUARY: "02", FEB: "02", PEBRERO: "02",
-        MARCH: "03", MAR: "03", MARSO: "03",
-        APRIL: "04", APR: "04", ABRIL: "04",
-        MAY: "05", MAYO: "05",
-        JUNE: "06", JUN: "06", HUNYO: "06",
-        JULY: "07", JUL: "07", HULYO: "07",
-        AUGUST: "08", AUG: "08", AGOSTO: "08",
-        SEPTEMBER: "09", SEP: "09", SETYEMBRE: "09",
-        OCTOBER: "10", OCT: "10", OKTUBRE: "10",
-        NOVEMBER: "11", NOV: "11", NOBYEMBRE: "11",
-        DECEMBER: "12", DEC: "12", DISYEMBRE: "12",
-      }
-      month = MONTHS_MAP[mStr] || (mStr.match(/^\d+$/) ? mStr.padStart(2, "0") : "01")
-    }
-
-    return {
-      month: month ? String(month).padStart(2, "0") : "",
-      day: day ? String(day).padStart(2, "0") : "",
-      year: year ? String(year) : "",
-    }
-  }
-
-  const formatSex = (prof: any) => {
-    const rawSex = String(prof?.sex || prof?.gender || "").toUpperCase()
-    if (rawSex.includes("FEMALE") || rawSex.includes("BABAE")) return "Female"
-    if (rawSex.includes("MALE") || rawSex.includes("LALAKI")) return "Male"
-    return ""
-  }
-
-  const getProfileData = (prof: any) => {
-    const p = prof || {}
-    const dob = parseProfileDob(p)
-    return {
-      qcidNumber: p.qcidNo || p.qcidNumber || p.qcid || "",
-      firstName: p.firstName || "",
-      middleName: p.middleName || "",
-      lastName: p.lastName || "",
-      suffix: p.suffix || "",
-      nationality: p.nationality || "FILIPINO",
-      dobMonth: dob.month,
-      dobDay: dob.day,
-      dobYear: dob.year,
-      age: p.age !== undefined && p.age !== null && p.age !== "" ? String(p.age) : "",
-      sex: formatSex(p),
-      civilStatus: p.civilStatus || "Single",
-      addressHouseNo: p.addressHouseNo || p.houseNo || "",
-      addressStreet: p.addressStreet || p.street || "",
-      barangay: p.addressBarangay || p.barangay || "Sauyo",
-      city: p.addressCityMunicipality || p.city || "Quezon City",
-      contactNo: p.contactNo || p.mobileNumber || "",
-      email: "",
-    }
-  }
-
-  const initialProfile = userProfile || getCurrentUserProfile() || ({} as any)
-  const initialData = getProfileData(initialProfile)
-
-  const [formData, setFormData] = useState({
-
-    qcidNumber: initialData.qcidNumber,
-    firstName: initialData.firstName,
-    middleName: initialData.middleName,
-    lastName: initialData.lastName,
-    suffix: initialData.suffix,
-    nationality: initialData.nationality,
-    dobMonth: initialData.dobMonth,
-    dobDay: initialData.dobDay,
-    dobYear: initialData.dobYear,
-    age: initialData.age,
-    sex: initialData.sex,
-    civilStatus: initialData.civilStatus,
-    addressHouseNo: initialData.addressHouseNo,
-    addressStreet: initialData.addressStreet,
-    barangay: initialData.barangay,
-    city: initialData.city,
-    contactNo: initialData.contactNo,
-    email: "",
-
-    parentFullName: "",
-    parentRelationship: "",
-    parentContactNo: "",
-    isReportingPersonCurrentParent: "",
-    specifiedRelationship: "",
-
-    reasonForRequest: "",
-    briefDescription: "",
-    isImmediateDanger: "No",
-    isChildSafe: "Yes",
-    isParentAvailable: "Yes",
-    emergencyType: "Emergency Medical Assistance",
-    emergencyDate: "",
-    emergencyTime: "",
-    emergencyDateTime: "",
-    reportEmergencyPriority: true,
-    currentLivingSituation: "",
-
-    certifiedCorrect: false,
-  })
-
-  useEffect(() => {
-    const prof: any = userProfile || getCurrentUserProfile()
-    if (prof) {
-      const data = getProfileData(prof)
-      setFormData((prev) => ({
-        ...prev,
-        qcidNumber: prev.qcidNumber || data.qcidNumber,
-        firstName: prev.firstName || data.firstName,
-        middleName: prev.middleName || data.middleName,
-        lastName: prev.lastName || data.lastName,
-        suffix: prev.suffix || data.suffix,
-        nationality: prev.nationality || data.nationality,
-        dobMonth: prev.dobMonth || data.dobMonth,
-        dobDay: prev.dobDay || data.dobDay,
-        dobYear: prev.dobYear || data.dobYear,
-        age: prev.age || data.age,
-        sex: prev.sex || data.sex,
-        civilStatus: prev.civilStatus || data.civilStatus,
-        addressHouseNo: prev.addressHouseNo || data.addressHouseNo,
-        addressStreet: prev.addressStreet || data.addressStreet,
-        barangay: prev.barangay || data.barangay,
-        city: prev.city || data.city,
-        contactNo: prev.contactNo || data.contactNo,
-      }))
-    }
-  }, [userProfile])
 
   const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -709,7 +639,7 @@ export default function ChildWelfareApplicationWizard({
   const [privacyAgreed, setPrivacyAgreed] = useState(false)
   const [isReapplying, setIsReapplying] = useState(() => {
     try {
-      const progKey = initialProgramKey || "nutritional-assistance"
+      const progKey = initialProgramKey || "educational-assistance"
       const progId = initialProgramId || 1
       const isUrlParam = typeof window !== "undefined" && window.location.search.includes("reapply=true")
       const isLocal =
@@ -758,12 +688,11 @@ export default function ChildWelfareApplicationWizard({
     submissionStage === "form" &&
     (
       step >= 2 ||
-      formData.parentFullName.trim() !== "" ||
-      formData.parentContactNo.trim() !== "" ||
-      formData.briefDescription.trim() !== "" ||
-      formData.emergencyDate.trim() !== "" ||
-      formData.emergencyTime.trim() !== "" ||
-      formData.reasonForRequest.trim() !== "" ||
+      formData.childFullName.trim() !== "" ||
+      formData.childSchoolName.trim() !== "" ||
+      formData.familyNumChildren.trim() !== "" ||
+      formData.familyNumStudying.trim() !== "" ||
+      formData.is4PsBeneficiary !== "" ||
       selectedSectors.length > 0 ||
       selectedAssistanceType !== "" ||
       check1 ||
@@ -816,19 +745,18 @@ export default function ChildWelfareApplicationWizard({
           const appUid = String(a.user_id || a.userId || "").trim()
           if (uid && uid !== "0" && uid !== "1" && appUid && appUid === String(uid)) return true
 
-          const appEmail = String(a.email || a.guardian_email || a.form_data?.email || a.form_data?.guardianEmail || "").toLowerCase().trim()
+          const appEmail = String(a.email || a.guardian_email || a.form_data?.email || a.form_data?.parentEmail || "").toLowerCase().trim()
           if (userEmail && appEmail && userEmail === appEmail) return true
 
-          const appRef = String(a.reference_number || a.referenceNumber || a.qcid_number || a.qcidNumber || a.form_data?.qcidNumber || "").replace(/\D/g, "")
+          const appRef = String(a.reference_number || a.referenceNumber || a.qcid_number || a.qcidNumber || a.form_data?.parentQcid || "").replace(/\D/g, "")
           if (cleanUserQcid && cleanUserQcid.length >= 10 && appRef && (cleanUserQcid === appRef || appRef.startsWith(cleanUserQcid))) return true
 
-          const appFn = String(a.guardian_first_name || a.firstName || a.first_name || a.form_data?.firstName || a.form_data?.guardianFirstName || "").toLowerCase().trim()
-          const appLn = String(a.guardian_last_name || a.lastName || a.last_name || a.form_data?.lastName || a.form_data?.guardianLastName || "").toLowerCase().trim()
-          const appChildName = String(a.child_name || a.childName || a.form_data?.childName || "").toLowerCase().trim()
+          const appFn = String(a.guardian_first_name || a.parentFullName || a.firstName || a.first_name || a.form_data?.parentFullName || "").toLowerCase().trim()
+          const appChildName = String(a.child_name || a.childName || a.form_data?.childFullName || a.form_data?.childName || "").toLowerCase().trim()
 
           if (userFirstName && userLastName) {
-            if (appFn === userFirstName && appLn === userLastName) return true
-            if (appChildName === `${userFirstName} ${userLastName}`) return true
+            if (appFn.includes(userLastName)) return true
+            if (appChildName.includes(userLastName)) return true
           }
           return false
         }
@@ -918,18 +846,26 @@ export default function ChildWelfareApplicationWizard({
     selectedAssistanceType !== ""
 
   const step2Valid =
-    formData.firstName.trim() !== "" &&
-    formData.lastName.trim() !== "" &&
+    // A. Applicant / Parent / Guardian Information
     formData.parentFullName.trim() !== "" &&
     formData.parentRelationship.trim() !== "" &&
     formData.parentContactNo.trim().length >= 11 &&
-    formData.isReportingPersonCurrentParent !== "" &&
-    (formData.isReportingPersonCurrentParent === "Yes" || (formData.isReportingPersonCurrentParent === "No" && formData.specifiedRelationship.trim() !== "")) &&
-    (!selectedProgram.hasProtectionConcern || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== "")) &&
-    (!selectedProgram.hasEmergencyInfo || (formData.emergencyType.trim() !== "" && (formData.emergencyDate.trim() !== "" || formData.emergencyDateTime.trim() !== "") && formData.briefDescription.trim() !== "")) &&
-    (!selectedProgram.hasPsychosocialReason || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== "")) &&
-    (!selectedProgram.hasShelterCareInfo || (formData.reasonForRequest.trim() !== "" && formData.currentLivingSituation.trim() !== "")) &&
-    (!selectedProgram.hasParentingReason || (formData.reasonForRequest.trim() !== "" && formData.briefDescription.trim() !== ""))
+    formData.parentAddress.trim() !== "" &&
+    formData.parentBarangay.trim() !== "" &&
+    // B. Child / Beneficiary Information
+    formData.childFullName.trim() !== "" &&
+    formData.childDob.trim() !== "" &&
+    formData.childAge.trim() !== "" &&
+    formData.childSex.trim() !== "" &&
+    formData.childSchoolName.trim() !== "" &&
+    formData.childGradeLevel.trim() !== "" &&
+    formData.childSchoolType.trim() !== "" &&
+    // C. Family Information
+    formData.familyNumChildren.trim() !== "" &&
+    formData.familyNumStudying.trim() !== "" &&
+    formData.is4PsBeneficiary.trim() !== "" &&
+    formData.isSoloParentEdBeneficiary.trim() !== "" &&
+    formData.isPwdEdBeneficiary.trim() !== ""
 
   const requiredDocItems = selectedProgram.documents.filter((d) => d.required)
   const step3Valid = requiredDocItems.every((d) => (uploadedFiles[d.id] || []).length > 0)
@@ -961,7 +897,7 @@ export default function ChildWelfareApplicationWizard({
   }
 
   const handleSubmit = async () => {
-    const ref = generateReference(userProfile?.qcidNo || formData.qcidNumber)
+    const ref = generateReference(userProfile?.qcidNo || formData.parentQcid)
     setReference(ref)
     setShowConfirmModal(false)
     setSubmissionStage("pending")
@@ -985,18 +921,13 @@ export default function ChildWelfareApplicationWizard({
     }))
 
     const userId = (userProfile as any)?.id || (userProfile as any)?.userId || "0"
-    const childFullName = [formData.firstName, formData.middleName, formData.lastName, formData.suffix].filter(Boolean).join(" ")
+    const childFullName = formData.childFullName.trim()
 
     const finalFormData = {
       ...formData,
       sector: selectedSectors.join(", "),
       sectors: selectedSectors,
       childName: childFullName,
-      parentFullName: formData.parentFullName,
-      parentRelationship: formData.parentRelationship,
-      parentContactNo: formData.parentContactNo,
-      isReportingPersonCurrentParent: formData.isReportingPersonCurrentParent,
-      specifiedRelationship: formData.specifiedRelationship,
       supportTypes: [selectedAssistanceType],
       documents: newDocItems,
       uploaded_documents: newDocItems,
@@ -1007,8 +938,8 @@ export default function ChildWelfareApplicationWizard({
       const localRecord = {
         id: String(Date.now()),
         user_id: String(userId || (userProfile as any)?.id || "0"),
-        qcid_number: String(formData.qcidNumber || userProfile?.qcidNo || "").trim(),
-        email: String((userProfile as any)?.email || "").trim().toLowerCase(),
+        qcid_number: String(formData.parentQcid || userProfile?.qcidNo || "").trim(),
+        email: String(formData.parentEmail || (userProfile as any)?.email || "").trim().toLowerCase(),
         reference_number: ref,
         referenceNumber: ref,
         category: "Child Welfare",
@@ -1016,9 +947,6 @@ export default function ChildWelfareApplicationWizard({
         application_type: selectedAssistanceType || "Educational Assistance",
         sector: selectedSectors.join(", "),
         sectors: selectedSectors,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        middleName: formData.middleName,
         childName: childFullName,
         child_name: childFullName,
         parentFullName: formData.parentFullName,
@@ -1026,8 +954,6 @@ export default function ChildWelfareApplicationWizard({
         parentContactNo: formData.parentContactNo,
         guardian_first_name: formData.parentFullName,
         guardian_contact_no: formData.parentContactNo,
-        isReportingPersonCurrentParent: formData.isReportingPersonCurrentParent,
-        specifiedRelationship: formData.specifiedRelationship,
         documents: newDocItems,
         form_data: finalFormData,
         uploaded_documents: newDocItems,
@@ -1130,7 +1056,6 @@ export default function ChildWelfareApplicationWizard({
   }, [submissionStage, appStatus, onSubmissionStageChange])
 
   if (submissionStage === "pending") {
-
     if (appStatus === "rejected") {
       return (
         <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
@@ -1149,64 +1074,23 @@ export default function ChildWelfareApplicationWizard({
               {language === "en"
                 ? `We regret to inform you that your application for ${selectedProgram.title} was not approved. You may contact the Quezon City Social Welfare Office for more details or submit a new application.`
                 : language === "bis"
-                ? `Gikasubo namo nga wala na-aprobahan ang imong aplikasyon para sa ${selectedProgram.title}. Mahimo kang makig-alayon sa Quezon City Social Welfare Office o mag-apply pag-usab.`
-                : `Paumanhin, hindi na-approve ang inyong aplikasyon para sa ${selectedProgram.title}. Maaari kang makipag-ugnayan sa Quezon City Social Welfare Office para sa karagdagang detalye o mag-apply muli kung may mga dokumentong kailangang ayusin.`}
+                ? `Gikasubo namo nga ipahibalo nga ang imong aplikasyon para sa ${selectedProgram.title} wala maaprobahan. Mahimo kang makig-alayon sa Quezon City Social Welfare Office o magsumite og bag-ong aplikasyon.`
+                : `Ikinalulungkot naming ipabatid na ang iyong aplikasyon para sa ${selectedProgram.title} ay hindi naaprubahan. Maaari kayong makipag-ugnayan sa Quezon City Social Welfare Office para sa karagdagang detalye o magsumite ng bagong aplikasyon.`}
             </p>
-            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
-              <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                <span className="text-gray-500">
-                  {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
-                </span>
-                <span className="font-mono font-bold text-gray-900 text-sm">{reference}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">
-                  {language === "en" ? "Program" : "Programa"}
-                </span>
-                <span className="font-semibold text-gray-900">{selectedProgram.title}</span>
-              </div>
-              {selectedAssistanceType && (
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">
-                    {language === "en" ? "Type of Assistance" : language === "bis" ? "Matang sa Tabang" : "Uri ng Tulong"}
-                  </span>
-                  <span className="font-semibold text-gray-900">{selectedAssistanceType}</span>
-                </div>
-              )}
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">
-                  {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
-                </span>
-                <span className="font-semibold text-gray-900">{formData.firstName} {formData.lastName}</span>
-              </div>
-            </div>
-
-            <div className="w-full flex flex-col gap-2 mt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    localStorage.removeItem(`cw_reapplying_${selectedProgram.key}`)
-                    localStorage.removeItem(`cw_reapplying_${selectedProgram.id}`)
-                  } catch {}
-                  ;(window as any).__isFormDirty = false
-                  window.location.href = "/portal/my-applications"
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-              >
-                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
-              </button>
-              <button
-                type="button"
-                onClick={handleReapply}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
-              >
-                <RotateCcw className="h-3.5 w-3.5 text-gray-500" />
-                <span>
-                  {language === "en" ? "RE-APPLY (APPLY AGAIN)" : language === "bis" ? "PAG-APPLY PAG-USAB (RE-APPLY)" : "MAG-APPLY MULI (RE-APPLY)"}
-                </span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleReapply}
+              className="mt-2 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>
+                {language === "en"
+                  ? "Submit New Application"
+                  : language === "bis"
+                  ? "Magsumite og Bag-ong Aplikasyon"
+                  : "Magsumite ng Bagong Aplikasyon"}
+              </span>
+            </button>
           </div>
         </div>
       )
@@ -1216,49 +1100,37 @@ export default function ChildWelfareApplicationWizard({
       return (
         <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
           <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-3">
-            <div className="h-14 w-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 ring-8 ring-emerald-50/50">
-              <Check className="h-7 w-7" strokeWidth={3} />
+            <div className="h-14 w-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <Check className="h-7 w-7 stroke-[3]" />
             </div>
-            <h2 className="text-lg font-bold text-gray-900">
-              {language === "en"
-                ? "Application Approved!"
-                : language === "bis"
-                ? "Na-aprobahan ang Aplikasyon!"
-                : "Na-approve ang Application!"}
-            </h2>
-            <p className="text-xs text-gray-600 max-w-sm">
-              {language === "en"
-                ? `Your application for ${selectedProgram.title} has been officially approved by the Quezon City Social Services Development Department.`
-                : language === "bis"
-                ? `Ang imong aplikasyon para sa ${selectedProgram.title} opisyal na nga gi-aprobahan sa Quezon City Social Services Development Department.`
-                : `Ang inyong aplikasyon para sa ${selectedProgram.title} ay opisyal nang na-apruba ng Quezon City Social Services Development Department.`}
-            </p>
-            <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3 w-full text-left space-y-2 text-xs border border-gray-200">
+            <div className="space-y-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {language === "en" ? "Application Approved" : language === "bis" ? "Na-aprobahan ang Aplikasyon" : "Aprobado ang Aplikasyon"}
+              </span>
+              <h2 className="text-lg font-bold text-gray-900 mt-2">
+                {language === "en" ? "Congratulations!" : language === "bis" ? "Pahalipay!" : "Binabati Kita!"}
+              </h2>
+              <p className="text-xs text-gray-600 max-w-sm">
+                {language === "en"
+                  ? `Your application for ${selectedProgram.title} has been officially approved.`
+                  : language === "bis"
+                  ? `Ang imong aplikasyon para sa ${selectedProgram.title} opisyal nang naaprobahan.`
+                  : `Ang inyong aplikasyon para sa ${selectedProgram.title} ay opisyal nang naaprubahan.`}
+              </p>
+            </div>
+
+            <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-2 text-xs mt-2">
               <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                <span className="text-gray-500">
-                  {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
-                </span>
+                <span className="text-gray-500">Reference Number:</span>
                 <span className="font-mono font-bold text-blue-700 text-sm">{reference}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">
-                  {language === "en" ? "Program" : "Programa"}
-                </span>
-                <span className="font-semibold text-gray-900">{selectedProgram.title}</span>
+                <span className="text-gray-500">Child / Beneficiary:</span>
+                <span className="font-semibold text-gray-900">{formData.childFullName || "—"}</span>
               </div>
-              {selectedAssistanceType && (
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">
-                    {language === "en" ? "Type of Assistance" : language === "bis" ? "Matang sa Tabang" : "Uri ng Tulong"}
-                  </span>
-                  <span className="font-semibold text-gray-900">{selectedAssistanceType}</span>
-                </div>
-              )}
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">
-                  {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}
-                </span>
-                <span className="font-semibold text-gray-900">{formData.firstName} {formData.lastName}</span>
+                <span className="text-gray-500">Parent / Guardian:</span>
+                <span className="font-semibold text-gray-900">{formData.parentFullName || "—"}</span>
               </div>
             </div>
 
@@ -1344,15 +1216,15 @@ export default function ChildWelfareApplicationWizard({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-500">
-              {language === "en" ? "Applicant Name" : language === "bis" ? "Ngalan sa Aplikante" : "Pangalan ng Aplikante"}:
+              Child / Beneficiary:
             </span>
-            <span className="font-semibold text-gray-900">{formData.firstName} {formData.lastName}</span>
+            <span className="font-semibold text-gray-900">{formData.childFullName || "—"}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-500">
-              {language === "en" ? "Parent / Guardian" : language === "bis" ? "Ginikanan / Guardian" : "Magulang / Guardian"}:
+              Parent / Guardian:
             </span>
-            <span className="font-semibold text-gray-900">{formData.parentFullName}</span>
+            <span className="font-semibold text-gray-900">{formData.parentFullName || "—"}</span>
           </div>
         </div>
 
@@ -1390,7 +1262,7 @@ export default function ChildWelfareApplicationWizard({
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
       <div className="border border-gray-200 rounded-xl overflow-hidden bg-white relative">
-        {}
+        {/* Step progress header */}
         <div className="flex items-center px-6 pt-6 pb-4">
           {STEPS.map((s, i) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
@@ -1412,7 +1284,7 @@ export default function ChildWelfareApplicationWizard({
           ))}
         </div>
 
-        {}
+        {/* Step tabs */}
         <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
@@ -1430,12 +1302,11 @@ export default function ChildWelfareApplicationWizard({
           ))}
         </div>
 
-        {}
+        {/* Wizard content */}
         <div className="p-6 sm:p-8 space-y-7">
-          {}
+          {/* STEP 1: Checklist, Sector, Assistance Type */}
           {step === 1 && (
             <div className="space-y-6">
-              {}
               <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
                 <div>
@@ -1452,7 +1323,6 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </div>
 
-              {}
               <div>
                 <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
                   SERVICE AND PRIMARY REQUIREMENTS
@@ -1464,15 +1334,14 @@ export default function ChildWelfareApplicationWizard({
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>
                     {language === "tl"
-                      ? "Mangyaring lagyan ng check ang lahat ng aytem sa checklist at pumili ng uri ng tulong."
+                      ? "Mangyaring lagyan ng check ang lahat ng aytem sa checklist, pumili ng sektor, at pumili ng uri ng tulong."
                       : language === "bis"
-                      ? "Palihug markahi ang tanang aytem sa checklist ug pagpili og matang sa tabang."
-                      : "Please check all items in the checklist and select the type of assistance."}
+                      ? "Palihug markahi ang tanang aytem sa checklist, pagpili og sektor, ug pagpili og matang sa tabang."
+                      : "Please check all items in the checklist, select at least one sector, and select the type of assistance."}
                   </span>
                 </div>
               )}
 
-              {}
               <div className="space-y-4">
                 <CustomCheckbox
                   checked={check1}
@@ -1531,7 +1400,6 @@ export default function ChildWelfareApplicationWizard({
                 )}
               </div>
 
-              {}
               <div className="pt-2">
                 <h3 className="text-sm font-bold text-gray-900 mb-1.5 tracking-wide uppercase">
                   {language === "tl" ? "PUMILI NG URI NG TULONG" : language === "bis" ? "PAGPILI OG MATANG SA TABANG" : "CLICK THE TYPE OF ASSISTANCE"}
@@ -1563,13 +1431,16 @@ export default function ChildWelfareApplicationWizard({
             </div>
           )}
 
-          {}
+          {/* STEP 2: Application Form (A to C) */}
           {step === 2 && (
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-3">
                 <h3 className="text-base font-bold text-gray-900 uppercase">
-                  {selectedProgram.title} — {language === "tl" ? "PERSONAL NA IMPORMASYON" : language === "bis" ? "PERSONAL NGA IMPORMASYON" : "PERSONAL INFORMATION"}
+                  {selectedProgram.title} — APPLICATION FORM
                 </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Please complete the information for Applicant/Parent, Child Beneficiary, and Family. Fields marked with (*) are required.
+                </p>
               </div>
 
               {attemptedNext && !step2Valid && (
@@ -1585,460 +1456,395 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               )}
 
-              {}
+              {/* A. APPLICANT / PARENT / GUARDIAN INFORMATION */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
                   <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  {language === "tl" ? "I. IMPORMASYON NG APLIKANTE / BATA" : language === "bis" ? "I. IMPORMASYON SA APLIKANTE / BATA" : "I. APPLICANT / CHILD INFORMATION"}
+                  A. APPLICANT / PARENT / GUARDIAN INFORMATION
                 </h4>
 
-                {}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "QC ID (Opsyonal / Kung mayroon)" : language === "bis" ? "QC ID (Opsyonal / Kung anaa)" : "QC ID (Optional / If available)"}</label>
-                    <input type="text" disabled value={formData.qcidNumber} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Pangalan (First Name) *" : language === "bis" ? "Unang Ngalan (First Name) *" : "First Name *"}</label>
-                    <input type="text" disabled value={formData.firstName} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                </div>
-
-                {}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Gitnang Pangalan (Middle Name)" : language === "bis" ? "Tunga nga Ngalan (Middle Name)" : "Middle Name"}</label>
-                    <input type="text" disabled value={formData.middleName} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Apelyido (Last Name) *" : language === "bis" ? "Apelyido (Last Name) *" : "Last Name *"}</label>
-                    <input type="text" disabled value={formData.lastName} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Suffix (Jr., Sr., III, atbp.)" : language === "bis" ? "Suffix (Jr., Sr., III, ug uban pa)" : "Suffix (Jr., Sr., III, etc.)"}</label>
-                    <input type="text" disabled value={formData.suffix} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                </div>
-
-                {}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Nasyonalidad *" : language === "bis" ? "Nasyonalidad *" : "Nationality *"}</label>
-                    <input type="text" disabled value={formData.nationality || "FILIPINO"} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Petsa ng Kapanganakan (MM/DD/YYYY)" : language === "bis" ? "Petsa sa Pagkatawo (MM/DD/YYYY)" : "Date of Birth (MM/DD/YYYY)"}</label>
-                    <input
-                      type="text"
-                      disabled
-                      value={
-                        formData.dobMonth && formData.dobDay && formData.dobYear
-                          ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
-                          : [formData.dobMonth, formData.dobDay, formData.dobYear].filter(Boolean).join("/")
-                      }
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Edad *" : language === "bis" ? "Edad *" : "Age *"}</label>
-                    <input type="text" disabled value={formData.age} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                </div>
-
-                {}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Kasarian *" : language === "bis" ? "Kasarian *" : "Gender / Sex *"}</label>
-                    <input type="text" disabled value={formData.sex} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Katayuang Sibil" : language === "bis" ? "Sibil nga Kahimtang" : "Civil Status"}</label>
-                    <input type="text" disabled value={formData.civilStatus} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Numero ng Telepono" : language === "bis" ? "Numero sa Telepono" : "Contact Number"}</label>
-                    <input type="text" disabled value={formData.contactNo} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                </div>
-
-                {}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Numero ng Bahay / Gusali" : language === "bis" ? "Numero sa Balay / Edipisyo" : "House / Building Number"}</label>
-                    <input type="text" disabled value={formData.addressHouseNo} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Kalye (Street)" : language === "bis" ? "Dalan (Street)" : "Street"}</label>
-                    <input type="text" disabled value={formData.addressStreet} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{language === "tl" ? "Barangay" : language === "bis" ? "Barangay" : "Barangay"}</label>
-                    <input type="text" disabled value={formData.barangay} className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed" />
-                  </div>
-                </div>
-              </div>
-
-              {}
-              <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
-                <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
-                  <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  {t("parentGuardianTitle") || (language === "tl" ? "II. IMPORMASYON NG MAGULANG / GUARDIAN / NAG-UULAT" : language === "bis" ? "II. IMPORMASYON SA GINIKANAN / GUARDIAN / TIG-REPORT" : "II. PARENT / GUARDIAN / REPORTING PERSON INFORMATION")}
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.parentFullName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      {language === "tl" ? "Buong Pangalan *" : language === "bis" ? "Tibuok Ngalan *" : "Full Name *"}
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.parentFullName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Full Name *
                     </label>
                     <input
                       type="text"
                       value={formData.parentFullName}
                       onChange={(e) => updateField("parentFullName", e.target.value.replace(/[^a-zA-Z\sñÑ.-]/g, "").toUpperCase())}
-                      placeholder={language === "tl" ? "Ilagay ang Buong Pangalan" : "Enter Full Name"}
-                      className={`w-full h-10 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.parentFullName.trim() ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-slate-700"
+                      placeholder="Enter Full Name"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.parentFullName.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
                       }`}
                     />
                   </div>
                   <div>
-                    <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.parentRelationship ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      {language === "tl" ? "Relasyon sa Bata *" : language === "bis" ? "Relasyon sa Bata *" : "Relationship to Child *"}
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.parentRelationship ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Relationship to Child *
                     </label>
                     <select
                       value={formData.parentRelationship}
                       onChange={(e) => updateField("parentRelationship", e.target.value)}
-                      className={`w-full h-10 border rounded-lg px-3 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                        attemptedNext && !formData.parentRelationship ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-slate-700"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.parentRelationship ? "border-red-500" : "border-gray-300 dark:border-slate-700"
                       }`}
                     >
-                      <option value="">{language === "tl" ? "Piliin ang Relasyon" : language === "bis" ? "Pilia ang Relasyon" : "Select Relationship"}</option>
-                      {[
-                        { val: "Parent", label: "Parent" },
-                        { val: "Legal Guardian", label: "Legal Guardian" },
-                        { val: "Relative", label: "Relative" },
-                        { val: "Teacher", label: "Teacher" },
-                        { val: "Neighbor", label: "Neighbor" },
-                        { val: "Other", label: "Other" },
-                      ].map((r) => (
-                        <option key={r.val} value={r.val}>{r.label}</option>
-                      ))}
+                      <option value="">Select Relationship</option>
+                      <option value="Parent (Mother/Father)">Parent (Mother/Father)</option>
+                      <option value="Solo Parent">Solo Parent</option>
+                      <option value="Legal Guardian">Legal Guardian</option>
+                      <option value="Grandparent">Grandparent</option>
+                      <option value="Relative / Sibling">Relative / Sibling</option>
+                      <option value="Other">Other</option>
                     </select>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className={`block text-xs font-semibold mb-1 ${attemptedNext && formData.parentContactNo.length < 11 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      {language === "tl" ? "Numero ng Telepono *" : language === "bis" ? "Numero sa Telepono *" : "Contact Number *"}
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                      QCitizen ID / Valid Government ID
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.parentQcid}
+                      onChange={(e) => updateField("parentQcid", e.target.value)}
+                      placeholder="e.g. 110000116932100"
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className={`text-xs font-semibold ${attemptedNext && formData.parentContactNo.length < 11 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Contact Number *
                     </label>
                     <input
                       type="text"
                       maxLength={11}
                       value={formData.parentContactNo}
                       onChange={(e) => updateField("parentContactNo", e.target.value.replace(/\D/g, ""))}
-                      placeholder={language === "tl" ? "Ilagay ang Contact Number" : "Enter Contact Number"}
-                      className={`w-full h-10 rounded-lg border px-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && formData.parentContactNo.length < 11 ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-slate-700"
+                      placeholder="09XXXXXXXXX"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && formData.parentContactNo.length < 11 ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.parentEmail}
+                      onChange={(e) => updateField("parentEmail", e.target.value)}
+                      placeholder="example@email.com"
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.parentAddress.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Complete Address *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.parentAddress}
+                      onChange={(e) => updateField("parentAddress", e.target.value)}
+                      placeholder="House No., Street / Subdivision"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.parentAddress.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.parentBarangay.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Barangay *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.parentBarangay}
+                      onChange={(e) => updateField("parentBarangay", e.target.value)}
+                      placeholder="Barangay"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.parentBarangay.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* B. CHILD / BENEFICIARY INFORMATION */}
+              <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
+                <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
+                  <Baby className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  B. CHILD / BENEFICIARY INFORMATION
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.childFullName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.childFullName}
+                      onChange={(e) => updateField("childFullName", e.target.value.replace(/[^a-zA-Z\sñÑ.-]/g, "").toUpperCase())}
+                      placeholder="Enter Child's Full Name"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.childFullName.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className={`text-xs font-semibold ${attemptedNext && !formData.childDob ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                        Date of Birth *
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.childDob}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          updateField("childDob", val)
+                          if (val) {
+                            const birthDate = new Date(val)
+                            const today = new Date()
+                            let age = today.getFullYear() - birthDate.getFullYear()
+                            const m = today.getMonth() - birthDate.getMonth()
+                            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                              age--
+                            }
+                            if (age >= 0 && age <= 100) {
+                              updateField("childAge", String(age))
+                            }
+                          }
+                        }}
+                        className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                          attemptedNext && !formData.childDob ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold ${attemptedNext && !formData.childAge ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                        Age *
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={3}
+                        value={formData.childAge}
+                        onChange={(e) => updateField("childAge", e.target.value.replace(/\D/g, ""))}
+                        placeholder="Age"
+                        className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                          attemptedNext && !formData.childAge ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !formData.childSex ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Sex *
+                    </label>
+                    <div className="flex items-center gap-6 mt-2">
+                      {["Male", "Female"].map((s) => (
+                        <label key={s} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="childSex"
+                            value={s}
+                            checked={formData.childSex === s}
+                            onChange={() => updateField("childSex", s)}
+                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
+                          />
+                          <span>{s}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.childSchoolName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      School Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.childSchoolName}
+                      onChange={(e) => updateField("childSchoolName", e.target.value)}
+                      placeholder="Enter School Name"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.childSchoolName.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.childGradeLevel.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Grade Level *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.childGradeLevel}
+                      onChange={(e) => updateField("childGradeLevel", e.target.value)}
+                      placeholder="e.g. Grade 5 / Grade 11"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.childGradeLevel.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
                       }`}
                     />
                   </div>
                 </div>
 
-                {}
-                <div className={`mt-4 pt-3 border-t p-4 rounded-xl space-y-3 transition-colors ${
-                  attemptedNext && !formData.isReportingPersonCurrentParent
-                    ? "border-red-400 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800"
-                    : "border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60"
-                }`}>
-                  <h5 className="text-xs font-bold uppercase text-gray-700 dark:text-slate-300 tracking-wider">
-                    {language === "tl" ? "Karagdagang Impormasyon" : "Additional Information"}
-                  </h5>
-
-                  <div>
-                    <label className={`block text-xs font-semibold mb-2 ${
-                      attemptedNext && !formData.isReportingPersonCurrentParent ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-200"
-                    }`}>
-                      {language === "tl"
-                        ? "Ang nag-uulat ba ang kasalukuyang magulang/guardian ng bata? *"
-                        : "Is the reporting person the child's current parent/guardian? *"}
-                    </label>
-                    <div className="flex items-center gap-6">
-                      <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-slate-200 cursor-pointer">
+                <div>
+                  <label className={`block text-xs font-semibold mb-2 ${attemptedNext && !formData.childSchoolType ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                    Type of School *
+                  </label>
+                  <div className="flex flex-wrap items-center gap-6">
+                    {["Public School", "Alternative Learning System (ALS)"].map((st) => (
+                      <label key={st} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
                         <input
                           type="radio"
-                          name="isReportingPersonCurrentParent"
-                          value="Yes"
-                          checked={formData.isReportingPersonCurrentParent === "Yes"}
-                          onChange={() => updateField("isReportingPersonCurrentParent", "Yes")}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 cursor-pointer"
+                          name="childSchoolType"
+                          value={st}
+                          checked={formData.childSchoolType === st}
+                          onChange={() => updateField("childSchoolType", st)}
+                          className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
                         />
-                        <span>{language === "tl" ? "Oo (Yes)" : "Yes"}</span>
+                        <span>{st}</span>
                       </label>
-                      <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-slate-200 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="isReportingPersonCurrentParent"
-                          value="No"
-                          checked={formData.isReportingPersonCurrentParent === "No"}
-                          onChange={() => updateField("isReportingPersonCurrentParent", "No")}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 cursor-pointer"
-                        />
-                        <span>{language === "tl" ? "Hindi (No)" : "No"}</span>
-                      </label>
-                    </div>
-                    {attemptedNext && !formData.isReportingPersonCurrentParent && (
-                      <p className="text-xs text-red-500 dark:text-red-400 mt-1.5 font-medium">
-                        {language === "tl" ? "Mangyaring pumili ng opsyon (Oo o Hindi) *" : "Please select an option (Yes or No) *"}
-                      </p>
-                    )}
+                    ))}
                   </div>
-
-                  {formData.isReportingPersonCurrentParent === "No" && (
-                    <div className="pt-2">
-                      <label className={`block text-xs font-semibold mb-1 ${attemptedNext && !formData.specifiedRelationship.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-200"}`}>
-                        {language === "tl" ? "Kung Hindi, tukuyin ang relasyon sa bata: *" : "If No, specify relationship to the child: *"}
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.specifiedRelationship}
-                        onChange={(e) => updateField("specifiedRelationship", e.target.value.replace(/[^a-zA-Z\sñÑ.-]/g, ""))}
-                        placeholder={language === "tl" ? "Ilagay ang relasyon" : "Enter relationship"}
-                        className={`w-full max-w-md h-10 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                          attemptedNext && !formData.specifiedRelationship.trim() ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-slate-700"
-                        }`}
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {}
-              {selectedProgram.hasProtectionConcern && (
-                <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
-                  <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
-                    <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                    {language === "tl" ? "ALALAHANIN SA PROTEKSYON NG BATA" : language === "bis" ? "KABALAKA SA PROTEKSYON SA BATA" : "CHILD PROTECTION CONCERN"}
-                  </h4>
+              {/* C. FAMILY INFORMATION */}
+              <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
+                <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
+                  <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  C. FAMILY INFORMATION
+                </h4>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                      {language === "tl" ? "Dahilan ng Ulat / Tulong *" : language === "bis" ? "Rason sa Pag-report / Tabang *" : "Reason for Report / Assistance *"}
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.familyNumChildren.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Number of Children in the Family *
                     </label>
-                    <select
-                      value={formData.reasonForRequest}
-                      onChange={(e) => updateField("reasonForRequest", e.target.value)}
-                      className="w-full h-10 border border-gray-300 dark:border-slate-700 rounded-lg px-3 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    >
-                      <option value="">
-                        {language === "tl" ? "Pumili ng sitwasyon / dahilan..." : language === "bis" ? "Pilia ang sitwasyon / rason..." : "Select situation / reason..."}
-                      </option>
-                      {[
-                        { val: "Child Abuse / Neglect", label: language === "tl" ? "Pang-aabuso sa Bata / Pagpapabaya (Child Abuse / Neglect)" : "Child Abuse / Neglect" },
-                        { val: "Physical Abuse", label: language === "tl" ? "Pisikal na Pang-aabuso (Physical Abuse)" : "Physical Abuse" },
-                        { val: "Emotional Abuse", label: language === "tl" ? "Emosyonal na Pang-aabuso (Emotional Abuse)" : "Emotional Abuse" },
-                        { val: "Exploitation", label: language === "tl" ? "Pagsasamantala / Child Labor (Exploitation)" : "Exploitation / Child Labor" },
-                        { val: "Abandonment", label: language === "tl" ? "Pag-abandona (Abandonment)" : "Abandonment" },
-                        { val: "Threat to Safety / Urgent Protection", label: language === "tl" ? "Banta sa Kaligtasan / Agarang Proteksyon" : "Threat to Safety / Urgent Protection" },
-                        { val: "Legal / Custody Concern", label: language === "tl" ? "Legal / Custody na Alalahanin" : "Legal / Custody Concern" },
-                        { val: "Other Protection Concern", label: language === "tl" ? "Iba pang Alalahanin sa Proteksyon" : "Other Protection Concern" },
-                      ].map((item) => (
-                        <option key={item.val} value={item.val}>{item.label}</option>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={formData.familyNumChildren}
+                      onChange={(e) => updateField("familyNumChildren", e.target.value.replace(/\D/g, ""))}
+                      placeholder="Enter number"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.familyNumChildren.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`text-xs font-semibold ${attemptedNext && !formData.familyNumStudying.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                      Number of Children Currently Studying *
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={formData.familyNumStudying}
+                      onChange={(e) => updateField("familyNumStudying", e.target.value.replace(/\D/g, ""))}
+                      placeholder="Enter number"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                        attemptedNext && !formData.familyNumStudying.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                  {/* 4Ps Beneficiary? */}
+                  <div className={`p-3.5 rounded-xl border transition-colors ${
+                    attemptedNext && !formData.is4PsBeneficiary
+                      ? "border-red-400 bg-red-50/50 dark:bg-red-950/20"
+                      : "border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800/50"
+                  }`}>
+                    <label className={`block text-xs font-semibold mb-2 ${attemptedNext && !formData.is4PsBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-800 dark:text-slate-200"}`}>
+                      4Ps Beneficiary? *
+                    </label>
+                    <div className="flex items-center gap-6">
+                      {["Yes", "No"].map((opt) => (
+                        <label key={opt} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="is4PsBeneficiary"
+                            value={opt}
+                            checked={formData.is4PsBeneficiary === opt}
+                            onChange={() => updateField("is4PsBeneficiary", opt)}
+                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
+                          />
+                          <span>{opt}</span>
+                        </label>
                       ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                      {language === "tl" ? "Maikling Paglalarawan ng Sitwasyon / Insidente *" : language === "bis" ? "Mubo nga Deskripsyon sa Hitabo *" : "Brief Description of the Concern / Incident *"}
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={formData.briefDescription}
-                      onChange={(e) => updateField("briefDescription", e.target.value)}
-                      placeholder={
-                        language === "tl"
-                          ? "Ilarawan ang nangyari o kung bakit kailangan ng bata ng agarang proteksyon..."
-                          : language === "bis"
-                          ? "Ihulagway kung unsay nahitabo o ngano kinahanglan ug dinaliang proteksyon ang bata..."
-                          : "Please describe what happened or why the child needs urgent protection..."
-                      }
-                      className="w-full rounded-lg border border-gray-300 dark:border-slate-700 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                        {language === "tl"
-                          ? "Kasalukuyan bang nasa agarang panganib ang bata? *"
-                          : language === "bis"
-                          ? "Karon ba anaa sa dinaliang kapeligrohan ang bata? *"
-                          : "Is the child currently in immediate danger? *"}
-                      </label>
-                      <div className="flex items-center gap-6">
-                        {[
-                          { val: "Yes", label: language === "tl" ? "Oo (Yes)" : language === "bis" ? "Oo (Yes)" : "Yes" },
-                          { val: "No", label: language === "tl" ? "Hindi (No)" : language === "bis" ? "Dili (No)" : "No" },
-                        ].map((v) => (
-                          <label key={v.val} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="childProtectionDanger"
-                              value={v.val}
-                              checked={formData.isImmediateDanger === v.val}
-                              onChange={() => updateField("isImmediateDanger", v.val)}
-                              className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                            />
-                            <span>{v.label}</span>
-                          </label>
-                        ))}
-                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                        {language === "tl"
-                          ? "Kasalukuyan bang nasa ligtas na lugar ang bata? *"
-                          : language === "bis"
-                          ? "Karon ba anaa sa luwas nga dapit ang bata? *"
-                          : "Is the child currently in a safe location? *"}
-                      </label>
-                      <div className="flex items-center gap-6">
-                        {[
-                          { val: "Yes", label: language === "tl" ? "Oo (Yes)" : language === "bis" ? "Oo (Yes)" : "Yes" },
-                          { val: "No", label: language === "tl" ? "Hindi (No)" : language === "bis" ? "Dili (No)" : "No" },
-                        ].map((v) => (
-                          <label key={v.val} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="childProtectionSafe"
-                              value={v.val}
-                              checked={formData.isChildSafe === v.val}
-                              onChange={() => updateField("isChildSafe", v.val)}
-                              className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                            />
-                            <span>{v.label}</span>
-                          </label>
-                        ))}
-                      </div>
+                  </div>
+
+                  {/* Solo Parent Educational Assistance Beneficiary? */}
+                  <div className={`p-3.5 rounded-xl border transition-colors ${
+                    attemptedNext && !formData.isSoloParentEdBeneficiary
+                      ? "border-red-400 bg-red-50/50 dark:bg-red-950/20"
+                      : "border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800/50"
+                  }`}>
+                    <label className={`block text-xs font-semibold mb-2 ${attemptedNext && !formData.isSoloParentEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-800 dark:text-slate-200"}`}>
+                      Solo Parent Educational Assistance Beneficiary? *
+                    </label>
+                    <div className="flex items-center gap-6">
+                      {["Yes", "No"].map((opt) => (
+                        <label key={opt} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="isSoloParentEdBeneficiary"
+                            value={opt}
+                            checked={formData.isSoloParentEdBeneficiary === opt}
+                            onChange={() => updateField("isSoloParentEdBeneficiary", opt)}
+                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* PWD Educational Assistance Beneficiary? */}
+                  <div className={`p-3.5 rounded-xl border transition-colors ${
+                    attemptedNext && !formData.isPwdEdBeneficiary
+                      ? "border-red-400 bg-red-50/50 dark:bg-red-950/20"
+                      : "border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-800/50"
+                  }`}>
+                    <label className={`block text-xs font-semibold mb-2 ${attemptedNext && !formData.isPwdEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-800 dark:text-slate-200"}`}>
+                      PWD Educational Assistance Beneficiary? *
+                    </label>
+                    <div className="flex items-center gap-6">
+                      {["Yes", "No"].map((opt) => (
+                        <label key={opt} className="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-slate-200 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="isPwdEdBeneficiary"
+                            value={opt}
+                            checked={formData.isPwdEdBeneficiary === opt}
+                            onChange={() => updateField("isPwdEdBeneficiary", opt)}
+                            className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      ))}
                     </div>
                   </div>
                 </div>
-              )}
-
-              {}
-              {selectedProgram.hasEmergencyInfo && (
-                <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
-                  <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
-                    <Activity className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                    {language === "tl" ? "III. DETALYE NG EMERHENSIYA" : language === "bis" ? "III. DETALYE SA EMERHENSIYA" : "III. EMERGENCY DETAILS"}
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                        {language === "tl" ? "Uri ng Emerhensiya *" : language === "bis" ? "Matang sa Emerhensiya *" : "Type of Emergency *"}
-                      </label>
-                      <select
-                        value={formData.emergencyType}
-                        onChange={(e) => updateField("emergencyType", e.target.value)}
-                        className="w-full h-10 border border-gray-300 dark:border-slate-700 rounded-lg px-3 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      >
-                        <option value="Emergency Medical Assistance">Emergency Medical Assistance</option>
-                        <option value="Emergency Food Assistance">Emergency Food Assistance</option>
-                        <option value="Emergency Shelter / Temporary Housing">Emergency Shelter / Temporary Housing</option>
-                        <option value="Emergency Transportation">Emergency Transportation</option>
-                        <option value="Disaster / Calamity Assistance">Disaster / Calamity Assistance</option>
-                        <option value="Accident / Injury">Accident / Injury</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                        {language === "tl" ? "Tinatayang Petsa ng Insidente *" : language === "bis" ? "Petsa sa Hitabo *" : "Approximate Date of Incident / Need *"}
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.emergencyDate}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          updateField("emergencyDate", val)
-                          updateField("emergencyDateTime", [val, formData.emergencyTime].filter(Boolean).join(" at "))
-                        }}
-                        className="w-full h-10 border border-gray-300 dark:border-slate-700 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                        {language === "tl" ? "Oras ng Insidente / Pangangailangan" : language === "bis" ? "Oras sa Hitabo" : "Time of Incident / Need"}
-                      </label>
-                      <input
-                        type="time"
-                        value={formData.emergencyTime}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          updateField("emergencyTime", val)
-                          updateField("emergencyDateTime", [formData.emergencyDate, val].filter(Boolean).join(" at "))
-                        }}
-                        className="w-full h-10 border border-gray-300 dark:border-slate-700 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                      {language === "tl" ? "Maikling Paglalarawan ng Sitwasyong Pang-emerhensiya *" : language === "bis" ? "Mubo nga Deskripsyon sa Sitwasyon sa Emerhensiya *" : "Brief Description of the Emergency Situation *"}
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={formData.briefDescription}
-                      onChange={(e) => updateField("briefDescription", e.target.value)}
-                      placeholder={
-                        language === "tl"
-                          ? "Ilarawan ang nangyari at kung anong tulong ang agarang kailangan..."
-                          : language === "bis"
-                          ? "Ihulagway kung unsay nahitabo ug unsang tabang ang gikinahanglan..."
-                          : "Please explain what happened and the urgent assistance required..."
-                      }
-                      className="w-full rounded-lg border border-gray-300 dark:border-slate-700 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {}
-              {selectedProgram.hasPsychosocialReason && (
-                <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
-                  <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
-                    <HeartHandshake className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                    PSYCHOSOCIAL SUPPORT DETAILS
-                  </h4>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                      Reason for Seeking Counseling / Psychosocial Support *
-                    </label>
-                    <select
-                      value={formData.reasonForRequest}
-                      onChange={(e) => updateField("reasonForRequest", e.target.value)}
-                      className="w-full h-10 border border-gray-300 dark:border-slate-700 rounded-lg px-3 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    >
-                      <option value="">Pumili ng dahilan...</option>
-                      <option value="Trauma / Post-Traumatic Support">Trauma / Post-Traumatic Support</option>
-                      <option value="Behavioral / Emotional Concern">Behavioral / Emotional Concern</option>
-                      <option value="Grief / Loss of Family Member">Grief / Loss of Family Member</option>
-                      <option value="Crisis / Stress Support">Crisis / Stress Support</option>
-                      <option value="Victim of Abuse Support">Victim of Abuse Support</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           )}
 
-          {}
+          {/* STEP 3: Required Documents (D) */}
           {step === 3 && (
             <div className="space-y-5">
               <div className="border-b border-gray-200 pb-3">
                 <h3 className="text-base font-bold text-gray-900 uppercase">
-                  {t("cwStepDocuments") || "UPLOAD DOCUMENTS"}
+                  D. REQUIRED DOCUMENTS
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
                   Upload the required documents for {selectedProgram.title}. Fields marked with (*) are required.
@@ -2053,15 +1859,6 @@ export default function ChildWelfareApplicationWizard({
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-base font-bold text-gray-900">
-                    UPLOAD DOCUMENTS
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Please upload the required verification documents. Make sure files are clear and legible.
-                  </p>
-                </div>
-
                 {selectedProgram.documents.map((doc, docIdx) => {
                   const files = uploadedFiles[doc.id] || []
                   const uploaded = files.length > 0
@@ -2168,23 +1965,23 @@ export default function ChildWelfareApplicationWizard({
             </div>
           )}
 
-          {}
+          {/* STEP 4: Review & Submit */}
           {step === 4 && (
             <div className="space-y-5">
               <div>
                 <h3 className="text-base font-bold text-gray-900 uppercase">
-                  {(t("pwdReviewHeader") || (language === "tl" ? "SURIIN ANG IMPORMASYON" : language === "bis" ? "SUSIHA ANG IMPORMASYON" : "REVIEW INFORMATION")).toUpperCase()}
+                  REVIEW APPLICATION DETAILS
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {t("pwdReviewDesc") || (language === "tl" ? "Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon." : language === "bis" ? "Palihug susiha og maayo ang tanang impormasyon sa dili pa isumite ang aplikasyon." : "Please review all information and uploaded documents before submitting your application.")}
+                  Please review all information and uploaded documents before submitting your application.
                 </p>
               </div>
 
-              {}
-              <ReviewSection title={language === "tl" ? "Mga Detalye ng Aplikasyon" : language === "bis" ? "Mga Detalye sa Aplikasyon" : "Application Details"} onEdit={() => { setReturnToReview(true); setStep(1) }}>
+              {/* Program & Assistance Details */}
+              <ReviewSection title="Program & Sector Details" onEdit={() => { setReturnToReview(true); setStep(1) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField
-                    label={language === "tl" ? "Programa" : language === "bis" ? "Programa" : "Program"}
+                    label="Program"
                     value={selectedProgram.title}
                   />
                   <ReviewField
@@ -2192,85 +1989,57 @@ export default function ChildWelfareApplicationWizard({
                     value={selectedSectors.join(", ") || "—"}
                   />
                   <ReviewField
-                    label={language === "tl" ? "Uri ng Tulong" : language === "bis" ? "Matang sa Tabang" : "Type of Assistance"}
+                    label="Type of Assistance"
                     value={selectedAssistanceType}
                   />
-                  {formData.reasonForRequest && (
-                    <ReviewField
-                      label={language === "tl" ? "Dahilan" : language === "bis" ? "Rason" : "Reason for Request"}
-                      value={formData.reasonForRequest}
-                    />
-                  )}
-                  {formData.briefDescription && (
-                    <ReviewField
-                      label={language === "tl" ? "Deskripsyon" : language === "bis" ? "Deskripsyon" : "Description"}
-                      value={formData.briefDescription}
-                    />
-                  )}
-                  {selectedProgram.hasProtectionConcern && (
-                    <>
-                      <ReviewField label="Immediate Danger" value={formData.isImmediateDanger} />
-                      <ReviewField label="Child in Safe Location" value={formData.isChildSafe} />
-                    </>
-                  )}
-                  {selectedProgram.hasEmergencyInfo && (
-                    <>
-                      <ReviewField label="Emergency Type" value={formData.emergencyType} />
-                      <ReviewField
-                        label="Incident Date & Time"
-                        value={
-                          [formData.emergencyDate, formData.emergencyTime].filter(Boolean).join(" at ") ||
-                          formData.emergencyDateTime ||
-                          "—"
-                        }
-                      />
-                      <ReviewField label="Priority Level" value="HIGH PRIORITY (Emergency Response)" />
-                    </>
-                  )}
-                  {selectedProgram.hasShelterCareInfo && (
-                    <>
-                      <ReviewField label="Living Situation" value={formData.currentLivingSituation} />
-                      <ReviewField label="Child Safe" value={formData.isChildSafe} />
-                      <ReviewField label="Parent Available" value={formData.isParentAvailable} />
-                    </>
-                  )}
                   <ReviewField label="Residency Status" value="Residente ng Lungsod Quezon (Verified)" />
                 </div>
               </ReviewSection>
 
-              {}
-              <ReviewSection title={language === "tl" ? "Impormasyon ng Aplikante / Bata" : language === "bis" ? "Impormasyon sa Aplikante / Bata" : "Applicant / Child Information"} onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              {/* Section A Review */}
+              <ReviewSection title="A. Applicant / Parent / Guardian Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
-                  <ReviewField label="QC ID Number" value={formData.qcidNumber} />
-                  <ReviewField label={language === "tl" ? "Buong Pangalan" : language === "bis" ? "Tibuok Ngalan" : "Full Name"} value={[formData.firstName, formData.middleName, formData.lastName, formData.suffix].filter(Boolean).join(" ")} />
+                  <ReviewField label="Full Name" value={formData.parentFullName} />
+                  <ReviewField label="Relationship to Child" value={formData.parentRelationship} />
+                  <ReviewField label="QCitizen ID / Valid Government ID" value={formData.parentQcid} />
+                  <ReviewField label="Contact Number" value={formData.parentContactNo} />
+                  <ReviewField label="Email Address" value={formData.parentEmail} />
                   <ReviewField
-                    label={language === "tl" ? "Petsa ng Kapanganakan / Edad" : language === "bis" ? "Petsa sa Pagkatawo / Edad" : "Date of Birth / Age"}
-                    value={`${[formData.dobMonth, formData.dobDay, formData.dobYear].filter(Boolean).join("/")} (${formData.age} y/o)`}
+                    label="Complete Address"
+                    value={formData.parentAddress}
                   />
-                  <ReviewField label={language === "tl" ? "Kasarian / Katayuang Sibil" : language === "bis" ? "Kasarian / Sibil nga Kahimtang" : "Sex / Civil Status"} value={`${formData.sex} / ${formData.civilStatus}`} />
-                  <ReviewField label={language === "tl" ? "Numero ng Telepono" : language === "bis" ? "Numero sa Telepono" : "Contact Number"} value={formData.contactNo} />
-                  <ReviewField
-                    label={language === "tl" ? "Kumpletong Tirahan" : language === "bis" ? "Kompletong Pinuy-anan" : "Complete Address"}
-                    value={`${formData.addressHouseNo} ${formData.addressStreet}, Brgy. ${formData.barangay}, ${formData.city}`}
-                  />
+                  <ReviewField label="Barangay" value={formData.parentBarangay} />
                 </div>
               </ReviewSection>
 
-              {}
-              <ReviewSection title={language === "tl" ? "Impormasyon ng Magulang / Guardian / Nag-uulat" : language === "bis" ? "Impormasyon sa Ginikanan / Guardian / Tig-report" : "Parent / Guardian / Reporting Person Information"} onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              {/* Section B Review */}
+              <ReviewSection title="B. Child / Beneficiary Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
-                  <ReviewField label={language === "tl" ? "Buong Pangalan" : language === "bis" ? "Tibuok Ngalan" : "Full Name"} value={formData.parentFullName} />
-                  <ReviewField label={language === "tl" ? "Relasyon sa Bata" : language === "bis" ? "Relasyon sa Bata" : "Relationship to Child"} value={formData.parentRelationship} />
-                  <ReviewField label={language === "tl" ? "Numero ng Telepono" : language === "bis" ? "Numero sa Telepono" : "Contact Number"} value={formData.parentContactNo} />
-                  <ReviewField label={language === "tl" ? "Kasalukuyang Magulang/Guardian?" : "Is Current Parent/Guardian?"} value={formData.isReportingPersonCurrentParent} />
-                  {formData.isReportingPersonCurrentParent === "No" && (
-                    <ReviewField label={language === "tl" ? "Tinukoy na Relasyon" : "Specified Relationship"} value={formData.specifiedRelationship} />
-                  )}
+                  <ReviewField label="Child's Full Name" value={formData.childFullName} />
+                  <ReviewField
+                    label="Date of Birth / Age"
+                    value={`${formData.childDob} (${formData.childAge} years old)`}
+                  />
+                  <ReviewField label="Sex" value={formData.childSex} />
+                  <ReviewField label="School Name" value={formData.childSchoolName} />
+                  <ReviewField label="Grade Level" value={formData.childGradeLevel} />
+                  <ReviewField label="Type of School" value={formData.childSchoolType} />
                 </div>
               </ReviewSection>
 
-              {}
-              <ReviewSection title={language === "tl" ? "Mga Na-upload na Dokumento" : language === "bis" ? "Mga Na-upload nga Dokumento" : "Uploaded Documents"} onEdit={() => { setReturnToReview(true); setStep(3) }}>
+              {/* Section C Review */}
+              <ReviewSection title="C. Family Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                  <ReviewField label="Number of Children in Family" value={formData.familyNumChildren} />
+                  <ReviewField label="Number of Children Currently Studying" value={formData.familyNumStudying} />
+                  <ReviewField label="4Ps Beneficiary?" value={formData.is4PsBeneficiary} />
+                  <ReviewField label="Solo Parent Educational Assistance Beneficiary?" value={formData.isSoloParentEdBeneficiary} />
+                  <ReviewField label="PWD Educational Assistance Beneficiary?" value={formData.isPwdEdBeneficiary} />
+                </div>
+              </ReviewSection>
+
+              {/* Section D Review (Uploaded Documents) */}
+              <ReviewSection title="D. Required Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>
                 <div className="p-4 space-y-4">
                   {selectedProgram.documents.map((doc) => {
                     const files = uploadedFiles[doc.id] || []
@@ -2315,7 +2084,6 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </ReviewSection>
 
-              {}
               <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <p className="text-xs sm:text-sm text-blue-700 leading-relaxed">
@@ -2323,7 +2091,7 @@ export default function ChildWelfareApplicationWizard({
                     ? "Sa pag-click ng \"Isumite\", kinukumpirma mo na ang lahat ng impormasyong ibinigay ay totoo at kumpleto. Susuriin ang iyong aplikasyon ng isang evaluator, at makakatanggap ka ng abiso tungkol sa katayuan nito."
                     : language === "bis"
                     ? "Sa pag-click sa \"Isumite\", gipamatud-an nimo nga ang tanang impormasyon nga gihatag tinuod ug kompleto. Susihon ang imong aplikasyon sa evaluator."
-                    : "By clicking \"Submit\", you confirm that all information provided is true and complete. Your application will be reviewed by an evaluator, and you will receive a notification to your email about the status of your application."}
+                    : "By clicking \"Submit Application\", you confirm that all information provided is true and complete. Your application will be reviewed by Quezon City SSDD social workers."}
                 </p>
               </div>
 
@@ -2339,7 +2107,7 @@ export default function ChildWelfareApplicationWizard({
           )}
         </div>
 
-        {}
+        {/* Wizard action bar */}
         <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
           {step > 1 ? (
             <button
@@ -2386,7 +2154,6 @@ export default function ChildWelfareApplicationWizard({
         </div>
       </div>
 
-      {}
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}
         onClose={() => setCameraDoc(null)}
@@ -2398,7 +2165,6 @@ export default function ChildWelfareApplicationWizard({
         }}
       />
 
-      {}
       {previewDocModal && (
         <UploadedDocPreviewModal
           title={previewDocModal.title}
@@ -2406,8 +2172,6 @@ export default function ChildWelfareApplicationWizard({
           onClose={() => setPreviewDocModal(null)}
         />
       )}
-
-      {}
       
       <SubmitPrivacyOverlayModal
         isOpen={showConfirmModal}
