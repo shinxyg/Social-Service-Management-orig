@@ -1516,27 +1516,27 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
           {}
           {(!activeApplication || isRevising) && (
             <form onSubmit={handleSubmitApplication} className="bg-card border border-border rounded-2xl p-5 sm:p-7 shadow-sm space-y-6">
-              {/* Stepper Header (Enhanced & Proportional) */}
-              <div className="border-b border-border pb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
+              {/* Stepper Header (Full Width Clean Layout) */}
+              <div className="border-b border-border pb-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                   <h3 className="text-xl font-bold text-foreground">
                     {isEn ? "Apply for Training Program" : isBis ? "Mag-apply sa Programa sa Pagbansay" : "Mag-apply sa Programa ng Pagsasanay"}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground">
                     {isEn
-                      ? "Complete the applicant details and requirements for Quezon City skills training."
+                      ? "Complete applicant details and requirements for skills training."
                       : isBis
-                      ? "Kompletuha ang impormasyon sa aplikante ug mga gikinahanglang dokumento."
-                      : "Kumpletuhin ang mga detalye ng aplikante at mga kinakailangang dokumento."}
+                      ? "Kompletuha ang impormasyon sa aplikante ug mga dokumento."
+                      : "Kumpletuhin ang impormasyon ng aplikante at mga dokumento."}
                   </p>
                 </div>
 
-                {/* Modern Interactive Stepper */}
-                <div className="flex items-center gap-1.5 sm:gap-2 self-start md:self-center overflow-x-auto max-w-full pb-1">
+                {/* Full-width Responsive Stepper Bar */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-1">
                   <button
                     type="button"
                     onClick={() => setFormStep("select")}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                       formStep === "select"
                         ? "bg-blue-600 text-white border-blue-600 shadow-sm"
                         : "bg-muted/40 text-muted-foreground border-border hover:bg-muted/70 hover:text-foreground"
@@ -1547,15 +1547,13 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     }`}>
                       1
                     </span>
-                    <span className="whitespace-nowrap">{isEn ? "Course" : "Kurso"}</span>
+                    <span className="truncate">{isEn ? "1. Course" : "1. Kurso"}</span>
                   </button>
-
-                  <span className="text-muted-foreground text-xs font-bold px-0.5">→</span>
 
                   <button
                     type="button"
                     onClick={() => setFormStep("profile")}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                       formStep === "profile"
                         ? "bg-blue-600 text-white border-blue-600 shadow-sm"
                         : formStep === "review"
@@ -1572,15 +1570,13 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     }`}>
                       {formStep === "review" ? "✓" : "2"}
                     </span>
-                    <span className="whitespace-nowrap">{isEn ? "Applicant Info" : "Impormasyon"}</span>
+                    <span className="truncate">{isEn ? "2. Applicant Info" : "2. Impormasyon"}</span>
                   </button>
-
-                  <span className="text-muted-foreground text-xs font-bold px-0.5">→</span>
 
                   <button
                     type="button"
                     onClick={() => setFormStep("review")}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                       formStep === "review"
                         ? "bg-blue-600 text-white border-blue-600 shadow-sm"
                         : "bg-muted/40 text-muted-foreground border-border hover:bg-muted/70 hover:text-foreground"
@@ -1591,7 +1587,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     }`}>
                       3
                     </span>
-                    <span className="whitespace-nowrap">{isEn ? "Requirements & Confirm" : "Dokumento at Confirm"}</span>
+                    <span className="truncate">{isEn ? "3. Requirements" : "3. Dokumento"}</span>
                   </button>
                 </div>
               </div>
@@ -2039,23 +2035,63 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       </h4>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-4">
                       {/* Document 1: Request Letter */}
-                      <div className="p-4 rounded-xl border border-border bg-card hover:border-blue-500/40 transition-all space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="text-xs font-bold text-foreground">1. Request Letter</p>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">
-                              {isEn ? "Attached formal request letter for training" : "Kalakip na liham kahilingan para sa pagsasanay"}
-                            </p>
-                          </div>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                            Required
-                          </span>
+                      <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
+                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
+                          <span>REQUEST LETTER</span>
+                          <span className="text-red-500">*</span>
+                          {requestLetterDoc && (
+                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
+                              <Check className="h-2.5 w-2.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {isEn
+                            ? "Attached formal request letter addressed to SSDD / City Mayor."
+                            : "Kalakip na liham kahilingan para sa skills training program."}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                          <input
+                            type="file"
+                            id="upload-request-letter"
+                            accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) {
+                                setRequestLetterDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
+                              }
+                              e.target.value = ""
+                            }}
+                          />
+                          <label
+                            htmlFor="upload-request-letter"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>UPLOAD PHOTO</span>
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={() => setCameraModalDocType("requestLetter")}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
+                          >
+                            <Camera className="h-3.5 w-3.5" />
+                            <span>TAKE PHOTO (CAMERA)</span>
+                          </button>
                         </div>
 
-                        {requestLetterDoc ? (
-                          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+                        {requestLetterDoc && (
+                          <div className="mt-3.5 p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between text-xs max-w-md">
                             <div className="flex items-center gap-2 truncate">
                               <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
                               <span className="font-semibold text-emerald-700 dark:text-emerald-300 truncate">
@@ -2065,58 +2101,71 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             <button
                               type="button"
                               onClick={() => setRequestLetterDoc(null)}
-                              className="text-muted-foreground hover:text-rose-600 p-1 cursor-pointer"
+                              className="p-1 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors cursor-pointer"
                               title="Remove"
                             >
                               <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <label className="flex-1 py-2 px-3 rounded-xl border border-border hover:border-blue-500 bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 cursor-pointer transition-all">
-                              <Upload className="h-3.5 w-3.5 text-blue-600" />
-                              <span>{isEn ? "Upload File" : "Mag-upload"}</span>
-                              <input
-                                type="file"
-                                accept="image/*,.pdf"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const f = e.target.files?.[0]
-                                  if (f) {
-                                    setRequestLetterDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
-                                  }
-                                }}
-                              />
-                            </label>
-                            <button
-                              type="button"
-                              onClick={() => setCameraModalDocType("requestLetter")}
-                              className="py-2 px-3 rounded-xl border border-border hover:border-blue-500 bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 cursor-pointer transition-all"
-                              title="Capture with Camera"
-                            >
-                              <Camera className="h-3.5 w-3.5 text-blue-600" />
-                              <span>{isEn ? "Camera" : "Kamera"}</span>
                             </button>
                           </div>
                         )}
                       </div>
 
                       {/* Document 2: Proof of QC Residency / QC ID */}
-                      <div className="p-4 rounded-xl border border-border bg-card hover:border-blue-500/40 transition-all space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="text-xs font-bold text-foreground">2. Proof of QC Residency / QC ID</p>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">
-                              {isEn ? "QCitizen ID, Barangay Certificate of Residency, or Valid ID" : "QCitizen ID, Brgy Certificate of Residency, o Valid ID"}
-                            </p>
-                          </div>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                            Required
-                          </span>
+                      <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
+                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
+                          <span>QC ID / PROOF OF QC RESIDENCY</span>
+                          <span className="text-red-500">*</span>
+                          {qcIdDoc && (
+                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
+                              <Check className="h-2.5 w-2.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {isEn
+                            ? "Clear photo of your QCitizen ID, Barangay Certificate of Residency, or Valid ID (front and back)."
+                            : "Malinaw na kopya ng QCitizen ID, Barangay Certificate of Residency, o Valid ID."}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                          <input
+                            type="file"
+                            id="upload-qc-id"
+                            accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) {
+                                setQcIdDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
+                              }
+                              e.target.value = ""
+                            }}
+                          />
+                          <label
+                            htmlFor="upload-qc-id"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>UPLOAD PHOTO</span>
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={() => setCameraModalDocType("qcId")}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
+                          >
+                            <Camera className="h-3.5 w-3.5" />
+                            <span>TAKE PHOTO (CAMERA)</span>
+                          </button>
                         </div>
 
-                        {qcIdDoc ? (
-                          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+                        {qcIdDoc && (
+                          <div className="mt-3.5 p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between text-xs max-w-md">
                             <div className="flex items-center gap-2 truncate">
                               <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
                               <span className="font-semibold text-emerald-700 dark:text-emerald-300 truncate">
@@ -2126,37 +2175,10 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             <button
                               type="button"
                               onClick={() => setQcIdDoc(null)}
-                              className="text-muted-foreground hover:text-rose-600 p-1 cursor-pointer"
+                              className="p-1 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors cursor-pointer"
                               title="Remove"
                             >
                               <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <label className="flex-1 py-2 px-3 rounded-xl border border-border hover:border-blue-500 bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 cursor-pointer transition-all">
-                              <Upload className="h-3.5 w-3.5 text-blue-600" />
-                              <span>{isEn ? "Upload File" : "Mag-upload"}</span>
-                              <input
-                                type="file"
-                                accept="image/*,.pdf"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const f = e.target.files?.[0]
-                                  if (f) {
-                                    setQcIdDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
-                                  }
-                                }}
-                              />
-                            </label>
-                            <button
-                              type="button"
-                              onClick={() => setCameraModalDocType("qcId")}
-                              className="py-2 px-3 rounded-xl border border-border hover:border-blue-500 bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 cursor-pointer transition-all"
-                              title="Capture with Camera"
-                            >
-                              <Camera className="h-3.5 w-3.5 text-blue-600" />
-                              <span>{isEn ? "Camera" : "Kamera"}</span>
                             </button>
                           </div>
                         )}
