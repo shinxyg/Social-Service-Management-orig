@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import {
   AlertCircle,
-  RefreshCw,
   HeartHandshake,
   X,
   FileText,
@@ -469,7 +468,6 @@ export default function ApplyPWDSenior() {
 
   if (isBlocked && !bypassedBlock) {
     const displayRef = blockedApp?.referenceNumber || blockedApp?.reference_no || blockedApp?.reference_number || blockedApp?.id || blockedApp?.qc_id || blockedApp?.qcid || getLoggedInUserQcid() || "110000572516915"
-    const assignedBookletNo = blockedApp?.assignedIdNumber || blockedApp?.assigned_id_number || blockedApp?.bookletNumber || blockedApp?.existingBookletNumber
     const rawBlockedDate = blockedApp?.created_at || blockedApp?.submittedAt || blockedApp?.submitted_at || blockedApp?.dateSubmitted || blockedApp?.date_submitted
     const displayDate = formatAppDate(rawBlockedDate, blockedApp)
 
