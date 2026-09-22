@@ -2052,15 +2052,34 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     <div className="space-y-4">
                       {/* Document 1: Request Letter */}
                       <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
-                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
-                          <span>REQUEST LETTER</span>
-                          <span className="text-red-500">*</span>
-                          {requestLetterDoc && (
-                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
-                              <Check className="h-2.5 w-2.5 stroke-[3]" />
-                            </span>
-                          )}
-                        </p>
+                        <div className="flex flex-wrap items-center justify-between gap-2.5">
+                          <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
+                            <span>REQUEST LETTER</span>
+                            <span className="text-red-500">*</span>
+                            {requestLetterDoc && (
+                              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
+                                <Check className="h-2.5 w-2.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSampleDocModal({
+                                title: isEn ? "Sample Request Letter" : "Halimbawa ng Liham Kahilingan (Request Letter)",
+                                label: isEn ? "Sample Request Letter / Letter of Intent" : "Sample Request Letter / Letter of Intent",
+                                description: isEn
+                                  ? "Sample formal request letter addressed to SSDD indicating intent to participate in the skills training program."
+                                  : "Halimbawa ng pormal na liham kahilingan na nakadirekta sa SSDD para sa skills training program.",
+                                image: "/samples/LETTER OF INTENT.png",
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-semibold tracking-wide cursor-pointer transition-colors shadow-xs"
+                          >
+                            <FileText className="h-3.5 w-3.5 text-blue-600" />
+                            <span>SAMPLE DOCUMENT</span>
+                          </button>
+                        </div>
 
                         <p className="text-xs text-muted-foreground mt-1">
                           {isEn
@@ -2102,24 +2121,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             <Camera className="h-3.5 w-3.5" />
                             <span>TAKE PHOTO (CAMERA)</span>
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSampleDocModal({
-                                title: isEn ? "Sample Request Letter" : "Halimbawa ng Liham Kahilingan (Request Letter)",
-                                label: isEn ? "Sample Request Letter / Letter of Intent" : "Sample Request Letter / Letter of Intent",
-                                description: isEn
-                                  ? "Sample formal request letter addressed to SSDD indicating intent to participate in the skills training program."
-                                  : "Halimbawa ng pormal na liham kahilingan na nakadirekta sa SSDD para sa skills training program.",
-                                image: "/samples/LETTER OF INTENT.png",
-                              })
-                            }
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-blue-600" />
-                            <span>SAMPLE DOCUMENT</span>
-                          </button>
                         </div>
 
                         {requestLetterDoc && (
@@ -2144,15 +2145,34 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
                       {/* Document 2: Proof of QC Residency / QC ID */}
                       <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
-                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
-                          <span>QC ID / PROOF OF QC RESIDENCY</span>
-                          <span className="text-red-500">*</span>
-                          {qcIdDoc && (
-                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
-                              <Check className="h-2.5 w-2.5 stroke-[3]" />
-                            </span>
-                          )}
-                        </p>
+                        <div className="flex flex-wrap items-center justify-between gap-2.5">
+                          <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
+                            <span>QC ID / PROOF OF QC RESIDENCY</span>
+                            <span className="text-red-500">*</span>
+                            {qcIdDoc && (
+                              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
+                                <Check className="h-2.5 w-2.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSampleDocModal({
+                                title: isEn ? "Sample QC ID / Proof of Residency" : "Halimbawa ng QC ID / Katunayan ng Paninirahan",
+                                label: isEn ? "Sample QCitizen ID / Proof of QC Residency" : "Sample QCitizen ID / Barangay Certificate of Residency",
+                                description: isEn
+                                  ? "Sample Quezon City QCitizen ID card or Barangay Certificate proving residency in Quezon City."
+                                  : "Halimbawa ng QCitizen ID o Barangay Certificate na nagpapatunay ng paninirahan sa Quezon City.",
+                                image: "/samples/PROOF OF RESIDENCE.webp",
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-semibold tracking-wide cursor-pointer transition-colors shadow-xs"
+                          >
+                            <FileText className="h-3.5 w-3.5 text-blue-600" />
+                            <span>SAMPLE DOCUMENT</span>
+                          </button>
+                        </div>
 
                         <p className="text-xs text-muted-foreground mt-1">
                           {isEn
@@ -2194,24 +2214,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             <Camera className="h-3.5 w-3.5" />
                             <span>TAKE PHOTO (CAMERA)</span>
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSampleDocModal({
-                                title: isEn ? "Sample QC ID / Proof of Residency" : "Halimbawa ng QC ID / Katunayan ng Paninirahan",
-                                label: isEn ? "Sample QCitizen ID / Proof of QC Residency" : "Sample QCitizen ID / Barangay Certificate of Residency",
-                                description: isEn
-                                  ? "Sample Quezon City QCitizen ID card or Barangay Certificate proving residency in Quezon City."
-                                  : "Halimbawa ng QCitizen ID o Barangay Certificate na nagpapatunay ng paninirahan sa Quezon City.",
-                                image: "/samples/PROOF OF RESIDENCE.webp",
-                              })
-                            }
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-blue-600" />
-                            <span>SAMPLE DOCUMENT</span>
-                          </button>
                         </div>
 
                         {qcIdDoc && (
@@ -2236,15 +2238,34 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
                       {/* Document 3: 2x2 ID Picture / Barangay Certificate */}
                       <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
-                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
-                          <span>2X2 ID PICTURE / BARANGAY CERTIFICATE</span>
-                          <span className="text-red-500">*</span>
-                          {idPicDoc && (
-                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
-                              <Check className="h-2.5 w-2.5 stroke-[3]" />
-                            </span>
-                          )}
-                        </p>
+                        <div className="flex flex-wrap items-center justify-between gap-2.5">
+                          <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
+                            <span>2X2 ID PICTURE / BARANGAY CERTIFICATE</span>
+                            <span className="text-red-500">*</span>
+                            {idPicDoc && (
+                              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
+                                <Check className="h-2.5 w-2.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSampleDocModal({
+                                title: isEn ? "Sample 2x2 ID Picture / Barangay Certificate" : "Halimbawa ng 2x2 ID Picture / Barangay Certificate",
+                                label: isEn ? "Sample 2x2 ID Picture (White Background)" : "Sample 2x2 ID Picture / Barangay Certificate",
+                                description: isEn
+                                  ? "Sample recent 2x2 ID picture on white background or Barangay Certificate of Indigency."
+                                  : "Halimbawa ng 2x2 ID picture na may puting background o Barangay Certificate.",
+                                image: "/samples/ID PICTURE (2X2).webp",
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-semibold tracking-wide cursor-pointer transition-colors shadow-xs"
+                          >
+                            <FileText className="h-3.5 w-3.5 text-blue-600" />
+                            <span>SAMPLE DOCUMENT</span>
+                          </button>
+                        </div>
 
                         <p className="text-xs text-muted-foreground mt-1">
                           {isEn
@@ -2285,24 +2306,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           >
                             <Camera className="h-3.5 w-3.5" />
                             <span>TAKE PHOTO (CAMERA)</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSampleDocModal({
-                                title: isEn ? "Sample 2x2 ID Picture / Barangay Certificate" : "Halimbawa ng 2x2 ID Picture / Barangay Certificate",
-                                label: isEn ? "Sample 2x2 ID Picture (White Background)" : "Sample 2x2 ID Picture / Barangay Certificate",
-                                description: isEn
-                                  ? "Sample recent 2x2 ID picture on white background or Barangay Certificate of Indigency."
-                                  : "Halimbawa ng 2x2 ID picture na may puting background o Barangay Certificate.",
-                                image: "/samples/ID PICTURE (2X2).webp",
-                              })
-                            }
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-blue-600" />
-                            <span>SAMPLE DOCUMENT</span>
                           </button>
                         </div>
 
