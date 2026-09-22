@@ -266,11 +266,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       totalMonthlyExpenses: "",
 
       // 5. Living Situation / Additional Information
-      livingArrangements: [] as string[],
+      livingArrangements: ["Living Alone"] as string[],
       livingArrangementOther: "",
-      financialSources: [] as string[],
+      financialSources: ["Pension"] as string[],
       financialSourceOther: "",
-      reasonsForAssistance: [] as string[],
+      reasonsForAssistance: ["Medical/Medication Expenses"] as string[],
       reasonForAssistanceOther: "",
 
       // 6. Other Assistance / Benefits Received
@@ -1636,7 +1636,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
               </div>
 
               {/* LIVING SITUATION / ADDITIONAL INFORMATION */}
-              <div className="border border-gray-300 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm space-y-6">
+              <div className="border border-gray-300 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm space-y-5">
                 <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <Home className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
@@ -1644,139 +1644,114 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                   </h3>
                 </div>
 
-                {/* Living Arrangement */}
-                <div>
-                  <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-2 uppercase tracking-wide">
-                    Living Arrangement:
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                    {[
-                      "Living Alone",
-                      "Living with Spouse",
-                      "Living with Children",
-                      "Living with Relatives",
-                      "Other",
-                    ].map((item) => {
-                      const checked = formData.livingArrangements.includes(item)
-                      return (
-                        <label
-                          key={item}
-                          className={`flex items-center gap-2.5 border rounded-lg p-3 cursor-pointer transition-all text-xs font-medium ${
-                            checked ? "border-blue-500 bg-blue-50/70 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-400" : "border-gray-300 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800 hover:bg-gray-100 text-gray-800 dark:text-gray-200"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleArrayItem("livingArrangements", item)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                          />
-                          <span>{item}</span>
-                        </label>
-                      )
-                    })}
-                  </div>
-                  {formData.livingArrangements.includes("Other") && (
-                    <div className="mt-2.5">
-                      <input
-                        type="text"
-                        value={formData.livingArrangementOther}
-                        onChange={(e) => updateField("livingArrangementOther", e.target.value)}
-                        placeholder="Pakitukoy ang living arrangement"
-                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
-                      />
-                    </div>
-                  )}
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Living Arrangement */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">
+                      Living Arrangement *
+                    </label>
+                    <select
+                      value={formData.livingArrangements[0] || "Living Alone"}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setFormData((prev) => ({
+                          ...prev,
+                          livingArrangements: [val],
+                        }))
+                      }}
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    >
+                      <option value="Living Alone">Living Alone</option>
+                      <option value="Living with Spouse">Living with Spouse</option>
+                      <option value="Living with Children">Living with Children</option>
+                      <option value="Living with Relatives">Living with Relatives</option>
+                      <option value="Other">Other</option>
+                    </select>
 
-                {/* Source of Financial Support */}
-                <div>
-                  <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-2 uppercase tracking-wide">
-                    Source of Financial Support:
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
-                    {[
-                      "Own Income",
-                      "Children/Family",
-                      "Pension",
-                      "Other",
-                    ].map((item) => {
-                      const checked = formData.financialSources.includes(item)
-                      return (
-                        <label
-                          key={item}
-                          className={`flex items-center gap-2.5 border rounded-lg p-3 cursor-pointer transition-all text-xs font-medium ${
-                            checked ? "border-blue-500 bg-blue-50/70 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-400" : "border-gray-300 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800 hover:bg-gray-100 text-gray-800 dark:text-gray-200"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleArrayItem("financialSources", item)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                          />
-                          <span>{item}</span>
-                        </label>
-                      )
-                    })}
+                    {formData.livingArrangements.includes("Other") && (
+                      <div className="mt-2.5">
+                        <input
+                          type="text"
+                          value={formData.livingArrangementOther}
+                          onChange={(e) => updateField("livingArrangementOther", e.target.value)}
+                          placeholder="Pakitukoy ang living arrangement"
+                          className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
+                        />
+                      </div>
+                    )}
                   </div>
-                  {formData.financialSources.includes("Other") && (
-                    <div className="mt-2.5">
-                      <input
-                        type="text"
-                        value={formData.financialSourceOther}
-                        onChange={(e) => updateField("financialSourceOther", e.target.value)}
-                        placeholder="Pakitukoy ang iba pang pinagkukunan ng suporta"
-                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
-                      />
-                    </div>
-                  )}
-                </div>
 
-                {/* Reason for Requesting Assistance */}
-                <div>
-                  <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-2 uppercase tracking-wide">
-                    Reason for Requesting Assistance:
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                    {[
-                      "Insufficient Income",
-                      "No Regular Income",
-                      "High Household Expenses",
-                      "Medical/Medication Expenses",
-                      "Food/Basic Needs",
-                      "Other",
-                    ].map((item) => {
-                      const checked = formData.reasonsForAssistance.includes(item)
-                      return (
-                        <label
-                          key={item}
-                          className={`flex items-center gap-2.5 border rounded-lg p-3 cursor-pointer transition-all text-xs font-medium ${
-                            checked ? "border-blue-500 bg-blue-50/70 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-400" : "border-gray-300 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800 hover:bg-gray-100 text-gray-800 dark:text-gray-200"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleArrayItem("reasonsForAssistance", item)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                          />
-                          <span>{item}</span>
-                        </label>
-                      )
-                    })}
+                  {/* Source of Financial Support */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">
+                      Source of Financial Support *
+                    </label>
+                    <select
+                      value={formData.financialSources[0] || "Pension"}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setFormData((prev) => ({
+                          ...prev,
+                          financialSources: [val],
+                        }))
+                      }}
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    >
+                      <option value="Own Income">Own Income</option>
+                      <option value="Children/Family">Children/Family</option>
+                      <option value="Pension">Pension</option>
+                      <option value="Other">Other</option>
+                    </select>
+
+                    {formData.financialSources.includes("Other") && (
+                      <div className="mt-2.5">
+                        <input
+                          type="text"
+                          value={formData.financialSourceOther}
+                          onChange={(e) => updateField("financialSourceOther", e.target.value)}
+                          placeholder="Pakitukoy ang iba pang pinagkukunan ng suporta"
+                          className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
+                        />
+                      </div>
+                    )}
                   </div>
-                  {formData.reasonsForAssistance.includes("Other") && (
-                    <div className="mt-2.5">
-                      <input
-                        type="text"
-                        value={formData.reasonForAssistanceOther}
-                        onChange={(e) => updateField("reasonForAssistanceOther", e.target.value)}
-                        placeholder="Pakitukoy ang ibang dahilan ng paghingi ng tulong..."
-                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
-                      />
-                    </div>
-                  )}
+
+                  {/* Reason for Requesting Assistance */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">
+                      Reason for Requesting Assistance *
+                    </label>
+                    <select
+                      value={formData.reasonsForAssistance[0] || "Medical/Medication Expenses"}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setFormData((prev) => ({
+                          ...prev,
+                          reasonsForAssistance: [val],
+                        }))
+                      }}
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    >
+                      <option value="Insufficient Income">Insufficient Income</option>
+                      <option value="No Regular Income">No Regular Income</option>
+                      <option value="High Household Expenses">High Household Expenses</option>
+                      <option value="Medical/Medication Expenses">Medical/Medication Expenses</option>
+                      <option value="Food/Basic Needs">Food/Basic Needs</option>
+                      <option value="Other">Other</option>
+                    </select>
+
+                    {formData.reasonsForAssistance.includes("Other") && (
+                      <div className="mt-2.5">
+                        <input
+                          type="text"
+                          value={formData.reasonForAssistanceOther}
+                          onChange={(e) => updateField("reasonForAssistanceOther", e.target.value)}
+                          placeholder="Pakitukoy ang ibang dahilan ng paghingi ng tulong..."
+                          className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
