@@ -309,13 +309,11 @@ export default function SoloParentApplicationWizard({
   const [otherSourceOfIncome, setOtherSourceOfIncome] = useState("")
 
   // Step 2: Section D. Other Government Assistance
-  const [receivingGovAssistance, setReceivingGovAssistance] = useState<"No" | "Yes">("No")
+  const [receivingGovAssistance, setReceivingGovAssistance] = useState<"No" | "Yes" | "">("")
   const [govAssistanceProgramName, setGovAssistanceProgramName] = useState("")
   const [govAssistanceAmountFreq, setGovAssistanceAmountFreq] = useState("")
-  const [receivingPension, setReceivingPension] = useState<"No" | "Yes">("No")
+  const [receivingPension, setReceivingPension] = useState<"No" | "Yes" | "">("")
   const [pensionType, setPensionType] = useState("")
-
-  const [isEditingInfo, setIsEditingInfo] = useState(false)
 
   const updateField = (field: string, val: string) => {
     setFormData((prev) => ({ ...prev, [field]: val }))
@@ -824,19 +822,11 @@ export default function SoloParentApplicationWizard({
 
               {/* A. APPLICANT INFORMATION */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-border pb-2">
+                <div className="border-b border-border pb-2">
                   <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
                     <span>A. Applicant Information</span>
                   </h3>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingInfo((v) => !v)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Pencil className="w-3 h-3" />
-                    <span>{isEditingInfo ? "LOCK INFORMATION" : "EDIT INFORMATION"}</span>
-                  </button>
                 </div>
 
                 {/* Full Name */}
@@ -847,13 +837,7 @@ export default function SoloParentApplicationWizard({
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => updateField("firstName", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                   <div>
@@ -862,13 +846,7 @@ export default function SoloParentApplicationWizard({
                       type="text"
                       value={formData.middleName}
                       onChange={(e) => updateField("middleName", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                   <div>
@@ -877,13 +855,7 @@ export default function SoloParentApplicationWizard({
                       type="text"
                       value={formData.lastName}
                       onChange={(e) => updateField("lastName", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                   <div>
@@ -892,14 +864,8 @@ export default function SoloParentApplicationWizard({
                       type="text"
                       value={formData.suffix}
                       onChange={(e) => updateField("suffix", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
                       placeholder="e.g. Jr., III"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                 </div>
@@ -912,13 +878,7 @@ export default function SoloParentApplicationWizard({
                       type="date"
                       value={formData.birthDate}
                       onChange={(e) => updateField("birthDate", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                   <div>
@@ -926,12 +886,7 @@ export default function SoloParentApplicationWizard({
                     <select
                       value={formData.sex}
                       onChange={(e) => updateField("sex", e.target.value)}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors cursor-pointer"
                     >
                       <option value="Female">Female</option>
                       <option value="Male">Male</option>
@@ -943,13 +898,7 @@ export default function SoloParentApplicationWizard({
                       type="text"
                       value={formData.civilStatus}
                       onChange={(e) => updateField("civilStatus", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                 </div>
@@ -962,14 +911,8 @@ export default function SoloParentApplicationWizard({
                       type="text"
                       value={formData.addressStreet}
                       onChange={(e) => updateField("addressStreet", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
                       placeholder="House / Unit / Street"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                   <div>
@@ -978,13 +921,7 @@ export default function SoloParentApplicationWizard({
                       type="text"
                       value={formData.addressBarangay}
                       onChange={(e) => updateField("addressBarangay", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                   <div>
@@ -993,13 +930,7 @@ export default function SoloParentApplicationWizard({
                       type="text"
                       value={formData.addressCityMunicipality}
                       onChange={(e) => updateField("addressCityMunicipality", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                 </div>
@@ -1013,13 +944,7 @@ export default function SoloParentApplicationWizard({
                       value={formData.contactNo}
                       onChange={(e) => updateField("contactNo", e.target.value.replace(/\D/g, "").slice(0, 11))}
                       maxLength={11}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                   <div>
@@ -1028,13 +953,7 @@ export default function SoloParentApplicationWizard({
                       type="email"
                       value={formData.email}
                       onChange={(e) => updateField("email", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                   <div>
@@ -1043,13 +962,7 @@ export default function SoloParentApplicationWizard({
                       type="text"
                       value={formData.qcidNumber}
                       onChange={(e) => updateField("qcidNumber", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-white dark:bg-slate-900 text-foreground transition-colors"
                     />
                   </div>
                   <div>
