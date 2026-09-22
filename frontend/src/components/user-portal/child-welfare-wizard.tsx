@@ -775,6 +775,7 @@ export default function ChildWelfareApplicationWizard({
   const [check2, setCheck2] = useState(false)
   const [check3, setCheck3] = useState(false)
   const [selectedSectors, setSelectedSectors] = useState<string[]>([])
+  const [selectedServicesRequested, setSelectedServicesRequested] = useState<string[]>([])
 
   const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -859,6 +860,7 @@ export default function ChildWelfareApplicationWizard({
     setCheck2(false)
     setCheck3(false)
     setSelectedSectors([])
+    setSelectedServicesRequested([])
     try {
       ;(window as any).__isFormDirty = false
     } catch {}
@@ -874,6 +876,7 @@ export default function ChildWelfareApplicationWizard({
       formData.familyNumStudying.trim() !== "" ||
       formData.is4PsBeneficiary !== "" ||
       selectedSectors.length > 0 ||
+      selectedServicesRequested.length > 0 ||
       check1 ||
       check2 ||
       check3 ||
@@ -1017,7 +1020,8 @@ export default function ChildWelfareApplicationWizard({
     check1 &&
     check2 &&
     (!selectedProgram.checklists[2] || check3) &&
-    selectedSectors.length > 0
+    selectedSectors.length > 0 &&
+    selectedServicesRequested.length > 0
 
   const step2Valid =
     // A. Applicant / Parent / Guardian Information
@@ -1101,8 +1105,10 @@ export default function ChildWelfareApplicationWizard({
       ...formData,
       sector: selectedSectors.join(", "),
       sectors: selectedSectors,
+      serviceRequested: selectedServicesRequested.join(", "),
+      servicesRequested: selectedServicesRequested,
       childName: childFullName,
-      supportTypes: selectedSectors.length > 0 ? selectedSectors : ["Educational Assistance"],
+      supportTypes: selectedServicesRequested.length > 0 ? selectedServicesRequested : selectedSectors,
       documents: newDocItems,
       uploaded_documents: newDocItems,
     }
@@ -1121,6 +1127,8 @@ export default function ChildWelfareApplicationWizard({
         application_type: "Educational Assistance",
         sector: selectedSectors.join(", "),
         sectors: selectedSectors,
+        serviceRequested: selectedServicesRequested.join(", "),
+        servicesRequested: selectedServicesRequested,
         childName: childFullName,
         child_name: childFullName,
         parentFullName: formData.parentFullName,
@@ -1502,10 +1510,10 @@ export default function ChildWelfareApplicationWizard({
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>
                     {language === "tl"
-                      ? "Mangyaring lagyan ng check ang lahat ng aytem sa checklist at pumili ng kahit isang sektor."
+                      ? "Mangyaring lagyan ng check ang lahat ng aytem sa checklist at pumili ng Sector at Service Requested."
                       : language === "bis"
-                      ? "Palihug markahi ang tanang aytem sa checklist ug pagpili og bisan usa ka sektor."
-                      : "Please check all items in the checklist and select at least one sector."}
+                      ? "Palihug markahi ang tanang aytem sa checklist ug pagpili og Sector ug Service Requested."
+                      : "Please check all items in the checklist and select at least one Sector and Service Requested."}
                   </span>
                 </div>
               )}
@@ -1564,6 +1572,44 @@ export default function ChildWelfareApplicationWizard({
                       : language === "bis"
                       ? "Palihug pagpili og bisan usa ka sektor."
                       : "Please select at least one sector."}
+                  </p>
+                )}
+              </div>
+
+              {/* Service Requested */}
+              <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-slate-800">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 tracking-wide uppercase">
+                    Service Requested <span className="text-red-500">*</span>
+                  </h3>
+                </div>
+                <div className="space-y-3 bg-gray-50/80 dark:bg-slate-800/40 p-4 rounded-xl border border-gray-200 dark:border-slate-700">
+                  {[
+                    "Child Protection",
+                    "Alternative Child Care",
+                    "Rehabilitative Counseling",
+                  ].map((srv) => (
+                    <CustomCheckbox
+                      key={srv}
+                      checked={selectedServicesRequested.includes(srv)}
+                      onChange={(checked) => {
+                        if (checked) {
+                          setSelectedServicesRequested((prev) => [...prev, srv])
+                        } else {
+                          setSelectedServicesRequested((prev) => prev.filter((s) => s !== srv))
+                        }
+                      }}
+                      label={srv}
+                    />
+                  ))}
+                </div>
+                {attemptedNext && selectedServicesRequested.length === 0 && (
+                  <p className="text-xs text-red-500 font-medium">
+                    {language === "tl"
+                      ? "Mangyaring pumili ng kahit isang hininging serbisyo (Service Requested)."
+                      : language === "bis"
+                      ? "Palihug pagpili og bisan usa ka gipangayong serbisyo (Service Requested)."
+                      : "Please select at least one requested service."}
                   </p>
                 )}
               </div>
@@ -2070,7 +2116,7 @@ export default function ChildWelfareApplicationWizard({
               </div>
 
               {/* Program & Sector Details */}
-              <ReviewSection title="Program & Sector Details" onEdit={() => { setReturnToReview(true); setStep(1) }}>
+              <ReviewSection title="Program, Sector & Service Details" onEdit={() => { setReturnToReview(true); setStep(1) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField
                     label="Program"
@@ -2079,6 +2125,10 @@ export default function ChildWelfareApplicationWizard({
                   <ReviewField
                     label="Sector"
                     value={selectedSectors.join(", ") || "—"}
+                  />
+                  <ReviewField
+                    label="Service Requested"
+                    value={selectedServicesRequested.join(", ") || "—"}
                   />
                   <ReviewField label="Residency Status" value="Residente ng Lungsod Quezon (Verified)" />
                 </div>
