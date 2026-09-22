@@ -2051,17 +2051,8 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
                     <div className="space-y-4">
                       {/* Document 1: Request Letter */}
-                      <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
-                        <div className="flex flex-wrap items-center justify-between gap-2.5">
-                          <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
-                            <span>REQUEST LETTER</span>
-                            <span className="text-red-500">*</span>
-                            {requestLetterDoc && (
-                              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
-                                <Check className="h-2.5 w-2.5 stroke-[3]" />
-                              </span>
-                            )}
-                          </p>
+                      <div className="space-y-2">
+                        <div>
                           <button
                             type="button"
                             onClick={() =>
@@ -2074,105 +2065,97 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                                 image: "/samples/LETTER OF INTENT.png",
                               })
                             }
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-semibold tracking-wide cursor-pointer transition-colors shadow-xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-blue-500 text-blue-500 hover:bg-blue-500/10 text-xs font-semibold uppercase tracking-wide cursor-pointer transition-colors shadow-xs"
                           >
-                            <FileText className="h-3.5 w-3.5 text-blue-600" />
                             <span>SAMPLE DOCUMENT</span>
                           </button>
                         </div>
 
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {isEn
-                            ? "Attached formal request letter addressed to SSDD / City Mayor."
-                            : "Kalakip na liham kahilingan para sa skills training program."}
-                        </p>
-
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
-                        </p>
-
-                        <div className="mt-3 flex flex-wrap items-center gap-2.5">
-                          <input
-                            type="file"
-                            id="upload-request-letter"
-                            accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0]
-                              if (f) {
-                                setRequestLetterDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
-                              }
-                              e.target.value = ""
-                            }}
-                          />
-                          <label
-                            htmlFor="upload-request-letter"
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
-                          >
-                            <Upload className="h-3.5 w-3.5" />
-                            <span>UPLOAD PHOTO</span>
-                          </label>
-
-                          <button
-                            type="button"
-                            onClick={() => setCameraModalDocType("requestLetter")}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <Camera className="h-3.5 w-3.5" />
-                            <span>TAKE PHOTO (CAMERA)</span>
-                          </button>
-                        </div>
-
-                        {requestLetterDoc && (
-                          <div className="mt-3.5 p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between text-xs max-w-md">
-                            <div className="flex items-center gap-2 truncate">
-                              <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
-                              <span className="font-semibold text-emerald-700 dark:text-emerald-300 truncate">
-                                {requestLetterDoc.name}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setRequestLetterDoc(null)}
-                              className="p-1 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors cursor-pointer"
-                              title="Remove"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Document 2: Proof of QC Residency / QC ID */}
-                      <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
-                        <div className="flex flex-wrap items-center justify-between gap-2.5">
+                        <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
                           <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
-                            <span>QC ID / PROOF OF QC RESIDENCY</span>
+                            <span>REQUEST LETTER</span>
                             <span className="text-red-500">*</span>
-                            {qcIdDoc && (
+                            {requestLetterDoc && (
                               <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
                                 <Check className="h-2.5 w-2.5 stroke-[3]" />
                               </span>
                             )}
                           </p>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSampleDocModal({
-                                title: isEn ? "Sample QC ID / Proof of Residency" : "Halimbawa ng QC ID / Katunayan ng Paninirahan",
-                                label: isEn ? "Sample QCitizen ID / Proof of QC Residency" : "Sample QCitizen ID / Barangay Certificate of Residency",
-                                description: isEn
-                                  ? "Sample Quezon City QCitizen ID card or Barangay Certificate proving residency in Quezon City."
-                                  : "Halimbawa ng QCitizen ID o Barangay Certificate na nagpapatunay ng paninirahan sa Quezon City.",
-                                image: "/samples/PROOF OF RESIDENCE.webp",
-                              })
-                            }
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-semibold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-blue-600" />
-                            <span>SAMPLE DOCUMENT</span>
-                          </button>
+
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {isEn
+                              ? "Attached formal request letter addressed to SSDD / City Mayor."
+                              : "Kalakip na liham kahilingan para sa skills training program."}
+                          </p>
+
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                            <input
+                              type="file"
+                              id="upload-request-letter"
+                              accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0]
+                                if (f) {
+                                  setRequestLetterDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
+                                }
+                                e.target.value = ""
+                              }}
+                            />
+                            <label
+                              htmlFor="upload-request-letter"
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
+                            >
+                              <Upload className="h-3.5 w-3.5" />
+                              <span>UPLOAD PHOTO</span>
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() => setCameraModalDocType("requestLetter")}
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
+                            >
+                              <Camera className="h-3.5 w-3.5" />
+                              <span>TAKE PHOTO (CAMERA)</span>
+                            </button>
+                          </div>
+
+                          {requestLetterDoc && (
+                            <div className="mt-3.5 p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between text-xs max-w-md">
+                              <div className="flex items-center gap-2 truncate">
+                                <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                                <span className="font-semibold text-emerald-700 dark:text-emerald-300 truncate">
+                                  {requestLetterDoc.name}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setRequestLetterDoc(null)}
+                                className="p-1 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                title="Remove"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Document 2: Proof of QC Residency / QC ID */}
+                      <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
+                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
+                          <span>QC ID / PROOF OF QC RESIDENCY</span>
+                          <span className="text-red-500">*</span>
+                          {qcIdDoc && (
+                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
+                              <Check className="h-2.5 w-2.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </p>
 
                         <p className="text-xs text-muted-foreground mt-1">
                           {isEn
@@ -2236,41 +2219,21 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         )}
                       </div>
 
-                      {/* Document 3: 2x2 ID Picture / Barangay Certificate */}
+                      {/* Document 3: Indigency of Barangay (Optional) */}
                       <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
-                        <div className="flex flex-wrap items-center justify-between gap-2.5">
-                          <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
-                            <span>2X2 ID PICTURE / BARANGAY CERTIFICATE</span>
-                            <span className="text-red-500">*</span>
-                            {idPicDoc && (
-                              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
-                                <Check className="h-2.5 w-2.5 stroke-[3]" />
-                              </span>
-                            )}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSampleDocModal({
-                                title: isEn ? "Sample 2x2 ID Picture / Barangay Certificate" : "Halimbawa ng 2x2 ID Picture / Barangay Certificate",
-                                label: isEn ? "Sample 2x2 ID Picture (White Background)" : "Sample 2x2 ID Picture / Barangay Certificate",
-                                description: isEn
-                                  ? "Sample recent 2x2 ID picture on white background or Barangay Certificate of Indigency."
-                                  : "Halimbawa ng 2x2 ID picture na may puting background o Barangay Certificate.",
-                                image: "/samples/ID PICTURE (2X2).webp",
-                              })
-                            }
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-semibold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-blue-600" />
-                            <span>SAMPLE DOCUMENT</span>
-                          </button>
-                        </div>
+                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
+                          <span>INDIGENCY OF BARANGAY (OPTIONAL)</span>
+                          {idPicDoc && (
+                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
+                              <Check className="h-2.5 w-2.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </p>
 
                         <p className="text-xs text-muted-foreground mt-1">
                           {isEn
-                            ? "Recent 2x2 ID picture (white background) or Barangay Certificate of Indigency."
-                            : "Kamakailang 2x2 ID picture (puting background) o Barangay Certificate."}
+                            ? "Barangay Certificate of Indigency (optional supporting document)."
+                            : "Barangay Certificate of Indigency (opsyonal na dokumento)."}
                         </p>
 
                         <p className="text-xs text-muted-foreground mt-2">
