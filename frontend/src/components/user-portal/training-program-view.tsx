@@ -1982,13 +1982,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             </div>
 
             <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsDetailModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                {isEn ? "Close" : isBis ? "Isira" : "Isara"}
-              </button>
               {allUserApplications.some(
                 (a) =>
                   (a.trainingId === selectedCourse.id ||
