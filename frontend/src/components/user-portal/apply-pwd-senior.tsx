@@ -15,7 +15,6 @@ import {
   ChevronLeft,
 } from "lucide-react"
 import PWDSocialAssistanceWizard from "./pwd-assistance-wizard"
-import SeniorBookletWizard from "./senior-booklet-wizard"
 import SeniorSocialAssistanceWizard from "./senior-assistance-wizard"
 import { useLanguage } from "../ui/language-context"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
@@ -110,10 +109,8 @@ function evaluateActiveAppBlockedState(
 
   const userApps = allApps.filter(isUserMatch)
   const isSenior = urlCategory === "senior"
-  const isSeniorMedicine = isSenior && urlType === "medicine-booklet"
-  const isSeniorMovie = isSenior && urlType === "movie-booklet"
-  const isSeniorSocial = isSenior && urlType === "social-assistance"
-  const isAssistance = !isSenior && urlType === "assistance"
+  const isSeniorSocial = isSenior && (urlType === "social-assistance" || !urlType)
+  const isAssistance = !isSenior && (urlType === "assistance" || !urlType)
 
   const seniorApps = userApps.filter((a) => {
     const cat = String(a.category || "").toLowerCase()
@@ -127,36 +124,6 @@ function evaluateActiveAppBlockedState(
     const isSeniorCat = cat.includes("senior") || srv.includes("senior")
     return !isSeniorCat && (cat.includes("pwd") || cat.includes("disability") || srv.includes("pwd") || cat === "pwd")
   })
-
-  const relevantApps = isSenior ? seniorApps : pwdApps
-
-  if (isSeniorMedicine) {
-    const medApps = seniorApps.filter((a) => {
-      const t = String(a.type || a.service || "").toLowerCase()
-      return t.includes("medicine")
-    })
-    const approvedMed = medApps.find((a) => ["approved", "completed", "for_release"].includes(String(a.status || "").toLowerCase()))
-    const pendingMed = medApps.find((a) => ["pending", "under_review"].includes(String(a.status || "pending").toLowerCase()))
-    const rejectedMed = medApps.find((a) => ["rejected", "disapproved"].includes(String(a.status || "").toLowerCase()))
-    if (approvedMed) return { isBlocked: true, blockedApp: approvedMed, hasApprovedApp: true }
-    if (pendingMed) return { isBlocked: true, blockedApp: pendingMed, hasApprovedApp: false }
-    if (rejectedMed) return { isBlocked: true, blockedApp: rejectedMed, hasApprovedApp: false }
-    return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
-  }
-
-  if (isSeniorMovie) {
-    const movieApps = seniorApps.filter((a) => {
-      const t = String(a.type || a.service || "").toLowerCase()
-      return t.includes("movie")
-    })
-    const approvedMovie = movieApps.find((a) => ["approved", "completed", "for_release"].includes(String(a.status || "").toLowerCase()))
-    const pendingMovie = movieApps.find((a) => ["pending", "under_review"].includes(String(a.status || "pending").toLowerCase()))
-    const rejectedMovie = movieApps.find((a) => ["rejected", "disapproved"].includes(String(a.status || "").toLowerCase()))
-    if (approvedMovie) return { isBlocked: true, blockedApp: approvedMovie, hasApprovedApp: true }
-    if (pendingMovie) return { isBlocked: true, blockedApp: pendingMovie, hasApprovedApp: false }
-    if (rejectedMovie) return { isBlocked: true, blockedApp: rejectedMovie, hasApprovedApp: false }
-    return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
-  }
 
   if (isSeniorSocial) {
     const socialApps = seniorApps.filter((a) => {
@@ -190,7 +157,7 @@ function evaluateActiveAppBlockedState(
 }
 
 interface ProgramCard {
-  id: "assistance" | "social-assistance" | "medicine-booklet" | "movie-booklet"
+  id: "assistance" | "social-assistance"
   title: string
   titleEn: string
   desc: string
@@ -218,22 +185,6 @@ const SENIOR_PROGRAMS: ProgramCard[] = [
     descEn: "The Senior Citizen Social Assistance Program provides specialized financial aid, healthcare subsidies, and emergency social safety nets for indigent Senior Citizens and their families to address senior-related vulnerabilities.",
     key: "seniorAssistance",
   },
-  {
-    id: "medicine-booklet",
-    title: "Medicine Discount Booklet",
-    titleEn: "Medicine Discount Booklet",
-    desc: "Opisyal na purchase booklet mula sa OSCA para sa pagtatala ng mga binibiling gamot at medical supplies upang magamit ang 20% discount at VAT exemption ng Senior Citizen sa mga botika alinsunod sa batas.",
-    descEn: "Official purchase booklet issued by OSCA for recording purchases of essential medicines and medical supplies to avail mandated senior citizen discounts in partner pharmacies.",
-    key: "seniorMedicineBooklet",
-  },
-  {
-    id: "movie-booklet",
-    title: "Free Movie Booklet",
-    titleEn: "Free Movie Booklet",
-    desc: "Espesyal na booklet na nagbibigay ng libreng panonood ng pelikula sa mga sinehan sa Lungsod Quezon para sa mga rehistradong Senior Citizens sa mga itinakdang screening schedules.",
-    descEn: "Special pass booklet entitling qualified Quezon City Senior Citizens to free admission at participating cinemas and movie theaters in Quezon City during designated schedules.",
-    key: "seniorMovieBooklet",
-  },
 ]
 
 export default function ApplyPWDSenior() {
@@ -245,12 +196,10 @@ export default function ApplyPWDSenior() {
   const rawTypeParam = searchParams.get("type")?.toLowerCase()
   const isSenior = urlCategory === "senior"
   const rawType = rawTypeParam || (isSenior ? "social-assistance" : "assistance")
-  const urlType = rawType as "assistance" | "medicine-booklet" | "movie-booklet" | "social-assistance"
+  const urlType = rawType as "assistance" | "social-assistance"
 
   const isOverview = !rawTypeParam
-  const isSeniorMedicine = isSenior && urlType === "medicine-booklet"
-  const isSeniorMovie = isSenior && urlType === "movie-booklet"
-  const isSeniorSocial = isSenior && urlType === "social-assistance"
+  const isSeniorSocial = isSenior && (urlType === "social-assistance" || !rawTypeParam)
   const isAssistance = !isSenior || urlType === "assistance"
 
   const [initialBlockedState] = useState(() => {
@@ -369,59 +318,21 @@ export default function ApplyPWDSenior() {
     setCurrentStep(1)
   }, [urlCategory, urlType])
 
-  const typeBadge = isSeniorMedicine
-    ? { label: t("badgeMedicineBooklet"), color: "bg-blue-100 text-blue-700 border-blue-200" }
-    : isSeniorMovie
-    ? { label: t("badgeMovieBooklet"), color: "bg-blue-100 text-blue-700 border-blue-200" }
-    : { label: t("badgeSocialAssistance"), color: "bg-blue-100 text-blue-700 border-blue-200" }
+  const typeBadge = { label: t("badgeSocialAssistance") || "Social Assistance", color: "bg-blue-100 text-blue-700 border-blue-200" }
 
-  const serviceCleanTitle = isSeniorMedicine
-    ? "Medicine Discount Booklet"
-    : isSeniorMovie
-    ? "Free Movie Booklet"
-    : isSeniorSocial
+  const serviceCleanTitle = isSenior
     ? "Senior Citizen Social Assistance"
     : "PWD Social Assistance"
 
-  const modalTitle = isSeniorMedicine
-    ? t("seniorMedicineReqTitle")
-    : isSeniorMovie
-    ? t("seniorMovieReqTitle")
-    : isSeniorSocial
-    ? t("seniorSocialReqTitle")
-    : t("pwdAssistanceReqTitle")
+  const modalTitle = isSenior
+    ? (t("seniorSocialReqTitle") || "Requirements for Senior Citizen Social Assistance")
+    : (t("pwdAssistanceReqTitle") || "Requirements for PWD Social Assistance")
 
   const pwdSocialAssistanceRequirements = [
     { title: t("pwdSocialReq1Title"), desc: t("pwdSocialReq1Desc") },
     { title: t("pwdSocialReq2Title"), desc: t("pwdSocialReq2Desc") },
     { title: t("pwdSocialReq3Title"), desc: t("pwdSocialReq3Desc") },
     { title: t("pwdSocialReq4Title"), desc: t("pwdSocialReq4Desc") },
-  ]
-
-  const generalPwdRequirements = [
-    { title: t("pwdGenReqResidence"), desc: t("pwdGenReqResidenceDesc") },
-    { title: t("pwdGenReqPhoto"), desc: t("pwdGenReqPhotoDesc") },
-    { title: t("pwdGenReqSignature"), desc: "" },
-    { title: t("pwdGenReqDisability"), desc: t("pwdGenReqDisabilityDesc") },
-  ]
-
-  const apparentDisabilityRequirements = [
-    { title: t("pwdApparentPhoto"), desc: t("pwdApparentPhotoDesc") },
-    { title: t("pwdApparentXray"), desc: t("pwdApparentXrayDesc") },
-  ]
-
-  const nonApparentDisabilityRequirements = [
-    { title: t("pwdNonApparentCert"), desc: t("pwdNonApparentCertDesc") },
-    { title: t("pwdNonApparentMedCert"), desc: t("pwdNonApparentMedCertDesc") },
-  ]
-
-  const seniorCitizenRequirements = [
-    t("seniorReq1"),
-    t("seniorReq2"),
-    t("seniorReq3"),
-    t("seniorReq4"),
-    t("seniorReq5"),
-    t("seniorReq6"),
   ]
 
   const seniorSocialRequirements = [
@@ -434,26 +345,11 @@ export default function ApplyPWDSenior() {
     t("seniorSocialReq7"),
   ]
 
-  const seniorMedicineRequirements = [
-    t("seniorMedReq1"),
-    t("seniorMedReq2"),
-    t("seniorMedReq3"),
-    t("seniorMedReq4"),
-    t("seniorMedReq5"),
-  ]
-
-  const seniorMovieRequirements = [
-    t("seniorMovieReq1"),
-    t("seniorMovieReq2"),
-    t("seniorMovieReq3"),
-    t("seniorMovieReq4"),
-  ]
-
   const isAppApproved = String(blockedApp?.status || "").toLowerCase() === "approved" || String(blockedApp?.status || "").toLowerCase() === "completed" || String(blockedApp?.status || "").toLowerCase() === "for_release"
   const isAppRejected = String(blockedApp?.status || "").toLowerCase() === "rejected" || String(blockedApp?.status || "").toLowerCase() === "disapproved"
   const rejectionReason = blockedApp?.rejection_reason || blockedApp?.rejectionReason || blockedApp?.admin_notes || blockedApp?.remarks || ""
 
-  // If category is PWD or SENIOR and no specific program type is chosen, render the Card Grid matching Pic 2
+  // If category is PWD or SENIOR and no specific program type is chosen, render the Card Grid
   if (isOverview) {
     const currentQcid = getLoggedInUserQcid() || "110000572516915"
     const userProf = getCurrentUserProfile()
@@ -462,7 +358,7 @@ export default function ApplyPWDSenior() {
 
     return (
       <div className="py-8 px-6 sm:px-10 max-w-5xl mx-auto space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className={`grid grid-cols-1 ${programs.length > 1 ? "md:grid-cols-2" : "max-w-2xl mx-auto"} gap-6`}>
           {programs.map((program) => {
             const ev = evaluateActiveAppBlockedState(localApps, isSenior ? "senior" : "pwd", program.id, userProf, currentQcid)
             const isApproved = ev.hasApprovedApp
@@ -838,11 +734,7 @@ export default function ApplyPWDSenior() {
       {}
       {(() => {
         const activeProfile = getCurrentUserProfile();
-        return isSeniorMedicine ? (
-          <SeniorBookletWizard key="senior-medicine" bookletType="medicine" userProfile={activeProfile as any} onStepChange={setCurrentStep} />
-        ) : isSeniorMovie ? (
-          <SeniorBookletWizard key="senior-movie" bookletType="movie" userProfile={activeProfile as any} onStepChange={setCurrentStep} />
-        ) : isSeniorSocial ? (
+        return isSenior ? (
           <SeniorSocialAssistanceWizard key="senior-social" userProfile={activeProfile as any} onStepChange={setCurrentStep} />
         ) : (
           <PWDSocialAssistanceWizard
@@ -853,7 +745,7 @@ export default function ApplyPWDSenior() {
         );
       })()}
 
-      {}
+      {/* Requirements Modal */}
       {showModal && (
         <div
           onClick={() => setShowModal(false)}
@@ -863,7 +755,7 @@ export default function ApplyPWDSenior() {
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-150"
           >
-            {}
+            {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
               <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
                 <h2 className="text-base md:text-lg font-bold text-foreground truncate">
@@ -883,84 +775,9 @@ export default function ApplyPWDSenior() {
               </button>
             </div>
 
-            {}
+            {/* Modal Content */}
             <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-              {}
-              {isSeniorMedicine && (
-                <>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-amber-900">
-                      {t("seniorDualCitizenshipNote") || 'NOTE: This may apply to seniors with "dual citizenship status" if he/she can prove his/her Filipino Citizen status and has resided in this city for at least six (6) months.'}
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-                    <RefreshCw className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                    <p className="text-sm font-semibold text-blue-900">
-                      {t("seniorMedicineReminder") || "Paalala: Para sa Medicine Discount Booklet ng Senior Citizen, tiyaking mayroong valid na Senior Citizen / OSCA ID."}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-base font-bold text-foreground mb-3 uppercase tracking-wide">
-                      {t("seniorRequirementsHeading") || "REQUIREMENTS:"}
-                    </h3>
-                    <ul className="space-y-2.5">
-                      {seniorMedicineRequirements.map((req, idx) => (
-                        <li key={idx} className="flex gap-2 text-sm text-foreground">
-                          <span className="text-blue-600">•</span>
-                          <span>{req}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <p className="text-sm text-muted-foreground italic">
-                    {t("seniorSocialWorkerVisitNote") || "A social worker will contact you for verification and to schedule an appointment. Please bring all required documents when you visit."}
-                  </p>
-                </>
-              )}
-
-              {}
-              {isSeniorMovie && (
-                <>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-amber-900">
-                      {t("seniorDualCitizenshipNote") || 'NOTE: This may apply to seniors with "dual citizenship status" if he/she can prove his/her Filipino Citizen status and has resided in this city for at least six (6) months.'}
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-                    <RefreshCw className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                    <p className="text-sm font-semibold text-blue-900">
-                      {t("seniorMovieReminder") || "Paalala: Para sa Free Movie Booklet ng Senior Citizen sa Quezon City cinemas, ihanda ang inyong valid OSCA ID."}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-base font-bold text-foreground mb-3 uppercase tracking-wide">
-                      {t("seniorRequirementsHeading") || "REQUIREMENTS:"}
-                    </h3>
-                    <ul className="space-y-2.5">
-                      {seniorMovieRequirements.map((req, idx) => (
-                        <li key={idx} className="flex gap-2 text-sm text-foreground">
-                          <span className="text-blue-600">•</span>
-                          <span>{req}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <p className="text-sm text-muted-foreground italic">
-                    {t("seniorSocialWorkerVisitNote") || "A social worker will contact you for verification and to schedule an appointment. Please bring all required documents when you visit."}
-                  </p>
-                </>
-              )}
-
-              {}
-              {isSeniorSocial && (
+              {isSenior && (
                 <>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                     <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
@@ -996,8 +813,7 @@ export default function ApplyPWDSenior() {
                 </>
               )}
 
-              {}
-              {isAssistance && (
+              {!isSenior && (
                 <>
                   <div className="space-y-3">
                     <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">

@@ -586,10 +586,6 @@ function ResidentHeader({
       const seniorLabel = t("navSeniorServices") || "Senior Citizen Services"
       if (location.search.includes("type=social-assistance")) {
         currentTitle = `${seniorLabel} — Senior Citizen Social Assistance`
-      } else if (location.search.includes("type=medicine-booklet")) {
-        currentTitle = `${seniorLabel} — Medicine Discount Booklet`
-      } else if (location.search.includes("type=movie-booklet")) {
-        currentTitle = `${seniorLabel} — Free Movie Booklet`
       } else if (location.search.includes("type=new")) {
         currentTitle = `${seniorLabel} — Senior Citizen ID Application`
       } else if (location.search.includes("type=renewal")) {
