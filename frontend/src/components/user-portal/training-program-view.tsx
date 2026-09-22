@@ -1531,64 +1531,70 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                   </p>
                 </div>
 
-                {/* Full-width Responsive Stepper Bar */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setFormStep("select")}
-                    className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                {/* Full-width Responsive Stepper Bar (Non-clickable progress indicators) */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-1 select-none">
+                  <div
+                    className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${
                       formStep === "select"
                         ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                        : "bg-muted/40 text-muted-foreground border-border hover:bg-muted/70 hover:text-foreground"
+                        : formStep === "profile" || formStep === "review"
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                        : "bg-muted/40 text-muted-foreground border-border"
                     }`}
                   >
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
-                      formStep === "select" ? "bg-white text-blue-600" : "bg-muted text-foreground border border-border"
-                    }`}>
-                      1
+                    <span
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                        formStep === "select"
+                          ? "bg-white text-blue-600"
+                          : formStep === "profile" || formStep === "review"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-muted text-foreground border border-border"
+                      }`}
+                    >
+                      {formStep === "profile" || formStep === "review" ? "✓" : "1"}
                     </span>
-                    <span className="truncate">{isEn ? "1. Course" : "1. Kurso"}</span>
-                  </button>
+                    <span className="truncate">{isEn ? "Course" : "Kurso"}</span>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setFormStep("profile")}
-                    className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                  <div
+                    className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${
                       formStep === "profile"
                         ? "bg-blue-600 text-white border-blue-600 shadow-sm"
                         : formStep === "review"
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
-                        : "bg-muted/40 text-muted-foreground border-border hover:bg-muted/70 hover:text-foreground"
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                        : "bg-muted/40 text-muted-foreground border-border"
                     }`}
                   >
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
-                      formStep === "profile"
-                        ? "bg-white text-blue-600"
-                        : formStep === "review"
-                        ? "bg-emerald-600 text-white"
-                        : "bg-muted text-foreground border border-border"
-                    }`}>
+                    <span
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                        formStep === "profile"
+                          ? "bg-white text-blue-600"
+                          : formStep === "review"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-muted text-foreground border border-border"
+                      }`}
+                    >
                       {formStep === "review" ? "✓" : "2"}
                     </span>
-                    <span className="truncate">{isEn ? "2. Applicant Info" : "2. Impormasyon"}</span>
-                  </button>
+                    <span className="truncate">{isEn ? "Applicant Info" : "Impormasyon"}</span>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setFormStep("review")}
-                    className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                  <div
+                    className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${
                       formStep === "review"
                         ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                        : "bg-muted/40 text-muted-foreground border-border hover:bg-muted/70 hover:text-foreground"
+                        : "bg-muted/40 text-muted-foreground border-border"
                     }`}
                   >
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
-                      formStep === "review" ? "bg-white text-blue-600" : "bg-muted text-foreground border border-border"
-                    }`}>
+                    <span
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                        formStep === "review" ? "bg-white text-blue-600" : "bg-muted text-foreground border border-border"
+                      }`}
+                    >
                       3
                     </span>
-                    <span className="truncate">{isEn ? "3. Requirements" : "3. Dokumento"}</span>
-                  </button>
+                    <span className="truncate">{isEn ? "Requirements" : "Dokumento"}</span>
+                  </div>
                 </div>
               </div>
 
@@ -2005,9 +2011,9 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     <button
                       type="button"
                       onClick={() => setFormStep("select")}
-                      className="px-4 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-muted-foreground cursor-pointer"
+                      className="px-5 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-foreground cursor-pointer transition-colors shadow-xs"
                     >
-                      {isEn ? "← Back to Course" : "← Bumalik sa Kurso"}
+                      {isEn ? "Back" : "Bumalik"}
                     </button>
                     <button
                       type="button"
@@ -2231,38 +2237,27 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     <button
                       type="button"
                       onClick={() => setFormStep("profile")}
-                      className="px-4 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-muted-foreground cursor-pointer"
+                      className="px-5 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-foreground cursor-pointer transition-colors shadow-xs"
                     >
-                      {isEn ? "← Back to Profile" : "← Bumalik sa Impormasyon"}
+                      {isEn ? "Back" : "Bumalik"}
                     </button>
-                    <div className="flex items-center gap-2">
-                      {isRevising && (
-                        <button
-                          type="button"
-                          onClick={() => setIsRevising(false)}
-                          className="px-4 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-muted-foreground cursor-pointer"
-                        >
-                          {isEn ? "Cancel" : "Kanselahin"}
-                        </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || !isAttested}
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          <span>{isEn ? "Submitting..." : "Isinusumite..."}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{isEn ? "Submit Application" : "Isumite ang Aplikasyon"}</span>
+                          <ArrowRight className="h-4 w-4" />
+                        </>
                       )}
-                      <button
-                        type="submit"
-                        disabled={isSubmitting || !isAttested}
-                        className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                            <span>{isEn ? "Submitting..." : "Isinusumite..."}</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>{isEn ? "Submit Application" : "Isumite ang Aplikasyon"}</span>
-                            <ArrowRight className="h-4 w-4" />
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    </button>
                   </div>
                 </div>
               )}
