@@ -176,7 +176,7 @@ const editableInputCls =
 
 export default function AICSServiceWizard({
   serviceType,
-  onBack,
+  onBack: _onBack,
 }: AICSServiceWizardProps) {
   const { t, language } = useLanguage()
 
