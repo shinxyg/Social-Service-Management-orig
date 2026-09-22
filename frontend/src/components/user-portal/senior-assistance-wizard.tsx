@@ -1114,16 +1114,16 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
             </div>
           )}
 
-          {/* STEP 2: SECTIONS 1 TO 6 */}
+          {/* STEP 2: PERSONAL & HOUSEHOLD INFORMATION */}
           {step === 2 && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Notice */}
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
                   <p className="font-semibold text-blue-600">IMPORTANT REMINDER / MAHALAGANG PAALALA</p>
                   <p className="text-blue-600/90 mt-0.5 text-xs">
-                    Pakisiguradong tama at kumpleto ang lahat ng impormasyon mula Seksiyon 1 hanggang Seksiyon 6 para sa mabilis na pagproseso ng inyong Social Welfare Assistance.
+                    Pakisiguradong tama at kumpleto ang lahat ng impormasyon para sa mabilis na pagproseso ng inyong Social Welfare Assistance.
                   </p>
                 </div>
               </div>
@@ -1135,208 +1135,217 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               )}
 
-              {/* 1. PERSONAL INFORMATION */}
-              <div className="border border-border rounded-xl p-5 bg-white shadow-xs space-y-4">
-                <div className="border-b border-border pb-2 flex items-center gap-2">
+              {/* PERSONAL INFORMATION (DISABLED PROFILE FIELDS) */}
+              <div className="border border-gray-300 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+                <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <User className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    1. Personal Information (Personal na Impormasyon)
+                    Personal Information (Personal na Impormasyon)
                   </h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">QCitizen ID Number *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">QCitizen ID Number *</label>
                     <input
                       type="text"
                       value={formData.qcidNumber}
-                      onChange={(e) => updateField("qcidNumber", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="e.g. 110000116932100"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 font-mono cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Senior Citizen / OSCA ID Number *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Senior Citizen / OSCA ID Number *</label>
                     <input
                       type="text"
                       value={formData.seniorIdNumber}
-                      onChange={(e) => updateField("seniorIdNumber", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="e.g. 137404-2026-XXXXXX"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 font-mono cursor-not-allowed"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">First Name *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">First Name *</label>
                     <input
                       type="text"
                       value={formData.firstName}
-                      onChange={(e) => updateField("firstName", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="Pangalan"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Middle Name</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Middle Name</label>
                     <input
                       type="text"
                       value={formData.middleName}
-                      onChange={(e) => updateField("middleName", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="Gitnang Pangalan"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Last Name *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Last Name *</label>
                     <input
                       type="text"
                       value={formData.lastName}
-                      onChange={(e) => updateField("lastName", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="Apelyido"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Suffix (Jr., Sr., III, etc.)</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Suffix (Jr., Sr., III, etc.)</label>
                     <input
                       type="text"
                       value={formData.suffix}
-                      onChange={(e) => updateField("suffix", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="e.g. Jr., Sr."
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Date of Birth (MM/DD/YYYY) *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Date of Birth (MM/DD/YYYY) *</label>
                     <div className="grid grid-cols-3 gap-1.5 mt-1">
                       <input
                         type="text"
                         placeholder="MM"
                         maxLength={2}
                         value={formData.dobMonth}
-                        onChange={(e) => updateField("dobMonth", e.target.value)}
-                        className="w-full border border-border rounded-lg px-2 py-2 text-center text-sm font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        disabled
+                        readOnly
+                        className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-2 py-2 text-center text-sm font-mono cursor-not-allowed"
                       />
                       <input
                         type="text"
                         placeholder="DD"
                         maxLength={2}
                         value={formData.dobDay}
-                        onChange={(e) => updateField("dobDay", e.target.value)}
-                        className="w-full border border-border rounded-lg px-2 py-2 text-center text-sm font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        disabled
+                        readOnly
+                        className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-2 py-2 text-center text-sm font-mono cursor-not-allowed"
                       />
                       <input
                         type="text"
                         placeholder="YYYY"
                         maxLength={4}
                         value={formData.dobYear}
-                        onChange={(e) => updateField("dobYear", e.target.value)}
-                        className="w-full border border-border rounded-lg px-2 py-2 text-center text-sm font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        disabled
+                        readOnly
+                        className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-2 py-2 text-center text-sm font-mono cursor-not-allowed"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Age *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Age *</label>
                     <input
                       type="text"
                       value={formData.age}
-                      onChange={(e) => updateField("age", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="Edad"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 font-mono cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Sex *</label>
-                    <select
-                      value={formData.sex}
-                      onChange={(e) => updateField("sex", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                    >
-                      <option value="Female">Female (Babae)</option>
-                      <option value="Male">Male (Lalaki)</option>
-                    </select>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Sex *</label>
+                    <input
+                      type="text"
+                      value={formData.sex === "Male" ? "Male (Lalaki)" : formData.sex === "Female" ? "Female (Babae)" : formData.sex}
+                      disabled
+                      readOnly
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
+                    />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Civil Status *</label>
-                    <select
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Civil Status *</label>
+                    <input
+                      type="text"
                       value={formData.civilStatus}
-                      onChange={(e) => updateField("civilStatus", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                    >
-                      <option value="Single">Single (Walang Asawa)</option>
-                      <option value="Married">Married (Kasal)</option>
-                      <option value="Widowed">Widowed (Balo)</option>
-                      <option value="Separated / Divorced">Separated / Divorced</option>
-                      <option value="Common-Law / Live-in">Live-in</option>
-                    </select>
+                      disabled
+                      readOnly
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">House/Building No.</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">House/Building No.</label>
                     <input
                       type="text"
                       value={formData.addressHouseNo}
-                      onChange={(e) => updateField("addressHouseNo", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="e.g. 12-A"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Street Name *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Street Name *</label>
                     <input
                       type="text"
                       value={formData.addressStreet}
-                      onChange={(e) => updateField("addressStreet", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="e.g. Mabini St."
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Barangay *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Barangay *</label>
                     <input
                       type="text"
                       value={formData.barangay}
-                      onChange={(e) => updateField("barangay", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="e.g. Sauyo"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Contact Number *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Contact Number *</label>
                     <input
                       type="text"
                       value={formData.contactNumber}
-                      onChange={(e) => updateField("contactNumber", e.target.value)}
+                      disabled
+                      readOnly
                       placeholder="09XXXXXXXXX"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-lg px-3 py-2 text-sm mt-1 font-mono cursor-not-allowed"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* 2. OCCUPATION / FINANCIAL INFORMATION */}
-              <div className="border border-border rounded-xl p-5 bg-white shadow-xs space-y-4">
-                <div className="border-b border-border pb-2 flex items-center gap-2">
+              {/* OCCUPATION / FINANCIAL INFORMATION */}
+              <div className="border border-gray-300 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+                <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <Briefcase className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    2. Occupation / Financial Information (Trabaho at Pananalapi)
+                    Occupation / Financial Information (Trabaho at Pananalapi)
                   </h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Employment Status *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Employment Status *</label>
                     <select
                       value={formData.employmentStatus}
                       onChange={(e) => updateField("employmentStatus", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     >
                       <option value="Retired / Pensioner">Retired / Pensioner (Pensyonado)</option>
                       <option value="Unemployed">Unemployed (Walang Trabaho)</option>
@@ -1346,31 +1355,31 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Current / Previous Occupation</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Current / Previous Occupation</label>
                     <input
                       type="text"
                       value={formData.currentPreviousOccupation}
                       onChange={(e) => updateField("currentPreviousOccupation", e.target.value)}
                       placeholder="e.g. Kasambahay, Karpintero, Vendor, atbp."
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Source of Income</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Source of Income</label>
                     <input
                       type="text"
                       value={formData.sourceOfIncome}
                       onChange={(e) => updateField("sourceOfIncome", e.target.value)}
                       placeholder="e.g. Suporta ng anak, maliit na sari-sari store"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Approximate Monthly Income</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Approximate Monthly Income</label>
                     <select
                       value={formData.approximateMonthlyIncome}
                       onChange={(e) => updateField("approximateMonthlyIncome", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     >
                       <option value="Below ₱5,000">Below ₱5,000</option>
                       <option value="₱5,000 - ₱10,000">₱5,000 – ₱10,000</option>
@@ -1381,11 +1390,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-2">
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-2">
                     Pension / Benefits Received, if any (Natatanggap na Pensyon / Benepisyo):
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                    <label className="flex items-center gap-2 border rounded-lg p-2.5 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                    <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                       <input
                         type="checkbox"
                         checked={formData.pensionSSS}
@@ -1395,7 +1404,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       <span>SSS Pension</span>
                     </label>
 
-                    <label className="flex items-center gap-2 border rounded-lg p-2.5 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                    <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                       <input
                         type="checkbox"
                         checked={formData.pensionGSIS}
@@ -1405,7 +1414,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       <span>GSIS Pension</span>
                     </label>
 
-                    <label className="flex items-center gap-2 border rounded-lg p-2.5 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                    <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                       <input
                         type="checkbox"
                         checked={formData.pensionOther}
@@ -1415,7 +1424,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       <span>Other Pension / Benefits</span>
                     </label>
 
-                    <label className="flex items-center gap-2 border rounded-lg p-2.5 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                    <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                       <input
                         type="checkbox"
                         checked={formData.pensionNone}
@@ -1447,14 +1456,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               </div>
 
-              {/* 3. FAMILY COMPOSITION */}
-              <div className="border border-border rounded-xl p-5 bg-white shadow-xs space-y-4">
-                <div className="border-b border-border pb-2 flex items-center justify-between">
+              {/* FAMILY COMPOSITION */}
+              <div className="border border-gray-300 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+                <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-blue-600" />
                     <div>
                       <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                        3. Family Composition (Komposisyon ng Pamilya)
+                        Family Composition (Komposisyon ng Pamilya)
                       </h3>
                       <p className="text-[11px] text-muted-foreground">
                         Para malaman kung sino ang kasama at sumusuporta sa senior citizen.
@@ -1472,14 +1481,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
 
                 {formData.familyMembers.length === 0 ? (
-                  <div className="p-6 rounded-xl border border-dashed border-border bg-gray-50/60 text-center space-y-2">
+                  <div className="p-6 rounded-xl border border-dashed border-gray-300 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-800/40 text-center space-y-2">
                     <p className="text-xs text-muted-foreground">
                       Walang nakatalang kasapi sa bahay. Kung mag-isang naninirahan, maaaring iwanang bakante o magdagdag kung may kasama.
                     </p>
                     <button
                       type="button"
                       onClick={addFamilyMember}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-white text-xs font-medium text-blue-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-medium text-blue-600 hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>+ Magdagdag ng Kasapi ng Pamilya</span>
@@ -1490,9 +1499,9 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     {formData.familyMembers.map((member, idx) => (
                       <div
                         key={member.id || idx}
-                        className="p-4 rounded-xl border border-border bg-slate-50/50 shadow-xs space-y-3 relative"
+                        className="p-4 rounded-xl border border-gray-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/50 shadow-xs space-y-3 relative"
                       >
-                        <div className="flex items-center justify-between border-b border-border pb-2">
+                        <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 pb-2">
                           <span className="text-xs font-bold text-blue-600">
                             Kasapi #{idx + 1}
                           </span>
@@ -1508,7 +1517,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
-                            <label className="text-[11px] font-semibold text-gray-700 block mb-1">
+                            <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
                               Pangalan ng Family Member *
                             </label>
                             <input
@@ -1516,17 +1525,17 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                               value={member.name}
                               onChange={(e) => updateFamilyMember(idx, "name", e.target.value)}
                               placeholder="Buong pangalan"
-                              className="w-full border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                             />
                           </div>
                           <div>
-                            <label className="text-[11px] font-semibold text-gray-700 block mb-1">
+                            <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
                               Relasyon (Relationship) *
                             </label>
                             <select
                               value={member.relationship}
                               onChange={(e) => updateFamilyMember(idx, "relationship", e.target.value)}
-                              className="w-full border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                             >
                               <option value="Asawa / Spouse">Asawa / Spouse</option>
                               <option value="Anak / Child">Anak / Child</option>
@@ -1539,7 +1548,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                             </select>
                           </div>
                           <div>
-                            <label className="text-[11px] font-semibold text-gray-700 block mb-1">
+                            <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
                               Edad (Age) *
                             </label>
                             <input
@@ -1548,14 +1557,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                               onChange={(e) => updateFamilyMember(idx, "age", e.target.value.replace(/\D/g, ""))}
                               placeholder="e.g. 35"
                               maxLength={3}
-                              className="w-full border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
                             />
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
-                            <label className="text-[11px] font-semibold text-gray-700 block mb-1">
+                            <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
                               Trabaho / Hanapbuhay (Occupation)
                             </label>
                             <input
@@ -1563,11 +1572,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                               value={member.occupation}
                               onChange={(e) => updateFamilyMember(idx, "occupation", e.target.value)}
                               placeholder="e.g. Driver, Tindera, Estudyante"
-                              className="w-full border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                             />
                           </div>
                           <div>
-                            <label className="text-[11px] font-semibold text-gray-700 block mb-1">
+                            <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
                               Kita / Suporta (Income / Support)
                             </label>
                             <input
@@ -1575,11 +1584,11 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                               value={member.income}
                               onChange={(e) => updateFamilyMember(idx, "income", e.target.value)}
                               placeholder="e.g. ₱5,000 o N/A"
-                              className="w-full border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                             />
                           </div>
                           <div>
-                            <label className="text-[11px] font-semibold text-gray-700 block mb-1">
+                            <label className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 block mb-1">
                               Iba pang Impormasyon (Other Info)
                             </label>
                             <input
@@ -1587,7 +1596,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                               value={member.otherInfo}
                               onChange={(e) => updateFamilyMember(idx, "otherInfo", e.target.value)}
                               placeholder="e.g. Nag-aaral, May kapansanan, atbp."
-                              className="w-full border border-border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                             />
                           </div>
                         </div>
@@ -1597,17 +1606,17 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 )}
               </div>
 
-              {/* 4. MONTHLY HOUSEHOLD EXPENSES */}
-              <div className="border border-border rounded-xl p-5 bg-white shadow-xs space-y-4">
-                <div className="border-b border-border pb-2 flex items-center gap-2">
+              {/* MONTHLY HOUSEHOLD EXPENSES */}
+              <div className="border border-gray-300 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+                <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    4. Monthly Household Expenses (Buwanang Gastusin ng Sambahayan)
+                    Monthly Household Expenses (Buwanang Gastusin ng Sambahayan)
                   </h3>
                 </div>
 
                 <div className="max-w-md">
-                  <label className="text-xs font-semibold text-gray-700 block mb-1">
+                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">
                     Kabuuang Buwanang Gastusin (Total Monthly Expenses)
                   </label>
                   <div className="relative">
@@ -1617,7 +1626,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       value={formData.totalMonthlyExpenses}
                       onChange={(e) => updateField("totalMonthlyExpenses", e.target.value)}
                       placeholder="e.g. 6,500 (kuryente, tubig, pagkain, gamot)"
-                      className="w-full border border-border rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     />
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1">
@@ -1626,18 +1635,18 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               </div>
 
-              {/* 5. LIVING SITUATION / ADDITIONAL INFORMATION */}
-              <div className="border border-border rounded-xl p-5 bg-white shadow-xs space-y-6">
-                <div className="border-b border-border pb-2 flex items-center gap-2">
+              {/* LIVING SITUATION / ADDITIONAL INFORMATION */}
+              <div className="border border-gray-300 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm space-y-6">
+                <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <Home className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    5. Living Situation / Additional Information (Kalagayan sa Tirahan at Karagdagang Impormasyon)
+                    Living Situation / Additional Information (Kalagayan sa Tirahan at Karagdagang Impormasyon)
                   </h3>
                 </div>
 
                 {/* Living Arrangement */}
                 <div>
-                  <label className="text-xs font-bold text-gray-800 block mb-2 uppercase tracking-wide">
+                  <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-2 uppercase tracking-wide">
                     Living Arrangement (Kaayusan sa Tirahan):
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
@@ -1653,7 +1662,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         <label
                           key={item}
                           className={`flex items-center gap-2.5 border rounded-lg p-3 cursor-pointer transition-all text-xs font-medium ${
-                            checked ? "border-blue-500 bg-blue-50/70 text-blue-900 ring-1 ring-blue-400" : "border-border bg-gray-50/50 hover:bg-gray-100 text-gray-800"
+                            checked ? "border-blue-500 bg-blue-50/70 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-400" : "border-gray-300 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800 hover:bg-gray-100 text-gray-800 dark:text-gray-200"
                           }`}
                         >
                           <input
@@ -1684,7 +1693,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         value={formData.livingArrangementOther}
                         onChange={(e) => updateField("livingArrangementOther", e.target.value)}
                         placeholder="Pakitukoy ang living arrangement (e.g. Kasama ang tagapag-alaga / boarding house)"
-                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30"
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
                       />
                     </div>
                   )}
@@ -1692,7 +1701,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
 
                 {/* Source of Financial Support */}
                 <div>
-                  <label className="text-xs font-bold text-gray-800 block mb-2 uppercase tracking-wide">
+                  <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-2 uppercase tracking-wide">
                     Source of Financial Support (Pinagkukunan ng Suportang Pinansyal):
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
@@ -1707,7 +1716,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         <label
                           key={item}
                           className={`flex items-center gap-2.5 border rounded-lg p-3 cursor-pointer transition-all text-xs font-medium ${
-                            checked ? "border-blue-500 bg-blue-50/70 text-blue-900 ring-1 ring-blue-400" : "border-border bg-gray-50/50 hover:bg-gray-100 text-gray-800"
+                            checked ? "border-blue-500 bg-blue-50/70 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-400" : "border-gray-300 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800 hover:bg-gray-100 text-gray-800 dark:text-gray-200"
                           }`}
                         >
                           <input
@@ -1736,7 +1745,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         value={formData.financialSourceOther}
                         onChange={(e) => updateField("financialSourceOther", e.target.value)}
                         placeholder="Pakitukoy ang iba pang pinagkukunan ng suporta (e.g. Kapitbahay, Donasyon)"
-                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30"
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
                       />
                     </div>
                   )}
@@ -1744,7 +1753,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
 
                 {/* Reason for Requesting Assistance */}
                 <div>
-                  <label className="text-xs font-bold text-gray-800 block mb-2 uppercase tracking-wide">
+                  <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-2 uppercase tracking-wide">
                     Reason for Requesting Assistance (Dahilan ng Paghingi ng Tulong):
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
@@ -1761,7 +1770,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         <label
                           key={item}
                           className={`flex items-center gap-2.5 border rounded-lg p-3 cursor-pointer transition-all text-xs font-medium ${
-                            checked ? "border-blue-500 bg-blue-50/70 text-blue-900 ring-1 ring-blue-400" : "border-border bg-gray-50/50 hover:bg-gray-100 text-gray-800"
+                            checked ? "border-blue-500 bg-blue-50/70 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-400" : "border-gray-300 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800 hover:bg-gray-100 text-gray-800 dark:text-gray-200"
                           }`}
                         >
                           <input
@@ -1794,19 +1803,19 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         value={formData.reasonForAssistanceOther}
                         onChange={(e) => updateField("reasonForAssistanceOther", e.target.value)}
                         placeholder="Pakitukoy ang ibang dahilan ng paghingi ng tulong..."
-                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30"
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
                       />
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* 6. OTHER ASSISTANCE / BENEFITS RECEIVED */}
-              <div className="border border-border rounded-xl p-5 bg-white shadow-xs space-y-4">
-                <div className="border-b border-border pb-2 flex items-center gap-2">
+              {/* OTHER ASSISTANCE / BENEFITS RECEIVED */}
+              <div className="border border-gray-300 dark:border-slate-700 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+                <div className="border-b border-gray-200 dark:border-slate-700 pb-2 flex items-center gap-2">
                   <Gift className="h-4 w-4 text-blue-600" />
                   <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    6. Other Assistance / Benefits Received (Iba Pang Tulong / Benepisyo)
+                    Other Assistance / Benefits Received (Iba Pang Tulong / Benepisyo)
                   </h3>
                 </div>
 
@@ -1815,7 +1824,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  <label className="flex items-center gap-2 border rounded-lg p-3 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                     <input
                       type="checkbox"
                       checked={formData.dswdSocialPension}
@@ -1825,7 +1834,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     <span>DSWD Social Pension</span>
                   </label>
 
-                  <label className="flex items-center gap-2 border rounded-lg p-3 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                     <input
                       type="checkbox"
                       checked={formData.sssPensionBenefit}
@@ -1835,7 +1844,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     <span>SSS Pension</span>
                   </label>
 
-                  <label className="flex items-center gap-2 border rounded-lg p-3 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                     <input
                       type="checkbox"
                       checked={formData.gsisPensionBenefit}
@@ -1845,7 +1854,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     <span>GSIS Pension</span>
                   </label>
 
-                  <label className="flex items-center gap-2 border rounded-lg p-3 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                     <input
                       type="checkbox"
                       checked={formData.otherGovtAssistance}
@@ -1855,7 +1864,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     <span>Other Government Assistance</span>
                   </label>
 
-                  <label className="flex items-center gap-2 border rounded-lg p-3 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                     <input
                       type="checkbox"
                       checked={formData.otherFinancialAssistance}
@@ -1865,7 +1874,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     <span>Other Financial Assistance</span>
                   </label>
 
-                  <label className="flex items-center gap-2 border rounded-lg p-3 bg-gray-50/70 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
+                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
                     <input
                       type="checkbox"
                       checked={formData.otherAssistanceNone}
@@ -1898,7 +1907,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       value={formData.otherGovtAssistanceSpecify}
                       onChange={(e) => updateField("otherGovtAssistanceSpecify", e.target.value)}
                       placeholder="Tukuyin ang Other Government Assistance (e.g. 4Ps, TUPAD, LGU Aid)"
-                      className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30"
+                      className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
                     />
                   </div>
                 )}
@@ -1910,7 +1919,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       value={formData.otherFinancialAssistanceSpecify}
                       onChange={(e) => updateField("otherFinancialAssistanceSpecify", e.target.value)}
                       placeholder="Tukuyin ang Other Financial Assistance (e.g. NGO Aid, Church assistance)"
-                      className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30"
+                      className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
                     />
                   </div>
                 )}
@@ -1918,12 +1927,12 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
             </div>
           )}
 
-          {/* STEP 3: DOCUMENTARY REQUIREMENTS / UPLOADS (SECTION 7) */}
+          {/* STEP 3: DOCUMENTARY REQUIREMENTS / UPLOADS */}
           {step === 3 && (
             <div className="space-y-4">
               <div className="border-b border-border pb-3">
                 <h3 className="text-base font-bold text-foreground">
-                  7. DOCUMENTARY REQUIREMENTS / UPLOADS (MGA KINAKAILANGANG DOKUMENTO)
+                  DOCUMENTARY REQUIREMENTS / UPLOADS (MGA KINAKAILANGANG DOKUMENTO)
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
                   Para sa Senior Social Welfare Assistance (SWA), mangyaring i-upload ang malinaw na larawan ng mga sumusunod:
@@ -1951,7 +1960,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                             ? "border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-950/30 dark:border-emerald-500/30"
                             : missing
                             ? "border-red-500/40 bg-red-500/10 dark:bg-red-950/30 dark:border-red-500/30"
-                            : "border-border bg-card/60 dark:bg-slate-900/40"
+                            : "border-gray-300 dark:border-slate-700 bg-card/60 dark:bg-slate-900/40"
                         }`}
                       >
                         <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
@@ -2042,8 +2051,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </p>
               </div>
 
-              {/* 1. Personal Info */}
-              <ReviewSection title="1. Personal Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              {/* Personal Info */}
+              <ReviewSection title="Personal Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <ReviewField label="QCitizen ID Number" value={formData.qcidNumber} />
                   <ReviewField label="Senior Citizen / OSCA ID" value={formData.seniorIdNumber} />
@@ -2068,8 +2077,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               </ReviewSection>
 
-              {/* 2. Occupation & Financial */}
-              <ReviewSection title="2. Occupation & Financial Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              {/* Occupation & Financial */}
+              <ReviewSection title="Occupation & Financial Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <ReviewField label="Employment Status" value={formData.employmentStatus} />
                   <ReviewField label="Current / Previous Occupation" value={formData.currentPreviousOccupation || "N/A"} />
@@ -2089,8 +2098,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               </ReviewSection>
 
-              {/* 3. Family Composition */}
-              <ReviewSection title={`3. Family Composition (${formData.familyMembers.length} Kasapi)`} onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              {/* Family Composition */}
+              <ReviewSection title={`Family Composition (${formData.familyMembers.length} Kasapi)`} onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 {formData.familyMembers.length === 0 ? (
                   <p className="text-xs text-muted-foreground">Walang nakatalang kasapi sa bahay (Living Alone / Mag-isa).</p>
                 ) : (
@@ -2119,13 +2128,13 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 )}
               </ReviewSection>
 
-              {/* 4. Monthly Expenses */}
-              <ReviewSection title="4. Monthly Household Expenses" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              {/* Monthly Expenses */}
+              <ReviewSection title="Monthly Household Expenses" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <ReviewField label="Total Monthly Expenses" value={formData.totalMonthlyExpenses ? `₱ ${formData.totalMonthlyExpenses}` : "—"} />
               </ReviewSection>
 
-              {/* 5. Living Situation */}
-              <ReviewSection title="5. Living Situation & Financial Support" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              {/* Living Situation */}
+              <ReviewSection title="Living Situation & Financial Support" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <ReviewField
                     label="Living Arrangement"
@@ -2151,8 +2160,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </div>
               </ReviewSection>
 
-              {/* 6. Other Assistance Received */}
-              <ReviewSection title="6. Other Assistance / Benefits Received" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              {/* Other Assistance Received */}
+              <ReviewSection title="Other Assistance / Benefits Received" onEdit={() => { setReturnToReview(true); setStep(2) }}>
                 <ReviewField
                   label="Tulong / Benepisyo mula sa Gobyerno o Ibang Tanggapan"
                   value={[
@@ -2166,8 +2175,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 />
               </ReviewSection>
 
-              {/* 7. Documentary Requirements */}
-              <ReviewSection title="7. Uploaded Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>
+              {/* Documentary Requirements */}
+              <ReviewSection title="Uploaded Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>
                 <div className="space-y-4">
                   {requiredDocuments.map((doc) => {
                     const file = uploadedFiles[doc.id]
