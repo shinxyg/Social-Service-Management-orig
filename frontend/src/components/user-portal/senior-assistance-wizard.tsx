@@ -249,16 +249,16 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       emailAddress: prof.email || "",
 
       // 2. Occupation / Financial Information
-      employmentStatus: "Retired / Pensioner",
+      employmentStatus: "",
       currentPreviousOccupation: "",
       sourceOfIncome: "",
-      approximateMonthlyIncome: "Below ₱5,000",
-      pensionType: "None",
+      approximateMonthlyIncome: "",
+      pensionType: "",
       pensionSSS: false,
       pensionGSIS: false,
       pensionOther: false,
       pensionOtherSpecify: "",
-      pensionNone: true,
+      pensionNone: false,
 
       // 3. Family Composition
       familyMembers: [] as SeniorFamilyMember[],
@@ -267,15 +267,15 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       totalMonthlyExpenses: "",
 
       // 5. Living Situation / Additional Information
-      livingArrangements: ["Living Alone"] as string[],
+      livingArrangements: [] as string[],
       livingArrangementOther: "",
-      financialSources: ["Pension"] as string[],
+      financialSources: [] as string[],
       financialSourceOther: "",
-      reasonsForAssistance: ["Medical/Medication Expenses"] as string[],
+      reasonsForAssistance: [] as string[],
       reasonForAssistanceOther: "",
 
       // 6. Other Assistance / Benefits Received
-      otherAssistanceType: "None",
+      otherAssistanceType: "",
       otherAssistanceSpecify: "",
       dswdSocialPension: false,
       sssPensionBenefit: false,
@@ -284,7 +284,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       otherGovtAssistanceSpecify: "",
       otherFinancialAssistance: false,
       otherFinancialAssistanceSpecify: "",
-      otherAssistanceNone: true,
+      otherAssistanceNone: false,
 
       signatureName: fullName,
       agreedToCertification: false,
@@ -599,7 +599,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
     const newMember: SeniorFamilyMember = {
       id: `fam-${Date.now()}`,
       name: "",
-      relationship: "Asawa / Spouse",
+      relationship: "",
       age: "",
       occupation: "",
       income: "",
@@ -1342,6 +1342,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       onChange={(e) => updateField("employmentStatus", e.target.value)}
                       className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     >
+                      <option value="" disabled>Select Employment Status</option>
                       <option value="Retired / Pensioner">Retired / Pensioner</option>
                       <option value="Unemployed">Unemployed</option>
                       <option value="Self-employed / Small Business">Self-employed / Small Business</option>
@@ -1376,6 +1377,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       onChange={(e) => updateField("approximateMonthlyIncome", e.target.value)}
                       className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     >
+                      <option value="" disabled>Select Monthly Income</option>
                       <option value="Below ₱5,000">Below ₱5,000</option>
                       <option value="₱5,000 - ₱10,000">₱5,000 – ₱10,000</option>
                       <option value="₱10,001 - ₱20,000">₱10,001 – ₱20,000</option>
@@ -1398,7 +1400,9 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                           ? "GSIS Pension"
                           : formData.pensionOther
                           ? "Other Pension / Benefits"
-                          : "None")
+                          : formData.pensionNone
+                          ? "None"
+                          : "")
                       }
                       onChange={(e) => {
                         const val = e.target.value
@@ -1413,6 +1417,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       }}
                       className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     >
+                      <option value="" disabled>Select Pension / Benefit</option>
                       <option value="None">None</option>
                       <option value="SSS Pension">SSS Pension</option>
                       <option value="GSIS Pension">GSIS Pension</option>
@@ -1515,6 +1520,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                               onChange={(e) => updateFamilyMember(idx, "relationship", e.target.value)}
                               className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                             >
+                              <option value="" disabled>Select Relationship</option>
                               <option value="Asawa / Spouse">Asawa / Spouse</option>
                               <option value="Anak / Child">Anak / Child</option>
                               <option value="Apo / Grandchild">Apo / Grandchild</option>
@@ -1630,16 +1636,17 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       Living Arrangement *
                     </label>
                     <select
-                      value={formData.livingArrangements[0] || "Living Alone"}
+                      value={formData.livingArrangements[0] || ""}
                       onChange={(e) => {
                         const val = e.target.value
                         setFormData((prev) => ({
                           ...prev,
-                          livingArrangements: [val],
+                          livingArrangements: val ? [val] : [],
                         }))
                       }}
                       className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     >
+                      <option value="" disabled>Select Living Arrangement</option>
                       <option value="Living Alone">Living Alone</option>
                       <option value="Living with Spouse">Living with Spouse</option>
                       <option value="Living with Children">Living with Children</option>
@@ -1666,16 +1673,17 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       Source of Financial Support *
                     </label>
                     <select
-                      value={formData.financialSources[0] || "Pension"}
+                      value={formData.financialSources[0] || ""}
                       onChange={(e) => {
                         const val = e.target.value
                         setFormData((prev) => ({
                           ...prev,
-                          financialSources: [val],
+                          financialSources: val ? [val] : [],
                         }))
                       }}
                       className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     >
+                      <option value="" disabled>Select Source of Financial Support</option>
                       <option value="Own Income">Own Income</option>
                       <option value="Children/Family">Children/Family</option>
                       <option value="Pension">Pension</option>
@@ -1701,16 +1709,17 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       Reason for Requesting Assistance *
                     </label>
                     <select
-                      value={formData.reasonsForAssistance[0] || "Medical/Medication Expenses"}
+                      value={formData.reasonsForAssistance[0] || ""}
                       onChange={(e) => {
                         const val = e.target.value
                         setFormData((prev) => ({
                           ...prev,
-                          reasonsForAssistance: [val],
+                          reasonsForAssistance: val ? [val] : [],
                         }))
                       }}
                       className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     >
+                      <option value="" disabled>Select Reason for Assistance</option>
                       <option value="Insufficient Income">Insufficient Income</option>
                       <option value="No Regular Income">No Regular Income</option>
                       <option value="High Household Expenses">High Household Expenses</option>
@@ -1760,7 +1769,9 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                         ? "Other Government Assistance"
                         : formData.otherFinancialAssistance
                         ? "Other Financial Assistance"
-                        : "None")
+                        : formData.otherAssistanceNone
+                        ? "None"
+                        : "")
                     }
                     onChange={(e) => {
                       const val = e.target.value
@@ -1777,6 +1788,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     }}
                     className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   >
+                    <option value="" disabled>Select Other Assistance / Benefit</option>
                     <option value="None">None</option>
                     <option value="DSWD Social Pension">DSWD Social Pension</option>
                     <option value="SSS Pension">SSS Pension</option>
