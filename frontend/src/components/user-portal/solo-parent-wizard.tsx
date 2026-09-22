@@ -45,7 +45,7 @@ interface SampleDocument {
   downloadUrl?: string
 }
 
-const EDUCATIONAL_ASSISTANCE_DOCUMENTS: SampleDocument[] = [
+const EDUCATIONAL_DOCUMENTS: SampleDocument[] = [
   {
     id: "barangayIndigency",
     label: "ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY",
@@ -56,7 +56,7 @@ const EDUCATIONAL_ASSISTANCE_DOCUMENTS: SampleDocument[] = [
   {
     id: "enrollmentCertificate",
     label: "CERTIFICATE OF ENROLLMENT",
-    description: "Official Certificate of Enrollment or Registration from public school for each schooling child.",
+    description: "Official Certificate of Enrollment or Registration from school for each schooling child/beneficiary.",
     images: ["/samples/BARANGAY CERTIFICATE.webp"],
     downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
   },
@@ -73,6 +73,37 @@ const EDUCATIONAL_ASSISTANCE_DOCUMENTS: SampleDocument[] = [
     description: "Valid Solo Parent ID card or official Solo Parent Certification issued by QC SSDD.",
     images: ["/samples/QC ID.png"],
     downloadUrl: "/samples/QC ID.png",
+  },
+]
+
+const FINANCIAL_SUBSIDY_DOCUMENTS: SampleDocument[] = [
+  {
+    id: "barangayIndigency",
+    label: "ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY",
+    description: "Original Barangay Certificate of Indigency certifying financial need and residency.",
+    images: ["/samples/BARANGAY CERTIFICATE.webp"],
+    downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
+  },
+  {
+    id: "soloParentIdOrCert",
+    label: "SOLO PARENT ID / CERTIFICATION",
+    description: "Valid Solo Parent ID card or official Solo Parent Certification issued by QC SSDD.",
+    images: ["/samples/QC ID.png"],
+    downloadUrl: "/samples/QC ID.png",
+  },
+  {
+    id: "qcitizenId",
+    label: "QCITIZEN ID",
+    description: "Valid QCitizen ID card of the applicant / Solo Parent.",
+    images: ["/samples/QC ID.png"],
+    downloadUrl: "/samples/QC ID.png",
+  },
+  {
+    id: "proofOfIncome",
+    label: "PROOF OF INCOME / AFFIDAVIT OF NO INCOME",
+    description: "Payslip, Certificate of Employment with compensation, or Barangay/Notarized Affidavit of Low/No Income.",
+    images: ["/samples/BARANGAY CERTIFICATE.webp"],
+    downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
   },
 ]
 
@@ -237,6 +268,7 @@ interface SoloParentApplicationWizardProps {
   userProfile?: any
   initialCategoryId?: number | null
   initialType?: string | null
+  programType?: string | null
   isModalOpen?: boolean
   onBlockedStatusChange?: (blocked: boolean, app?: any) => void
   onStepChange?: (step: number) => void
@@ -246,11 +278,15 @@ interface SoloParentApplicationWizardProps {
 export default function SoloParentApplicationWizard({
   onBack,
   userProfile: propUserProfile,
+  programType = "financial-subsidy",
   onStepChange,
   onSubmissionStageChange,
 }: SoloParentApplicationWizardProps) {
   const { language } = useLanguage()
   const userProfile = propUserProfile || getCurrentUserProfile()
+
+  const isFinancialSubsidy = programType === "financial-subsidy" || !programType?.includes("education")
+  const requiredDocuments = isFinancialSubsidy ? FINANCIAL_SUBSIDY_DOCUMENTS : EDUCATIONAL_DOCUMENTS
 
   const STEPS = [
     { id: 1, label: "SERVICE REQUIREMENTS" },
@@ -273,8 +309,8 @@ export default function SoloParentApplicationWizard({
   const [isVerifying, setIsVerifying] = useState(false)
   const [verifyNotice, setVerifyNotice] = useState<string | null>(null)
   const [soloParentStatus, setSoloParentStatus] = useState("")
-  const [assistanceType] = useState("Educational Assistance")
-  const [beneficiaryType] = useState("Solo Parent's Child/Beneficiary")
+  const assistanceType = isFinancialSubsidy ? "Financial Subsidy" : "Educational Assistance"
+  const beneficiaryType = "Solo Parent's Child/Beneficiary"
 
   // Step 2: Personal info (A. Applicant / Solo Parent Information)
   const [formData, setFormData] = useState({
@@ -427,7 +463,7 @@ export default function SoloParentApplicationWizard({
     (formData.email || "").trim() !== "" &&
     childrenValid
 
-  const step3Valid = EDUCATIONAL_ASSISTANCE_DOCUMENTS.every(
+  const step3Valid = requiredDocuments.every(
     (doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0
   )
 
@@ -467,10 +503,15 @@ export default function SoloParentApplicationWizard({
   const handleSubmit = async () => {
     setSubmitting(true)
     const randNum = Math.floor(100000 + Math.random() * 900000)
-    const generatedRef = `SP-EDU-2026-${randNum}`
+    const prefix = isFinancialSubsidy ? "SP-SUB" : "SP-EDU"
+    const generatedRef = `${prefix}-2026-${randNum}`
     setReference(generatedRef)
 
-    const docPayload = EDUCATIONAL_ASSISTANCE_DOCUMENTS.map((doc) => ({
+    const programTitle = isFinancialSubsidy
+      ? "Solo Parent Financial Subsidy Program"
+      : "Solo Parent Educational Assistance Program"
+
+    const docPayload = requiredDocuments.map((doc) => ({
       documentId: doc.id,
       documentLabel: doc.label,
       files: (uploadedDocs[doc.id] || []).map((f) => ({
@@ -487,12 +528,14 @@ export default function SoloParentApplicationWizard({
       referenceNumber: generatedRef,
       category: "Solo Parent",
       module_type: "solo-parent",
-      service: "Solo Parent Educational Assistance Program",
-      service_name: "Solo Parent Educational Assistance Program",
-      classification_title: "Solo Parent Educational Assistance Program (₱5,000 Financial Assistance)",
-      assistanceType: "Educational Assistance (₱5,000)",
-      type: "educational-assistance",
-      application_type: "educational-assistance",
+      service: programTitle,
+      service_name: programTitle,
+      classification_title: isFinancialSubsidy
+        ? "Solo Parent Financial Subsidy Program"
+        : "Solo Parent Educational Assistance Program (₱5,000 Financial Assistance)",
+      assistanceType: isFinancialSubsidy ? "Financial Subsidy" : "Educational Assistance (₱5,000)",
+      type: isFinancialSubsidy ? "financial-subsidy" : "educational-assistance",
+      application_type: isFinancialSubsidy ? "financial-subsidy" : "educational-assistance",
       solo_parent_id_number: soloParentIdNumber.startsWith("SP-") ? soloParentIdNumber : `SP-${soloParentIdNumber}`,
       soloParentStatus: soloParentStatus || "Active / Verified Solo Parent",
       assistance_type_requested: assistanceType,
@@ -506,7 +549,7 @@ export default function SoloParentApplicationWizard({
       address_barangay: formData.addressBarangay,
       children: schoolingChildren,
       schooling_children: schoolingChildren,
-      financial_assistance_amount: "₱5,000 per beneficiary",
+      financial_assistance_amount: isFinancialSubsidy ? "Monthly Financial Subsidy" : "₱5,000 per beneficiary",
       status: "pending",
       application_status: "pending",
       created_at: new Date().toISOString(),
@@ -519,7 +562,7 @@ export default function SoloParentApplicationWizard({
         assistanceType,
         beneficiaryType,
         schoolingChildren,
-        assistanceAmount: "₱5,000 per beneficiary",
+        assistanceAmount: isFinancialSubsidy ? "Monthly Financial Subsidy" : "₱5,000 per beneficiary",
         assessmentStatus: "Pending Social Worker Assessment & Interview",
       },
       documents: docPayload,
@@ -563,7 +606,9 @@ export default function SoloParentApplicationWizard({
               Application Submitted Successfully!
             </h2>
             <p className="text-xs text-muted-foreground max-w-md mt-1.5 leading-relaxed">
-              Your application for the Solo Parent Educational Assistance Program has been submitted. A Social Worker will conduct an interview and assessment prior to the release of educational assistance.
+              {isFinancialSubsidy
+                ? "Your application for the Solo Parent Financial Subsidy Program has been submitted. A Social Worker will conduct verification and assessment before approval."
+                : "Your application for the Solo Parent Educational Assistance Program has been submitted. A Social Worker will conduct an interview and assessment prior to the release of educational assistance."}
             </p>
           </div>
 
@@ -585,8 +630,10 @@ export default function SoloParentApplicationWizard({
               <span className="font-semibold text-foreground">{beneficiaryType}</span>
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
-              <span className="text-muted-foreground font-medium">Assistance Amount:</span>
-              <span className="font-semibold text-emerald-600 font-mono">₱5,000 per beneficiary</span>
+              <span className="text-muted-foreground font-medium">Assistance Program:</span>
+              <span className="font-semibold text-emerald-600 font-mono">
+                {isFinancialSubsidy ? "Financial Subsidy Program" : "₱5,000 per beneficiary"}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground font-medium">Status:</span>
@@ -680,10 +727,14 @@ export default function SoloParentApplicationWizard({
                 <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="space-y-1 text-xs">
                   <p className="text-xs md:text-sm font-bold text-blue-950 dark:text-blue-200">
-                    SOLO PARENT SECTOR: Qualified beneficiaries may receive educational assistance.
+                    {isFinancialSubsidy
+                      ? "SOLO PARENT SECTOR: Qualified applicants may receive financial subsidy."
+                      : "SOLO PARENT SECTOR: Qualified beneficiaries may receive educational assistance."}
                   </p>
                   <p className="text-blue-900/90 dark:text-blue-300/90 leading-relaxed text-justify">
-                    For qualified children/beneficiaries of Solo Parents. Subject to eligibility verification, document validation, and assessment before approval.
+                    {isFinancialSubsidy
+                      ? "For qualified Solo Parents who meet the applicable income and program requirements. Eligibility is subject to document verification and assessment before approval."
+                      : "For qualified children/beneficiaries of Solo Parents. Subject to eligibility verification, document validation, and assessment before approval."}
                   </p>
                 </div>
               </div>
@@ -1025,7 +1076,7 @@ export default function SoloParentApplicationWizard({
                       <span>B. Beneficiary / Child Information</span>
                     </h3>
                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Please enter the enrolled children/beneficiaries eligible for educational assistance.
+                      Please enter the enrolled children/beneficiaries eligible for assistance.
                     </p>
                   </div>
                   <button
@@ -1158,12 +1209,12 @@ export default function SoloParentApplicationWizard({
                   C. UPLOAD REQUIREMENTS
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Please upload clear scanned copies or photographs of the required documents for Educational Assistance.
+                  Please upload clear scanned copies or photographs of the required documents for this program.
                 </p>
               </div>
 
               <div className="space-y-4">
-                {EDUCATIONAL_ASSISTANCE_DOCUMENTS.map((doc, docIndex) => {
+                {requiredDocuments.map((doc, docIndex) => {
                   const files = uploadedDocs[doc.id] || []
                   const uploaded = files.length > 0
                   const inputId = `upload-doc-${docIndex}`
@@ -1281,7 +1332,7 @@ export default function SoloParentApplicationWizard({
                   REVIEW & SUBMIT INFORMATION
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Please review all information carefully before submitting your application for Solo Parent Educational Assistance.
+                  Please review all information carefully before submitting your application.
                 </p>
               </div>
 
@@ -1292,7 +1343,10 @@ export default function SoloParentApplicationWizard({
                   <ReviewField label="Solo Parent Status" value={soloParentStatus || "Active / Verified Solo Parent (QC SSDD Recorded)"} />
                   <ReviewField label="Type of Assistance" value={assistanceType} />
                   <ReviewField label="Beneficiary Type" value={beneficiaryType} />
-                  <ReviewField label="Assistance Amount" value="₱5,000 per qualified beneficiary (Subject to assessment)" />
+                  <ReviewField
+                    label="Assistance Program"
+                    value={isFinancialSubsidy ? "Solo Parent Financial Subsidy Program" : "₱5,000 per qualified beneficiary (Subject to assessment)"}
+                  />
                 </div>
               </AccordionSection>
 
@@ -1333,7 +1387,7 @@ export default function SoloParentApplicationWizard({
               {/* C. Uploaded Requirements */}
               <AccordionSection title="C. Uploaded Requirements" onEdit={() => setStep(3)}>
                 <div className="space-y-2 text-xs">
-                  {EDUCATIONAL_ASSISTANCE_DOCUMENTS.map((doc) => {
+                  {requiredDocuments.map((doc) => {
                     const uploaded = Boolean(uploadedDocs[doc.id]?.length)
                     return (
                       <div key={doc.id} className="flex items-center justify-between">

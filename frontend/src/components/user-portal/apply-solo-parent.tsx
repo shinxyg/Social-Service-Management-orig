@@ -244,6 +244,14 @@ interface ProgramCard {
 
 const SOLO_PARENT_PROGRAMS: ProgramCard[] = [
   {
+    id: "financial-subsidy",
+    key: "financial-subsidy",
+    title: "Solo Parent Financial Subsidy Program",
+    titleEn: "Solo Parent Financial Subsidy Program",
+    desc: "SOLO PARENT SECTOR: Qualified applicants may receive financial subsidy. For qualified Solo Parents who meet the applicable income and program requirements. Eligibility is subject to document verification and assessment before approval.",
+    descEn: "SOLO PARENT SECTOR: Qualified applicants may receive financial subsidy. For qualified Solo Parents who meet the applicable income and program requirements. Eligibility is subject to document verification and assessment before approval.",
+  },
+  {
     id: "educational-assistance",
     key: "educational-assistance",
     title: "Solo Parent Educational Assistance Program",
@@ -253,60 +261,52 @@ const SOLO_PARENT_PROGRAMS: ProgramCard[] = [
   },
 ]
 
-function evaluateSoloParentBlockedState(
+function evaluateSoloParentCardState(
   allApps: any[],
+  programKey: string,
   userProf: any,
   currentQcid: string
-): { isBlocked: boolean; blockedApp: any; hasApprovedApp: boolean } {
+): { isApproved: boolean; isOngoing: boolean } {
   const uid = userProf?.id || (userProf as any)?.userId || ""
   const currentEmail = (userProf?.email || "").toLowerCase().trim()
   const cleanUserQcid = String(currentQcid || userProf?.qcidNo || userProf?.qcidNumber || "110000572516915").replace(/\D/g, "")
-  const currentFirst = (userProf?.firstName || "").toLowerCase().trim()
-  const currentLast = (userProf?.lastName || "").toLowerCase().trim()
 
-  const isMatchUser = (a: any) => {
+  const userApps = allApps.filter((a) => {
     if (!a) return false
     const mod = String(a.module_type || a.moduleType || a.category || "").toLowerCase()
     const srv = String(a.service || a.service_name || a.classification_title || "").toLowerCase()
-    const isSP = mod.includes("solo") || srv.includes("solo") || a.solo_parent_id_number || a.soloParentIdNumber || a.category_id || a.categoryId
+    const isSP = mod.includes("solo") || srv.includes("solo") || a.solo_parent_id_number || a.soloParentIdNumber
     if (!isSP && mod && !mod.includes("solo")) return false
 
     const appRef = String(a.reference_number || a.referenceNumber || a.qcid_number || a.qcidNumber || a.qcid || a.form_data?.qcidNumber || "").trim().replace(/\D/g, "")
     const appEmail = String(a.email || a.form_data?.email || "").toLowerCase().trim()
     const appUid = String(a.user_id || a.userId || "").trim()
-    const appFirst = String(a.first_name || a.firstName || a.form_data?.firstName || "").toLowerCase().trim()
-    const appLast = String(a.last_name || a.lastName || a.form_data?.lastName || "").toLowerCase().trim()
 
     if (uid && appUid && String(uid) === appUid && String(uid) !== "0") return true
     if (cleanUserQcid && appRef && (cleanUserQcid === appRef || cleanUserQcid.includes(appRef) || appRef.includes(cleanUserQcid))) return true
     if (currentEmail && appEmail && currentEmail === appEmail) return true
-    if (currentFirst && currentLast && appFirst && appLast && currentFirst === appFirst && currentLast === appLast) return true
-
     return false
-  }
+  })
 
-  const userApps = allApps.filter(isMatchUser)
+  const programApps = userApps.filter((a) => {
+    const srv = String(a.service || a.service_name || a.classification_title || a.type || a.application_type || "").toLowerCase()
+    if (programKey === "financial-subsidy") {
+      return srv.includes("subsidy") || srv.includes("financial")
+    }
+    return srv.includes("education") || srv.includes("educational") || (!srv.includes("subsidy") && !srv.includes("child-welfare"))
+  })
 
-  const approved = userApps.find((a) => {
+  const approved = programApps.find((a) => {
     const s = String(a.application_status || a.status || "").toLowerCase()
     return s === "approved" || s === "completed" || s === "for_release" || s === "active"
   })
 
-  const pending = userApps.find((a) => {
+  const pending = programApps.find((a) => {
     const s = String(a.application_status || a.status || "pending").toLowerCase()
     return s === "pending" || s === "draft" || s === "under_review"
   })
 
-  const rejected = userApps.find((a) => {
-    const s = String(a.application_status || a.status || "").toLowerCase()
-    return s === "rejected" || s === "disapproved"
-  })
-
-  if (approved) return { isBlocked: true, blockedApp: approved, hasApprovedApp: true }
-  if (pending) return { isBlocked: true, blockedApp: pending, hasApprovedApp: false }
-  if (rejected) return { isBlocked: true, blockedApp: rejected, hasApprovedApp: false }
-
-  return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
+  return { isApproved: Boolean(approved), isOngoing: Boolean(pending && !approved) }
 }
 
 export default function ApplySoloParent() {
@@ -465,12 +465,20 @@ export default function ApplySoloParent() {
     setCurrentStep(1)
   }, [categoryParam, rawTypeParam])
 
+  const isSpFinancialSubsidy = rawTypeParam === "financial-subsidy"
+
   const modalTitle = isChildWelfare
     ? language === "en"
       ? `Requirements for Child Welfare Support — ${matchedCwProgram.title}`
       : language === "bis"
       ? `Mga Kinahanglanon sa Tabang sa Kaayohan sa Bata — ${matchedCwProgram.title}`
       : `Mga Kinakailangan sa Tulong sa Kapakanan ng Bata — ${matchedCwProgram.title}`
+    : isSpFinancialSubsidy
+    ? language === "en"
+      ? "Solo Parent Financial Subsidy Program — Requirements"
+      : language === "bis"
+      ? "Solo Parent Financial Subsidy Program — Mga Kinahanglanon"
+      : "Solo Parent Financial Subsidy Program — Mga Kinakailangan"
     : language === "en"
     ? "Solo Parent Educational Assistance Program — Requirements"
     : language === "bis"
@@ -480,7 +488,7 @@ export default function ApplySoloParent() {
   const typeBadge = isChildWelfare
     ? { label: matchedCwProgram.title, color: "bg-blue-50 text-blue-700 border-blue-200" }
     : {
-        label: language === "en" ? "Educational Assistance" : "Educational Assistance",
+        label: isSpFinancialSubsidy ? "Financial Subsidy" : "Educational Assistance",
         color: "bg-blue-50 text-blue-700 border-blue-200",
       }
 
@@ -619,14 +627,15 @@ export default function ApplySoloParent() {
     const currentQcid = getLoggedInUserQcid() || "110000572516915"
     const userProf = getCurrentUserProfile()
     const localSpApps = getLocalSoloParentApplications()
-    const cardRes = evaluateSoloParentBlockedState(localSpApps, userProf, currentQcid)
-    const isApproved = cardRes.hasApprovedApp
-    const isOngoing = cardRes.isBlocked && !cardRes.hasApprovedApp && !isAppRejected
 
     return (
-      <div className="py-8 px-6 sm:px-10 max-w-2xl mx-auto space-y-6 animate-in fade-in duration-150">
-        <div className="grid grid-cols-1 gap-6">
+      <div className="py-8 px-6 sm:px-10 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-150">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {SOLO_PARENT_PROGRAMS.map((program) => {
+            const cardRes = evaluateSoloParentCardState(localSpApps, program.key, userProf, currentQcid)
+            const isApproved = cardRes.isApproved
+            const isOngoing = cardRes.isOngoing
+
             return (
               <div
                 key={program.id}
@@ -714,7 +723,7 @@ export default function ApplySoloParent() {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setSearchParams({ category: "solo-parent", type: "educational-assistance" })}
+                        onClick={() => setSearchParams({ category: "solo-parent", type: program.key })}
                         className="text-[#0066cc] dark:text-sky-400 hover:text-[#004c99] dark:hover:text-sky-300 font-extrabold text-xs md:text-sm tracking-widest uppercase cursor-pointer hover:underline transition-colors py-1 px-4"
                       >
                         {language === "en" ? "APPLY NOW" : "MAG-APPLY NGAYON"}
@@ -1005,9 +1014,10 @@ export default function ApplySoloParent() {
         />
       ) : (
         <SoloParentApplicationWizard
-          key="solo-parent-educational-assistance"
+          key={`solo-parent-${rawTypeParam || "financial-subsidy"}`}
           userProfile={activeProfile as any}
-          initialType="new"
+          programType={rawTypeParam || "financial-subsidy"}
+          initialType={rawTypeParam || "financial-subsidy"}
           initialCategoryId={null}
           isModalOpen={showRequirementsModal}
           onStepChange={setCurrentStep}
