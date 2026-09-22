@@ -6,11 +6,8 @@ import {
   X,
   Pencil,
   Info,
-  HeartHandshake,
-  ShieldAlert,
   Users,
   Baby,
-  Activity,
   AlertCircle,
   User,
   Camera,
@@ -469,6 +466,7 @@ export default function ChildWelfareApplicationWizard({
 }: ChildWelfareWizardProps) {
   const { t, language } = useLanguage()
   const [profile, setProfile] = useState(() => (propUserProfile || getCurrentUserProfile()) as any)
+  const userProfile = propUserProfile || profile || (getCurrentUserProfile() as any)
 
   const getProfileData = (prof: any) => {
     const p = prof || {}
@@ -539,8 +537,6 @@ export default function ChildWelfareApplicationWizard({
       window.removeEventListener("storage", handleProfileUpdate)
     }
   }, [])
-
-  const userProfile = propUserProfile || profile || (getCurrentUserProfile() as any)
 
   const STEPS = [
     { id: 1, label: "COMPLETE CHECKLIST" },
