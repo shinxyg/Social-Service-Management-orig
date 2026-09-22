@@ -32,83 +32,59 @@ function getLocalizedSoloParentRequirements(language: string): RequirementItem[]
   if (language === "en") {
     return [
       {
-        title: "1 PC 2×2 ID Picture",
-        desc: "Recent 2×2 color photo with clean white background of the Solo Parent.",
+        title: "Original Barangay Certificate of Indigency",
+        desc: "Original Barangay Certificate of Indigency certifying financial need and legitimate residency.",
       },
       {
-        title: "Valid Solo Parent ID / Solo Parent Certificate",
-        desc: "Valid Solo Parent ID card or official Solo Parent Certification issued by SSDD.",
+        title: "Certificate of Enrollment",
+        desc: "Official Certificate of Enrollment or Registration from school for each schooling child/beneficiary.",
       },
       {
-        title: "Certificate of Enrollment / Registration (Public School)",
-        desc: "Official Certificate of Enrollment / Registration from public school for each schooling child (2 or more enrolled children).",
+        title: "QCitizen ID",
+        desc: "Valid QCitizen ID of the applicant / Solo Parent with photo and signature.",
       },
       {
-        title: "Barangay Certificate of Indigency / Residency",
-        desc: "Proof of indigency and legitimate residency issued by the Barangay.",
-      },
-      {
-        title: "PSA Birth Certificate/s of Children",
-        desc: "PSA Birth certificate/s of the dependent schooling child/children.",
-      },
-      {
-        title: "Valid Government ID / QC ID",
-        desc: "Valid Government-issued ID or QCitizen ID of the solo parent with photo and signature.",
+        title: "Solo Parent ID / Certification",
+        desc: "Valid Solo Parent ID card or official Solo Parent Certification issued by QC SSDD.",
       },
     ]
   }
   if (language === "bis") {
     return [
       {
-        title: "1 PC 2×2 ID Picture",
-        desc: "Bag-ong 2×2 ID Picture nga adunay limpyo nga puti nga background sa Solo Parent.",
+        title: "Original Barangay Certificate of Indigency",
+        desc: "Orihinal nga Barangay Certificate of Indigency nga nagpamatuod sa panginahanglanon sa pinansyal.",
       },
       {
-        title: "Balido nga Solo Parent ID / Solo Parent Certificate",
-        desc: "Balido nga Solo Parent ID card o opisyal nga Solo Parent Certification gikan sa SSDD.",
+        title: "Certificate of Enrollment",
+        desc: "Opisyal nga Certificate of Enrollment o Rehistrasyon gikan sa eskwelahan sa matag nag-eskwela nga anak.",
       },
       {
-        title: "Certificate of Enrollment / Registration (Public School)",
-        desc: "Sertipiko sa pagpa-enroll gikan sa pampublikong eskwelahan alang sa matag nag-eskwela nga anak (2 o labaw pa).",
+        title: "QCitizen ID",
+        desc: "Balido nga QCitizen ID card sa aplikante / Solo Parent.",
       },
       {
-        title: "Barangay Certificate of Indigency / Residency",
-        desc: "Pruweba sa pagka-indigent ug pagpuyo gikan sa Barangay.",
-      },
-      {
-        title: "PSA Birth Certificate sa mga Anak",
-        desc: "PSA Birth Certificate sa mga nag-eskwela nga anak.",
-      },
-      {
-        title: "Balido nga Government ID / QC ID",
-        desc: "Balido nga Government ID o QCitizen ID sa solo parent.",
+        title: "Solo Parent ID / Sertipikasyon",
+        desc: "Balido nga Solo Parent ID card o opisyal nga Sertipikasyon gikan sa QC SSDD.",
       },
     ]
   }
   return [
     {
-      title: "1 PC 2×2 ID Picture",
-      desc: "Kasalukuyang 2×2 ID Picture na may malinis na puting background ng Solong Magulang.",
+      title: "Original Barangay Certificate of Indigency",
+      desc: "Orihinal na Barangay Certificate of Indigency na nagpapatunay ng pangangailangan sa tulong-pinansyal at paninirahan.",
     },
     {
-      title: "Valid Solo Parent ID / Solo Parent Certificate",
-      desc: "Valid Solo Parent ID card o opisyal na Solo Parent Certification mula sa SSDD.",
+      title: "Certificate of Enrollment",
+      desc: "Opisyal na Certificate of Enrollment o Rehistrasyon mula sa paaralan para sa bawat nag-aaral na anak/benepisyaryo.",
     },
     {
-      title: "Certificate of Enrollment / Registration (Public School)",
-      desc: "Sertipiko ng pagpapatala mula sa pampublikong paaralan para sa bawat nag-aaral na anak (dalawa o higit pa).",
+      title: "QCitizen ID",
+      desc: "Valid QCitizen ID ng aplikante / Solong Magulang na may litrato at lagda.",
     },
     {
-      title: "Barangay Certificate of Indigency / Residency",
-      desc: "Patunay ng pagiging indigent at lehitimong paninirahan mula sa Barangay.",
-    },
-    {
-      title: "PSA Birth Certificate ng mga Anak",
-      desc: "PSA Birth Certificate ng mga mag-aaral na anak na benepisyaryo.",
-    },
-    {
-      title: "Valid Government ID / QC ID",
-      desc: "Opisyal na Government ID o QCitizen ID ng solong magulang na may litrato at lagda.",
+      title: "Solo Parent ID / Certification",
+      desc: "Valid Solo Parent ID card o opisyal na Solo Parent Certification mula sa QC SSDD.",
     },
   ]
 }

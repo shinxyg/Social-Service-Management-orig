@@ -34,6 +34,7 @@ export interface SchoolingChild {
   schoolName: string
   gradeLevel: string
   schoolType: string
+  otherEnrollmentInfo?: string
 }
 
 interface SampleDocument {
@@ -46,46 +47,32 @@ interface SampleDocument {
 
 const EDUCATIONAL_ASSISTANCE_DOCUMENTS: SampleDocument[] = [
   {
-    id: "soloParentIdOrCert",
-    label: "VALID SOLO PARENT ID / SOLO PARENT CERTIFICATE",
-    description: "Kopya o larawan ng inyong valid Solo Parent ID o opisyal na Certificate mula sa QC SSDD.",
-    images: ["/samples/QC ID.png"],
-    downloadUrl: "/samples/QC ID.png",
-  },
-  {
-    id: "enrollmentCertificates",
-    label: "CERTIFICATE OF ENROLLMENT / REGISTRATION (PUBLIC SCHOOL)",
-    description: "Sertipiko ng pagpapatala mula sa pampublikong paaralan ng dalawa (2) o higit pang anak.",
-    images: ["/samples/BARANGAY CERTIFICATE.webp"],
-    downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
-  },
-  {
     id: "barangayIndigency",
-    label: "BARANGAY CERTIFICATE OF INDIGENCY / RESIDENCY",
-    description: "Barangay Certificate of Indigency na nagpapatunay ng pangangailangan sa tulong-pinansyal.",
+    label: "ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY",
+    description: "Original Barangay Certificate of Indigency certifying financial need and residency.",
     images: ["/samples/BARANGAY CERTIFICATE.webp"],
     downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
   },
   {
-    id: "birthCertificates",
-    label: "PSA BIRTH CERTIFICATE(S) OF CHILDREN",
-    description: "PSA Birth Certificate ng mga anak na nag-aaral at tumatanggap ng suporta.",
-    images: ["/samples/BIRTH CERTIFICATE OF MINOR.jpg"],
-    downloadUrl: "/samples/BIRTH CERTIFICATE OF MINOR.jpg",
+    id: "enrollmentCertificate",
+    label: "CERTIFICATE OF ENROLLMENT",
+    description: "Official Certificate of Enrollment or Registration from public school for each schooling child.",
+    images: ["/samples/BARANGAY CERTIFICATE.webp"],
+    downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
   },
   {
-    id: "validGovId",
-    label: "VALID GOVERNMENT ID O QC ID NG SOLO PARENT",
-    description: "Valid Government-issued ID o QCitizen ID ng solong magulang na may litrato at lagda.",
+    id: "qcitizenId",
+    label: "QCITIZEN ID",
+    description: "Valid QCitizen ID card of the applicant / Solo Parent.",
     images: ["/samples/QC ID.png"],
     downloadUrl: "/samples/QC ID.png",
   },
   {
-    id: "idPicture",
-    label: "RECENT 2X2 ID PICTURE NG SOLO PARENT",
-    description: "Kasalukuyang 2x2 picture na may malinis na puting background.",
-    images: ["/samples/ID PICTURE (2X2).webp"],
-    downloadUrl: "/samples/ID PICTURE (2X2).webp",
+    id: "soloParentIdOrCert",
+    label: "SOLO PARENT ID / CERTIFICATION",
+    description: "Valid Solo Parent ID card or official Solo Parent Certification issued by QC SSDD.",
+    images: ["/samples/QC ID.png"],
+    downloadUrl: "/samples/QC ID.png",
   },
 ]
 
@@ -193,50 +180,6 @@ function TextInput({
   )
 }
 
-function SelectInput({
-  value,
-  onChange,
-  options,
-  invalid = false,
-  disabled = false,
-  placeholder = "Select...",
-}: {
-  value: string
-  onChange: (v: string) => void
-  options: { label: string; value: string }[] | string[]
-  invalid?: boolean
-  disabled?: boolean
-  placeholder?: string
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 transition-colors ${
-        disabled
-          ? "border-border dark:border-slate-700 bg-gray-100 dark:bg-slate-800 text-muted-foreground cursor-not-allowed"
-          : invalid
-          ? "border-red-400 focus:ring-red-300 bg-red-50 dark:bg-red-950/30 text-foreground"
-          : "border-border dark:border-slate-700 bg-white dark:bg-slate-900 text-foreground focus:ring-blue-400"
-      }`}
-    >
-      <option value="">
-        {placeholder}
-      </option>
-      {options.map((opt) => {
-        const val = typeof opt === "string" ? opt : opt.value
-        const lab = typeof opt === "string" ? opt : opt.label
-        return (
-          <option key={val} value={val} className="bg-white dark:bg-slate-900 text-foreground">
-            {lab}
-          </option>
-        )
-      })}
-    </select>
-  )
-}
-
 function LockedField({ value, placeholder }: { value?: string; placeholder?: string }) {
   return (
     <div className="w-full border border-border dark:border-slate-800 bg-gray-100 dark:bg-slate-800/80 rounded-lg px-3 py-2.5 text-sm text-foreground select-none cursor-not-allowed">
@@ -272,7 +215,7 @@ function AccordionSection({
           className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline cursor-pointer"
         >
           <Pencil className="h-3 w-3" />
-          I-EDIT
+          EDIT
         </button>
       </div>
       {open && <div className="p-4 border-t border-border dark:border-slate-800">{children}</div>}
@@ -310,9 +253,9 @@ export default function SoloParentApplicationWizard({
   const userProfile = propUserProfile || getCurrentUserProfile()
 
   const STEPS = [
-    { id: 1, label: "COMPLETE CHECKLIST" },
-    { id: 2, label: "PERSONAL INFORMATION" },
-    { id: 3, label: "UPLOAD DOCUMENTS" },
+    { id: 1, label: "SERVICE REQUIREMENTS" },
+    { id: 2, label: "APPLICANT & BENEFICIARY INFO" },
+    { id: 3, label: "UPLOAD REQUIREMENTS" },
     { id: 4, label: "REVIEW & SUBMIT" },
   ]
 
@@ -324,16 +267,16 @@ export default function SoloParentApplicationWizard({
     onStepChange?.(step)
   }, [step, onStepChange])
 
-  // Step 1: Form Fields (Exact Image 1 Spec)
+  // Step 1: Form Fields
   const [soloParentIdNumber, setSoloParentIdNumber] = useState("")
   const [isIdVerified, setIsIdVerified] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [verifyNotice, setVerifyNotice] = useState<string | null>(null)
   const [soloParentStatus, setSoloParentStatus] = useState("")
-  const [assistanceType, setAssistanceType] = useState("Educational Assistance")
-  const [beneficiaryType, setBeneficiaryType] = useState("Solo Parent's Child/Beneficiary")
+  const [assistanceType] = useState("Educational Assistance")
+  const [beneficiaryType] = useState("Solo Parent's Child/Beneficiary")
 
-  // Step 2: Personal info
+  // Step 2: Personal info (A. Applicant / Solo Parent Information)
   const [formData, setFormData] = useState({
     firstName: userProfile?.firstName || "",
     middleName: userProfile?.middleName || "",
@@ -363,7 +306,7 @@ export default function SoloParentApplicationWizard({
 
   const [isEditingInfo, setIsEditingInfo] = useState(false)
 
-  // Schooling Children (Min 2 children in public school)
+  // Step 2: B. Beneficiary / Child Information
   const [schoolingChildren, setSchoolingChildren] = useState<SchoolingChild[]>([
     {
       id: "child-1",
@@ -373,6 +316,7 @@ export default function SoloParentApplicationWizard({
       schoolName: "SAUYO ELEMENTARY SCHOOL",
       gradeLevel: "Grade 5",
       schoolType: "Public School",
+      otherEnrollmentInfo: "LRN: 123456789012 - Section Diamond",
     },
     {
       id: "child-2",
@@ -382,6 +326,7 @@ export default function SoloParentApplicationWizard({
       schoolName: "SAUYO ELEMENTARY SCHOOL",
       gradeLevel: "Grade 2",
       schoolType: "Public School",
+      otherEnrollmentInfo: "LRN: 987654321098 - Section Emerald",
     },
   ])
 
@@ -396,12 +341,13 @@ export default function SoloParentApplicationWizard({
         schoolName: "",
         gradeLevel: "Grade 1",
         schoolType: "Public School",
+        otherEnrollmentInfo: "",
       },
     ])
   }
 
   const handleRemoveChild = (index: number) => {
-    if (schoolingChildren.length <= 2) return
+    if (schoolingChildren.length <= 1) return
     setSchoolingChildren((prev) => prev.filter((_, idx) => idx !== index))
   }
 
@@ -426,17 +372,16 @@ export default function SoloParentApplicationWizard({
     }, 600)
   }
 
-  // Step 3: Documents
+  // Step 3: Documents (C. Upload Requirements)
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
   const [uploadedDocsBase64, setUploadedDocsBase64] = useState<Record<string, string>>({})
   const [cameraDoc, setCameraDoc] = useState<SampleDocument | null>(null)
 
   const handleFileUpload = async (docId: string, files: File[]) => {
+    setUploadedDocs((prev) => ({ ...prev, [docId]: files }))
     if (!files.length) return
-    const file = files[0]
-    setUploadedDocs((prev) => ({ ...prev, [docId]: [file] }))
     try {
-      const dataUrl = await readFileAsDataUrl(file)
+      const dataUrl = await readFileAsDataUrl(files[0])
       setUploadedDocsBase64((prev) => ({ ...prev, [docId]: dataUrl }))
     } catch {}
   }
@@ -465,7 +410,7 @@ export default function SoloParentApplicationWizard({
   const step1Valid = Boolean(soloParentIdNumber.trim())
 
   const childrenValid =
-    schoolingChildren.length >= 2 &&
+    schoolingChildren.length >= 1 &&
     schoolingChildren.every(
       (c) =>
         (c.fullName || "").trim() !== "" &&
@@ -476,12 +421,11 @@ export default function SoloParentApplicationWizard({
   const step2Valid =
     (formData.firstName || "").trim() !== "" &&
     (formData.lastName || "").trim() !== "" &&
+    (formData.qcidNumber || "").trim() !== "" &&
     (formData.contactNo || "").replace(/\D/g, "").length >= 10 &&
     (formData.addressBarangay || "").trim() !== "" &&
-    childrenValid &&
-    (formData.emergencyFirstName || "").trim() !== "" &&
-    (formData.emergencyLastName || "").trim() !== "" &&
-    (formData.emergencyContactNo || "").replace(/\D/g, "").length === 11
+    (formData.email || "").trim() !== "" &&
+    childrenValid
 
   const step3Valid = EDUCATIONAL_ASSISTANCE_DOCUMENTS.every(
     (doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0
@@ -562,7 +506,7 @@ export default function SoloParentApplicationWizard({
       address_barangay: formData.addressBarangay,
       children: schoolingChildren,
       schooling_children: schoolingChildren,
-      financial_assistance_amount: "₱5,000 bawat benepisyaryo",
+      financial_assistance_amount: "₱5,000 per beneficiary",
       status: "pending",
       application_status: "pending",
       created_at: new Date().toISOString(),
@@ -575,7 +519,7 @@ export default function SoloParentApplicationWizard({
         assistanceType,
         beneficiaryType,
         schoolingChildren,
-        assistanceAmount: "₱5,000 bawat benepisyaryo",
+        assistanceAmount: "₱5,000 per beneficiary",
         assessmentStatus: "Pending Social Worker Assessment & Interview",
       },
       documents: docPayload,
@@ -595,8 +539,6 @@ export default function SoloParentApplicationWizard({
         method: "POST",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
-          userId: formData.qcidNumber || "0",
-          referenceNumber: generatedRef,
           applicationData: newAppRecord,
           documents: docPayload,
         }),
@@ -618,10 +560,10 @@ export default function SoloParentApplicationWizard({
           </div>
           <div>
             <h2 className="text-xl font-bold text-foreground">
-              {language === "en" ? "Application Submitted Successfully!" : "Matagumpay na Naisumite ang Aplikasyon!"}
+              Application Submitted Successfully!
             </h2>
             <p className="text-xs text-muted-foreground max-w-md mt-1.5 leading-relaxed">
-              Naisumite na ang inyong aplikasyon para sa Solo Parent Educational Assistance Program. Magsasagawa ng panayam (interview) at assessment ang Social Worker bago maipagkaloob ang tulong-pinansyal na ₱5,000 para sa bawat kwalipikadong anak na mag-aaral.
+              Your application for the Solo Parent Educational Assistance Program has been submitted. A Social Worker will conduct an interview and assessment prior to the release of educational assistance.
             </p>
           </div>
 
@@ -644,7 +586,7 @@ export default function SoloParentApplicationWizard({
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
               <span className="text-muted-foreground font-medium">Assistance Amount:</span>
-              <span className="font-semibold text-emerald-600 font-mono">₱5,000 bawat benepisyaryo</span>
+              <span className="font-semibold text-emerald-600 font-mono">₱5,000 per beneficiary</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground font-medium">Status:</span>
@@ -663,7 +605,7 @@ export default function SoloParentApplicationWizard({
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              {language === "en" ? "VIEW IN APPLICATION HISTORY" : "TINGNAN SA APPLICATION HISTORY"}
+              VIEW IN APPLICATION HISTORY
             </button>
           </div>
         </div>
@@ -678,7 +620,7 @@ export default function SoloParentApplicationWizard({
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
       <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-        {/* Top Circle Connector Stepper (Matching Pic 2) */}
+        {/* Top Circle Connector Stepper */}
         <div className="flex items-center px-6 pt-6 pb-4">
           {STEPS.map((s, idx) => (
             <div key={s.id} className="flex items-center flex-1 last:flex-none">
@@ -704,7 +646,7 @@ export default function SoloParentApplicationWizard({
           ))}
         </div>
 
-        {/* Step Indicator Tabs (Matching Pic 2) */}
+        {/* Step Indicator Tabs */}
         <div className="flex gap-2 border-b border-border bg-gray-50 dark:bg-slate-900/60 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
@@ -724,7 +666,7 @@ export default function SoloParentApplicationWizard({
 
         {/* Main Content Area */}
         <div className="p-6 min-h-90">
-          {/* STEP 1: SERVICE AND PRIMARY REQUIREMENTS (Exact Image 1 & 2 Spec) */}
+          {/* STEP 1: SERVICE AND PRIMARY REQUIREMENTS */}
           {step === 1 && (
             <div className="space-y-6">
               <div>
@@ -733,7 +675,7 @@ export default function SoloParentApplicationWizard({
                 </h3>
               </div>
 
-              {/* Notice Box (Matching Pic 2 Style) */}
+              {/* Notice Box */}
               <div className="bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3.5 shadow-xs">
                 <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="space-y-1 text-xs">
@@ -746,7 +688,7 @@ export default function SoloParentApplicationWizard({
                 </div>
               </div>
 
-              {/* Form Fields from Pic 1 */}
+              {/* Form Fields */}
               <div className="space-y-5 pt-1">
                 {/* 1. SOLO PARENT ID NUMBER */}
                 <div>
@@ -759,7 +701,7 @@ export default function SoloParentApplicationWizard({
                       SOLO PARENT ID NUMBER <span className="text-red-500">*</span>
                     </label>
                     {isIdVerified && soloParentIdNumber.trim() && (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-0.5 rounded-full">
                         <Check className="w-3.5 h-3.5" /> Solo Parent ID Verified
                       </span>
                     )}
@@ -818,7 +760,7 @@ export default function SoloParentApplicationWizard({
                   )}
                   {attemptedNext && !soloParentIdNumber.trim() && (
                     <p className="text-xs text-red-500 mt-1">
-                      Kailangang ilagay ang inyong Solo Parent ID Number bago magpatuloy.
+                      Please enter your Solo Parent ID Number to proceed.
                     </p>
                   )}
                 </div>
@@ -844,22 +786,22 @@ export default function SoloParentApplicationWizard({
             </div>
           )}
 
-          {/* STEP 2: PERSONAL INFORMATION & SCHOOLING BENEFICIARIES */}
+          {/* STEP 2: APPLICANT & BENEFICIARY INFORMATION */}
           {step === 2 && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
                 <div>
                   <h2 className="text-base font-bold text-foreground uppercase tracking-wide">
-                    PERSONAL INFORMATION & BENEFICIARIES
+                    APPLICANT & BENEFICIARY INFORMATION
                   </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Please review your personal information from your QCID profile. Fill in the schooling children details below.
+                    Please review your applicant details and enter your beneficiary schooling information below.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsEditingInfo((v) => !v)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                   {isEditingInfo ? "LOCK INFORMATION" : "EDIT INFORMATION"}
@@ -870,31 +812,24 @@ export default function SoloParentApplicationWizard({
               <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-semibold text-blue-600">Important reminder</p>
-                  <p className="text-blue-600/90 mt-0.5 text-xs">
-                    Please make sure the information on your QCID is correct and complete. Accurate information is important for fast processing of your Educational Assistance.
+                  <p className="font-semibold text-blue-600 dark:text-blue-400">Important Reminder</p>
+                  <p className="text-blue-600/90 dark:text-blue-400/90 mt-0.5 text-xs">
+                    Your profile information is pre-filled using your verified QCitizen ID and Solo Parent records. Click "Edit Information" if you need to update any field.
                   </p>
                 </div>
               </div>
 
-              {/* Personal Info Grid */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">QC ID *</label>
-                    <input
-                      type="text"
-                      value={formData.qcidNumber}
-                      onChange={(e) => updateField("qcidNumber", e.target.value)}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-blue-400"
-                      }`}
-                    />
-                  </div>
+              {/* A. APPLICANT / SOLO PARENT INFORMATION */}
+              <div className="space-y-4 pt-2">
+                <div className="border-b border-border pb-2">
+                  <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <User className="w-4 h-4 text-blue-600" />
+                    <span>A. Applicant / Solo Parent Information</span>
+                  </h3>
+                </div>
+
+                {/* Full Name */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">First Name *</label>
                     <input
@@ -910,9 +845,6 @@ export default function SoloParentApplicationWizard({
                       }`}
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Middle Name</label>
                     <input
@@ -951,6 +883,7 @@ export default function SoloParentApplicationWizard({
                       onChange={(e) => updateField("suffix", e.target.value)}
                       readOnly={!isEditingInfo}
                       disabled={!isEditingInfo}
+                      placeholder="e.g. Jr., III"
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
                         !isEditingInfo
                           ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
@@ -960,16 +893,17 @@ export default function SoloParentApplicationWizard({
                   </div>
                 </div>
 
+                {/* QCitizen ID & Contact Details */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Barangay *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">QCitizen ID Number *</label>
                     <input
                       type="text"
-                      value={formData.addressBarangay}
-                      onChange={(e) => updateField("addressBarangay", e.target.value)}
+                      value={formData.qcidNumber}
+                      onChange={(e) => updateField("qcidNumber", e.target.value)}
                       readOnly={!isEditingInfo}
                       disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
                         !isEditingInfo
                           ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
                           : "bg-white dark:bg-slate-900 border-blue-400"
@@ -977,7 +911,7 @@ export default function SoloParentApplicationWizard({
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Contact Number *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Contact Number (11-digits) *</label>
                     <input
                       type="text"
                       value={formData.contactNo}
@@ -1008,18 +942,90 @@ export default function SoloParentApplicationWizard({
                     />
                   </div>
                 </div>
+
+                {/* Address */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">House No. / Street</label>
+                    <input
+                      type="text"
+                      value={formData.addressStreet}
+                      onChange={(e) => updateField("addressStreet", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      placeholder="House / Unit / Street"
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
+                          : "bg-white dark:bg-slate-900 border-blue-400"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Barangay *</label>
+                    <input
+                      type="text"
+                      value={formData.addressBarangay}
+                      onChange={(e) => updateField("addressBarangay", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
+                          : "bg-white dark:bg-slate-900 border-blue-400"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">City / Municipality *</label>
+                    <input
+                      type="text"
+                      value={formData.addressCityMunicipality}
+                      onChange={(e) => updateField("addressCityMunicipality", e.target.value)}
+                      readOnly={!isEditingInfo}
+                      disabled={!isEditingInfo}
+                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
+                        !isEditingInfo
+                          ? "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-border cursor-not-allowed"
+                          : "bg-white dark:bg-slate-900 border-blue-400"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Solo Parent ID/Certification Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-800/40 p-3.5 rounded-xl border border-border">
+                  <div>
+                    <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Solo Parent ID Number</label>
+                    <p className="text-xs font-bold font-mono text-foreground mt-0.5">
+                      {soloParentIdNumber.startsWith("SP-") ? soloParentIdNumber : `SP-${soloParentIdNumber}`}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Solo Parent Status</label>
+                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                      {soloParentStatus || "Active / Verified Solo Parent (QC SSDD Recorded)"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Issuing Authority / Office</label>
+                    <p className="text-xs font-medium text-foreground mt-0.5">
+                      Quezon City SSDD (Social Services Dev. Dept.)
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {/* Schooling Children Section */}
+              {/* B. BENEFICIARY / CHILD INFORMATION */}
               <div className="space-y-4 pt-4 border-t border-border">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                       <School className="w-4 h-4 text-blue-600" />
-                      <span>Mga Mag-aaral na Anak na Benepisyaryo (Public School)</span>
+                      <span>B. Beneficiary / Child Information</span>
                     </h3>
                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Kailangan ng dalawa (2) o higit pang anak na naka-enroll sa pampublikong paaralan para sa ₱5,000 educational financial aid.
+                      Please enter the enrolled children/beneficiaries eligible for educational assistance.
                     </p>
                   </div>
                   <button
@@ -1028,7 +1034,7 @@ export default function SoloParentApplicationWizard({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer shrink-0 self-start sm:self-auto shadow-xs"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>MAGDAGDAG NG ANAK</span>
+                    <span>ADD BENEFICIARY / CHILD</span>
                   </button>
                 </div>
 
@@ -1040,39 +1046,60 @@ export default function SoloParentApplicationWizard({
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-blue-900 dark:text-sky-300 uppercase tracking-wide">
-                          Mag-aaral na Anak #{idx + 1}
+                          Beneficiary / Child #{idx + 1}
                         </span>
-                        {schoolingChildren.length > 2 && (
+                        {schoolingChildren.length > 1 && (
                           <button
                             type="button"
                             onClick={() => handleRemoveChild(idx)}
                             className="text-red-500 hover:text-red-700 text-xs flex items-center gap-1 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                            <span>Alisin</span>
+                            <span>Remove</span>
                           </button>
                         )}
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">Buong Pangalan ng Anak *</label>
+                        <div className="sm:col-span-2">
+                          <label className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">Child/Beneficiary’s Full Name *</label>
                           <input
                             type="text"
                             value={child.fullName}
                             onChange={(e) => handleUpdateChild(idx, "fullName", e.target.value.toUpperCase())}
-                            placeholder="JUAN DELA CRUZ JR."
-                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
+                            placeholder="e.g. JUAN DELA CRUZ JR."
+                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900 text-foreground"
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">Pangalan ng Pampublikong Paaralan *</label>
+                          <label className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">Date of Birth / Age *</label>
+                          <div className="grid grid-cols-2 gap-2 mt-1">
+                            <input
+                              type="date"
+                              value={child.birthDate}
+                              onChange={(e) => handleUpdateChild(idx, "birthDate", e.target.value)}
+                              className="w-full border border-border rounded-lg px-2 py-2 text-xs bg-white dark:bg-slate-900 text-foreground"
+                            />
+                            <input
+                              type="text"
+                              value={child.age}
+                              onChange={(e) => handleUpdateChild(idx, "age", e.target.value.replace(/\D/g, "").slice(0, 2))}
+                              placeholder="Age"
+                              className="w-full border border-border rounded-lg px-2 py-2 text-xs bg-white dark:bg-slate-900 text-foreground text-center"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">School *</label>
                           <input
                             type="text"
                             value={child.schoolName}
                             onChange={(e) => handleUpdateChild(idx, "schoolName", e.target.value.toUpperCase())}
                             placeholder="e.g. SAUYO HIGH SCHOOL"
-                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
+                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900 text-foreground"
                           />
                         </div>
                         <div>
@@ -1080,7 +1107,7 @@ export default function SoloParentApplicationWizard({
                           <select
                             value={child.gradeLevel}
                             onChange={(e) => handleUpdateChild(idx, "gradeLevel", e.target.value)}
-                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
+                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900 text-foreground"
                           >
                             <option value="Kindergarten">Kindergarten</option>
                             <option value="Grade 1">Grade 1</option>
@@ -1089,14 +1116,24 @@ export default function SoloParentApplicationWizard({
                             <option value="Grade 4">Grade 4</option>
                             <option value="Grade 5">Grade 5</option>
                             <option value="Grade 6">Grade 6</option>
-                            <option value="Grade 7">Grade 7 (Junior HS)</option>
-                            <option value="Grade 8">Grade 8 (Junior HS)</option>
-                            <option value="Grade 9">Grade 9 (Junior HS)</option>
-                            <option value="Grade 10">Grade 10 (Junior HS)</option>
-                            <option value="Grade 11">Grade 11 (Senior HS)</option>
-                            <option value="Grade 12">Grade 12 (Senior HS)</option>
+                            <option value="Grade 7">Grade 7 (Junior High School)</option>
+                            <option value="Grade 8">Grade 8 (Junior High School)</option>
+                            <option value="Grade 9">Grade 9 (Junior High School)</option>
+                            <option value="Grade 10">Grade 10 (Junior High School)</option>
+                            <option value="Grade 11">Grade 11 (Senior High School)</option>
+                            <option value="Grade 12">Grade 12 (Senior High School)</option>
                             <option value="College / Vocational">College / Vocational</option>
                           </select>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">Other Enrollment Information</label>
+                          <input
+                            type="text"
+                            value={child.otherEnrollmentInfo || ""}
+                            onChange={(e) => handleUpdateChild(idx, "otherEnrollmentInfo", e.target.value)}
+                            placeholder="e.g. LRN, Section, Track"
+                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900 text-foreground"
+                          />
                         </div>
                       </div>
                     </div>
@@ -1104,62 +1141,24 @@ export default function SoloParentApplicationWizard({
                 </div>
               </div>
 
-              {/* Emergency Contact */}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                  <User className="w-4 h-4 text-blue-600" />
-                  <span>Emergency Contact Person</span>
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">First Name *</label>
-                    <input
-                      type="text"
-                      value={formData.emergencyFirstName}
-                      onChange={(e) => updateField("emergencyFirstName", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Last Name *</label>
-                    <input
-                      type="text"
-                      value={formData.emergencyLastName}
-                      onChange={(e) => updateField("emergencyLastName", e.target.value)}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Contact Number (11-digits) *</label>
-                    <input
-                      type="text"
-                      value={formData.emergencyContactNo}
-                      onChange={(e) => updateField("emergencyContactNo", e.target.value.replace(/\D/g, "").slice(0, 11))}
-                      maxLength={11}
-                      className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 font-mono bg-white dark:bg-slate-900"
-                    />
-                  </div>
-                </div>
-              </div>
-
               {attemptedNext && !step2Valid && (
                 <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-                  <span>Pakikumpleto ang lahat ng mandatory fields at tiyaking may kahit dalawang (2) kumpletong talaan ng mag-aaral na anak.</span>
+                  <span>Please complete all required fields and ensure at least one complete beneficiary record is entered.</span>
                 </div>
               )}
             </div>
           )}
 
-          {/* STEP 3: UPLOAD DOCUMENTS */}
+          {/* STEP 3: C. UPLOAD REQUIREMENTS */}
           {step === 3 && (
             <div className="space-y-6">
               <div className="border-b border-border pb-3">
                 <h2 className="text-base font-bold text-foreground uppercase tracking-wide">
-                  DOCUMENTARY REQUIREMENTS
+                  C. UPLOAD REQUIREMENTS
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  I-upload ang malilinaw na kopya o larawan ng mga kinakailangang dokumento para sa Educational Assistance.
+                  Please upload clear scanned copies or photographs of the required documents for Educational Assistance.
                 </p>
               </div>
 
@@ -1173,50 +1172,64 @@ export default function SoloParentApplicationWizard({
                   return (
                     <div
                       key={doc.id}
-                      className={`border rounded-xl p-4 sm:p-5 transition-colors ${
+                      className={`p-4 rounded-xl border transition-all ${
                         uploaded
-                          ? "border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-950/30"
+                          ? "border-emerald-300 dark:border-emerald-700/60 bg-emerald-50/20 dark:bg-emerald-950/10"
                           : invalid
-                          ? "border-red-500/40 bg-red-500/10 dark:bg-red-950/30"
-                          : "border-border bg-card/60 dark:bg-slate-800/40"
+                          ? "border-red-300 dark:border-red-800/60 bg-red-50/30 dark:bg-red-950/10"
+                          : "border-border bg-card dark:bg-slate-900/40"
                       }`}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <p className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-foreground uppercase tracking-wide">
-                            {doc.label} <span className="text-red-500">*</span>
-                            {uploaded && (
-                              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0">
-                                <Check className="h-2.5 w-2.5 stroke-[3]" />
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div className="space-y-1 max-w-xl">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-foreground uppercase tracking-wide">
+                              {doc.label}
+                            </span>
+                            <span className="text-red-500 font-bold">*</span>
+                            {uploaded ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-2 py-0.5 rounded-full">
+                                <Check className="w-3 h-3 stroke-[3]" /> Uploaded
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                                Required
                               </span>
                             )}
-                          </p>
-                          {doc.description && <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>}
+                          </div>
+                          {doc.description && (
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {doc.description}
+                            </p>
+                          )}
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
                           <input
-                            type="file"
                             id={inputId}
-                            accept=".jpg,.jpeg,.png,.webp,image/*"
+                            type="file"
                             className="hidden"
+                            accept="image/*,application/pdf"
                             onChange={(e) => {
-                              const selectedFiles = e.target.files ? Array.from(e.target.files) : []
-                              if (selectedFiles.length > 0) handleFileUpload(doc.id, selectedFiles)
-                              e.target.value = ""
+                              const selected = Array.from(e.target.files || [])
+                              if (selected.length) {
+                                handleFileUpload(doc.id, selected)
+                              }
                             }}
                           />
                           <label
                             htmlFor={inputId}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
+                            className="px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
                           >
                             <Upload className="h-3.5 w-3.5" />
-                            <span>UPLOAD</span>
+                            <span>CHOOSE FILE</span>
                           </label>
+
                           <button
                             type="button"
                             onClick={() => setCameraDoc(doc)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
+                            className="px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
                           >
                             <Camera className="h-3.5 w-3.5" />
                             <span>CAMERA</span>
@@ -1250,7 +1263,7 @@ export default function SoloParentApplicationWizard({
 
                       {invalid && (
                         <p className="text-xs text-red-500 mt-2 font-medium">
-                          Kinakailangang mag-upload ng dokumento para sa aytem na ito.
+                          Please upload a valid document for this required item.
                         </p>
                       )}
                     </div>
@@ -1268,7 +1281,7 @@ export default function SoloParentApplicationWizard({
                   REVIEW & SUBMIT INFORMATION
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Pakisuri ang lahat ng impormasyon bago isumite ang aplikasyon para sa Solo Parent Educational Assistance.
+                  Please review all information carefully before submitting your application for Solo Parent Educational Assistance.
                 </p>
               </div>
 
@@ -1276,42 +1289,49 @@ export default function SoloParentApplicationWizard({
               <AccordionSection title="Service & Primary Requirements" onEdit={() => setStep(1)}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <ReviewField label="Solo Parent ID Number" value={soloParentIdNumber.startsWith("SP-") ? soloParentIdNumber : `SP-${soloParentIdNumber}`} />
-                  <ReviewField label="Solo Parent Status" value={soloParentStatus || "Active / Verified Solo Parent"} />
+                  <ReviewField label="Solo Parent Status" value={soloParentStatus || "Active / Verified Solo Parent (QC SSDD Recorded)"} />
                   <ReviewField label="Type of Assistance" value={assistanceType} />
                   <ReviewField label="Beneficiary Type" value={beneficiaryType} />
-                  <ReviewField label="Assistance Amount" value="₱5,000 bawat benepisyaryo (subject to assessment)" />
+                  <ReviewField label="Assistance Amount" value="₱5,000 per qualified beneficiary (Subject to assessment)" />
                 </div>
               </AccordionSection>
 
-              {/* Personal Information */}
-              <AccordionSection title="Personal Information & Emergency Contact" onEdit={() => setStep(2)}>
+              {/* A. Applicant / Solo Parent Information */}
+              <AccordionSection title="A. Applicant / Solo Parent Information" onEdit={() => setStep(2)}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <ReviewField label="Full Name" value={fullApplicantName} />
-                  <ReviewField label="Barangay" value={formData.addressBarangay} />
+                  <ReviewField label="QCitizen ID Number" value={formData.qcidNumber} />
                   <ReviewField label="Contact Number" value={formData.contactNo} />
                   <ReviewField label="Email Address" value={formData.email} />
-                  <ReviewField label="Emergency Contact" value={`${formData.emergencyFirstName} ${formData.emergencyLastName} (${formData.emergencyContactNo})`} />
+                  <ReviewField label="Address" value={`${formData.addressStreet ? `${formData.addressStreet}, ` : ""}${formData.addressBarangay}, ${formData.addressCityMunicipality}`} />
+                  <ReviewField label="Solo Parent Details" value={`${soloParentIdNumber.startsWith("SP-") ? soloParentIdNumber : `SP-${soloParentIdNumber}`} (${soloParentStatus || "Active"})`} />
                 </div>
               </AccordionSection>
 
-              {/* Schooling Children */}
-              <AccordionSection title="Schooling Children (Beneficiaries)" onEdit={() => setStep(2)}>
+              {/* B. Beneficiary / Child Information */}
+              <AccordionSection title="B. Beneficiary / Child Information" onEdit={() => setStep(2)}>
                 <div className="space-y-2 text-xs">
                   {schoolingChildren.map((c, i) => (
-                    <div key={c.id} className="flex justify-between items-center border-b border-border/60 pb-1.5">
-                      <span className="font-semibold text-foreground">
-                        {i + 1}. {c.fullName}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {c.schoolName} ({c.gradeLevel})
-                      </span>
+                    <div key={c.id} className="p-2.5 rounded-lg bg-muted/40 border border-border/60 space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-foreground">
+                          {i + 1}. {c.fullName}
+                        </span>
+                        <span className="text-muted-foreground font-mono">
+                          {c.birthDate ? `DOB: ${c.birthDate} (Age: ${c.age || "—"})` : `Age: ${c.age || "—"}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-muted-foreground text-[11px]">
+                        <span>School: {c.schoolName} ({c.gradeLevel})</span>
+                        {c.otherEnrollmentInfo && <span>Details: {c.otherEnrollmentInfo}</span>}
+                      </div>
                     </div>
                   ))}
                 </div>
               </AccordionSection>
 
-              {/* Uploaded Documents */}
-              <AccordionSection title="Uploaded Documents" onEdit={() => setStep(3)}>
+              {/* C. Uploaded Requirements */}
+              <AccordionSection title="C. Uploaded Requirements" onEdit={() => setStep(3)}>
                 <div className="space-y-2 text-xs">
                   {EDUCATIONAL_ASSISTANCE_DOCUMENTS.map((doc) => {
                     const uploaded = Boolean(uploadedDocs[doc.id]?.length)
@@ -1350,7 +1370,7 @@ export default function SoloParentApplicationWizard({
             onClick={goBack}
             className="px-5 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer"
           >
-            {step === 1 ? "CANCEL" : "BUMALIK"}
+            {step === 1 ? "CANCEL" : "BACK"}
           </button>
 
           {step < 4 ? (
@@ -1359,7 +1379,7 @@ export default function SoloParentApplicationWizard({
               onClick={goNext}
               className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer shadow-xs"
             >
-              SUSUNOD
+              NEXT
             </button>
           ) : (
             <button
@@ -1369,7 +1389,7 @@ export default function SoloParentApplicationWizard({
               className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer shadow-xs flex items-center gap-2"
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>ISUMITE ANG APLIKASYON</span>
+              <span>SUBMIT APPLICATION</span>
             </button>
           )}
         </div>
