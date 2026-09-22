@@ -330,8 +330,8 @@ export default function SoloParentApplicationWizard({
   const [isVerifying, setIsVerifying] = useState(false)
   const [verifyNotice, setVerifyNotice] = useState<string | null>(null)
   const [soloParentStatus, setSoloParentStatus] = useState("")
-  const [assistanceType, setAssistanceType] = useState("")
-  const [beneficiaryType, setBeneficiaryType] = useState("")
+  const [assistanceType, setAssistanceType] = useState("Educational Assistance")
+  const [beneficiaryType, setBeneficiaryType] = useState("Solo Parent's Child/Beneficiary")
 
   // Step 2: Personal info
   const [formData, setFormData] = useState({
@@ -462,11 +462,7 @@ export default function SoloParentApplicationWizard({
   const [reference, setReference] = useState("")
 
   // Validations
-  const step1Valid = Boolean(
-    soloParentIdNumber.trim() &&
-    assistanceType === "Educational Assistance" &&
-    beneficiaryType.trim() !== ""
-  )
+  const step1Valid = Boolean(soloParentIdNumber.trim())
 
   const childrenValid =
     schoolingChildren.length >= 2 &&
@@ -843,82 +839,6 @@ export default function SoloParentApplicationWizard({
                   <p className="text-[11px] text-muted-foreground mt-1">
                     Auto-filled upon Solo Parent ID verification
                   </p>
-                </div>
-
-                {/* 3. TYPE OF ASSISTANCE REQUESTED */}
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide block text-foreground mb-1.5">
-                    TYPE OF ASSISTANCE REQUESTED <span className="text-red-500">*</span>
-                  </label>
-                  <SelectInput
-                    value={assistanceType}
-                    onChange={(v) => setAssistanceType(v)}
-                    placeholder="Select Type of Assistance"
-                    options={[
-                      {
-                        label: "Educational Assistance",
-                        value: "Educational Assistance",
-                      },
-                      {
-                        label: "Medical Assistance",
-                        value: "Medical Assistance",
-                      },
-                      {
-                        label: "Livelihood Assistance",
-                        value: "Livelihood Assistance",
-                      },
-                      {
-                        label: "Financial Assistance / Cash Aid",
-                        value: "Financial Assistance / Cash Aid",
-                      },
-                    ]}
-                    invalid={
-                      (attemptedNext && !assistanceType) ||
-                      (!!assistanceType && assistanceType !== "Educational Assistance")
-                    }
-                  />
-                  {attemptedNext && !assistanceType && (
-                    <p className="text-xs text-red-500 mt-1">
-                      Pumili ng uri ng tulong na hinihiling.
-                    </p>
-                  )}
-                  {assistanceType && assistanceType !== "Educational Assistance" && (
-                    <p className="text-xs text-red-500 mt-1 font-medium">
-                      Paunawa: Ang application na ito ay para lamang sa Educational Assistance. Mangyaring piliin ang "Educational Assistance".
-                    </p>
-                  )}
-                </div>
-
-                {/* 4. BENEFICIARY TYPE */}
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide block text-foreground mb-1.5">
-                    BENEFICIARY TYPE <span className="text-red-500">*</span>
-                  </label>
-                  <SelectInput
-                    value={beneficiaryType}
-                    onChange={(v) => setBeneficiaryType(v)}
-                    placeholder="Select Beneficiary Type"
-                    options={[
-                      {
-                        label: "Solo Parent's Child/Beneficiary",
-                        value: "Solo Parent's Child/Beneficiary",
-                      },
-                      {
-                        label: "Solo Parent (Self)",
-                        value: "Solo Parent (Self)",
-                      },
-                      {
-                        label: "Dependent Relative",
-                        value: "Dependent Relative",
-                      },
-                    ]}
-                    invalid={attemptedNext && !beneficiaryType}
-                  />
-                  {attemptedNext && !beneficiaryType && (
-                    <p className="text-xs text-red-500 mt-1">
-                      Pumili ng beneficiary type.
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
