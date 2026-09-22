@@ -16,7 +16,6 @@ import {
   Laptop,
   Check,
   ArrowRight,
-  Info,
   ShieldCheck,
   RefreshCw,
   Lock,
@@ -87,13 +86,26 @@ export interface TrainingApplicationRecord {
     suffix?: string
     email: string
     contactNo: string
-    address: string
+    address?: string
+    completeAddress?: string
     barangay: string
     city: string
     sex: string
     dateOfBirth: string
     age: string | number
     occupation?: string
+    civilStatus?: string
+    highestEducation?: string
+    schoolInstitution?: string
+    trainingPurpose?: string
+    reasonForApplying?: string
+    hasAttendedTraining?: string
+    previousTrainingCourse?: string
+    previousYearCompleted?: string
+    documents?: {
+      requestLetter?: string | null
+      qcIdProof?: string | null
+    }
   }
   status: "pending" | "under_review" | "approved" | "rejected" | "needs_revision"
   submittedAt: string
@@ -742,6 +754,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         sex: sex || profile.sex || "Female",
         civilStatus: civilStatus || "Single",
         completeAddress: completeAddress || `${profile.houseNo || ""} ${profile.street || ""}, Brgy. ${profile.barangay || "Sauyo"}, Quezon City`.trim(),
+        address: completeAddress || `${profile.houseNo || ""} ${profile.street || ""}, Brgy. ${profile.barangay || "Sauyo"}, Quezon City`.trim(),
         barangay: barangay || profile.barangay || "Sauyo",
         city: "Quezon City",
         highestEducation: highestEducation || "Senior High School",
@@ -1128,10 +1141,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               )
               const totalSlots = course.totalSlots || 25
               const availableSlots = Math.max(0, totalSlots - enrolledCount)
-              const slotPercent = Math.min(
-                100,
-                Math.round((enrolledCount / totalSlots) * 100)
-              )
 
               const isUserEnrolledInThis = allUserApplications.some(
                 (a) =>
