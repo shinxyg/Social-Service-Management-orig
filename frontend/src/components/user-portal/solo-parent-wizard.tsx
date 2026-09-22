@@ -742,10 +742,10 @@ export default function SoloParentApplicationWizard({
                 <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="space-y-1 text-xs">
                   <p className="text-xs md:text-sm font-bold text-blue-950 dark:text-blue-200">
-                    Solo Parent Sector: Qualified beneficiaries may receive the educational assistance provided.
+                    SOLO PARENT SECTOR: Qualified beneficiaries may receive educational assistance.
                   </p>
                   <p className="text-blue-900/90 dark:text-blue-300/90 leading-relaxed text-justify">
-                    Para sa indigent solo parents’ children/beneficiaries na nag-aaral. Kabilang dito ang mga solo parents na may dalawa (2) o higit pang anak na naka-enroll sa pampublikong paaralan, na may tulong-pinansyal na ₱5,000 bawat kwalipikadong benepisyaryo. May interview at assessment din ng Social Worker bago ma-extend ang tulong-pinansyal.
+                    For qualified children/beneficiaries of Solo Parents. Subject to eligibility verification, document validation, and assessment before approval.
                   </p>
                 </div>
               </div>
@@ -1449,7 +1449,7 @@ export default function SoloParentApplicationWizard({
           isOpen={showSubmitModal}
           onClose={() => setShowSubmitModal(false)}
           onConfirm={handleSubmit}
-          loading={submitting}
+          isSubmitting={submitting}
         />
       )}
     </div>
