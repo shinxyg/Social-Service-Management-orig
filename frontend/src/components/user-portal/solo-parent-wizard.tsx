@@ -1448,14 +1448,16 @@ export default function SoloParentApplicationWizard({
         </div>
 
         {/* Footer Navigation Buttons */}
-        <div className="bg-gray-50 dark:bg-slate-900/60 border-t border-border px-6 py-4 flex items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={goBack}
-            className="px-5 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer"
-          >
-            {step === 1 ? "CANCEL" : "BACK"}
-          </button>
+        <div className={`bg-gray-50 dark:bg-slate-900/60 border-t border-border px-6 py-4 flex items-center ${step > 1 ? "justify-between" : "justify-end"} gap-4`}>
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={goBack}
+              className="px-5 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer"
+            >
+              BACK
+            </button>
+          )}
 
           {step < 4 ? (
             <button
