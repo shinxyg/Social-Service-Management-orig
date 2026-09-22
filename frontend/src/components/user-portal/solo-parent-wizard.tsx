@@ -221,7 +221,7 @@ function SelectInput({
           : "border-border dark:border-slate-700 bg-white dark:bg-slate-900 text-foreground focus:ring-blue-400"
       }`}
     >
-      <option value="" disabled>
+      <option value="">
         {placeholder}
       </option>
       {options.map((opt) => {
@@ -330,8 +330,8 @@ export default function SoloParentApplicationWizard({
   const [isVerifying, setIsVerifying] = useState(false)
   const [verifyNotice, setVerifyNotice] = useState<string | null>(null)
   const [soloParentStatus, setSoloParentStatus] = useState("")
-  const [assistanceType, setAssistanceType] = useState("Educational Assistance")
-  const [beneficiaryType, setBeneficiaryType] = useState("Solo Parent's Child/Beneficiary")
+  const [assistanceType, setAssistanceType] = useState("")
+  const [beneficiaryType, setBeneficiaryType] = useState("")
 
   // Step 2: Personal info
   const [formData, setFormData] = useState({
@@ -464,8 +464,8 @@ export default function SoloParentApplicationWizard({
   // Validations
   const step1Valid = Boolean(
     soloParentIdNumber.trim() &&
-    assistanceType &&
-    beneficiaryType
+    assistanceType === "Educational Assistance" &&
+    beneficiaryType.trim() !== ""
   )
 
   const childrenValid =
@@ -859,12 +859,32 @@ export default function SoloParentApplicationWizard({
                         label: "Educational Assistance",
                         value: "Educational Assistance",
                       },
+                      {
+                        label: "Medical Assistance",
+                        value: "Medical Assistance",
+                      },
+                      {
+                        label: "Livelihood Assistance",
+                        value: "Livelihood Assistance",
+                      },
+                      {
+                        label: "Financial Assistance / Cash Aid",
+                        value: "Financial Assistance / Cash Aid",
+                      },
                     ]}
-                    invalid={attemptedNext && !assistanceType}
+                    invalid={
+                      (attemptedNext && !assistanceType) ||
+                      (!!assistanceType && assistanceType !== "Educational Assistance")
+                    }
                   />
                   {attemptedNext && !assistanceType && (
                     <p className="text-xs text-red-500 mt-1">
                       Pumili ng uri ng tulong na hinihiling.
+                    </p>
+                  )}
+                  {assistanceType && assistanceType !== "Educational Assistance" && (
+                    <p className="text-xs text-red-500 mt-1 font-medium">
+                      Paunawa: Ang application na ito ay para lamang sa Educational Assistance. Mangyaring piliin ang "Educational Assistance".
                     </p>
                   )}
                 </div>
@@ -886,6 +906,10 @@ export default function SoloParentApplicationWizard({
                       {
                         label: "Solo Parent (Self)",
                         value: "Solo Parent (Self)",
+                      },
+                      {
+                        label: "Dependent Relative",
+                        value: "Dependent Relative",
                       },
                     ]}
                     invalid={attemptedNext && !beneficiaryType}
