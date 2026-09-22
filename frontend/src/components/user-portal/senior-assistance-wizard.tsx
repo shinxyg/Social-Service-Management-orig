@@ -253,11 +253,12 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       currentPreviousOccupation: "",
       sourceOfIncome: "",
       approximateMonthlyIncome: "Below ₱5,000",
+      pensionType: "None",
       pensionSSS: false,
       pensionGSIS: false,
       pensionOther: false,
       pensionOtherSpecify: "",
-      pensionNone: false,
+      pensionNone: true,
 
       // 3. Family Composition
       familyMembers: [] as SeniorFamilyMember[],
@@ -274,6 +275,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       reasonForAssistanceOther: "",
 
       // 6. Other Assistance / Benefits Received
+      otherAssistanceType: "None",
+      otherAssistanceSpecify: "",
       dswdSocialPension: false,
       sssPensionBenefit: false,
       gsisPensionBenefit: false,
@@ -281,7 +284,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       otherGovtAssistanceSpecify: "",
       otherFinancialAssistance: false,
       otherFinancialAssistanceSpecify: "",
-      otherAssistanceNone: false,
+      otherAssistanceNone: true,
 
       signatureName: fullName,
       agreedToCertification: false,
@@ -732,6 +735,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
       formData.gsisPensionBenefit ? "GSIS Pension" : null,
       formData.otherGovtAssistance ? `Other Govt: ${formData.otherGovtAssistanceSpecify || "Yes"}` : null,
       formData.otherFinancialAssistance ? `Other Financial: ${formData.otherFinancialAssistanceSpecify || "Yes"}` : null,
+      formData.otherAssistanceType === "Other" ? `Other: ${formData.otherAssistanceSpecify || "Yes"}` : null,
       formData.otherAssistanceNone ? "None" : null,
     ].filter(Boolean).join(", ") || "None"
 
@@ -1384,66 +1388,49 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                   <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-2">
                     Pension / Benefits Received, if any:
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                    <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={formData.pensionSSS}
-                        onChange={(e) => updateField("pensionSSS", e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                      />
-                      <span>SSS Pension</span>
-                    </label>
+                  <div className="max-w-md">
+                    <select
+                      value={
+                        formData.pensionType ||
+                        (formData.pensionSSS
+                          ? "SSS Pension"
+                          : formData.pensionGSIS
+                          ? "GSIS Pension"
+                          : formData.pensionOther
+                          ? "Other Pension / Benefits"
+                          : "None")
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setFormData((prev) => ({
+                          ...prev,
+                          pensionType: val,
+                          pensionSSS: val === "SSS Pension",
+                          pensionGSIS: val === "GSIS Pension",
+                          pensionOther: val === "Other Pension / Benefits",
+                          pensionNone: val === "None",
+                        }))
+                      }}
+                      className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    >
+                      <option value="None">None</option>
+                      <option value="SSS Pension">SSS Pension</option>
+                      <option value="GSIS Pension">GSIS Pension</option>
+                      <option value="Other Pension / Benefits">Other Pension / Benefits</option>
+                    </select>
 
-                    <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={formData.pensionGSIS}
-                        onChange={(e) => updateField("pensionGSIS", e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                      />
-                      <span>GSIS Pension</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={formData.pensionOther}
-                        onChange={(e) => updateField("pensionOther", e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                      />
-                      <span>Other Pension / Benefits</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-2.5 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={formData.pensionNone}
-                        onChange={(e) => {
-                          const val = e.target.checked
-                          setFormData((prev) => ({
-                            ...prev,
-                            pensionNone: val,
-                            ...(val ? { pensionSSS: false, pensionGSIS: false, pensionOther: false } : {}),
-                          }))
-                        }}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                      />
-                      <span>None</span>
-                    </label>
+                    {(formData.pensionType === "Other Pension / Benefits" || formData.pensionOther) && (
+                      <div className="mt-2.5">
+                        <input
+                          type="text"
+                          value={formData.pensionOtherSpecify}
+                          onChange={(e) => updateField("pensionOtherSpecify", e.target.value)}
+                          placeholder="Pakitukoy ang ibang pensyon o benepisyo"
+                          className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
+                        />
+                      </div>
+                    )}
                   </div>
-
-                  {formData.pensionOther && (
-                    <div className="mt-3">
-                      <input
-                        type="text"
-                        value={formData.pensionOtherSpecify}
-                        onChange={(e) => updateField("pensionOtherSpecify", e.target.value)}
-                        placeholder="Pakitukoy ang ibang pensyon o benepisyo"
-                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30"
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -1467,7 +1454,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>+ Magdagdag ng Kasapi</span>
+                    <span>Magdagdag ng Kasapi</span>
                   </button>
                 </div>
 
@@ -1482,7 +1469,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-medium text-blue-600 hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>+ Magdagdag ng Kasapi ng Pamilya</span>
+                      <span>Magdagdag ng Kasapi ng Pamilya</span>
                     </button>
                   </div>
                 ) : (
@@ -1614,14 +1601,15 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     <span className="absolute left-3 top-2.5 text-gray-500 font-bold text-sm">₱</span>
                     <input
                       type="text"
+                      maxLength={5}
                       value={formData.totalMonthlyExpenses}
-                      onChange={(e) => updateField("totalMonthlyExpenses", e.target.value)}
-                      placeholder="e.g. 6,500"
+                      onChange={(e) => updateField("totalMonthlyExpenses", e.target.value.replace(/\D/g, "").slice(0, 5))}
+                      placeholder="e.g. 6500"
                       className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                     />
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Tantiyang kabuuang gastusin sa pagkain, gamot, tubig, kuryente, at iba pang pangangailangan kada buwan.
+                    Tantiyang kabuuang gastusin kada buwan (hanggang 5 numero lamang).
                   </p>
                 </div>
               </div>
@@ -1755,110 +1743,85 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                   </h3>
                 </div>
 
-                <p className="text-xs text-muted-foreground">
-                  Piliin ang mga programang kasalukuyang nakatutulong sa inyo. Kung wala, piliin ang "None".
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={formData.dswdSocialPension}
-                      onChange={(e) => updateField("dswdSocialPension", e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    />
-                    <span>DSWD Social Pension</span>
+                <div className="max-w-md">
+                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">
+                    Other Assistance / Benefits Received
                   </label>
+                  <select
+                    value={
+                      formData.otherAssistanceType ||
+                      (formData.dswdSocialPension
+                        ? "DSWD Social Pension"
+                        : formData.sssPensionBenefit
+                        ? "SSS Pension"
+                        : formData.gsisPensionBenefit
+                        ? "GSIS Pension"
+                        : formData.otherGovtAssistance
+                        ? "Other Government Assistance"
+                        : formData.otherFinancialAssistance
+                        ? "Other Financial Assistance"
+                        : "None")
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setFormData((prev) => ({
+                        ...prev,
+                        otherAssistanceType: val,
+                        dswdSocialPension: val === "DSWD Social Pension",
+                        sssPensionBenefit: val === "SSS Pension",
+                        gsisPensionBenefit: val === "GSIS Pension",
+                        otherGovtAssistance: val === "Other Government Assistance",
+                        otherFinancialAssistance: val === "Other Financial Assistance",
+                        otherAssistanceNone: val === "None",
+                      }))
+                    }}
+                    className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  >
+                    <option value="None">None</option>
+                    <option value="DSWD Social Pension">DSWD Social Pension</option>
+                    <option value="SSS Pension">SSS Pension</option>
+                    <option value="GSIS Pension">GSIS Pension</option>
+                    <option value="Other Government Assistance">Other Government Assistance</option>
+                    <option value="Other Financial Assistance">Other Financial Assistance</option>
+                    <option value="Other">Other</option>
+                  </select>
 
-                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={formData.sssPensionBenefit}
-                      onChange={(e) => updateField("sssPensionBenefit", e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    />
-                    <span>SSS Pension</span>
-                  </label>
+                  {(formData.otherAssistanceType === "Other Government Assistance" || formData.otherGovtAssistance) && (
+                    <div className="mt-2.5">
+                      <input
+                        type="text"
+                        value={formData.otherGovtAssistanceSpecify}
+                        onChange={(e) => updateField("otherGovtAssistanceSpecify", e.target.value)}
+                        placeholder="Tukuyin ang Other Government Assistance"
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
+                      />
+                    </div>
+                  )}
 
-                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={formData.gsisPensionBenefit}
-                      onChange={(e) => updateField("gsisPensionBenefit", e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    />
-                    <span>GSIS Pension</span>
-                  </label>
+                  {(formData.otherAssistanceType === "Other Financial Assistance" || formData.otherFinancialAssistance) && (
+                    <div className="mt-2.5">
+                      <input
+                        type="text"
+                        value={formData.otherFinancialAssistanceSpecify}
+                        onChange={(e) => updateField("otherFinancialAssistanceSpecify", e.target.value)}
+                        placeholder="Tukuyin ang Other Financial Assistance"
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
+                      />
+                    </div>
+                  )}
 
-                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={formData.otherGovtAssistance}
-                      onChange={(e) => updateField("otherGovtAssistance", e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    />
-                    <span>Other Government Assistance</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={formData.otherFinancialAssistance}
-                      onChange={(e) => updateField("otherFinancialAssistance", e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    />
-                    <span>Other Financial Assistance</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 border border-gray-300 dark:border-slate-700 rounded-lg p-3 bg-gray-50/70 dark:bg-slate-800 hover:bg-blue-50/50 cursor-pointer transition-colors text-xs font-medium text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={formData.otherAssistanceNone}
-                      onChange={(e) => {
-                        const val = e.target.checked
-                        setFormData((prev) => ({
-                          ...prev,
-                          otherAssistanceNone: val,
-                          ...(val
-                            ? {
-                                dswdSocialPension: false,
-                                sssPensionBenefit: false,
-                                gsisPensionBenefit: false,
-                                otherGovtAssistance: false,
-                                otherFinancialAssistance: false,
-                              }
-                            : {}),
-                        }))
-                      }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    />
-                    <span>None</span>
-                  </label>
+                  {formData.otherAssistanceType === "Other" && (
+                    <div className="mt-2.5">
+                      <input
+                        type="text"
+                        value={formData.otherAssistanceSpecify}
+                        onChange={(e) => updateField("otherAssistanceSpecify", e.target.value)}
+                        placeholder="Pakitukoy ang ibang tulong o benepisyo"
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
+                      />
+                    </div>
+                  )}
                 </div>
-
-                {formData.otherGovtAssistance && (
-                  <div>
-                    <input
-                      type="text"
-                      value={formData.otherGovtAssistanceSpecify}
-                      onChange={(e) => updateField("otherGovtAssistanceSpecify", e.target.value)}
-                      placeholder="Tukuyin ang Other Government Assistance"
-                      className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
-                    />
-                  </div>
-                )}
-
-                {formData.otherFinancialAssistance && (
-                  <div>
-                    <input
-                      type="text"
-                      value={formData.otherFinancialAssistanceSpecify}
-                      onChange={(e) => updateField("otherFinancialAssistanceSpecify", e.target.value)}
-                      placeholder="Tukuyin ang Other Financial Assistance"
-                      className="w-full border border-blue-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-400 focus:outline-none bg-blue-50/30 dark:bg-slate-800"
-                    />
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -2106,6 +2069,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     formData.gsisPensionBenefit ? "GSIS Pension" : null,
                     formData.otherGovtAssistance ? `Other Govt: ${formData.otherGovtAssistanceSpecify || "Yes"}` : null,
                     formData.otherFinancialAssistance ? `Other Financial: ${formData.otherFinancialAssistanceSpecify || "Yes"}` : null,
+                    formData.otherAssistanceType === "Other" ? `Other: ${formData.otherAssistanceSpecify || "Yes"}` : null,
                     formData.otherAssistanceNone ? "None" : null,
                   ].filter(Boolean).join(", ") || "None"}
                 />
