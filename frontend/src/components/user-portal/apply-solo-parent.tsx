@@ -195,28 +195,12 @@ interface ChildWelfareCardItem {
 
 const CHILD_WELFARE_CARDS: ChildWelfareCardItem[] = [
   {
-    id: "nutritional-assistance",
-    key: "nutritional-assistance",
-    title: "Nutritional Assistance",
-    titleEn: "Nutritional Assistance",
-    desc: "Nagbibigay ng suporta sa nutrisyon para sa mga batang nangangailangan ng masustansyang pagkain, supplementary feeding, gatas o infant nutrition, nutritional supplements, at gabay sa nutrisyon.",
-    descEn: "Provides nutritional support for children in need of nutritious food, supplementary feeding, milk or infant nutrition, nutritional supplements, and dietary guidance.",
-  },
-  {
-    id: "child-protection",
-    key: "child-protection",
-    title: "Child Protection Assistance",
-    titleEn: "Child Protection Assistance",
-    desc: "Nagbibigay ng proteksyon, intervention, legal at case referral, at psychosocial support para sa mga batang nakakaranas o nasa panganib ng abuse, neglect, karahasan, o safety concerns.",
-    descEn: "Provides comprehensive protection, intervention, legal and case referral, and psychosocial support for children facing abuse, neglect, exploitation, violence, or urgent welfare concerns.",
-  },
-  {
-    id: "emergency-assistance",
-    key: "emergency-assistance",
-    title: "Emergency Assistance",
-    titleEn: "Emergency Assistance",
-    desc: "Nagbibigay ng agarang tulong at mabilisang interbensyon para sa mga batang nasa krisis, kagipitan, sakuna, medikal na emerhensiya, o kritikal na kalagayan sa kaligtasan.",
-    descEn: "Delivers urgent intervention and rapid response relief for children caught in crisis, medical emergencies, disasters, or critical safety situations.",
+    id: "educational-assistance",
+    key: "educational-assistance",
+    title: "Educational Assistance for Indigent Children & Youth",
+    titleEn: "Educational Assistance for Indigent Children & Youth",
+    desc: "Nagbibigay ng tulong-pinansyal at suporta sa edukasyon para sa mga maralitang bata at kabataan, anak ng solo parent, at mga batang may kapansanan (CWD) sa Lungsod Quezon.",
+    descEn: "Provides educational and financial aid support for indigent children & youth, solo parents' children/beneficiaries, and children with disabilities (CWD) residing in Quezon City.",
   },
 ]
 

@@ -64,137 +64,47 @@ export interface ChildWelfareProgram {
 export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
   {
     id: 1,
-    key: "nutritional-assistance",
-    title: "Nutritional Assistance",
-    desc: "Provides nutritional support for children in need of nutritious food, supplementary feeding, milk or infant nutrition, nutritional supplements, and dietary counseling to improve their health and nutritional status.",
+    key: "educational-assistance",
+    title: "Educational Assistance for Indigent Children & Youth",
+    desc: "Provides educational financial assistance and learning support for indigent children & youth, solo parents' children/beneficiaries, and children with disabilities (CWD) residing in Quezon City.",
     checklists: [
       "Are you a legitimate resident of Quezon City?",
-      "Are you applying for nutritional assistance for a child?",
-      "Is the child currently in need of nutritional support?",
+      "Are you applying for educational assistance for an indigent child or youth?",
+      "Is the beneficiary currently enrolled or in need of educational assistance?",
     ],
-    receivedQuestion: "Have you already received nutritional assistance from another Quezon City office? *",
-    receivedOptions: ["Yes, I already received nutritional assistance", "Not yet"],
+    receivedQuestion: "Have you already received educational assistance from another Quezon City office? *",
+    receivedOptions: ["Yes, I already received educational assistance", "Not yet"],
     assistanceTypeLabel: "Choose the type of assistance *",
     assistanceTypes: [
-      "Food Pack / Nutritious Food",
-      "Supplementary Feeding",
-      "Milk / Infant Nutrition",
-      "Nutritional Supplements",
-      "Nutrition Education / Counseling",
+      "Educational Financial Assistance (₱5,000 / Student)",
+      "School Supplies & Learning Materials Support",
+      "Tuition / Miscellaneous Fee Subsidy",
+      "Special Education (SPED) / CWD Learning Assistance",
     ],
-    whatIsIt: "The Nutritional Assistance Program provides support to children who need nutritious food packs, supplementary feeding, milk or infant nutrition, nutritional supplements, and proper nutrition guidance to improve their health and wellbeing.",
+    whatIsIt: "The Educational Assistance for Indigent Children & Youth Program provides financial assistance and learning support to qualified indigent students, children of solo parents, and children with disabilities in Quezon City to help them continue their studies.",
     whoIsEligible: [
-      "Children residing in Quezon City who are in need of nutritional assistance.",
-      "Children with specific nutritional needs or at risk of malnutrition.",
-      "Applications may be submitted by the parent or legal guardian of the child.",
+      "Indigent children and youth residing in Quezon City currently enrolled in elementary, high school, or college.",
+      "Children/beneficiaries of registered Solo Parents.",
+      "Children with Disabilities (CWD) enrolled in formal or SPED classes.",
     ],
     childRequirements: [
       "PSA Birth Certificate of the Child",
+      "Certificate of Enrollment / Registration Form / School ID",
     ],
     parentRequirements: [
-      "QCID or Valid Government ID",
-      "Proof of Residency",
-      "Contact Information",
+      "QCID or Valid Government ID of Parent / Guardian",
+      "Barangay Certificate of Indigency / Solo Parent ID / PWD ID",
     ],
     specialRequirements: [
-      "Nutrition / Supplementary Feeding Assessment",
+      "School Enrollment / Academic Record Assessment",
     ],
     documents: [
       { id: "psaBirthCert", label: "PSA Birth Certificate of the Child", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-      { id: "parentId", label: "Valid ID of Parent/Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
-      { id: "proofResidency", label: "Proof of Residency", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
+      { id: "certEnrollment", label: "Certificate of Enrollment / School ID", required: true, sampleImage: "/samples/sample_valid_id.png" },
+      { id: "parentId", label: "Valid ID of Parent / Guardian / QCitizen ID", required: true, sampleImage: "/samples/QC ID.png" },
+      { id: "proofIndigency", label: "Barangay Certificate of Indigency / Solo Parent ID / PWD ID", required: true, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
     ],
     submitButtonText: "SUBMIT APPLICATION",
-  },
-  {
-    id: 2,
-    key: "child-protection",
-    title: "Child Protection Assistance",
-    desc: "Provides protection, intervention, legal and case referral, and psychosocial support for children experiencing or at risk of abuse, neglect, exploitation, violence, or other safety concerns.",
-    checklists: [
-      "Are you a legitimate resident of Quezon City?",
-      "Are you applying for child protection assistance for a child?",
-      "Is the child currently experiencing a protection or safety concern?",
-    ],
-    receivedQuestion: "Have you already received child protection assistance from another Quezon City office? *",
-    receivedOptions: ["Yes, I already received assistance", "Not yet"],
-    assistanceTypeLabel: "Choose the type of assistance *",
-    assistanceTypes: [
-      "Child Protection / Safety Assistance",
-      "Emergency Child Assistance",
-      "Temporary Shelter / Protective Custody Referral",
-      "Legal / Case Referral Assistance",
-      "Psychosocial Support / Counseling Referral",
-    ],
-    whatIsIt: "The Child Protection Assistance Program provides comprehensive protection, intervention, counseling, and legal referral for children facing abuse, neglect, violence, exploitation, or urgent welfare concerns.",
-    whoIsEligible: [
-      "Children residing in Quezon City in need of child protection services.",
-      "Children experiencing or at risk of abuse, neglect, exploitation, violence, or safety issues.",
-      "Applications or reports may be filed by parents, guardians, relatives, or authorized reporting individuals.",
-    ],
-    childRequirements: [
-      "PSA Birth Certificate of the Child",
-      "Proof of Residency",
-    ],
-    parentRequirements: [
-      "QCID or Valid Government ID",
-      "Contact Information",
-    ],
-    specialRequirements: [
-      "Case Information / Protection Report",
-    ],
-    hasProtectionConcern: true,
-    documents: [
-      { id: "psaBirthCert", label: "PSA Birth Certificate of the Child", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-      { id: "parentId", label: "Valid ID of Parent/Guardian/Reporting Person", required: true, sampleImage: "/samples/sample_valid_id.png" },
-      { id: "proofResidency", label: "Proof of Residency", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
-    ],
-    submitButtonText: "SUBMIT APPLICATION",
-  },
-  {
-    id: 3,
-    key: "emergency-assistance",
-    title: "Emergency Assistance",
-    desc: "Provides immediate intervention and emergency aid for children facing crisis situations, including emergency food, medical aid, temporary shelter, transportation, and urgent protection.",
-    checklists: [
-      "Are you a legitimate resident of Quezon City?",
-      "Are you requesting emergency assistance for a child?",
-      "Is the child currently experiencing an emergency or immediate need?",
-    ],
-    receivedQuestion: "Is the child currently in immediate danger or in need of urgent assistance? *",
-    receivedOptions: ["Yes", "No"],
-    assistanceTypeLabel: "Choose the type of assistance *",
-    assistanceTypes: [
-      "Emergency Food Assistance",
-      "Emergency Medical Assistance",
-      "Emergency Transportation Assistance",
-      "Emergency Shelter Assistance",
-      "Emergency Protection / Intervention",
-    ],
-    whatIsIt: "The Emergency Assistance Program delivers urgent intervention and rapid response relief for children caught in crisis, medical emergencies, disasters, or critical safety situations.",
-    whoIsEligible: [
-      "Children residing in Quezon City in immediate need of emergency assistance.",
-      "Children facing emergencies affecting their immediate health, safety, food security, or shelter.",
-      "Requests may be submitted by parents, guardians, relatives, or authorized first responders.",
-    ],
-    childRequirements: [
-      "PSA Birth Certificate of the Child",
-      "Proof of Residency",
-    ],
-    parentRequirements: [
-      "QCID or Valid Government ID",
-      "Contact Information",
-    ],
-    specialRequirements: [
-      "Emergency Assessment Information",
-    ],
-    hasEmergencyInfo: true,
-    documents: [
-      { id: "psaBirthCert", label: "PSA Birth Certificate of the Child", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-      { id: "parentId", label: "Valid ID of Parent/Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
-      { id: "proofResidency", label: "Proof of Residency", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
-    ],
-    submitButtonText: "SUBMIT EMERGENCY REQUEST",
   },
 ]
 
@@ -203,135 +113,45 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
     return [
       {
         id: 1,
-        key: "nutritional-assistance",
-        title: "Tulong sa Nutrisyon",
-        desc: "Nagbibigay ng suporta sa mga batang nangangailangan ng masustansyang pagkain, supplementary feeding, gatas o infant nutrition, nutritional supplements, at gabay tungkol sa wastong nutrisyon upang makatulong sa kanilang kalusugan at nutritional status.",
+        key: "educational-assistance",
+        title: "Tulong-Pang-edukasyon para sa Maralitang Bata at Kabataan",
+        desc: "Nagbibigay ng tulong-pinansyal at suporta sa edukasyon para sa mga maralitang bata at kabataan, anak ng solo parent, at mga batang may kapansanan (CWD) sa Lungsod Quezon.",
         checklists: [
           "Ikaw ba ay lehitimong residente ng Quezon City?",
-          "Nag-a-apply ka ba para sa tulong sa nutrisyon para sa bata?",
-          "Kasalukuyan bang nangangailangan ng suporta sa nutrisyon ang bata?",
+          "Nag-a-apply ka ba para sa tulong-pang-edukasyon para sa bata o kabataan?",
+          "Kasalukuyan bang naka-enroll o nangangailangan ng tulong sa pag-aaral ang benepisyaryo?",
         ],
-        receivedQuestion: "Nakatanggap ka na ba ng tulong sa nutrisyon mula sa ibang opisina ng Quezon City? *",
-        receivedOptions: ["Oo, nakatanggap na ako ng tulong sa nutrisyon", "Hindi pa"],
+        receivedQuestion: "Nakatanggap ka na ba ng tulong-pang-edukasyon mula sa ibang opisina ng Quezon City? *",
+        receivedOptions: ["Oo, nakatanggap na ako ng tulong-pang-edukasyon", "Hindi pa"],
         assistanceTypeLabel: "Piliin ang uri ng tulong *",
         assistanceTypes: [
-          "Food Pack / Masustansyang Pagkain",
-          "Supplementary Feeding",
-          "Gatas / Infant Nutrition",
-          "Nutritional Supplements",
-          "Edukasyon sa Nutrisyon / Counseling",
+          "Educational Financial Assistance (₱5,000 / Student)",
+          "School Supplies & Learning Materials Support",
+          "Tuition / Miscellaneous Fee Subsidy",
+          "Special Education (SPED) / CWD Learning Assistance",
         ],
-        whatIsIt: "Ang Nutritional Assistance Program ay nagbibigay ng suporta sa mga batang nangangailangan ng masustansyang pagkain, supplementary feeding, gatas o infant nutrition, nutritional supplements, at gabay tungkol sa wastong nutrisyon upang makatulong sa kanilang kalusugan at nutritional status.",
+        whatIsIt: "Ang Educational Assistance Program ay nagbibigay ng suportang pinansyal at gamit sa pag-aaral sa mga maralitang mag-aaral, anak ng solo parent, at batang may kapansanan sa Lungsod Quezon upang makapagpatuloy sa kanilang edukasyon.",
         whoIsEligible: [
-          "Mga batang residente ng Quezon City na nangangailangan ng nutritional assistance.",
-          "Mga batang may nutritional needs o nasa panganib ng malnutrition.",
-          "Ang aplikasyon ay maaaring isumite ng magulang o legal na guardian ng bata.",
+          "Mga maralitang bata at kabataang residente ng Quezon City na kasalukuyang nag-aaral sa elementarya, hayskul, o kolehiyo.",
+          "Mga anak o benepisyaryo ng rehistradong Solo Parent.",
+          "Mga Batang may Kapansanan (CWD) na naka-enroll sa pormal o SPED na klase.",
         ],
         childRequirements: [
           "PSA Birth Certificate ng Bata",
+          "Certificate of Enrollment / School ID",
         ],
         parentRequirements: [
           "QCID o Valid ID ng Magulang / Guardian",
-          "Katibayan ng Paninirahan (Proof of Residency)",
-          "Impormasyon sa Pakikipag-ugnayan (Contact Information)",
+          "Barangay Certificate of Indigency / Solo Parent ID / PWD ID",
         ],
         specialRequirements: [
-          "Nutrition / Supplementary Feeding Assessment",
+          "School Enrollment / Academic Record Assessment",
         ],
         documents: [
           { id: "psaBirthCert", label: "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "parentId", label: "Valid ID ng Magulang / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "proofResidency", label: "Katibayan ng Paninirahan (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
-        ],
-        submitButtonText: "ISUMITE ANG APLIKASYON",
-      },
-      {
-        id: 2,
-        key: "child-protection",
-        title: "Tulong sa Proteksyon ng Bata",
-        desc: "Nagbibigay ng proteksyon, intervention, referral, at iba pang kinakailangang suporta para sa mga batang nakakaranas o nasa panganib ng abuse, neglect, exploitation, violence, o iba pang child protection concerns.",
-        checklists: [
-          "Ikaw ba ay lehitimong residente ng Quezon City?",
-          "Nag-a-apply ka ba para sa proteksyon ng bata?",
-          "Kasalukuyan bang may banta sa kaligtasan o proteksyon ang bata?",
-        ],
-        receivedQuestion: "Nakatanggap ka na ba ng tulong sa proteksyon mula sa ibang opisina ng Quezon City? *",
-        receivedOptions: ["Oo, nakatanggap na ako ng tulong", "Hindi pa"],
-        assistanceTypeLabel: "Piliin ang uri ng tulong *",
-        assistanceTypes: [
-          "Tulong sa Proteksyon / Kaligtasan ng Bata",
-          "Pang-emerhensiyang Tulong sa Bata",
-          "Temporary Shelter / Protective Custody Referral",
-          "Tulong Legal / Case Referral",
-          "Psychosocial Support / Counseling Referral",
-        ],
-        whatIsIt: "Ang Child Protection Assistance Program ay nagbibigay ng proteksyon, intervention, referral, at iba pang kinakailangang suporta para sa mga batang nakakaranas o nasa panganib ng abuse, neglect, exploitation, violence, o iba pang child protection concerns.",
-        whoIsEligible: [
-          "Mga batang residente ng Quezon City na nangangailangan ng child protection services.",
-          "Mga batang nakakaranas o nasa panganib ng abuse, neglect, exploitation, violence, o iba pang safety concerns.",
-          "Maaaring magsumite ng aplikasyon o referral ang magulang, legal guardian, kamag-anak, o authorized reporting person, depende sa sitwasyon.",
-        ],
-        childRequirements: [
-          "PSA Birth Certificate ng Bata",
-          "Katibayan ng Paninirahan (Proof of Residency)",
-        ],
-        parentRequirements: [
-          "QCID o Valid ID ng Magulang / Guardian / Nag-uulat",
-          "Impormasyon sa Pakikipag-ugnayan",
-        ],
-        specialRequirements: [
-          "Case Information / Protection Report",
-        ],
-        hasProtectionConcern: true,
-        documents: [
-          { id: "psaBirthCert", label: "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "parentId", label: "Valid ID ng Magulang / Guardian / Nag-uulat", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "proofResidency", label: "Katibayan ng Paninirahan (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
-        ],
-        submitButtonText: "ISUMITE ANG APLIKASYON",
-      },
-      {
-        id: 3,
-        key: "emergency-assistance",
-        title: "Pang-emerhensiyang Tulong",
-        desc: "Nagbibigay ng agarang tulong at intervention sa mga batang nakakaranas ng emergency o agarang pangangailangan, kabilang ang medical, food, transportation, shelter, at protection concerns.",
-        checklists: [
-          "Ikaw ba ay lehitimong residente ng Quezon City?",
-          "Humihiling ka ba ng pang-emerhensiyang tulong para sa bata?",
-          "Kasalukuyan bang nakakaranas ng emergency o agarang pangangailangan ang bata?",
-        ],
-        receivedQuestion: "Kasalukuyan bang nasa agarang panganib o nangangailangan ng agarang saklolo ang bata? *",
-        receivedOptions: ["Oo", "Hindi"],
-        assistanceTypeLabel: "Piliin ang uri ng tulong *",
-        assistanceTypes: [
-          "Pang-emerhensiyang Tulong sa Pagkain",
-          "Pang-emerhensiyang Tulong Medikal",
-          "Pang-emerhensiyang Tulong sa Transportasyon",
-          "Pang-emerhensiyang Silungan",
-          "Pang-emerhensiyang Proteksyon / Intervention",
-        ],
-        whatIsIt: "Ang Emergency Assistance Program ay nagbibigay ng agarang tulong at intervention sa mga batang nakakaranas ng emergency o agarang pangangailangan, kabilang ang medical, food, transportation, shelter, at protection concerns.",
-        whoIsEligible: [
-          "Mga batang residente ng Quezon City na nangangailangan ng agarang tulong o saklolo.",
-          "Mga batang nakakaranas ng emergency o sitwasyong maaaring makaapekto sa kanilang kaligtasan, kalusugan, o pangunahing pangangailangan.",
-          "Maaaring magsumite ng request ang magulang, legal guardian, kamag-anak, o authorized person.",
-        ],
-        childRequirements: [
-          "PSA Birth Certificate ng Bata",
-          "Katibayan ng Paninirahan (Proof of Residency)",
-        ],
-        parentRequirements: [
-          "QCID o Valid ID ng Magulang / Guardian",
-          "Impormasyon sa Pakikipag-ugnayan",
-        ],
-        specialRequirements: [
-          "Emergency Assessment Information",
-        ],
-        hasEmergencyInfo: true,
-        documents: [
-          { id: "psaBirthCert", label: "PSA Birth Certificate ng Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "parentId", label: "Valid ID ng Magulang / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "proofResidency", label: "Katibayan ng Paninirahan (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
+          { id: "certEnrollment", label: "Certificate of Enrollment / School ID", required: true, sampleImage: "/samples/sample_valid_id.png" },
+          { id: "parentId", label: "Valid ID ng Magulang / Guardian / QCID", required: true, sampleImage: "/samples/QC ID.png" },
+          { id: "proofIndigency", label: "Barangay Certificate of Indigency / Solo Parent ID / PWD ID", required: true, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
         ],
         submitButtonText: "ISUMITE ANG APLIKASYON",
       },
@@ -342,135 +162,45 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
     return [
       {
         id: 1,
-        key: "nutritional-assistance",
-        title: "Tabang sa Nutrisyon",
-        desc: "Naghatag og tabang sa mga bata nga nagkinahanglan og masustansyang pagkaon, supplementary feeding, gatas o infant nutrition, nutritional supplements, ug giya sa nutrisyon.",
+        key: "educational-assistance",
+        title: "Tabang Pang-edukasyon alang sa Kabus nga mga Bata ug Kabatan-onan",
+        desc: "Naghatag og pinansyal nga tabang ug suporta sa edukasyon alang sa mga kabus nga bata ug kabatan-onan, anak sa solo parent, ug mga bata nga adunay kapansanan (CWD) sa Quezon City.",
         checklists: [
           "Ikaw ba usa ka lehitimong residente sa Quezon City?",
-          "Nag-apply ba ka og tabang sa nutrisyon para sa bata?",
-          "Kasamtangan ba nga nagkinahanglan og tabang sa nutrisyon ang bata?",
+          "Nag-apply ba ka alang sa tabang pang-edukasyon para sa bata o batan-on?",
+          "Kasamtangan ba nga naka-enroll o nagkinahanglan og tabang sa pag-eskwela ang benepisyaryo?",
         ],
-        receivedQuestion: "Nakadawat na ba ka og tabang sa nutrisyon gikan sa laing opisina sa Quezon City? *",
-        receivedOptions: ["Oo, nakadawat na ko og tabang sa nutrisyon", "Wala pa"],
+        receivedQuestion: "Nakadawat na ba ka og tabang pang-edukasyon gikan sa laing opisina sa Quezon City? *",
+        receivedOptions: ["Oo, nakadawat na ko og tabang pang-edukasyon", "Wala pa"],
         assistanceTypeLabel: "Pilia ang matang sa tabang *",
         assistanceTypes: [
-          "Food Pack / Masustansyang Pagkaon",
-          "Supplementary Feeding",
-          "Gatas / Infant Nutrition",
-          "Nutritional Supplements",
-          "Edukasyon sa Nutrisyon / Counseling",
+          "Educational Financial Assistance (₱5,000 / Student)",
+          "School Supplies & Learning Materials Support",
+          "Tuition / Miscellaneous Fee Subsidy",
+          "Special Education (SPED) / CWD Learning Assistance",
         ],
-        whatIsIt: "Ang Nutritional Assistance Program naghatag og tabang sa mga bata nga nagkinahanglan og masustansyang pagkaon, supplementary feeding, gatas o infant nutrition, nutritional supplements, ug giya sa nutrisyon aron mapalambo ang ilang kahimsog.",
+        whatIsIt: "Ang Educational Assistance Program naghatag og pinansyal nga suporta ug gamit sa pagtuon alang sa mga kabus nga estudyante, anak sa solo parent, ug bata nga may kapansanan sa Quezon City.",
         whoIsEligible: [
-          "Mga bata nga residente sa Quezon City nga nagkinahanglan og tabang sa nutrisyon.",
-          "Mga bata nga adunay partikular nga panginahanglan sa nutrisyon o anaa sa peligro sa malnutrisyon.",
-          "Ang aplikasyon mahimong isumite sa ginikanan o legal nga guardian sa bata.",
+          "Mga kabus nga bata ug kabatan-onan sa Quezon City nga kasamtangang nag-eskwela sa elementarya, high school, o kolehiyo.",
+          "Mga anak o benepisyaryo sa rehistradong Solo Parent.",
+          "Mga Bata nga Adunay Kapansanan (CWD) nga naka-enroll sa pormal o SPED classes.",
         ],
         childRequirements: [
           "PSA Birth Certificate sa Bata",
+          "Certificate of Enrollment / School ID",
         ],
         parentRequirements: [
           "QCID o Balido nga ID sa Ginikanan / Guardian",
-          "Katibayan sa Pagpuyo (Proof of Residency)",
-          "Impormasyon sa Pakig-kontak (Contact Information)",
+          "Barangay Certificate of Indigency / Solo Parent ID / PWD ID",
         ],
         specialRequirements: [
-          "Nutrition / Supplementary Feeding Assessment",
+          "School Enrollment / Academic Record Assessment",
         ],
         documents: [
           { id: "psaBirthCert", label: "PSA Birth Certificate sa Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "parentId", label: "Balido nga ID sa Ginikanan / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "proofResidency", label: "Katibayan sa Pagpuyo (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
-        ],
-        submitButtonText: "ISUMITE ANG APLIKASYON",
-      },
-      {
-        id: 2,
-        key: "child-protection",
-        title: "Tabang sa Proteksyon sa Bata",
-        desc: "Naghatag og proteksyon, intervention, referral, ug suporta para sa mga bata nga nag-atubang o anaa sa peligro sa pang-abuso, kapabayaan, o kapintasan.",
-        checklists: [
-          "Ikaw ba usa ka lehitimong residente sa Quezon City?",
-          "Nag-apply ba ka para sa proteksyon sa bata?",
-          "Kasamtangan ba nga dunay kabalaka sa kaluwasan o proteksyon ang bata?",
-        ],
-        receivedQuestion: "Nakadawat na ba ka og tabang sa proteksyon gikan sa laing opisina sa Quezon City? *",
-        receivedOptions: ["Oo, nakadawat na ko og tabang", "Wala pa"],
-        assistanceTypeLabel: "Pilia ang matang sa tabang *",
-        assistanceTypes: [
-          "Tabang sa Proteksyon / Kaluwasan sa Bata",
-          "Pang-emerhensya nga Tabang sa Bata",
-          "Temporary Shelter / Protective Custody Referral",
-          "Tabang Legal / Case Referral",
-          "Psychosocial Support / Counseling Referral",
-        ],
-        whatIsIt: "Ang Child Protection Assistance Program naghatag og proteksyon, intervention, referral, ug suporta para sa mga bata nga nag-atubang o anaa sa peligro sa pang-abuso, kapabayaan, o kapintasan.",
-        whoIsEligible: [
-          "Mga bata nga residente sa Quezon City nga nagkinahanglan og proteksyon.",
-          "Mga bata nga nakasinati o anaa sa peligro sa pang-abuso, kapabayaan, o kapintasan.",
-          "Mahimong magsumite og aplikasyon ang ginikanan, legal nga guardian, paryente, o tig-report.",
-        ],
-        childRequirements: [
-          "PSA Birth Certificate sa Bata",
-          "Katibayan sa Pagpuyo (Proof of Residency)",
-        ],
-        parentRequirements: [
-          "QCID o Balido nga ID sa Ginikanan / Guardian / Tig-report",
-          "Impormasyon sa Pakig-kontak",
-        ],
-        specialRequirements: [
-          "Case Information / Protection Report",
-        ],
-        hasProtectionConcern: true,
-        documents: [
-          { id: "psaBirthCert", label: "PSA Birth Certificate sa Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "parentId", label: "Balido nga ID sa Ginikanan / Nag-report", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "proofResidency", label: "Katibayan sa Pagpuyo (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
-        ],
-        submitButtonText: "ISUMITE ANG APLIKASYON",
-      },
-      {
-        id: 3,
-        key: "emergency-assistance",
-        title: "Pang-emerhensya nga Tabang",
-        desc: "Naghatag og dinalian nga tabang ug intervention sa mga bata nga nag-atubang og emerhensya o dinaliang panginahanglan, lakip ang medikal, pagkaon, kapasilongan, ug proteksyon.",
-        checklists: [
-          "Ikaw ba usa ka lehitimong residente sa Quezon City?",
-          "Nangayo ba ka og pang-emerhensya nga tabang para sa bata?",
-          "Kasamtangan ba nga nakasinati og emerhensya o dinaliang panginahanglan ang bata?",
-        ],
-        receivedQuestion: "Kasamtangan ba nga anaa sa dinaliang peligro o nagkinahanglan og dinalian nga tabang ang bata? *",
-        receivedOptions: ["Oo", "Dili"],
-        assistanceTypeLabel: "Pilia ang matang sa tabang *",
-        assistanceTypes: [
-          "Pang-emerhensya nga Tabang sa Pagkaon",
-          "Pang-emerhensya nga Tabang Medikal",
-          "Pang-emerhensya nga Tabang sa Transportasyon",
-          "Pang-emerhensya nga Kapasilongan",
-          "Pang-emerhensya nga Proteksyon / Intervention",
-        ],
-        whatIsIt: "Ang Emergency Assistance Program naghatag og dinalian nga tabang ug intervention sa mga bata nga nag-atubang og emerhensya o dinaliang panginahanglan, lakip ang medikal, pagkaon, kapasilongan, ug proteksyon.",
-        whoIsEligible: [
-          "Mga bata nga residente sa Quezon City nga nagkinahanglan og dinalian nga tabang o saklolo.",
-          "Mga bata nga nag-atubang og emerhensya nga makaapekto sa ilang kaluwasan, kahimsog, o pangunang panginahanglan.",
-          "Mahimong magsumite og hangyo ang ginikanan, legal nga guardian, paryente, o otorisadong tawo.",
-        ],
-        childRequirements: [
-          "PSA Birth Certificate sa Bata",
-          "Katibayan sa Pagpuyo (Proof of Residency)",
-        ],
-        parentRequirements: [
-          "QCID o Balido nga ID sa Ginikanan / Guardian",
-          "Impormasyon sa Pakig-kontak",
-        ],
-        specialRequirements: [
-          "Emergency Assessment Information",
-        ],
-        hasEmergencyInfo: true,
-        documents: [
-          { id: "psaBirthCert", label: "PSA Birth Certificate sa Bata", required: true, sampleImage: "/samples/BIRTH CERTIFICATE OF MINOR.jpg" },
-          { id: "parentId", label: "Balido nga ID sa Ginikanan / Guardian", required: true, sampleImage: "/samples/sample_valid_id.png" },
-          { id: "proofResidency", label: "Katibayan sa Pagpuyo (Proof of Residency)", required: true, sampleImage: "/samples/PROOF OF RESIDENCE.webp" },
+          { id: "certEnrollment", label: "Certificate of Enrollment / School ID", required: true, sampleImage: "/samples/sample_valid_id.png" },
+          { id: "parentId", label: "Balido nga ID sa Ginikanan / Guardian / QCID", required: true, sampleImage: "/samples/QC ID.png" },
+          { id: "proofIndigency", label: "Barangay Certificate of Indigency / Solo Parent ID / PWD ID", required: true, sampleImage: "/samples/BARANGAY CERTIFICATE.webp" },
         ],
         submitButtonText: "ISUMITE ANG APLIKASYON",
       },
@@ -762,6 +492,7 @@ export default function ChildWelfareApplicationWizard({
   const [check1, setCheck1] = useState(false)
   const [check2, setCheck2] = useState(false)
   const [check3, setCheck3] = useState(false)
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([])
   const [selectedAssistanceType, setSelectedAssistanceType] = useState<string>("")
 
   useEffect(() => {
@@ -1016,6 +747,7 @@ export default function ChildWelfareApplicationWizard({
     setCheck1(false)
     setCheck2(false)
     setCheck3(false)
+    setSelectedSectors([])
     setSelectedAssistanceType("")
     try {
       ;(window as any).__isFormDirty = false
@@ -1032,6 +764,11 @@ export default function ChildWelfareApplicationWizard({
       formData.emergencyDate.trim() !== "" ||
       formData.emergencyTime.trim() !== "" ||
       formData.reasonForRequest.trim() !== "" ||
+      selectedSectors.length > 0 ||
+      selectedAssistanceType !== "" ||
+      check1 ||
+      check2 ||
+      check3 ||
       Object.values(uploadedFiles).some((files) => files && files.length > 0)
     )
 
@@ -1177,6 +914,7 @@ export default function ChildWelfareApplicationWizard({
     check1 &&
     check2 &&
     (!selectedProgram.checklists[2] || check3) &&
+    selectedSectors.length > 0 &&
     selectedAssistanceType !== ""
 
   const step2Valid =
@@ -1251,6 +989,8 @@ export default function ChildWelfareApplicationWizard({
 
     const finalFormData = {
       ...formData,
+      sector: selectedSectors.join(", "),
+      sectors: selectedSectors,
       childName: childFullName,
       parentFullName: formData.parentFullName,
       parentRelationship: formData.parentRelationship,
@@ -1273,7 +1013,9 @@ export default function ChildWelfareApplicationWizard({
         referenceNumber: ref,
         category: "Child Welfare",
         classification_title: selectedProgram.title,
-        application_type: selectedAssistanceType || "Child Welfare Assistance",
+        application_type: selectedAssistanceType || "Educational Assistance",
+        sector: selectedSectors.join(", "),
+        sectors: selectedSectors,
         firstName: formData.firstName,
         lastName: formData.lastName,
         middleName: formData.middleName,
@@ -1751,8 +1493,46 @@ export default function ChildWelfareApplicationWizard({
                 )}
               </div>
 
+              {/* Sector */}
+              <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-slate-800">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 tracking-wide uppercase">
+                    Sector <span className="text-red-500">*</span>
+                  </h3>
+                </div>
+                <div className="space-y-3 bg-gray-50/80 dark:bg-slate-800/40 p-4 rounded-xl border border-gray-200 dark:border-slate-700">
+                  {[
+                    "Children & Youth",
+                    "Solo Parent’s Child/Beneficiary",
+                    "Child with Disability (CWD)",
+                  ].map((sec) => (
+                    <CustomCheckbox
+                      key={sec}
+                      checked={selectedSectors.includes(sec)}
+                      onChange={(checked) => {
+                        if (checked) {
+                          setSelectedSectors((prev) => [...prev, sec])
+                        } else {
+                          setSelectedSectors((prev) => prev.filter((s) => s !== sec))
+                        }
+                      }}
+                      label={sec}
+                    />
+                  ))}
+                </div>
+                {attemptedNext && selectedSectors.length === 0 && (
+                  <p className="text-xs text-red-500 font-medium">
+                    {language === "tl"
+                      ? "Mangyaring pumili ng kahit isang sektor."
+                      : language === "bis"
+                      ? "Palihug pagpili og bisan usa ka sektor."
+                      : "Please select at least one sector."}
+                  </p>
+                )}
+              </div>
+
               {}
-              <div>
+              <div className="pt-2">
                 <h3 className="text-sm font-bold text-gray-900 mb-1.5 tracking-wide uppercase">
                   {language === "tl" ? "PUMILI NG URI NG TULONG" : language === "bis" ? "PAGPILI OG MATANG SA TABANG" : "CLICK THE TYPE OF ASSISTANCE"}
                 </h3>
@@ -2406,6 +2186,10 @@ export default function ChildWelfareApplicationWizard({
                   <ReviewField
                     label={language === "tl" ? "Programa" : language === "bis" ? "Programa" : "Program"}
                     value={selectedProgram.title}
+                  />
+                  <ReviewField
+                    label="Sector"
+                    value={selectedSectors.join(", ") || "—"}
                   />
                   <ReviewField
                     label={language === "tl" ? "Uri ng Tulong" : language === "bis" ? "Matang sa Tabang" : "Type of Assistance"}
