@@ -11,16 +11,11 @@ import {
   Pencil,
   Info,
   Loader2,
-  Plus,
-  Trash2,
-  School,
   User,
   Briefcase,
   HelpCircle,
-  DollarSign,
 } from "lucide-react"
 
-import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { DataPrivacyConsent } from "../ui/data-privacy-consent"
 import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
@@ -254,7 +249,6 @@ export default function SoloParentApplicationWizard({
   onStepChange,
   onSubmissionStageChange,
 }: SoloParentApplicationWizardProps) {
-  const { language } = useLanguage()
   const userProfile = propUserProfile || getCurrentUserProfile()
 
   const STEPS = [
@@ -490,8 +484,8 @@ export default function SoloParentApplicationWizard({
       service_name: "Solo Parent Financial Subsidy Program",
       classification_title: "Solo Parent Financial Subsidy Program",
       assistanceType: "Financial Subsidy",
-      type: "financial-subsidy",
-      application_type: "financial-subsidy",
+      type: programType || "financial-subsidy",
+      application_type: programType || "financial-subsidy",
       solo_parent_id_number: soloParentIdNumber.startsWith("SP-") ? soloParentIdNumber : `SP-${soloParentIdNumber}`,
       soloParentStatus: soloParentStatus || "Active / Verified Solo Parent",
       employment_status: employmentStatus,
@@ -753,6 +747,12 @@ export default function SoloParentApplicationWizard({
                       )}
                     </button>
                   </div>
+                  {verifyNotice && isIdVerified && soloParentIdNumber.trim() && (
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      {verifyNotice}
+                    </p>
+                  )}
                   {attemptedNext && !soloParentIdNumber.trim() && (
                     <p className="text-xs text-red-500 mt-1">Please enter your Solo Parent ID Number.</p>
                   )}

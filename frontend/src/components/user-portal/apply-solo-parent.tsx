@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import {
   AlertCircle,
-  FileText,
   X,
   HeartHandshake,
   Info,
@@ -248,6 +247,49 @@ const SOLO_PARENT_PROGRAMS: ProgramCard[] = [
     descEn: "Educational financial assistance for indigent solo parents' dependent children/beneficiaries who are currently studying. The program includes solo parents with two (2) or more children enrolled in public school, providing financial assistance of ₱5,000 per qualified beneficiary, subject to interview and social worker assessment prior to granting assistance.",
   },
 ]
+
+function evaluateSoloParentBlockedState(
+  allApps: any[],
+  userProf: any,
+  currentQcid: string
+): { isBlocked: boolean; blockedApp: any; hasApprovedApp: boolean } {
+  const uid = userProf?.id || (userProf as any)?.userId || ""
+  const currentEmail = (userProf?.email || "").toLowerCase().trim()
+  const cleanUserQcid = String(currentQcid || userProf?.qcidNo || userProf?.qcidNumber || "110000572516915").replace(/\D/g, "")
+
+  const userApps = allApps.filter((a) => {
+    if (!a) return false
+    const mod = String(a.module_type || a.moduleType || a.category || "").toLowerCase()
+    const srv = String(a.service || a.service_name || a.classification_title || "").toLowerCase()
+    const isSP = mod.includes("solo") || srv.includes("solo") || a.solo_parent_id_number || a.soloParentIdNumber
+    if (!isSP && mod && !mod.includes("solo")) return false
+
+    const appRef = String(a.reference_number || a.referenceNumber || a.qcid_number || a.qcidNumber || a.qcid || a.form_data?.qcidNumber || "").trim().replace(/\D/g, "")
+    const appEmail = String(a.email || a.form_data?.email || "").toLowerCase().trim()
+    const appUid = String(a.user_id || a.userId || "").trim()
+
+    if (uid && appUid && String(uid) === appUid && String(uid) !== "0") return true
+    if (cleanUserQcid && appRef && (cleanUserQcid === appRef || cleanUserQcid.includes(appRef) || appRef.includes(cleanUserQcid))) return true
+    if (currentEmail && appEmail && currentEmail === appEmail) return true
+    return false
+  })
+
+  const blockedApp = userApps.find((a) => {
+    const s = String(a.application_status || a.status || "pending").toLowerCase()
+    return s === "pending" || s === "draft" || s === "under_review" || s === "approved" || s === "active"
+  })
+
+  const approvedApp = userApps.find((a) => {
+    const s = String(a.application_status || a.status || "").toLowerCase()
+    return s === "approved" || s === "completed" || s === "for_release" || s === "active"
+  })
+
+  return {
+    isBlocked: Boolean(blockedApp),
+    blockedApp: blockedApp || null,
+    hasApprovedApp: Boolean(approvedApp),
+  }
+}
 
 function evaluateSoloParentCardState(
   allApps: any[],
