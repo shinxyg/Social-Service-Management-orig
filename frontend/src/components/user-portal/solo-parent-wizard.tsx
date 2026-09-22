@@ -370,19 +370,22 @@ export default function SoloParentApplicationWizard({
   const getProofDocumentLabel = () => {
     if (employmentStatus === "Unemployed") {
       return {
-        label: "3. PROOF OF INDIGENCY: AFFIDAVIT OF NO EMPLOYMENT / NON-EMPLOYMENT",
+        label: "PROOF OF INDIGENCY: AFFIDAVIT OF NO EMPLOYMENT / NON-EMPLOYMENT",
         description: "Notarized Affidavit of No Employment or Certificate of Non-Employment.",
+        note: "If unemployed: Notarized Affidavit of No Employment or Certificate of Non-Employment from Barangay.",
       }
     }
     if (employmentStatus === "Employed") {
       return {
-        label: "3. PROOF OF INCOME: LATEST ITR OR LATEST PAYSLIP (1 MONTH)",
+        label: "PROOF OF INCOME: LATEST ITR OR LATEST PAYSLIP (1 MONTH)",
         description: "Latest Income Tax Return (ITR) or latest payslip covering one month.",
+        note: "If employed: Latest ITR or latest 1-month payslip from your employer.",
       }
     }
     return {
-      label: "3. PROOF OF INDIGENCY / INCOME OR BARANGAY CERTIFICATE",
+      label: "PROOF OF INDIGENCY / INCOME OR BARANGAY CERTIFICATE",
       description: "Verifiable proof of income or Barangay Certificate of Indigency.",
+      note: "Informal economy worker: Barangay Certificate of Indigency or proof of income.",
     }
   }
 
@@ -391,15 +394,15 @@ export default function SoloParentApplicationWizard({
   const requiredDocuments: SampleDocument[] = [
     {
       id: "spicIdCard",
-      label: "1. SOLO PARENT IDENTIFICATION CARD (SPIC)",
+      label: "SOLO PARENT IDENTIFICATION CARD (SPIC)",
       description: "Photocopy or clear scan/photo of your valid Solo Parent ID (SPIC).",
       images: ["/samples/QC ID.png"],
       downloadUrl: "/samples/QC ID.png",
     },
     {
       id: "qcidCard",
-      label: "2. QCITIZEN ID (QC ID)",
-      description: "Photocopy or clear scan/photo of your valid QCitizen ID.",
+      label: "QCITIZEN ID / APPLICABLE IDENTIFICATION",
+      description: "Clear photo of your QCitizen ID or any applicable identification card (front and back).",
       images: ["/samples/QC ID.png"],
       downloadUrl: "/samples/QC ID.png",
     },
@@ -407,6 +410,7 @@ export default function SoloParentApplicationWizard({
       id: "proofOfIndigencyOrIncome",
       label: proofDocInfo.label,
       description: proofDocInfo.description,
+      note: proofDocInfo.note,
       images: ["/samples/BARANGAY CERTIFICATE.webp"],
       downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
     },
@@ -1284,77 +1288,76 @@ export default function SoloParentApplicationWizard({
                   return (
                     <div
                       key={doc.id}
-                      className={`border rounded-xl p-4 sm:p-5 transition-colors space-y-3.5 ${
+                      className={`border rounded-xl p-5 transition-colors ${
                         isUploaded
-                          ? "border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 dark:border-emerald-500/30"
+                          ? "border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-950/30 dark:border-emerald-500/30"
                           : missing
-                          ? "border-red-500/40 bg-red-500/5 dark:bg-red-950/20 dark:border-red-500/30"
+                          ? "border-red-500/40 bg-red-500/10 dark:bg-red-950/30 dark:border-red-500/30"
                           : "border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40"
                       }`}
                     >
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-bold text-foreground uppercase tracking-wide">
-                              {doc.label}
-                            </span>
-                            <span className="text-red-500 font-bold">*</span>
-                            {isUploaded ? (
-                              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0">
-                                <Check className="h-2.5 w-2.5 stroke-[3]" />
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-950/80 border border-amber-800/60 px-2 py-0.5 rounded">
-                                REQUIRED
-                              </span>
-                            )}
-                          </div>
+                      <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
+                        {doc.label} <span className="text-red-500">*</span>
+                        {isUploaded && (
+                          <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0">
+                            <Check className="h-2.5 w-2.5 stroke-[3]" />
+                          </span>
+                        )}
+                      </p>
 
-                          {doc.description && (
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                              {doc.description}
-                            </p>
-                          )}
-                        </div>
+                      {doc.description && (
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          {doc.description}
+                        </p>
+                      )}
 
-                        <div className="flex items-center gap-2.5 shrink-0">
-                          <input
-                            id={inputId}
-                            key={`${inputId}-${files.length}`}
-                            type="file"
-                            accept=".jpg,.jpeg,.png,.webp,image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const selected = e.target.files ? Array.from(e.target.files) : []
-                              if (selected.length > 0) handleFileUpload(doc.id, selected)
-                              e.target.value = ""
-                            }}
-                          />
-                          <label
-                            htmlFor={inputId}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-700 hover:border-slate-500 bg-slate-800/90 hover:bg-slate-800 text-slate-100 text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <Upload className="h-3.5 w-3.5" />
-                            <span>CHOOSE FILE</span>
-                          </label>
+                      {doc.note && (
+                        <p className="text-xs text-amber-800 dark:text-amber-200 bg-amber-500/10 dark:bg-amber-950/40 rounded-lg p-2 mt-1.5 border border-amber-500/30 dark:border-amber-800/40">
+                          {doc.note}
+                        </p>
+                      )}
 
-                          <button
-                            type="button"
-                            onClick={() => setCameraDoc(doc)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-700 hover:border-slate-500 bg-slate-800/90 hover:bg-slate-800 text-slate-100 text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <Camera className="h-3.5 w-3.5" />
-                            <span>CAMERA</span>
-                          </button>
-                        </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                        <input
+                          type="file"
+                          id={inputId}
+                          key={`${inputId}-${files.length}`}
+                          accept=".jpg,.jpeg,.png,.webp,image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const selected = e.target.files ? Array.from(e.target.files) : []
+                            if (selected.length > 0) handleFileUpload(doc.id, selected)
+                            e.target.value = ""
+                          }}
+                        />
+                        <label
+                          htmlFor={inputId}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
+                        >
+                          <Upload className="h-3.5 w-3.5" />
+                          <span>UPLOAD PHOTO</span>
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => setCameraDoc(doc)}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
+                        >
+                          <Camera className="h-3.5 w-3.5" />
+                          <span>TAKE PHOTO (CAMERA)</span>
+                        </button>
                       </div>
 
                       {isUploaded && (
-                        <div className="flex flex-wrap gap-3 pt-3 border-t border-border/50">
+                        <div className="flex flex-wrap gap-3 pt-4 border-t border-border/50 mt-4">
                           {files.map((file, i) => (
                             <div
                               key={`${file.name}-${i}`}
-                              className="relative w-36 border border-border dark:border-slate-800 rounded-lg bg-card dark:bg-slate-900 shadow-xs p-2.5 flex flex-col items-center text-center"
+                              className="relative w-40 border border-border dark:border-slate-800 rounded-lg bg-card dark:bg-slate-900 shadow-xs p-3 flex flex-col items-center text-center"
                             >
                               <button
                                 type="button"
@@ -1364,7 +1367,7 @@ export default function SoloParentApplicationWizard({
                               >
                                 <X className="h-3 w-3" />
                               </button>
-                              <div className="h-14 w-14 rounded-md overflow-hidden border border-border dark:border-slate-700 mb-1.5 flex items-center justify-center bg-muted/40 dark:bg-slate-800">
+                              <div className="h-16 w-16 rounded-md overflow-hidden border border-border dark:border-slate-700 mb-2 flex items-center justify-center bg-muted/40 dark:bg-slate-800">
                                 <FileThumbnail file={file} className="h-full w-full object-cover" />
                               </div>
                               <p className="text-xs font-medium text-foreground truncate w-full">{file.name}</p>
@@ -1375,7 +1378,7 @@ export default function SoloParentApplicationWizard({
                       )}
 
                       {missing && (
-                        <p className="text-xs text-red-500 font-medium">
+                        <p className="text-xs text-red-500 mt-2 font-medium">
                           Photo upload is required for this item.
                         </p>
                       )}
