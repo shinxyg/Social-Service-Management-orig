@@ -1607,8 +1607,10 @@ export default function ChildWelfareApplicationWizard({
               {/* Service Requested */}
               <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-slate-800">
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 tracking-wide uppercase">
-                    Service Requested <span className="text-red-500">*</span>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 tracking-wide uppercase flex items-center gap-1.5">
+                    <span>Service Requested</span>
+                    <span className="text-xs font-medium normal-case text-gray-500 dark:text-slate-400">({language === "tl" ? "Piliin ang lahat ng naaangkop" : language === "bis" ? "Pilia ang tanang magamit" : "Select all that apply"})</span>
+                    <span className="text-red-500">*</span>
                   </h3>
                 </div>
                 <div className="space-y-3 bg-gray-50/80 dark:bg-slate-800/40 p-4 rounded-xl border border-gray-200 dark:border-slate-700">
