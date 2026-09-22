@@ -45,10 +45,10 @@ export interface TrainingCourse {
   description: string
   duration: string // "18 working days" or "30 working days"
   durationHours?: number
-  batch: string // "2nd Quarter 2026"
-  applicationOpens: string // "April 1, 2026"
-  applicationDeadline: string // "April 15, 2026"
-  trainingStarts: string // "May 2026"
+  batch: string // "3rd Batch 2026"
+  applicationOpens: string // "July 1, 2026"
+  applicationDeadline: string // "July 15, 2026"
+  trainingStarts: string // "August 1 - 30, 2026"
   date?: string
   time?: string
   location?: string
@@ -130,11 +130,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Learn commercial bread and pastry production, baking techniques, measuring and mixing, pastry decorating, oven management, and food safety standards.",
     duration: "18 working days",
     durationHours: 54,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (18 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Culinary & Bakery Lab, 3rd Floor",
@@ -153,11 +153,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Master espresso extraction, milk steaming, latte art, coffee brewing methods, equipment maintenance, and coffee shop customer service.",
     duration: "18 working days",
     durationHours: 54,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (18 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Beverage & Coffee Training Hub, 2nd Floor",
@@ -176,11 +176,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Practical training in computer operations, Microsoft Office tools, typing speed, English communication skills, call handling techniques, and BPO job preparation.",
     duration: "18 working days",
     durationHours: 54,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (18 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "IT & BPO Simulation Lab, 2nd Floor",
@@ -199,11 +199,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Hands-on training in hair cutting, hair styling, hair coloring, blowdrying, hair rebonding/perming, and salon sanitation management.",
     duration: "30 working days",
     durationHours: 90,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (30 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Salon & Cosmetology Studio, Ground Floor",
@@ -222,11 +222,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Learn manicure, pedicure, nail art application, basic facial treatments, day/evening makeup, and home-service/salon business management.",
     duration: "30 working days",
     durationHours: 90,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (30 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Beauty & Wellness Studio, Ground Floor",
@@ -245,11 +245,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Learn body measurement, pattern drafting, fabric cutting, high-speed sewing machine operation, garment assembly, and sewing craft creation.",
     duration: "30 working days",
     durationHours: 90,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (30 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "9:00 AM - 12:00 PM / 1:00 PM - 4:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Garment & Tailoring Workshop, 2nd Floor",
@@ -268,11 +268,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Professional training in room cleaning, bed making, linen and laundry management, cleaning chemicals and sanitization, and hospitality guest service standards.",
     duration: "30 working days",
     durationHours: 90,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (30 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Hospitality & Housekeeping Simulation Suite, 3rd Floor",
@@ -291,11 +291,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Foundational caregiving skills, patient vital signs measurement, elderly care, personal hygiene assistance, patient mobility, first aid, and emergency care basics.",
     duration: "30 working days",
     durationHours: 90,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (30 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Healthcare & Caregiving Simulation Ward, 3rd Floor",
@@ -314,11 +314,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Fundamental Shielded Metal Arc Welding (SMAW), welding safety standards, metal cutting, joint preparation, welding positions, and metal fabrication.",
     duration: "30 working days",
     durationHours: 90,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (30 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Industrial Welding & Metal Fabrication Bay, Ground Floor",
@@ -337,11 +337,11 @@ const DEFAULT_COURSES: TrainingCourse[] = [
     description: "Comprehensive training in food dining service, table setting, banquet catering operations, food safety standards, bar service, and catering event management.",
     duration: "30 working days",
     durationHours: 90,
-    batch: "2nd Quarter 2026",
-    applicationOpens: "April 1, 2026",
-    applicationDeadline: "April 15, 2026",
-    trainingStarts: "May 2026",
-    date: "May 2026 (30 working days)",
+    batch: "3rd Batch 2026",
+    applicationOpens: "July 1, 2026",
+    applicationDeadline: "July 15, 2026",
+    trainingStarts: "August 1 - 30, 2026",
+    date: "August 1 - 30, 2026",
     time: "8:00 AM - 12:00 PM / 1:00 PM - 5:00 PM",
     location: "Gov Services Skills Development Center, Batasan Hills",
     landmark: "Culinary Arts & Dining Banquet Hall, 3rd Floor",
@@ -987,19 +987,19 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     <div className="space-y-1.5 pt-2 border-t border-border/60 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                        <span><strong className="text-foreground">Training Batch:</strong> {course.batch || "2nd Quarter 2026"}</span>
+                        <span><strong className="text-foreground">Training Batch:</strong> {course.batch || "3rd Batch 2026"}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                        <span><strong className="text-foreground">Application Opens:</strong> {course.applicationOpens || "April 1, 2026"}</span>
+                        <span><strong className="text-foreground">Application Opens:</strong> {course.applicationOpens || "July 1, 2026"}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                        <span><strong className="text-foreground">Application Deadline:</strong> {course.applicationDeadline || "April 15, 2026"}</span>
+                        <span><strong className="text-foreground">Application Deadline:</strong> {course.applicationDeadline || "July 15, 2026"}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
-                        <span><strong className="text-foreground">Training Starts:</strong> {course.trainingStarts || "May 2026"}</span>
+                        <span><strong className="text-foreground">Training Starts:</strong> {course.trainingStarts || "August 1 - 30, 2026"}</span>
                       </div>
                     </div>
 
@@ -1352,7 +1352,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {selectedCourse.duration || "18 working days"} • Training Batch: {selectedCourse.batch || "2nd Quarter 2026"} (Starts: {selectedCourse.trainingStarts || "May 2026"})
+                            {selectedCourse.duration || "18 working days"} • Training Batch: {selectedCourse.batch || "3rd Batch 2026"} (Starts: {selectedCourse.trainingStarts || "August 1 - 30, 2026"})
                           </p>
                         </div>
                       </div>
@@ -1460,9 +1460,9 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         <span>{picked.title}</span>
                         <span className="text-blue-600">{picked.duration || "18 working days"}</span>
                       </div>
-                      <p className="text-muted-foreground"><strong className="text-foreground">Training Batch:</strong> {picked.batch || "2nd Quarter 2026"}</p>
-                      <p className="text-muted-foreground"><strong className="text-foreground">Application Period:</strong> {picked.applicationOpens || "April 1, 2026"} - {picked.applicationDeadline || "April 15, 2026"}</p>
-                      <p className="text-muted-foreground"><strong className="text-foreground">Training Starts:</strong> {picked.trainingStarts || "May 2026"}</p>
+                      <p className="text-muted-foreground"><strong className="text-foreground">Training Batch:</strong> {picked.batch || "3rd Batch 2026"}</p>
+                      <p className="text-muted-foreground"><strong className="text-foreground">Application Period:</strong> {picked.applicationOpens || "July 1, 2026"} - {picked.applicationDeadline || "July 15, 2026"}</p>
+                      <p className="text-muted-foreground"><strong className="text-foreground">Training Starts:</strong> {picked.trainingStarts || "August 1 - 30, 2026"}</p>
                       <p className="text-muted-foreground"><strong className="text-foreground">Location:</strong> {picked.location} • <span className="italic">{picked.landmark}</span></p>
                     </div>
                   )
@@ -1948,7 +1948,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
                 <div>
                   <span className="font-semibold text-muted-foreground block text-[11px]">Training Batch:</span>
-                  <span className="font-bold text-foreground">{selectedCourse.batch || "2nd Quarter 2026"}</span>
+                  <span className="font-bold text-foreground">{selectedCourse.batch || "3rd Batch 2026"}</span>
                 </div>
                 <div>
                   <span className="font-semibold text-muted-foreground block text-[11px]">Duration:</span>
@@ -1956,15 +1956,15 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
                 <div>
                   <span className="font-semibold text-muted-foreground block text-[11px]">Application Opens:</span>
-                  <span className="font-bold text-emerald-600">{selectedCourse.applicationOpens || "April 1, 2026"}</span>
+                  <span className="font-bold text-emerald-600">{selectedCourse.applicationOpens || "July 1, 2026"}</span>
                 </div>
                 <div>
                   <span className="font-semibold text-muted-foreground block text-[11px]">Application Deadline:</span>
-                  <span className="font-bold text-amber-600">{selectedCourse.applicationDeadline || "April 15, 2026"}</span>
+                  <span className="font-bold text-amber-600">{selectedCourse.applicationDeadline || "July 15, 2026"}</span>
                 </div>
                 <div className="col-span-2">
                   <span className="font-semibold text-muted-foreground block text-[11px]">Training Starts:</span>
-                  <span className="font-bold text-blue-600">{selectedCourse.trainingStarts || "May 2026"}</span>
+                  <span className="font-bold text-blue-600">{selectedCourse.trainingStarts || "August 1 - 30, 2026"}</span>
                 </div>
               </div>
 
