@@ -202,6 +202,14 @@ const CHILD_WELFARE_CARDS: ChildWelfareCardItem[] = [
     desc: "Nagbibigay ng tulong-pinansyal at suporta sa edukasyon para sa mga maralitang bata at kabataan, anak ng solo parent, at mga batang may kapansanan (CWD) sa Lungsod Quezon.",
     descEn: "Provides educational and financial aid support for indigent children & youth, solo parents' children/beneficiaries, and children with disabilities (CWD) residing in Quezon City.",
   },
+  {
+    id: "child-welfare-services",
+    key: "child-welfare-services",
+    title: "Child Welfare Services",
+    titleEn: "Child Welfare Services",
+    desc: "Komprehensibong serbisyo at programang pangangalaga, proteksyon, at pagpapaunlad para sa kapakanan ng mga bata at kabataan sa Lungsod Quezon.",
+    descEn: "Comprehensive care, protection, and developmental welfare services dedicated to ensuring the well-being and rights of children and youth in Quezon City.",
+  },
 ]
 
 interface ProgramCard {

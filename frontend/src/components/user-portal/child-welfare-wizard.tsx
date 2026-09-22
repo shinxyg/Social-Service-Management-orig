@@ -123,6 +123,70 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
     ],
     submitButtonText: "SUBMIT APPLICATION",
   },
+  {
+    id: 2,
+    key: "child-welfare-services",
+    title: "Child Welfare Services",
+    desc: "Comprehensive care, protection, and developmental welfare services dedicated to ensuring the well-being and rights of children and youth in Quezon City.",
+    checklists: [
+      "Are you a legitimate resident of Quezon City?",
+      "Are you applying for welfare assistance for a child or youth?",
+      "Is the beneficiary in need of child welfare support and social services?",
+    ],
+    receivedQuestion: "Have you already received child welfare assistance from another Quezon City office? *",
+    receivedOptions: ["Yes, I already received assistance", "Not yet"],
+    assistanceTypeLabel: "Choose the type of assistance *",
+    assistanceTypes: [
+      "Educational Financial Assistance (₱5,000 / Student)",
+      "School Supplies & Learning Materials Support",
+      "Tuition / Miscellaneous Fee Subsidy",
+      "Special Education (SPED) / CWD Learning Assistance",
+    ],
+    whatIsIt: "The Child Welfare Services Program provides comprehensive care, development, and social welfare support to qualified indigent children, solo parents' children, and children with special needs in Quezon City.",
+    whoIsEligible: [
+      "Indigent children and youth residing in Quezon City currently enrolled in elementary, high school, or college.",
+      "Children/beneficiaries of registered Solo Parents.",
+      "Children with Disabilities (CWD) enrolled in formal or SPED classes.",
+    ],
+    childRequirements: [
+      "Certificate of Enrollment – Original",
+      "Recent School ID – if available",
+    ],
+    parentRequirements: [
+      "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+      "Valid Government ID / preferably QCitizen ID",
+    ],
+    specialRequirements: [
+      "Social Welfare Case Assessment",
+    ],
+    documents: [
+      {
+        id: "barangayIndigency",
+        label: "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+        required: true,
+        sampleImage: "/samples/BARANGAY CERTIFICATE.webp",
+      },
+      {
+        id: "certEnrollment",
+        label: "Certificate of Enrollment – Original",
+        required: true,
+        sampleImage: "/samples/sample_valid_id.png",
+      },
+      {
+        id: "schoolId",
+        label: "Recent School ID – if available",
+        required: false,
+        sampleImage: "/samples/sample_valid_id.png",
+      },
+      {
+        id: "validGovId",
+        label: "Valid Government ID / preferably QCitizen ID",
+        required: true,
+        sampleImage: "/samples/QC ID.png",
+      },
+    ],
+    submitButtonText: "SUBMIT APPLICATION",
+  },
 ]
 
 export function getLocalizedChildWelfarePrograms(language: string): ChildWelfareProgram[] {
@@ -192,6 +256,70 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
         ],
         submitButtonText: "ISUMITE ANG APLIKASYON",
       },
+      {
+        id: 2,
+        key: "child-welfare-services",
+        title: "Child Welfare Services",
+        desc: "Komprehensibong serbisyo at programang pangangalaga, proteksyon, at pagpapaunlad para sa kapakanan ng mga bata at kabataan sa Lungsod Quezon.",
+        checklists: [
+          "Ikaw ba ay lehitimong residente ng Quezon City?",
+          "Nag-a-apply ka ba para sa tulong sa kapakanan ng bata o kabataan?",
+          "Nangangailangan ba ang benepisyaryo ng serbisyo at suportang panlipunan para sa bata?",
+        ],
+        receivedQuestion: "Nakatanggap ka na ba ng tulong mula sa ibang opisina ng Quezon City? *",
+        receivedOptions: ["Oo, nakatanggap na ako", "Hindi pa"],
+        assistanceTypeLabel: "Piliin ang uri ng tulong *",
+        assistanceTypes: [
+          "Educational Financial Assistance (₱5,000 / Student)",
+          "School Supplies & Learning Materials Support",
+          "Tuition / Miscellaneous Fee Subsidy",
+          "Special Education (SPED) / CWD Learning Assistance",
+        ],
+        whatIsIt: "Ang Child Welfare Services ay nagbibigay ng komprehensibong pangangalaga, proteksyon, at serbisyong panlipunan para sa mga maralitang bata at kabataan sa Lungsod Quezon.",
+        whoIsEligible: [
+          "Mga maralitang bata at kabataang residente ng Quezon City na kasalukuyang nag-aaral sa elementarya, hayskul, o kolehiyo.",
+          "Mga anak o benepisyaryo ng rehistradong Solo Parent.",
+          "Mga Batang may Kapansanan (CWD) na naka-enroll sa pormal o SPED na klase.",
+        ],
+        childRequirements: [
+          "Certificate of Enrollment – Original",
+          "Recent School ID – kung mayroon",
+        ],
+        parentRequirements: [
+          "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+          "Valid Government ID / mas mainam ang QCitizen ID",
+        ],
+        specialRequirements: [
+          "Social Welfare Case Assessment",
+        ],
+        documents: [
+          {
+            id: "barangayIndigency",
+            label: "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+            required: true,
+            sampleImage: "/samples/BARANGAY CERTIFICATE.webp",
+          },
+          {
+            id: "certEnrollment",
+            label: "Certificate of Enrollment – Original",
+            required: true,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "schoolId",
+            label: "Recent School ID – if available",
+            required: false,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "validGovId",
+            label: "Valid Government ID / preferably QCitizen ID",
+            required: true,
+            sampleImage: "/samples/QC ID.png",
+          },
+        ],
+        submitButtonText: "ISUMITE ANG APLIKASYON",
+      },
     ]
   }
 
@@ -232,6 +360,70 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
         ],
         specialRequirements: [
           "School Enrollment / Academic Record Assessment",
+        ],
+        documents: [
+          {
+            id: "barangayIndigency",
+            label: "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+            required: true,
+            sampleImage: "/samples/BARANGAY CERTIFICATE.webp",
+          },
+          {
+            id: "certEnrollment",
+            label: "Certificate of Enrollment – Original",
+            required: true,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "schoolId",
+            label: "Recent School ID – if available",
+            required: false,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "validGovId",
+            label: "Valid Government ID / preferably QCitizen ID",
+            required: true,
+            sampleImage: "/samples/QC ID.png",
+          },
+        ],
+        submitButtonText: "ISUMITE ANG APLIKASYON",
+      },
+      {
+        id: 2,
+        key: "child-welfare-services",
+        title: "Child Welfare Services",
+        desc: "Komprehensibong serbisyo ug programa sa pag-atiman, proteksyon, ug kalamboan alang sa kaayohan sa mga bata ug kabatan-onan sa Quezon City.",
+        checklists: [
+          "Ikaw ba usa ka lehitimong residente sa Quezon City?",
+          "Nag-apply ba ka alang sa tabang sa kaayohan sa bata o batan-on?",
+          "Nagkinahanglan ba ang benepisyaryo og suporta ug serbisyong sosyal alang sa mga bata?",
+        ],
+        receivedQuestion: "Nakadawat na ba ka og tabang gikan sa laing opisina sa Quezon City? *",
+        receivedOptions: ["Oo, nakadawat na ko", "Wala pa"],
+        assistanceTypeLabel: "Pilia ang matang sa tabang *",
+        assistanceTypes: [
+          "Educational Financial Assistance (₱5,000 / Student)",
+          "School Supplies & Learning Materials Support",
+          "Tuition / Miscellaneous Fee Subsidy",
+          "Special Education (SPED) / CWD Learning Assistance",
+        ],
+        whatIsIt: "Ang Child Welfare Services naghatag og komprehensibong pag-atiman, proteksyon, ug serbisyo sosyal alang sa mga kabus nga bata ug kabatan-onan sa Quezon City.",
+        whoIsEligible: [
+          "Mga kabus nga bata ug kabatan-onan sa Quezon City nga kasamtangang nag-eskwela sa elementarya, high school, o kolehiyo.",
+          "Mga anak o benepisyaryo sa rehistradong Solo Parent.",
+          "Mga Bata nga Adunay Kapansanan (CWD) nga naka-enroll sa pormal o SPED classes.",
+        ],
+        childRequirements: [
+          "Certificate of Enrollment – Original",
+          "Recent School ID – kung anaa",
+        ],
+        parentRequirements: [
+          "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+          "Balido nga Government ID / QCID",
+        ],
+        specialRequirements: [
+          "Social Welfare Case Assessment",
         ],
         documents: [
           {
