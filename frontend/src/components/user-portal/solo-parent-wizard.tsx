@@ -15,6 +15,10 @@ import {
   User,
   Clock,
   RotateCcw,
+  GraduationCap,
+  Plus,
+  Trash2,
+  School,
 } from "lucide-react"
 
 import { useLanguage } from "../ui/language-context"
@@ -28,142 +32,6 @@ import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils
 import { readFileAsDataUrl } from "../../utils/fileUpload"
 import { formatAppDate } from "./my-applications"
 
-function generateReference(_status?: string | null, qcid?: string) {
-  if (qcid && (qcid || "").trim() && qcid !== "110000116932100") return (qcid || "").trim()
-  return getLoggedInUserQcid()
-}
-
-type IdStatus = "new" | "renewal" | "loss" | null
-
-interface SoloParentCategory {
-  id: number
-  title: string
-  description?: string
-  requirements: string[]
-}
-
-const SOLO_PARENT_CATEGORIES: SoloParentCategory[] = [
-  {
-    id: 1,
-    title: "Solo parent with child/children as a consequence of rape",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Complaint Affidavit / Police or Medical Record",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 2,
-    title: "Death of the spouse",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Death Certificate of the Spouse",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 3,
-    title: "Detention or criminal conviction of the spouse",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Certificate of Detention / Commitment Order",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 4,
-    title: "Physical or mental incapacity of the spouse",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Medical Certificate / PWD ID of Spouse",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 5,
-    title: "Legal or de facto separation of spouse",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Judicial Decree / Affidavit of Separation",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 6,
-    title: "Declaration of nullity or annulment of marriage",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Court Order / Annotated Nullity of Marriage",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 7,
-    title: "Abandonment by the spouse",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Police / Barangay Blotter of Abandonment",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 8,
-    title: "Spouse is an OFW / migrant worker (RA 11861)",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Valid OFW Contract / POEA Record",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 9,
-    title: "Unmarried father or mother who keeps and rears the child/children",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Certificate of No Marriage (CENOMAR)",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 10,
-    title: "Legal guardian, adoptive or foster parent",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Proof of Guardianship / Adoption Decree",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 11,
-    title: "Relative within the 4th civil degree who assumes parental care & support",
-    requirements: [
-      "PSA Birth Certificate of the Child/Children",
-      "Proof of Relationship & Absence of Parents",
-      "Barangay Certificate of Residency & Parental Care",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-  {
-    id: 12,
-    title: "Pregnant woman",
-    requirements: [
-      "Medical Certificate / Ultrasound (Pregnancy)",
-      "Barangay Certificate of Residency",
-      "Sworn Affidavit of Solo Parent",
-    ],
-  },
-]
-
 interface SampleDocument {
   id: string
   label: string
@@ -172,126 +40,50 @@ interface SampleDocument {
   downloadUrl?: string
 }
 
-const RENEWAL_DOCUMENTS: SampleDocument[] = [
+const EDUCATIONAL_ASSISTANCE_DOCUMENTS: SampleDocument[] = [
   {
-    id: "oldId",
-    label: "OLD ID",
-    description: "Ang iyong dating Solo Parent card.",
-    images: ["/samples/OLD SOLO ID.jpg"],
-    downloadUrl: "/samples/OLD SOLO ID.jpg",
+    id: "soloParentIdOrCert",
+    label: "VALID SOLO PARENT ID / SOLO PARENT CERTIFICATE",
+    description: "Kopya o larawan ng inyong valid Solo Parent ID o opisyal na Certificate mula sa QC SSDD.",
+    images: ["/samples/QC ID.png"],
+    downloadUrl: "/samples/QC ID.png",
   },
   {
-    id: "idPicture",
-    label: "RECENT 2X2 ID PICTURE",
-    description: "Recent color photo, light background, clear face.",
-    images: ["/samples/ID PICTURE (2X2).webp"],
-    downloadUrl: "/samples/ID PICTURE (2X2).webp",
-  },
-  {
-    id: "barangayCertificate",
-    label: "BARANGAY CERTIFICATE (KUNG NAGBAGO ANG ADDRESS)",
-    description: "Kailangan lamang kung nagbago ang tirahan mula noong huling application.",
+    id: "enrollmentCertificates",
+    label: "CERTIFICATE OF ENROLLMENT / REGISTRATION (PUBLIC SCHOOL)",
+    description: "Sertipiko ng pagpapatala mula sa pampublikong paaralan ng dalawa (2) o higit pang anak.",
     images: ["/samples/BARANGAY CERTIFICATE.webp"],
     downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
   },
   {
-    id: "endorsement",
-    label: "ENDORSEMENT FROM SOLO PARENT PRESIDENT",
-    description: "Endorsement mula sa Solo Parent President ng iyong barangay.",
-    images: ["/samples/ENDORSEMENT FROM SOLO PARENT.webp"],
-    downloadUrl: "/samples/ENDORSEMENT FROM SOLO PARENT.webp",
-  },
-]
-
-const LOSS_ID_DOCUMENTS: SampleDocument[] = [
-  {
-    id: "affidavitOfLoss",
-    label: "AFFIDAVIT OF LOSS",
-    description: "Notarized Affidavit of Loss na nagpapatunay ng pagkawala ng ID.",
-    images: ["/samples/AFFIDAVIT OF LOSS.webp"],
-    downloadUrl: "/samples/AFFIDAVIT OF LOSS.webp",
+    id: "barangayIndigency",
+    label: "BARANGAY CERTIFICATE OF INDIGENCY / RESIDENCY",
+    description: "Barangay Certificate of Indigency na nagpapatunay ng pangangailangan sa tulong-pinansyal.",
+    images: ["/samples/BARANGAY CERTIFICATE.webp"],
+    downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
   },
   {
-    id: "idPicture",
-    label: "RECENT 2X2 ID PICTURE",
-    description: "Recent color photo, light background, clear face.",
-    images: ["/samples/ID PICTURE (2X2).webp"],
-    downloadUrl: "/samples/ID PICTURE (2X2).webp",
+    id: "birthCertificates",
+    label: "PSA BIRTH CERTIFICATE(S) OF CHILDREN",
+    description: "PSA Birth Certificate ng mga anak na nag-aaral at tumatanggap ng suporta.",
+    images: ["/samples/BIRTH CERTIFICATE OF MINOR.jpg"],
+    downloadUrl: "/samples/BIRTH CERTIFICATE OF MINOR.jpg",
   },
   {
     id: "validGovId",
-    label: "VALID GOVERNMENT ID O QCID",
-    description: "Kahit anong valid government-issued ID o QCitizen ID.",
+    label: "VALID GOVERNMENT ID O QC ID NG SOLO PARENT",
+    description: "Valid Government-issued ID o QCitizen ID ng solong magulang na may litrato at lagda.",
     images: ["/samples/QC ID.png"],
     downloadUrl: "/samples/QC ID.png",
   },
+  {
+    id: "idPicture",
+    label: "RECENT 2X2 ID PICTURE NG SOLO PARENT",
+    description: "Kasalukuyang 2x2 picture na may malinis na puting background.",
+    images: ["/samples/ID PICTURE (2X2).webp"],
+    downloadUrl: "/samples/ID PICTURE (2X2).webp",
+  },
 ]
-
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-}
-
-function requirementToDocument(requirement: string, index: number): SampleDocument {
-  const id = `req-${index}-${slugify(requirement).slice(0, 40)}`
-
-  if (/birth certificate/i.test(requirement)) {
-    return {
-      id,
-      label: requirement.toUpperCase(),
-      description: "PSA Birth certificate of the child/children.",
-      images: ["/samples/BIRTH CERTIFICATE OF MINOR.jpg"],
-      downloadUrl: "/samples/BIRTH CERTIFICATE OF MINOR.jpg",
-    }
-  }
-  if (/barangay/i.test(requirement)) {
-    return {
-      id,
-      label: requirement.toUpperCase(),
-      description: "Original Barangay Certificate of Residency & Parental Care.",
-      images: ["/samples/BARANGAY CERTIFICATE.webp"],
-      downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
-    }
-  }
-  if (/death/i.test(requirement)) {
-    return {
-      id,
-      label: requirement.toUpperCase(),
-      description: "PSA / Certified copy of Death Certificate of the spouse.",
-      images: ["/samples/sample_death_certificate.png"],
-      downloadUrl: "/samples/sample_death_certificate.png",
-    }
-  }
-  return {
-    id,
-    label: requirement.toUpperCase(),
-    description: "Clear copy or photo of the supporting document.",
-    images: ["/samples/PROOF OF CIRCUMSTANCE (ANY ONE).webp"],
-    downloadUrl: "/samples/PROOF OF CIRCUMSTANCE (ANY ONE).webp",
-  }
-}
-
-const BASE_NEW_APPLICANT_DOCUMENT: SampleDocument = {
-  id: "idPicture",
-  label: "1 PC 2X2 ID PICTURE",
-  description: "Recent color photo, light background, clear face.",
-  images: ["/samples/ID PICTURE (2X2).webp"],
-  downloadUrl: "/samples/ID PICTURE (2X2).webp",
-}
-
-function getNewApplicantDocuments(categoryId: number | null): SampleDocument[] {
-  const category = SOLO_PARENT_CATEGORIES.find((c) => c.id === categoryId)
-  if (!category) return [BASE_NEW_APPLICANT_DOCUMENT]
-  return [BASE_NEW_APPLICANT_DOCUMENT, ...category.requirements.map(requirementToDocument)]
-}
-
-function getRequiredDocuments(idStatus: IdStatus, categoryId: number | null): SampleDocument[] {
-  if (idStatus === "renewal") return RENEWAL_DOCUMENTS
-  if (idStatus === "loss") return LOSS_ID_DOCUMENTS
-  return getNewApplicantDocuments(categoryId)
-}
 
 function formatFileSize(bytes: number) {
   if (!bytes) return "0.0 KB"
@@ -328,26 +120,25 @@ interface UserProfile {
   emergencyAddress?: string
 }
 
+export interface SchoolingChild {
+  id: string
+  fullName: string
+  birthDate: string
+  age: string
+  schoolName: string
+  gradeLevel: string
+  schoolType: string
+}
+
 interface SoloParentApplicationWizardProps {
   onBack?: () => void
   userProfile?: UserProfile
   initialCategoryId?: number | null
-  initialType?: IdStatus
+  initialType?: string | null
   isModalOpen?: boolean
   onBlockedStatusChange?: (blocked: boolean, app?: any) => void
   onStepChange?: (step: number) => void
   onSubmissionStageChange?: (stage: "form" | "matching" | "pending") => void
-}
-
-interface FamilyMember {
-  id: string
-  name: string
-  relationship: string
-  age: string
-  birthday: string
-  status: string
-  educationalAttainment: string
-  occupationMonthlyIncome: string
 }
 
 interface FormData {
@@ -368,8 +159,10 @@ interface FormData {
   addressBarangay: string
   addressCityMunicipality: string
   qcidNumber: string
+  soloParentIdNumber: string
   email: string
   bloodType: string
+  monthlyIncome: string
   emergencyFirstName: string
   emergencyLastName: string
   emergencyContactNo: string
@@ -382,346 +175,28 @@ const EMPTY_FORM_DATA: FormData = {
   middleName: "",
   lastName: "",
   suffix: "",
-  citizenship: "",
+  citizenship: "FILIPINO",
   dobMonth: "",
   dobDay: "",
   dobYear: "",
   age: "",
   sex: "",
-  civilStatus: "",
+  civilStatus: "Single Parent",
   contactNo: "",
   addressHouseNo: "",
   addressStreet: "",
   addressBarangay: "",
   addressCityMunicipality: "QUEZON CITY",
   qcidNumber: "",
+  soloParentIdNumber: "",
   email: "",
-  bloodType: "",
+  bloodType: "O+",
+  monthlyIncome: "Below ₱15,000",
   emergencyFirstName: "",
   emergencyLastName: "",
   emergencyContactNo: "",
   emergencyRelationship: "",
   emergencyAddress: "",
-}
-
-function extractEmergencyContact(app: any, fallbackProfile?: any) {
-  if (!app && !fallbackProfile) {
-    return {
-      emergencyFirstName: "",
-      emergencyLastName: "",
-      emergencyContactNo: "",
-      emergencyRelationship: "",
-      emergencyAddress: "",
-    }
-  }
-
-  const fd =
-    app?.form_data ||
-    app?.formData ||
-    (typeof app?.extra_data === "object" ? app?.extra_data?.formData : null) ||
-    {}
-
-  let efName = app?.emergency_first_name || app?.emergencyFirstName || fd?.emergencyFirstName || ""
-  let elName = app?.emergency_last_name || app?.emergencyLastName || fd?.emergencyLastName || ""
-  const rawFullName =
-    app?.emergency_name ||
-    app?.emergencyName ||
-    app?.emergency_contact_person ||
-    app?.emergencyContactPerson ||
-    fd?.emergencyName ||
-    fd?.emergencyContactPerson ||
-    ""
-
-  if ((!efName || !elName) && rawFullName) {
-    const parts = rawFullName.trim().split(/\s+/)
-    if (parts.length === 1) {
-      efName = efName || parts[0]
-      elName = elName || parts[0]
-    } else if (parts.length > 1) {
-      efName = efName || parts[0]
-      elName = elName || parts.slice(1).join(" ")
-    }
-  }
-
-  if (!efName && fallbackProfile?.emergencyFirstName) {
-    efName = fallbackProfile.emergencyFirstName
-  }
-  if (!elName && fallbackProfile?.emergencyLastName) {
-    elName = fallbackProfile.emergencyLastName
-  }
-
-  const ePhone =
-    app?.emergency_contact_no ||
-    app?.emergencyContactNo ||
-    app?.emergency_phone ||
-    app?.emergencyPhone ||
-    fd?.emergencyContactNo ||
-    fd?.emergencyPhone ||
-    fallbackProfile?.emergencyContactNo ||
-    app?.contact_no ||
-    app?.contactNo ||
-    fallbackProfile?.contactNo ||
-    ""
-
-  const eRel =
-    app?.emergency_relationship ||
-    app?.emergencyRelationship ||
-    app?.relationship ||
-    fd?.emergencyRelationship ||
-    fallbackProfile?.emergencyRelationship ||
-    "Immediate Family"
-
-  let eAddr =
-    app?.emergency_address ||
-    app?.emergencyAddress ||
-    fd?.emergencyAddress ||
-    fallbackProfile?.emergencyAddress ||
-    ""
-
-  if (!eAddr) {
-    const house = app?.address_house_no || app?.addressHouseNo || fallbackProfile?.addressHouseNo || ""
-    const street = app?.address_street || app?.addressStreet || fallbackProfile?.addressStreet || ""
-    const brgy = app?.address_barangay || app?.addressBarangay || fallbackProfile?.addressBarangay || ""
-    const city = app?.address_city_municipality || app?.addressCityMunicipality || fallbackProfile?.addressCityMunicipality || "QUEZON CITY"
-    if (house || street || brgy) {
-      eAddr = [house, street, brgy, city].filter(Boolean).join(", ")
-    }
-  }
-
-  return {
-    emergencyFirstName: efName,
-    emergencyLastName: elName,
-    emergencyContactNo: ePhone,
-    emergencyRelationship: eRel,
-    emergencyAddress: eAddr,
-  }
-}
-
-function TextInput({
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-  disabled = false,
-  invalid = false,
-  numbersOnly = false,
-  maxLength,
-}: {
-  value: string
-  onChange: (v: string) => void
-  placeholder?: string
-  type?: string
-  disabled?: boolean
-  invalid?: boolean
-  numbersOnly?: boolean
-  maxLength?: number
-}) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let raw = e.target.value
-    if (numbersOnly) {
-      raw = raw.replace(/\D/g, "")
-    }
-    if (maxLength && raw.length > maxLength) {
-      raw = raw.slice(0, maxLength)
-    }
-    onChange(raw)
-  }
-  return (
-    <input
-      type={numbersOnly ? "tel" : type}
-      inputMode={numbersOnly ? "numeric" : undefined}
-      value={value}
-      placeholder={placeholder}
-      onChange={handleChange}
-      disabled={disabled}
-      maxLength={maxLength}
-      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-        disabled
-          ? "border-border bg-gray-100 text-muted-foreground cursor-not-allowed"
-          : invalid
-          ? "border-red-400 focus:ring-red-300 bg-red-50"
-          : "border-border focus:ring-blue-400"
-      }`}
-    />
-  )
-}
-
-interface DocumentModalProps {
-  doc: SampleDocument | null
-  isOpen: boolean
-  onClose: () => void
-}
-
-function DocumentSampleModal({ doc, isOpen, onClose }: DocumentModalProps) {
-  const { t } = useLanguage()
-  if (!isOpen || !doc) return null
-  const hasImages = Boolean(doc.images && doc.images.length > 0)
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
-        <div className="p-6 pb-4 border-b border-gray-200 shrink-0">
-          <h3 className="text-lg font-bold text-foreground">{t("sampleLabel", { name: doc.label })}</h3>
-        </div>
-
-        <div className="p-6 overflow-y-auto">
-          {hasImages ? (
-            <div className="flex flex-wrap gap-4 justify-center">
-              {doc.images!.map((img, i) => (
-                <img
-                  key={i}
-                  src={img}
-                  alt={`${doc.label} sample ${i + 1}`}
-                  className="max-h-96 rounded-lg border border-border object-contain"
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="bg-gray-100 rounded-lg p-8 text-center text-muted-foreground">
-              <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-              <p className="text-sm font-semibold mb-2">{t("noSampleImageAvailable")}</p>
-            </div>
-          )}
-
-          {doc.description && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4 text-left">
-              <p className="text-xs text-blue-700 leading-relaxed">{doc.description}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="p-6 pt-4 border-t border-gray-200 flex items-center justify-between gap-4 shrink-0">
-          {doc.downloadUrl ? (
-            <a
-              href={doc.downloadUrl}
-              download
-              className="px-6 h-10 flex items-center rounded-xl bg-gray-100 text-foreground text-sm font-medium hover:bg-gray-200 transition-colors"
-            >
-              {t("download").toUpperCase()}
-            </a>
-          ) : (
-            <span />
-          )}
-          <button
-            onClick={onClose}
-            className="px-6 h-10 rounded-xl bg-blue-600 text-white text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            {t("close").toUpperCase()}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function DocumentUploadRow({
-  doc,
-  docIndex,
-  files,
-  invalid,
-  onUpload,
-  onRemove,
-  onCameraClick,
-}: {
-  doc: SampleDocument
-  docIndex: number
-  files: File[]
-  invalid?: boolean
-  onUpload: (files: File[]) => void
-  onRemove: (fileIndex: number) => void
-  onCameraClick: (doc: SampleDocument) => void
-}) {
-  const { t } = useLanguage()
-  const inputId = `upload-doc-${docIndex}`
-  const uploaded = files.length > 0
-
-  return (
-    <div key={doc.id}>
-
-      <div
-        className={`border rounded-xl p-5 transition-colors ${
-          uploaded
-            ? "border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-950/30 dark:border-emerald-500/30"
-            : invalid
-            ? "border-red-500/40 bg-red-500/10 dark:bg-red-950/30 dark:border-red-500/30"
-            : "border-border bg-card/60 dark:bg-slate-900/40"
-        }`}
-      >
-        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
-          {doc.label} <span className="text-red-500">*</span>
-          {uploaded && (
-            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0">
-              <Check className="h-2.5 w-2.5 stroke-[3]" />
-            </span>
-          )}
-        </p>
-        {doc.description && <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>}
-        <p className="text-xs text-muted-foreground mt-2">
-          {t("allowedFileTypesCameraNote") || "Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)"}
-        </p>
-
-        <input
-          type="file"
-          id={inputId}
-          key={`${inputId}-${files.length}`}
-          accept=".jpg,.jpeg,.png,.webp,image/*"
-          className="hidden"
-          onChange={(e) => {
-            const selectedFiles = e.target.files ? Array.from(e.target.files) : []
-            if (selectedFiles.length > 0) onUpload(selectedFiles)
-            e.target.value = ""
-          }}
-        />
-        <div className="mt-3 flex flex-wrap items-center gap-2.5">
-          <label
-            htmlFor={inputId}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            {t("uploadPhotoBtn") || "UPLOAD PHOTO"}
-          </label>
-
-          <button
-            type="button"
-            onClick={() => onCameraClick(doc)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
-          >
-            <Camera className="h-3.5 w-3.5" />
-            {t("takePhotoCameraBtn") || "KUMUHA NG LARAWAN (CAMERA)"}
-          </button>
-        </div>
-
-        {uploaded && (
-          <div className="flex flex-wrap gap-3 pt-4">
-            {files.map((file, i) => (
-              <div
-                key={`${file.name}-${i}`}
-                className="relative w-40 border border-border rounded-lg bg-card dark:bg-slate-900/90 shadow-sm p-3 flex flex-col items-center text-center shadow-xs"
-              >
-                <button
-                  type="button"
-                  onClick={() => onRemove(i)}
-                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-slate-700 hover:bg-red-600 flex items-center justify-center text-white transition-colors z-10 cursor-pointer"
-                  aria-label={t("removeFile", { filename: file.name })}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-                <div className="h-12 w-12 rounded-md overflow-hidden border border-border mb-2 flex items-center justify-center bg-muted/40 dark:bg-slate-800">
-                  <FileThumbnail file={file} className="h-full w-full object-cover" />
-                </div>
-                <p className="text-xs font-medium text-foreground truncate w-full">{file.name}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{formatFileSize(file.size)}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {invalid && (
-          <p className="text-xs text-red-500 mt-2">{t("spDocRequiredNote") || "Kailangan pang mag-upload ng dokumento para sa kinakailangang item na ito."}</p>
-        )}
-      </div>
-    </div>
-  )
 }
 
 function ReviewField({ label, value }: { label: string; value: string }) {
@@ -746,7 +221,7 @@ function ReviewSection({
   const [open, setOpen] = useState(true)
   return (
     <div className="border border-border rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between bg-gray-50 px-4 py-3">
+      <div className="flex items-center justify-between bg-gray-50 dark:bg-slate-800/80 px-4 py-3">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -772,9 +247,6 @@ function ReviewSection({
 export default function SoloParentApplicationWizard({
   onBack,
   userProfile: propUserProfile,
-  initialCategoryId = null,
-  initialType = "new",
-  isModalOpen = false,
   onBlockedStatusChange,
   onStepChange,
   onSubmissionStageChange,
@@ -782,1087 +254,177 @@ export default function SoloParentApplicationWizard({
   const { t, language } = useLanguage()
   const [profile, setProfile] = useState(() => (propUserProfile || getCurrentUserProfile()) as any)
 
-  useEffect(() => {
-    const handleProfileUpdate = () => {
-      const p = getCurrentUserProfile() as any
-      setProfile(p)
-      if (p) {
-        setFormData((prev) => ({
-          ...prev,
-          firstName: p.firstName || prev.firstName,
-          middleName: p.middleName || prev.middleName,
-          lastName: p.lastName || prev.lastName,
-          suffix: p.suffix || prev.suffix,
-          citizenship: p.nationality || prev.citizenship || "FILIPINO",
-          dobMonth: p.dobMonth || prev.dobMonth,
-          dobDay: p.dobDay || prev.dobDay,
-          dobYear: p.dobYear || prev.dobYear,
-          age: p.age ? String(p.age) : prev.age,
-          sex: p.sex || p.gender || prev.sex,
-          civilStatus: p.civilStatus || prev.civilStatus,
-          contactNo: String(p.contactNo || p.mobileNumber || prev.contactNo || "").replace(/\s+/g, ""),
-          addressHouseNo: p.addressHouseNo || p.houseNo || prev.addressHouseNo,
-          addressStreet: p.addressStreet || p.street || prev.addressStreet,
-          addressBarangay: p.addressBarangay || p.barangay || prev.addressBarangay,
-          addressCityMunicipality: p.addressCityMunicipality || p.city || prev.addressCityMunicipality,
-          qcidNumber: p.qcidNo || p.qcidNumber || prev.qcidNumber,
-          email: p.email || prev.email,
-        }))
-      }
-    }
-    window.addEventListener("user_profile_updated", handleProfileUpdate)
-    window.addEventListener("storage", handleProfileUpdate)
-    return () => {
-      window.removeEventListener("user_profile_updated", handleProfileUpdate)
-      window.removeEventListener("storage", handleProfileUpdate)
-    }
-  }, [])
-
-  const userProfile = propUserProfile || profile || (getCurrentUserProfile() as any)
-  const [idStatus, setIdStatus] = useState<IdStatus>(initialType)
-  const lastInitialTypeRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (initialType && lastInitialTypeRef.current !== initialType) {
-      lastInitialTypeRef.current = initialType
-      setIdStatus(initialType)
-      setStep(1)
-      setReturnToReview(false)
-      setAttemptedNext(false)
-      setIsIdVerified(false)
-      setExistingIdNumber("")
-      setVerifyError("")
-      const prof = getCurrentUserProfile()
-      const isNew = initialType === "new"
-      setFormData((prev) => ({
-        ...EMPTY_FORM_DATA,
-        firstName: prev.firstName || prof.firstName || userProfile?.firstName || "",
-        middleName: prev.middleName || prof.middleName || userProfile?.middleName || "",
-        lastName: prev.lastName || prof.lastName || userProfile?.lastName || "",
-        suffix: prev.suffix || prof.suffix || userProfile?.suffix || "",
-        citizenship: prev.citizenship || prof.nationality || userProfile?.nationality || "FILIPINO",
-        dobMonth: prev.dobMonth || prof.dobMonth || userProfile?.dobMonth || "",
-        dobDay: prev.dobDay || prof.dobDay || userProfile?.dobDay || "",
-        dobYear: prev.dobYear || prof.dobYear || userProfile?.dobYear || "",
-        age: prev.age || (prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : ""),
-        sex: prev.sex || prof.sex || userProfile?.sex || "",
-        civilStatus: prev.civilStatus || prof.civilStatus || userProfile?.civilStatus || "",
-        contactNo: prev.contactNo || prof.contactNo || userProfile?.contactNo || "",
-        addressHouseNo: prev.addressHouseNo || prof.addressHouseNo || userProfile?.addressHouseNo || "",
-        addressStreet: prev.addressStreet || prof.addressStreet || userProfile?.addressStreet || "",
-        addressBarangay: prev.addressBarangay || prof.addressBarangay || userProfile?.addressBarangay || "",
-        addressCityMunicipality: prev.addressCityMunicipality || prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
-        qcidNumber: prev.qcidNumber || prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
-        email: prev.email || prof.email || userProfile?.email || "",
-        bloodType: prev.bloodType || (prof as any).bloodType || userProfile?.bloodType || "O+",
-
-        emergencyFirstName: prev.emergencyFirstName || (isNew ? "" : (prof.emergencyFirstName || userProfile?.emergencyFirstName || "")),
-        emergencyLastName: prev.emergencyLastName || (isNew ? "" : (prof.emergencyLastName || userProfile?.emergencyLastName || "")),
-        emergencyContactNo: prev.emergencyContactNo || (isNew ? "" : (prof.emergencyContactNo || userProfile?.emergencyContactNo || "")),
-        emergencyRelationship: prev.emergencyRelationship || (isNew ? "" : (prof.emergencyRelationship || userProfile?.emergencyRelationship || "")),
-        emergencyAddress: prev.emergencyAddress || (isNew ? "" : ((prof as any).emergencyAddress || userProfile?.emergencyAddress || "")),
-      }))
-    }
-  }, [initialType])
-
   const STEPS = [
-    { id: 1, label: "COMPLETE CHECKLIST" },
-    { id: 2, label: "PERSONAL INFORMATION" },
-    { id: 3, label: "UPLOAD DOCUMENTS" },
-    { id: 4, label: "REVIEW & SUBMIT" },
+    { id: 1, label: language === "en" ? "CHECKLIST & ELIGIBILITY" : "CHECKLIST AT KWALIPIKASYON" },
+    { id: 2, label: language === "en" ? "APPLICANT & BENEFICIARIES" : "IMPORMASYON AT MGA MAG-AARAL" },
+    { id: 3, label: language === "en" ? "UPLOAD DOCUMENTS" : "UPLOAD NG DOKUMENTO" },
+    { id: 4, label: language === "en" ? "REVIEW & SUBMIT" : "PAGSUSURI AT PAGSUMITE" },
   ]
 
   const [step, setStep] = useState(1)
-    const [returnToReview, setReturnToReview] = useState(false)
+  const [returnToReview, setReturnToReview] = useState(false)
+  const [attemptedNext, setAttemptedNext] = useState(false)
 
   useEffect(() => {
     onStepChange?.(step)
   }, [step, onStepChange])
 
-  const [attemptedNext, setAttemptedNext] = useState(false)
-  const [selectedSampleDoc, setSelectedSampleDoc] = useState<SampleDocument | null>(null)
-  const [showSampleModal, setShowSampleModal] = useState(false)
-  const [cameraDoc, setCameraDoc] = useState<SampleDocument | null>(null)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
+  // Step 1: Checklist items
+  const [checkResidency, setCheckResidency] = useState(false)
+  const [checkTwoChildren, setCheckTwoChildren] = useState(false)
+  const [checkIndigent, setCheckIndigent] = useState(false)
+  const [checkAssessmentInterview, setCheckAssessmentInterview] = useState(false)
 
-  const [isResident, setIsResident] = useState(false)
-  const [hasSoleParentalCare, setHasSoleParentalCare] = useState(false)
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(initialCategoryId ?? null)
-  const [existingIdNumber, setExistingIdNumber] = useState("")
-  const [isEditingInfo, setIsEditingInfo] = useState(false)
-  const [renewalReason, setRenewalReason] = useState("")
-  const [replacementReason, setReplacementReason] = useState("")
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [isIdVerified, setIsIdVerified] = useState(false)
-  const [verifyError, setVerifyError] = useState("")
-  const [verifiedRecord, setVerifiedRecord] = useState<{
-    name: string
-    idNumber: string
-    barangay: string
-    status: string
-  } | null>(null)
-  const selectedCategory = SOLO_PARENT_CATEGORIES.find((c) => c.id === selectedCategoryId) || null
-
-  const [samplePlaceholder] = useState(() => {
-    const rand = Math.floor(100000 + Math.random() * 900000)
-    return `137404-2026-${rand}`
-  })
-
-  const formatSoloParentIdInput = (val: string): string => {
-    const digits = val.replace(/\D/g, "").slice(0, 16)
-    if (digits.length <= 6) return digits
-    if (digits.length <= 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
-    return `${digits.slice(0, 6)}-${digits.slice(6, 10)}-${digits.slice(10)}`
-  }
-
-  const fetchAllSoloParentApps = async () => {
-    const prof = getCurrentUserProfile()
-    const uid = userId || prof.id || ""
-    const qcid = (formData?.qcidNumber || prof.qcidNo || prof.qcidNumber || userProfile?.qcidNo || "").trim()
-    const email = (formData?.email || prof.email || userProfile?.email || "").trim()
-    const fn = (formData?.firstName || prof.firstName || userProfile?.firstName || "").trim()
-    const ln = (formData?.lastName || prof.lastName || userProfile?.lastName || "").trim()
-    const activeRef = reference || blockedReference || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("ref") : "")
-
-    try {
-      const promises: Promise<any>[] = [
-        cachedApiFetch(
-          `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(fn)}&lastName=${encodeURIComponent(ln)}`,
-          { headers: getAuthHeaders() },
-          15000
-        ).catch(() => null),
-      ]
-
-      if (activeRef) {
-        promises.push(
-          cachedApiFetch(
-            `${API_BASE}/api/solo-parent/reference/${encodeURIComponent(activeRef)}`,
-            { headers: getAuthHeaders() },
-            15000
-          ).catch(() => null)
-        )
-      }
-
-      const results = await Promise.all(promises)
-      const backendApps: any[] = []
-      const seenIds = new Set<string>()
-
-      for (const data of results) {
-        if (!data) continue
-        const apps = Array.isArray(data) ? data : data.applications || (data.application ? [data.application] : [])
-        if (Array.isArray(apps)) {
-          apps.forEach((a: any) => {
-            const key = a?.id || a?.reference_number || a?.referenceNumber
-            if (key && !seenIds.has(String(key))) {
-              seenIds.add(String(key))
-              backendApps.push(a)
-            }
-          })
-        }
-      }
-
-      if (backendApps.length > 0) {
-        try {
-          localStorage.setItem("solo_parent_applications", JSON.stringify(backendApps))
-        } catch {}
-        return backendApps
-      }
-    } catch {}
-
-    try {
-      const raw = localStorage.getItem("solo_parent_applications")
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) return parsed
-      }
-    } catch {}
-
-    return []
-  }
-
-  const handleVerifyId = async () => {
-    setVerifyError("")
-    const typed = (existingIdNumber || "").trim()
-    const cleanDigits = typed.replace(/\D/g, "")
-
-    if (cleanDigits.length < 6) {
-      setVerifyError(
-        language === "en"
-          ? "Please enter a valid Solo Parent ID Number (e.g. 137404-2026-XXXXXX)."
-          : language === "bis"
-          ? "Palihug ibutang ang balido nga Solo Parent ID Number (e.g. 137404-2026-XXXXXX)."
-          : "Kailangang ilagay ang tamang Solo Parent ID Number (e.g. 137404-2026-XXXXXX)."
-      )
-      setIsIdVerified(false)
-      return
-    }
-
-    setIsVerifying(true)
-    try {
-      const apps = await fetchAllSoloParentApps()
-      const prof = getCurrentUserProfile()
-
-      const soloApps = apps.filter((a) => {
-        if (!a) return false
-        const cat = String(a.classification_title || a.category || a.service || a.application_type || "").toLowerCase()
-        const isSoloParent =
-          cat.includes("solo") ||
-          cat.includes("parent") ||
-          Boolean(a.solo_parent_id_number) ||
-          Boolean(a.soloParentIdNumber) ||
-          Boolean(a.children) ||
-          Boolean(a.family_members) ||
-          Boolean(a.familyMembers) ||
-          Boolean(String(a.assigned_id_number || a.assignedIdNumber || "").includes("SP-"))
-        const isApproved = a.status === "approved" || a.status === "completed" || a.status === "for_release"
-        return isSoloParent && isApproved
-      })
-
-      let matchedApp = soloApps.find((a) => {
-        const aAssignedDigits = String(a.assigned_id_number || a.assignedIdNumber || "").replace(/\D/g, "")
-        const aSoloIdDigits = String(a.solo_parent_id_number || a.soloParentIdNumber || "").replace(/\D/g, "")
-        const aRefDigits = String(a.reference_number || a.referenceNumber || "").replace(/\D/g, "")
-        const aQcidDigits = String(a.qcid_number || a.qcidNumber || "").replace(/\D/g, "")
-        const aAssignedClean = String(a.assigned_id_number || a.assignedIdNumber || "").toUpperCase().trim()
-        const typedClean = typed.toUpperCase().trim()
-
-        const matchDigits =
-          (aAssignedDigits && (aAssignedDigits === cleanDigits || cleanDigits.includes(aAssignedDigits) || aAssignedDigits.includes(cleanDigits))) ||
-          (aSoloIdDigits && (aSoloIdDigits === cleanDigits || cleanDigits.includes(aSoloIdDigits) || aSoloIdDigits.includes(cleanDigits))) ||
-          (aRefDigits && (aRefDigits === cleanDigits || cleanDigits.includes(aRefDigits) || aRefDigits.includes(cleanDigits))) ||
-          (aQcidDigits && (aQcidDigits === cleanDigits || cleanDigits.includes(aQcidDigits) || aQcidDigits.includes(cleanDigits)))
-
-        const matchExactString = aAssignedClean && (aAssignedClean === typedClean || aAssignedClean.includes(typedClean) || typedClean.includes(aAssignedClean))
-
-        return Boolean(matchDigits || matchExactString)
-      })
-
-      if (!matchedApp) {
-        try {
-          const resVerify = await fetch(`${API_BASE}/api/solo-parent/verify-id/${encodeURIComponent(typed)}?_t=${Date.now()}`, {
-            headers: getAuthHeaders(),
-            cache: "no-store",
-          })
-          if (resVerify.ok) {
-            const dataVerify = await resVerify.json()
-            if (dataVerify.verified && dataVerify.application) {
-              const isApproved = dataVerify.application.status === "approved" || dataVerify.application.status === "completed" || dataVerify.application.status === "for_release"
-              if (isApproved) {
-                matchedApp = dataVerify.application
-              }
-            }
-          }
-        } catch {}
-      }
-
-      if (matchedApp) {
-        setIsIdVerified(true)
-        setVerifyError("")
-        const applicantName = `${matchedApp?.first_name || matchedApp?.firstName || prof.firstName || userProfile?.firstName || ""} ${matchedApp?.last_name || matchedApp?.lastName || prof.lastName || userProfile?.lastName || ""}`.trim() || "SOLO PARENT APPLICANT"
-        const rawOfficialId =
-          matchedApp?.assigned_id_number ||
-          matchedApp?.assignedIdNumber ||
-          matchedApp?.solo_parent_id_number ||
-          matchedApp?.soloParentIdNumber ||
-          typed
-
-        const officialId = formatSoloParentIdInput(rawOfficialId)
-        setExistingIdNumber(officialId)
-        setVerifiedRecord({
-          name: applicantName,
-          idNumber: officialId,
-          barangay: matchedApp?.address_barangay || matchedApp?.addressBarangay || prof.addressBarangay || "SAUYO",
-          status: idStatus === "renewal" ? "Active / Expired" : "Replacement / Lost ID",
-        })
-
-        const emergencyData = extractEmergencyContact(matchedApp, userProfile || prof)
-
-        setFormData((prev) => ({
-          ...prev,
-          firstName: matchedApp?.first_name || matchedApp?.firstName || prof.firstName || prev.firstName,
-          middleName: matchedApp?.middle_name || matchedApp?.middleName || prof.middleName || prev.middleName,
-          lastName: matchedApp?.last_name || matchedApp?.lastName || prof.lastName || prev.lastName,
-          suffix: matchedApp?.suffix || prof.suffix || prev.suffix,
-          citizenship: matchedApp?.citizenship || matchedApp?.nationality || prof.nationality || prev.citizenship || "FILIPINO",
-          dobMonth: matchedApp?.dob_month || matchedApp?.dobMonth || prof.dobMonth || prev.dobMonth,
-          dobDay: matchedApp?.dob_day || matchedApp?.dobDay || prof.dobDay || prev.dobDay,
-          dobYear: matchedApp?.dob_year || matchedApp?.dobYear || prof.dobYear || prev.dobYear,
-          age: String(matchedApp?.age || prof.age || prev.age || ""),
-          sex: matchedApp?.sex || matchedApp?.gender || prof.sex || prev.sex,
-          civilStatus: matchedApp?.civil_status || matchedApp?.civilStatus || prof.civilStatus || prev.civilStatus,
-          contactNo: matchedApp?.contact_no || matchedApp?.contactNo || matchedApp?.phone_number || matchedApp?.phoneNumber || prof.contactNo || prev.contactNo,
-          addressHouseNo: matchedApp?.address_house_no || matchedApp?.addressHouseNo || prof.addressHouseNo || prev.addressHouseNo,
-          addressStreet: matchedApp?.address_street || matchedApp?.addressStreet || prof.addressStreet || prev.addressStreet,
-          addressBarangay: matchedApp?.address_barangay || matchedApp?.addressBarangay || prof.addressBarangay || prev.addressBarangay,
-          addressCityMunicipality: matchedApp?.address_city_municipality || matchedApp?.addressCityMunicipality || prof.addressCityMunicipality || prev.addressCityMunicipality || "QUEZON CITY",
-          qcidNumber: matchedApp?.qcid_number || matchedApp?.qcidNumber || prof.qcidNo || (prof as any)?.qcidNumber || prev.qcidNumber,
-          email: matchedApp?.email || prof.email || prev.email,
-          bloodType: matchedApp?.blood_type || matchedApp?.bloodType || (prof as any)?.bloodType || prev.bloodType || "O+",
-          ...emergencyData,
-        }))
-      } else {
-        setIsIdVerified(false)
-        setVerifiedRecord(null)
-        setVerifyError(
-          language === "en"
-            ? "No approved Solo Parent ID record found matching this ID number. Please check and enter your valid approved Solo Parent ID."
-            : language === "bis"
-            ? "Walay nakit-an nga naaprobahan nga rekord sa Solo Parent ID. Palihug siguroha ang imong balido nga approved ID number."
-            : "Walang nahanap na aprubadong rekord ng Solo Parent ID para sa numerong ito. Tiyaking tama ang inyong aprubadong Solo Parent ID number."
-        )
-      }
-    } catch (err) {
-      console.error("Verification error:", err)
-      setIsIdVerified(false)
-      setVerifyError(
-        language === "en"
-          ? "Unable to verify ID at this time. Please try again."
-          : language === "bis"
-          ? "Dili masusi ang ID karong panahona. Palihug sulayi pag-usab."
-          : "Hindi masuri ang ID sa ngayon. Pakisubukang muli."
-      )
-    } finally {
-      setIsVerifying(false)
-    }
-  }
-
-  const currentProf = getCurrentUserProfile()
-  const userId = userProfile?.userId || (userProfile as any)?.id || currentProf?.id || ""
-  const [checkingEligibility, setCheckingEligibility] = useState(false)
-
-  const [isBlocked, setIsBlocked] = useState(() => {
-    try {
-      const prof = getCurrentUserProfile()
-      const userQcidClean = (prof.qcidNo || prof.qcidNumber || "").replace(/\D/g, "")
-      const userEmailClean = (prof.email || "").toLowerCase().trim()
-      const raw = localStorage.getItem("solo_parent_applications")
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const match = parsed.find((a: any) => {
-            const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
-            const matchType =
-              initialType === "renewal" ? aType === "renewal" :
-              initialType === "loss" ? (aType === "loss" || aType === "replacement") :
-              (aType === "new" || !aType)
-            if (!matchType) return false
-
-            const aQcid = String(a.qcid_number || a.qcidNumber || a.qcid || a.reference_number || a.referenceNumber || "").replace(/\D/g, "")
-            const aEmail = String(a.email || "").toLowerCase().trim()
-            return (userQcidClean && (aQcid.includes(userQcidClean) || userQcidClean.includes(aQcid))) || (userEmailClean && aEmail === userEmailClean)
-          })
-          if (match) return true
-        }
-      }
-      return false
-    } catch {
-      return false
-    }
-  })
-
-  const [blockReason, setBlockReason] = useState<"draft" | "pending" | "approved" | "rejected" | null>(() => {
-    try {
-      const prof = getCurrentUserProfile()
-      const userQcidClean = (prof.qcidNo || prof.qcidNumber || "").replace(/\D/g, "")
-      const userEmailClean = (prof.email || "").toLowerCase().trim()
-      const raw = localStorage.getItem("solo_parent_applications")
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const match = parsed.find((a: any) => {
-            const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
-            const matchType =
-              initialType === "renewal" ? aType === "renewal" :
-              initialType === "loss" ? (aType === "loss" || aType === "replacement") :
-              (aType === "new" || !aType)
-            if (!matchType) return false
-
-            const aQcid = String(a.qcid_number || a.qcidNumber || a.qcid || a.reference_number || a.referenceNumber || "").replace(/\D/g, "")
-            const aEmail = String(a.email || "").toLowerCase().trim()
-            return (userQcidClean && (aQcid.includes(userQcidClean) || userQcidClean.includes(aQcid))) || (userEmailClean && aEmail === userEmailClean)
-          })
-          if (match) {
-            const st = String(match.application_status || match.status || "").toLowerCase()
-            return st === "approved" || st === "completed" || st === "for_release" ? "approved" : st === "rejected" ? "rejected" : "pending"
-          }
-        }
-      }
-      return null
-    } catch {
-      return null
-    }
-  })
-
-  const [blockedReference, setBlockedReference] = useState(() => {
-    try {
-      const prof = getCurrentUserProfile()
-      const userQcidClean = (prof.qcidNo || prof.qcidNumber || "").replace(/\D/g, "")
-      const userEmailClean = (prof.email || "").toLowerCase().trim()
-      const raw = localStorage.getItem("solo_parent_applications")
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const match = parsed.find((a: any) => {
-            const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
-            const matchType =
-              initialType === "renewal" ? aType === "renewal" :
-              initialType === "loss" ? (aType === "loss" || aType === "replacement") :
-              (aType === "new" || !aType)
-            if (!matchType) return false
-
-            const aQcid = String(a.qcid_number || a.qcidNumber || a.qcid || a.reference_number || a.referenceNumber || "").replace(/\D/g, "")
-            const aEmail = String(a.email || "").toLowerCase().trim()
-            return (userQcidClean && (aQcid.includes(userQcidClean) || userQcidClean.includes(aQcid))) || (userEmailClean && aEmail === userEmailClean)
-          })
-          if (match) return match.reference_number || match.referenceNumber || ""
-        }
-      }
-      return ""
-    } catch {
-      return ""
-    }
-  })
-
-  const [blockedApp, setBlockedApp] = useState<any>(() => {
-    try {
-      const prof = getCurrentUserProfile()
-      const userQcidClean = (prof.qcidNo || prof.qcidNumber || "").replace(/\D/g, "")
-      const userEmailClean = (prof.email || "").toLowerCase().trim()
-      const raw = localStorage.getItem("solo_parent_applications")
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const match = parsed.find((a: any) => {
-            const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
-            const matchType =
-              initialType === "renewal" ? aType === "renewal" :
-              initialType === "loss" ? (aType === "loss" || aType === "replacement") :
-              (aType === "new" || !aType)
-            if (!matchType) return false
-
-            const aQcid = String(a.qcid_number || a.qcidNumber || a.qcid || a.reference_number || a.referenceNumber || "").replace(/\D/g, "")
-            const aEmail = String(a.email || "").toLowerCase().trim()
-            return (userQcidClean && (aQcid.includes(userQcidClean) || userQcidClean.includes(aQcid))) || (userEmailClean && aEmail === userEmailClean)
-          })
-          if (match) return match
-        }
-      }
-      return null
-    } catch {
-      return null
-    }
-  })
-
-  const [isReapplying, setIsReapplying] = useState(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const hasUrlReapply = window.location.search.includes("reapply=true")
-        if (hasUrlReapply) return true
-        localStorage.removeItem("solo_parent_reapplying")
-        localStorage.removeItem("solo_parent_reapplying_new")
-        localStorage.removeItem("solo_parent_reapplying_renewal")
-        localStorage.removeItem("solo_parent_reapplying_loss")
-      }
-      return false
-    } catch {
-      return false
-    }
-  })
-
-  const handleStartReapply = (targetType: "new" | "renewal" | "loss") => {
-    try {
-      localStorage.setItem("solo_parent_reapplying", "true")
-      localStorage.setItem(`solo_parent_reapplying_${targetType}`, "true")
-    } catch {}
-    ;(window as any).__isFormDirty = false
-    setIsReapplying(true)
-    setIdStatus(targetType)
-    setIsBlocked(false)
-    setBlockReason(null)
-    setStep(1)
-    setReturnToReview(false)
-    setAttemptedNext(false)
-    setIsIdVerified(false)
-    setExistingIdNumber("")
-    setIsResident(false)
-    setHasSoleParentalCare(false)
-    setUploadedDocs({})
-    try {
-      const newUrl = `/portal/apply-solo-parent?category=solo-parent&type=${targetType}&reapply=true`
-      window.history.replaceState(null, "", newUrl)
-    } catch {}
-  }
-
-  useEffect(() => {
-    let isMounted = true
-
-    const checkEligibility = async (isInitial = false) => {
-
-      if (submissionStage === "matching") {
-        return
-      }
-      if (isInitial && !isBlocked) setCheckingEligibility(true)
-      try {
-        const typeToCheck = idStatus || "new"
-        const prof = getCurrentUserProfile()
-        const uid = userId || prof.id || ""
-        const qcid = (prof.qcidNo || prof.qcidNumber || "").trim()
-        const email = (prof.email || "").trim()
-
-        let isBlockedFound = false
-        let reasonFound: "draft" | "pending" | "approved" | "rejected" | null = null
-        let refFound = ""
-        let appFound: any = null
-
-        const isReapply = isReapplying || (typeof window !== "undefined" && window.location.search.includes("reapply=true"))
-
-        try {
-          const data = await cachedApiFetch(
-            `${API_BASE}/api/solo-parent/eligibility/${uid || "0"}?applicationType=${typeToCheck}&qcid=${encodeURIComponent(qcid)}&email=${encodeURIComponent(email)}&reapply=${isReapply ? "true" : "false"}`,
-            { headers: getAuthHeaders() },
-            15000
-          ).catch(() => null)
-          if (data && data.blocked) {
-            isBlockedFound = true
-            reasonFound = data.reason || (data.application?.application_status === "approved" ? "approved" : data.application?.application_status === "rejected" ? "rejected" : "pending")
-            refFound = data.referenceNumber || data.application?.reference_number || ""
-            appFound = data.application || null
-          }
-        } catch {}
-
-        const allApps = await fetchAllSoloParentApps()
-        const userQcidClean = qcid.replace(/\D/g, "")
-        const userEmailClean = email.toLowerCase()
-
-        const matchedUserApps = allApps.filter((a) => {
-          if (!a) return false
-          const aQcid = String(a.qcid_number || a.qcidNumber || a.qcid || a.reference_number || a.referenceNumber || a.form_data?.qcidNumber || "").replace(/\D/g, "")
-          const aEmail = String(a.email || a.form_data?.email || "").toLowerCase().trim()
-          const aUid = String(a.user_id || a.userId || "").trim()
-
-          const isUserMatch =
-            (uid && aUid && aUid === String(uid) && String(uid) !== "0") ||
-            (userQcidClean && aQcid && (userQcidClean === aQcid || (userQcidClean.length >= 10 && aQcid.startsWith(userQcidClean)))) ||
-            (userEmailClean && aEmail && userEmailClean === aEmail)
-
-          return isUserMatch
-        })
-
-        const approvedAnyApp = matchedUserApps.find((a) => {
-          const st = String(a.application_status || a.status || "").toLowerCase()
-          return st === "approved" || st === "completed" || st === "for_release" || st === "active"
-        })
-
-        const approvedAppForType = matchedUserApps.find((a) => {
-          const st = String(a.application_status || a.status || "").toLowerCase()
-          const isApproved = st === "approved" || st === "completed" || st === "for_release" || st === "active"
-          if (!isApproved) return false
-          const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
-          if (typeToCheck === "renewal") return aType === "renewal"
-          if (typeToCheck === "loss") return aType === "loss" || aType === "replacement"
-          return aType === "new" || !aType
-        })
-
-        const pendingApp = matchedUserApps.find((a) => {
-          const st = String(a.application_status || a.status || "").toLowerCase()
-          const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
-          const isMatchPendingType =
-            typeToCheck === "renewal" ? aType === "renewal" :
-            typeToCheck === "loss" ? (aType === "loss" || aType === "replacement") :
-            (aType === "new" || !aType)
-          return (st === "pending" || st === "draft" || st === "under_review") && isMatchPendingType
-        })
-
-        const rejectedApp = matchedUserApps.find((a) => {
-          const st = String(a.application_status || a.status || "").toLowerCase()
-          const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
-          const isMatchRejectedType =
-            typeToCheck === "renewal" ? aType === "renewal" :
-            typeToCheck === "loss" ? (aType === "loss" || aType === "replacement") :
-            (aType === "new" || !aType)
-          return (st === "rejected" || st === "disapproved") && isMatchRejectedType
-        })
-
-        if (!isReapply) {
-          if (typeToCheck === "renewal" || typeToCheck === "loss") {
-            if (approvedAppForType) {
-              isBlockedFound = true
-              reasonFound = "approved"
-              refFound = approvedAppForType.reference_number || approvedAppForType.referenceNumber || refFound
-              appFound = approvedAppForType
-            } else if (pendingApp) {
-              isBlockedFound = true
-              reasonFound = "pending"
-              refFound = pendingApp.reference_number || pendingApp.referenceNumber || ""
-              appFound = pendingApp
-            } else if (rejectedApp) {
-              isBlockedFound = true
-              reasonFound = "rejected"
-              refFound = rejectedApp.reference_number || rejectedApp.referenceNumber || refFound
-              appFound = rejectedApp
-            } else {
-              isBlockedFound = false
-              reasonFound = null
-              refFound = ""
-              appFound = null
-            }
-          } else {
-            if (reasonFound === "approved" || approvedAnyApp) {
-              isBlockedFound = true
-              reasonFound = "approved"
-              refFound = approvedAnyApp?.reference_number || approvedAnyApp?.referenceNumber || refFound
-              appFound = approvedAnyApp || appFound
-            } else if (pendingApp) {
-              isBlockedFound = true
-              reasonFound = "pending"
-              refFound = pendingApp.reference_number || pendingApp.referenceNumber || ""
-              appFound = pendingApp
-            } else if (reasonFound === "rejected" || rejectedApp) {
-              isBlockedFound = true
-              reasonFound = "rejected"
-              refFound = rejectedApp?.reference_number || rejectedApp?.referenceNumber || refFound
-              appFound = rejectedApp || appFound
-            }
-          }
-        }
-
-        const appToPreFill = approvedAnyApp || approvedAppForType
-        if (appToPreFill && (typeToCheck === "renewal" || typeToCheck === "loss") && !isBlockedFound) {
-          const emergencyData = extractEmergencyContact(appToPreFill, prof)
-
-          if (isMounted) {
-            setFormData((prev) => ({
-              ...prev,
-              firstName: appToPreFill.first_name || appToPreFill.firstName || prof.firstName || prev.firstName,
-              middleName: appToPreFill.middle_name || appToPreFill.middleName || prof.middleName || prev.middleName,
-              lastName: appToPreFill.last_name || appToPreFill.lastName || prof.lastName || prev.lastName,
-              suffix: appToPreFill.suffix || prof.suffix || prev.suffix,
-              citizenship: appToPreFill.citizenship || appToPreFill.nationality || prof.nationality || prev.citizenship || "FILIPINO",
-              dobMonth: appToPreFill.dob_month || appToPreFill.dobMonth || prof.dobMonth || prev.dobMonth,
-              dobDay: appToPreFill.dob_day || appToPreFill.dobDay || prof.dobDay || prev.dobDay,
-              dobYear: appToPreFill.dob_year || appToPreFill.dobYear || prof.dobYear || prev.dobYear,
-              age: String(appToPreFill.age || prof.age || prev.age),
-              sex: appToPreFill.sex || appToPreFill.gender || prof.sex || prev.sex,
-              civilStatus: appToPreFill.civil_status || appToPreFill.civilStatus || prof.civilStatus || prev.civilStatus,
-              contactNo: appToPreFill.contact_no || appToPreFill.contactNo || appToPreFill.phone_number || appToPreFill.phoneNumber || prof.contactNo || prev.contactNo,
-              addressHouseNo: appToPreFill.address_house_no || appToPreFill.addressHouseNo || prof.addressHouseNo || prev.addressHouseNo,
-              addressStreet: appToPreFill.address_street || appToPreFill.addressStreet || prof.addressStreet || prev.addressStreet,
-              addressBarangay: appToPreFill.address_barangay || appToPreFill.addressBarangay || prof.addressBarangay || prev.addressBarangay,
-              addressCityMunicipality: appToPreFill.address_city_municipality || appToPreFill.addressCityMunicipality || prof.addressCityMunicipality || prev.addressCityMunicipality || "QUEZON CITY",
-              qcidNumber: appToPreFill.qcid_number || appToPreFill.qcidNumber || prof.qcidNo || prev.qcidNumber,
-              email: appToPreFill.email || prof.email || prev.email,
-              bloodType: appToPreFill.blood_type || appToPreFill.bloodType || (prof as any).bloodType || prev.bloodType || "O+",
-              ...emergencyData,
-            }))
-          }
-        }
-
-        if (matchedUserApps.length === 0 && !isBlockedFound) {
-          isBlockedFound = false
-          reasonFound = null
-          refFound = ""
-          appFound = null
-          try {
-            localStorage.removeItem("solo_parent_applications")
-          } catch {}
-        }
-
-        if (isMounted) {
-          setIsBlocked(isBlockedFound)
-          setBlockReason(reasonFound)
-          setBlockedReference(refFound)
-          setBlockedApp(appFound)
-          if (!isBlockedFound) {
-            setSubmissionStage("form")
-          }
-          onBlockedStatusChange?.(isBlockedFound)
-        }
-      } catch (err) {
-        console.warn("Eligibility check error:", err)
-      } finally {
-        if (isMounted && isInitial) {
-          setCheckingEligibility(false)
-        }
-      }
-    }
-
-    checkEligibility(true)
-    const interval = setInterval(() => checkEligibility(false), 8000)
-    const handleUpdate = () => checkEligibility(false)
-
-    const unsubscribe = subscribeToRealtimeChanges((event) => {
-      if (event?.type === "APPLICATION_DELETED" || event?.type === "STATUS_CHANGED") {
-        try {
-          localStorage.removeItem("solo_parent_applications")
-        } catch {}
-        setIsBlocked(false)
-        setBlockReason(null)
-        setBlockedReference("")
-        setBlockedApp(null)
-        setSubmissionStage("form")
-        setStep(1)
-      }
-      checkEligibility(false)
-    })
-
-    const handleStorage = (e: StorageEvent) => {
-      if (!e.key || e.key.includes("solo_parent") || e.key === "applications") {
-        checkEligibility(false)
-      }
-    }
-
-    window.addEventListener("solo_parent_applications_updated", handleUpdate)
-    window.addEventListener("applications_updated", handleUpdate)
-    window.addEventListener("storage", handleStorage)
-
-    return () => {
-      isMounted = false
-      clearInterval(interval)
-      unsubscribe()
-      window.removeEventListener("solo_parent_applications_updated", handleUpdate)
-      window.removeEventListener("applications_updated", handleUpdate)
-      window.removeEventListener("storage", handleStorage)
-    }
-  }, [userId, idStatus])
-
-  const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
-  const [reference, setReference] = useState("")
-
-  useEffect(() => {
-    onSubmissionStageChange?.(submissionStage)
-  }, [submissionStage, onSubmissionStageChange])
-
-  useEffect(() => {
-    if (submissionStage === "pending") {
-      setIsBlocked(true)
-      setBlockReason("pending")
-      setBlockedReference(reference)
-    }
-  }, [submissionStage, reference])
-  const familyMembers: FamilyMember[] = []
-
+  // Step 2: Form data
   const [formData, setFormData] = useState<FormData>(() => {
     const prof = getCurrentUserProfile()
-    const isNew = initialType === "new"
     return {
       ...EMPTY_FORM_DATA,
-      firstName: prof.firstName || userProfile?.firstName || "",
-      middleName: prof.middleName || userProfile?.middleName || "",
-      lastName: prof.lastName || userProfile?.lastName || "",
-      suffix: prof.suffix || userProfile?.suffix || "",
-      citizenship: prof.nationality || userProfile?.nationality || "FILIPINO",
-      dobMonth: prof.dobMonth || userProfile?.dobMonth || "",
-      dobDay: prof.dobDay || userProfile?.dobDay || "",
-      dobYear: prof.dobYear || userProfile?.dobYear || "",
-      age: prof.age ? String(prof.age) : userProfile?.age ? String(userProfile.age) : "",
-      sex: prof.sex || userProfile?.sex || "",
-      civilStatus: prof.civilStatus || userProfile?.civilStatus || "",
-      contactNo: prof.contactNo || userProfile?.contactNo || "",
-      addressHouseNo: prof.addressHouseNo || userProfile?.addressHouseNo || "",
-      addressStreet: prof.addressStreet || userProfile?.addressStreet || "",
-      addressBarangay: prof.addressBarangay || userProfile?.addressBarangay || "",
-      addressCityMunicipality: prof.addressCityMunicipality || userProfile?.addressCityMunicipality || "Quezon City",
-      qcidNumber: prof.qcidNo || (prof as any).qcidNumber || userProfile?.qcidNo || (userProfile as any)?.qcidNumber || "",
-      email: prof.email || userProfile?.email || "",
-      bloodType: (prof as any).bloodType || userProfile?.bloodType || "O+",
-
-      emergencyFirstName: isNew ? "" : (prof.emergencyFirstName || userProfile?.emergencyFirstName || ""),
-      emergencyLastName: isNew ? "" : (prof.emergencyLastName || userProfile?.emergencyLastName || ""),
-      emergencyContactNo: isNew ? "" : (prof.emergencyContactNo || userProfile?.emergencyContactNo || ""),
-      emergencyRelationship: isNew ? "" : (prof.emergencyRelationship || userProfile?.emergencyRelationship || ""),
-      emergencyAddress: isNew ? "" : ((prof as any).emergencyAddress || userProfile?.emergencyAddress || (prof.addressHouseNo ? `${prof.addressHouseNo} ${prof.addressStreet}, ${prof.addressBarangay}, ${prof.addressCityMunicipality}` : "")),
+      firstName: prof.firstName || propUserProfile?.firstName || "",
+      middleName: prof.middleName || propUserProfile?.middleName || "",
+      lastName: prof.lastName || propUserProfile?.lastName || "",
+      suffix: prof.suffix || propUserProfile?.suffix || "",
+      citizenship: prof.nationality || propUserProfile?.nationality || "FILIPINO",
+      dobMonth: prof.dobMonth || propUserProfile?.dobMonth || "",
+      dobDay: prof.dobDay || propUserProfile?.dobDay || "",
+      dobYear: prof.dobYear || propUserProfile?.dobYear || "",
+      age: prof.age ? String(prof.age) : propUserProfile?.age ? String(propUserProfile.age) : "",
+      sex: prof.sex || propUserProfile?.sex || "",
+      civilStatus: prof.civilStatus || propUserProfile?.civilStatus || "Single Parent",
+      contactNo: prof.contactNo || propUserProfile?.contactNo || "",
+      addressHouseNo: prof.addressHouseNo || propUserProfile?.addressHouseNo || "",
+      addressStreet: prof.addressStreet || propUserProfile?.addressStreet || "",
+      addressBarangay: prof.addressBarangay || propUserProfile?.addressBarangay || "",
+      addressCityMunicipality: prof.addressCityMunicipality || propUserProfile?.addressCityMunicipality || "QUEZON CITY",
+      qcidNumber: prof.qcidNo || (prof as any).qcidNumber || propUserProfile?.qcidNo || "",
+      soloParentIdNumber: "",
+      email: prof.email || propUserProfile?.email || "",
+      bloodType: (prof as any).bloodType || propUserProfile?.bloodType || "O+",
+      monthlyIncome: "Below ₱15,000",
+      emergencyFirstName: prof.emergencyFirstName || propUserProfile?.emergencyFirstName || "",
+      emergencyLastName: prof.emergencyLastName || propUserProfile?.emergencyLastName || "",
+      emergencyContactNo: prof.emergencyContactNo || propUserProfile?.emergencyContactNo || "",
+      emergencyRelationship: prof.emergencyRelationship || propUserProfile?.emergencyRelationship || "",
+      emergencyAddress: (prof as any).emergencyAddress || propUserProfile?.emergencyAddress || "",
     }
   })
-  const updateField = (key: keyof FormData, value: string) =>
-    setFormData((prev) => ({ ...prev, [key]: value }))
 
-  const requiredDocs = getRequiredDocuments(idStatus, selectedCategoryId)
+  const [isEditingInfo, setIsEditingInfo] = useState(false)
+
+  // Schooling Children (beneficiaries enrolled in public school)
+  const [schoolingChildren, setSchoolingChildren] = useState<SchoolingChild[]>([
+    {
+      id: "child-1",
+      fullName: "",
+      birthDate: "",
+      age: "",
+      schoolName: "",
+      gradeLevel: "Grade 1",
+      schoolType: "Public School",
+    },
+    {
+      id: "child-2",
+      fullName: "",
+      birthDate: "",
+      age: "",
+      schoolName: "",
+      gradeLevel: "Grade 2",
+      schoolType: "Public School",
+    },
+  ])
+
+  const handleAddChild = () => {
+    setSchoolingChildren((prev) => [
+      ...prev,
+      {
+        id: `child-${Date.now()}`,
+        fullName: "",
+        birthDate: "",
+        age: "",
+        schoolName: "",
+        gradeLevel: "Grade 1",
+        schoolType: "Public School",
+      },
+    ])
+  }
+
+  const handleRemoveChild = (index: number) => {
+    if (schoolingChildren.length <= 1) return
+    setSchoolingChildren((prev) => prev.filter((_, idx) => idx !== index))
+  }
+
+  const handleUpdateChild = (index: number, field: keyof SchoolingChild, val: string) => {
+    setSchoolingChildren((prev) =>
+      prev.map((c, idx) => (idx === index ? { ...c, [field]: val } : c))
+    )
+  }
+
+  // Step 3: Documents
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
   const [uploadedDocsBase64, setUploadedDocsBase64] = useState<Record<string, string>>({})
+  const [cameraDoc, setCameraDoc] = useState<SampleDocument | null>(null)
+  const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
+
+  // Step 4: Submit & Modals
   const [privacyAgreed, setPrivacyAgreed] = useState(false)
+  const [showSubmitModal, setShowSubmitModal] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [reference, setReference] = useState("")
 
-  const isFormDirty =
-    !isModalOpen &&
-    !isBlocked &&
-    !checkingEligibility &&
-    submissionStage === "form" &&
-    step >= 2 &&
-    step <= 4
-
-  useEffect(() => {
-    if (isFormDirty) {
-      ;(window as any).__isFormDirty = true
-    } else {
-      ;(window as any).__isFormDirty = false
-    }
-    return () => {
-      ;(window as any).__isFormDirty = false
-    }
-  }, [isFormDirty])
-
-  useEffect(() => {
-    if (isBlocked || submissionStage !== "form" || checkingEligibility) {
-      ;(window as any).__isFormDirty = false
-    }
-  }, [isBlocked, submissionStage, checkingEligibility])
-
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isFormDirty) {
-        e.preventDefault()
-        e.returnValue = ""
-      }
-    }
-    window.addEventListener("beforeunload", handleBeforeUnload)
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [isFormDirty])
-
-  const handleFileUpload = (docId: string, files: File[]) => {
-    if (!files || files.length === 0) return
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
-    const allowedExtensions = /\.(jpe?g|png|webp|jfif|bmp|heic|heif)$/i
-
-    const validFiles = files.filter(
-      (f) => allowedTypes.includes(f.type) || allowedExtensions.test(f.name)
-    )
-    const rejectedCount = files.length - validFiles.length
-
-    if (rejectedCount > 0) {
-      alert(`${rejectedCount} file(s) ang hindi tinanggap. Mga litrato o larawan (JPG, JPEG, PNG, WEBP) lamang ang maaaring i-upload. Bawal ang document/PDF file.`)
-    }
-
-    if (validFiles.length === 0) return
-
-    const fileToUpload = validFiles[0]
-    setUploadedDocs((prev) => ({
-      ...prev,
-      [docId]: [fileToUpload],
-    }))
-
-    readFileAsDataUrl(fileToUpload, 1000, 0.75).then((dataUrl) => {
-      if (dataUrl) {
-        setUploadedDocsBase64((prev) => ({ ...prev, [docId]: dataUrl }))
-      }
-    })
+  const handleFileUpload = async (docId: string, files: File[]) => {
+    if (!files.length) return
+    const file = files[0]
+    setUploadedDocs((prev) => ({ ...prev, [docId]: [file] }))
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+      setUploadedDocsBase64((prev) => ({ ...prev, [docId]: dataUrl }))
+    } catch {}
   }
 
-  const handleRemoveFile = (docId: string, fileIndex: number) => {
+  const handleRemoveFile = (docId: string) => {
     setUploadedDocs((prev) => {
-      const updated = [...(prev[docId] || [])]
-      updated.splice(fileIndex, 1)
-      return { ...prev, [docId]: updated }
+      const copy = { ...prev }
+      delete copy[docId]
+      return copy
     })
     setUploadedDocsBase64((prev) => {
-      const updated = { ...prev }
-      delete updated[docId]
-      return updated
+      const copy = { ...prev }
+      delete copy[docId]
+      return copy
     })
   }
 
-  const handleFinalSubmit = async () => {
-    ;(window as any).__isFormDirty = false
-    const fallbackRef = reference || generateReference(idStatus, userProfile?.qcidNo || formData?.qcidNumber)
-    setReference(fallbackRef)
-
-    setSubmissionStage("pending")
-    setIsBlocked(true)
-    setBlockReason("pending")
-    setBlockedReference(fallbackRef)
-
-    const userId = (userProfile as any)?.id || (userProfile as any)?.userId || "0"
-    const isRenewalOrLoss = idStatus === "renewal" || idStatus === "loss"
-    const emFirst = isRenewalOrLoss ? formData.emergencyFirstName : ((userProfile as any)?.emergencyFirstName || formData.emergencyFirstName || "")
-    const emLast = isRenewalOrLoss ? formData.emergencyLastName : ((userProfile as any)?.emergencyLastName || formData.emergencyLastName || "")
-    const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
-
-    const photoKey = Object.keys(uploadedDocsBase64).find((k) =>
-      /photo|picture|2x2|id_pic|avatar/i.test(k)
-    )
-    const applicantPhoto = photoKey ? uploadedDocsBase64[photoKey] : (userProfile as any)?.photo || ""
-
-    const finalFormData = {
-      ...formData,
-      isResident,
-      idStatus,
-      selectedCategoryId,
-      selectedCategory,
-      existingIdNumber,
-      isIdVerified,
-      familyMembers,
-      applicantPhoto: applicantPhoto || undefined,
-      idPhoto: applicantPhoto || undefined,
-      photoUrl: applicantPhoto || undefined,
-      emergencyFirstName: emFirst,
-      emergencyLastName: emLast,
-      emergencyName: emCombined || (formData as any).emergencyName || "",
-      emergencyContactPerson: emCombined || (formData as any).emergencyContactPerson || "",
-      emergencyContactNo: (formData.emergencyContactNo || "").trim(),
-      emergencyPhone: (formData.emergencyContactNo || "").trim(),
-      emergencyRelationship: (formData.emergencyRelationship || "").trim(),
-      emergencyAddress: (formData.emergencyAddress || "").trim(),
-      bloodType: formData.bloodType || "O+",
-    }
-
-    const newDocItems = requiredDocs.map((d) => ({
-      documentId: d.id,
-      documentLabel: d.label,
-      files: (uploadedDocs[d.id] || []).map((f) => ({
-        filename: f.name,
-        fileUrl: uploadedDocsBase64[d.id] || `${API_BASE}/uploads/solo-parent/${f.name}`,
-        previewUrl: uploadedDocsBase64[d.id] || `${API_BASE}/uploads/solo-parent/${f.name}`,
-        dataUrl: uploadedDocsBase64[d.id] || undefined,
-        fileSize: f.size,
-        uploadedAt: new Date().toISOString(),
-      })),
-    }))
-
-    try {
-      const stored = JSON.parse(localStorage.getItem("solo_parent_applications") || "[]")
-      const localRecord = {
-        id: String(Date.now()),
-        reference_number: fallbackRef,
-        referenceNumber: fallbackRef,
-        category: "Solo Parent",
-        classification_title: selectedCategory?.title || "Solo Parent ID Application",
-        application_type: idStatus || "new",
-        applicantPhoto: applicantPhoto || undefined,
-        photoUrl: applicantPhoto || undefined,
-        idPhoto: applicantPhoto || undefined,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        middleName: formData.middleName,
-        qcid_number: formData.qcidNumber,
-        email: formData.email,
-        documents: newDocItems,
-        form_data: finalFormData,
-        extra_data: { formData: finalFormData, applicantPhoto: applicantPhoto || undefined },
-        application_status: "pending",
-        status: "pending",
-        created_at: new Date().toISOString(),
-        submittedAt: new Date().toISOString(),
-        submitted_at: new Date().toISOString(),
-        dateSubmitted: new Date().toISOString(),
-      }
-      try {
-        localStorage.setItem("solo_parent_applications", JSON.stringify([localRecord, ...stored.slice(0, 10)]))
-      } catch {
-        const lightRecord = {
-          ...localRecord,
-          applicantPhoto: "",
-          photoUrl: "",
-          idPhoto: "",
-          documents: newDocItems.map((d: any) => ({ ...d, files: d.files.map((f: any) => ({ ...f, dataUrl: undefined, previewUrl: f.filename })) })),
-        }
-        localStorage.setItem("solo_parent_applications", JSON.stringify([lightRecord, ...stored.slice(0, 3)]))
-      }
-      window.dispatchEvent(new Event("storage"))
-      notifyApplicationChange("APPLICATION_SUBMITTED", "solo_parent", fallbackRef)
-    } catch {}
-
-    try {
-
-      const res = await fetch(`${API_BASE}/api/solo-parent/create`, {
-        method: "POST",
-        headers: getAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({
-          userId: userId || userProfile?.id || "0",
-          referenceNumber: fallbackRef,
-          applicationData: {
-            isResident,
-            idStatus,
-            selectedCategoryId,
-            selectedCategory,
-            existingIdNumber,
-            isIdVerified,
-            formData: finalFormData,
-            familyMembers,
-            emergencyFirstName: emFirst,
-            emergencyLastName: emLast,
-            emergencyName: emCombined,
-            emergencyContactPerson: emCombined,
-            emergencyContactNo: (formData.emergencyContactNo || "").trim(),
-            emergencyPhone: (formData.emergencyContactNo || "").trim(),
-            emergencyRelationship: (formData.emergencyRelationship || "").trim(),
-            emergencyAddress: (formData.emergencyAddress || "").trim(),
-            bloodType: formData.bloodType || "O+",
-            status: "pending",
-            application_status: "pending",
-            documents: newDocItems,
-          },
-          documents: newDocItems,
-          requiredDocumentIds: requiredDocs.map((d) => d.id),
-        }),
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        const appId = data.applicationId
-        if (data.referenceNumber) {
-          setReference(data.referenceNumber)
-        }
-
-        notifyApplicationChange("APPLICATION_SUBMITTED", "solo_parent", data.referenceNumber || fallbackRef)
-
-        const token = getAuthToken()
-        const uploadPromises = requiredDocs.map(async (doc) => {
-          const files = uploadedDocs[doc.id] || []
-          if (files.length > 0 && appId) {
-            const uploadFormData = new FormData()
-            files.forEach((f) => uploadFormData.append("documents", f))
-            uploadFormData.append("documentId", doc.id)
-            uploadFormData.append("documentLabel", doc.label)
-            return fetch(`${API_BASE}/api/solo-parent/${appId}/upload-documents`, {
-              method: "POST",
-              headers: token ? { Authorization: `Bearer ${token}`, "x-access-token": token, "x-session-token": token } : undefined,
-              body: uploadFormData,
-            }).catch(() => null)
-          }
-        })
-
-        await Promise.all(uploadPromises)
-
-        if (appId) {
-          await fetch(`${API_BASE}/api/solo-parent/${appId}/submit`, {
-            method: "POST",
-            headers: getAuthHeaders({ "Content-Type": "application/json" }),
-          }).catch(() => {})
-        }
-
-        notifyApplicationChange("APPLICATION_SUBMITTED", "solo_parent", data.referenceNumber || fallbackRef)
-      }
-    } catch (err) {
-      console.warn("Submit background sync:", err)
-    }
+  const updateField = (field: keyof FormData, val: string) => {
+    setFormData((prev) => ({ ...prev, [field]: val }))
   }
 
-  const step1Valid =
-    isResident &&
-    (idStatus === "new"
-      ? selectedCategoryId !== null && hasSoleParentalCare
-      : idStatus === "renewal"
-      ? isIdVerified && (existingIdNumber || "").trim() !== "" && hasSoleParentalCare && renewalReason !== ""
-      : isIdVerified && (existingIdNumber || "").trim() !== "" && hasSoleParentalCare && replacementReason !== "")
+  // Validations
+  const step1Valid = checkResidency && checkTwoChildren && checkIndigent && checkAssessmentInterview
+
+  const childrenValid =
+    schoolingChildren.length >= 2 &&
+    schoolingChildren.every(
+      (c) =>
+        (c.fullName || "").trim() !== "" &&
+        (c.schoolName || "").trim() !== "" &&
+        (c.gradeLevel || "").trim() !== ""
+    )
 
   const step2Valid =
-    (idStatus === "new"
-      ? (formData.firstName || "").trim() !== "" &&
-        (formData.lastName || "").trim() !== "" &&
-        (formData.contactNo || "").trim().length >= 10 &&
-        (formData.addressBarangay || "").trim() !== ""
-      : true) &&
+    (formData.firstName || "").trim() !== "" &&
+    (formData.lastName || "").trim() !== "" &&
+    (formData.contactNo || "").replace(/\D/g, "").length >= 10 &&
+    (formData.addressBarangay || "").trim() !== "" &&
+    childrenValid &&
     (formData.emergencyFirstName || "").trim() !== "" &&
     (formData.emergencyLastName || "").trim() !== "" &&
-    (formData.emergencyContactNo || "").replace(/\D/g, "").startsWith("09") &&
     (formData.emergencyContactNo || "").replace(/\D/g, "").length === 11 &&
-    (formData.emergencyRelationship || "").trim() !== "" &&
-    (formData.emergencyAddress || "").trim() !== "" &&
-    (formData.bloodType || "").trim() !== ""
+    (formData.emergencyRelationship || "").trim() !== ""
 
-  const step3Valid = requiredDocs.every((doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0)
-
-  const canGoNext =
-    step === 1 ? step1Valid : step === 2 ? step2Valid : step === 3 ? step3Valid : privacyAgreed
+  const step3Valid = EDUCATIONAL_ASSISTANCE_DOCUMENTS.every(
+    (doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0
+  )
 
   const goNext = () => {
     if (step === 1 && !step1Valid) {
@@ -1897,428 +459,142 @@ export default function SoloParentApplicationWizard({
     setStep((s) => Math.max(s - 1, 1))
   }
 
-  const fullApplicantName = [formData.firstName, formData.middleName, formData.lastName, formData.suffix]
-    .filter(Boolean)
-    .join(" ")
+  const handleSubmit = async () => {
+    setSubmitting(true)
+    const randNum = Math.floor(100000 + Math.random() * 900000)
+    const generatedRef = `SP-EDU-2026-${randNum}`
+    setReference(generatedRef)
 
-  const applicationTypeLabel =
-    idStatus === "renewal" ? t("spTypeRenewal") : idStatus === "loss" ? t("spTypeReplacementRequest") : t("spTypeApplication")
+    const docPayload = EDUCATIONAL_ASSISTANCE_DOCUMENTS.map((doc) => ({
+      documentId: doc.id,
+      documentLabel: doc.label,
+      files: (uploadedDocs[doc.id] || []).map((f) => ({
+        filename: f.name,
+        previewUrl: uploadedDocsBase64[doc.id] || f.name,
+        fileSize: f.size,
+        uploadedAt: new Date().toISOString(),
+      })),
+    }))
 
-  if (isBlocked && !isReapplying && (blockReason === "pending" || blockReason === "draft" || blockReason === "rejected" || (blockReason === "approved" && idStatus === "new"))) {
-    const isAppApproved = blockReason === "approved" || blockedApp?.application_status === "approved" || blockedApp?.status === "approved"
-    const isAppRejected = blockReason === "rejected" || blockedApp?.application_status === "rejected" || blockedApp?.status === "rejected"
-    const rejectionReason = blockedApp?.rejection_reason || blockedApp?.rejectionReason || blockedApp?.admin_notes || ""
-    const displayRef = blockedReference || blockedApp?.reference_number || blockedApp?.referenceNumber || "REF-SP-2026-001"
-    const assignedIdNo = blockedApp?.assigned_id_number || blockedApp?.assignedIdNumber || blockedApp?.solo_parent_id_number || blockedApp?.soloParentIdNumber
-    const rawDate = blockedApp?.created_at || blockedApp?.submittedAt || blockedApp?.submitted_at || blockedApp?.dateSubmitted
-    const displayDate = formatAppDate(rawDate, blockedApp)
+    const newAppRecord = {
+      id: String(Date.now()),
+      reference_number: generatedRef,
+      referenceNumber: generatedRef,
+      category: "Solo Parent",
+      module_type: "solo-parent",
+      service: "Solo Parent Educational Assistance Program",
+      service_name: "Solo Parent Educational Assistance Program",
+      classification_title: "Solo Parent Educational Assistance Program (₱5,000 Financial Assistance)",
+      assistanceType: "Educational Assistance (₱5,000)",
+      type: "educational-assistance",
+      application_type: "educational-assistance",
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      middleName: formData.middleName,
+      qcid_number: formData.qcidNumber || getLoggedInUserQcid() || "110000572516915",
+      email: formData.email,
+      contact_no: formData.contactNo,
+      address_barangay: formData.addressBarangay,
+      children: schoolingChildren,
+      schooling_children: schoolingChildren,
+      financial_assistance_amount: "₱5,000 bawat benepisyaryo",
+      status: "pending",
+      application_status: "pending",
+      created_at: new Date().toISOString(),
+      submittedAt: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+      form_data: {
+        ...formData,
+        schoolingChildren,
+        assistanceAmount: "₱5,000 bawat benepisyaryo",
+        assessmentStatus: "Pending Social Worker Assessment & Interview",
+      },
+      documents: docPayload,
+    }
 
+    try {
+      const existing = JSON.parse(localStorage.getItem("solo_parent_applications") || "[]")
+      localStorage.setItem("solo_parent_applications", JSON.stringify([newAppRecord, ...existing]))
+      const allUserApps = JSON.parse(localStorage.getItem("applications") || "[]")
+      localStorage.setItem("applications", JSON.stringify([newAppRecord, ...allUserApps]))
+      window.dispatchEvent(new Event("storage"))
+      notifyApplicationChange("APPLICATION_SUBMITTED", "solo_parent", generatedRef)
+    } catch {}
+
+    try {
+      await fetch(`${API_BASE}/api/solo-parent/create`, {
+        method: "POST",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          userId: formData.qcidNumber || "0",
+          referenceNumber: generatedRef,
+          applicationData: newAppRecord,
+          documents: docPayload,
+        }),
+      }).catch(() => null)
+    } catch {}
+
+    setSubmitting(false)
+    setShowSubmitModal(false)
+    setIsSubmitted(true)
+    onSubmissionStageChange?.("pending")
+  }
+
+  if (isSubmitted) {
     return (
       <div className="p-4 md:p-6 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150 py-8">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5 cursor-pointer mb-2"
-          >
-            ← Back
-          </button>
-        )}
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
-          <div
-            className={`h-16 w-16 rounded-2xl flex items-center justify-center ${
-              isAppApproved
-                ? "bg-emerald-500/10 text-emerald-600"
-                : isAppRejected
-                ? "bg-red-500/10 text-red-600"
-                : "bg-amber-500/10 text-amber-500"
-            }`}
-          >
-            {isAppApproved ? (
-              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-            ) : isAppRejected ? (
-              <X className="h-8 w-8 text-red-600" />
-            ) : (
-              <Info className="h-8 w-8 text-amber-500" />
-            )}
+        <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl p-8 shadow-sm flex flex-col items-center text-center gap-4">
+          <div className="h-16 w-16 rounded-2xl flex items-center justify-center bg-emerald-500/10 text-emerald-600">
+            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">
-              {isAppApproved
-                ? language === "en"
-                  ? "Application Approved"
-                  : language === "bis"
-                  ? "Na-aprobahan ang Aplikasyon!"
-                  : "Na-approve ang Application!"
-                : isAppRejected
-                ? language === "en"
-                  ? "Application Not Approved / Disapproved"
-                  : language === "bis"
-                  ? "Wala Na-aprobahan ang Aplikasyon"
-                  : "Hindi Na-aprubahan ang Aplikasyon"
-                : language === "en"
-                ? "You Have an Existing Active Application"
-                : language === "bis"
-                ? "Aduna Ka Nay Aktibo nga Aplikasyon"
-                : "May Kasalukuyan Ka Nang Aktibong Aplikasyon"}
+            <h2 className="text-xl font-bold text-foreground">
+              {language === "en"
+                ? "Application Submitted Successfully!"
+                : "Matagumpay na Naisumite ang Aplikasyon!"}
             </h2>
-            <p className="text-xs text-gray-600 max-w-md mt-1 leading-relaxed">
-              {isAppApproved
-                ? language === "en"
-                  ? "Your application for Solo Parent ID has been officially approved! You already have an active Solo Parent ID. If you need to renew or replace your ID, please choose an option below."
-                  : language === "bis"
-                  ? "Ang imong aplikasyon para sa Solo Parent ID opisyal nga na-aprobahan sa Gov Service. Aduna ka nay aktibo nga ID."
-                  : "Ang inyong aplikasyon para sa Solo Parent ID ay opisyal nang na-apruba ng Gov Service Social Services Development Department."
-                : isAppRejected
-                ? language === "en"
-                  ? "Your application for Solo Parent ID was reviewed and not approved. You can review the reason below and submit a new application with the required documents."
-                  : language === "bis"
-                  ? "Ang imong aplikasyon para sa Solo Parent ID gisusi ug wala na-aprobahan. Mahimo nimong susihon ang hinungdan sa ubos ug mag-apply pag-usab."
-                  : "Ang inyong aplikasyon para sa Solo Parent ID ay sinuri ng Social Worker at hindi na-aprubahan. Maaari ninyong suriin ang dahilan sa ibaba at mag-apply muli kalakip ang kumpletong mga dokumento."
-                : language === "en"
-                ? "Your application for Solo Parent ID has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."
-                : language === "bis"
-                ? "Ang imong aplikasyon para sa Solo Parent ID nasumite na ug kasamtangang girebyu sa Social Worker."
-                : "Ang inyong aplikasyon para sa Solo Parent ID ay matagumpay na naisumite at kasalukuyang sinusuri ng Social Worker."}
+            <p className="text-xs text-muted-foreground max-w-md mt-1.5 leading-relaxed">
+              {language === "en"
+                ? "Your application for the Solo Parent Educational Assistance Program has been received. A City Social Worker will conduct an interview and assessment of your 2 or more schooling children before assistance of ₱5,000 is extended."
+                : "Naisumite na ang inyong aplikasyon para sa Solo Parent Educational Assistance Program. Magsasagawa ng panayam (interview) at assessment ang City Social Worker bago maipagkaloob ang ₱5,000 tulong-pinansyal para sa inyong mga mag-aaral na anak."}
             </p>
           </div>
 
-          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">
-            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">
-                {language === "en" ? "Reference Number" : language === "bis" ? "Numero sa Reperensya" : "Reference Number"}
-              </span>
-              <span className="font-mono font-bold text-blue-600">
-                {displayRef}
-              </span>
+          <div className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-left space-y-2 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
+              <span className="text-muted-foreground font-medium">Application Reference No.:</span>
+              <span className="font-mono font-bold text-blue-600 dark:text-sky-400">{reference}</span>
             </div>
-            {assignedIdNo && (
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <span className="text-gray-500 font-medium">
-                  {language === "en" ? "Official ID Number" : language === "bis" ? "Opisyal nga Numero sa ID" : "Opisyal na Numero ng ID"}
-                </span>
-                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  {assignedIdNo}
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-              <span className="text-gray-500 font-medium">Status:</span>
-              {isAppApproved ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  {language === "en" ? "Approved" : language === "bis" ? "Aprobado" : "Approved"}
-                </span>
-              ) : isAppRejected ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                  {language === "en" ? "Not Approved (Rejected)" : language === "bis" ? "Wala Na-aprobahan (Rejected)" : "Hindi Na-aprubahan (Rejected)"}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  {language === "en" ? "Under Review (Pending)" : language === "bis" ? "Gisusi Pa (Pending)" : "Kasalukuyang Sinusuri (Pending)"}
-                </span>
-              )}
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
+              <span className="text-muted-foreground font-medium">Program:</span>
+              <span className="font-semibold text-foreground">Solo Parent Educational Assistance</span>
+            </div>
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
+              <span className="text-muted-foreground font-medium">Assistance Amount:</span>
+              <span className="font-semibold text-emerald-600 font-mono">₱5,000 / beneficiary</span>
+            </div>
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
+              <span className="text-muted-foreground font-medium">Enrolled Children:</span>
+              <span className="font-semibold text-foreground">{schoolingChildren.length} mga mag-aaral</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-500 font-medium">
-                {language === "en" ? "Date Filed" : language === "bis" ? "Petsa sa Pag-file" : "Petsa ng Pag-apply"}
+              <span className="text-muted-foreground font-medium">Status:</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Under Review / Assessment
               </span>
-              <span className="font-semibold text-gray-700">{displayDate}</span>
             </div>
-
-            {isAppRejected && rejectionReason && (
-              <div className="p-3 bg-red-50/90 border border-red-200 rounded-lg text-left mt-2">
-                <span className="text-[11px] font-bold text-red-800 uppercase tracking-wider block">
-                  {language === "en" ? "Reason for Disapproval:" : language === "bis" ? "Hinungdan sa Wala Pag-apruba:" : "Dahilan ng Hindi Pag-apruba:"}
-                </span>
-                <p className="text-xs text-red-700 mt-1 font-medium leading-relaxed">
-                  {rejectionReason}
-                </p>
-              </div>
-            )}
           </div>
 
           <div className="w-full pt-2 flex flex-col gap-2">
-            {isAppApproved ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => handleStartReapply("renewal")}
-                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-                >
-                  {language === "en" ? "Apply for Renewal (Renewal Solo Parent ID)" : language === "bis" ? "Pag-apply para sa Renewal (Renewal Solo Parent ID)" : "Mag-apply para sa Renewal (Renewal Solo Parent ID)"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleStartReapply("loss")}
-                  className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer"
-                >
-                  {language === "en" ? "Apply for Replacement / Lost ID" : language === "bis" ? "Pag-apply para sa Replacement / Nawala nga ID" : "Mag-apply para sa Replacement / Nawalang ID"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    try {
-                      localStorage.removeItem("solo_parent_reapplying")
-                      localStorage.removeItem(`solo_parent_reapplying_${idStatus || "new"}`)
-                    } catch {}
-                    ;(window as any).__isFormDirty = false
-                    window.location.href = "/portal/my-applications"
-                  }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors cursor-pointer uppercase tracking-wide"
-                >
-                  {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
-                </button>
-              </>
-            ) : isAppRejected ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => handleStartReapply(idStatus || "new")}
-                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  <span>
-                    {language === "en"
-                      ? "RE-APPLY (SUBMIT NEW APPLICATION)"
-                      : language === "bis"
-                      ? "MAG-APPLY PAG-USAB (RE-APPLY)"
-                      : "MAG-APPLY MULI (RE-APPLY APPLICATION)"}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    try {
-                      localStorage.removeItem("solo_parent_reapplying")
-                      localStorage.removeItem(`solo_parent_reapplying_${idStatus || "new"}`)
-                    } catch {}
-                    ;(window as any).__isFormDirty = false
-                    window.location.href = "/portal/my-applications"
-                  }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors cursor-pointer uppercase tracking-wide"
-                >
-                  {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    localStorage.removeItem("solo_parent_reapplying")
-                    localStorage.removeItem(`solo_parent_reapplying_${idStatus || "new"}`)
-                  } catch {}
-                  ;(window as any).__isFormDirty = false
-                  window.location.href = "/portal/my-applications"
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-              >
-                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
-  if (submissionStage === "pending") {
-    const activeRef = reference || blockedReference
-    let liveApp =
-      (blockedApp && (blockedApp.reference_number === activeRef || blockedApp.referenceNumber === activeRef || blockedApp.id === activeRef) ? blockedApp : null)
-
-    if (!liveApp) {
-      try {
-        const local = JSON.parse(localStorage.getItem("solo_parent_applications") || "[]")
-        if (Array.isArray(local)) {
-          liveApp = local.find((a: any) =>
-            a.reference_number === activeRef ||
-            a.referenceNumber === activeRef ||
-            String(a.id) === String(activeRef) ||
-            (activeRef && String(a.reference_number || "").includes(activeRef))
-          )
-        }
-      } catch {}
-    }
-
-    const isLiveApproved =
-      liveApp?.application_status === "approved" ||
-      liveApp?.status === "approved" ||
-      blockReason === "approved"
-
-    const liveAssignedId =
-      liveApp?.assigned_id_number ||
-      liveApp?.assignedIdNumber ||
-      liveApp?.solo_parent_id_number ||
-      liveApp?.soloParentIdNumber
-
-    return (
-      <div className="max-w-3xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
-        <div className="bg-white border border-border rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
-          <div
-            className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ring-8 ${
-              isLiveApproved
-                ? "bg-emerald-100 text-emerald-600 ring-emerald-50"
-                : "bg-amber-100 text-amber-600 ring-amber-50"
-            }`}
-          >
-            {isLiveApproved ? <Check className="w-8 h-8 text-emerald-600" /> : <Clock className="w-8 h-8 text-amber-600" />}
-          </div>
-
-          <div className="space-y-2">
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-                isLiveApproved
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-amber-50 text-amber-700 border-amber-200"
-              }`}
-            >
-              {isLiveApproved ? (
-                <>
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Official Solo Parent ID Approved!
-                </>
-              ) : (
-                <>
-                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" /> Application Pending Review
-                </>
-              )}
-            </span>
-            <h2 className="text-2xl font-bold text-foreground">
-              {isLiveApproved
-                ? language === "en"
-                  ? "Congratulations! Your Solo Parent ID is Approved!"
-                  : language === "bis"
-                  ? "Pahalipay! Na-aprobahan ang Imong Solo Parent ID!"
-                  : "Malugod na Pagbati! Ang Inyong Solo Parent ID ay Approved Na!"
-                : language === "en"
-                ? "Application Received & Pending Review"
-                : language === "bis"
-                ? "Nadawat na ang Aplikasyon ug Kasamtangang Gisusi"
-                : "Aplikasyon ay Natanggap Na at Kasalukuyang Sinusuri"}
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              {isLiveApproved
-                ? language === "en"
-                  ? "Your Solo Parent ID application has been officially approved by the SSDD. Your official ID is ready."
-                  : language === "bis"
-                  ? "Ang imong aplikasyon na-aprobahan na sa SSDD. Ang opisyal nga ID na-generate na."
-                  : "Ang inyong aplikasyon para sa Solo Parent ID ay opisyal nang na-apruba ng SSDD. Naka-forward na ito sa Appointments para sa claiming schedule."
-                : language === "en"
-                ? "Your Solo Parent ID application has been submitted and is currently pending review by a Social Worker."
-                : language === "bis"
-                ? "Ang imong aplikasyon para sa Solo Parent ID nasumite na ug kasamtangang girebyu sa Social Worker."
-                : "Ang inyong Solo Parent ID application ay matagumpay na naisumite at kasalukuyang sinusuri ng Social Worker."}
-            </p>
-          </div>
-
-          {}
-          <div className="border border-border rounded-xl p-5 max-w-md mx-auto space-y-2.5 text-left bg-gray-50/60">
-            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-              <span className="font-semibold text-muted-foreground">
-                {language === "en" ? "Reference Number:" : language === "bis" ? "Numero sa Reperensya:" : "Application Reference No.:"}
-              </span>
-              <span className="font-mono font-bold text-blue-700 text-sm">{activeRef || reference}</span>
-            </div>
-
-            {liveAssignedId && (
-              <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-                <span className="font-semibold text-muted-foreground">
-                  {language === "en" ? "Official ID Number:" : language === "bis" ? "Opisyal nga Numero sa ID:" : "Opisyal na Numero ng ID:"}
-                </span>
-                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-300">
-                  {liveAssignedId}
-                </span>
-              </div>
-            )}
-
-            <div className="flex justify-between items-center text-xs text-foreground border-b border-border/80 pb-2">
-              <span className="font-semibold text-muted-foreground">Status:</span>
-              {isLiveApproved ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  {language === "en" ? "Approved" : language === "bis" ? "Aprobado" : "Approved"}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  {language === "en" ? "Under Review (Pending)" : language === "bis" ? "Gisusi Pa (Pending)" : "Kasalukuyang Sinusuri (Pending)"}
-                </span>
-              )}
-            </div>
-
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Service:</span>
-              <span className="font-semibold text-foreground">Solo Parent ID Application</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">Application Type:</span>
-              <span className="font-semibold text-foreground uppercase">{applicationTypeLabel}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">
-                {language === "en" ? "Applicant:" : language === "bis" ? "Aplikante:" : "Aplikante:"}
-              </span>
-              <span className="font-semibold text-foreground">{fullApplicantName || "Applicant"}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-foreground">
-              <span className="text-muted-foreground">
-                {language === "en" ? "Date:" : language === "bis" ? "Petsa:" : "Petsa:"}
-              </span>
-              <span className="text-foreground">
-                {new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 max-w-md mx-auto flex items-center justify-center gap-2.5 text-center">
-            <Info className="w-4 h-4 text-blue-600 shrink-0" />
-            <p>
-              {isLiveApproved
-                ? language === "en"
-                  ? "Your ID claiming schedule is being prepared in Appointments. You may check Notifications or Application History."
-                  : "Nai-forward na ang inyong ID sa Appointments para sa claiming schedule. Maaari ninyong tingnan ang Notifications o Application History."
-                : language === "en"
-                ? "You may check Notifications or Application History for updates on your application."
-                : "Maaari ninyong tingnan ang Notifications o Application History para sa live update sa inyong aplikasyon."}
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 max-w-md mx-auto w-full">
             <button
               type="button"
               onClick={() => {
-                try {
-                  localStorage.removeItem("solo_parent_applications")
-                  localStorage.removeItem("solo_parent_reapplying")
-                  localStorage.removeItem(`solo_parent_reapplying_${idStatus || "new"}`)
-                } catch {}
-                ;(window as any).__isFormDirty = false
-                setIsBlocked(false)
-                setBlockReason(null)
-                setBlockedReference("")
-                setBlockedApp(null)
-                setSubmissionStage("form")
-                setStep(1)
-                setReference("")
-              }}
-              className="w-full py-2.5 px-4 rounded-xl border border-blue-600 bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
-            >
-              {language === "bis" ? "PAG-APPLY PAG-USAB / BAG-ONG FORM" : "MAG-APPLY ULIT / BAGONG FORM"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  localStorage.removeItem("solo_parent_reapplying")
-                  localStorage.removeItem(`solo_parent_reapplying_${idStatus || "new"}`)
-                } catch {}
-                ;(window as any).__isFormDirty = false
                 window.location.href = "/portal/my-applications"
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide"
             >
-              {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+              {language === "en" ? "VIEW IN APPLICATION HISTORY" : "TINGNAN SA APPLICATION HISTORY"}
             </button>
           </div>
         </div>
@@ -2326,646 +602,232 @@ export default function SoloParentApplicationWizard({
     )
   }
 
+  const fullApplicantName = [formData.firstName, formData.middleName, formData.lastName, formData.suffix]
+    .filter(Boolean)
+    .join(" ")
+
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6">
-      <div className="bg-card border border-border rounded-2xl shadow-soft overflow-hidden">
-        {}
-        <div className="flex items-center px-6 pt-6 pb-4">
-          {STEPS.map((s, idx) => (
-            <div key={s.id} className="flex items-center flex-1 last:flex-none">
+    <div className="max-w-5xl mx-auto px-4 md:px-6 py-2 space-y-6 animate-in fade-in duration-150">
+      {/* Step Indicator */}
+      <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl p-4 sm:p-5 shadow-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {STEPS.map((s, idx) => {
+            const isCurrent = step === s.id
+            const isCompleted = step > s.id
+            return (
               <div
-                className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                  s.id === step
-                    ? "bg-blue-600 text-white"
-                    : s.id < step
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-500"
+                key={s.id}
+                className={`flex items-center gap-2 p-2 rounded-xl transition-all ${
+                  isCurrent
+                    ? "bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 text-blue-900 dark:text-sky-300 font-bold"
+                    : isCompleted
+                    ? "text-emerald-700 dark:text-emerald-400 font-semibold"
+                    : "text-muted-foreground opacity-60 font-medium"
                 }`}
               >
-                {s.id < step ? <Check className="h-4 w-4" /> : s.id}
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                    isCurrent
+                      ? "bg-blue-600 text-white font-bold"
+                      : isCompleted
+                      ? "bg-emerald-600 text-white"
+                      : "bg-gray-200 dark:bg-slate-800 text-muted-foreground"
+                  }`}
+                >
+                  {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : idx + 1}
+                </div>
+                <span className="text-xs truncate">{s.label}</span>
               </div>
-              {idx < STEPS.length - 1 && (
-                <div className={`h-px flex-1 mx-2 ${s.id < step ? "bg-blue-300" : "bg-gray-200"}`} />
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
+      </div>
 
-        {}
-        <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
-          {STEPS.map((s) => (
-            <div
-              key={s.id}
-              className={`flex-1 px-4 py-3 rounded-lg text-xs font-semibold whitespace-nowrap text-center transition-colors ${
-                s.id === step
-                  ? "bg-blue-600 text-white"
-                  : s.id < step
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-500"
-              }`}
-            >
-              {s.label}
-            </div>
-          ))}
-        </div>
-
-        {}
-        <div className="p-6 min-h-90">
-          {}
+      {/* Main Card Container */}
+      <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-xs overflow-hidden">
+        <div className="p-6 sm:p-8 space-y-6">
+          {/* STEP 1: CHECKLIST & ELIGIBILITY */}
           {step === 1 && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-base font-bold text-foreground uppercase tracking-wide">
-                  {language === "en"
-                    ? "SERVICE AND PRIMARY REQUIREMENTS"
-                    : language === "bis"
-                    ? "SERBISYO UG PANGUNANG KINAHANGLANON"
-                    : "SERBISYO AT PANGUNAHING KINAKAILANGAN"}
-                </h3>
+              <div className="border-b border-border pb-3 flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 shrink-0">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-foreground uppercase tracking-wide">
+                    {language === "en"
+                      ? "Educational Assistance — Qualification Checklist"
+                      : "Educational Assistance — Checklist at Kwalipikasyon"}
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {language === "en"
+                      ? "Financial assistance of ₱5,000 per qualified beneficiary for solo parents with 2 or more children enrolled in public school."
+                      : "Tulong-pinansyal na ₱5,000 bawat kwalipikadong benepisyaryo para sa mga solo parent na may 2 o higit pang anak sa pampublikong paaralan."}
+                  </p>
+                </div>
               </div>
 
-              {}
-              <div className="space-y-3">
-                <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              {/* Highlight Info Box */}
+              <div className="bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-blue-950 dark:text-sky-200">
+                  <Info className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>QC Social Services Development Department (SSDD) Guidelines</span>
+                </div>
+                <p className="text-xs text-blue-900/90 dark:text-slate-300 leading-relaxed text-justify">
+                  Ang programang ito ay nakalaan para sa mga kapus-palad (indigent) na rehistradong Solo Parents sa Lungsod Quezon na nagtataguyod ng dalawa (2) o higit pang anak na nag-aaral sa pampublikong paaralan. May interview at assessment ang Social Worker bago ma-extend ang ayuda na ₱5,000 bawat benepisyaryo.
+                </p>
+              </div>
+
+              {/* Checklist items */}
+              <div className="space-y-3 pt-2">
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                  Pakilagyan ng tsek (✓) ang lahat ng aytem upang magpatuloy:
+                </h3>
+
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-border hover:bg-muted/30 transition-colors cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    checked={isResident}
-                    onChange={(e) => setIsResident(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
+                    checked={checkResidency}
+                    onChange={(e) => setCheckResidency(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-blue-600 rounded cursor-pointer shrink-0"
                   />
-                  <span className={`text-sm ${attemptedNext && !isResident ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                    {language === "en"
-                      ? "Are you a legitimate resident of Gov Service?"
-                      : language === "bis"
-                      ? "Ikaw ba usa ka lehitimong residente sa Gov Service?"
-                      : "Ikaw ba ay lehitimong residente ng Gov Service?"} <span className="text-red-500">*</span>
-                  </span>
-                </label>
-                {attemptedNext && !isResident && (
-                  <p className="text-xs text-red-500 ml-6">
-                    {language === "en"
-                      ? "Must be a legitimate resident of Gov Service to apply."
-                      : language === "bis"
-                      ? "Kinahanglang residente sa Gov Service aron maka-apply."
-                      : "Kinakailangang residente ng Gov Service upang makapag-apply."}
-                  </p>
-                )}
-
-                {idStatus === "new" ? (
-                  <>
-                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={hasSoleParentalCare}
-                        onChange={(e) => setHasSoleParentalCare(e.target.checked)}
-                        className="mt-0.5 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
-                      />
-                      <span className={`text-sm ${attemptedNext && !hasSoleParentalCare ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                        {language === "en"
-                          ? "Are you a solo parent with sole parental care and custody over your child/children?"
-                          : language === "bis"
-                          ? "Ikaw ba usa ka solo parent nga adunay bugtong pag-atiman ug kustodiya sa imong anak/mga anak?"
-                          : "Ikaw ba ay isang solo parent na may solong pag-aalaga at kustodiya sa iyong anak/mga anak?"} <span className="text-red-500">*</span>
-                      </span>
-                    </label>
-                    {attemptedNext && !hasSoleParentalCare && (
-                      <p className="text-xs text-red-500 ml-6">
-                        {language === "en"
-                          ? "Must have sole parental care and custody over your child/children."
-                          : language === "bis"
-                          ? "Kinahanglang adunay bugtong pag-atiman sa anak."
-                          : "Kinakailangang may solong responsibilidad sa pag-aalaga ng anak."}
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={hasSoleParentalCare}
-                      onChange={(e) => setHasSoleParentalCare(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
-                    />
-                    <span className={`text-sm ${attemptedNext && !hasSoleParentalCare ? "text-red-600 font-semibold" : "text-blue-700"}`}>
-                      {idStatus === "renewal"
-                        ? language === "en"
-                          ? "Do you have an existing or expired Solo Parent ID for renewal? *"
-                          : language === "bis"
-                          ? "Aduna ka bay kasamtangan o na-expire nga Solo Parent ID para sa renewal? *"
-                          : "Mayroon ka bang kasalukuyan o expired na Solo Parent ID para sa renewal? *"
-                        : language === "en"
-                        ? "Was your Solo Parent ID lost or damaged, and in need of replacement? *"
-                        : language === "bis"
-                        ? "Nawala o nadaot ba ang imong Solo Parent ID, ug kinahanglan nga ilisan? *"
-                        : "Nawala o nasira ba ang inyong Solo Parent ID, at kailangang palitan? *"}
-                    </span>
-                  </label>
-                )}
-              </div>
-
-              {}
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-semibold text-blue-900">
-                    {idStatus === "renewal"
-                      ? language === "en"
-                        ? "RENEWAL OF SOLO PARENT ID"
-                        : language === "bis"
-                        ? "PAG-RENEW SA SOLO PARENT ID"
-                        : "PAG-RENEW NG SOLO PARENT ID"
-                      : idStatus === "loss"
-                      ? language === "en"
-                        ? "REPLACEMENT OF LOST OR DAMAGED SOLO PARENT ID"
-                        : language === "bis"
-                        ? "PAG-ILIS SA NAWALA O NADAOT NGA SOLO PARENT ID"
-                        : "PAGPAPALIT NG NAWALA O NASIRANG SOLO PARENT ID"
-                      : language === "en"
-                      ? "NEW APPLICATION FOR SOLO PARENT ID"
-                      : language === "bis"
-                      ? "BAG-ONG APLIKASYON PARA SA SOLO PARENT ID"
-                      : "BAGONG APLIKASYON PARA SA SOLO PARENT ID"}
-                  </p>
-                  <p className="text-xs text-blue-700 mt-0.5">
-                    {idStatus === "renewal"
-                      ? language === "en"
-                        ? "RENEWAL: Update your existing Solo Parent ID. Prepare your ID number and required documents."
-                        : language === "bis"
-                        ? "RENEWAL: I-update ang imong kasamtangang Solo Parent ID. Ihanda ang ID number ug mga gikinahanglang dokumento."
-                        : "RENEWAL: I-update ang inyong kasalukuyang Solo Parent ID. Ihanda ang ID number at mga kaukulang dokumento."
-                      : idStatus === "loss"
-                      ? language === "en"
-                        ? "REPLACEMENT: Application for lost or damaged Solo Parent ID. Prepare Affidavit of Loss or damaged ID."
-                        : language === "bis"
-                        ? "REPLACEMENT: Aplikasyon para sa nawala o nadaot nga Solo Parent ID. Ihanda ang Affidavit of Loss o nadaot nga ID."
-                        : "REPLACEMENT: Aplikasyon para sa nawala o nasirang Solo Parent ID. Ihanda ang Affidavit of Loss o sirang ID."
-                      : language === "en"
-                      ? "NEW APPLICATION: First-time Solo Parent ID application. Complete all requirements."
-                      : language === "bis"
-                      ? "BAG-ONG APLIKASYON: Unang higayon nga pag-apply og Solo Parent ID. Kompletoha ang tanang kinahanglanon."
-                      : "BAGONG APLIKASYON: Unang beses na aplikasyon para sa Solo Parent ID. Kumpletuhin ang lahat ng kailangan."}
-                  </p>
-                </div>
-              </div>
-
-              {}
-              {idStatus === "new" && (
-                <div className="space-y-2 pt-2">
-                  <label className="text-xs font-bold text-foreground uppercase tracking-wide block">
-                    {language === "en"
-                      ? "CLICK THE TYPE OF ASSISTANCE / CATEGORY"
-                      : language === "bis"
-                      ? "PILIA ANG MATANG SA TABANG / KATEGORYA"
-                      : "PILIIN ANG URI NG TULONG / KATEGORYA"} <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={selectedCategoryId ?? ""}
-                    onChange={(e) => {
-                      const val = e.target.value ? Number(e.target.value) : null
-                      setSelectedCategoryId(val)
-                    }}
-                    className={`w-full border rounded-lg px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 ${
-                      attemptedNext && selectedCategoryId === null
-                        ? "border-red-400 focus:ring-red-300 bg-red-50"
-                        : "border-border focus:ring-blue-400"
-                    }`}
-                  >
-                    <option value="">
-                      {language === "en"
-                        ? "Select Category"
-                        : language === "bis"
-                        ? "Pilia ang Kategorya"
-                        : "Pumili ng Kategorya"}
-                    </option>
-                    {SOLO_PARENT_CATEGORIES.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.title}
-                      </option>
-                    ))}
-                  </select>
-                  {attemptedNext && selectedCategoryId === null && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {language === "en"
-                        ? "Please select a category to continue."
-                        : language === "bis"
-                        ? "Palihug pagpili og kategorya aron makapadayon."
-                        : "Pumili ng kategorya upang makapagpatuloy."}
+                  <div className="text-xs space-y-0.5">
+                    <p className="font-semibold text-foreground">
+                      1. Lehitimong Residente ng Lungsod Quezon at may Solo Parent record
                     </p>
-                  )}
+                    <p className="text-muted-foreground">
+                      Ako ay naninirahan sa QC at mayroong valid Solo Parent ID o sertipikasyon.
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-border hover:bg-muted/30 transition-colors cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={checkTwoChildren}
+                    onChange={(e) => setCheckTwoChildren(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-blue-600 rounded cursor-pointer shrink-0"
+                  />
+                  <div className="text-xs space-y-0.5">
+                    <p className="font-semibold text-foreground">
+                      2. May dalawa (2) o higit pang anak na naka-enroll sa Pampublikong Paaralan (Public School)
+                    </p>
+                    <p className="text-muted-foreground">
+                      Ang aking mga mag-aaral na anak ay opisyal na naka-enroll sa pampublikong elementarya, high school, o kolehiyo.
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-border hover:bg-muted/30 transition-colors cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={checkIndigent}
+                    onChange={(e) => setCheckIndigent(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-blue-600 rounded cursor-pointer shrink-0"
+                  />
+                  <div className="text-xs space-y-0.5">
+                    <p className="font-semibold text-foreground">
+                      3. Kabilang sa Indigent Solo Parents na nangangailangan ng tulong-pinansyal sa edukasyon
+                    </p>
+                    <p className="text-muted-foreground">
+                      Tulong-pinansyal na ₱5,000 bawat benepisyaryo para sa gastusin sa pag-aaral, uniporme, gamit sa eskwela, at proyekto.
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-border hover:bg-muted/30 transition-colors cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={checkAssessmentInterview}
+                    onChange={(e) => setCheckAssessmentInterview(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-blue-600 rounded cursor-pointer shrink-0"
+                  />
+                  <div className="text-xs space-y-0.5">
+                    <p className="font-semibold text-foreground">
+                      4. Sumasang-ayon sa Panayam (Interview) at Assessment ng Social Worker
+                    </p>
+                    <p className="text-muted-foreground">
+                      Nauunawaan ko na may interview at assessment ng Social Worker bago maaprubahan at maipagkaloob ang tulong-pinansyal.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {attemptedNext && !step1Valid && (
+                <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>Kailangang lagyan ng tsek ang lahat ng kwalipikasyon bago makapagpatuloy.</span>
                 </div>
               )}
-
-              {}
-              {idStatus === "renewal" && (
-                <div className="space-y-5 pt-2">
-                  <div className="border-b border-gray-200 pb-2">
-                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
-                      {language === "en"
-                        ? "Existing Solo Parent ID"
-                        : language === "bis"
-                        ? "Kasamtangang Solo Parent ID"
-                        : "Kasalukuyang Solo Parent ID"}
-                    </h3>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wide block text-gray-700">
-                      {language === "en"
-                        ? "Existing Solo Parent ID Number"
-                        : language === "bis"
-                        ? "Kasamtangang Solo Parent ID Number"
-                        : "Kasalukuyang Solo Parent ID Number"} <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex flex-col sm:flex-row gap-2 max-w-md">
-                      <div className="flex-1">
-                        <TextInput
-                          value={existingIdNumber}
-                          onChange={(v) => {
-                            const formatted = formatSoloParentIdInput(v)
-                            setExistingIdNumber(formatted)
-                            setIsIdVerified(false)
-                            setVerifyError("")
-                          }}
-                          placeholder={samplePlaceholder}
-                          invalid={attemptedNext && (!(existingIdNumber || "").trim() || !isIdVerified)}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleVerifyId}
-                        disabled={!(existingIdNumber || "").trim() || isVerifying}
-                        className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 h-10 uppercase tracking-wide"
-                      >
-                        {isVerifying ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>
-                              {language === "en"
-                                ? "Verifying..."
-                                : language === "bis"
-                                ? "Gisusi..."
-                                : "Sinusuri..."}
-                            </span>
-                          </>
-                        ) : (
-                          <span>
-                            {language === "en"
-                              ? "VERIFY ID"
-                              : language === "bis"
-                              ? "I-VERIFY ANG ID"
-                              : "I-VERIFY ANG ID"}
-                          </span>
-                        )}
-                      </button>
-                    </div>
-                    {verifyError && <p className="text-xs text-red-500 mt-1">{verifyError}</p>}
-                    {attemptedNext && !isIdVerified && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {language === "en"
-                          ? "Please click VERIFY ID and ensure your record is verified before proceeding."
-                          : language === "bis"
-                          ? "Palihug pindota ang VERIFY ID ug siguroha nga napamatud-an ang record sa dili pa mopadayon."
-                          : "Pindutin ang VERIFY ID at tiyaking verified ang record bago magpatuloy."}
-                      </p>
-                    )}
-                  </div>
-
-                  {isIdVerified && (
-                    <div className="space-y-4 max-w-md">
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in duration-200">
-                        <div className="h-7 w-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
-                          <Check className="w-4 h-4 stroke-[2.5]" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs font-bold text-emerald-900 uppercase tracking-wide">
-                            {language === "en"
-                              ? "✓ Solo Parent ID Verified"
-                              : language === "bis"
-                              ? "✓ Napamatud-ang Solo Parent ID"
-                              : "✓ Solo Parent ID Verified"}
-                          </p>
-                          <p className="text-xs text-emerald-800">
-                            <span className="font-semibold">
-                              {language === "en"
-                                ? "Existing Solo Parent record found:"
-                                : language === "bis"
-                                ? "Nakit-an nga Solo Parent record:"
-                                : "Nakitang rekord ng Solo Parent:"}
-                            </span>{" "}
-                            {verifiedRecord?.name || `${userProfile.firstName} ${userProfile.lastName}`}
-                          </p>
-                          <p className="text-xs text-emerald-800">
-                            <span className="font-semibold">ID Status:</span> Active / Expired
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wide block text-gray-700">
-                          {language === "en"
-                            ? "Reason for Renewal"
-                            : language === "bis"
-                            ? "Hinungdan sa Pag-renew"
-                            : "Dahilan ng Pag-renew"} <span className="text-red-500">*</span>
-                        </label>
-                        <div className="flex flex-wrap items-center gap-6 pt-1">
-                          {[
-                            { label: "Expired ID", value: "Expired ID" },
-                            { label: "Updating Information", value: "Updating Information" },
-                          ].map((opt) => (
-                            <label key={opt.value} className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer select-none">
-                              <input
-                                type="radio"
-                                name="spRenewalReason"
-                                checked={renewalReason === opt.value}
-                                onChange={() => setRenewalReason(opt.value)}
-                                className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                              />
-                              <span>{opt.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                        {attemptedNext && !renewalReason && (
-                          <p className="text-xs text-red-500 mt-1">
-                            {language === "en"
-                              ? "Please select a reason for renewal."
-                              : language === "bis"
-                              ? "Palihug pagpili og hinungdan sa renewal."
-                              : "Pumili ng dahilan ng renewal."}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {}
-              {idStatus === "loss" && (
-                <div className="space-y-5 pt-2">
-                  <div className="border-b border-gray-200 pb-2">
-                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
-                      {language === "en"
-                        ? "Existing Solo Parent ID"
-                        : language === "bis"
-                        ? "Kasamtangang Solo Parent ID"
-                        : "Kasalukuyang Solo Parent ID"}
-                    </h3>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wide block text-gray-700">
-                      {language === "en"
-                        ? "Existing Solo Parent ID Number"
-                        : language === "bis"
-                        ? "Kasamtangang Solo Parent ID Number"
-                        : "Kasalukuyang Solo Parent ID Number"} <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex flex-col sm:flex-row gap-2 max-w-md">
-                      <div className="flex-1">
-                        <TextInput
-                          value={existingIdNumber}
-                          onChange={(v) => {
-                            const formatted = formatSoloParentIdInput(v)
-                            setExistingIdNumber(formatted)
-                            setIsIdVerified(false)
-                            setVerifyError("")
-                          }}
-                          placeholder={samplePlaceholder}
-                          invalid={attemptedNext && (!(existingIdNumber || "").trim() || !isIdVerified)}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleVerifyId}
-                        disabled={!(existingIdNumber || "").trim() || isVerifying}
-                        className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 h-10 uppercase tracking-wide"
-                      >
-                        {isVerifying ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>
-                              {language === "en"
-                                ? "Verifying..."
-                                : language === "bis"
-                                ? "Gisusi..."
-                                : "Sinusuri..."}
-                            </span>
-                          </>
-                        ) : (
-                          <span>
-                            {language === "en"
-                              ? "VERIFY ID"
-                              : language === "bis"
-                              ? "I-VERIFY ANG ID"
-                              : "I-VERIFY ANG ID"}
-                          </span>
-                        )}
-                      </button>
-                    </div>
-                    {verifyError && <p className="text-xs text-red-500 mt-1">{verifyError}</p>}
-                    {attemptedNext && !isIdVerified && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {language === "en"
-                          ? "Please click VERIFY ID and ensure your record is verified before proceeding."
-                          : language === "bis"
-                          ? "Palihug pindota ang VERIFY ID ug siguroha nga napamatud-an ang record sa dili pa mopadayon."
-                          : "Pindutin ang VERIFY ID at tiyaking verified ang record bago magpatuloy."}
-                      </p>
-                    )}
-                  </div>
-
-                  {isIdVerified && (
-                    <div className="space-y-4 max-w-md">
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in duration-200">
-                        <div className="h-7 w-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
-                          <Check className="w-4 h-4 stroke-[2.5]" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs font-bold text-emerald-900 uppercase tracking-wide">
-                            {language === "en"
-                              ? "✓ Solo Parent ID Verified"
-                              : language === "bis"
-                              ? "✓ Napamatud-ang Solo Parent ID"
-                              : "✓ Solo Parent ID Verified"}
-                          </p>
-                          <p className="text-xs text-emerald-800">
-                            <span className="font-semibold">
-                              {language === "en"
-                                ? "Existing Solo Parent record found:"
-                                : language === "bis"
-                                ? "Nakit-an nga Solo Parent record:"
-                                : "Nakitang rekord ng Solo Parent:"}
-                            </span>{" "}
-                            {verifiedRecord?.name || `${userProfile.firstName} ${userProfile.lastName}`}
-                          </p>
-                          <p className="text-xs text-emerald-800">
-                            <span className="font-semibold">ID Status:</span> Active / Expired
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wide block text-gray-700">
-                          {language === "en"
-                            ? "Reason for Replacement"
-                            : language === "bis"
-                            ? "Hinungdan sa Pag-ilis"
-                            : "Dahilan ng Pagpapalit"} <span className="text-red-500">*</span>
-                        </label>
-                        <div className="flex flex-wrap items-center gap-6 pt-1">
-                          {[
-                            { label: "Lost Solo Parent ID", value: "Lost" },
-                            { label: "Damaged Solo Parent ID", value: "Damaged" },
-                            { label: "Stolen Solo Parent ID", value: "Stolen" },
-                          ].map((opt) => (
-                            <label key={opt.value} className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer select-none">
-                              <input
-                                type="radio"
-                                name="spReplacementReason"
-                                checked={replacementReason === opt.value}
-                                onChange={() => setReplacementReason(opt.value)}
-                                className="h-4 w-4 text-blue-600 accent-blue-600 cursor-pointer"
-                              />
-                              <span>{opt.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                        {attemptedNext && !replacementReason && (
-                          <p className="text-xs text-red-500 mt-1">
-                            {language === "en"
-                              ? "Please select a reason for replacement."
-                              : language === "bis"
-                              ? "Palihug pagpili og hinungdan sa pag-ilis."
-                              : "Pumili ng dahilan ng pagpapalit."}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
             </div>
           )}
 
+          {/* STEP 2: APPLICANT & BENEFICIARIES */}
           {step === 2 && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
                 <div>
-                  <h2 className="text-base font-bold text-gray-900 tracking-wide uppercase">
-                    {t("wizardPersonal") || "PERSONAL INFORMATION"}
+                  <h2 className="text-base sm:text-lg font-bold text-foreground uppercase tracking-wide">
+                    {language === "en" ? "Applicant & Schooling Beneficiaries" : "Impormasyon ng Magulang at Mag-aaral"}
                   </h2>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {t("reviewSeniorDesc") || "Please review your personal information from your QCID profile. Fill in the additional details below."}
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Pakisuri ang inyong personal na impormasyon at ilagay ang detalye ng inyong mga anak na nag-aaral sa pampublikong paaralan.
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingInfo((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 transition-colors cursor-pointer"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    {isEditingInfo ? "LOCK INFORMATION" : "EDIT INFORMATION"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingInfo((v) => !v)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  {isEditingInfo ? "LOCK FIELDS" : "EDIT INFO"}
+                </button>
               </div>
 
-              {}
-              <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold text-blue-600">{t("importantReminder") || "Important reminder"}</p>
-                  <p className="text-blue-600/90 mt-0.5 text-xs sm:text-sm">
-                    {t("qcidReminderNote") || "Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service."}
-                  </p>
-                </div>
-              </div>
-
-              {}
+              {/* Applicant Details */}
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                  <User className="w-4 h-4 text-blue-600" />
+                  <span>I. Personal Details ng Solo Parent</span>
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("qcIdLabel") || "QC ID"} *</label>
-                    <input
-                      type="text"
-                      value={formData.qcidNumber}
-                      onChange={(e) => updateField("qcidNumber", e.target.value)}
-                      placeholder="110000116932100"
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("firstNameLabel") || "First name"} *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">First Name *</label>
                     <input
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => updateField("firstName", e.target.value)}
-                      placeholder={t("firstNameLabel") || "First name"}
                       readOnly={!isEditingInfo}
                       disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                        !isEditingInfo ? "bg-gray-100 dark:bg-slate-800 text-foreground border-border" : "bg-white border-blue-400"
                       }`}
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("middleNameLabel") || "Middle name"}</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Middle Name</label>
                     <input
                       type="text"
                       value={formData.middleName}
                       onChange={(e) => updateField("middleName", e.target.value)}
-                      placeholder={t("middleNameLabel") || "Middle name"}
                       readOnly={!isEditingInfo}
                       disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                        !isEditingInfo ? "bg-gray-100 dark:bg-slate-800 text-foreground border-border" : "bg-white border-blue-400"
                       }`}
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("lastNameLabel") || "Last name"} *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Last Name *</label>
                     <input
                       type="text"
                       value={formData.lastName}
                       onChange={(e) => updateField("lastName", e.target.value)}
-                      placeholder={t("lastNameLabel") || "Last name"}
                       readOnly={!isEditingInfo}
                       disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("suffixLabel") || "Suffix (Jr., Sr., III, etc.)"}</label>
-                    <input
-                      type="text"
-                      value={formData.suffix}
-                      onChange={(e) => updateField("suffix", e.target.value)}
-                      placeholder={t("suffixLabel") || "Suffix (Jr., Sr., III, etc.)"}
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                        !isEditingInfo ? "bg-gray-100 dark:bg-slate-800 text-foreground border-border" : "bg-white border-blue-400"
                       }`}
                     />
                   </div>
@@ -2973,149 +835,7 @@ export default function SoloParentApplicationWizard({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("nationalityLabel") || "Nationality"} *</label>
-                    <input
-                      type="text"
-                      value={formData.citizenship}
-                      onChange={(e) => updateField("citizenship", e.target.value)}
-                      placeholder="FILIPINO"
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("birthDateLabel") || "Date of birth"} *</label>
-                    <input
-                      type="text"
-                      value={
-                        formData.dobMonth && formData.dobDay && formData.dobYear
-                          ? `${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`
-                          : (formData.dobMonth || "")
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value
-                        const parts = val.split("/")
-                        if (parts.length === 3) {
-                          updateField("dobMonth", parts[0])
-                          updateField("dobDay", parts[1])
-                          updateField("dobYear", parts[2])
-                        } else {
-                          updateField("dobMonth", val)
-                        }
-                      }}
-                      placeholder="MM/DD/YYYY"
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("ageLabel") || "Age"} *</label>
-                    <input
-                      type="text"
-                      value={formData.age}
-                      onChange={(e) => updateField("age", e.target.value.replace(/\D/g, ""))}
-                      placeholder="e.g. 28"
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("genderLabel") || "Gender"} *</label>
-                    <input
-                      type="text"
-                      value={formData.sex}
-                      onChange={(e) => updateField("sex", e.target.value)}
-                      placeholder="Male / Female"
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("civilStatusLabel") || "Civil status"} *</label>
-                    <input
-                      type="text"
-                      value={formData.civilStatus}
-                      onChange={(e) => updateField("civilStatus", e.target.value)}
-                      placeholder="Single / Widowed / Separated"
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">Blood type *</label>
-                    <input
-                      type="text"
-                      value={formData.bloodType || "O+"}
-                      readOnly
-                      disabled
-                      className="w-full border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed font-medium select-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("houseNumberLabel") || "House/Building number"} *</label>
-                    <input
-                      type="text"
-                      value={formData.addressHouseNo}
-                      onChange={(e) => updateField("addressHouseNo", e.target.value)}
-                      placeholder="e.g. 123"
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("streetNameLabel") || "Street name"} *</label>
-                    <input
-                      type="text"
-                      value={formData.addressStreet}
-                      onChange={(e) => updateField("addressStreet", e.target.value)}
-                      placeholder="e.g. Main St."
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("barangayLabel") || "Barangay"} *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Barangay *</label>
                     <input
                       type="text"
                       value={formData.addressBarangay}
@@ -3124,303 +844,380 @@ export default function SoloParentApplicationWizard({
                       readOnly={!isEditingInfo}
                       disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                        !isEditingInfo ? "bg-gray-100 dark:bg-slate-800 text-foreground border-border" : "bg-white border-blue-400"
                       }`}
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("phoneNumberLabel") || "Phone number"} *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Contact Number *</label>
                     <input
                       type="text"
                       value={formData.contactNo}
-                      onChange={(e) => updateField("contactNo", e.target.value.replace(/\D/g, ""))}
+                      onChange={(e) => updateField("contactNo", e.target.value.replace(/\D/g, "").slice(0, 11))}
                       placeholder="09XXXXXXXXX"
                       maxLength={11}
                       readOnly={!isEditingInfo}
                       disabled={!isEditingInfo}
                       className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
+                        !isEditingInfo ? "bg-gray-100 dark:bg-slate-800 text-foreground border-border" : "bg-white border-blue-400"
                       }`}
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">{t("emailLabel") || "Email"} *</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Solo Parent ID / Cert No. (Kung mayroon)</label>
                     <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => updateField("email", e.target.value)}
-                      placeholder="name@example.com"
-                      readOnly={!isEditingInfo}
-                      disabled={!isEditingInfo}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 transition-colors ${
-                        !isEditingInfo
-                          ? "bg-gray-100 text-gray-800 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-900 border-blue-400 ring-2 ring-blue-100"
-                      }`}
+                      type="text"
+                      value={formData.soloParentIdNumber}
+                      onChange={(e) => updateField("soloParentIdNumber", e.target.value)}
+                      placeholder="e.g. 137404-2026-XXXXXX"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-white dark:bg-slate-900"
                     />
                   </div>
                 </div>
+              </div>
 
-                {}
-                <div className="pt-4 border-t border-gray-200 space-y-3">
-                  <h4 className="text-xs font-bold uppercase text-gray-800 tracking-wider flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-[#3b82f6]" />
-                    {t("emergencyContactTitle") || "EMERGENCY CONTACT"}
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyFirstName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
-                        {t("firstNameLabel") || "First name"} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={50}
-                        value={formData.emergencyFirstName}
-                        onChange={(e) => updateField("emergencyFirstName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
-                        placeholder={t("firstNameLabel") || "First name"}
-                        className={`w-full h-11 rounded-lg border px-3.5 text-sm transition-colors ${
-                          attemptedNext && !(formData.emergencyFirstName || "").trim()
-                            ? "border-red-400 focus:ring-red-300 bg-red-50"
-                            : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyLastName || "").trim() ? "text-red-600" : "text-gray-700"}`}>
-                        {t("lastNameLabel") || "Last name"} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={50}
-                        value={formData.emergencyLastName}
-                        onChange={(e) => updateField("emergencyLastName", e.target.value.replace(/[^a-zA-ZñÑ\s'-]/g, "").slice(0, 50).toUpperCase())}
-                        placeholder={t("lastNameLabel") || "Last name"}
-                        className={`w-full h-11 rounded-lg border px-3.5 text-sm transition-colors ${
-                          attemptedNext && !(formData.emergencyLastName || "").trim()
-                            ? "border-red-400 focus:ring-red-300 bg-red-50"
-                            : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && (!formData.emergencyContactNo || formData.emergencyContactNo.replace(/\D/g, "").length !== 11 || !formData.emergencyContactNo.replace(/\D/g, "").startsWith("09")) ? "text-red-600" : "text-gray-700"}`}>
-                        {t("phoneNumberLabel") || "Phone number"} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={11}
-                        value={formData.emergencyContactNo}
-                        onChange={(e) => updateField("emergencyContactNo", e.target.value.replace(/\D/g, "").slice(0, 11))}
-                        placeholder="09XXXXXXXXX"
-                        className={`w-full h-11 rounded-lg border px-3.5 text-sm font-mono transition-colors ${
-                          (attemptedNext && (!formData.emergencyContactNo || formData.emergencyContactNo.replace(/\D/g, "").length !== 11 || !formData.emergencyContactNo.replace(/\D/g, "").startsWith("09"))) ||
-                          (formData.emergencyContactNo && formData.emergencyContactNo.length >= 2 && !formData.emergencyContactNo.startsWith("09"))
-                            ? "border-red-400 focus:ring-red-300 bg-red-50 text-red-900"
-                            : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                        }`}
-                      />
-                      {formData.emergencyContactNo && formData.emergencyContactNo.length >= 2 && !formData.emergencyContactNo.startsWith("09") && (
-                        <p className="text-[11px] text-red-500 mt-1">Dapat magsimula sa 09 ang contact number.</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyRelationship || "").trim() ? "text-red-600" : "text-gray-700"}`}>
-                        {t("pwdRelationshipLabel") || "Relationship"} <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={formData.emergencyRelationship}
-                        onChange={(e) => updateField("emergencyRelationship", e.target.value)}
-                        className={`w-full h-11 rounded-lg border px-3.5 text-sm text-gray-900 focus:outline-none focus:ring-2 ${
-                          attemptedNext && !(formData.emergencyRelationship || "").trim()
-                            ? "border-red-400 focus:ring-red-300 bg-red-50"
-                            : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                        }`}
-                      >
-                        <option value="">{t("selectRelationshipOption") || "Select Relationship"}</option>
-                        <option value="Parent">{t("relationParent") || "Parent"}</option>
-                        <option value="Sibling">{t("relationSibling") || "Sibling"}</option>
-                        <option value="Child">{t("relationChild") || "Child"}</option>
-                        <option value="Relative">{t("relationRelative") || "Relative"}</option>
-                        <option value="Friend">{t("relationFriend") || "Friend / Neighbor"}</option>
-                        <option value="Caregiver">{t("relationCaregiver") || "Caregiver / Guardian"}</option>
-                      </select>
-                    </div>
+              {/* Schooling Children Section */}
+              <div className="space-y-4 pt-4 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <School className="w-4 h-4 text-blue-600" />
+                      <span>II. Mga Mag-aaral na Anak na Benepisyaryo (Public School)</span>
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Kailangan ng dalawa (2) o higit pang anak na naka-enroll sa pampublikong paaralan para sa ₱5,000 educational financial aid.
+                    </p>
                   </div>
-                  <div className="mt-3">
-                    <label className={`block text-xs font-semibold mb-1.5 ${attemptedNext && !(formData.emergencyAddress || "").trim() ? "text-red-600" : "text-gray-700"}`}>
-                      {t("address") || "Emergency Address"} <span className="text-red-500">*</span>
-                    </label>
+                  <button
+                    type="button"
+                    onClick={handleAddChild}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer shrink-0 self-start sm:self-auto shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>MAGDAGDAG NG ANAK (ADD CHILD)</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {schoolingChildren.map((child, idx) => (
+                    <div
+                      key={child.id}
+                      className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-800/40 space-y-3 relative group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-blue-900 dark:text-sky-300 uppercase tracking-wide">
+                          Benepisyaryong Anak #{idx + 1}
+                        </span>
+                        {schoolingChildren.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveChild(idx)}
+                            className="text-red-500 hover:text-red-700 text-xs flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Alisin</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">Buong Pangalan ng Anak *</label>
+                          <input
+                            type="text"
+                            value={child.fullName}
+                            onChange={(e) => handleUpdateChild(idx, "fullName", e.target.value.toUpperCase())}
+                            placeholder="JUAN DELA CRUZ JR."
+                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">Pangalan ng Pampublikong Paaralan *</label>
+                          <input
+                            type="text"
+                            value={child.schoolName}
+                            onChange={(e) => handleUpdateChild(idx, "schoolName", e.target.value.toUpperCase())}
+                            placeholder="e.g. SAUYO HIGH SCHOOL"
+                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-gray-700 dark:text-slate-300">Grade / Year Level *</label>
+                          <select
+                            value={child.gradeLevel}
+                            onChange={(e) => handleUpdateChild(idx, "gradeLevel", e.target.value)}
+                            className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
+                          >
+                            <option value="Kindergarten">Kindergarten</option>
+                            <option value="Grade 1">Grade 1</option>
+                            <option value="Grade 2">Grade 2</option>
+                            <option value="Grade 3">Grade 3</option>
+                            <option value="Grade 4">Grade 4</option>
+                            <option value="Grade 5">Grade 5</option>
+                            <option value="Grade 6">Grade 6</option>
+                            <option value="Grade 7">Grade 7 (Junior HS)</option>
+                            <option value="Grade 8">Grade 8 (Junior HS)</option>
+                            <option value="Grade 9">Grade 9 (Junior HS)</option>
+                            <option value="Grade 10">Grade 10 (Junior HS)</option>
+                            <option value="Grade 11">Grade 11 (Senior HS)</option>
+                            <option value="Grade 12">Grade 12 (Senior HS)</option>
+                            <option value="College / Vocational">College / Vocational</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Emergency Contact */}
+              <div className="space-y-4 pt-4 border-t border-border">
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                  <User className="w-4 h-4 text-blue-600" />
+                  <span>III. Emergency Contact Person</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">First Name *</label>
+                    <input
+                      type="text"
+                      value={formData.emergencyFirstName}
+                      onChange={(e) => updateField("emergencyFirstName", e.target.value)}
+                      placeholder="First Name"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Last Name *</label>
+                    <input
+                      type="text"
+                      value={formData.emergencyLastName}
+                      onChange={(e) => updateField("emergencyLastName", e.target.value)}
+                      placeholder="Last Name"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Contact Number (11-digits) *</label>
+                    <input
+                      type="text"
+                      value={formData.emergencyContactNo}
+                      onChange={(e) => updateField("emergencyContactNo", e.target.value.replace(/\D/g, "").slice(0, 11))}
+                      placeholder="09XXXXXXXXX"
+                      maxLength={11}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 font-mono bg-white dark:bg-slate-900"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Relationship *</label>
+                    <select
+                      value={formData.emergencyRelationship}
+                      onChange={(e) => updateField("emergencyRelationship", e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
+                    >
+                      <option value="">Pumili ng Relasyon</option>
+                      <option value="Magulang">Magulang (Parent)</option>
+                      <option value="Kapatid">Kapatid (Sibling)</option>
+                      <option value="Kamag-anak">Kamag-anak (Relative)</option>
+                      <option value="Kapitbahay">Kapitbahay (Neighbor)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Address *</label>
                     <input
                       type="text"
                       value={formData.emergencyAddress}
                       onChange={(e) => updateField("emergencyAddress", e.target.value)}
-                      placeholder="Emergency Residential Address"
-                      className={`w-full h-11 rounded-lg border px-3.5 text-sm transition-colors ${
-                        attemptedNext && !(formData.emergencyAddress || "").trim()
-                          ? "border-red-400 focus:ring-red-300 bg-red-50"
-                          : "border-gray-300 bg-white focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]"
-                      }`}
+                      placeholder="Tirahan sa Quezon City"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-xs mt-1 bg-white dark:bg-slate-900"
                     />
                   </div>
                 </div>
               </div>
 
               {attemptedNext && !step2Valid && (
-                <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700">
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>Pakikumpleto ang lahat ng kinakailangang impormasyon sa Step 2 bago magpatuloy sa susunod na hakbang.</span>
+                <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>Pakikumpleto ang lahat ng mandatory fields at tiyaking may kahit dalawang (2) kumpletong talaan ng mag-aaral na anak.</span>
                 </div>
               )}
             </div>
           )}
 
+          {/* STEP 3: UPLOAD DOCUMENTS */}
           {step === 3 && (
-            <div className="space-y-4">
-              <h3 className="text-base font-bold text-foreground">{t("fileUploadHeader") || "File upload"}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {t("fileUploadDesc1") || "Make sure to upload the appropriate documents for each category and verify that all details match the information on your QC ID."}
-              </p>
-
-              <div className="space-y-6 pt-2">
-                <p className="text-sm font-bold text-foreground">
-                  {idStatus === "renewal" ? t("spDocForRenewalLabel") : idStatus === "loss" ? t("spDocForLossLabel") : t("spDocForNewLabel")}
+            <div className="space-y-6">
+              <div className="border-b border-border pb-3">
+                <h2 className="text-base sm:text-lg font-bold text-foreground uppercase tracking-wide">
+                  {language === "en" ? "Documentary Requirements" : "Upload ng mga Dokumento"}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  I-upload ang malilinaw na kopya o larawan ng mga kinakailangang dokumento para sa Educational Assistance.
                 </p>
-
-                <div className="space-y-6">
-                  {requiredDocs.map((doc, docIndex) => (
-                    <DocumentUploadRow
-                      key={doc.id}
-                      doc={doc}
-                      docIndex={docIndex}
-                      files={uploadedDocs[doc.id] || []}
-                      invalid={attemptedNext && (uploadedDocs[doc.id]?.length ?? 0) === 0}
-                      onUpload={(files) => handleFileUpload(doc.id, files)}
-                      onRemove={(fileIndex) => handleRemoveFile(doc.id, fileIndex)}
-                      onCameraClick={(d) => setCameraDoc(d)}
-                    />
-                  ))}
-                </div>
               </div>
 
-              <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <AlertCircle className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-700">{t("spDocFileTypeNote")}</p>
+              <div className="space-y-4">
+                {EDUCATIONAL_ASSISTANCE_DOCUMENTS.map((doc, docIndex) => {
+                  const files = uploadedDocs[doc.id] || []
+                  const uploaded = files.length > 0
+                  const inputId = `upload-doc-${docIndex}`
+                  const invalid = attemptedNext && !uploaded
+
+                  return (
+                    <div
+                      key={doc.id}
+                      className={`border rounded-xl p-4 sm:p-5 transition-colors ${
+                        uploaded
+                          ? "border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-950/30"
+                          : invalid
+                          ? "border-red-500/40 bg-red-500/10 dark:bg-red-950/30"
+                          : "border-border bg-card/60 dark:bg-slate-800/40"
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <p className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-foreground uppercase tracking-wide">
+                            {doc.label} <span className="text-red-500">*</span>
+                            {uploaded && (
+                              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0">
+                                <Check className="h-2.5 w-2.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </p>
+                          {doc.description && <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>}
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <input
+                            type="file"
+                            id={inputId}
+                            accept=".jpg,.jpeg,.png,.webp,image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const selectedFiles = e.target.files ? Array.from(e.target.files) : []
+                              if (selectedFiles.length > 0) handleFileUpload(doc.id, selectedFiles)
+                              e.target.value = ""
+                            }}
+                          />
+                          <label
+                            htmlFor={inputId}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>UPLOAD</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setCameraDoc(doc)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
+                          >
+                            <Camera className="h-3.5 w-3.5" />
+                            <span>CAMERA</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {uploaded && (
+                        <div className="flex flex-wrap gap-3 pt-3">
+                          {files.map((file, i) => (
+                            <div
+                              key={`${file.name}-${i}`}
+                              className="relative w-44 border border-border rounded-lg bg-card dark:bg-slate-900 p-2.5 flex items-center gap-2"
+                            >
+                              <FileText className="h-6 w-6 text-blue-500 shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
+                                <p className="text-[10px] text-muted-foreground">{formatFileSize(file.size)}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile(doc.id)}
+                                className="h-5 w-5 rounded-full bg-slate-700 hover:bg-red-600 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {invalid && (
+                        <p className="text-xs text-red-500 mt-2 font-medium">
+                          Kinakailangang mag-upload ng dokumento para sa aytem na ito.
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
 
+          {/* STEP 4: REVIEW & SUBMIT */}
           {step === 4 && (
-            <div className="space-y-5">
-              <div>
-                <h3 className="text-base font-bold text-foreground">{(t("pwdReviewHeader") || "REVIEW INFORMATION").toUpperCase()}</h3>
-                <p className="text-sm text-muted-foreground">{t("pwdReviewDesc") || "Pakisuri nang mabuti ang lahat ng impormasyon at uploaded documents bago isumite ang aplikasyon."}</p>
+            <div className="space-y-6">
+              <div className="border-b border-border pb-3">
+                <h2 className="text-base sm:text-lg font-bold text-foreground uppercase tracking-wide">
+                  {language === "en" ? "Review & Confirmation" : "Pagsusuri at Pagsumite"}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pakisuri ang lahat ng impormasyon bago isumite ang aplikasyon para sa Solo Parent Educational Assistance.
+                </p>
               </div>
 
-              {}
-              <ReviewSection title="Application Details" onEdit={() => { setReturnToReview(true); setStep(1) }}>
+              {/* Program Summary */}
+              <ReviewSection title="Program Details" onEdit={() => setStep(1)}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
-                  <ReviewField
-                    label="Application Type"
-                    value={
-                      idStatus === "new"
-                        ? "New Application (Bagong Solo Parent ID)"
-                        : idStatus === "renewal"
-                        ? "Renewal ng Solo Parent ID"
-                        : "Replacement / Lost Solo Parent ID"
-                    }
-                  />
-                  {idStatus === "new" ? (
-                    <ReviewField
-                      label="Solo Parent Category / Reason"
-                      value={selectedCategory ? selectedCategory.title : "—"}
-                    />
-                  ) : (
-                    <>
-                      <ReviewField
-                        label="Solo Parent ID Number"
-                        value={existingIdNumber || "—"}
-                      />
-                      <ReviewField
-                        label={idStatus === "renewal" ? "Reason for Renewal" : "Reason for Replacement"}
-                        value={(idStatus === "renewal" ? renewalReason : replacementReason) || "—"}
-                      />
-                    </>
-                  )}
-                  <ReviewField label="Residency Status" value="Residente ng Lungsod Quezon (Verified)" />
+                  <ReviewField label="Program" value="Solo Parent Educational Assistance Program" />
+                  <ReviewField label="Assistance Amount" value="₱5,000 bawat kwalipikadong mag-aaral" />
+                  <ReviewField label="Assessment Process" value="Subject to interview & assessment by Social Worker" />
+                  <ReviewField label="Enrolled School Children" value={`${schoolingChildren.length} mga mag-aaral`} />
                 </div>
               </ReviewSection>
 
-              {}
-              <ReviewSection title="Personal Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+              {/* Applicant Info */}
+              <ReviewSection title="Applicant Information" onEdit={() => setStep(2)}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
                   <ReviewField label="Full Name" value={fullApplicantName} />
-                  <ReviewField
-                    label="Date of Birth / Age"
-                    value={`${[formData.dobMonth, formData.dobDay, formData.dobYear].filter(Boolean).join("/")} (${formData.age} y/o)`}
-                  />
-                  <ReviewField label="Sex / Gender" value={formData.sex} />
-                  <ReviewField label="Civil Status" value={formData.civilStatus} />
-                  <ReviewField label="Blood Type" value={formData.bloodType || "O+"} />
-                  <ReviewField label="Contact Number" value={formData.contactNo} />
-                  <ReviewField
-                    label="Complete Address"
-                    value={`${formData.addressHouseNo} ${formData.addressStreet}, Brgy. ${formData.addressBarangay}, ${formData.addressCityMunicipality}`}
-                  />
                   <ReviewField label="Barangay" value={formData.addressBarangay} />
-                  <ReviewField label="QCID Number" value={formData.qcidNumber} />
-                  <ReviewField label="Email Address" value={formData.email || "—"} />
-                  <ReviewField label="Emergency Contact" value={`${formData.emergencyFirstName} ${formData.emergencyLastName}`} />
-                  <ReviewField label="Emergency Contact No." value={formData.emergencyContactNo} />
-                  <ReviewField label="Emergency Relationship" value={formData.emergencyRelationship} />
+                  <ReviewField label="Contact Number" value={formData.contactNo} />
+                  <ReviewField label="Email Address" value={formData.email} />
+                  <ReviewField label="Emergency Contact" value={`${formData.emergencyFirstName} ${formData.emergencyLastName} (${formData.emergencyContactNo})`} />
                 </div>
               </ReviewSection>
 
-              {}
-              <ReviewSection title="Uploaded Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>
-                <div className="p-4 space-y-4">
-                  {requiredDocs.map((doc) => {
-                    const files = uploadedDocs[doc.id] || []
-                    const uploaded = files.length > 0
+              {/* Schooling Children Summary */}
+              <ReviewSection title="Schooling Children (Beneficiaries)" onEdit={() => setStep(2)}>
+                <div className="p-4 space-y-2 text-xs">
+                  {schoolingChildren.map((c, i) => (
+                    <div key={c.id} className="flex justify-between items-center border-b border-border/60 pb-1.5">
+                      <span className="font-semibold text-foreground">
+                        {i + 1}. {c.fullName}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {c.schoolName} ({c.gradeLevel})
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ReviewSection>
+
+              {/* Uploaded Documents Summary */}
+              <ReviewSection title="Uploaded Documents" onEdit={() => setStep(3)}>
+                <div className="p-4 space-y-2 text-xs">
+                  {EDUCATIONAL_ASSISTANCE_DOCUMENTS.map((doc) => {
+                    const uploaded = Boolean(uploadedDocs[doc.id]?.length)
                     return (
-                      <div key={doc.id}>
-                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
-                          {doc.label} <span className="text-red-500">*</span>
-                          {uploaded ? (
-                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-green-500 shrink-0">
-                              <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
-                            </span>
-                          ) : (
-                            <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
-                          )}
-                        </p>
+                      <div key={doc.id} className="flex items-center justify-between">
+                        <span className="text-foreground">{doc.label}</span>
                         {uploaded ? (
-                          <div className="mt-2 space-y-2">
-                            {files.map((file, i) => (
-                              <button
-                                key={`${file.name}-${i}`}
-                                type="button"
-                                onClick={() => setPreviewDocModal({ title: doc.label, file })}
-                                className="w-full max-w-md border border-border hover:border-blue-400 rounded-lg overflow-hidden text-left bg-white cursor-pointer transition-colors shadow-xs"
-                              >
-                                <div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                                  <FileThumbnail file={file} className="h-full w-full object-cover" />
-                                </div>
-                                <div className="px-3 py-2 text-center border-t border-border bg-white">
-                                  <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
-                                  <p className="text-[10px] text-muted-foreground mt-0.5">{formatFileSize(file.size)}</p>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
+                          <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5 stroke-[3]" /> Uploaded
+                          </span>
                         ) : (
-                          <p className="text-xs text-red-500 mt-1">{t("noFileUploadedYet") || "Walang nai-upload na dokumento"}</p>
+                          <span className="text-red-500 font-semibold">Missing</span>
                         )}
                       </div>
                     )
@@ -3428,80 +1225,51 @@ export default function SoloParentApplicationWizard({
                 </div>
               </ReviewSection>
 
-              <div className="mt-6">
+              {/* Privacy Consent */}
+              <div className="pt-2">
                 <DataPrivacyConsent
                   checked={privacyAgreed}
                   onChange={setPrivacyAgreed}
-                  moduleName="Solo Parent Assistance Program"
-                  error={attemptedNext && !privacyAgreed ? "Mandatory: You must agree to the Data Privacy Policy to submit your application." : undefined}
+                  required
                 />
               </div>
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-gray-50">
-          {step === 1 ? (
-            <div />
-          ) : (
-            <button onClick={goBack} className="text-sm font-semibold text-muted-foreground hover:text-foreground cursor-pointer">
-              {language === "en" ? "BACK" : language === "bis" ? "BALIK" : "BUMALIK"}
-            </button>
-          )}
+        {/* Footer Navigation Buttons */}
+        <div className="bg-gray-50 dark:bg-slate-800/60 border-t border-border px-6 py-4 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={goBack}
+            className="px-5 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer"
+          >
+            {step === 1 ? (language === "en" ? "CANCEL" : "KANSELAHIN") : (language === "en" ? "BACK" : "BUMALIK")}
+          </button>
 
           {step < 4 ? (
             <button
+              type="button"
               onClick={goNext}
-              disabled={!canGoNext}
-              className={`flex items-center justify-center px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                canGoNext ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs" : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer shadow-xs"
             >
-              {language === "en" ? "NEXT" : language === "bis" ? "PADAYON" : "SUSUNOD"}
+              {language === "en" ? "NEXT STEP" : "SUSUNOD"}
             </button>
           ) : (
             <button
-              onClick={() => {
-                setAttemptedNext(true)
-                if (!canGoNext) return
-                setShowConfirmModal(true)
-              }}
-              disabled={!canGoNext}
-              className={`flex items-center gap-1.5 px-6 py-2.5 rounded-lg text-xs font-bold transition-colors ${
-                canGoNext
-                  ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
+              type="button"
+              disabled={!privacyAgreed || submitting}
+              onClick={() => setShowSubmitModal(true)}
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer shadow-xs flex items-center gap-2"
             >
-              {language === "en" ? "SUBMIT APPLICATION" : language === "bis" ? "ISUMITE ANG APLIKASYON" : "ISUMITE ANG APLIKASYON"}
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>{language === "en" ? "SUBMIT APPLICATION" : "ISUMITE ANG APLIKASYON"}</span>
             </button>
           )}
         </div>
       </div>
 
-      {}
-      
-      <SubmitPrivacyOverlayModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        moduleName="Solo Parent Assistance Program"
-        onConfirmSubmit={() => {
-          setShowConfirmModal(false)
-          handleFinalSubmit()
-        }}
-      />
-
-      {}
-      <DocumentSampleModal
-        doc={selectedSampleDoc}
-        isOpen={showSampleModal}
-        onClose={() => {
-          setShowSampleModal(false)
-          setSelectedSampleDoc(null)
-        }}
-      />
-
-      {}
+      {/* Camera Capture Modal */}
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}
         onClose={() => setCameraDoc(null)}
@@ -3513,82 +1281,15 @@ export default function SoloParentApplicationWizard({
         }}
       />
 
-      {}
-      {previewDocModal && (
-        <UploadedDocPreviewModal
-          title={previewDocModal.title}
-          file={previewDocModal.file}
-          onClose={() => setPreviewDocModal(null)}
+      {/* Submit Confirmation Modal */}
+      {showSubmitModal && (
+        <SubmitPrivacyOverlayModal
+          isOpen={showSubmitModal}
+          onClose={() => setShowSubmitModal(false)}
+          onConfirm={handleSubmit}
+          loading={submitting}
         />
       )}
-    </div>
-  )
-}
-
-function FileThumbnail({ file, className }: { file: File; className?: string }) {
-  const [src, setSrc] = useState<string>("")
-  const isImg = file.type.startsWith("image/") || /\.(jpe?g|png|webp|jfif|bmp|gif)$/i.test(file.name)
-
-  useEffect(() => {
-    if (!isImg) return
-    const url = URL.createObjectURL(file)
-    setSrc(url)
-    return () => {
-      URL.revokeObjectURL(url)
-    }
-  }, [file, isImg])
-
-  if (isImg && src) {
-    return <img src={src} alt={file.name} className={className || "h-full w-full object-cover"} />
-  }
-  return <FileText className="h-8 w-8 text-muted-foreground" />
-}
-
-function UploadedDocPreviewModal({
-  title,
-  file,
-  onClose,
-}: {
-  title: string
-  file: File | null
-  onClose: () => void
-}) {
-  if (!file) return null
-  const isImage = file.type.startsWith("image/") || /\.(jpe?g|png|webp|jfif|bmp|gif)$/i.test(file.name)
-  const [previewUrl, setPreviewUrl] = useState<string>("")
-
-  useEffect(() => {
-    if (!isImage) return
-    const url = URL.createObjectURL(file)
-    setPreviewUrl(url)
-    return () => {
-      URL.revokeObjectURL(url)
-    }
-  }, [file, isImage])
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-          <h4 className="text-sm font-bold text-foreground uppercase tracking-wide truncate pr-2">{title}</h4>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="p-6 max-h-[65vh] overflow-y-auto bg-gray-50 flex items-center justify-center">
-          {isImage && previewUrl ? (
-            <img src={previewUrl} alt={title} className="max-w-full max-h-[55vh] rounded-lg border border-border object-contain shadow-xs" />
-          ) : (
-            <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
-              <FileText className="h-12 w-12 text-blue-500" />
-              <p className="text-sm font-medium">{file.name}</p>
-            </div>
-          )}
-        </div>
-        <div className="px-6 py-3 border-t border-border text-xs text-muted-foreground truncate bg-white">
-          {file.name}
-        </div>
-      </div>
     </div>
   )
 }

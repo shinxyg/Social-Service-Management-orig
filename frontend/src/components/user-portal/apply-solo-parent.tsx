@@ -4,7 +4,6 @@ import {
   AlertCircle,
   FileText,
   X,
-  RefreshCw,
   HeartHandshake,
   Info,
   CheckCircle2,
@@ -13,6 +12,7 @@ import {
   Clock,
   ArrowRight,
   ChevronLeft,
+  GraduationCap,
 } from "lucide-react"
 import SoloParentApplicationWizard from "./solo-parent-wizard"
 import ChildWelfareApplicationWizard, { getLocalizedChildWelfarePrograms } from "./child-welfare-wizard"
@@ -28,165 +28,32 @@ interface RequirementItem {
   desc?: string
 }
 
-function getLocalizedSoloParentRequirements(
-  language: string,
-  type: "new" | "renewal" | "loss"
-): RequirementItem[] {
-  if (type === "renewal") {
-    if (language === "en") {
-      return [
-        {
-          title: "Old / Expired Solo Parent ID",
-          desc: "Prepare your existing Solo Parent ID number and original or copy of the ID card.",
-        },
-        {
-          title: "ID Picture (2×2)",
-          desc: "Recent 2×2 ID Picture with clean white background.",
-        },
-        {
-          title: "Barangay Endorsement",
-          desc: "Endorsement from the Solo Parent President of your Barangay.",
-        },
-        {
-          title: "Barangay Certificate of Residency",
-          desc: "Required if there is a change of residence in Gov Service since your last application.",
-        },
-        {
-          title: "Sworn Affidavit of Solo Parent",
-          desc: "Sworn statement certifying continued sole parental care and support.",
-        },
-      ]
-    }
-    if (language === "bis") {
-      return [
-        {
-          title: "Daang / Na-expire nga Solo Parent ID",
-          desc: "Ihanda ang imong kasamtangang Solo Parent ID number ug orihinal o kopya sa ID card.",
-        },
-        {
-          title: "ID Picture (2×2)",
-          desc: "Bag-ong 2×2 ID Picture nga adunay puti nga background.",
-        },
-        {
-          title: "Endorsement sa Barangay",
-          desc: "Endorsement gikan sa Solo Parent President sa imong Barangay.",
-        },
-        {
-          title: "Barangay Certificate of Residency",
-          desc: "Gikinahanglan kung adunay pagbag-o sa pinuy-anan sa Gov Service sukad sa miaging aplikasyon.",
-        },
-        {
-          title: "Sworn Affidavit of Solo Parent",
-          desc: "Pinanumpaang pamahayag nga nagpamatuod sa padayong bugtong pag-atiman sa anak/mga anak.",
-        },
-      ]
-    }
-    return [
-      {
-        title: "Lumang / Expired Solo Parent ID",
-        desc: "Ihanda ang inyong kasalukuyang Solo Parent ID number at orihinal o kopya ng ID card.",
-      },
-      {
-        title: "ID Picture (2×2)",
-        desc: "Kasalukuyang 2×2 ID Picture na may puting background.",
-      },
-      {
-        title: "Barangay Endorsement",
-        desc: "Endorsement mula sa Solo Parent President ng inyong Barangay.",
-      },
-      {
-        title: "Barangay Certificate of Residency",
-        desc: "Kailangan kung may pagbabago sa inyong tirahan sa Gov Service mula sa huling aplikasyon.",
-      },
-      {
-        title: "Sworn Affidavit of Solo Parent",
-        desc: "Pinanumpaang salaysay na nagpapatunay ng patuloy na solong pagtataguyod sa anak/mga anak.",
-      },
-    ]
-  }
-
-  if (type === "loss") {
-    if (language === "en") {
-      return [
-        {
-          title: "Notarized Affidavit of Loss",
-          desc: "Stating the reason, date, and details of loss of your Solo Parent ID card.",
-        },
-        {
-          title: "Valid Government ID / Gov Service ID",
-          desc: "With photo and signature as official proof of identity.",
-        },
-        {
-          title: "ID Picture (2×2)",
-          desc: "Recent 2×2 ID Picture with clean white background.",
-        },
-        {
-          title: "Barangay Certificate of Residency",
-          desc: "Proof of legitimate residency in Gov Service.",
-        },
-      ]
-    }
-    if (language === "bis") {
-      return [
-        {
-          title: "Notarized Affidavit of Loss",
-          desc: "Nagpatin-aw sa hinungdan, petsa, ug mga detalye sa pagkawala sa imong Solo Parent ID card.",
-        },
-        {
-          title: "Balido nga Government ID / Gov Service ID",
-          desc: "Adunay litrato ug pirma isip opisyal nga pruweba sa imong pagkatawo.",
-        },
-        {
-          title: "ID Picture (2×2)",
-          desc: "Bag-ong 2×2 ID Picture nga adunay limpyo nga puti nga background.",
-        },
-        {
-          title: "Barangay Certificate of Residency",
-          desc: "Pruweba sa lehitimong pagpuyo sa Gov Service.",
-        },
-      ]
-    }
-    return [
-      {
-        title: "Notarized Affidavit of Loss",
-        desc: "Nagsasaad ng dahilan, petsa, at detalye ng pagkawala ng inyong Solo Parent ID card.",
-      },
-      {
-        title: "Valid Government ID / Gov Service ID",
-        desc: "May larawan at lagda bilang opisyal na patunay ng inyong pagkakakilanlan.",
-      },
-      {
-        title: "ID Picture (2×2)",
-        desc: "Kasalukuyang 2×2 ID Picture na may malinis na puting background.",
-      },
-      {
-        title: "Barangay Certificate of Residency",
-        desc: "Patunay ng lehitimong paninirahan sa Gov Service.",
-      },
-    ]
-  }
-
+function getLocalizedSoloParentRequirements(language: string): RequirementItem[] {
   if (language === "en") {
     return [
       {
         title: "1 PC 2×2 ID Picture",
-        desc: "Recent 2×2 color photo with clean white background.",
+        desc: "Recent 2×2 color photo with clean white background of the Solo Parent.",
+      },
+      {
+        title: "Valid Solo Parent ID / Solo Parent Certificate",
+        desc: "Valid Solo Parent ID card or official Solo Parent Certification issued by SSDD.",
+      },
+      {
+        title: "Certificate of Enrollment / Registration (Public School)",
+        desc: "Official Certificate of Enrollment / Registration from public school for each schooling child (2 or more enrolled children).",
+      },
+      {
+        title: "Barangay Certificate of Indigency / Residency",
+        desc: "Proof of indigency and legitimate residency issued by the Barangay.",
       },
       {
         title: "PSA Birth Certificate/s of Children",
-        desc: "Birth certificate/s of dependent child/children.",
+        desc: "PSA Birth certificate/s of the dependent schooling child/children.",
       },
       {
-        title: "Barangay Certificate of Residency & Parental Care",
-        desc: "Proof of legitimate residency and parental care in Gov Service.",
-      },
-      {
-        title: "Proof of Circumstance (Category Document)",
-        desc: "Death Certificate, Medical/Detention Record, Court Order, OFW Contract, or CENOMAR based on category.",
-      },
-      {
-        title: "Sworn Affidavit of Solo Parent",
-        desc: "Certifying sole parental care and support, and non-cohabitation.",
+        title: "Valid Government ID / QC ID",
+        desc: "Valid Government-issued ID or QCitizen ID of the solo parent with photo and signature.",
       },
     ]
   }
@@ -194,46 +61,54 @@ function getLocalizedSoloParentRequirements(
     return [
       {
         title: "1 PC 2×2 ID Picture",
-        desc: "Bag-ong 2×2 ID Picture nga adunay limpyo nga puti nga background.",
+        desc: "Bag-ong 2×2 ID Picture nga adunay limpyo nga puti nga background sa Solo Parent.",
+      },
+      {
+        title: "Balido nga Solo Parent ID / Solo Parent Certificate",
+        desc: "Balido nga Solo Parent ID card o opisyal nga Solo Parent Certification gikan sa SSDD.",
+      },
+      {
+        title: "Certificate of Enrollment / Registration (Public School)",
+        desc: "Sertipiko sa pagpa-enroll gikan sa pampublikong eskwelahan alang sa matag nag-eskwela nga anak (2 o labaw pa).",
+      },
+      {
+        title: "Barangay Certificate of Indigency / Residency",
+        desc: "Pruweba sa pagka-indigent ug pagpuyo gikan sa Barangay.",
       },
       {
         title: "PSA Birth Certificate sa mga Anak",
-        desc: "Birth Certificate sa anak o mga anak.",
+        desc: "PSA Birth Certificate sa mga nag-eskwela nga anak.",
       },
       {
-        title: "Barangay Certificate of Residency & Parental Care",
-        desc: "Pruweba sa lehitimong pagpuyo ug pag-atiman sa Gov Service.",
-      },
-      {
-        title: "Pruweba sa Sitwasyon (Kategorya)",
-        desc: "Death Certificate, Medical/Detention Record, Court Order, OFW Contract, o CENOMAR base sa kategorya.",
-      },
-      {
-        title: "Sworn Affidavit of Solo Parent",
-        desc: "Nagpamatuod nga ikaw bugtong nag-atiman sa bata ug walay kapuyo.",
+        title: "Balido nga Government ID / QC ID",
+        desc: "Balido nga Government ID o QCitizen ID sa solo parent.",
       },
     ]
   }
   return [
     {
       title: "1 PC 2×2 ID Picture",
-      desc: "Kasalukuyang 2×2 ID Picture na may malinis na puting background.",
+      desc: "Kasalukuyang 2×2 ID Picture na may malinis na puting background ng Solong Magulang.",
+    },
+    {
+      title: "Valid Solo Parent ID / Solo Parent Certificate",
+      desc: "Valid Solo Parent ID card o opisyal na Solo Parent Certification mula sa SSDD.",
+    },
+    {
+      title: "Certificate of Enrollment / Registration (Public School)",
+      desc: "Sertipiko ng pagpapatala mula sa pampublikong paaralan para sa bawat nag-aaral na anak (dalawa o higit pa).",
+    },
+    {
+      title: "Barangay Certificate of Indigency / Residency",
+      desc: "Patunay ng pagiging indigent at lehitimong paninirahan mula sa Barangay.",
     },
     {
       title: "PSA Birth Certificate ng mga Anak",
-      desc: "Birth Certificate ng anak o mga anak.",
+      desc: "PSA Birth Certificate ng mga mag-aaral na anak na benepisyaryo.",
     },
     {
-      title: "Barangay Certificate of Residency & Parental Care",
-      desc: "Patunay ng lehitimong paninirahan at pangangalaga sa Gov Service.",
-    },
-    {
-      title: "Katibayan ng Sitwasyon (Category Document)",
-      desc: "Death Certificate ng asawa, Medical/Detention Record, Court Order, OFW Contract, o CENOMAR base sa kategorya.",
-    },
-    {
-      title: "Sworn Affidavit of Solo Parent",
-      desc: "Pinanumpaang salaysay na nagpapatunay ng solong pagtataguyod sa anak at walang kinakasama.",
+      title: "Valid Government ID / QC ID",
+      desc: "Opisyal na Government ID o QCitizen ID ng solong magulang na may litrato at lagda.",
     },
   ]
 }
@@ -382,12 +257,31 @@ const CHILD_WELFARE_CARDS: ChildWelfareCardItem[] = [
   },
 ]
 
+interface ProgramCard {
+  id: string
+  key: string
+  title: string
+  titleEn: string
+  desc: string
+  descEn: string
+}
+
+const SOLO_PARENT_PROGRAMS: ProgramCard[] = [
+  {
+    id: "educational-assistance",
+    key: "educational-assistance",
+    title: "Solo Parent Educational Assistance Program",
+    titleEn: "Solo Parent Educational Assistance Program",
+    desc: "Para sa indigent solo parents’ children/beneficiaries na nag-aaral. Kabilang dito ang mga solo parents na may dalawa (2) o higit pang anak na naka-enroll sa pampublikong paaralan, na may tulong-pinansyal na ₱5,000 bawat kwalipikadong benepisyaryo. May interview at assessment din ng Social Worker bago ma-extend ang tulong-pinansyal.",
+    descEn: "Educational financial assistance for indigent solo parents' dependent children/beneficiaries who are currently studying. The program includes solo parents with two (2) or more children enrolled in public school, providing financial assistance of ₱5,000 per qualified beneficiary, subject to interview and social worker assessment prior to granting assistance.",
+  },
+]
+
 function evaluateSoloParentBlockedState(
   allApps: any[],
-  typeParam: string,
   userProf: any,
   currentQcid: string
-): { isBlocked: boolean; blockedApp: any } {
+): { isBlocked: boolean; blockedApp: any; hasApprovedApp: boolean } {
   const uid = userProf?.id || (userProf as any)?.userId || ""
   const currentEmail = (userProf?.email || "").toLowerCase().trim()
   const cleanUserQcid = String(currentQcid || userProf?.qcidNo || userProf?.qcidNumber || "110000572516915").replace(/\D/g, "")
@@ -397,7 +291,7 @@ function evaluateSoloParentBlockedState(
   const isMatchUser = (a: any) => {
     if (!a) return false
     const mod = String(a.module_type || a.moduleType || a.category || "").toLowerCase()
-    const srv = String(a.service || a.service_name || "").toLowerCase()
+    const srv = String(a.service || a.service_name || a.classification_title || "").toLowerCase()
     const isSP = mod.includes("solo") || srv.includes("solo") || a.solo_parent_id_number || a.soloParentIdNumber || a.category_id || a.categoryId
     if (!isSP && mod && !mod.includes("solo")) return false
 
@@ -417,40 +311,26 @@ function evaluateSoloParentBlockedState(
 
   const userApps = allApps.filter(isMatchUser)
 
-  const anyApproved = userApps.find((a) => {
+  const approved = userApps.find((a) => {
     const s = String(a.application_status || a.status || "").toLowerCase()
     return s === "approved" || s === "completed" || s === "for_release" || s === "active"
   })
 
-  const isMatchForType = (a: any) => {
-    const aType = String(a.application_type || a.applicationType || a.type || "new").toLowerCase()
-    if (typeParam === "renewal") return aType === "renewal"
-    if (typeParam === "loss") return aType === "loss" || aType === "replacement"
-    return aType !== "loss" && aType !== "replacement" && aType !== "renewal"
-  }
-
-  const appsForType = userApps.filter(isMatchForType)
-
-  const matchedApproved = appsForType.find((a) => {
-    const s = String(a.application_status || a.status || "").toLowerCase()
-    return s === "approved" || s === "completed" || s === "for_release" || s === "active"
-  }) || (typeParam === "new" || !typeParam ? anyApproved : null)
-
-  const matchedPending = appsForType.find((a) => {
+  const pending = userApps.find((a) => {
     const s = String(a.application_status || a.status || "pending").toLowerCase()
     return s === "pending" || s === "draft" || s === "under_review"
   })
 
-  const matchedRejected = appsForType.find((a) => {
+  const rejected = userApps.find((a) => {
     const s = String(a.application_status || a.status || "").toLowerCase()
     return s === "rejected" || s === "disapproved"
   })
 
-  if (matchedApproved) return { isBlocked: true, blockedApp: matchedApproved }
-  if (matchedPending) return { isBlocked: true, blockedApp: matchedPending }
-  if (matchedRejected) return { isBlocked: true, blockedApp: matchedRejected }
+  if (approved) return { isBlocked: true, blockedApp: approved, hasApprovedApp: true }
+  if (pending) return { isBlocked: true, blockedApp: pending, hasApprovedApp: false }
+  if (rejected) return { isBlocked: true, blockedApp: rejected, hasApprovedApp: false }
 
-  return { isBlocked: false, blockedApp: null }
+  return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
 }
 
 export default function ApplySoloParent() {
@@ -459,7 +339,7 @@ export default function ApplySoloParent() {
   const navigate = useNavigate()
 
   const categoryParam = searchParams.get("category")?.toLowerCase() || "solo-parent"
-  const typeParam = searchParams.get("type")?.toLowerCase() || "new"
+  const rawTypeParam = searchParams.get("type")?.toLowerCase()
   const rawProgramParam = searchParams.get("program")?.toLowerCase()
   const programParam = rawProgramParam || "nutritional-assistance"
   const isChildWelfare = categoryParam === "child-welfare"
@@ -469,26 +349,24 @@ export default function ApplySoloParent() {
 
   const [initialBlockedState] = useState(() => {
     try {
-      if (typeof window === "undefined") return { isBlocked: false, blockedApp: null }
+      if (typeof window === "undefined") return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
       const isReapp =
         window.location.search.includes("reapply=true") ||
-        localStorage.getItem(`solo_parent_reapplying_${typeParam}`) === "true" ||
         localStorage.getItem("solo_parent_reapplying") === "true"
-      if (isReapp) return { isBlocked: false, blockedApp: null }
+      if (isReapp) return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
 
       const prof = getCurrentUserProfile()
       const currentQcid = getLoggedInUserQcid() || "110000572516915"
       const localApps = getLocalSoloParentApplications()
-      return evaluateSoloParentBlockedState(localApps, typeParam, prof, currentQcid)
+      return evaluateSoloParentBlockedState(localApps, prof, currentQcid)
     } catch {
-      return { isBlocked: false, blockedApp: null }
+      return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
     }
   })
 
   const [showRequirementsModal, setShowRequirementsModal] = useState(false)
   const [blockedApp, setBlockedApp] = useState<any>(initialBlockedState.blockedApp)
   const [isBlocked, setIsBlocked] = useState<boolean>(initialBlockedState.isBlocked)
-  const [selectedCategoryId] = useState<number | null>(null)
   const [understood, setUnderstood] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [cwSubmissionStage, setCwSubmissionStage] = useState<"form" | "matching" | "pending">("form")
@@ -497,9 +375,7 @@ export default function ApplySoloParent() {
   const [bypassedBlock, setBypassedBlock] = useState(() => {
     try {
       const isUrlParam = typeof window !== "undefined" && window.location.search.includes("reapply=true")
-      const isLocal =
-        localStorage.getItem(`solo_parent_reapplying_${typeParam}`) === "true" ||
-        localStorage.getItem("solo_parent_reapplying") === "true"
+      const isLocal = localStorage.getItem("solo_parent_reapplying") === "true"
       return Boolean(isUrlParam || isLocal)
     } catch {
       return false
@@ -524,7 +400,7 @@ export default function ApplySoloParent() {
         const currentEmail = (userProf?.email || "").toLowerCase().trim()
 
         const localApps = getLocalSoloParentApplications()
-        const localRes = evaluateSoloParentBlockedState(localApps, typeParam, userProf, currentQcid)
+        const localRes = evaluateSoloParentBlockedState(localApps, userProf, currentQcid)
         if (isMounted && localRes.isBlocked) {
           setIsBlocked(true)
           setBlockedApp(localRes.blockedApp)
@@ -543,9 +419,7 @@ export default function ApplySoloParent() {
               backendApps = raw
             }
           }
-        } catch {
-
-        }
+        } catch {}
 
         let allApps = [...backendApps]
         for (const la of localApps) {
@@ -557,7 +431,7 @@ export default function ApplySoloParent() {
           localStorage.setItem("solo_parent_applications", JSON.stringify(allApps))
         } catch {}
 
-        const finalRes = evaluateSoloParentBlockedState(allApps, typeParam, userProf, currentQcid)
+        const finalRes = evaluateSoloParentBlockedState(allApps, userProf, currentQcid)
         if (isMounted) {
           setIsBlocked(finalRes.isBlocked)
           setBlockedApp(finalRes.blockedApp)
@@ -592,12 +466,11 @@ export default function ApplySoloParent() {
       window.removeEventListener("applications_updated", handleUpdated)
       window.removeEventListener("storage", handleStorage)
     }
-  }, [categoryParam, typeParam, programParam, isChildWelfare])
+  }, [categoryParam, rawTypeParam, programParam, isChildWelfare])
 
   useEffect(() => {
     try {
       const isReapp =
-        localStorage.getItem(`solo_parent_reapplying_${typeParam}`) === "true" ||
         localStorage.getItem("solo_parent_reapplying") === "true" ||
         (typeof window !== "undefined" && window.location.search.includes("reapply=true"))
       if (isReapp) {
@@ -614,10 +487,7 @@ export default function ApplySoloParent() {
     setShowRequirementsModal(false)
     setUnderstood(false)
     setCurrentStep(1)
-  }, [categoryParam, typeParam])
-
-  const isRenewal = typeParam === "renewal"
-  const isLoss = typeParam === "loss"
+  }, [categoryParam, rawTypeParam])
 
   const modalTitle = isChildWelfare
     ? language === "en"
@@ -626,33 +496,19 @@ export default function ApplySoloParent() {
       ? `Mga Kinahanglanon sa Tabang sa Kaayohan sa Bata — ${matchedCwProgram.title}`
       : `Mga Kinakailangan sa Tulong sa Kapakanan ng Bata — ${matchedCwProgram.title}`
     : language === "en"
-    ? "Requirements for Application of Gov Service Solo Parent ID"
+    ? "Solo Parent Educational Assistance Program — Requirements"
     : language === "bis"
-    ? "Mga Kinahanglanon sa Pag-apply og Gov Service Solo Parent ID"
-    : "Mga Kinakailangan sa Aplikasyon ng Gov Service Solo Parent ID"
+    ? "Solo Parent Educational Assistance Program — Mga Kinahanglanon"
+    : "Solo Parent Educational Assistance Program — Mga Kinakailangan"
 
   const typeBadge = isChildWelfare
     ? { label: matchedCwProgram.title, color: "bg-blue-50 text-blue-700 border-blue-200" }
-    : isRenewal
-    ? {
-        label: language === "en" ? "Renewal" : language === "bis" ? "Pag-renew" : "Pag-renew",
-        color: "bg-amber-50 text-amber-700 border-amber-200",
-      }
-    : isLoss
-    ? {
-        label: language === "en" ? "Replacement" : language === "bis" ? "Pag-ilis" : "Pagpapalit",
-        color: "bg-orange-50 text-orange-700 border-orange-200",
-      }
     : {
-        label: language === "en" ? "New Application" : language === "bis" ? "Bag-ong Aplikasyon" : "Bagong Aplikasyon",
-        color: "bg-green-50 text-green-700 border-green-200",
+        label: language === "en" ? "Educational Assistance" : "Educational Assistance",
+        color: "bg-blue-50 text-blue-700 border-blue-200",
       }
 
-  const currentRequirements = getLocalizedSoloParentRequirements(
-    language,
-    isRenewal ? "renewal" : isLoss ? "loss" : "new"
-  )
-
+  const currentRequirements = getLocalizedSoloParentRequirements(language)
   const activeProfile = getCurrentUserProfile()
 
   const isAppApproved =
@@ -782,22 +638,131 @@ export default function ApplySoloParent() {
     )
   }
 
+  // Solo Parent Services Card Overview (matching Senior / PWD card pattern)
+  if (!isChildWelfare && !rawTypeParam) {
+    const currentQcid = getLoggedInUserQcid() || "110000572516915"
+    const userProf = getCurrentUserProfile()
+    const localSpApps = getLocalSoloParentApplications()
+    const cardRes = evaluateSoloParentBlockedState(localSpApps, userProf, currentQcid)
+    const isApproved = cardRes.hasApprovedApp
+    const isOngoing = cardRes.isBlocked && !cardRes.hasApprovedApp && !isAppRejected
+
+    return (
+      <div className="py-8 px-6 sm:px-10 max-w-2xl mx-auto space-y-6 animate-in fade-in duration-150">
+        <div className="grid grid-cols-1 gap-6">
+          {SOLO_PARENT_PROGRAMS.map((program) => {
+            return (
+              <div
+                key={program.id}
+                className={`bg-white dark:bg-slate-900 rounded-xl border shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
+                  isApproved
+                    ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-400/30"
+                    : isOngoing
+                    ? "border-amber-300 dark:border-amber-800 ring-1 ring-amber-400/30"
+                    : "border-slate-200 dark:border-slate-800"
+                }`}
+              >
+                {/* Dark navy blue top banner matching Senior / PWD */}
+                <div
+                  className={`text-white py-3 px-4 font-bold text-center text-sm md:text-base tracking-wide select-none flex items-center justify-center gap-2 ${
+                    isApproved ? "bg-emerald-800" : isOngoing ? "bg-slate-800" : "bg-[#1e3a5f]"
+                  }`}
+                >
+                  {isApproved && <CheckCircle2 className="w-4 h-4 text-emerald-300" />}
+                  {isOngoing && <Clock className="w-4 h-4 text-amber-300" />}
+                  <span>{language === "en" ? program.titleEn : program.title}</span>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5 sm:p-6 flex flex-col justify-between flex-1 gap-4">
+                  <p className="text-slate-600 dark:text-slate-300 text-xs md:text-sm leading-relaxed text-justify">
+                    {language === "en" ? program.descEn : program.desc}
+                  </p>
+
+                  {/* Status Badges */}
+                  {isApproved && (
+                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>
+                          {language === "en"
+                            ? "Already Availed (Approved & Recorded)"
+                            : "Na-avail na (Approved & Recorded)"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-emerald-800/90 dark:text-emerald-300/90">
+                        {language === "en"
+                          ? "You already have an approved record for this program."
+                          : "Mayroon ka nang aprubadong talaan para sa programang ito."}
+                      </p>
+                    </div>
+                  )}
+
+                  {isOngoing && (
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>
+                          {language === "en"
+                            ? "Application In Progress (Active Request)"
+                            : "Kasalukuyang Pinoproseso (Active Request)"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90">
+                        {language === "en"
+                          ? "Your application has been submitted and is currently being assessed by a Social Worker."
+                          : "Nakasumite na ang inyong aplikasyon at nasa ilalim ng pagsusuri ng Social Worker."}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  <div className="pt-2 flex justify-center">
+                    {isApproved || isOngoing ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate("/portal/my-applications")}
+                        className={`font-bold text-xs md:text-sm tracking-wider uppercase cursor-pointer transition-colors py-2 px-4 rounded-xl flex items-center gap-2 shadow-xs ${
+                          isApproved
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
+                      >
+                        <span>
+                          {isApproved
+                            ? (language === "en" ? "VIEW IN APPLICATION HISTORY" : "TINGNAN SA APPLICATION HISTORY")
+                            : (language === "en" ? "TRACK APPLICATION STATUS" : "SUBAYBAYAN ANG STATUS")}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setSearchParams({ category: "solo-parent", type: "educational-assistance" })}
+                        className="text-[#0066cc] dark:text-sky-400 hover:text-[#004c99] dark:hover:text-sky-300 font-extrabold text-xs md:text-sm tracking-widest uppercase cursor-pointer hover:underline transition-colors py-1 px-4"
+                      >
+                        {language === "en" ? "APPLY NOW" : "MAG-APPLY NGAYON"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  // Blocked View for when applying inside wizard
   if (isBlocked && (!bypassedBlock || isAppApproved) && !isChildWelfare) {
-
     const rejectionReason = blockedApp?.rejection_reason || blockedApp?.rejectionReason || blockedApp?.admin_notes || ""
-
     const displayRef =
       blockedApp?.reference_number ||
       blockedApp?.referenceNumber ||
       blockedApp?.id ||
       getLoggedInUserQcid() ||
       "110000572516915"
-
-    const assignedIdNo =
-      blockedApp?.assigned_id_number ||
-      blockedApp?.assignedIdNumber ||
-      blockedApp?.solo_parent_id_number ||
-      blockedApp?.soloParentIdNumber
 
     const rawDate = blockedApp?.created_at || blockedApp?.submittedAt || blockedApp?.submitted_at || blockedApp?.dateSubmitted
     const displayDate = formatAppDate(rawDate, blockedApp)
@@ -845,21 +810,21 @@ export default function ApplySoloParent() {
             <p className="text-xs text-gray-600 max-w-md mt-1 leading-relaxed">
               {isAppApproved
                 ? language === "en"
-                  ? "Your application for Solo Parent ID has been officially approved! You already have an active Solo Parent ID. If you need to renew or replace your ID, please choose an option below."
+                  ? "Your application for Solo Parent Educational Assistance has been officially approved! You already have an active assistance record."
                   : language === "bis"
-                  ? "Ang imong aplikasyon para sa Solo Parent ID opisyal nga na-aprobahan sa Gov Service. Aduna ka nay aktibo nga ID."
-                  : "Ang inyong aplikasyon para sa Solo Parent ID ay opisyal nang na-apruba ng Gov Service Social Services Development Department."
+                  ? "Ang imong aplikasyon para sa Solo Parent Educational Assistance opisyal nga na-aprobahan sa Gov Service."
+                  : "Ang inyong aplikasyon para sa Solo Parent Educational Assistance ay opisyal nang na-apruba ng QC Social Services Development Department."
                 : isAppRejected
                 ? language === "en"
-                  ? "Your application for Solo Parent ID was reviewed and not approved. You can review the reason below and submit a new application with the required documents."
+                  ? "Your application for Solo Parent Educational Assistance was reviewed and not approved. You can review the reason below and submit a new application with the complete requirements."
                   : language === "bis"
-                  ? "Ang imong aplikasyon para sa Solo Parent ID gisusi ug wala na-aprobahan. Mahimo nimong susihon ang hinungdan sa ubos ug mag-apply pag-usab."
-                  : "Ang inyong aplikasyon para sa Solo Parent ID ay sinuri ng Social Worker at hindi na-aprubahan. Maaari ninyong suriin ang dahilan sa ibaba at mag-apply muli kalakip ang kumpletong mga dokumento."
+                  ? "Ang imong aplikasyon para sa Educational Assistance gisusi ug wala na-aprobahan. Mahimo nimong susihon ang hinungdan sa ubos ug mag-apply pag-usab."
+                  : "Ang inyong aplikasyon para sa Solo Parent Educational Assistance ay sinuri ng Social Worker at hindi na-aprubahan. Maaari ninyong suriin ang dahilan sa ibaba at mag-apply muli kalakip ang kumpletong mga dokumento."
                 : language === "en"
-                ? "Your application for Solo Parent ID has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment before submitting a new application."
+                ? "Your application for Solo Parent Educational Assistance has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment."
                 : language === "bis"
-                ? "Ang imong aplikasyon para sa Solo Parent ID nasumite na ug kasamtangang girebyu sa Social Worker."
-                : "Ang inyong aplikasyon para sa Solo Parent ID ay matagumpay na naisumite at kasalukuyang sinusuri ng Social Worker."}
+                ? "Ang imong aplikasyon para sa Solo Parent Educational Assistance nasumite na ug kasamtangang girebyu sa Social Worker."
+                : "Ang inyong aplikasyon para sa Solo Parent Educational Assistance ay matagumpay na naisumite at kasalukuyang sinusuri ng Social Worker."}
             </p>
           </div>
 
@@ -870,16 +835,6 @@ export default function ApplySoloParent() {
               </span>
               <span className="font-mono font-bold text-blue-600">{displayRef}</span>
             </div>
-            {assignedIdNo && (
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <span className="text-gray-500 font-medium">
-                  {language === "en" ? "Official ID Number:" : language === "bis" ? "Numero sa ID:" : "Opisyal na Numero ng ID:"}
-                </span>
-                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  {assignedIdNo}
-                </span>
-              </div>
-            )}
             <div className="flex justify-between items-center border-b border-slate-200 pb-2">
               <span className="text-gray-500 font-medium">Status:</span>
               {isAppApproved ? (
@@ -920,51 +875,15 @@ export default function ApplySoloParent() {
 
           <div className="w-full pt-2 flex flex-col gap-2">
             {isAppApproved ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    try {
-                      localStorage.setItem("solo_parent_reapplying", "true")
-                      localStorage.setItem("solo_parent_reapplying_renewal", "true")
-                    } catch {}
-                    window.location.href = `/portal/apply-solo-parent?category=solo-parent&type=renewal&reapply=true`
-                  }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
-                >
-                  {language === "en"
-                    ? "Apply for Renewal (Renewal Solo Parent ID)"
-                    : language === "bis"
-                    ? "Pag-apply para sa Renewal (Renewal Solo Parent ID)"
-                    : "Mag-apply para sa Renewal (Renewal Solo Parent ID)"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    try {
-                      localStorage.setItem("solo_parent_reapplying", "true")
-                      localStorage.setItem("solo_parent_reapplying_loss", "true")
-                    } catch {}
-                    window.location.href = `/portal/apply-solo-parent?category=solo-parent&type=loss&reapply=true`
-                  }}
-                  className="w-full py-2.5 px-4 rounded-xl border border-blue-600 text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {language === "en"
-                    ? "Apply for Replacement / Lost ID"
-                    : language === "bis"
-                    ? "Pag-apply para sa Replacement / Nawala nga ID"
-                    : "Mag-apply para sa Replacement / Nawalang ID"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.location.href = "/portal/my-applications"
-                  }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors cursor-pointer uppercase tracking-wide"
-                >
-                  {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = "/portal/my-applications"
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors cursor-pointer uppercase tracking-wide"
+              >
+                {language === "bis" ? "TAN-AWA SA KASAYSAYAN SA APLIKASYON" : "VIEW IN APPLICATION HISTORY"}
+              </button>
             ) : isAppRejected ? (
               <>
                 <button
@@ -972,13 +891,12 @@ export default function ApplySoloParent() {
                   onClick={() => {
                     try {
                       localStorage.setItem("solo_parent_reapplying", "true")
-                      localStorage.setItem("solo_parent_reapplying_new", "true")
                     } catch {}
                     bypassedBlockRef.current = true
                     setBypassedBlock(true)
                     setIsBlocked(false)
                     setBlockedApp(null)
-                    window.history.replaceState(null, "", "/portal/apply-solo-parent?category=solo-parent&type=new&reapply=true")
+                    window.history.replaceState(null, "", "/portal/apply-solo-parent?category=solo-parent&type=educational-assistance&reapply=true")
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
                 >
@@ -1024,13 +942,13 @@ export default function ApplySoloParent() {
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] py-2">
-      {}
+      {/* Top Requirements Bar */}
       {shouldShowRequirements && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-4 animate-in fade-in duration-150">
           <div className="bg-white border border-border rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 text-blue-700">
-                <FileText className="w-5 h-5" />
+                {isChildWelfare ? <HeartHandshake className="w-5 h-5" /> : <GraduationCap className="w-5 h-5" />}
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1044,15 +962,15 @@ export default function ApplySoloParent() {
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {isChildWelfare
                     ? language === "en"
-                      ? "Official service for Child & Youth Welfare of Gov Service."
+                      ? "Official service for Child & Youth Welfare of Quezon City."
                       : language === "bis"
-                      ? "Opisyal nga serbisyo para sa Kaayohan sa Bata ug Kabatan-onan sa Gov Service."
-                      : "Opisyal na serbisyo para sa Child & Youth Welfare ng Gov Service."
+                      ? "Opisyal nga serbisyo para sa Kaayohan sa Bata ug Kabatan-onan sa Lungsod Quezon."
+                      : "Opisyal na serbisyo para sa Child & Youth Welfare ng Lungsod Quezon."
                     : language === "en"
-                      ? "Official service for Solo Parents (RA 8972 / RA 11861) of Gov Service."
+                      ? "Financial assistance of ₱5,000 for indigent solo parents with 2+ children in public school."
                       : language === "bis"
-                      ? "Opisyal nga serbisyo para sa Solo Parents (RA 8972 / RA 11861) sa Gov Service."
-                      : "Opisyal na serbisyo para sa Solo Parents (RA 8972 / RA 11861) ng Gov Service."}
+                      ? "Tulong-pinansyal nga ₱5,000 alang sa mga indigent solo parents nga adunay 2+ ka anak sa pampublikong eskwelahan."
+                      : "Tulong-pinansyal na ₱5,000 para sa mga indigent solo parents na may 2 o higit pang anak sa pampublikong paaralan."}
                 </p>
               </div>
             </div>
@@ -1071,7 +989,7 @@ export default function ApplySoloParent() {
         </div>
       )}
 
-      {/* Back to Child Welfare Services button */}
+      {/* Back to Overview Buttons */}
       {isChildWelfare && rawProgramParam && (
         <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3">
           <button
@@ -1081,6 +999,19 @@ export default function ApplySoloParent() {
           >
             <ChevronLeft className="h-4 w-4" />
             <span>{language === "en" ? "Back to Child Welfare Services" : "Bumalik sa Child Welfare Services"}</span>
+          </button>
+        </div>
+      )}
+
+      {!isChildWelfare && rawTypeParam && (
+        <div className="max-w-5xl mx-auto px-4 md:px-6 mb-3">
+          <button
+            type="button"
+            onClick={() => setSearchParams({ category: "solo-parent" })}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer uppercase tracking-wider bg-white dark:bg-slate-900 border border-border px-3 py-1.5 rounded-lg shadow-xs"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>{language === "en" ? "Back to Solo Parent Services" : "Bumalik sa Solo Parent Services"}</span>
           </button>
         </div>
       )}
@@ -1098,10 +1029,10 @@ export default function ApplySoloParent() {
         />
       ) : (
         <SoloParentApplicationWizard
-          key={`solo-parent-${typeParam}`}
+          key="solo-parent-educational-assistance"
           userProfile={activeProfile as any}
-          initialType={typeParam === "renewal" ? "renewal" : typeParam === "loss" ? "loss" : "new"}
-          initialCategoryId={selectedCategoryId}
+          initialType="new"
+          initialCategoryId={null}
           isModalOpen={showRequirementsModal}
           onStepChange={setCurrentStep}
           onSubmissionStageChange={(stage) => setSpSubmissionStage(stage)}
@@ -1115,7 +1046,7 @@ export default function ApplySoloParent() {
         />
       )}
 
-      {}
+      {/* Requirements Modal */}
       {showRequirementsModal && shouldShowRequirements && (
         <div
           onClick={() => setShowRequirementsModal(false)}
@@ -1125,7 +1056,7 @@ export default function ApplySoloParent() {
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-150 cursor-default"
           >
-            {}
+            {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10 shrink-0">
               <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
                 <h2 className="text-base md:text-lg font-bold text-foreground truncate">
@@ -1145,71 +1076,22 @@ export default function ApplySoloParent() {
               </button>
             </div>
 
-            {}
+            {/* Modal Body */}
             <div className="p-6 space-y-5 flex-1 overflow-y-auto">
-              {}
               <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-blue-900 dark:text-white">{t("importantReminder") || "Important reminder"}</p>
                   <p className="text-sm text-blue-800 dark:text-slate-200 mt-0.5">
                     {language === "en"
-                      ? "Please scroll and read all requirements below."
+                      ? "Please read all qualification criteria and documentary requirements below."
                       : language === "bis"
-                      ? "Palihug i-scroll ug basaha ang tanang gikinahanglang dokumento sa ubos."
-                      : "Pakisuri at basahin ang lahat ng dokumentong kailangan sa ibaba."}
+                      ? "Palihug basaha ang tanang kwalipikasyon ug gikinahanglang dokumento sa ubos."
+                      : "Pakisuri at basahin ang lahat ng kwalipikasyon at dokumentong kailangan sa ibaba."}
                   </p>
                 </div>
               </div>
 
-              {}
-              {isChildWelfare ? (
-                <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3">
-                  <HeartHandshake className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                  <p className="text-sm font-semibold text-blue-950 dark:text-white">
-                    {language === "en"
-                      ? "CHILD & YOUTH WELFARE — Official program for the welfare, protection, and development of children in Quezon City."
-                      : language === "bis"
-                      ? "CHILD & YOUTH WELFARE — Opisyal nga programa para sa kaayohan, proteksyon ug paglambo sa mga bata sa Lungsod Quezon."
-                      : "CHILD & YOUTH WELFARE — Opisyal na programa para sa kapakanan, proteksyon at pag-unlad ng mga bata sa Lungsod Quezon."}
-                  </p>
-                </div>
-              ) : isRenewal ? (
-                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 flex items-start gap-3">
-                  <RefreshCw className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                    {language === "en"
-                      ? "RENEWAL — Please prepare your current Solo Parent ID Number before proceeding."
-                      : language === "bis"
-                      ? "RENEWAL — Palihug ihanda ang imong kasamtangang Solo Parent ID Number sa dili pa mopadayon."
-                      : "RENEWAL — Ihanda ang inyong kasalukuyang Solo Parent ID Number bago magpatuloy."}
-                  </p>
-                </div>
-              ) : isLoss ? (
-                <div className="bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 rounded-xl p-4 flex items-start gap-3">
-                  <RefreshCw className="h-5 w-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
-                  <p className="text-sm font-semibold text-orange-900 dark:text-orange-200">
-                    {language === "en"
-                      ? "REPLACEMENT — Please prepare your Notarized Affidavit of Loss before proceeding."
-                      : language === "bis"
-                      ? "REPLACEMENT — Palihug ihanda ang imong Notarized Affidavit of Loss sa dili pa mopadayon."
-                      : "REPLACEMENT — Ihanda ang inyong Notarized Affidavit of Loss bago magpatuloy."}
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-green-50 dark:bg-emerald-950/40 border border-green-200 dark:border-emerald-800/60 rounded-xl p-4 flex items-start gap-3">
-                  <RefreshCw className="h-5 w-5 text-green-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                  <p className="text-sm font-semibold text-green-900 dark:text-emerald-200">
-                    {language === "en"
-                      ? "NEW APPLICATION — Ensure all original or certified true copies of documentary requirements are prepared before proceeding."
-                      : language === "bis"
-                      ? "BAG-ONG APLIKASYON — Siguroha nga andam ang tanang orihinal o sertipikadong kopya sa mga gikinahanglang dokumento sa dili pa mopadayon."
-                      : "NEW APPLICATION — Tiyaking handa ang lahat ng orihinal o certified true copy ng mga documentary requirements bago magpatuloy."}
-                  </p>
-                </div>
-              )}
-
-              {}
               {isChildWelfare ? (
                 <div className="space-y-5">
                   <div>
@@ -1310,42 +1192,80 @@ export default function ApplySoloParent() {
                   </div>
                 </div>
               ) : (
-                <div>
-                  <h3 className="text-base font-bold text-foreground mb-3 uppercase tracking-wide">
-                    {isRenewal
-                      ? language === "en"
-                        ? "REQUIREMENTS (FOR RENEWAL)"
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="text-base font-bold text-foreground mb-2 uppercase tracking-wide">
+                      {language === "en"
+                        ? "I. WHAT IS THE SOLO PARENT EDUCATIONAL ASSISTANCE PROGRAM?"
                         : language === "bis"
-                        ? "MGA KINAHANGLANON (PARA SA PAG-RENEW)"
-                        : "MGA KINAKAILANGAN (PARA SA PAG-RENEW)"
-                      : isLoss
-                      ? language === "en"
-                        ? "REQUIREMENTS (FOR REPLACEMENT)"
+                        ? "I. UNSA ANG SOLO PARENT EDUCATIONAL ASSISTANCE PROGRAM?"
+                        : "I. ANO ANG SOLO PARENT EDUCATIONAL ASSISTANCE PROGRAM?"}
+                    </h3>
+                    <p className="text-sm text-foreground/80 leading-relaxed bg-gray-50 border border-border/80 rounded-xl p-3.5 text-justify">
+                      {language === "en"
+                        ? "The Solo Parent Educational Assistance Program provides educational financial assistance of ₱5,000 per qualified beneficiary for indigent solo parents residing in Quezon City who have two (2) or more dependent children currently enrolled in public school. Assistance is granted following mandatory interview and assessment by a City Social Worker."
                         : language === "bis"
-                        ? "MGA KINAHANGLANON (PARA SA PAG-ILIS)"
-                        : "MGA KINAKAILANGAN (PARA SA PAGPAPALIT)"
-                      : language === "en"
-                      ? "REQUIREMENTS (FOR NEW APPLICATION)"
-                      : language === "bis"
-                      ? "MGA KINAHANGLANON (PARA SA BAG-ONG APLIKASYON)"
-                      : "MGA KINAKAILANGAN (PARA SA BAGONG APLIKASYON)"}
-                  </h3>
-                  <ul className="space-y-3 mb-6">
-                    {currentRequirements.map((req, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground">
-                        <span className="text-blue-600 font-bold leading-none mt-1 shrink-0">•</span>
-                        <div>
-                          <span className="font-semibold text-foreground">{req.title}</span>
-                          {req.desc && <p className="text-muted-foreground text-xs mt-0.5">{req.desc}</p>}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                        ? "Ang Solo Parent Educational Assistance Program naghatag og pinansyal nga tabang nga ₱5,000 matag benepisyaryo alang sa mga indigent solo parents sa Lungsod Quezon nga adunay duha (2) o labaw pa nga mga anak nga naka-enroll sa pampublikong eskwelahan, human sa interview ug assessment sa Social Worker."
+                        : "Ang Solo Parent Educational Assistance Program ay nagbibigay ng tulong-pinansyal na ₱5,000 bawat kwalipikadong benepisyaryo para sa mga indigent solo parents sa Lungsod Quezon na may dalawa (2) o higit pang anak na nag-aaral at naka-enroll sa pampublikong paaralan (public school). Isinasagawa ang panayam at assessment ng Social Worker bago maipagkaloob ang tulong."}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-bold text-foreground mb-2 uppercase tracking-wide">
+                      {language === "en"
+                        ? "II. WHO IS ELIGIBLE FOR EDUCATIONAL ASSISTANCE?"
+                        : language === "bis"
+                        ? "II. KINSA ANG KWALIPIKADO SA EDUCATIONAL ASSISTANCE?"
+                        : "II. SINO ANG KWALIPIKADO SA EDUCATIONAL ASSISTANCE?"}
+                    </h3>
+                    <ul className="space-y-2">
+                      {[
+                        language === "en"
+                          ? "Legitimate resident of Quezon City with valid Solo Parent record."
+                          : "Lehitimong residente ng Lungsod Quezon na may rehistradong Solo Parent status.",
+                        language === "en"
+                          ? "Solo parent with two (2) or more children currently enrolled in public school."
+                          : "Solong magulang na may dalawa (2) o higit pang anak na kasalukuyang naka-enroll sa pampublikong paaralan.",
+                        language === "en"
+                          ? "Classified as indigent solo parent in need of educational financial support (₱5,000 per beneficiary)."
+                          : "Kabilang sa indigent solo parents na nangangailangan ng tulong-pinansyal sa pag-aaral (₱5,000 bawat benepisyaryo).",
+                        language === "en"
+                          ? "Agrees to and passes the social assessment and interview conducted by the City Social Worker."
+                          : "Sumasang-ayon na sumailalim at pumasa sa panayam (interview) at assessment ng Social Worker bago ma-extend ang assistance.",
+                      ].map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground">
+                          <span className="text-blue-600 font-bold leading-none mt-1 shrink-0">•</span>
+                          <span className="leading-relaxed">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-bold text-foreground mb-3 uppercase tracking-wide">
+                      {language === "en"
+                        ? "III. REQUIRED DOCUMENTS (REQUIREMENTS)"
+                        : language === "bis"
+                        ? "III. MGA GIKINAHANGLANG DOKUMENTO (REQUIREMENTS)"
+                        : "III. MGA KINAKAILANGANG DOKUMENTO (REQUIREMENTS)"}
+                    </h3>
+                    <ul className="space-y-3 mb-6">
+                      {currentRequirements.map((req, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground">
+                          <span className="text-blue-600 font-bold leading-none mt-1 shrink-0">•</span>
+                          <div>
+                            <span className="font-semibold text-foreground">{req.title}</span>
+                            {req.desc && <p className="text-muted-foreground text-xs mt-0.5">{req.desc}</p>}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               )}
             </div>
 
-            {}
+            {/* Modal Footer */}
             <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex items-center justify-between gap-4 shrink-0">
               <div className="flex items-start gap-2.5 flex-1">
                 <input
@@ -1357,10 +1277,10 @@ export default function ApplySoloParent() {
                 />
                 <label htmlFor="understand" className="text-xs md:text-sm text-foreground cursor-pointer select-none">
                   {language === "en"
-                    ? "I accept and understand the documentary requirements for this service"
+                    ? "I accept and understand the qualification criteria & documentary requirements"
                     : language === "bis"
-                    ? "Gidawat ug nasabtan nako ang mga gikinahanglang dokumento alang niini nga serbisyo"
-                    : "Tinatanggap at nauunawaan ko ang mga kailangang dokumento para sa serbisyong ito"}
+                    ? "Gidawat ug nasabtan nako ang mga kwalipikasyon ug gikinahanglang dokumento"
+                    : "Tinatanggap at nauunawaan ko ang mga kwalipikasyon at kailangang dokumento"}
                 </label>
               </div>
               <button

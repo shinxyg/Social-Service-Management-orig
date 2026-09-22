@@ -92,13 +92,9 @@ function getResidentNav(t: (key: string, vars?: Record<string, string>) => strin
     },
     {
       id: "soloParent",
+      path: "/portal/apply-solo-parent?category=solo-parent",
       label: t("navSoloParentServices"),
       icon: Baby,
-      children: [
-        { path: "/portal/apply-solo-parent?category=solo-parent&type=new", label: t("navNewSoloParent") },
-        { path: "/portal/apply-solo-parent?category=solo-parent&type=renewal", label: t("navRenewalSoloParent") },
-        { path: "/portal/apply-solo-parent?category=solo-parent&type=loss", label: t("navLossSoloParent") },
-      ],
     },
     {
       id: "childWelfare",
@@ -467,6 +463,13 @@ function ResidentSidebar({ open, onToggle }: { open: boolean; onToggle: () => vo
                       (location.pathname === "/portal/apply-pwd-senior" && location.search.includes("category=senior"))
                     )
                   }
+                  if (item.id === "soloParent") {
+                    return (
+                      location.pathname === "/portal/solo-parent" ||
+                      (location.pathname === "/portal/apply-solo-parent" &&
+                        (location.search.includes("category=solo-parent") || (!location.search.includes("category=child-welfare") && !location.search.includes("category="))))
+                    )
+                  }
                   if (item.id === "childWelfare") {
                     return (
                       location.pathname === "/portal/child-welfare" ||
@@ -594,6 +597,17 @@ function ResidentHeader({
         currentTitle = `${seniorLabel} — Replacement / Lost Senior ID`
       } else {
         currentTitle = seniorLabel
+      }
+    } else if (
+      location.pathname === "/portal/solo-parent" ||
+      (location.pathname === "/portal/apply-solo-parent" &&
+        (location.search.includes("category=solo-parent") || (!location.search.includes("category=child-welfare") && !location.search.includes("category="))))
+    ) {
+      const spLabel = t("navSoloParentServices") || "Solo Parent Services"
+      if (location.search.includes("type=educational-assistance") || location.search.includes("type=assistance")) {
+        currentTitle = `${spLabel} — Solo Parent Educational Assistance`
+      } else {
+        currentTitle = spLabel
       }
     } else if (
       location.pathname === "/portal/child-welfare" ||
