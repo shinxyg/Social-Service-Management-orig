@@ -473,12 +473,12 @@ export default function ChildWelfareApplicationWizard({
     const fullName = [p.firstName, p.middleName, p.lastName, p.suffix].filter(Boolean).join(" ").trim()
     const fullAddress = [p.addressHouseNo || p.houseNo, p.addressStreet || p.street].filter(Boolean).join(" ").trim()
     return {
-      parentFullName: fullName || "",
+      parentFullName: fullName || p.name || p.fullName || "",
       parentRelationship: "",
       parentQcid: p.qcidNo || p.qcidNumber || p.qcid || "110000116932100",
-      parentContactNo: p.contactNo || p.mobileNumber || "",
-      parentEmail: p.email || "",
-      parentAddress: fullAddress || "",
+      parentContactNo: p.contactNo || p.mobileNumber || p.contactNumber || p.phone || p.mobileNo || "",
+      parentEmail: p.email || p.userEmail || "",
+      parentAddress: fullAddress || p.address || p.fullAddress || "",
       parentBarangay: p.addressBarangay || p.barangay || "Sauyo",
     }
   }
@@ -1412,17 +1412,14 @@ export default function ChildWelfareApplicationWizard({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.parentFullName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
                       Full Name *
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.parentFullName}
-                      onChange={(e) => updateField("parentFullName", e.target.value.replace(/[^a-zA-Z\sñÑ.-]/g, "").toUpperCase())}
-                      placeholder="Enter Full Name"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.parentFullName.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -1454,25 +1451,20 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.parentQcid}
-                      onChange={(e) => updateField("parentQcid", e.target.value)}
-                      placeholder="e.g. 110000116932100"
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && formData.parentContactNo.length < 11 ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
                       Contact Number *
                     </label>
                     <input
                       type="text"
-                      maxLength={11}
+                      disabled
                       value={formData.parentContactNo}
-                      onChange={(e) => updateField("parentContactNo", e.target.value.replace(/\D/g, ""))}
-                      placeholder="09XXXXXXXXX"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && formData.parentContactNo.length < 11 ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -1481,41 +1473,34 @@ export default function ChildWelfareApplicationWizard({
                     </label>
                     <input
                       type="email"
+                      disabled
                       value={formData.parentEmail}
-                      onChange={(e) => updateField("parentEmail", e.target.value)}
-                      placeholder="example@email.com"
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="sm:col-span-2">
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.parentAddress.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
                       Complete Address *
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.parentAddress}
-                      onChange={(e) => updateField("parentAddress", e.target.value)}
-                      placeholder="House No., Street / Subdivision"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.parentAddress.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.parentBarangay.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
                       Barangay *
                     </label>
                     <input
                       type="text"
+                      disabled
                       value={formData.parentBarangay}
-                      onChange={(e) => updateField("parentBarangay", e.target.value)}
-                      placeholder="Barangay"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.parentBarangay.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
                     />
                   </div>
                 </div>
