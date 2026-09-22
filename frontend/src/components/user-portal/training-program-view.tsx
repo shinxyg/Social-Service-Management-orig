@@ -30,7 +30,16 @@ import {
   HeartPulse,
   Flame,
   ChefHat,
+  Upload,
+  Camera,
+  FileText,
+  X,
+  GraduationCap,
+  User,
+  Briefcase,
+  FolderCheck,
 } from "lucide-react"
+import DocumentCameraModal from "../ui/document-camera-modal"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, type LoggedInUserProfile } from "../../utils/userProfile"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
@@ -541,13 +550,42 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   const [applyCourseId, setApplyCourseId] = useState<string>("tr-bread-pastry")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formStep, setFormStep] = useState<"select" | "profile" | "review">("select")
-    const [isAttested, setIsAttested] = useState(false)
+  const [isAttested, setIsAttested] = useState(false)
   const [isRevising, setIsRevising] = useState(false)
 
   const [certificateModalApp, setCertificateModalApp] = useState<TrainingApplicationRecord | null>(null)
 
   const profile: LoggedInUserProfile = getCurrentUserProfile()
   const userQcid = getLoggedInUserQcid() || profile.qcidNo || "110000116932100"
+
+  // Step 2: Form Details State
+  const [civilStatus, setCivilStatus] = useState<string>("Single")
+  const [sex, setSex] = useState<string>(profile.sex || "Female")
+  const [dateOfBirth, setDateOfBirth] = useState<string>(profile.birthDate || "1998-05-12")
+  const [age, setAge] = useState<string | number>(profile.age || 26)
+  const [completeAddress, setCompleteAddress] = useState<string>(
+    `${profile.houseNo || ""} ${profile.street || ""}, Brgy. ${profile.barangay || "Sauyo"}, Quezon City`.trim()
+  )
+  const [barangay, setBarangay] = useState<string>(profile.barangay || "Sauyo")
+
+  // II. Educational Background
+  const [highestEducation, setHighestEducation] = useState<string>("Senior High School")
+  const [schoolInstitution, setSchoolInstitution] = useState<string>("")
+
+  // III. Training Purpose
+  const [trainingPurpose, setTrainingPurpose] = useState<string>("Skills Development")
+  const [otherPurpose, setOtherPurpose] = useState<string>("")
+  const [reasonForApplying, setReasonForApplying] = useState<string>("")
+
+  // V. Previous Training / Experience
+  const [hasAttendedTraining, setHasAttendedTraining] = useState<string>("No")
+  const [previousTrainingCourse, setPreviousTrainingCourse] = useState<string>("")
+  const [previousYearCompleted, setPreviousYearCompleted] = useState<string>("")
+
+  // IV. Requirements (Supporting Documents)
+  const [requestLetterDoc, setRequestLetterDoc] = useState<{ file: File | null; dataUrl: string; name: string } | null>(null)
+  const [qcIdDoc, setQcIdDoc] = useState<{ file: File | null; dataUrl: string; name: string } | null>(null)
+  const [cameraModalDocType, setCameraModalDocType] = useState<"requestLetter" | "qcId" | null>(null)
 
   const fetchTrainingData = async () => {
     try {
@@ -697,15 +735,26 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         middleName: profile.middleName || "",
         lastName: profile.lastName,
         suffix: profile.suffix || "",
-        email: profile.email || "",
+        email: profile.email || "resident@quezoncity.gov.ph",
         contactNo: profile.contactNo || profile.mobileNumber || "09172345678",
-        address: `${profile.houseNo || ""} ${profile.street || ""}`.trim() || "Quezon City Resident Address",
-        barangay: profile.barangay || "Central",
-        city: profile.city || "Quezon City",
-        sex: profile.sex || "Female",
-        dateOfBirth: profile.birthDate || "1998-05-12",
-        age: profile.age || 26,
-        occupation: profile.occupation || "Resident",
+        dateOfBirth: dateOfBirth || profile.birthDate || "1998-05-12",
+        age: age || profile.age || 26,
+        sex: sex || profile.sex || "Female",
+        civilStatus: civilStatus || "Single",
+        completeAddress: completeAddress || `${profile.houseNo || ""} ${profile.street || ""}, Brgy. ${profile.barangay || "Sauyo"}, Quezon City`.trim(),
+        barangay: barangay || profile.barangay || "Sauyo",
+        city: "Quezon City",
+        highestEducation: highestEducation || "Senior High School",
+        schoolInstitution: schoolInstitution || "Quezon City School",
+        trainingPurpose: trainingPurpose === "Other" && otherPurpose ? `Other: ${otherPurpose}` : trainingPurpose,
+        reasonForApplying: reasonForApplying || "",
+        hasAttendedTraining: hasAttendedTraining || "No",
+        previousTrainingCourse: hasAttendedTraining === "Yes" ? previousTrainingCourse : "",
+        previousYearCompleted: hasAttendedTraining === "Yes" ? previousYearCompleted : "",
+        documents: {
+          requestLetter: requestLetterDoc?.name || null,
+          qcIdProof: qcIdDoc?.name || null,
+        },
       },
     }
 
@@ -1457,229 +1506,735 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
 
           {}
           {(!activeApplication || isRevising) && (
-            <form onSubmit={handleSubmitApplication} className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-6">
-              <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <form onSubmit={handleSubmitApplication} className="bg-card border border-border rounded-2xl p-5 sm:p-7 shadow-sm space-y-6">
+              {/* Stepper Header (Enhanced & Proportional) */}
+              <div className="border-b border-border pb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-xl font-bold text-foreground">
                     {isEn ? "Apply for Training Program" : isBis ? "Mag-apply sa Programa sa Pagbansay" : "Mag-apply sa Programa ng Pagsasanay"}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1">
                     {isEn
-                      ? "Fast-track application for Quezon City livelihood and skills training opportunities."
+                      ? "Complete the applicant details and requirements for Quezon City skills training."
                       : isBis
-                      ? "Paspas nga aplikasyon alang sa mga programa sa panginabuhi ug skills training sa QC."
-                      : "Mabilisang aplikasyon para sa mga programang pangkabuhayan at skills training ng Quezon City."}
+                      ? "Kompletuha ang impormasyon sa aplikante ug mga gikinahanglang dokumento."
+                      : "Kumpletuhin ang mga detalye ng aplikante at mga kinakailangang dokumento."}
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 self-start sm:self-center">
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${formStep === "select" ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}>
-                    {isEn ? "1. Course" : isBis ? "1. Kurso" : "1. Kurso"}
-                  </span>
-                  <span className="text-muted-foreground text-xs">→</span>
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${formStep === "profile" ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}>
-                    {isEn ? "2. Profile" : isBis ? "2. Impormasyon" : "2. Impormasyon"}
-                  </span>
-                  <span className="text-muted-foreground text-xs">→</span>
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${formStep === "review" ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"}`}>
-                    {isEn ? "3. Confirm" : isBis ? "3. Kumpirmasyon" : "3. Kumpirmasyon"}
-                  </span>
+
+                {/* Modern Interactive Stepper */}
+                <div className="flex items-center gap-1.5 sm:gap-2 self-start md:self-center overflow-x-auto max-w-full pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setFormStep("select")}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      formStep === "select"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                        : "bg-muted/40 text-muted-foreground border-border hover:bg-muted/70 hover:text-foreground"
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                      formStep === "select" ? "bg-white text-blue-600" : "bg-muted text-foreground border border-border"
+                    }`}>
+                      1
+                    </span>
+                    <span className="whitespace-nowrap">{isEn ? "Course" : "Kurso"}</span>
+                  </button>
+
+                  <span className="text-muted-foreground text-xs font-bold px-0.5">→</span>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormStep("profile")}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      formStep === "profile"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                        : formStep === "review"
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
+                        : "bg-muted/40 text-muted-foreground border-border hover:bg-muted/70 hover:text-foreground"
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                      formStep === "profile"
+                        ? "bg-white text-blue-600"
+                        : formStep === "review"
+                        ? "bg-emerald-600 text-white"
+                        : "bg-muted text-foreground border border-border"
+                    }`}>
+                      {formStep === "review" ? "✓" : "2"}
+                    </span>
+                    <span className="whitespace-nowrap">{isEn ? "Applicant Info" : "Impormasyon"}</span>
+                  </button>
+
+                  <span className="text-muted-foreground text-xs font-bold px-0.5">→</span>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormStep("review")}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      formStep === "review"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                        : "bg-muted/40 text-muted-foreground border-border hover:bg-muted/70 hover:text-foreground"
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                      formStep === "review" ? "bg-white text-blue-600" : "bg-muted text-foreground border border-border"
+                    }`}>
+                      3
+                    </span>
+                    <span className="whitespace-nowrap">{isEn ? "Requirements & Confirm" : "Dokumento at Confirm"}</span>
+                  </button>
                 </div>
               </div>
 
-              {}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
-                    {isEn ? "Step 1. Selected Training Program" : isBis ? "Step 1. Napiling Kurso sa Pagbansay" : "Step 1. Napiling Kursong Pagsasanay"}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("available")}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                  >
-                    {isEn ? "Change Course →" : isBis ? "Ilisi ang Kurso →" : "Palitan ang Kurso →"}
-                  </button>
-                </div>
+              {/* ======================================================== */}
+              {/* STEP 1: COURSE SELECTION */}
+              {/* ======================================================== */}
+              {formStep === "select" && (
+                <div className="space-y-5 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
+                      {isEn ? "Step 1. Selected Training Program" : isBis ? "Step 1. Napiling Kurso sa Pagbansay" : "Step 1. Napiling Kursong Pagsasanay"}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("available")}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                    >
+                      {isEn ? "Change Course →" : isBis ? "Ilisi ang Kurso →" : "Palitan ang Kurso →"}
+                    </button>
+                  </div>
 
-                {(() => {
-                  const rawCourse = courses.find((c) => c.id === applyCourseId) || courses[0]
-                  const selectedCourse = getLocalizedCourse(rawCourse)
-                  return (
-                    <div className="p-4 rounded-xl border border-blue-600 bg-blue-50/50 dark:bg-blue-950/20 shadow-xs flex items-center justify-between">
-                      <div className="flex items-center gap-3.5">
-                        <div className="p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 shadow-xs">
-                          {getCourseIcon(selectedCourse.id)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-bold text-foreground">{selectedCourse.title}</p>
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white">
-                              {isEn ? "Selected" : isBis ? "Napili" : "Napili"}
-                            </span>
+                  {(() => {
+                    const rawCourse = courses.find((c) => c.id === applyCourseId) || courses[0]
+                    const selectedCourse = getLocalizedCourse(rawCourse)
+                    return (
+                      <div className="p-5 rounded-2xl border-2 border-blue-600/60 bg-blue-50/40 dark:bg-blue-950/20 shadow-xs space-y-3">
+                        <div className="flex items-center gap-3.5">
+                          <div className="p-3 rounded-xl bg-card border border-blue-200 dark:border-blue-800 shadow-xs">
+                            {getCourseIcon(selectedCourse.id)}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {selectedCourse.duration || "18 working days"} • Training Batch: {selectedCourse.batch || "3rd Batch 2026"} (Starts: {selectedCourse.trainingStarts || "August 1 - 30, 2026"})
-                          </p>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-base font-bold text-foreground">{selectedCourse.title}</h4>
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white">
+                                {isEn ? "Selected" : "Napili"}
+                              </span>
+                            </div>
+                            <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mt-0.5">
+                              {localizeDuration(selectedCourse.duration)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {selectedCourse.description}
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t border-border/60 text-xs">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                            <span><strong className="text-foreground">{isEn ? "Training Batch:" : "Batch ng Pagsasanay:"}</strong> {localizeBatch(selectedCourse.batch)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <span><strong className="text-foreground">{isEn ? "Application Opens:" : "Bukas ang Aplikasyon:"}</strong> {localizeDateStr(selectedCourse.applicationOpens || "July 1, 2026")}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                            <span><strong className="text-foreground">{isEn ? "Application Deadline:" : "Huling Araw:"}</strong> {localizeDateStr(selectedCourse.applicationDeadline || "July 15, 2026")}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+                            <span><strong className="text-foreground">{isEn ? "Training Starts:" : "Simula ng Pagsasanay:"}</strong> {localizeDateStr(selectedCourse.trainingStarts || "August 1 - 30, 2026")}</span>
+                          </div>
                         </div>
                       </div>
-                      <CheckCircle2 className="h-6 w-6 text-blue-600 shrink-0" />
-                    </div>
-                  )
-                })()}
-              </div>
+                    )
+                  })()}
 
-              {}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
-                    {isEn
-                      ? "Step 2. Applicant Profile (Auto-filled)"
-                      : isBis
-                      ? "Step 2. Impormasyon sa Aplikante (Auto-filled)"
-                      : "Step 2. Impormasyon ng Aplikante (Auto-filled)"}
-                  </label>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-md">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    {isEn ? "Verified Resident Profile" : isBis ? "Beripikadong Profile" : "Beripikadong Profile"}
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-muted/20 border border-border text-xs text-muted-foreground flex items-start gap-2.5">
-                  <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                  <p>
-                    {isEn
-                      ? "The following verified information is automatically loaded from your resident account so you do not need to re-type it."
-                      : isBis
-                      ? "Ang mosunod nga impormasyon awtomatikong gikuha gikan sa imong account aron dili na kinahanglan mag-type pag-usab."
-                      : "Ang sumusunod na impormasyon ay kusang kinuha mula sa iyong account upang hindi mo na kailangang mag-type muli."}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <label className="block font-semibold text-muted-foreground mb-1.5">
-                      QC ID / Reference Number
-                    </label>
-                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-mono font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      {userQcid}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-muted-foreground mb-1.5">
-                      {isEn ? "Full Name" : isBis ? "Tibuok Ngalan" : "Buong Pangalan"}
-                    </label>
-                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs truncate">
-                      {profile.firstName} {profile.middleName} {profile.lastName} {profile.suffix}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-muted-foreground mb-1.5">
-                      {isEn ? "Email Address" : "Email Address"}
-                    </label>
-                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs truncate">
-                      {profile.email || "resident@quezoncity.gov.ph"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-muted-foreground mb-1.5">
-                      {isEn ? "Contact / Mobile Number" : isBis ? "Numero sa Telepono" : "Numero ng Telepono"}
-                    </label>
-                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-semibold text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      {profile.contactNo || profile.mobileNumber || "0917 234 5678"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-muted-foreground mb-1.5">
-                      {isEn ? "Sex & Age" : isBis ? "Kinatawhan ug Edad" : "Kasarian at Edad"}
-                    </label>
-                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs">
-                      {profile.sex || "Female"} • {profile.age || "24"} {isEn ? "years old" : isBis ? "anyos" : "taong gulang"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-muted-foreground mb-1.5">
-                      {isEn ? "Barangay & City" : isBis ? "Barangay ug Dakbayan" : "Barangay at Lungsod"}
-                    </label>
-                    <div className="px-3.5 py-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-300/80 dark:border-gray-700 font-medium text-gray-700 dark:text-gray-300 cursor-not-allowed select-none shadow-xs truncate">
-                      Brgy. {profile.barangay || "Sauyo"}, Quezon City
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {}
-              <div className="space-y-3 pt-4 border-t border-border">
-                <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
-                  {isEn ? "Step 3. Review Application" : isBis ? "Step 3. Subaya ang Aplikasyon" : "Step 3. Repasuhin ang Aplikasyon"}
-                </label>
-                {(() => {
-                  const rawPicked = courses.find((c) => c.id === applyCourseId) || courses[0]
-                  const picked = getLocalizedCourse(rawPicked)
-                  return (
-                    <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-2 text-xs">
-                      <div className="flex justify-between font-bold text-sm text-foreground">
-                        <span>{picked.title}</span>
-                        <span className="text-blue-600">{picked.duration || "18 working days"}</span>
-                      </div>
-                      <p className="text-muted-foreground"><strong className="text-foreground">Training Batch:</strong> {picked.batch || "3rd Batch 2026"}</p>
-                      <p className="text-muted-foreground"><strong className="text-foreground">Application Period:</strong> {picked.applicationOpens || "July 1, 2026"} - {picked.applicationDeadline || "July 15, 2026"}</p>
-                      <p className="text-muted-foreground"><strong className="text-foreground">Training Starts:</strong> {picked.trainingStarts || "August 1 - 30, 2026"}</p>
-                      <p className="text-muted-foreground"><strong className="text-foreground">Location:</strong> {picked.location} • <span className="italic">{picked.landmark}</span></p>
-                    </div>
-                  )
-                })()}
-
-                <label className="flex items-start gap-2.5 pt-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isAttested}
-                    onChange={(e) => setIsAttested(e.target.checked)}
-                    className="mt-0.5 rounded border-border text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    {isEn
-                      ? "I hereby certify that all information provided is true and correct, and I commit to faithfully attend all scheduled training sessions for this course."
-                      : isBis
-                      ? "Gipamatud-an nako nga tinuod ang tanang impormasyon ug ako matinud-anong motambong sa tanang adlaw sa pagbansay."
-                      : "Pinatutunayan ko na totoo ang lahat ng impormasyong nakatala at ako ay tapat na dadalo sa lahat ng takdang araw ng pagsasanay sa kursong ito."}
-                  </span>
-                </label>
-              </div>
-
-              {}
-              <div className="pt-2 flex items-center justify-end gap-3">
-                {isRevising && (
-                  <button
-                    type="button"
-                    onClick={() => setIsRevising(false)}
-                    className="px-4 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-muted-foreground cursor-pointer"
-                  >
-                    {isEn ? "Cancel" : isBis ? "Kanselaha" : "Kanselahin"}
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !isAttested}
-                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span>{isEn ? "Submitting..." : isBis ? "Gisumite..." : "Isinusumite..."}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{isEn ? "Submit Application" : isBis ? "Isumite ang Aplikasyon" : "Isumite ang Aplikasyon"}</span>
+                  <div className="pt-3 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormStep("profile")}
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <span>{isEn ? "Continue to Applicant Information" : isBis ? "Padayon sa Impormasyon sa Aplikante" : "Magpatuloy sa Impormasyon ng Aplikante"}</span>
                       <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-              </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* STEP 2: APPLICANT INFORMATION & BACKGROUND (I, II, III, V) */}
+              {/* ======================================================== */}
+              {formStep === "profile" && (
+                <div className="space-y-6 animate-in fade-in duration-200">
+                  {/* I. APPLICANT INFORMATION */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-blue-600" />
+                        <h4 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                          I. {isEn ? "Applicant Information" : "Impormasyon ng Aplikante"}
+                        </h4>
+                      </div>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-md">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        {isEn ? "Auto-filled from QCID" : "Naka-autofill mula sa QCID"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                      {/* Full Name (Locked) */}
+                      <div className="sm:col-span-2">
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{isEn ? "Full Name" : "Buong Pangalan"}</span>
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={`${profile.firstName} ${profile.middleName ? profile.middleName + " " : ""}${profile.lastName} ${profile.suffix || ""}`.trim()}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-85 shadow-xs"
+                        />
+                      </div>
+
+                      {/* QC ID (Locked) */}
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>QC ID / Reference Number</span>
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={userQcid}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border font-mono font-bold text-foreground cursor-not-allowed select-none opacity-85 shadow-xs"
+                        />
+                      </div>
+
+                      {/* Date of Birth */}
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          {isEn ? "Date of Birth" : "Petsa ng Kapanganakan"}
+                        </label>
+                        <input
+                          type="date"
+                          value={dateOfBirth}
+                          onChange={(e) => setDateOfBirth(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                        />
+                      </div>
+
+                      {/* Age */}
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          {isEn ? "Age" : "Edad"}
+                        </label>
+                        <input
+                          type="number"
+                          min="15"
+                          max="100"
+                          value={age}
+                          onChange={(e) => setAge(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                        />
+                      </div>
+
+                      {/* Sex (Dropdown) */}
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          {isEn ? "Sex" : "Kasarian"}
+                        </label>
+                        <select
+                          value={sex}
+                          onChange={(e) => setSex(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs cursor-pointer"
+                        >
+                          <option value="Male">{isEn ? "Male" : "Lalaki"}</option>
+                          <option value="Female">{isEn ? "Female" : "Babae"}</option>
+                        </select>
+                      </div>
+
+                      {/* Civil Status (Dropdown) */}
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          {isEn ? "Civil Status" : "Katayuang Sibil (Civil Status)"}
+                        </label>
+                        <select
+                          value={civilStatus}
+                          onChange={(e) => setCivilStatus(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs cursor-pointer"
+                        >
+                          <option value="Single">Single</option>
+                          <option value="Married">Married</option>
+                          <option value="Widowed">Widowed</option>
+                          <option value="Separated">Separated</option>
+                        </select>
+                      </div>
+
+                      {/* Contact Number (Locked) */}
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{isEn ? "Contact Number" : "Numero ng Telepono"}</span>
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={profile.contactNo || profile.mobileNumber || "0917 234 5678"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-85 shadow-xs"
+                        />
+                      </div>
+
+                      {/* Email Address (Locked) */}
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>Email Address</span>
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={profile.email || "resident@quezoncity.gov.ph"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground cursor-not-allowed select-none opacity-85 shadow-xs truncate"
+                        />
+                      </div>
+
+                      {/* Barangay */}
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          Barangay
+                        </label>
+                        <input
+                          type="text"
+                          value={barangay}
+                          onChange={(e) => setBarangay(e.target.value)}
+                          placeholder="e.g. Batasan Hills"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                        />
+                      </div>
+
+                      {/* Complete Address */}
+                      <div className="sm:col-span-2">
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          {isEn ? "Complete Address" : "Kumpletong Tirahan"}
+                        </label>
+                        <input
+                          type="text"
+                          value={completeAddress}
+                          onChange={(e) => setCompleteAddress(e.target.value)}
+                          placeholder="House No., Street, Subdivision/Area"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* II. EDUCATIONAL BACKGROUND */}
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 pb-2 border-b border-border">
+                      <GraduationCap className="h-4 w-4 text-blue-600" />
+                      <h4 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                        II. {isEn ? "Educational Background" : "Pinag-aralan / Educational Background"}
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          {isEn ? "Highest Educational Attainment" : "Pinakamataas na Antas ng Edukasyon"}
+                        </label>
+                        <select
+                          value={highestEducation}
+                          onChange={(e) => setHighestEducation(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs cursor-pointer"
+                        >
+                          <option value="Elementary">Elementary</option>
+                          <option value="Junior High School">Junior High School</option>
+                          <option value="Senior High School">Senior High School</option>
+                          <option value="ALS">Alternative Learning System (ALS)</option>
+                          <option value="College">College</option>
+                          <option value="Vocational/Technical">Vocational / Technical</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          {isEn ? "School / Institution" : "Paaralan / Institusyon"}
+                        </label>
+                        <input
+                          type="text"
+                          value={schoolInstitution}
+                          onChange={(e) => setSchoolInstitution(e.target.value)}
+                          placeholder={isEn ? "e.g. Batasan Hills National High School" : "Hal. Batasan Hills National High School"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* III. TRAINING PURPOSE */}
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 pb-2 border-b border-border">
+                      <Target className="h-4 w-4 text-blue-600" />
+                      <h4 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                        III. {isEn ? "Training Purpose" : "Layunin sa Pagsasanay"}
+                      </h4>
+                    </div>
+
+                    <div className="space-y-4 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block font-semibold text-muted-foreground mb-1.5">
+                            {isEn ? "Why are you applying for the training?" : "Bakit ka nag-a-apply sa pagsasanay na ito?"}
+                          </label>
+                          <select
+                            value={trainingPurpose}
+                            onChange={(e) => setTrainingPurpose(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs cursor-pointer"
+                          >
+                            <option value="Employment">{isEn ? "Employment (Trabaho / Pagtatrabaho)" : "Employment (Trabaho / Pagtatrabaho)"}</option>
+                            <option value="Self-Employment">{isEn ? "Self-Employment (Sariling Hanapbuhay)" : "Self-Employment (Sariling Hanapbuhay)"}</option>
+                            <option value="Start/Improve a Small Business">{isEn ? "Start / Improve a Small Business (Pagtatayo o Pagpapalago ng Negosyo)" : "Start / Improve a Small Business (Pagtatayo o Pagpapalago ng Negosyo)"}</option>
+                            <option value="Skills Development">{isEn ? "Skills Development (Pagpapalawak ng Kasanayan)" : "Skills Development (Pagpapalawak ng Kasanayan)"}</option>
+                            <option value="Other">{isEn ? "Other (Iba pang dahilan)" : "Other (Iba pang dahilan)"}</option>
+                          </select>
+                        </div>
+
+                        {trainingPurpose === "Other" && (
+                          <div className="animate-in fade-in duration-150">
+                            <label className="block font-semibold text-muted-foreground mb-1.5">
+                              {isEn ? "Please specify other purpose:" : "Tukuyin ang ibang dahilan:"}
+                            </label>
+                            <input
+                              type="text"
+                              value={otherPurpose}
+                              onChange={(e) => setOtherPurpose(e.target.value)}
+                              placeholder={isEn ? "Specify your purpose" : "Ilagay ang iyong partikular na layunin"}
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          {isEn ? "Briefly state your reason for applying:" : "Maikling paliwanag sa dahilan ng pag-aapply:"}
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={reasonForApplying}
+                          onChange={(e) => setReasonForApplying(e.target.value)}
+                          placeholder={isEn ? "Provide brief details about your motivation or livelihood plans..." : "Magbigay ng maikling detalye tungkol sa iyong motibasyon o planong pangkabuhayan..."}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs resize-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* V. PREVIOUS TRAINING / EXPERIENCE */}
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 pb-2 border-b border-border">
+                      <Briefcase className="h-4 w-4 text-blue-600" />
+                      <h4 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                        V. {isEn ? "Previous Training / Experience" : "Nakaraang Pagsasanay / Karanasan"}
+                      </h4>
+                    </div>
+
+                    <div className="space-y-4 text-xs">
+                      <div>
+                        <label className="block font-semibold text-muted-foreground mb-1.5">
+                          {isEn ? "Have you attended a similar skills training before?" : "Nakarating o nakadalo ka na ba sa kahalintulad na skills training dati?"}
+                        </label>
+                        <select
+                          value={hasAttendedTraining}
+                          onChange={(e) => setHasAttendedTraining(e.target.value)}
+                          className="w-full max-w-xs px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs cursor-pointer"
+                        >
+                          <option value="No">{isEn ? "No (Hindi pa)" : "No (Hindi pa)"}</option>
+                          <option value="Yes">{isEn ? "Yes (Oo, nakadalo na)" : "Yes (Oo, nakadalo na)"}</option>
+                        </select>
+                      </div>
+
+                      {hasAttendedTraining === "Yes" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 animate-in fade-in duration-150">
+                          <div>
+                            <label className="block font-semibold text-muted-foreground mb-1.5">
+                              {isEn ? "Training / Course Attended:" : "Pangalan ng Kursong Dinaluhan:"}
+                            </label>
+                            <input
+                              type="text"
+                              value={previousTrainingCourse}
+                              onChange={(e) => setPreviousTrainingCourse(e.target.value)}
+                              placeholder="e.g. Basic Baking / Culinary / TESDA SMAW"
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block font-semibold text-muted-foreground mb-1.5">
+                              {isEn ? "Year Completed:" : "Taon Kung Kailan Natapos:"}
+                            </label>
+                            <input
+                              type="text"
+                              value={previousYearCompleted}
+                              onChange={(e) => setPreviousYearCompleted(e.target.value)}
+                              placeholder="e.g. 2024"
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Navigation Buttons for Step 2 */}
+                  <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormStep("select")}
+                      className="px-4 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-muted-foreground cursor-pointer"
+                    >
+                      {isEn ? "← Back to Course" : "← Bumalik sa Kurso"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormStep("review")}
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <span>{isEn ? "Continue to Requirements & Review" : "Magpatuloy sa Requirements at Review"}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* STEP 3: REQUIREMENTS (DOCUMENTS) & REVIEW CONFIRMATION */}
+              {/* ======================================================== */}
+              {formStep === "review" && (
+                <div className="space-y-6 animate-in fade-in duration-200">
+                  {/* IV. REQUIREMENTS */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-border">
+                      <FolderCheck className="h-4 w-4 text-blue-600" />
+                      <h4 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                        IV. {isEn ? "Requirements / Supporting Documents" : "Mga Kinakailangang Dokumento (SSDD Requirements)"}
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Document 1: Request Letter */}
+                      <div className="p-4 rounded-xl border border-border bg-card hover:border-blue-500/40 transition-all space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-xs font-bold text-foreground">1. Request Letter</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {isEn ? "Attached formal request letter for training" : "Kalakip na liham kahilingan para sa pagsasanay"}
+                            </p>
+                          </div>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                            Required
+                          </span>
+                        </div>
+
+                        {requestLetterDoc ? (
+                          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 truncate">
+                              <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                              <span className="font-semibold text-emerald-700 dark:text-emerald-300 truncate">
+                                {requestLetterDoc.name}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setRequestLetterDoc(null)}
+                              className="text-muted-foreground hover:text-rose-600 p-1 cursor-pointer"
+                              title="Remove"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <label className="flex-1 py-2 px-3 rounded-xl border border-border hover:border-blue-500 bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+                              <Upload className="h-3.5 w-3.5 text-blue-600" />
+                              <span>{isEn ? "Upload File" : "Mag-upload"}</span>
+                              <input
+                                type="file"
+                                accept="image/*,.pdf"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0]
+                                  if (f) {
+                                    setRequestLetterDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
+                                  }
+                                }}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setCameraModalDocType("requestLetter")}
+                              className="py-2 px-3 rounded-xl border border-border hover:border-blue-500 bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                              title="Capture with Camera"
+                            >
+                              <Camera className="h-3.5 w-3.5 text-blue-600" />
+                              <span>{isEn ? "Camera" : "Kamera"}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Document 2: Proof of QC Residency / QC ID */}
+                      <div className="p-4 rounded-xl border border-border bg-card hover:border-blue-500/40 transition-all space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-xs font-bold text-foreground">2. Proof of QC Residency / QC ID</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {isEn ? "QCitizen ID, Barangay Certificate of Residency, or Valid ID" : "QCitizen ID, Brgy Certificate of Residency, o Valid ID"}
+                            </p>
+                          </div>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                            Required
+                          </span>
+                        </div>
+
+                        {qcIdDoc ? (
+                          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 truncate">
+                              <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                              <span className="font-semibold text-emerald-700 dark:text-emerald-300 truncate">
+                                {qcIdDoc.name}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setQcIdDoc(null)}
+                              className="text-muted-foreground hover:text-rose-600 p-1 cursor-pointer"
+                              title="Remove"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <label className="flex-1 py-2 px-3 rounded-xl border border-border hover:border-blue-500 bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+                              <Upload className="h-3.5 w-3.5 text-blue-600" />
+                              <span>{isEn ? "Upload File" : "Mag-upload"}</span>
+                              <input
+                                type="file"
+                                accept="image/*,.pdf"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0]
+                                  if (f) {
+                                    setQcIdDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
+                                  }
+                                }}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setCameraModalDocType("qcId")}
+                              className="py-2 px-3 rounded-xl border border-border hover:border-blue-500 bg-muted/20 hover:bg-muted/40 text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                              title="Capture with Camera"
+                            >
+                              <Camera className="h-3.5 w-3.5 text-blue-600" />
+                              <span>{isEn ? "Camera" : "Kamera"}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary Review Card */}
+                  <div className="space-y-3 pt-4 border-t border-border">
+                    <label className="block text-xs font-bold text-foreground uppercase tracking-wide">
+                      {isEn ? "Review Application Summary" : "Repasuhin ang Buod ng Aplikasyon"}
+                    </label>
+                    {(() => {
+                      const rawPicked = courses.find((c) => c.id === applyCourseId) || courses[0]
+                      const picked = getLocalizedCourse(rawPicked)
+                      return (
+                        <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-2 text-xs">
+                          <div className="flex justify-between font-bold text-sm text-foreground">
+                            <span>{picked.title}</span>
+                            <span className="text-blue-600">{localizeDuration(picked.duration)}</span>
+                          </div>
+                          <p className="text-muted-foreground"><strong className="text-foreground">{isEn ? "Training Batch:" : "Batch ng Pagsasanay:"}</strong> {localizeBatch(picked.batch)}</p>
+                          <p className="text-muted-foreground"><strong className="text-foreground">{isEn ? "Application Period:" : "Panahon ng Aplikasyon:"}</strong> {localizeDateStr(picked.applicationOpens || "July 1, 2026")} - {localizeDateStr(picked.applicationDeadline || "July 15, 2026")}</p>
+                          <p className="text-muted-foreground"><strong className="text-foreground">{isEn ? "Training Schedule:" : "Simula ng Pagsasanay:"}</strong> {localizeDateStr(picked.trainingStarts || "August 1 - 30, 2026")}</p>
+                          <p className="text-muted-foreground"><strong className="text-foreground">{isEn ? "Applicant:" : "Aplikante:"}</strong> {profile.firstName} {profile.lastName} • {sex}, {age} • {civilStatus} • Brgy. {barangay}</p>
+                          <p className="text-muted-foreground"><strong className="text-foreground">{isEn ? "Education & Purpose:" : "Edukasyon at Layunin:"}</strong> {highestEducation} • {trainingPurpose === "Other" && otherPurpose ? otherPurpose : trainingPurpose}</p>
+                        </div>
+                      )
+                    })()}
+
+                    <label className="flex items-start gap-2.5 pt-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isAttested}
+                        onChange={(e) => setIsAttested(e.target.checked)}
+                        className="mt-0.5 rounded border-border text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span className="text-xs text-muted-foreground leading-relaxed">
+                        {isEn
+                          ? "I hereby certify that all information provided is true and correct, and I commit to faithfully attend all scheduled training sessions for this course."
+                          : isBis
+                          ? "Gipamatud-an nako nga tinuod ang tanang impormasyon ug ako matinud-anong motambong sa tanang adlaw sa pagbansay."
+                          : "Pinatutunayan ko na totoo ang lahat ng impormasyong nakatala at ako ay tapat na dadalo sa lahat ng takdang araw ng pagsasanay sa kursong ito."}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Submit & Navigation Buttons */}
+                  <div className="pt-2 flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormStep("profile")}
+                      className="px-4 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-muted-foreground cursor-pointer"
+                    >
+                      {isEn ? "← Back to Profile" : "← Bumalik sa Impormasyon"}
+                    </button>
+                    <div className="flex items-center gap-2">
+                      {isRevising && (
+                        <button
+                          type="button"
+                          onClick={() => setIsRevising(false)}
+                          className="px-4 py-2.5 rounded-xl border border-border hover:bg-muted/40 text-xs font-bold text-muted-foreground cursor-pointer"
+                        >
+                          {isEn ? "Cancel" : "Kanselahin"}
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || !isAttested}
+                        className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                            <span>{isEn ? "Submitting..." : "Isinusumite..."}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>{isEn ? "Submit Application" : "Isumite ang Aplikasyon"}</span>
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </form>
           )}
         </div>
@@ -2314,6 +2869,38 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             </div>
           </div>
         </div>
+      )}
+
+      {cameraModalDocType && (
+        <DocumentCameraModal
+          isOpen={!!cameraModalDocType}
+          docTitle={
+            cameraModalDocType === "requestLetter"
+              ? isEn
+                ? "Request Letter"
+                : "Liham Kahilingan (Request Letter)"
+              : isEn
+              ? "Proof of QC Residency / QC ID"
+              : "Katunayan ng Paninirahan / QC ID"
+          }
+          onClose={() => setCameraModalDocType(null)}
+          onCapture={(file, dataUrl) => {
+            if (cameraModalDocType === "requestLetter") {
+              setRequestLetterDoc({
+                file,
+                dataUrl: dataUrl || URL.createObjectURL(file),
+                name: file.name || "request-letter-camera.jpg",
+              })
+            } else if (cameraModalDocType === "qcId") {
+              setQcIdDoc({
+                file,
+                dataUrl: dataUrl || URL.createObjectURL(file),
+                name: file.name || "qcid-proof-camera.jpg",
+              })
+            }
+            setCameraModalDocType(null)
+          }}
+        />
       )}
     </div>
   )
