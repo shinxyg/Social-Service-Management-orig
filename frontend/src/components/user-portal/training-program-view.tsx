@@ -966,6 +966,8 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border whitespace-nowrap ${
                           availableSlots === 0
                             ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                            : availableSlots < totalSlots
+                            ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
                             : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                         }`}
                       >
@@ -975,7 +977,9 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             : isBis
                             ? "Puno na (0 slots)"
                             : "Puno na (0 slots)"
-                          : `${availableSlots} ${isEn ? "slots left" : isBis ? "slot nahabilin" : "slots natitira"}`}
+                          : availableSlots < totalSlots
+                          ? `${availableSlots} ${isEn ? "slots left" : isBis ? "slot nahabilin" : "slots left"}`
+                          : `${totalSlots} slots`}
                       </span>
                     </div>
 
@@ -1000,26 +1004,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
                         <span><strong className="text-foreground">Training Starts:</strong> {course.trainingStarts || "August 1 - 30, 2026"}</span>
-                      </div>
-                    </div>
-
-                    {}
-                    <div className="pt-2">
-                      <div className="flex justify-between text-[11px] font-medium text-muted-foreground mb-1">
-                        <span>{isEn ? "Slots filled" : isBis ? "Mga slot nga napuno" : "Mga slot na napuno"}</span>
-                        <span className="font-mono">{enrolledCount} / {totalSlots} {isEn ? "slots" : "slots"} ({slotPercent}%)</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-muted/60 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-300 ${
-                            slotPercent >= 100
-                              ? "bg-rose-500"
-                              : slotPercent > 70
-                              ? "bg-amber-500"
-                              : "bg-blue-600"
-                          }`}
-                          style={{ width: `${slotPercent}%` }}
-                        />
                       </div>
                     </div>
                   </div>
