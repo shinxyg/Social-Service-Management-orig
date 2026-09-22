@@ -252,9 +252,10 @@ export default function SoloParentApplicationWizard({
   const userProfile = propUserProfile || getCurrentUserProfile()
 
   const STEPS = [
-    { id: 1, label: "APPLICATION FORM" },
-    { id: 2, label: "REQUIRED DOCUMENTS" },
-    { id: 3, label: "REVIEW & SUBMIT" },
+    { id: 1, label: "VERIFICATION" },
+    { id: 2, label: "APPLICATION FORM" },
+    { id: 3, label: "REQUIRED DOCUMENTS" },
+    { id: 4, label: "REVIEW & SUBMIT" },
   ]
 
   const [step, setStep] = useState(1)
@@ -273,7 +274,7 @@ export default function SoloParentApplicationWizard({
   const [soloParentStatus, setSoloParentStatus] = useState("")
   const [employmentStatus, setEmploymentStatus] = useState("")
 
-  // Step 1: Section A. Applicant Information
+  // Step 2: Section A. Applicant Information
   const [formData, setFormData] = useState({
     firstName: userProfile?.firstName || "",
     middleName: userProfile?.middleName || "",
@@ -296,18 +297,18 @@ export default function SoloParentApplicationWizard({
     email: userProfile?.email || "soloparent@example.com",
   })
 
-  // Step 1: Section B. Solo Parent Information
+  // Step 2: Section B. Solo Parent Information
   const [soloParentCategory, setSoloParentCategory] = useState("Unmarried parent")
   const [numberOfDependents, setNumberOfDependents] = useState("2")
-  const [ageOfYoungestDependent, setAgeOfYoungestDependent] = useState("4")
+  const [ageOfYoungestDependent, setAgeOfYoungestDependent] = useState("5")
 
-  // Step 1: Section C. Employment & Income Information
+  // Step 2: Section C. Employment & Income Information
   const [occupation, setOccupation] = useState("")
   const [employerOrIncomeSource, setEmployerOrIncomeSource] = useState("")
   const [monthlyIncome, setMonthlyIncome] = useState("")
   const [otherSourceOfIncome, setOtherSourceOfIncome] = useState("")
 
-  // Step 1: Section D. Other Government Assistance
+  // Step 2: Section D. Other Government Assistance
   const [receivingGovAssistance, setReceivingGovAssistance] = useState<"No" | "Yes">("No")
   const [govAssistanceProgramName, setGovAssistanceProgramName] = useState("")
   const [govAssistanceAmountFreq, setGovAssistanceAmountFreq] = useState("")
@@ -331,7 +332,7 @@ export default function SoloParentApplicationWizard({
     }, 600)
   }
 
-  // Step 2: Documents based on Employment Status
+  // Step 3: Documents based on Employment Status
   const getProofDocumentLabel = () => {
     if (employmentStatus === "Unemployed") {
       return {
@@ -403,16 +404,16 @@ export default function SoloParentApplicationWizard({
     })
   }
 
-  // Step 3: Submission & Validation
+  // Step 4: Submission & Validation
   const [privacyAgreed, setPrivacyAgreed] = useState(false)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [reference, setReference] = useState("")
 
-  const step1Valid = Boolean(
-    soloParentIdNumber.trim() &&
-    employmentStatus &&
+  const step1Valid = Boolean(soloParentIdNumber.trim() && employmentStatus)
+
+  const step2Valid = Boolean(
     formData.firstName.trim() &&
     formData.lastName.trim() &&
     formData.qcidNumber.trim() &&
@@ -424,7 +425,7 @@ export default function SoloParentApplicationWizard({
     ageOfYoungestDependent.trim()
   )
 
-  const step2Valid = requiredDocuments.every(
+  const step3Valid = requiredDocuments.every(
     (doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0
   )
 
@@ -437,15 +438,19 @@ export default function SoloParentApplicationWizard({
       setAttemptedNext(true)
       return
     }
+    if (step === 3 && !step3Valid) {
+      setAttemptedNext(true)
+      return
+    }
 
     setAttemptedNext(false)
-    if (returnToReview && step1Valid && step2Valid) {
-      setStep(3)
+    if (returnToReview && step1Valid && step2Valid && step3Valid) {
+      setStep(4)
       setReturnToReview(false)
       return
     }
     setReturnToReview(false)
-    setStep((s) => Math.min(s + 1, 3))
+    setStep((s) => Math.min(s + 1, 4))
   }
 
   const goBack = () => {
@@ -468,9 +473,8 @@ export default function SoloParentApplicationWizard({
       documentLabel: doc.label,
       files: (uploadedDocs[doc.id] || []).map((f) => ({
         filename: f.name,
-        previewUrl: uploadedDocsBase64[doc.id] || f.name,
-        fileSize: f.size,
-        uploadedAt: new Date().toISOString(),
+        size: f.size,
+        dataUrl: uploadedDocsBase64[doc.id] || null,
       })),
     }))
 
@@ -676,9 +680,9 @@ export default function SoloParentApplicationWizard({
 
         {/* Main Step Content */}
         <div className="p-6 min-h-90">
-          {/* ================= STEP 1: APPLICATION FORM ================= */}
+          {/* ================= STEP 1: VERIFICATION & ELIGIBILITY ================= */}
           {step === 1 && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in duration-150">
               {/* Notice Box */}
               <div className="bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-4 flex items-start gap-3.5 shadow-xs">
                 <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
@@ -693,88 +697,90 @@ export default function SoloParentApplicationWizard({
               </div>
 
               {/* Primary Verification & Employment Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-border pb-5">
-                {/* Solo Parent ID Number */}
-                <div className="sm:col-span-2">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wide block text-foreground">
-                      SOLO PARENT ID NUMBER <span className="text-red-500">*</span>
-                    </label>
-                    {isIdVerified && soloParentIdNumber.trim() && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-0.5 rounded-full">
-                        <Check className="w-3 h-3" /> Solo Parent ID Verified
-                      </span>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Solo Parent ID Number */}
+                  <div className="sm:col-span-2">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wide block text-foreground">
+                        SOLO PARENT ID NUMBER <span className="text-red-500">*</span>
+                      </label>
+                      {isIdVerified && soloParentIdNumber.trim() && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-0.5 rounded-full">
+                          <Check className="w-3 h-3" /> Solo Parent ID Verified
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex-1">
+                        <TextInput
+                          prefix="SP-"
+                          value={soloParentIdNumber}
+                          onChange={(v) => {
+                            setSoloParentIdNumber(v)
+                            setIsIdVerified(true)
+                            setSoloParentStatus("Active / Verified Solo Parent (QC SSDD Recorded)")
+                            setVerifyNotice(`Verified Record: ${formData.firstName} ${formData.lastName}`)
+                          }}
+                          placeholder="137404-2026-847708"
+                          verified={isIdVerified && Boolean(soloParentIdNumber.trim())}
+                          invalid={attemptedNext && !soloParentIdNumber.trim()}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleVerifySoloParentId}
+                        disabled={!soloParentIdNumber.trim() || isVerifying}
+                        className={`px-4 py-2 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 h-10 ${
+                          isIdVerified && soloParentIdNumber.trim()
+                            ? "bg-emerald-600 hover:bg-emerald-700"
+                            : "bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        }`}
+                      >
+                        {isVerifying ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Verifying...</span>
+                          </>
+                        ) : isIdVerified && soloParentIdNumber.trim() ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>VERIFIED</span>
+                          </>
+                        ) : (
+                          <span>VERIFY SOLO PARENT ID</span>
+                        )}
+                      </button>
+                    </div>
+                    {verifyNotice && isIdVerified && soloParentIdNumber.trim() && (
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1 font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        {verifyNotice}
+                      </p>
+                    )}
+                    {attemptedNext && !soloParentIdNumber.trim() && (
+                      <p className="text-xs text-red-500 mt-1 font-medium">Please enter your Solo Parent ID Number.</p>
                     )}
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <div className="flex-1">
-                      <TextInput
-                        prefix="SP-"
-                        value={soloParentIdNumber}
-                        onChange={(v) => {
-                          setSoloParentIdNumber(v)
-                          setIsIdVerified(true)
-                          setSoloParentStatus("Active / Verified Solo Parent (QC SSDD Recorded)")
-                          setVerifyNotice(`Verified Record: ${formData.firstName} ${formData.lastName}`)
-                        }}
-                        placeholder="137404-2026-847708"
-                        verified={isIdVerified && Boolean(soloParentIdNumber.trim())}
-                        invalid={attemptedNext && !soloParentIdNumber.trim()}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleVerifySoloParentId}
-                      disabled={!soloParentIdNumber.trim() || isVerifying}
-                      className={`px-4 py-2 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 h-10 ${
-                        isIdVerified && soloParentIdNumber.trim()
-                          ? "bg-emerald-600 hover:bg-emerald-700"
-                          : "bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      }`}
-                    >
-                      {isVerifying ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Verifying...</span>
-                        </>
-                      ) : isIdVerified && soloParentIdNumber.trim() ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>VERIFIED</span>
-                        </>
-                      ) : (
-                        <span>VERIFY SOLO PARENT ID</span>
-                      )}
-                    </button>
-                  </div>
-                  {verifyNotice && isIdVerified && soloParentIdNumber.trim() && (
-                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1 font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                      {verifyNotice}
-                    </p>
-                  )}
-                  {attemptedNext && !soloParentIdNumber.trim() && (
-                    <p className="text-xs text-red-500 mt-1">Please enter your Solo Parent ID Number.</p>
-                  )}
-                </div>
 
-                {/* Solo Parent Status */}
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide block text-foreground mb-1.5">
-                    SOLO PARENT STATUS <span className="text-red-500">*</span>
-                  </label>
-                  <LockedField
-                    value={
-                      isIdVerified && soloParentIdNumber.trim()
-                        ? soloParentStatus || "Active / Verified Solo Parent"
-                        : ""
-                    }
-                    placeholder="Auto-filled upon Solo Parent ID verification"
-                  />
+                  {/* Solo Parent Status */}
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-wide block text-foreground mb-1.5">
+                      SOLO PARENT STATUS <span className="text-red-500">*</span>
+                    </label>
+                    <LockedField
+                      value={
+                        isIdVerified && soloParentIdNumber.trim()
+                          ? soloParentStatus || "Active / Verified Solo Parent"
+                          : ""
+                      }
+                      placeholder="Auto-filled upon Solo Parent ID verification"
+                    />
+                  </div>
                 </div>
 
                 {/* Employment Status */}
-                <div className="sm:col-span-3">
+                <div>
                   <label className="text-xs font-semibold uppercase tracking-wide block text-foreground mb-1.5">
                     EMPLOYMENT STATUS <span className="text-red-500">*</span>
                   </label>
@@ -790,13 +796,34 @@ export default function SoloParentApplicationWizard({
                     invalid={attemptedNext && !employmentStatus}
                   />
                   {attemptedNext && !employmentStatus && (
-                    <p className="text-xs text-red-500 mt-1">Please select your Employment Status.</p>
+                    <p className="text-xs text-red-500 mt-1 font-medium">Please select your Employment Status.</p>
                   )}
                 </div>
               </div>
 
+              {attemptedNext && !step1Valid && (
+                <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>Please provide a valid Solo Parent ID Number and select your Employment Status to continue.</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ================= STEP 2: APPLICATION FORM ================= */}
+          {step === 2 && (
+            <div className="space-y-6 animate-in fade-in duration-150">
+              <div className="border-b border-border pb-3">
+                <h2 className="text-base font-bold text-foreground uppercase tracking-wide">
+                  APPLICATION FORM
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Please review and complete the applicant information and family details below.
+                </p>
+              </div>
+
               {/* A. APPLICANT INFORMATION */}
-              <div className="space-y-4 pt-2">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
@@ -1098,6 +1125,18 @@ export default function SoloParentApplicationWizard({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                      Employment Status (from Step 1)
+                    </label>
+                    <input
+                      type="text"
+                      value={employmentStatus || "Not Specified"}
+                      readOnly
+                      disabled
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800 text-foreground font-semibold cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
                       Occupation
                     </label>
                     <input
@@ -1132,7 +1171,7 @@ export default function SoloParentApplicationWizard({
                       className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground font-mono"
                     />
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
                       Other Source of Income
                     </label>
@@ -1244,18 +1283,18 @@ export default function SoloParentApplicationWizard({
                 </div>
               </div>
 
-              {attemptedNext && !step1Valid && (
+              {attemptedNext && !step2Valid && (
                 <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-                  <span>Please ensure your Solo Parent ID is entered, Employment Status is selected, and all required personal details are filled.</span>
+                  <span>Please ensure all required personal details, family members, and contact numbers are provided.</span>
                 </div>
               )}
             </div>
           )}
 
-          {/* ================= STEP 2: REQUIRED DOCUMENTS ================= */}
-          {step === 2 && (
-            <div className="space-y-6">
+          {/* ================= STEP 3: REQUIRED DOCUMENTS ================= */}
+          {step === 3 && (
+            <div className="space-y-6 animate-in fade-in duration-150">
               <div className="border-b border-border pb-3">
                 <h2 className="text-base font-bold text-foreground uppercase tracking-wide">
                   REQUIRED DOCUMENTS
@@ -1381,12 +1420,19 @@ export default function SoloParentApplicationWizard({
                   )
                 })}
               </div>
+
+              {attemptedNext && !step3Valid && (
+                <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>Please upload all the required documents before proceeding to review.</span>
+                </div>
+              )}
             </div>
           )}
 
-          {/* ================= STEP 3: REVIEW & SUBMIT ================= */}
-          {step === 3 && (
-            <div className="space-y-6">
+          {/* ================= STEP 4: REVIEW & SUBMIT ================= */}
+          {step === 4 && (
+            <div className="space-y-6 animate-in fade-in duration-150">
               <div className="border-b border-border pb-3">
                 <h2 className="text-base font-bold text-foreground uppercase tracking-wide">
                   REVIEW & SUBMIT INFORMATION
@@ -1396,12 +1442,30 @@ export default function SoloParentApplicationWizard({
                 </p>
               </div>
 
-              {/* Preliminary & Applicant Information */}
-              <AccordionSection title="Applicant Information" onEdit={() => setStep(1)}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              {/* Preliminary & Verification */}
+              <AccordionSection
+                title="1. Solo Parent ID & Verification"
+                onEdit={() => {
+                  setStep(1)
+                  setReturnToReview(true)
+                }}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                   <ReviewField label="Solo Parent ID (SPIC)" value={soloParentIdNumber.startsWith("SP-") ? soloParentIdNumber : `SP-${soloParentIdNumber}`} />
                   <ReviewField label="Solo Parent Status" value={soloParentStatus || "Active / Verified Solo Parent"} />
                   <ReviewField label="Employment Status" value={employmentStatus} />
+                </div>
+              </AccordionSection>
+
+              {/* Applicant Information */}
+              <AccordionSection
+                title="2. Applicant Information"
+                onEdit={() => {
+                  setStep(2)
+                  setReturnToReview(true)
+                }}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <ReviewField label="Full Name" value={fullApplicantName} />
                   <ReviewField label="Date of Birth / Age" value={`${formData.birthDate} (Age: ${formData.age})`} />
                   <ReviewField label="Sex / Civil Status" value={`${formData.sex} / ${formData.civilStatus}`} />
@@ -1412,7 +1476,13 @@ export default function SoloParentApplicationWizard({
               </AccordionSection>
 
               {/* Solo Parent & Employment Info */}
-              <AccordionSection title="Solo Parent, Employment & Income Information" onEdit={() => setStep(1)}>
+              <AccordionSection
+                title="3. Solo Parent, Employment & Other Assistance"
+                onEdit={() => {
+                  setStep(2)
+                  setReturnToReview(true)
+                }}
+              >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <ReviewField label="Category / Reason" value={soloParentCategory} />
                   <ReviewField label="Dependents Info" value={`${numberOfDependents} dependent(s) (Youngest Age: ${ageOfYoungestDependent})`} />
@@ -1426,7 +1496,13 @@ export default function SoloParentApplicationWizard({
               </AccordionSection>
 
               {/* Uploaded Documents */}
-              <AccordionSection title="Required Documents" onEdit={() => setStep(2)}>
+              <AccordionSection
+                title="4. Required Documents"
+                onEdit={() => {
+                  setStep(3)
+                  setReturnToReview(true)
+                }}
+              >
                 <div className="space-y-2 text-xs">
                   {requiredDocuments.map((doc) => {
                     const uploaded = Boolean(uploadedDocs[doc.id]?.length)
@@ -1468,13 +1544,17 @@ export default function SoloParentApplicationWizard({
             {step === 1 ? "CANCEL" : "BACK"}
           </button>
 
-          {step < 3 ? (
+          {step < 4 ? (
             <button
               type="button"
               onClick={goNext}
               className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer shadow-xs"
             >
-              NEXT
+              {step === 1
+                ? "NEXT: APPLICATION FORM"
+                : step === 2
+                ? "NEXT: REQUIRED DOCUMENTS"
+                : "NEXT: REVIEW & SUBMIT"}
             </button>
           ) : (
             <button
