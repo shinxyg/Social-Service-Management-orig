@@ -597,13 +597,8 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   // IV. Requirements (Supporting Documents)
   const [requestLetterDoc, setRequestLetterDoc] = useState<{ file: File | null; dataUrl: string; name: string } | null>(null)
   const [qcIdDoc, setQcIdDoc] = useState<{ file: File | null; dataUrl: string; name: string } | null>(null)
-  const [cameraModalDocType, setCameraModalDocType] = useState<"requestLetter" | "qcId" | null>(null)
-  const [sampleDocModal, setSampleDocModal] = useState<{
-    title: string
-    label: string
-    description?: string
-    image: string
-  } | null>(null)
+  const [idPicDoc, setIdPicDoc] = useState<{ file: File | null; dataUrl: string; name: string } | null>(null)
+  const [cameraModalDocType, setCameraModalDocType] = useState<"requestLetter" | "qcId" | "idPic" | null>(null)
 
   const fetchTrainingData = async () => {
     try {
@@ -773,6 +768,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         documents: {
           requestLetter: requestLetterDoc?.name || null,
           qcIdProof: qcIdDoc?.name || null,
+          idPicProof: idPicDoc?.name || null,
         },
       },
     }
@@ -2100,24 +2096,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             <Camera className="h-3.5 w-3.5" />
                             <span>TAKE PHOTO (CAMERA)</span>
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSampleDocModal({
-                                title: isEn ? "Request Letter Sample" : "Halimbawa ng Liham Kahilingan (Request Letter)",
-                                label: isEn ? "Sample Formal Request Letter / Letter of Intent" : "Sample Formal Request Letter / Letter of Intent",
-                                description: isEn
-                                  ? "Sample formal letter addressed to SSDD or Quezon City Skills Training Center stating your intent to enroll."
-                                  : "Halimbawa ng pormal na liham kahilingan na nakadirekta sa SSDD o Quezon City Skills Training Center para sa pagsasanay.",
-                                image: "/samples/LETTER OF INTENT.png",
-                              })
-                            }
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-blue-600" />
-                            <span>SAMPLE DOCUMENT</span>
-                          </button>
                         </div>
 
                         {requestLetterDoc && (
@@ -2192,24 +2170,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             <Camera className="h-3.5 w-3.5" />
                             <span>TAKE PHOTO (CAMERA)</span>
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSampleDocModal({
-                                title: isEn ? "QC ID / Proof of QC Residency Sample" : "Halimbawa ng QC ID / Katunayan ng Paninirahan",
-                                label: isEn ? "Sample QCitizen ID or Barangay Certificate of Residency" : "Sample QCitizen ID / Barangay Certificate of Residency",
-                                description: isEn
-                                  ? "Sample Quezon City QCitizen ID card or Barangay Certificate of Residency proving residence in Quezon City."
-                                  : "Halimbawa ng QCitizen ID o Barangay Certificate of Residency na nagpapatunay ng paninirahan sa Lungsod Quezon.",
-                                image: "/samples/PROOF OF RESIDENCE.webp",
-                              })
-                            }
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-muted/40 hover:bg-muted/70 text-foreground text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-blue-600" />
-                            <span>SAMPLE DOCUMENT</span>
-                          </button>
                         </div>
 
                         {qcIdDoc && (
@@ -2223,6 +2183,80 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             <button
                               type="button"
                               onClick={() => setQcIdDoc(null)}
+                              className="p-1 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors cursor-pointer"
+                              title="Remove"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Document 3: 2x2 ID Picture / Barangay Certificate */}
+                      <div className="border border-border dark:border-slate-800 bg-card/60 dark:bg-slate-900/40 rounded-xl p-5 transition-colors">
+                        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground uppercase tracking-wide">
+                          <span>2X2 ID PICTURE / BARANGAY CERTIFICATE</span>
+                          <span className="text-red-500">*</span>
+                          {idPicDoc && (
+                            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shrink-0 ml-1">
+                              <Check className="h-2.5 w-2.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {isEn
+                            ? "Recent 2x2 ID picture (white background) or Barangay Certificate of Indigency."
+                            : "Kamakailang 2x2 ID picture (puting background) o Barangay Certificate."}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                          <input
+                            type="file"
+                            id="upload-id-pic"
+                            accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) {
+                                setIdPicDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
+                              }
+                              e.target.value = ""
+                            }}
+                          />
+                          <label
+                            htmlFor="upload-id-pic"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide cursor-pointer hover:bg-blue-700 transition-colors shadow-xs"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            <span>UPLOAD PHOTO</span>
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={() => setCameraModalDocType("idPic")}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tracking-wide cursor-pointer transition-colors shadow-xs"
+                          >
+                            <Camera className="h-3.5 w-3.5" />
+                            <span>TAKE PHOTO (CAMERA)</span>
+                          </button>
+                        </div>
+
+                        {idPicDoc && (
+                          <div className="mt-3.5 p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between text-xs max-w-md">
+                            <div className="flex items-center gap-2 truncate">
+                              <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                              <span className="font-semibold text-emerald-700 dark:text-emerald-300 truncate">
+                                {idPicDoc.name}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setIdPicDoc(null)}
                               className="p-1 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors cursor-pointer"
                               title="Remove"
                             >
@@ -2947,9 +2981,13 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               ? isEn
                 ? "Request Letter"
                 : "Liham Kahilingan (Request Letter)"
+              : cameraModalDocType === "qcId"
+              ? isEn
+                ? "Proof of QC Residency / QC ID"
+                : "Katunayan ng Paninirahan / QC ID"
               : isEn
-              ? "Proof of QC Residency / QC ID"
-              : "Katunayan ng Paninirahan / QC ID"
+              ? "2x2 ID Picture / Barangay Certificate"
+              : "2x2 ID Picture / Barangay Certificate"
           }
           onClose={() => setCameraModalDocType(null)}
           onCapture={(file, dataUrl) => {
@@ -2965,53 +3003,16 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 dataUrl: dataUrl || URL.createObjectURL(file),
                 name: file.name || "qcid-proof-camera.jpg",
               })
+            } else if (cameraModalDocType === "idPic") {
+              setIdPicDoc({
+                file,
+                dataUrl: dataUrl || URL.createObjectURL(file),
+                name: file.name || "id-pic-camera.jpg",
+              })
             }
             setCameraModalDocType(null)
           }}
         />
-      )}
-
-      {sampleDocModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card border border-border w-full max-w-xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95">
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-foreground">{sampleDocModal.title}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{sampleDocModal.label}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSampleDocModal(null)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto space-y-3 text-center">
-              <div className="max-h-[60vh] overflow-hidden rounded-xl border border-border bg-muted/20 flex items-center justify-center p-2">
-                <img
-                  src={sampleDocModal.image}
-                  alt={sampleDocModal.title}
-                  className="max-h-[55vh] max-w-full rounded-lg object-contain"
-                />
-              </div>
-              {sampleDocModal.description && (
-                <p className="text-xs text-muted-foreground text-left bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl leading-relaxed">
-                  {sampleDocModal.description}
-                </p>
-              )}
-            </div>
-            <div className="p-4 border-t border-border flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSampleDocModal(null)}
-                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer"
-              >
-                {isEn ? "Close" : isBis ? "Isira" : "Isara"}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )
