@@ -30,7 +30,6 @@ import {
   HeartPulse,
   Flame,
   ChefHat,
-  Building,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid, type LoggedInUserProfile } from "../../utils/userProfile"
