@@ -32,59 +32,47 @@ function getLocalizedSoloParentRequirements(language: string): RequirementItem[]
   if (language === "en") {
     return [
       {
-        title: "Original Barangay Certificate of Indigency",
-        desc: "Original Barangay Certificate of Indigency certifying financial need and legitimate residency.",
+        title: "1. Solo Parent Identification Card (SPIC)",
+        desc: "Photocopy or clear image of your valid Solo Parent ID (SPIC).",
       },
       {
-        title: "Certificate of Enrollment",
-        desc: "Official Certificate of Enrollment or Registration from school for each schooling child/beneficiary.",
+        title: "2. QCitizen ID (QC ID)",
+        desc: "Photocopy or clear image of your valid QCitizen ID card.",
       },
       {
-        title: "QCitizen ID",
-        desc: "Valid QCitizen ID of the applicant / Solo Parent with photo and signature.",
-      },
-      {
-        title: "Solo Parent ID / Certification",
-        desc: "Valid Solo Parent ID card or official Solo Parent Certification issued by QC SSDD.",
+        title: "3. Proof of Indigency / Income (based on Employment Status)",
+        desc: "Unemployed: Affidavit of No Employment | Employed: Latest ITR or Payslip (1 month) | Informal worker: Proof of income or Barangay Certificate of Indigency.",
       },
     ]
   }
   if (language === "bis") {
     return [
       {
-        title: "Original Barangay Certificate of Indigency",
-        desc: "Orihinal nga Barangay Certificate of Indigency nga nagpamatuod sa panginahanglanon sa pinansyal.",
+        title: "1. Solo Parent Identification Card (SPIC)",
+        desc: "Photocopy o klaro nga hulagway sa imong balido nga Solo Parent ID (SPIC).",
       },
       {
-        title: "Certificate of Enrollment",
-        desc: "Opisyal nga Certificate of Enrollment o Rehistrasyon gikan sa eskwelahan sa matag nag-eskwela nga anak.",
+        title: "2. QCitizen ID (QC ID)",
+        desc: "Photocopy o klaro nga hulagway sa imong balido nga QCitizen ID card.",
       },
       {
-        title: "QCitizen ID",
-        desc: "Balido nga QCitizen ID card sa aplikante / Solo Parent.",
-      },
-      {
-        title: "Solo Parent ID / Sertipikasyon",
-        desc: "Balido nga Solo Parent ID card o opisyal nga Sertipikasyon gikan sa QC SSDD.",
+        title: "3. Pruweba sa Indigency / Kita (depende sa kahimtang sa trabaho)",
+        desc: "Walay trabaho: Affidavit of No Employment | Adunay trabaho: Pinakabag-ong ITR o Payslip (1 ka buwan) | Informal worker: Pruweba sa kita o Barangay Certificate of Indigency.",
       },
     ]
   }
   return [
     {
-      title: "Original Barangay Certificate of Indigency",
-      desc: "Orihinal na Barangay Certificate of Indigency na nagpapatunay ng pangangailangan sa tulong-pinansyal at paninirahan.",
+      title: "1. Solo Parent Identification Card (SPIC)",
+      desc: "Photocopy o malinaw na larawan ng inyong valid Solo Parent ID (SPIC).",
     },
     {
-      title: "Certificate of Enrollment",
-      desc: "Opisyal na Certificate of Enrollment o Rehistrasyon mula sa paaralan para sa bawat nag-aaral na anak/benepisyaryo.",
+      title: "2. QCitizen ID (QC ID)",
+      desc: "Photocopy o malinaw na larawan ng inyong valid QCitizen ID card.",
     },
     {
-      title: "QCitizen ID",
-      desc: "Valid QCitizen ID ng aplikante / Solong Magulang na may litrato at lagda.",
-    },
-    {
-      title: "Solo Parent ID / Certification",
-      desc: "Valid Solo Parent ID card o opisyal na Solo Parent Certification mula sa QC SSDD.",
+      title: "3. Patunay ng Indigency / Kita (depende sa employment status)",
+      desc: "Walang trabaho: Affidavit of No Employment | May trabaho: Latest ITR o Payslip (1 buwan) | Informal worker: Patunay ng kita o Barangay Certificate of Indigency.",
     },
   ]
 }
