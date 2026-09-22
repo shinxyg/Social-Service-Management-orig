@@ -149,40 +149,41 @@ export const CHILD_WELFARE_PROGRAMS: ChildWelfareProgram[] = [
       "Children with Disabilities (CWD) enrolled in formal or SPED classes.",
     ],
     childRequirements: [
-      "Certificate of Enrollment – Original",
-      "Recent School ID – if available",
+      "Birth certificate, if available",
+      "School documents, if applicable",
     ],
     parentRequirements: [
-      "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
-      "Valid Government ID / preferably QCitizen ID",
+      "Upload available documents",
+      "Referral letter, if applicable",
+      "Medical/police/barangay documents, if applicable",
     ],
     specialRequirements: [
       "Social Welfare Case Assessment",
     ],
     documents: [
       {
-        id: "barangayIndigency",
-        label: "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+        id: "availableDocs",
+        label: "Upload available documents",
         required: true,
         sampleImage: "/samples/BARANGAY CERTIFICATE.webp",
       },
       {
-        id: "certEnrollment",
-        label: "Certificate of Enrollment – Original",
-        required: true,
-        sampleImage: "/samples/sample_valid_id.png",
-      },
-      {
-        id: "schoolId",
-        label: "Recent School ID – if available",
+        id: "referralLetter",
+        label: "Referral letter, if applicable",
         required: false,
         sampleImage: "/samples/sample_valid_id.png",
       },
       {
-        id: "validGovId",
-        label: "Valid Government ID / preferably QCitizen ID",
-        required: true,
-        sampleImage: "/samples/QC ID.png",
+        id: "birthCert",
+        label: "Birth certificate, if available",
+        required: false,
+        sampleImage: "/samples/sample_valid_id.png",
+      },
+      {
+        id: "medPoliceBrgyDocs",
+        label: "Medical/police/barangay documents, if applicable",
+        required: false,
+        sampleImage: "/samples/sample_valid_id.png",
       },
     ],
     submitButtonText: "SUBMIT APPLICATION",
@@ -270,52 +271,52 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
         receivedOptions: ["Oo, nakatanggap na ako", "Hindi pa"],
         assistanceTypeLabel: "Piliin ang uri ng tulong *",
         assistanceTypes: [
-          "Educational Financial Assistance (₱5,000 / Student)",
-          "School Supplies & Learning Materials Support",
-          "Tuition / Miscellaneous Fee Subsidy",
-          "Special Education (SPED) / CWD Learning Assistance",
+          "Child Protection Services",
+          "Alternative Child Care",
+          "Rehabilitative Counseling",
         ],
         whatIsIt: "Ang Child Welfare Services ay nagbibigay ng komprehensibong pangangalaga, proteksyon, at serbisyong panlipunan para sa mga maralitang bata at kabataan sa Lungsod Quezon.",
         whoIsEligible: [
-          "Mga maralitang bata at kabataang residente ng Quezon City na kasalukuyang nag-aaral sa elementarya, hayskul, o kolehiyo.",
+          "Mga bata at kabataang residente ng Quezon City na nangangailangan ng proteksyon, pangangalaga, o counseling.",
           "Mga anak o benepisyaryo ng rehistradong Solo Parent.",
-          "Mga Batang may Kapansanan (CWD) na naka-enroll sa pormal o SPED na klase.",
+          "Mga Batang may Kapansanan (CWD) at mga maralitang kabataan.",
         ],
         childRequirements: [
-          "Certificate of Enrollment – Original",
-          "Recent School ID – kung mayroon",
+          "Birth certificate, if available (kung mayroon)",
+          "School documents, if applicable (kung mayroon)",
         ],
         parentRequirements: [
-          "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
-          "Valid Government ID / mas mainam ang QCitizen ID",
+          "Upload available documents (Mag-upload ng mga available na dokumento)",
+          "Referral letter, if applicable (kung mayroon)",
+          "Medical/police/barangay documents, if applicable (kung mayroon)",
         ],
         specialRequirements: [
           "Social Welfare Case Assessment",
         ],
         documents: [
           {
-            id: "barangayIndigency",
-            label: "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+            id: "availableDocs",
+            label: "Upload available documents",
             required: true,
             sampleImage: "/samples/BARANGAY CERTIFICATE.webp",
           },
           {
-            id: "certEnrollment",
-            label: "Certificate of Enrollment – Original",
-            required: true,
-            sampleImage: "/samples/sample_valid_id.png",
-          },
-          {
-            id: "schoolId",
-            label: "Recent School ID – if available",
+            id: "referralLetter",
+            label: "Referral letter, if applicable",
             required: false,
             sampleImage: "/samples/sample_valid_id.png",
           },
           {
-            id: "validGovId",
-            label: "Valid Government ID / preferably QCitizen ID",
-            required: true,
-            sampleImage: "/samples/QC ID.png",
+            id: "birthCert",
+            label: "Birth certificate, if available",
+            required: false,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "medPoliceBrgyDocs",
+            label: "Medical/police/barangay documents, if applicable",
+            required: false,
+            sampleImage: "/samples/sample_valid_id.png",
           },
         ],
         submitButtonText: "ISUMITE ANG APLIKASYON",
@@ -403,52 +404,52 @@ export function getLocalizedChildWelfarePrograms(language: string): ChildWelfare
         receivedOptions: ["Oo, nakadawat na ko", "Wala pa"],
         assistanceTypeLabel: "Pilia ang matang sa tabang *",
         assistanceTypes: [
-          "Educational Financial Assistance (₱5,000 / Student)",
-          "School Supplies & Learning Materials Support",
-          "Tuition / Miscellaneous Fee Subsidy",
-          "Special Education (SPED) / CWD Learning Assistance",
+          "Child Protection Services",
+          "Alternative Child Care",
+          "Rehabilitative Counseling",
         ],
         whatIsIt: "Ang Child Welfare Services naghatag og komprehensibong pag-atiman, proteksyon, ug serbisyo sosyal alang sa mga kabus nga bata ug kabatan-onan sa Quezon City.",
         whoIsEligible: [
-          "Mga kabus nga bata ug kabatan-onan sa Quezon City nga kasamtangang nag-eskwela sa elementarya, high school, o kolehiyo.",
+          "Mga bata ug kabatan-onan sa Quezon City nga nagkinahanglan og proteksyon, pag-atiman, o counseling.",
           "Mga anak o benepisyaryo sa rehistradong Solo Parent.",
-          "Mga Bata nga Adunay Kapansanan (CWD) nga naka-enroll sa pormal o SPED classes.",
+          "Mga Bata nga Adunay Kapansanan (CWD) ug kabus nga kabatan-onan.",
         ],
         childRequirements: [
-          "Certificate of Enrollment – Original",
-          "Recent School ID – kung anaa",
+          "Birth certificate, if available (kung anaa)",
+          "School documents, if applicable (kung anaa)",
         ],
         parentRequirements: [
-          "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
-          "Balido nga Government ID / QCID",
+          "Upload available documents (I-upload ang mga available nga dokumento)",
+          "Referral letter, if applicable (kung anaa)",
+          "Medical/police/barangay documents, if applicable (kung anaa)",
         ],
         specialRequirements: [
           "Social Welfare Case Assessment",
         ],
         documents: [
           {
-            id: "barangayIndigency",
-            label: "Barangay Certificate of Indigency – Original (Purpose: Educational Assistance)",
+            id: "availableDocs",
+            label: "Upload available documents",
             required: true,
             sampleImage: "/samples/BARANGAY CERTIFICATE.webp",
           },
           {
-            id: "certEnrollment",
-            label: "Certificate of Enrollment – Original",
-            required: true,
-            sampleImage: "/samples/sample_valid_id.png",
-          },
-          {
-            id: "schoolId",
-            label: "Recent School ID – if available",
+            id: "referralLetter",
+            label: "Referral letter, if applicable",
             required: false,
             sampleImage: "/samples/sample_valid_id.png",
           },
           {
-            id: "validGovId",
-            label: "Valid Government ID / preferably QCitizen ID",
-            required: true,
-            sampleImage: "/samples/QC ID.png",
+            id: "birthCert",
+            label: "Birth certificate, if available",
+            required: false,
+            sampleImage: "/samples/sample_valid_id.png",
+          },
+          {
+            id: "medPoliceBrgyDocs",
+            label: "Medical/police/barangay documents, if applicable",
+            required: false,
+            sampleImage: "/samples/sample_valid_id.png",
           },
         ],
         submitButtonText: "ISUMITE ANG APLIKASYON",
@@ -693,11 +694,18 @@ export default function ChildWelfareApplicationWizard({
     childDob: "",
     childAge: "",
     childSex: "",
+    childAddress: initialData.parentAddress || "",
+    childSchool: "",
     childSchoolName: "",
     childGradeLevel: "",
     childSchoolType: "",
 
-    // C. Family Information
+    // Reason for Request (Child Welfare Services)
+    incidentConcernDescription: "",
+    incidentDate: "",
+    incidentLocation: "",
+
+    // C. Family Information (Educational Assistance)
     familyNumChildren: "",
     familyNumStudying: "",
     is4PsBeneficiary: "",
@@ -719,6 +727,7 @@ export default function ChildWelfareApplicationWizard({
           parentEmail: prev.parentEmail || d.parentEmail,
           parentAddress: prev.parentAddress || d.parentAddress,
           parentBarangay: prev.parentBarangay || d.parentBarangay,
+          childAddress: prev.childAddress || d.parentAddress,
         }))
       }
     }
@@ -1023,27 +1032,46 @@ export default function ChildWelfareApplicationWizard({
     selectedSectors.length > 0 &&
     selectedServicesRequested.length > 0
 
-  const step2Valid =
-    // A. Applicant / Parent / Guardian Information
-    formData.parentFullName.trim() !== "" &&
-    formData.parentRelationship.trim() !== "" &&
-    formData.parentContactNo.trim().length >= 11 &&
-    formData.parentAddress.trim() !== "" &&
-    formData.parentBarangay.trim() !== "" &&
-    // B. Child / Beneficiary Information
-    formData.childFullName.trim() !== "" &&
-    formData.childDob.trim() !== "" &&
-    formData.childAge.trim() !== "" &&
-    formData.childSex.trim() !== "" &&
-    formData.childSchoolName.trim() !== "" &&
-    formData.childGradeLevel.trim() !== "" &&
-    formData.childSchoolType.trim() !== "" &&
-    // C. Family Information
-    formData.familyNumChildren.trim() !== "" &&
-    formData.familyNumStudying.trim() !== "" &&
-    formData.is4PsBeneficiary.trim() !== "" &&
-    formData.isSoloParentEdBeneficiary.trim() !== "" &&
-    formData.isPwdEdBeneficiary.trim() !== ""
+  const isCwServices = selectedProgram.key === "child-welfare-services"
+
+  const step2Valid = isCwServices
+    ? (
+        // Applicant Information
+        formData.parentFullName.trim() !== "" &&
+        formData.parentRelationship.trim() !== "" &&
+        formData.parentContactNo.trim().length >= 11 &&
+        (formData.parentAddress.trim() !== "" || formData.parentBarangay.trim() !== "") &&
+        // Child Information
+        formData.childFullName.trim() !== "" &&
+        formData.childDob.trim() !== "" &&
+        formData.childAge.trim() !== "" &&
+        formData.childSex.trim() !== "" &&
+        formData.childAddress.trim() !== "" &&
+        // Reason for Request
+        formData.incidentConcernDescription.trim() !== ""
+      )
+    : (
+        // A. Applicant / Parent / Guardian Information
+        formData.parentFullName.trim() !== "" &&
+        formData.parentRelationship.trim() !== "" &&
+        formData.parentContactNo.trim().length >= 11 &&
+        formData.parentAddress.trim() !== "" &&
+        formData.parentBarangay.trim() !== "" &&
+        // B. Child / Beneficiary Information
+        formData.childFullName.trim() !== "" &&
+        formData.childDob.trim() !== "" &&
+        formData.childAge.trim() !== "" &&
+        formData.childSex.trim() !== "" &&
+        formData.childSchoolName.trim() !== "" &&
+        formData.childGradeLevel.trim() !== "" &&
+        formData.childSchoolType.trim() !== "" &&
+        // C. Family Information
+        formData.familyNumChildren.trim() !== "" &&
+        formData.familyNumStudying.trim() !== "" &&
+        formData.is4PsBeneficiary.trim() !== "" &&
+        formData.isSoloParentEdBeneficiary.trim() !== "" &&
+        formData.isPwdEdBeneficiary.trim() !== ""
+      )
 
   const requiredDocItems = selectedProgram.documents.filter((d) => d.required)
   const step3Valid = requiredDocItems.every((d) => (uploadedFiles[d.id] || []).length > 0)
@@ -1616,7 +1644,7 @@ export default function ChildWelfareApplicationWizard({
             </div>
           )}
 
-          {/* STEP 2: Application Form (A to C) */}
+          {/* STEP 2: Application Form */}
           {step === 2 && (
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-3">
@@ -1624,7 +1652,9 @@ export default function ChildWelfareApplicationWizard({
                   {selectedProgram.title} — APPLICATION FORM
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Please complete the information for Applicant/Parent, Child Beneficiary, and Family. Fields marked with (*) are required.
+                  {isCwServices
+                    ? "Please complete the information for Applicant, Child, and Reason for Request. Fields marked with (*) are required."
+                    : "Please complete the information for Applicant/Parent, Child Beneficiary, and Family. Fields marked with (*) are required."}
                 </p>
               </div>
 
@@ -1641,339 +1671,594 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               )}
 
-              {/* A. APPLICANT / PARENT / GUARDIAN INFORMATION */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
-                  <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  A. APPLICANT / PARENT / GUARDIAN INFORMATION
-                </h4>
+              {isCwServices ? (
+                <>
+                  {/* Applicant Information */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
+                      <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      Applicant Information
+                    </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.parentFullName}
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.parentRelationship ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      Relationship to Child *
-                    </label>
-                    <select
-                      value={formData.parentRelationship}
-                      onChange={(e) => updateField("parentRelationship", e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.parentRelationship ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    >
-                      <option value="">Select Relationship</option>
-                      <option value="Parent (Mother/Father)">Parent (Mother/Father)</option>
-                      <option value="Solo Parent">Solo Parent</option>
-                      <option value="Legal Guardian">Legal Guardian</option>
-                      <option value="Grandparent">Grandparent</option>
-                      <option value="Relative / Sibling">Relative / Sibling</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      QCitizen ID / Valid Government ID
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.parentQcid}
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Contact Number *
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.parentContactNo}
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      disabled
-                      value={formData.parentEmail}
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2">
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Complete Address *
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.parentAddress}
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Barangay *
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.parentBarangay}
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* B. CHILD / BENEFICIARY INFORMATION */}
-              <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
-                <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
-                  <Baby className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  B. CHILD / BENEFICIARY INFORMATION
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.childFullName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.childFullName}
-                      onChange={(e) => updateField("childFullName", e.target.value.replace(/[^a-zA-Z\sñÑ.-]/g, "").toUpperCase())}
-                      placeholder="Enter Child's Full Name"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.childFullName.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className={`text-xs font-semibold ${attemptedNext && !formData.childDob ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                        Date of Birth *
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.childDob}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          updateField("childDob", val)
-                          if (val) {
-                            const birthDate = new Date(val)
-                            const today = new Date()
-                            let age = today.getFullYear() - birthDate.getFullYear()
-                            const m = today.getMonth() - birthDate.getMonth()
-                            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                              age--
-                            }
-                            if (age >= 0 && age <= 100) {
-                              updateField("childAge", String(age))
-                            }
-                          }
-                        }}
-                        className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                          attemptedNext && !formData.childDob ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label className={`text-xs font-semibold ${attemptedNext && !formData.childAge ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                        Age *
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={3}
-                        value={formData.childAge}
-                        onChange={(e) => updateField("childAge", e.target.value.replace(/\D/g, ""))}
-                        placeholder="Age"
-                        className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                          attemptedNext && !formData.childAge ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                        }`}
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.parentFullName}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          QCitizen ID / Valid Government ID *
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.parentQcid}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Contact Number *
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.parentContactNo}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          disabled
+                          value={formData.parentEmail}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Address *
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.parentAddress ? `${formData.parentAddress}${formData.parentBarangay ? `, ${formData.parentBarangay}` : ""}` : formData.parentBarangay || ""}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.parentRelationship ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Relationship to Child *
+                        </label>
+                        <select
+                          value={formData.parentRelationship}
+                          onChange={(e) => updateField("parentRelationship", e.target.value)}
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.parentRelationship ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        >
+                          <option value="">Select Relationship</option>
+                          <option value="Mother">Mother</option>
+                          <option value="Father">Father</option>
+                          <option value="Legal Guardian">Legal Guardian</option>
+                          <option value="Grandparent">Grandparent</option>
+                          <option value="Aunt / Uncle">Aunt / Uncle</option>
+                          <option value="Sibling">Sibling</option>
+                          <option value="Custodian / Caregiver">Custodian / Caregiver</option>
+                          <option value="Other Relative">Other Relative</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.childSex ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      Sex *
-                    </label>
-                    <select
-                      value={formData.childSex}
-                      onChange={(e) => updateField("childSex", e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.childSex ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    >
-                      <option value="">Select Sex</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.childSchoolName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      School Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.childSchoolName}
-                      onChange={(e) => updateField("childSchoolName", e.target.value)}
-                      placeholder="Enter School Name"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.childSchoolName.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.childGradeLevel.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      Grade Level *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.childGradeLevel}
-                      onChange={(e) => updateField("childGradeLevel", e.target.value)}
-                      placeholder="e.g. Grade 5 / Grade 11"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.childGradeLevel.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    />
-                  </div>
-                </div>
+                  {/* Child Information */}
+                  <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
+                    <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
+                      <Baby className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      Child Information
+                    </h4>
 
-                <div>
-                  <label className={`text-xs font-semibold ${attemptedNext && !formData.childSchoolType ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                    Type of School *
-                  </label>
-                  <select
-                    value={formData.childSchoolType}
-                    onChange={(e) => updateField("childSchoolType", e.target.value)}
-                    className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                      attemptedNext && !formData.childSchoolType ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                    }`}
-                  >
-                    <option value="">Select Type of School</option>
-                    <option value="Public School">Public School</option>
-                    <option value="Alternative Learning System (ALS)">Alternative Learning System (ALS)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* C. FAMILY INFORMATION */}
-              <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
-                <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
-                  <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  C. FAMILY INFORMATION
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.familyNumChildren.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      Number of Children in the Family *
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={formData.familyNumChildren}
-                      onChange={(e) => updateField("familyNumChildren", e.target.value.replace(/\D/g, ""))}
-                      placeholder="Enter number"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.familyNumChildren.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.familyNumStudying.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      Number of Children Currently Studying *
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={formData.familyNumStudying}
-                      onChange={(e) => updateField("familyNumStudying", e.target.value.replace(/\D/g, ""))}
-                      placeholder="Enter number"
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.familyNumStudying.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                  {/* 4Ps Beneficiary? */}
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.is4PsBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      4Ps Beneficiary? *
-                    </label>
-                    <select
-                      value={formData.is4PsBeneficiary}
-                      onChange={(e) => updateField("is4PsBeneficiary", e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.is4PsBeneficiary ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    >
-                      <option value="">Select Option</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="sm:col-span-2">
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.childFullName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Child’s Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.childFullName}
+                          onChange={(e) => updateField("childFullName", e.target.value.replace(/[^a-zA-Z\sñÑ.-]/g, "").toUpperCase())}
+                          placeholder="Enter Child's Full Name"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.childFullName.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className={`text-xs font-semibold ${attemptedNext && !formData.childDob ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                            Date of Birth *
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.childDob}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              updateField("childDob", val)
+                              if (val) {
+                                const birthDate = new Date(val)
+                                const today = new Date()
+                                let age = today.getFullYear() - birthDate.getFullYear()
+                                const m = today.getMonth() - birthDate.getMonth()
+                                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                                  age--
+                                }
+                                if (age >= 0 && age <= 100) {
+                                  updateField("childAge", String(age))
+                                }
+                              }
+                            }}
+                            className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                              attemptedNext && !formData.childDob ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className={`text-xs font-semibold ${attemptedNext && !formData.childAge ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                            Age *
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={3}
+                            value={formData.childAge}
+                            onChange={(e) => updateField("childAge", e.target.value.replace(/\D/g, ""))}
+                            placeholder="Age"
+                            className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                              attemptedNext && !formData.childAge ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                            }`}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.childSex ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Sex *
+                        </label>
+                        <select
+                          value={formData.childSex}
+                          onChange={(e) => updateField("childSex", e.target.value)}
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.childSex ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        >
+                          <option value="">Select Sex</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.childAddress?.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Address *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.childAddress}
+                          onChange={(e) => updateField("childAddress", e.target.value)}
+                          placeholder="House No., Street / Barangay"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.childAddress?.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          School, if applicable
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.childSchool}
+                          onChange={(e) => updateField("childSchool", e.target.value)}
+                          placeholder="e.g. Quezon City Elementary School (Optional)"
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Solo Parent Educational Assistance Beneficiary? */}
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.isSoloParentEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      Solo Parent Educational Assistance Beneficiary? *
-                    </label>
-                    <select
-                      value={formData.isSoloParentEdBeneficiary}
-                      onChange={(e) => updateField("isSoloParentEdBeneficiary", e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.isSoloParentEdBeneficiary ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    >
-                      <option value="">Select Option</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
+                  {/* Reason for Request */}
+                  <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
+                    <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
+                      <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      Reason for Request
+                    </h4>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.incidentConcernDescription.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Description of concern/problem *
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={formData.incidentConcernDescription}
+                          onChange={(e) => updateField("incidentConcernDescription", e.target.value)}
+                          placeholder="Please provide details regarding the child's situation, concern, or reason for requesting assistance / protection..."
+                          className={`w-full border rounded-lg p-3 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white resize-y ${
+                            attemptedNext && !formData.incidentConcernDescription.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                            Date / approximate date of incident, if applicable
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.incidentDate}
+                            onChange={(e) => updateField("incidentDate", e.target.value)}
+                            className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                            Location of incident, if applicable
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.incidentLocation}
+                            onChange={(e) => updateField("incidentLocation", e.target.value)}
+                            placeholder="e.g. Barangay / Street / Specific location (Optional)"
+                            className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* A. APPLICANT / PARENT / GUARDIAN INFORMATION */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
+                      <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      A. APPLICANT / PARENT / GUARDIAN INFORMATION
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.parentFullName}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.parentRelationship ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Relationship to Child *
+                        </label>
+                        <select
+                          value={formData.parentRelationship}
+                          onChange={(e) => updateField("parentRelationship", e.target.value)}
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.parentRelationship ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        >
+                          <option value="">Select Relationship</option>
+                          <option value="Mother">Mother</option>
+                          <option value="Father">Father</option>
+                          <option value="Legal Guardian">Legal Guardian</option>
+                          <option value="Grandparent">Grandparent</option>
+                          <option value="Aunt / Uncle">Aunt / Uncle</option>
+                          <option value="Sibling">Sibling</option>
+                          <option value="Other Relative">Other Relative</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          QCitizen ID / Valid Government ID *
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.parentQcid}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Contact Number *
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.parentContactNo}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 font-mono focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          disabled
+                          value={formData.parentEmail}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Complete Address *
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.parentAddress}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Barangay *
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.parentBarangay}
+                          className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none bg-gray-100 dark:bg-slate-800/80 text-gray-700 dark:text-slate-300 cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  {/* PWD Educational Assistance Beneficiary? */}
-                  <div>
-                    <label className={`text-xs font-semibold ${attemptedNext && !formData.isPwdEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
-                      PWD Educational Assistance Beneficiary? *
-                    </label>
-                    <select
-                      value={formData.isPwdEdBeneficiary}
-                      onChange={(e) => updateField("isPwdEdBeneficiary", e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
-                        attemptedNext && !formData.isPwdEdBeneficiary ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                      }`}
-                    >
-                      <option value="">Select Option</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
+                  {/* B. CHILD / BENEFICIARY INFORMATION */}
+                  <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
+                    <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
+                      <Baby className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      B. CHILD / BENEFICIARY INFORMATION
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.childFullName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.childFullName}
+                          onChange={(e) => updateField("childFullName", e.target.value.replace(/[^a-zA-Z\sñÑ.-]/g, "").toUpperCase())}
+                          placeholder="Enter Child's Full Name"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.childFullName.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className={`text-xs font-semibold ${attemptedNext && !formData.childDob ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                            Date of Birth *
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.childDob}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              updateField("childDob", val)
+                              if (val) {
+                                const birthDate = new Date(val)
+                                const today = new Date()
+                                let age = today.getFullYear() - birthDate.getFullYear()
+                                const m = today.getMonth() - birthDate.getMonth()
+                                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                                  age--
+                                }
+                                if (age >= 0 && age <= 100) {
+                                  updateField("childAge", String(age))
+                                }
+                              }
+                            }}
+                            className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                              attemptedNext && !formData.childDob ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className={`text-xs font-semibold ${attemptedNext && !formData.childAge ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                            Age *
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={3}
+                            value={formData.childAge}
+                            onChange={(e) => updateField("childAge", e.target.value.replace(/\D/g, ""))}
+                            placeholder="Age"
+                            className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                              attemptedNext && !formData.childAge ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.childSex ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Sex *
+                        </label>
+                        <select
+                          value={formData.childSex}
+                          onChange={(e) => updateField("childSex", e.target.value)}
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.childSex ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        >
+                          <option value="">Select Sex</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.childSchoolName.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          School Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.childSchoolName}
+                          onChange={(e) => updateField("childSchoolName", e.target.value)}
+                          placeholder="Enter School Name"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.childSchoolName.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.childGradeLevel.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Grade Level *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.childGradeLevel}
+                          onChange={(e) => updateField("childGradeLevel", e.target.value)}
+                          placeholder="e.g. Grade 5 / Grade 11"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.childGradeLevel.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-xs font-semibold ${attemptedNext && !formData.childSchoolType ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                        Type of School *
+                      </label>
+                      <select
+                        value={formData.childSchoolType}
+                        onChange={(e) => updateField("childSchoolType", e.target.value)}
+                        className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                          attemptedNext && !formData.childSchoolType ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                        }`}
+                      >
+                        <option value="">Select Type of School</option>
+                        <option value="Public School">Public School</option>
+                        <option value="Alternative Learning System (ALS)">Alternative Learning System (ALS)</option>
+                      </select>
+                    </div>
                   </div>
-                </div>
-              </div>
+
+                  {/* C. FAMILY INFORMATION */}
+                  <div className="space-y-4 pt-3 border-t border-gray-200 dark:border-slate-800">
+                    <h4 className="text-xs font-bold uppercase text-gray-800 dark:text-slate-100 tracking-wider flex items-center gap-1.5 border-b border-gray-100 dark:border-slate-800 pb-2">
+                      <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      C. FAMILY INFORMATION
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.familyNumChildren.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Number of Children in the Family *
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={formData.familyNumChildren}
+                          onChange={(e) => updateField("familyNumChildren", e.target.value.replace(/\D/g, ""))}
+                          placeholder="Enter number"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.familyNumChildren.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.familyNumStudying.trim() ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Number of Children Currently Studying *
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={formData.familyNumStudying}
+                          onChange={(e) => updateField("familyNumStudying", e.target.value.replace(/\D/g, ""))}
+                          placeholder="Enter number"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.familyNumStudying.trim() ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                      {/* 4Ps Beneficiary? */}
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.is4PsBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          4Ps Beneficiary? *
+                        </label>
+                        <select
+                          value={formData.is4PsBeneficiary}
+                          onChange={(e) => updateField("is4PsBeneficiary", e.target.value)}
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.is4PsBeneficiary ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        >
+                          <option value="">Select Option</option>
+                          <option value="Yes">Yes</option>
+                          <option value="No">No</option>
+                        </select>
+                      </div>
+
+                      {/* Solo Parent Educational Assistance Beneficiary? */}
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.isSoloParentEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          Solo Parent Educational Assistance Beneficiary? *
+                        </label>
+                        <select
+                          value={formData.isSoloParentEdBeneficiary}
+                          onChange={(e) => updateField("isSoloParentEdBeneficiary", e.target.value)}
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.isSoloParentEdBeneficiary ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        >
+                          <option value="">Select Option</option>
+                          <option value="Yes">Yes</option>
+                          <option value="No">No</option>
+                        </select>
+                      </div>
+
+                      {/* PWD Educational Assistance Beneficiary? */}
+                      <div>
+                        <label className={`text-xs font-semibold ${attemptedNext && !formData.isPwdEdBeneficiary ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-slate-300"}`}>
+                          PWD Educational Assistance Beneficiary? *
+                        </label>
+                        <select
+                          value={formData.isPwdEdBeneficiary}
+                          onChange={(e) => updateField("isPwdEdBeneficiary", e.target.value)}
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-white ${
+                            attemptedNext && !formData.isPwdEdBeneficiary ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                          }`}
+                        >
+                          <option value="">Select Option</option>
+                          <option value="Yes">Yes</option>
+                          <option value="No">No</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -2134,47 +2419,99 @@ export default function ChildWelfareApplicationWizard({
                 </div>
               </ReviewSection>
 
-              {/* Section A Review */}
-              <ReviewSection title="A. Applicant / Parent / Guardian Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
-                  <ReviewField label="Full Name" value={formData.parentFullName} />
-                  <ReviewField label="Relationship to Child" value={formData.parentRelationship} />
-                  <ReviewField label="QCitizen ID / Valid Government ID" value={formData.parentQcid} />
-                  <ReviewField label="Contact Number" value={formData.parentContactNo} />
-                  <ReviewField label="Email Address" value={formData.parentEmail} />
-                  <ReviewField
-                    label="Complete Address"
-                    value={formData.parentAddress}
-                  />
-                  <ReviewField label="Barangay" value={formData.parentBarangay} />
-                </div>
-              </ReviewSection>
+              {isCwServices ? (
+                <>
+                  {/* Applicant Information Review */}
+                  <ReviewSection title="Applicant Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                      <ReviewField label="Full Name" value={formData.parentFullName} />
+                      <ReviewField label="Relationship to Child" value={formData.parentRelationship} />
+                      <ReviewField label="QCitizen ID / Valid Government ID" value={formData.parentQcid} />
+                      <ReviewField label="Contact Number" value={formData.parentContactNo} />
+                      <ReviewField label="Email Address" value={formData.parentEmail} />
+                      <ReviewField
+                        label="Address"
+                        value={formData.parentAddress ? `${formData.parentAddress}${formData.parentBarangay ? `, ${formData.parentBarangay}` : ""}` : formData.parentBarangay || "—"}
+                      />
+                    </div>
+                  </ReviewSection>
 
-              {/* Section B Review */}
-              <ReviewSection title="B. Child / Beneficiary Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
-                  <ReviewField label="Child's Full Name" value={formData.childFullName} />
-                  <ReviewField
-                    label="Date of Birth / Age"
-                    value={`${formData.childDob} (${formData.childAge} years old)`}
-                  />
-                  <ReviewField label="Sex" value={formData.childSex} />
-                  <ReviewField label="School Name" value={formData.childSchoolName} />
-                  <ReviewField label="Grade Level" value={formData.childGradeLevel} />
-                  <ReviewField label="Type of School" value={formData.childSchoolType} />
-                </div>
-              </ReviewSection>
+                  {/* Child Information Review */}
+                  <ReviewSection title="Child Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                      <ReviewField label="Child's Full Name" value={formData.childFullName} />
+                      <ReviewField
+                        label="Date of Birth / Age"
+                        value={`${formData.childDob} (${formData.childAge} years old)`}
+                      />
+                      <ReviewField label="Sex" value={formData.childSex} />
+                      <ReviewField label="Address" value={formData.childAddress} />
+                      {formData.childSchool && (
+                        <ReviewField label="School" value={formData.childSchool} />
+                      )}
+                    </div>
+                  </ReviewSection>
 
-              {/* Section C Review */}
-              <ReviewSection title="C. Family Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
-                  <ReviewField label="Number of Children in Family" value={formData.familyNumChildren} />
-                  <ReviewField label="Number of Children Currently Studying" value={formData.familyNumStudying} />
-                  <ReviewField label="4Ps Beneficiary?" value={formData.is4PsBeneficiary} />
-                  <ReviewField label="Solo Parent Educational Assistance Beneficiary?" value={formData.isSoloParentEdBeneficiary} />
-                  <ReviewField label="PWD Educational Assistance Beneficiary?" value={formData.isPwdEdBeneficiary} />
-                </div>
-              </ReviewSection>
+                  {/* Reason for Request Review */}
+                  <ReviewSection title="Reason for Request" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                      <div className="sm:col-span-2">
+                        <ReviewField label="Description of concern/problem" value={formData.incidentConcernDescription} />
+                      </div>
+                      {formData.incidentDate && (
+                        <ReviewField label="Date of incident" value={formData.incidentDate} />
+                      )}
+                      {formData.incidentLocation && (
+                        <ReviewField label="Location of incident" value={formData.incidentLocation} />
+                      )}
+                    </div>
+                  </ReviewSection>
+                </>
+              ) : (
+                <>
+                  {/* Section A Review */}
+                  <ReviewSection title="A. Applicant / Parent / Guardian Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                      <ReviewField label="Full Name" value={formData.parentFullName} />
+                      <ReviewField label="Relationship to Child" value={formData.parentRelationship} />
+                      <ReviewField label="QCitizen ID / Valid Government ID" value={formData.parentQcid} />
+                      <ReviewField label="Contact Number" value={formData.parentContactNo} />
+                      <ReviewField label="Email Address" value={formData.parentEmail} />
+                      <ReviewField
+                        label="Complete Address"
+                        value={formData.parentAddress}
+                      />
+                      <ReviewField label="Barangay" value={formData.parentBarangay} />
+                    </div>
+                  </ReviewSection>
+
+                  {/* Section B Review */}
+                  <ReviewSection title="B. Child / Beneficiary Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                      <ReviewField label="Child's Full Name" value={formData.childFullName} />
+                      <ReviewField
+                        label="Date of Birth / Age"
+                        value={`${formData.childDob} (${formData.childAge} years old)`}
+                      />
+                      <ReviewField label="Sex" value={formData.childSex} />
+                      <ReviewField label="School Name" value={formData.childSchoolName} />
+                      <ReviewField label="Grade Level" value={formData.childGradeLevel} />
+                      <ReviewField label="Type of School" value={formData.childSchoolType} />
+                    </div>
+                  </ReviewSection>
+
+                  {/* Section C Review */}
+                  <ReviewSection title="C. Family Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 text-xs">
+                      <ReviewField label="Number of Children in Family" value={formData.familyNumChildren} />
+                      <ReviewField label="Number of Children Currently Studying" value={formData.familyNumStudying} />
+                      <ReviewField label="4Ps Beneficiary?" value={formData.is4PsBeneficiary} />
+                      <ReviewField label="Solo Parent Educational Assistance Beneficiary?" value={formData.isSoloParentEdBeneficiary} />
+                      <ReviewField label="PWD Educational Assistance Beneficiary?" value={formData.isPwdEdBeneficiary} />
+                    </div>
+                  </ReviewSection>
+                </>
+              )}
 
               {/* Section D Review (Uploaded Documents) */}
               <ReviewSection title="D. Required Documents" onEdit={() => { setReturnToReview(true); setStep(3) }}>

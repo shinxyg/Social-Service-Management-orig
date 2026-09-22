@@ -164,10 +164,9 @@ function evaluateChildWelfareCardState(
   })
 
   const programApps = userApps.filter((a) => {
-    const srv = String(a.service || a.service_name || a.program_name || a.program || a.programKey || a.type || "").toLowerCase()
-    if (programKey === "nutritional-assistance") return srv.includes("nutrition") || srv.includes("nutrisyon")
-    if (programKey === "child-protection") return srv.includes("protection") || srv.includes("proteksyon")
-    if (programKey === "emergency-assistance") return srv.includes("emergency") || srv.includes("kagipitan") || srv.includes("sakuna")
+    const srv = String(a.service || a.service_name || a.program_name || a.program || a.programKey || a.type || a.classification_title || a.category_title || "").toLowerCase()
+    if (programKey === "educational-assistance") return srv.includes("educational") || srv.includes("edukasyon") || srv.includes("indigent")
+    if (programKey === "child-welfare-services") return srv.includes("child welfare") || srv.includes("welfare services") || srv.includes("kapakanan")
     return false
   })
 
