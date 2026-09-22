@@ -369,8 +369,170 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   const [selectedCourse, setSelectedCourse] = useState<TrainingCourse | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
-  const getLocalizedCourse = (course: TrainingCourse) => {
-    return course
+  const COURSE_LOCALIZATIONS: Record<
+    string,
+    {
+      title?: { en: string; tl: string; bis: string }
+      description: { en: string; tl: string; bis: string }
+      prerequisites?: { en: string; tl: string; bis: string }
+      materialsProvided?: { en: string; tl: string; bis: string }
+    }
+  > = {
+    "tr-bread-pastry": {
+      title: { en: "Bread and Pastry Making", tl: "Bread and Pastry Making", bis: "Bread and Pastry Making" },
+      description: {
+        en: "Learn commercial bread and pastry production, baking techniques, measuring and mixing, pastry decorating, oven management, and food safety standards.",
+        tl: "Matutunan ang commercial bread and pastry production, baking techniques, measuring at mixing, pastry decorating, oven management, at food safety standards para sa panaderya at pastry business.",
+        bis: "Pagkat-on sa commercial bread ug pastry production, baking techniques, pagsukod ug pagsagol, pastry decorating, pagdumala sa oven, ug food safety standards.",
+      },
+    },
+    "tr-barista": {
+      title: { en: "Barista", tl: "Barista", bis: "Barista" },
+      description: {
+        en: "Master espresso extraction, milk steaming, latte art, coffee brewing methods, equipment maintenance, and coffee shop customer service.",
+        tl: "Master ang espresso extraction, milk steaming, latte art, coffee brewing methods, equipment maintenance, at coffee shop customer service.",
+        bis: "Pagkat-on sa espresso extraction, milk steaming, latte art, mga paagi sa pagtimpla og kape, pagmentinar sa ekipo, ug serbisyo sa kustomer sa coffee shop.",
+      },
+    },
+    "tr-computer-call-center": {
+      title: {
+        en: "Basic Computer Literacy & Call Center Service",
+        tl: "Basic Computer Literacy at Call Center Service",
+        bis: "Basic Computer Literacy ug Call Center Service",
+      },
+      description: {
+        en: "Practical training in computer operations, Microsoft Office tools, typing speed, English communication skills, call handling techniques, and BPO job preparation.",
+        tl: "Pagsasanay sa computer navigation, Microsoft Office tools, typing speed, communication skills, call handling techniques, at BPO job readiness.",
+        bis: "Pagbansay sa paggamit og computer, Microsoft Office tools, katulin sa pag-type, komunikasyon, pagdumala sa tawag, ug pag-andam sa trabaho sa BPO.",
+      },
+    },
+    "tr-hairdressing": {
+      title: { en: "Hairdressing", tl: "Hairdressing (Paggugupit at Pag-aayos ng Buhok)", bis: "Hairdressing (Pagtupi ug Pag-ayo sa Buhok)" },
+      description: {
+        en: "Hands-on training in hair cutting, hair styling, hair coloring, blowdrying, hair rebonding/perming, and salon sanitation management.",
+        tl: "Pang-propesyonal na kasanayan sa haircutting, hair styling, hair coloring, blowdrying, hair rebonding/perming, at salon sanitation management.",
+        bis: "Propesyonal nga kahanas sa pagtupi, hair styling, pagkolor sa buhok, blowdrying, rebonding/perming, ug kalimpyo sa salon.",
+      },
+    },
+    "tr-beauty-care": {
+      title: { en: "Beauty Care", tl: "Beauty Care (Pangangalaga sa Kagandahan)", bis: "Beauty Care (Pag-atiman sa Katahom)" },
+      description: {
+        en: "Learn manicure, pedicure, nail art application, basic facial treatments, day/evening makeup, and home-service/salon business management.",
+        tl: "Matutunan ang manicure, pedicure, nail art, basic facial treatments, day/evening makeup, at salon/home-service business management.",
+        bis: "Pagkat-on sa manicure, pedicure, nail art, facial treatments, makeup para sa adlaw ug gabii, ug pagdumala sa negosyo sa salon.",
+      },
+    },
+    "tr-dressmaking-sewing": {
+      title: {
+        en: "Dressmaking / Sewing Craft",
+        tl: "Dressmaking / Pananahi at Sewing Craft",
+        bis: "Dressmaking / Panahi ug Sewing Craft",
+      },
+      description: {
+        en: "Learn body measurement, pattern drafting, fabric cutting, high-speed sewing machine operation, garment assembly, and sewing craft creation.",
+        tl: "Matutunan ang body measurement, pattern drafting, fabric cutting, paggamit ng high-speed sewing machine, pananahi ng damit, at sewing crafts.",
+        bis: "Pagkat-on sa pagsukod sa lawas, pattern drafting, pagputol sa panapton, paggamit sa sewing machine, pagtahi og sinina, ug sewing crafts.",
+      },
+    },
+    "tr-housekeeping": {
+      title: {
+        en: "Basic Housekeeping",
+        tl: "Basic Housekeeping (Pangangalaga sa Silid at Pasilidad)",
+        bis: "Basic Housekeeping (Paglimpyo ug Pag-atiman sa Lawak)",
+      },
+      description: {
+        en: "Professional training in room cleaning, bed making, linen and laundry management, cleaning chemicals and sanitization, and hospitality guest service standards.",
+        tl: "Propesyonal na kasanayan sa hotel at residential room cleaning, bed making, linen at laundry management, sanitizing chemicals, at hospitality guest service.",
+        bis: "Propesyonal nga pagbansay sa paglimpyo sa lawak sa hotel ug balay, bed making, pagdumala sa labada, sanitizing chemicals, ug serbisyo sa hospitality.",
+      },
+    },
+    "tr-health-care": {
+      title: {
+        en: "Health Care Provider",
+        tl: "Health Care Provider (Caregiving at Pangangalaga)",
+        bis: "Health Care Provider (Pag-atiman sa Panglawas)",
+      },
+      description: {
+        en: "Foundational caregiving skills, patient vital signs measurement, elderly care, personal hygiene assistance, patient mobility, first aid, and emergency care basics.",
+        tl: "Pangunahing kasanayan sa caregiving, pagkuha ng vital signs, pangangalaga sa matatanda at may sakit, personal hygiene assistance, first aid, at healthcare hygiene.",
+        bis: "Panguna nga kahanas sa caregiving, pagkuha og vital signs, pag-atiman sa mga tigulang ug masakiton, first aid, ug kalimpyo sa panglawas.",
+      },
+    },
+    "tr-welding": {
+      title: {
+        en: "Basic Welding",
+        tl: "Basic Welding (SMAW Pundasyon sa Pagwewelding)",
+        bis: "Basic Welding (Pundasyon sa Pag-welding)",
+      },
+      description: {
+        en: "Fundamental Shielded Metal Arc Welding (SMAW), welding safety standards, metal cutting, joint preparation, welding positions, and metal fabrication.",
+        tl: "Pundasyon sa Shielded Metal Arc Welding (SMAW), kaligtasan sa pagwewelding, metal cutting, joint preparation, welding positions, at metal fabrication.",
+        bis: "Pundasyon sa Shielded Metal Arc Welding (SMAW), kaluwasan sa pag-welding, pagputol sa metal, joint preparation, ug metal fabrication.",
+      },
+    },
+    "tr-food-beverage-catering": {
+      title: {
+        en: "Food, Beverage & Catering Services",
+        tl: "Food, Beverage at Catering Services",
+        bis: "Food, Beverage ug Catering Services",
+      },
+      description: {
+        en: "Comprehensive training in food dining service, table setting, banquet catering operations, food safety standards, bar service, and catering event management.",
+        tl: "Komprehensibong pagsasanay sa dining service, table setting, banquet catering operations, food safety standards, bar service, at catering event management.",
+        bis: "Komprehensibo nga pagbansay sa dining service, table setting, banquet catering operations, food safety standards, bar service, ug pagdumala sa okasyon.",
+      },
+    },
+  }
+
+  const localizeDateStr = (str?: string) => {
+    if (!str) return ""
+    if (isEn) return str
+    return str
+      .replace(/January/g, "Enero")
+      .replace(/February/g, "Pebrero")
+      .replace(/March/g, "Marso")
+      .replace(/April/g, "Abril")
+      .replace(/May/g, "Mayo")
+      .replace(/June/g, "Hunyo")
+      .replace(/July/g, "Hulyo")
+      .replace(/August/g, "Agosto")
+      .replace(/September/g, "Setyembre")
+      .replace(/October/g, "Oktubre")
+      .replace(/November/g, "Nobyembre")
+      .replace(/December/g, "Disyembre")
+  }
+
+  const localizeDuration = (duration?: string) => {
+    if (!duration) return isEn ? "18 working days" : isBis ? "18 ka adlaw nga pagbansay" : "18 araw ng pagsasanay"
+    if (isEn) return duration
+    if (duration.includes("18")) {
+      return isBis ? "18 ka adlaw nga pagbansay" : "18 araw ng pagsasanay"
+    }
+    if (duration.includes("30")) {
+      return isBis ? "30 ka adlaw nga pagbansay" : "30 araw ng pagsasanay"
+    }
+    return duration
+  }
+
+  const localizeBatch = (batch?: string) => {
+    if (!batch) return isEn ? "3rd Batch 2026" : isBis ? "3rd Batch 2026" : "Ika-3 Batch 2026"
+    if (isEn) return batch
+    return batch
+      .replace(/1st Batch/g, isBis ? "1st Batch" : "Ika-1 Batch")
+      .replace(/2nd Batch/g, isBis ? "2nd Batch" : "Ika-2 Batch")
+      .replace(/3rd Batch/g, isBis ? "3rd Batch" : "Ika-3 Batch")
+      .replace(/4th Batch/g, isBis ? "4th Batch" : "Ika-4 Batch")
+  }
+
+  const getLocalizedCourse = (course: TrainingCourse): TrainingCourse => {
+    const loc = COURSE_LOCALIZATIONS[course.id]
+    if (!loc) return course
+    const langKey = isEn ? "en" : isBis ? "bis" : "tl"
+    return {
+      ...course,
+      title: loc.title ? loc.title[langKey] : course.title,
+      description: loc.description[langKey] || course.description,
+    }
   }
 
   const [activeApplication, setActiveApplication] = useState<TrainingApplicationRecord | null>(null)
@@ -957,7 +1119,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             )}
                           </div>
                           <span className="text-[11px] font-medium text-muted-foreground">
-                            {course.duration || "18 working days"}
+                            {localizeDuration(course.duration)}
                           </span>
                         </div>
                       </div>
@@ -978,8 +1140,8 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             ? "Puno na (0 slots)"
                             : "Puno na (0 slots)"
                           : availableSlots < totalSlots
-                          ? `${availableSlots} ${isEn ? "slots left" : isBis ? "slot nahabilin" : "slots left"}`
-                          : `${totalSlots} slots`}
+                          ? `${availableSlots} ${isEn ? "slots left" : isBis ? "slot nahabilin" : "slots natitira"}`
+                          : `${totalSlots} ${isEn ? "slots" : isBis ? "ka slot" : "slots"}`}
                       </span>
                     </div>
 
@@ -991,19 +1153,39 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                     <div className="space-y-1.5 pt-2 border-t border-border/60 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                        <span><strong className="text-foreground">Training Batch:</strong> {course.batch || "3rd Batch 2026"}</span>
+                        <span>
+                          <strong className="text-foreground">
+                            {isEn ? "Training Batch:" : isBis ? "Batch sa Pagbansay:" : "Batch ng Pagsasanay:"}
+                          </strong>{" "}
+                          {localizeBatch(course.batch)}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                        <span><strong className="text-foreground">Application Opens:</strong> {course.applicationOpens || "July 1, 2026"}</span>
+                        <span>
+                          <strong className="text-foreground">
+                            {isEn ? "Application Opens:" : isBis ? "Bukas ang Aplikasyon:" : "Bukas ang Aplikasyon:"}
+                          </strong>{" "}
+                          {localizeDateStr(course.applicationOpens || "July 1, 2026")}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                        <span><strong className="text-foreground">Application Deadline:</strong> {course.applicationDeadline || "July 15, 2026"}</span>
+                        <span>
+                          <strong className="text-foreground">
+                            {isEn ? "Application Deadline:" : isBis ? "Kataposang Adlaw:" : "Huling Araw ng Aplikasyon:"}
+                          </strong>{" "}
+                          {localizeDateStr(course.applicationDeadline || "July 15, 2026")}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
-                        <span><strong className="text-foreground">Training Starts:</strong> {course.trainingStarts || "August 1 - 30, 2026"}</span>
+                        <span>
+                          <strong className="text-foreground">
+                            {isEn ? "Training Starts:" : isBis ? "Pagsugod sa Pagbansay:" : "Simula ng Pagsasanay:"}
+                          </strong>{" "}
+                          {localizeDateStr(course.trainingStarts || "August 1 - 30, 2026")}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1049,7 +1231,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         onClick={() => handleSelectToApply(course)}
                         className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <span>{isEn ? "Apply Now" : isBis ? "Mag-apply Karon" : "Mag-apply Ngayon"}</span>
+                        <span>{isEn ? "Apply Now" : isBis ? "Mag-apply Karon" : "Mag-apply Na"}</span>
                         <ArrowRight className="h-3.5 w-3.5" />
                       </button>
                     )}
@@ -1901,81 +2083,83 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
       {}
       {}
       {}
-      {isDetailModalOpen && selectedCourse && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                  {getCourseIcon(selectedCourse.id)}
+      {isDetailModalOpen && selectedCourse && (() => {
+        const localizedModalCourse = getLocalizedCourse(selectedCourse)
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+            <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    {getCourseIcon(localizedModalCourse.id)}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">{localizedModalCourse.title}</h3>
+                    <p className="text-xs text-muted-foreground">{localizeDuration(localizedModalCourse.duration)} {isEn ? "Skills Training Course" : isBis ? "Kurso sa Pagbansay" : "Pagsasanay sa Kasanayan"}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">{selectedCourse.title}</h3>
-                  <p className="text-xs text-muted-foreground">{selectedCourse.duration || "18 working days"} Skills Training Course</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsDetailModalOpen(false)}
-                className="text-muted-foreground hover:text-foreground text-lg font-bold px-2 py-1 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "What You Will Learn:" : isBis ? "Unsay Imong Makat-onan:" : "Ano ang Matututunan:"}</span>
-                <p className="text-foreground leading-relaxed mt-0.5">{selectedCourse.description}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
-                <div>
-                  <span className="font-semibold text-muted-foreground block text-[11px]">Training Batch:</span>
-                  <span className="font-bold text-foreground">{selectedCourse.batch || "3rd Batch 2026"}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-muted-foreground block text-[11px]">Duration:</span>
-                  <span className="font-bold text-foreground">{selectedCourse.duration || "18 working days"}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-muted-foreground block text-[11px]">Application Opens:</span>
-                  <span className="font-bold text-emerald-600">{selectedCourse.applicationOpens || "July 1, 2026"}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-muted-foreground block text-[11px]">Application Deadline:</span>
-                  <span className="font-bold text-amber-600">{selectedCourse.applicationDeadline || "July 15, 2026"}</span>
-                </div>
-                <div className="col-span-2">
-                  <span className="font-semibold text-muted-foreground block text-[11px]">Training Starts:</span>
-                  <span className="font-bold text-blue-600">{selectedCourse.trainingStarts || "August 1 - 30, 2026"}</span>
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-border">
-                <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Location & Landmark:" : isBis ? "Lugar ug Landmark:" : "Lokasyon at Landmark:"}</span>
-                <span className="font-bold text-foreground block">{selectedCourse.location}</span>
-                <span className="text-muted-foreground italic text-[11px] mt-0.5 block">{selectedCourse.landmark}</span>
-              </div>
-
-              <div className="pt-2 border-t border-border">
-                <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Instructor & Materials:" : isBis ? "Tigtudlo ug Gamit:" : "Instructor & Materials:"}</span>
-                <p className="text-foreground font-medium">{selectedCourse.instructor}</p>
-                <p className="text-muted-foreground mt-0.5 text-[11px]">{isEn ? "Provided materials:" : isBis ? "Libreng gamit:" : "Libreng gamit:"} {selectedCourse.materialsProvided}</p>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
-              {allUserApplications.some(
-                (a) =>
-                  (a.trainingId === selectedCourse.id ||
-                    a.trainingName?.toLowerCase() === selectedCourse.title?.toLowerCase() ||
-                    a.schedule?.trainingName?.toLowerCase() === selectedCourse.title?.toLowerCase()) &&
-                  a.status !== "rejected"
-              ) ? (
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={() => setIsDetailModalOpen(false)}
+                  className="text-muted-foreground hover:text-foreground text-lg font-bold px-2 py-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "What You Will Learn:" : isBis ? "Unsay Imong Makat-onan:" : "Ano ang Matututunan:"}</span>
+                  <p className="text-foreground leading-relaxed mt-0.5">{localizedModalCourse.description}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
+                  <div>
+                    <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Training Batch:" : isBis ? "Batch sa Pagbansay:" : "Batch ng Pagsasanay:"}</span>
+                    <span className="font-bold text-foreground">{localizeBatch(localizedModalCourse.batch)}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Duration:" : isBis ? "Gidugayon:" : "Tagal / Duration:"}</span>
+                    <span className="font-bold text-foreground">{localizeDuration(localizedModalCourse.duration)}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Application Opens:" : isBis ? "Bukas ang Aplikasyon:" : "Bukas ang Aplikasyon:"}</span>
+                    <span className="font-bold text-emerald-600">{localizeDateStr(localizedModalCourse.applicationOpens || "July 1, 2026")}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Application Deadline:" : isBis ? "Kataposang Adlaw:" : "Huling Araw ng Aplikasyon:"}</span>
+                    <span className="font-bold text-amber-600">{localizeDateStr(localizedModalCourse.applicationDeadline || "July 15, 2026")}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Training Starts:" : isBis ? "Pagsugod sa Pagbansay:" : "Simula ng Pagsasanay:"}</span>
+                    <span className="font-bold text-blue-600">{localizeDateStr(localizedModalCourse.trainingStarts || "August 1 - 30, 2026")}</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-border">
+                  <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Location & Landmark:" : isBis ? "Lugar ug Landmark:" : "Lokasyon at Landmark:"}</span>
+                  <span className="font-bold text-foreground block">{localizedModalCourse.location}</span>
+                  <span className="text-muted-foreground italic text-[11px] mt-0.5 block">{localizedModalCourse.landmark}</span>
+                </div>
+
+                <div className="pt-2 border-t border-border">
+                  <span className="font-semibold text-muted-foreground block text-[11px]">{isEn ? "Instructor & Materials:" : isBis ? "Tigtudlo ug Gamit:" : "Instructor & Materials:"}</span>
+                  <p className="text-foreground font-medium">{localizedModalCourse.instructor}</p>
+                  <p className="text-muted-foreground mt-0.5 text-[11px]">{isEn ? "Provided materials:" : isBis ? "Libreng gamit:" : "Libreng gamit:"} {localizedModalCourse.materialsProvided}</p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
+                {allUserApplications.some(
+                  (a) =>
+                    (a.trainingId === selectedCourse.id ||
+                      a.trainingName?.toLowerCase() === selectedCourse.title?.toLowerCase() ||
+                      a.schedule?.trainingName?.toLowerCase() === selectedCourse.title?.toLowerCase()) &&
+                    a.status !== "rejected"
+                ) ? (
+                  <button
+                    type="button"
+                    onClick={() => {
                     setIsDetailModalOpen(false)
                     setActiveTab(activeApplication?.status === "approved" ? "schedule" : "apply")
                   }}
@@ -2006,7 +2190,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
             </div>
           </div>
         </div>
-      )}
+      )})()}
 
       {}
       {}
