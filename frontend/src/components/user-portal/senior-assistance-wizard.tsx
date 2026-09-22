@@ -462,7 +462,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
   const handleVerifyId = async () => {
     const typed = (formData.seniorIdNumber || "").trim().toUpperCase()
     if (!typed) {
-      setVerifyNotice("Pakilagay ang inyong Senior Citizen / OSCA ID Number.")
+      setVerifyNotice("Please enter your Senior Citizen / OSCA ID Number.")
       return
     }
 
@@ -536,7 +536,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         ].filter(Boolean).join(" ").trim().toUpperCase()
 
         setVerifiedSeniorName(foundName || "SENIOR CITIZEN BENEFICIARY")
-        setVerifyNotice(`Na-verify ang talaan para kay: ${foundName || "Senior Citizen"}`)
+        setVerifyNotice(`Record verified for: ${foundName || "Senior Citizen"}`)
 
         const bMonth = matchedApp.dobMonth || ""
         const bDay = matchedApp.dobDay || ""
@@ -569,12 +569,12 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         // ID is accepted directly for senior social welfare assistance!
         const profileName = [userProfile?.firstName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase()
         setVerifiedSeniorName(profileName || "SENIOR CITIZEN APPLICANT")
-        setVerifyNotice(`Tinanggap ang Senior Citizen / OSCA ID (${typed}). Maaari nang magpatuloy sa paglalagay ng impormasyon.`)
+        setVerifyNotice(`Senior Citizen / OSCA ID (${typed}) accepted. You may now proceed to complete the information.`)
       }
     } catch {
       setIsIdVerified(true)
       setVerifiedSeniorName("SENIOR CITIZEN APPLICANT")
-      setVerifyNotice(`Tinanggap ang Senior Citizen / OSCA ID. Maaari nang magpatuloy.`)
+      setVerifyNotice(`Senior Citizen / OSCA ID accepted. You may now proceed.`)
     } finally {
       setIsVerifying(false)
     }
@@ -1053,7 +1053,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                       setIsIdVerified(false)
                       setVerifyNotice(null)
                     }}
-                    placeholder="e.g. 137404-2026-XXXXXX o 343243-2432-432"
+                    placeholder="e.g. 137404-2026-XXXXXX or 343243-2432-432"
                     maxLength={24}
                     className={`flex-1 border rounded-lg px-3 py-2.5 text-sm font-mono transition-all focus:outline-none ${
                       isIdVerified
@@ -1103,7 +1103,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 )}
 
                 {attemptedNext && !formData.seniorIdNumber.trim() && (
-                  <p className="text-xs text-red-500">Kailangang ilagay ang inyong Senior Citizen / OSCA ID Number.</p>
+                  <p className="text-xs text-red-500">Senior Citizen / OSCA ID Number is required.</p>
                 )}
               </div>
             </div>

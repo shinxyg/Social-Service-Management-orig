@@ -741,10 +741,13 @@ export default function PWDSocialAssistanceWizard({
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
   const [isVerifying, setIsVerifying] = useState(false)
   const [isIdVerified, setIsIdVerified] = useState(false)
+  const [verifyNotice, setVerifyNotice] = useState<string | null>(null)
+  const [verifiedPwdName, setVerifiedPwdName] = useState<string | null>(null)
   const [verifyError, setVerifyError] = useState<string | null>(null)
 
   const handleVerifyId = async () => {
     setVerifyError(null)
+    setVerifyNotice(null)
     const typed = (formData.pwdIdNumber || "").trim()
     const cleanTyped = typed.replace(/[^a-z0-9]/gi, "").toLowerCase()
     const cleanTypedDigits = typed.replace(/\D/g, "")
@@ -815,6 +818,14 @@ export default function PWDSocialAssistanceWizard({
       if (matchedApp) {
         setIsIdVerified(true)
         setVerifyError(null)
+        const foundName = [
+          matchedApp.firstName || matchedApp.first_name,
+          matchedApp.middleName || matchedApp.middle_name,
+          matchedApp.lastName || matchedApp.last_name,
+          matchedApp.suffix,
+        ].filter(Boolean).join(" ").trim().toUpperCase() || (userProfile?.firstName ? `${userProfile.firstName} ${userProfile.lastName}`.toUpperCase() : "PWD BENEFICIARY")
+        setVerifiedPwdName(foundName)
+        setVerifyNotice(`Record verified for: ${foundName}`)
         const officialId = matchedApp.assignedIdNumber || matchedApp.referenceNumber || typed
         updateField("pwdIdNumber", officialId)
         const matchedDisability =
@@ -851,6 +862,9 @@ export default function PWDSocialAssistanceWizard({
         // Accept any entered PWD ID without blocking
         setIsIdVerified(true)
         setVerifyError(null)
+        const profileName = [userProfile?.firstName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase() || "PWD APPLICANT"
+        setVerifiedPwdName(profileName)
+        setVerifyNotice(`PWD ID (${typed}) accepted. You may now proceed to complete the information.`)
         updateField("pwdIdNumber", typed)
         if (!formData.disabilityType) {
           updateField("disabilityType", "Physical Disability")
@@ -862,6 +876,9 @@ export default function PWDSocialAssistanceWizard({
     } catch {
       setIsIdVerified(true)
       setVerifyError(null)
+      const profileName = [userProfile?.firstName, userProfile?.lastName].filter(Boolean).join(" ").trim().toUpperCase() || "PWD APPLICANT"
+      setVerifiedPwdName(profileName)
+      setVerifyNotice(`PWD ID (${typed}) accepted. You may now proceed.`)
       if (!formData.disabilityType) {
         updateField("disabilityType", "Physical Disability")
       }
@@ -1364,6 +1381,17 @@ export default function PWDSocialAssistanceWizard({
                       )}
                     </button>
                   </div>
+                  {verifyNotice && isIdVerified && formData.pwdIdNumber.trim() && (
+                    <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-start gap-2 text-xs text-emerald-800 animate-in fade-in">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold">{verifyNotice}</p>
+                        {verifiedPwdName && (
+                          <p className="text-emerald-700 text-[11px] mt-0.5">Beneficiary: {verifiedPwdName}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {verifyError && (
                     <div className="mt-2 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2 animate-in fade-in duration-200">
                       <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
