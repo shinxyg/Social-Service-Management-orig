@@ -169,10 +169,8 @@ async function syncAndCleanAppointments() {
     await db.query(`
       UPDATE appointments
       SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
-      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%'
-          OR scheduled_date = '2026-09-15' OR scheduled_date ILIKE '%Sep 15%' OR scheduled_date ILIKE '%2026-09-15%'
-          OR scheduled_date IS NULL OR scheduled_date = '')
-        AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
+      WHERE (scheduled_date IS NULL OR scheduled_date = '' OR scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date = '2026-09-15' OR scheduled_date ILIKE '%Sep 15%')
+        AND status NOT IN ('rejected')
     `).catch(() => {});
 
     // Ensure pending/new AICS applications are strictly 'pending' and NEVER carried over as approved
@@ -685,9 +683,6 @@ exports.updateAppointmentStatus = async (req, res) => {
            updated_at = NOW()
        WHERE id::text = $3
           OR id::text = $4
-          OR reference_no = $3
-          OR reference_no = $4
-          OR REPLACE(reference_no, '-', '') = $5
           OR (
             (reference_no = $3 OR reference_no = $4 OR REPLACE(reference_no, '-', '') = $5)
             AND ($6 = '' OR module ILIKE $6)

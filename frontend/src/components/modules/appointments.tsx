@@ -350,13 +350,13 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
 }
 
 export function getApptEffectiveStatus(a: AppointmentRequest): AppointmentStatus {
-  // 1. Explicit admin decisions made during appointment assessment (or approved/completed status) take top priority
+  // 1. Pending schedule: If no schedule date has been set yet, it is ALWAYS pending!
+  if (!a.scheduledDate) return "pending"
+
+  // 2. Explicit admin decisions made during appointment assessment (only valid once scheduled)
   if (a.decision === "approved" || a.status === "approved" || a.status === "completed") return "approved"
   if (a.decision === "referred" || a.status === "referred") return "referred"
   if (a.decision === "rejected" || a.status === "rejected") return "rejected"
-
-  // 2. Pending schedule: If no schedule has been set yet, it is ALWAYS pending!
-  if (!a.scheduledDate) return "pending"
 
   // 3. Time-based status: Scheduled before date/time, Under Review on/after date/time
   const isDue = isAppointmentDue(a.scheduledDate, a.scheduledTime)
@@ -824,7 +824,10 @@ export default function Appointments() {
                   const isReferredDecision = rawStatus === 'referred' || cached?.decision === 'referred' || cached?.status === 'referred'
                   const isRejectedDecision = rawStatus === 'rejected' || cached?.decision === 'rejected' || cached?.status === 'rejected'
 
-                  if (isApprovedDecision && !isAicsPending) {
+                  if (!hasDate) {
+                    statusVal = 'pending'
+                    cachedDecision = undefined
+                  } else if (isApprovedDecision && !isAicsPending) {
                     statusVal = 'approved'
                     cachedDecision = 'approved'
                   } else if (isReferredDecision && !isAicsPending) {
@@ -833,9 +836,6 @@ export default function Appointments() {
                   } else if (isRejectedDecision) {
                     statusVal = 'rejected'
                     cachedDecision = 'rejected'
-                  } else if (!hasDate) {
-                    statusVal = 'pending'
-                    cachedDecision = undefined
                   } else {
                     statusVal = 'scheduled'
                     cachedDecision = undefined
