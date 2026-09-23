@@ -409,28 +409,28 @@ exports.scheduleAppointment = async (req, res) => {
     const { id } = req.params;
     const { scheduledDate, scheduledTime, officeLocation, notes, applicantName, concern, module: apptModule } = req.body;
 
-    if (!scheduledDate || !scheduledTime) {
-      return res.status(400).json({ error: 'Date and time are required.' });
-    }
-
-    let formattedDate = scheduledDate;
-    try {
-      const d = new Date(scheduledDate);
-      if (!isNaN(d.getTime())) {
-        formattedDate = d.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
-      }
-    } catch {}
-
-    const cleanId = String(id || '').trim();
+    const rawId = String(id || '').trim();
+    const cleanId = rawId.replace(/^(db-appt-|aics-appt-|pwd-senior-appt-|cw-appt-|liv-appt-|appt_)/, '').trim();
     const cleanNoDash = cleanId.replace(/[^a-zA-Z0-9]/g, '');
     const targetModule = String(apptModule || '').trim();
     const targetConcern = String(concern || '').trim();
 
+    let formattedDate = scheduledDate || null;
+    if (scheduledDate) {
+      try {
+        const d = new Date(scheduledDate);
+        if (!isNaN(d.getTime())) {
+          formattedDate = d.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
+        }
+      } catch {}
+    }
+    const finalTime = scheduledTime || '09:00 AM';
+
     const result = await db.query(
       `UPDATE appointments
        SET status = 'scheduled',
-           scheduled_date = $1,
-           scheduled_time = $2,
+           scheduled_date = COALESCE($1, scheduled_date),
+           scheduled_time = COALESCE($2, scheduled_time),
            office_location = COALESCE($3, office_location),
            notes = COALESCE($4, notes),
            updated_at = NOW()
@@ -441,7 +441,7 @@ exports.scheduleAppointment = async (req, res) => {
             AND ($8 = '' OR concern ILIKE $8)
           )
        RETURNING *`,
-      [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', notes, cleanId, cleanNoDash, targetModule, targetConcern ? `%${targetConcern}%` : '']
+      [formattedDate, finalTime, officeLocation || 'Quezon City Hall', notes, cleanId, cleanNoDash, targetModule, targetConcern ? `%${targetConcern}%` : '']
     );
 
     let appt;
