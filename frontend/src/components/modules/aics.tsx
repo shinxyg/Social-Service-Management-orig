@@ -872,48 +872,49 @@ export default function AICS() {
 
               {/* Bottom Action Footer */}
               <div className="mt-8 pt-5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                {/* Left Side: Approve for Scheduling and Reject Actions */}
-                <div className="flex items-center gap-3">
-                  {currentStatus !== 'approved' && currentStatus !== 'completed' && currentStatus !== 'rejected' && currentStatus !== 'waiting_approval' && currentStatus !== 'scheduled' && currentStatus !== 'under_review' && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={actionLoading}
-                        onClick={() => updateStatus('waiting_approval')}
-                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
-                      >
-                        <Calendar className="w-4 h-4" />
-                        <span>Approve for Scheduling</span>
-                      </button>
+                {/* Left Side: Approve and Reject Actions */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    disabled={actionLoading || currentStatus === 'approved'}
+                    onClick={() => updateStatus('approved')}
+                    className={`px-5 py-2.5 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
+                      currentStatus === 'approved'
+                        ? 'bg-emerald-700 opacity-90 cursor-default'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{currentStatus === 'approved' ? '✓ Case Approved' : 'Approve Application'}</span>
+                  </button>
 
-                      <button
-                        type="button"
-                        disabled={actionLoading}
-                        onClick={() => setShowRejectModal(true)}
-                        className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
-                      >
-                        <XCircle className="w-4 h-4" />
-                        <span>Reject</span>
-                      </button>
-                    </>
-                  )}
-                  {(currentStatus === 'waiting_approval' || currentStatus === 'scheduled' || currentStatus === 'under_review') && (
-                    <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
-                      <Calendar className="w-4 h-4 text-blue-600" />
-                      <span>Screened & Queued in Appointments for Scheduling</span>
-                    </span>
-                  )}
-                  {(currentStatus === 'approved' || currentStatus === 'completed') && (
-                    <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Case Evaluated & Approved</span>
-                    </span>
-                  )}
-                  {currentStatus === 'rejected' && (
-                    <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold">
-                      <XCircle className="w-4 h-4 text-rose-600" />
-                      <span>Case Disqualified / Rejected</span>
-                    </span>
+                  <button
+                    type="button"
+                    disabled={actionLoading || currentStatus === 'rejected'}
+                    onClick={() => setShowRejectModal(true)}
+                    className={`px-5 py-2.5 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
+                      currentStatus === 'rejected'
+                        ? 'bg-rose-700 opacity-90 cursor-default'
+                        : 'bg-rose-600 hover:bg-rose-700'
+                    }`}
+                  >
+                    <XCircle className="w-4 h-4" />
+                    <span>{currentStatus === 'rejected' ? '✕ Disqualified / Rejected' : 'Reject Application'}</span>
+                  </button>
+
+                  {currentStatus === 'approved' && (
+                    <button
+                      type="button"
+                      onClick={() => setGlApp(reviewingApp)}
+                      className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <Printer className="w-4 h-4" />
+                      <span>
+                        {String(reviewingApp.assistance_type || '').toLowerCase().includes('medicine') || String(reviewingApp.assistance_type || '').toLowerCase().includes('gamot')
+                          ? 'View / Print Mercury Drug Gift Certificate'
+                          : 'View / Print Guarantee Letter (GL)'}
+                      </span>
+                    </button>
                   )}
                 </div>
 
@@ -1476,7 +1477,7 @@ export default function AICS() {
           </div>
         )}
 
-        {/* Guarantee Letter Modal */}
+        {/* Guarantee Letter / Medicine Gift Certificate Modal */}
         {glApp && (
           <OfficialGuaranteeLetterModal
             data={{
@@ -1486,9 +1487,10 @@ export default function AICS() {
               qcidNumber: glApp.qc_id || glApp.reference_no,
               barangay: glApp.barangay,
               district: glApp.district,
-              diagnosis: (typeof glApp.details === 'object' ? glApp.details?.medicalDiagnosis : null) || 'Medical Confinement / Specialty Care',
-              hospitalName: (typeof glApp.details === 'object' ? (glApp.details?.partnerHospital === 'Other' ? glApp.details?.partnerHospitalOther : glApp.details?.partnerHospital) : null) || 'EAST AVENUE MEDICAL CENTER (EAMC)',
-              amount: FIXED_ASSISTANCE_AMOUNTS['Medical Assistance'] || 25000,
+              assistanceType: glApp.assistance_type || glApp.concern || 'Medical Assistance',
+              diagnosis: (typeof glApp.details === 'object' ? glApp.details?.medicalDiagnosis : null) || (String(glApp.assistance_type || '').toLowerCase().includes('medicine') || String(glApp.assistance_type || '').toLowerCase().includes('gamot') ? "Doctor's Prescription / Essential Medicines" : 'Medical Confinement / Specialty Care'),
+              hospitalName: (typeof glApp.details === 'object' ? (glApp.details?.partnerHospital === 'Other' ? glApp.details?.partnerHospitalOther : glApp.details?.partnerHospital) : null) || (String(glApp.assistance_type || '').toLowerCase().includes('medicine') || String(glApp.assistance_type || '').toLowerCase().includes('gamot') ? 'MERCURY DRUG (QUEZON CITY BRANCHES)' : 'EAST AVENUE MEDICAL CENTER (EAMC)'),
+              amount: String(glApp.assistance_type || '').toLowerCase().includes('medicine') || String(glApp.assistance_type || '').toLowerCase().includes('gamot') ? 500 : (FIXED_ASSISTANCE_AMOUNTS['Medical Assistance'] || 25000),
             }}
             onClose={() => setGlApp(null)}
             canPrint={true}
