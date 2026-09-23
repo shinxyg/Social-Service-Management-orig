@@ -103,6 +103,20 @@ async function syncAndCleanAppointments() {
       )
     `).catch(() => {});
 
+    // 3. Clean up orphaned appointments whose parent applications were deleted from the DB
+    await db.query(`
+      DELETE FROM appointments
+      WHERE module IN ('PWD', 'Senior Citizen')
+        AND reference_no NOT IN (SELECT reference_number FROM pwd_senior_applications)
+    `).catch(() => {});
+
+    await db.query(`
+      DELETE FROM appointments
+      WHERE module = 'AICS'
+        AND reference_no NOT IN (SELECT reference_no FROM aics_applications)
+        AND reference_no NOT IN (SELECT qc_id FROM aics_applications WHERE qc_id IS NOT NULL AND qc_id <> '')
+    `).catch(() => {});
+
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'Livelihood' AND reference_no IN (
@@ -593,6 +607,8 @@ exports.deleteAppointment = async (req, res) => {
     const cleanId = raw.replace(/^db-appt-/, '').replace(/^aics-appt-/, '').replace(/^pwd-senior-appt-/, '').replace(/^cw-appt-/, '').trim();
 
     await db.query(`DELETE FROM appointments WHERE id::text = $1 OR reference_no = $1 OR id::text = $2 OR reference_no = $2`, [raw, cleanId]);
+    await db.query(`DELETE FROM pwd_senior_applications WHERE id::text = $1 OR reference_number = $1 OR id::text = $2 OR reference_number = $2`, [raw, cleanId]).catch(() => {});
+    await db.query(`DELETE FROM aics_applications WHERE id::text = $1 OR reference_no = $1 OR id::text = $2 OR reference_no = $2`, [raw, cleanId]).catch(() => {});
 
     if (cleanId) {
       await db.query(

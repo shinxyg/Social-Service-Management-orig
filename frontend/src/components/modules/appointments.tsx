@@ -8,6 +8,7 @@ import {
   Building2,
   Printer,
   XCircle,
+  Trash2,
 } from "lucide-react"
 
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
@@ -332,7 +333,7 @@ function AppointmentCard({
   onReject,
   onPrintGL,
   onPrintReferral,
-  onDelete: _onDelete,
+  onDelete,
 }: {
   appt: AppointmentRequest
   onSchedule: (a: AppointmentRequest) => void
@@ -522,6 +523,18 @@ function AppointmentCard({
               >
                 <Printer className="h-3.5 w-3.5" />
                 <span>🏛️ Print Referral</span>
+              </button>
+            )}
+
+            {/* 6. Delete Action */}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(appt.id, appt.referenceNo)}
+                className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-slate-200 dark:border-slate-800 transition-colors cursor-pointer ml-1"
+                title="Burahin ang appointment na ito"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
@@ -795,7 +808,8 @@ export default function Appointments() {
             pwdSeniorApps = await resPwdSettled.value.json()
           } catch {}
         }
-        if (!pwdSeniorApps || pwdSeniorApps.length === 0) {
+        // Only fallback to localStorage if network completely failed, NOT if DB returned empty
+        if ((resPwdSettled.status !== "fulfilled" || !resPwdSettled.value.ok) && (!pwdSeniorApps || pwdSeniorApps.length === 0)) {
           try {
             const local = localStorage.getItem("pwd_senior_applications")
             if (local) pwdSeniorApps = JSON.parse(local)
@@ -1744,11 +1758,31 @@ export default function Appointments() {
                         fetch(`${API_BASE}/api/appointments/${encodeURIComponent(cleanId)}`, { method: "DELETE" }),
                         fetch(`${API_BASE}/api/appointments/${encodeURIComponent(cleanRef)}`, { method: "DELETE" }),
                         fetch(`${API_BASE}/api/appointments/${encodeURIComponent(rawId)}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(cleanRef)}`, { method: "DELETE" }),
+                        fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(cleanRef)}`, { method: "DELETE" }),
                       ])
                     } catch {}
 
+                    try {
+                      const rawPwd = localStorage.getItem("pwd_senior_applications")
+                      if (rawPwd) {
+                        const parsed = JSON.parse(rawPwd)
+                        const filtered = parsed.filter((p: any) => {
+                          const pRef = String(p.referenceNumber || p.reference_number || '').trim().toLowerCase()
+                          const pId = String(p.id || '').trim().toLowerCase()
+                          if (cleanRef && pRef === cleanRef.toLowerCase()) return false
+                          if (cleanId && pId === cleanId.toLowerCase()) return false
+                          if (rawId && (pId === rawId.toLowerCase() || pRef === rawId.toLowerCase())) return false
+                          return true
+                        })
+                        localStorage.setItem("pwd_senior_applications", JSON.stringify(filtered))
+                      }
+                    } catch {}
+
                     window.dispatchEvent(new Event("appointments_updated"))
-                    notifyApplicationChange("APPLICATION_APPROVED", "appointment", cleanRef || cleanId)
+                    window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+                    window.dispatchEvent(new Event("aics_applications_updated"))
+                    notifyApplicationChange("STATUS_CHANGED", "appointment", cleanRef || cleanId)
                   }
                 }}
               />
