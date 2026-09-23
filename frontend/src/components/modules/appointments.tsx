@@ -1329,9 +1329,43 @@ export default function Appointments() {
   const [selectedAgency, setSelectedAgency] = useState('PCSO')
   const [referralNotes, setReferralNotes] = useState('Total financial requirement exceeds local budget capacity. Endorsed for assistance.')
 
+function to24HourTime(timeStr?: string): string {
+  if (!timeStr) return "09:00"
+  const s = String(timeStr).trim()
+  const match12 = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i)
+  if (match12) {
+    let hours = parseInt(match12[1], 10)
+    const minutes = match12[2]
+    const ampm = (match12[3] || "").toUpperCase()
+    if (ampm === "PM" && hours < 12) hours += 12
+    if (ampm === "AM" && hours === 12) hours = 0
+    return `${String(hours).padStart(2, "0")}:${minutes}`
+  }
+  const match24 = s.match(/^(\d{1,2}):(\d{2})$/)
+  if (match24) {
+    return `${String(match24[1]).padStart(2, "0")}:${match24[2]}`
+  }
+  return "09:00"
+}
+
+function to12HourTime(timeStr?: string): string {
+  if (!timeStr) return "09:00 AM"
+  const s = String(timeStr).trim()
+  const match = s.match(/^(\d{1,2}):(\d{2})$/)
+  if (match) {
+    let hours = parseInt(match[1], 10)
+    const minutes = match[2]
+    const ampm = hours >= 12 ? "PM" : "AM"
+    if (hours === 0) hours = 12
+    else if (hours > 12) hours -= 12
+    return `${String(hours).padStart(2, "0")}:${minutes} ${ampm}`
+  }
+  return s
+}
+
   const [approvingAppt, setApprovingAppt] = useState<AppointmentRequest | null>(null)
   const [approvalDate, setApprovalDate] = useState<string>("")
-  const [approvalTime, setApprovalTime] = useState<string>("09:00 AM")
+  const [approvalTime, setApprovalTime] = useState<string>("09:00")
   const [approvalOfficeLocation, setApprovalOfficeLocation] = useState<string>(
     "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
   )
@@ -1352,7 +1386,7 @@ export default function Appointments() {
     const defaultLoc = "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
     const today = new Date().toISOString().split("T")[0]
     setApprovalDate(appt.scheduledDate && appt.scheduledDate.includes("-") ? appt.scheduledDate : today)
-    setApprovalTime(appt.scheduledTime || "09:00 AM")
+    setApprovalTime(to24HourTime(appt.scheduledTime || "09:00 AM"))
     setApprovalOfficeLocation(appt.officeLocation || defaultLoc)
     setApprovalNotes(appt.notes || "Dalhin ang Valid ID, Original Medical Abstract/Prescription, at iba pang kaukulang dokumento sa 2nd Floor SSDD Civic Center E (PAD).")
     setApprovingAppt(appt)
@@ -1362,7 +1396,7 @@ export default function Appointments() {
     if (!approvingAppt) return
     const appt = approvingAppt
     const date = approvalDate
-    const time = approvalTime
+    const time = to12HourTime(approvalTime)
     const loc = approvalOfficeLocation
     const notes = approvalNotes
     setApprovingAppt(null)
@@ -2118,20 +2152,13 @@ export default function Appointments() {
                     <Clock className="w-3.5 h-3.5 text-slate-500" />
                     <span>Release Time (Oras) *</span>
                   </label>
-                  <select
+                  <input
+                    type="time"
                     value={approvalTime}
                     onChange={(e) => setApprovalTime(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
-                  >
-                    <option value="08:00 AM">08:00 AM – Morning Slot</option>
-                    <option value="09:00 AM">09:00 AM – Morning Slot</option>
-                    <option value="10:00 AM">10:00 AM – Morning Slot</option>
-                    <option value="11:00 AM">11:00 AM – Morning Slot</option>
-                    <option value="01:00 PM">01:00 PM – Afternoon Slot</option>
-                    <option value="02:00 PM">02:00 PM – Afternoon Slot</option>
-                    <option value="03:00 PM">03:00 PM – Afternoon Slot</option>
-                    <option value="04:00 PM">04:00 PM – Afternoon Slot</option>
-                  </select>
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition cursor-pointer"
+                    required
+                  />
                 </div>
               </div>
 
