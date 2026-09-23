@@ -1345,16 +1345,6 @@ export default function FinancialAidDisbursement() {
                         <div className="inline-flex items-center justify-end gap-1.5 flex-wrap">
                           {d.status === "PENDING" && (
                             <>
-                              <button
-                                type="button"
-                                onClick={() => setSchedulingRecord(d)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
-                                title="Set Payout Appointment Schedule at Quezon City Hall"
-                              >
-                                <Clock className="w-3.5 h-3.5 text-blue-600" />
-                                <span>{d.appointmentDate ? "Resched" : "Set Sched"}</span>
-                              </button>
-
                               {isPwd ? (
                                 pwdState?.isMatured ? (
                                   <button
@@ -1544,37 +1534,18 @@ export default function FinancialAidDisbursement() {
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 flex-wrap">
-              <div className="flex items-center gap-2 flex-wrap">
-                {selectedDetailsRecord.assistanceType.toLowerCase().includes("medical") && (
-                  <button
-                    type="button"
-                    onClick={() => setGlModalRecord(selectedDetailsRecord)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors cursor-pointer shadow-2xs"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Print Guarantee Letter (GL)</span>
-                  </button>
-                )}
-
+            {selectedDetailsRecord.assistanceType.toLowerCase().includes("medical") && (
+              <div className="flex items-center justify-end pt-2 border-t border-gray-100">
                 <button
                   type="button"
-                  onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+                  onClick={() => setGlModalRecord(selectedDetailsRecord)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors cursor-pointer shadow-2xs"
                 >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Voucher</span>
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Print Guarantee Letter (GL)</span>
                 </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedDetailsRecord(null)}
-                className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
