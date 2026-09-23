@@ -555,17 +555,7 @@ export function OfficialGuaranteeLetterModal({
         </div>
 
         {/* Modal Bottom Actions */}
-        <div className="px-6 py-3.5 bg-gray-100 border-t border-gray-300 flex items-center justify-between no-print gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-700 transition-colors cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-
+        <div className="px-6 py-3.5 bg-gray-100 border-t border-gray-300 flex items-center justify-end no-print gap-3">
           {canPrint && (
             <button
               type="button"

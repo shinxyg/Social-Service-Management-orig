@@ -8,7 +8,6 @@ import {
   Building2,
   Printer,
   XCircle,
-  Trash2,
 } from "lucide-react"
 
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
@@ -582,17 +581,6 @@ function AppointmentCard({
               </button>
             )}
 
-            {/* 6. Delete Action */}
-            {onDelete && (
-              <button
-                type="button"
-                onClick={() => onDelete(appt.id, appt.referenceNo)}
-                className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-slate-200 dark:border-slate-800 transition-colors cursor-pointer ml-1"
-                title="Burahin ang appointment na ito"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            )}
           </div>
         </div>
       </div>
