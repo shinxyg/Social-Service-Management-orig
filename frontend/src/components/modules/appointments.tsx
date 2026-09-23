@@ -441,21 +441,10 @@ function AppointmentCard({
 
             {/* 2. Scheduled Stage (Upcoming Interview - Waiting for exact appointment time) */}
             {effectiveStatus === "scheduled" && (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Scheduled (Upcoming Interview)</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onSchedule(appt)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
-                  title="Reschedule Appointment"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Resched</span>
-                </button>
-              </div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>Scheduled (Upcoming Interview)</span>
+              </span>
             )}
 
             {/* 3. Under Review Stage (Due for Assessment / Interview - Approve and Reject actions unlocked) */}
@@ -470,14 +459,6 @@ function AppointmentCard({
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     <span>Approve & Start ₱500/mo Pension</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSchedule(appt)}
-                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 text-xs font-medium cursor-pointer"
-                    title="Reschedule Interview"
-                  >
-                    <span>Resched</span>
                   </button>
                   <button
                     type="button"
@@ -508,14 +489,6 @@ function AppointmentCard({
                   >
                     <Building2 className="h-3.5 w-3.5" />
                     <span>🏛️ Refer</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSchedule(appt)}
-                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 text-xs font-medium cursor-pointer"
-                    title="Reschedule Appointment"
-                  >
-                    <span>Resched</span>
                   </button>
                   <button
                     type="button"
