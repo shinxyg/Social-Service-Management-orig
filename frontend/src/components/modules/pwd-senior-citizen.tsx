@@ -2375,7 +2375,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                        Approving this social assistance application will automatically forward the applicant to <strong>Appointments (for payout scheduling)</strong> and <strong>Financial Aid Disbursement (₱2,000 Aid)</strong>.
+                        Approving this social assistance application will automatically forward the applicant to <strong>Appointments (for interview &amp; verification)</strong> and enroll in <strong>PWD Social Pension (₱500/mo | ₱1,500 quarterly payout)</strong>.
                       </p>
                     </div>
                     <div className="flex gap-3">
@@ -2494,11 +2494,11 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
                 <div className="pt-2 text-xs space-y-2">
                   <p className="text-emerald-800 font-semibold flex items-center gap-1.5">
                     <Check className="h-3.5 w-3.5 text-emerald-600" />
-                    Connected to Appointments (for payout schedule)
+                    Connected to Appointments (for interview &amp; verification schedule)
                   </p>
                   <p className="text-emerald-800 font-semibold flex items-center gap-1.5">
                     <Check className="h-3.5 w-3.5 text-emerald-600" />
-                    Forwarded to Financial Aid Disbursement (₱2,000 Fixed Aid)
+                    Enrolled in PWD Social Pension (₱500/month | ₱1,500 Quarterly Payout)
                   </p>
                 </div>
               ) : (
