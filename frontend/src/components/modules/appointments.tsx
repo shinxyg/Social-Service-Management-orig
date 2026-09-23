@@ -1330,8 +1330,12 @@ export default function Appointments() {
   const [referralNotes, setReferralNotes] = useState('Total financial requirement exceeds local budget capacity. Endorsed for assistance.')
 
   const [approvingAppt, setApprovingAppt] = useState<AppointmentRequest | null>(null)
-  const [selectedPartnerBranch, setSelectedPartnerBranch] = useState<string>("Mercury Drug – Quezon City Hall Branch")
-  const [voucherNotes, setVoucherNotes] = useState<string>("")
+  const [approvalDate, setApprovalDate] = useState<string>("")
+  const [approvalTime, setApprovalTime] = useState<string>("09:00 AM")
+  const [approvalOfficeLocation, setApprovalOfficeLocation] = useState<string>(
+    "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
+  )
+  const [approvalNotes, setApprovalNotes] = useState<string>("")
 
   const [rejectingAppt, setRejectingAppt] = useState<AppointmentRequest | null>(null)
   const [selectedRejectReasonId, setSelectedRejectReasonId] = useState("cooldown")
@@ -1345,36 +1349,31 @@ export default function Appointments() {
       return
     }
 
-    const raw = appt.rawApp || {}
-    const rawDetails = raw.details || {}
-    const isHospital =
-      String(appt.concern || '').toLowerCase().includes('hospital bill') ||
-      String(appt.concern || '').toLowerCase().includes('confinement') ||
-      String(appt.concern || '').toLowerCase().includes('admission') ||
-      String(rawDetails.assistanceSubType || '').toLowerCase().includes('medical bill') ||
-      String(rawDetails.assistanceSubType || '').toLowerCase().includes('hospital bill')
-
-    setSelectedPartnerBranch(
-      isHospital
-        ? (rawDetails.partnerHospital || rawDetails.partnerHospitalOther || "Quezon City General Hospital (QCGH)")
-        : (appt.pharmacyBranch || "Mercury Drug – Quezon City Hall Branch")
-    )
-    setVoucherNotes(appt.voucherNotes || rawDetails.medicalDiagnosis || "")
+    const defaultLoc = "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
+    const today = new Date().toISOString().split("T")[0]
+    setApprovalDate(appt.scheduledDate && appt.scheduledDate.includes("-") ? appt.scheduledDate : today)
+    setApprovalTime(appt.scheduledTime || "09:00 AM")
+    setApprovalOfficeLocation(appt.officeLocation || defaultLoc)
+    setApprovalNotes(appt.notes || "Dalhin ang Valid ID, Original Medical Abstract/Prescription, at iba pang kaukulang dokumento sa 2nd Floor SSDD Civic Center E (PAD).")
     setApprovingAppt(appt)
   }
 
   const handleConfirmApproveAid = () => {
     if (!approvingAppt) return
     const appt = approvingAppt
-    const branch = selectedPartnerBranch
-    const notes = voucherNotes
+    const date = approvalDate
+    const time = approvalTime
+    const loc = approvalOfficeLocation
+    const notes = approvalNotes
     setApprovingAppt(null)
-    executeApproveAid(appt, branch, notes)
+    executeApproveAid(appt, date, time, loc, notes)
   }
 
   const executeApproveAid = async (
     appt: AppointmentRequest,
-    branchOverride?: string,
+    dateOverride?: string,
+    timeOverride?: string,
+    locationOverride?: string,
     notesOverride?: string
   ) => {
     try {
@@ -1384,6 +1383,12 @@ export default function Appointments() {
       const isPwd = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
       const isSenior = appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")
       const isAics = (appt.module === "AICS" || String(appt.concern || "").toLowerCase().includes("medical") || String(appt.concern || "").toLowerCase().includes("funeral") || String(appt.concern || "").toLowerCase().includes("educational")) && !isPwd && !isSenior
+
+      const defaultLoc = "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
+      const finalDate = dateOverride || appt.scheduledDate || new Date().toISOString().split("T")[0]
+      const finalTime = timeOverride || appt.scheduledTime || "09:00 AM"
+      const finalLocation = locationOverride || appt.officeLocation || defaultLoc
+      const finalNotes = notesOverride || appt.notes || ""
 
       const pwdIdNumber = `PWD-137404-2026-${String(Math.floor(1000 + Math.random() * 9000))}`
       const approvedIsoDate = new Date().toISOString()
@@ -1399,6 +1404,10 @@ export default function Appointments() {
             applicantName: appt.applicantName,
             module: appt.module,
             concern: appt.concern,
+            scheduledDate: finalDate,
+            scheduledTime: finalTime,
+            officeLocation: finalLocation,
+            notes: finalNotes,
           }),
         }),
       ]
@@ -1447,17 +1456,16 @@ export default function Appointments() {
       const approvedPayload = {
         status: "approved",
         decision: "approved",
-        scheduledDate: appt.scheduledDate,
-        scheduledTime: appt.scheduledTime,
-        officeLocation: appt.officeLocation,
+        scheduledDate: finalDate,
+        scheduledTime: finalTime,
+        officeLocation: finalLocation,
         applicantName: appt.applicantName,
         referenceNo: appt.referenceNo,
         concern: appt.concern,
         module: appt.module,
         pwdIdNumber: isPwd ? pwdIdNumber : undefined,
         approvedDate: approvedIsoDate,
-        pharmacyBranch: branchOverride || appt.pharmacyBranch,
-        voucherNotes: notesOverride || appt.voucherNotes,
+        notes: finalNotes,
       }
 
       localMap[appt.id] = approvedPayload
@@ -1561,7 +1569,7 @@ export default function Appointments() {
         pushUserNotification({
           userId: appt.referenceNo || 'all',
           title: 'AICS: Application APPROVED',
-          message: `Malugod naming ipinababatid na APPROVED ang inyong ${appt.concern}. Ang inyong Guarantee Letter ay handa na.`,
+          message: `Malugod naming ipinababatid na APPROVED ang inyong ${appt.concern}. Ang inyong Guarantee Letter ay handa na sa ${finalLocation} sa ${finalDate} nang ${finalTime}.`,
           type: 'payout',
           link: '/portal/aics',
         })
@@ -1571,20 +1579,22 @@ export default function Appointments() {
         ...a, 
         status: "approved" as const, 
         decision: "approved" as const,
-        pharmacyBranch: branchOverride || a.pharmacyBranch,
-        voucherNotes: notesOverride || a.voucherNotes
+        scheduledDate: finalDate,
+        scheduledTime: finalTime,
+        officeLocation: finalLocation,
+        notes: finalNotes,
       } : a))
 
       syncAppointmentToFinancialAid({
         referenceNo: appt.referenceNo,
         applicantName: appt.applicantName,
         concern: isSenior ? "Senior Social Assistance" : (isPwd ? "PWD Social Assistance" : appt.concern),
-        date: (isPwd || isSenior) ? undefined : (appt.scheduledDate || new Date().toLocaleDateString("en-PH")),
-        time: (isPwd || isSenior) ? undefined : (appt.scheduledTime || "10:00 AM"),
-        location: appt.officeLocation || "Quezon City Hall",
+        date: (isPwd || isSenior) ? undefined : finalDate,
+        time: (isPwd || isSenior) ? undefined : finalTime,
+        location: finalLocation,
         notes: isSenior
           ? "Approved Senior Citizen Pension (₱500/month). Accumulating for 6-month consolidated payout (₱3,000)."
-          : (isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (appt.notes || "Approved appointment for financial aid payout.")),
+          : (isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (finalNotes || "Approved appointment for financial aid payout.")),
       })
 
       notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : (isSenior ? 'pwd_senior' : 'aics'), appt.referenceNo)
@@ -2046,119 +2056,128 @@ export default function Appointments() {
         />
       )}
 
-      {/* Aid Approval & Release Details Modal (Option 2: Partner Pharmacy / Branch / Hospital Selection & Rx Notes) */}
-      {approvingAppt && (() => {
-        const raw = approvingAppt.rawApp || {}
-        const rawDetails = raw.details || {}
-        const isHospital =
-          String(approvingAppt.concern || '').toLowerCase().includes('hospital bill') ||
-          String(approvingAppt.concern || '').toLowerCase().includes('confinement') ||
-          String(approvingAppt.concern || '').toLowerCase().includes('admission') ||
-          String(rawDetails.assistanceSubType || '').toLowerCase().includes('medical bill') ||
-          String(rawDetails.assistanceSubType || '').toLowerCase().includes('hospital bill')
-
-        return (
-          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-150">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base">Aid Approval &amp; Release Details</h3>
-                    <p className="text-xs text-slate-500">{approvingAppt.applicantName} ({approvingAppt.referenceNo})</p>
-                  </div>
+      {/* Aid Approval & Release Details Modal (Revised: Date, Time & SSDD Civic Center E 2nd Floor PAD Location) */}
+      {approvingAppt && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                  <CheckCircle2 className="w-5 h-5" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setApprovingAppt(null)}
-                  className="text-slate-400 hover:text-slate-600 text-xl font-light cursor-pointer"
-                >
-                  &times;
-                </button>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Aid Approval &amp; Release Schedule</h3>
+                  <p className="text-xs text-slate-500">{approvingAppt.applicantName} ({approvingAppt.referenceNo})</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setApprovingAppt(null)}
+                className="text-slate-400 hover:text-slate-600 text-xl font-light cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Fixed Designated Venue / Location */}
+              <div className="p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-xl space-y-1">
+                <div className="flex items-center gap-2 text-xs font-bold text-blue-900 uppercase tracking-wider">
+                  <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>Designated Office &amp; Release Venue</span>
+                </div>
+                <p className="text-xs font-bold text-slate-900 leading-snug">
+                  SSDD Civic Center E, 2nd Floor
+                </p>
+                <p className="text-[11px] text-slate-600">
+                  Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City
+                </p>
+                <p className="text-[11px] font-semibold text-blue-700">
+                  Public Assistance Division (PAD) — Medical Assistance Program
+                </p>
               </div>
 
-              <div className="space-y-4">
-                {/* Partner Pharmacy & Branch (or Partner Hospital) */}
+              {/* Date and Time Picker (2 columns) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    {isHospital ? "🏥 Partner Hospital (Designated Facility) *" : "🏪 Partner Pharmacy & Branch (Pagkukuhanan) *"}
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Release Date (Petsa) *</span>
                   </label>
-                  <select
-                    value={selectedPartnerBranch}
-                    onChange={(e) => setSelectedPartnerBranch(e.target.value)}
+                  <input
+                    type="date"
+                    value={approvalDate}
+                    onChange={(e) => setApprovalDate(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
-                  >
-                    {isHospital ? (
-                      <>
-                        <option value="Quezon City General Hospital (QCGH)">Quezon City General Hospital (QCGH)</option>
-                        <option value="East Avenue Medical Center (EAMC)">East Avenue Medical Center (EAMC)</option>
-                        <option value="Lung Center of the Philippines (LCP)">Lung Center of the Philippines (LCP)</option>
-                        <option value="Philippine Heart Center (PHC)">Philippine Heart Center (PHC)</option>
-                        <option value="National Kidney and Transplant Institute (NKTI)">National Kidney and Transplant Institute (NKTI)</option>
-                        <option value="Philippine Children's Medical Center (PCMC)">Philippine Children's Medical Center (PCMC)</option>
-                        <option value="Quirino Memorial Medical Center (QMMC)">Quirino Memorial Medical Center (QMMC)</option>
-                        <option value="Novaliches District Hospital (NDH)">Novaliches District Hospital (NDH)</option>
-                        <option value="Rosario Maclang Bautista General Hospital (RMBGH)">Rosario Maclang Bautista General Hospital (RMBGH)</option>
-                        <option value="St. Luke's Medical Center – Quezon City">St. Luke's Medical Center – Quezon City</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="Mercury Drug – Quezon City Hall Branch">Mercury Drug – Quezon City Hall Branch</option>
-                        <option value="Mercury Drug – Fairview / Commonwealth">Mercury Drug – Fairview / Commonwealth</option>
-                        <option value="Mercury Drug – Cubao / Aurora Blvd">Mercury Drug – Cubao / Aurora Blvd</option>
-                        <option value="Mercury Drug – Novaliches District">Mercury Drug – Novaliches District</option>
-                        <option value="QC Health Dept Central Pharmacy (City Hall Compound)">QC Health Dept Central Pharmacy (City Hall Compound)</option>
-                        <option value="Any Accredited Mercury Drug Branch Nationwide">Any Accredited Mercury Drug Branch Nationwide</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-
-                {/* Doctor's Prescription / Voucher Notes */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    📝 Doctor&apos;s Prescription / Voucher Notes
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={voucherNotes}
-                    onChange={(e) => setVoucherNotes(e.target.value)}
-                    placeholder="e.g. Maintenance medicines for Hypertension / Diabetes (Amlodipine 5mg, Metformin 500mg) as per Doctor's Prescription..."
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition resize-none placeholder:text-slate-400"
+                    required
                   />
                 </div>
 
-                <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-start gap-2.5 text-xs text-emerald-900">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <p>
-                    Upon confirmation, the official <strong>{isHospital ? "Guarantee Letter (GL)" : "Mercury Drug Gift Certificate"}</strong> will be issued with these branch and prescription details.
-                  </p>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Release Time (Oras) *</span>
+                  </label>
+                  <select
+                    value={approvalTime}
+                    onChange={(e) => setApprovalTime(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                  >
+                    <option value="08:00 AM">08:00 AM – Morning Slot</option>
+                    <option value="09:00 AM">09:00 AM – Morning Slot</option>
+                    <option value="10:00 AM">10:00 AM – Morning Slot</option>
+                    <option value="11:00 AM">11:00 AM – Morning Slot</option>
+                    <option value="01:00 PM">01:00 PM – Afternoon Slot</option>
+                    <option value="02:00 PM">02:00 PM – Afternoon Slot</option>
+                    <option value="03:00 PM">03:00 PM – Afternoon Slot</option>
+                    <option value="04:00 PM">04:00 PM – Afternoon Slot</option>
+                  </select>
                 </div>
+              </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setApprovingAppt(null)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleConfirmApproveAid}
-                    className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Confirm Approval &amp; Issue {isHospital ? "GL" : "Voucher"}</span>
-                  </button>
-                </div>
+              {/* Notes / Instructions for Applicant */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  📝 Paalala / Instructions para sa Aplikante
+                </label>
+                <textarea
+                  rows={2}
+                  value={approvalNotes}
+                  onChange={(e) => setApprovalNotes(e.target.value)}
+                  placeholder="Hal. Dalhin ang Valid ID, Original Medical Abstract/Prescription sa 2nd Floor PAD..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition resize-none placeholder:text-slate-400"
+                />
+              </div>
+
+              <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-start gap-2.5 text-xs text-emerald-900">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <p>
+                  Pagka-kumpirma, opisyal nang maa-approve ang ayuda at mai-schedule ang releasing sa <strong>SSDD Civic Center E, 2nd Floor (PAD)</strong> sa tinukoy na petsa at oras.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setApprovingAppt(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmApproveAid}
+                  disabled={!approvalDate || !approvalTime}
+                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Confirm Approval &amp; Set Schedule</span>
+                </button>
               </div>
             </div>
           </div>
-        )
-      })()}
+        </div>
+      )}
 
       {/* Referral Agency Selection Modal */}
       {referralApp && (
