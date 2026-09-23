@@ -10,7 +10,6 @@ import {
   Banknote,
   Users,
   X,
-  Printer,
   FileText,
   Lock,
 } from "lucide-react"
@@ -1361,7 +1360,7 @@ export default function FinancialAidDisbursement() {
                                     type="button"
                                     disabled
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 font-bold text-xs cursor-not-allowed"
-                                    title={`Naka-lock pa dahil Buwan ${pwdState?.monthIndex || 1} pa lang (₱${pwdState?.currentAccumulated || 500}). Mag-u-unlock kapag ₱1,500 na (Buwan 3).`}
+                                    title={`Naka-lock pa dahil Buwan ${pwdState?.currentMonthNumber || 1} pa lang (₱${pwdState?.currentAccumulated || 500}). Mag-u-unlock kapag ₱1,500 na (Buwan 3).`}
                                   >
                                     <Lock className="w-3.5 h-3.5 text-gray-400" />
                                     <span>Locked ({pwdState?.nextQuarterMonthName || "₱500/mo"})</span>
