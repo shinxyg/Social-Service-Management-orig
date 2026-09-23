@@ -369,7 +369,6 @@ function AppointmentCard({
   onReject,
   onPrintGL,
   onPrintReferral,
-  onDelete,
 }: {
   appt: AppointmentRequest
   onSchedule: (a: AppointmentRequest) => void
@@ -378,7 +377,6 @@ function AppointmentCard({
   onReject?: (a: AppointmentRequest) => void
   onPrintGL?: (a: AppointmentRequest) => void
   onPrintReferral?: (a: AppointmentRequest) => void
-  onDelete?: (id: string, ref: string) => void
 }) {
   const effectiveStatus: AppointmentStatus = getApptEffectiveStatus(appt)
   const st = getAppointmentStatusTheme(effectiveStatus)
@@ -1920,75 +1918,6 @@ export default function Appointments() {
                 onReject={handleRejectAid}
                 onPrintGL={handlePrintGL}
                 onPrintReferral={(a) => handlePrintReferral(a)}
-                onDelete={async (id, ref) => {
-                  if (confirm(`Burahin ang appointment request para kay ${appt.applicantName}?`)) {
-                    const cleanRef = String(ref || '').trim()
-                    const cleanId = String(id || '').trim()
-                    const rawId = cleanId.replace(/^(db-appt-|aics-appt-|pwd-senior-appt-|cw-appt-)/, '').trim()
-
-                    setAppointments((prev) =>
-                      prev.filter((item) => {
-                        const iRef = String(item.referenceNo || '').trim().toLowerCase()
-                        const iId = String(item.id || '').trim().toLowerCase()
-                        if (cleanId && iId === cleanId.toLowerCase()) return false
-                        if (cleanRef && iRef === cleanRef.toLowerCase()) return false
-                        if (rawId && (iId.includes(rawId.toLowerCase()) || iRef === rawId.toLowerCase())) return false
-                        return true
-                      })
-                    )
-
-                    try {
-                      const dismissedRaw = localStorage.getItem("dismissed_appointments") || "[]"
-                      const dismissedList: string[] = JSON.parse(dismissedRaw)
-                      if (cleanRef && !dismissedList.includes(cleanRef)) dismissedList.push(cleanRef)
-                      if (cleanId && !dismissedList.includes(cleanId)) dismissedList.push(cleanId)
-                      if (rawId && !dismissedList.includes(rawId)) dismissedList.push(rawId)
-                      localStorage.setItem("dismissed_appointments", JSON.stringify(dismissedList))
-                    } catch {}
-
-                    try {
-                      const raw = localStorage.getItem("all_appointments_scheduled")
-                      if (raw) {
-                        const localMap = JSON.parse(raw)
-                        delete localMap[cleanId]
-                        delete localMap[cleanRef]
-                        delete localMap[rawId]
-                        localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
-                      }
-                    } catch {}
-
-                    try {
-                      await Promise.allSettled([
-                        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(cleanId)}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(cleanRef)}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/appointments/${encodeURIComponent(rawId)}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(cleanRef)}`, { method: "DELETE" }),
-                        fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(cleanRef)}`, { method: "DELETE" }),
-                      ])
-                    } catch {}
-
-                    try {
-                      const rawPwd = localStorage.getItem("pwd_senior_applications")
-                      if (rawPwd) {
-                        const parsed = JSON.parse(rawPwd)
-                        const filtered = parsed.filter((p: any) => {
-                          const pRef = String(p.referenceNumber || p.reference_number || '').trim().toLowerCase()
-                          const pId = String(p.id || '').trim().toLowerCase()
-                          if (cleanRef && pRef === cleanRef.toLowerCase()) return false
-                          if (cleanId && pId === cleanId.toLowerCase()) return false
-                          if (rawId && (pId === rawId.toLowerCase() || pRef === rawId.toLowerCase())) return false
-                          return true
-                        })
-                        localStorage.setItem("pwd_senior_applications", JSON.stringify(filtered))
-                      }
-                    } catch {}
-
-                    window.dispatchEvent(new Event("appointments_updated"))
-                    window.dispatchEvent(new Event("pwd_senior_applications_updated"))
-                    window.dispatchEvent(new Event("aics_applications_updated"))
-                    notifyApplicationChange("STATUS_CHANGED", "appointment", cleanRef || cleanId)
-                  }
-                }}
               />
             ))}
           </div>
