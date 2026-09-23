@@ -310,11 +310,12 @@ exports.createAppointment = async (req, res) => {
 
     const initialStatus = scheduledDate ? 'scheduled' : 'pending';
 
+    await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [referenceNo]).catch(() => {});
+
     const result = await db.query(
       `INSERT INTO appointments
         (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       ON CONFLICT (id) DO NOTHING
        RETURNING *`,
       [
         referenceNo,

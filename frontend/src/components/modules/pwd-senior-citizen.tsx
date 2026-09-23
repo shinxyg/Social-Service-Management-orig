@@ -2788,6 +2788,19 @@ export default function PWDSeniorCitizen() {
       }
 
       try {
+        const rawMap = localStorage.getItem("all_appointments_scheduled")
+        if (rawMap) {
+          const map = JSON.parse(rawMap)
+          delete map[`pwd-senior-appt-${targetApp.id}`]
+          delete map[`pwd-senior-appt-${targetApp.referenceNumber}`]
+          delete map[targetApp.referenceNumber]
+          delete map[`${targetApp.referenceNumber}_${assistanceName}`]
+          delete map[`appt_${targetApp.referenceNumber}`]
+          localStorage.setItem("all_appointments_scheduled", JSON.stringify(map))
+        }
+      } catch {}
+
+      try {
         fetch(`${API_BASE}/api/appointments`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

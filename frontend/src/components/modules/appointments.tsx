@@ -487,14 +487,23 @@ function AppointmentCard({
 
             {/* 4. Approved / Completed Stage (Admin clicked Approve) */}
             {effectiveStatus === "approved" && (
-              <button
-                type="button"
-                onClick={() => onPrintGL?.(appt)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                <span>📄 Print GL</span>
-              </button>
+              isPwdAppt ? (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 text-xs font-bold shadow-2xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>✓ PWD Pension Active (₱500/mo)</span>
+                  </span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onPrintGL?.(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>📄 Print GL</span>
+                </button>
+              )
             )}
 
             {/* 5. Referred Stage (Admin clicked Refer) */}
