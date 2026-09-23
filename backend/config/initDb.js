@@ -246,6 +246,48 @@ async function initDb() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS aics_applications (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(100) UNIQUE NOT NULL,
+        assistance_type VARCHAR(150) NOT NULL,
+        qc_id VARCHAR(100),
+        first_name VARCHAR(150) NOT NULL,
+        middle_name VARCHAR(150),
+        last_name VARCHAR(150) NOT NULL,
+        suffix VARCHAR(50),
+        nationality VARCHAR(100),
+        birth_date VARCHAR(50),
+        age INTEGER,
+        gender VARCHAR(50),
+        civil_status VARCHAR(50),
+        phone VARCHAR(50),
+        email VARCHAR(150),
+        address TEXT,
+        details JSONB DEFAULT '{}'::jsonb,
+        status VARCHAR(50) DEFAULT 'pending',
+        is_archived BOOLEAN DEFAULT false,
+        archived_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS aics_documents (
+        id SERIAL PRIMARY KEY,
+        application_id INTEGER REFERENCES aics_applications(id) ON DELETE CASCADE,
+        document_label VARCHAR(255),
+        original_filename VARCHAR(255),
+        file_type VARCHAR(100),
+        file_data BYTEA,
+        file_path TEXT,
+        uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      ALTER TABLE aics_documents ADD COLUMN IF NOT EXISTS file_data BYTEA;
+      ALTER TABLE aics_documents ADD COLUMN IF NOT EXISTS file_path TEXT;
+      ALTER TABLE aics_documents ADD COLUMN IF NOT EXISTS document_label VARCHAR(255);
+      ALTER TABLE aics_documents ADD COLUMN IF NOT EXISTS original_filename VARCHAR(255);
+      ALTER TABLE aics_documents ADD COLUMN IF NOT EXISTS file_type VARCHAR(100);
+
       CREATE TABLE IF NOT EXISTS email_otps (
         id SERIAL PRIMARY KEY,
         email VARCHAR(150) NOT NULL,

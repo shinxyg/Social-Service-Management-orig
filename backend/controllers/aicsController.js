@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const db = require('../config/db');
 let logActivity = null;
 try {
@@ -157,10 +159,21 @@ exports.createApplication = async (req, res) => {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const label = parsedLabels[i] || file.originalname;
+      let diskPath = null;
+      try {
+        const aicsUploadsDir = path.join(__dirname, '..', 'uploads', 'aics');
+        if (!fs.existsSync(aicsUploadsDir)) fs.mkdirSync(aicsUploadsDir, { recursive: true });
+        const safeName = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        diskPath = path.join(aicsUploadsDir, safeName);
+        fs.writeFileSync(diskPath, file.buffer);
+      } catch (e) {
+        console.warn('Could not write document to disk:', e);
+      }
+
       await client.query(
-        `INSERT INTO aics_documents (application_id, document_label, original_filename, file_type, file_data)
-         VALUES ($1,$2,$3,$4,$5)`,
-        [application.id, label, file.originalname, file.mimetype, file.buffer]
+        `INSERT INTO aics_documents (application_id, document_label, original_filename, file_type, file_data, file_path)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [application.id, label, file.originalname, file.mimetype, file.buffer, diskPath]
       );
     }
 
@@ -555,18 +568,27 @@ exports.getDocumentFile = async (req, res) => {
     const { id } = req.params;
 
     const result = await db.query(
-      'SELECT file_data, file_type, original_filename FROM aics_documents WHERE id = $1',
+      'SELECT file_data, file_type, file_path, original_filename FROM aics_documents WHERE id = $1',
       [id]
     );
 
-    if (result.rows.length === 0 || !result.rows[0].file_data) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Walang nahanap na file.' });
     }
 
     const doc = result.rows[0];
-    res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `inline; filename="${doc.original_filename}"`);
-    res.send(doc.file_data);
+
+    if (doc.file_data && doc.file_data.length > 0) {
+      res.setHeader('Content-Type', doc.file_type || 'image/jpeg');
+      res.setHeader('Content-Disposition', `inline; filename="${doc.original_filename || 'document.jpg'}"`);
+      return res.end(doc.file_data);
+    }
+
+    if (doc.file_path && fs.existsSync(doc.file_path)) {
+      return res.sendFile(path.resolve(doc.file_path));
+    }
+
+    return res.status(404).json({ error: 'Walang nahanap na file data.' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'May error sa pagkuha ng file.' });
