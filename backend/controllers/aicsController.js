@@ -197,6 +197,7 @@ exports.createApplication = async (req, res) => {
          WHERE (application_ref = $1 OR (application_ref = $2 AND $2 IS NOT NULL) OR qc_id = $1 OR (qc_id = $2 AND $2 IS NOT NULL))
            AND (LOWER(aid_type) LIKE '%med%' OR LOWER(aid_type) LIKE '%gamot%' OR LOWER(aid_type) = LOWER($3))`,
         [referenceNo, targetQcId, finalAssistanceType]
+      );
     } catch (apptErr) {
       console.warn('AICS clean prior records warning:', apptErr.message);
     }
