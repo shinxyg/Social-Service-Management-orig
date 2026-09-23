@@ -902,21 +902,6 @@ export default function AICS() {
                     <XCircle className="w-4 h-4" />
                     <span>{currentStatus === 'rejected' ? '✕ Disqualified / Rejected' : 'Reject Application'}</span>
                   </button>
-
-                  {currentStatus === 'approved' && (
-                    <button
-                      type="button"
-                      onClick={() => setGlApp(reviewingApp)}
-                      className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
-                    >
-                      <Printer className="w-4 h-4" />
-                      <span>
-                        {String(reviewingApp.assistance_type || '').toLowerCase().includes('medicine') || String(reviewingApp.assistance_type || '').toLowerCase().includes('gamot')
-                          ? 'View / Print Mercury Drug Gift Certificate'
-                          : 'View / Print Guarantee Letter (GL)'}
-                      </span>
-                    </button>
-                  )}
                 </div>
 
                 {/* Right Side: Close Button */}

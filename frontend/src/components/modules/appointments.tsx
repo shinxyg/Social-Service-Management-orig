@@ -546,7 +546,11 @@ function AppointmentCard({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
                 >
                   <Printer className="h-3.5 w-3.5" />
-                  <span>📄 Print GL</span>
+                  <span>
+                    {String(appt.concern || '').toLowerCase().includes('medicine') || String(appt.concern || '').toLowerCase().includes('gamot') || String(appt.rawApp?.assistance_type || '').toLowerCase().includes('medicine') || String(appt.rawApp?.assistance_type || '').toLowerCase().includes('gamot') || String(appt.rawApp?.details?.assistanceSubType || '').toLowerCase().includes('medicine') || String(appt.rawApp?.details?.assistanceSubType || '').toLowerCase().includes('gamot')
+                      ? '🎁 Print Gift Certificate'
+                      : '📄 Print GL'}
+                  </span>
                 </button>
               )
             )}
@@ -1724,8 +1728,19 @@ export default function Appointments() {
 
     const raw = appt.rawApp || {}
     const rawDetails = raw.details || {}
+    const isMedicine =
+      String(raw.assistance_type || '').toLowerCase().includes('medicine') ||
+      String(raw.assistance_type || '').toLowerCase().includes('gamot') ||
+      String(appt.concern || '').toLowerCase().includes('medicine') ||
+      String(appt.concern || '').toLowerCase().includes('gamot') ||
+      String(rawDetails.assistanceSubType || '').toLowerCase().includes('medicine') ||
+      String(rawDetails.assistanceSubType || '').toLowerCase().includes('gamot') ||
+      String(rawDetails.assistanceSubType || '').toLowerCase().includes('supply')
+
     setGlModalData({
-      controlNo: `QC-SSDD-GL-2026-${String(appt.rawAppId || appt.id).padStart(6, '0')}`,
+      controlNo: isMedicine
+        ? `QC-MD-GC-2026-${String(appt.rawAppId || appt.id).padStart(6, '0')}`
+        : `QC-SSDD-GL-2026-${String(appt.rawAppId || appt.id).padStart(6, '0')}`,
       applicationRef: appt.referenceNo,
       patientName: appt.applicantName,
       qcidNumber: raw.qc_id || appt.referenceNo,
@@ -1735,9 +1750,13 @@ export default function Appointments() {
       gender: raw.gender || 'Female',
       address: raw.address || 'Quezon City',
       diagnosis: rawDetails.medicalDiagnosis || `${appt.concern} — SSDD Evaluated Assistance`,
-      hospitalName: rawDetails.partnerHospital || rawDetails.partnerHospitalOther || 'East Avenue Medical Center',
-      amount: 5000,
+      hospitalName: isMedicine
+        ? 'MERCURY DRUG (QUEZON CITY BRANCHES)'
+        : (rawDetails.partnerHospital || rawDetails.partnerHospitalOther || 'East Avenue Medical Center'),
+      amount: isMedicine ? 500 : (Number(rawDetails.hospitalBillEstimate) || 25000),
       dateIssued: new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+      assistanceType: isMedicine ? 'Medicines / Medical Supplies' : (raw.assistance_type || appt.concern || 'Medical Assistance'),
+      isMedicineVoucher: isMedicine,
     })
   }
 

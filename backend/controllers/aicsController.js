@@ -274,41 +274,6 @@ async function enrichApplicationWithSuffix(app) {
 
 exports.getApplications = async (req, res) => {
   try {
-    // 1. Reset any erroneously auto-approved AICS applications where status was overwritten without an approved AICS appointment
-    await db.query(`
-      UPDATE aics_applications
-      SET status = CASE 
-        WHEN (details->>'appointmentDate' IS NOT NULL AND details->>'appointmentDate' <> '') THEN 'scheduled'
-        ELSE 'waiting_approval'
-      END, updated_at = NOW()
-      WHERE status IN ('approved', 'completed')
-        AND reference_no NOT IN (
-          SELECT reference_no FROM appointments WHERE module = 'AICS' AND status IN ('approved', 'completed')
-        )
-    `).catch(() => {});
-
-    // Ensure applications with scheduled dates are marked as scheduled
-    await db.query(`
-      UPDATE aics_applications
-      SET status = 'scheduled', updated_at = NOW()
-      WHERE (details->>'appointmentDate' IS NOT NULL AND details->>'appointmentDate' <> '')
-        AND status IN ('pending', 'submit_pending', 'waiting_approval')
-    `).catch(() => {});
-
-    // 2. Strictly sync AICS status with actual AICS appointments by exact reference_no
-    await db.query(`
-      UPDATE aics_applications a
-      SET status = appt.status, updated_at = NOW()
-      FROM appointments appt
-      WHERE appt.module = 'AICS'
-        AND (appt.reference_no = a.reference_no 
-             OR REPLACE(COALESCE(appt.reference_no,''), '-', '') = REPLACE(COALESCE(a.reference_no,''), '-', ''))
-        AND LOWER(appt.status) IN ('scheduled', 'under_review', 'approved', 'completed', 'referred', 'rejected')
-        AND LOWER(COALESCE(a.status, '')) != LOWER(appt.status)
-    `).catch((syncErr) => {
-      console.warn('[aicsController.getApplications] sync warning:', syncErr.message);
-    });
-
     const { status, qcId, email } = req.query;
     let query = 'SELECT * FROM aics_applications';
     const conditions = [];
