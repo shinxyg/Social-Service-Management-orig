@@ -341,7 +341,7 @@ exports.getNotifications = async (req, res) => {
                 title,
                 desc: isAssistance
                   ? (isApproved
-                      ? `Congratulations! Your ${serviceLabel} application has been approved. Your ₱500/month Social Welfare Pension is now active (₱1,500 every 3-month cycle).`
+                      ? `Congratulations! Your ${serviceLabel} application has been approved. Your ₱500/month Social Welfare Pension is now active (${isSenior ? '₱3,000 every 6-month cycle' : '₱1,500 every 3-month cycle'}).`
                       : `Your ${serviceLabel} application was not approved.`)
                   : `${serviceLabel} — Ref: ${app.assigned_id_number || app.reference_number || app.id}`,
                 time: formatManilaTime(appDate),
