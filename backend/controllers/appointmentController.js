@@ -74,7 +74,9 @@ async function initAppointmentTables() {
     console.warn('[Appointments init tables]:', e.message);
   }
 }
-initAppointmentTables();
+initAppointmentTables().then(() => {
+  syncAndCleanAppointments();
+});
 
 let lastAppointmentSyncTime = 0;
 let isAppointmentSyncInProgress = false;
@@ -123,7 +125,7 @@ async function syncAndCleanAppointments() {
     await db.query(`
       DELETE FROM appointments a
       USING appointments b
-      WHERE a.id < b.id AND a.reference_no = b.reference_no AND a.concern = b.concern
+      WHERE a.id < b.id AND a.reference_no = b.reference_no AND a.module = b.module AND a.concern = b.concern
     `).catch(() => {});
 
     await db.query(`
@@ -144,13 +146,13 @@ async function syncAndCleanAppointments() {
 
     // Import active AICS applications (Medical, Funeral, Food, Educational, etc.)
     const activeAics = await db.query(
-      `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix, status
+      `SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
        FROM aics_applications
        WHERE status NOT IN ('rejected', 'denied', 'disapproved')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeAics.rows) {
-      const refNo = String(row.reference_no || '').trim();
+      const refNo = String(row.reference_no || row.qc_id || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
       const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
       const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
@@ -159,13 +161,35 @@ async function syncAndCleanAppointments() {
       const isReferred = ['for_referral', 'referred'].includes(row.status);
       const isSched = ['scheduled', 'under_review'].includes(row.status);
       const initStatus = isApproved ? 'approved' : isReferred ? 'referred' : isSched ? 'scheduled' : 'pending';
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
-         SELECT $1, 'AICS', $2, $3, $4, NULL, NULL, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.'
-         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
-        [refNo, fullName, cleanType, initStatus]
-      ).catch(() => {});
+
+      const details = (typeof row.details === 'object' && row.details !== null) ? row.details : {};
+      const schedDate = details.appointmentDate || null;
+      const schedTime = details.appointmentTime || null;
+      const venue = details.appointmentVenue || 'Quezon City Hall';
+
+      const checkExists = await db.query(
+        `SELECT id, status, scheduled_date FROM appointments WHERE reference_no = $1 AND module = 'AICS' AND concern = $2`,
+        [refNo, cleanType]
+      ).catch(() => ({ rows: [] }));
+
+      if (checkExists.rows.length === 0) {
+        await db.query(
+          `INSERT INTO appointments
+            (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes, created_at, updated_at)
+           VALUES ($1, 'AICS', $2, $3, $4, $5, $6, $7, 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.', COALESCE($8, NOW()), NOW())`,
+          [refNo, fullName, cleanType, initStatus, schedDate, schedTime, venue, row.created_at || null]
+        ).catch(() => {});
+      } else {
+        const existing = checkExists.rows[0];
+        if (isApproved && existing.status !== 'approved') {
+          await db.query(`UPDATE appointments SET status = 'approved', updated_at = NOW() WHERE id = $1`, [existing.id]).catch(() => {});
+        } else if (schedDate && !existing.scheduled_date) {
+          await db.query(
+            `UPDATE appointments SET status = $1, scheduled_date = $2, scheduled_time = $3, office_location = $4, updated_at = NOW() WHERE id = $5`,
+            [initStatus, schedDate, schedTime, venue, existing.id]
+          ).catch(() => {});
+        }
+      }
     }
 
     const approvedLivelihood = await db.query(
@@ -184,32 +208,45 @@ async function syncAndCleanAppointments() {
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, office_location, notes)
          SELECT $1, 'Livelihood', $2, 'Livelihood Capital Assistance', 'pending', 'Quezon City Hall - SSDD Livelihood Center', 'Awtomatikong pumasok mula sa na-aprubahang Livelihood Capital allocation para sa appointment scheduling.'
-         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = 'Livelihood Capital Assistance')`,
+         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND module = 'Livelihood' AND concern = 'Livelihood Capital Assistance')`,
         [refNo, fullName]
       ).catch(() => {});
     }
 
-    const approvedPwdSenior = await db.query(
-      `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix
+    // Import active PWD and Senior assistance applications
+    const activePwdSenior = await db.query(
+      `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, status, submitted_at, created_at
        FROM pwd_senior_applications
-       WHERE status IN ('approved', 'completed', 'for_release')
+       WHERE status NOT IN ('rejected', 'denied', 'disapproved')
          AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')`
     ).catch(() => ({ rows: [] }));
 
-    for (const row of approvedPwdSenior.rows) {
+    for (const row of activePwdSenior.rows) {
       const refNo = String(row.reference_number || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
       const isPwd = String(row.category || '').toUpperCase().includes('PWD');
       const mod = isPwd ? 'PWD' : 'Senior Citizen';
       const concern = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
       const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang Social Assistance aplikasyon para sa scheduling.'
-         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $4)`,
-        [refNo, mod, fullName, concern]
-      ).catch(() => {});
+      const isApproved = ['approved', 'completed', 'for_release', 'released'].includes(row.status);
+      const isSched = ['scheduled', 'under_review'].includes(row.status);
+      const initStatus = isApproved ? 'approved' : isSched ? 'scheduled' : 'pending';
+
+      const checkExists = await db.query(
+        `SELECT id, status FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3`,
+        [refNo, mod, concern]
+      ).catch(() => ({ rows: [] }));
+
+      if (checkExists.rows.length === 0) {
+        await db.query(
+          `INSERT INTO appointments
+            (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, 'Quezon City Hall - PDAO Room 102', 'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.', COALESCE($6, NOW()), NOW())`,
+          [refNo, mod, fullName, concern, initStatus, row.submitted_at || row.created_at || null]
+        ).catch(() => {});
+      } else if (isApproved && checkExists.rows[0].status !== 'approved') {
+        await db.query(`UPDATE appointments SET status = 'approved', updated_at = NOW() WHERE id = $1`, [checkExists.rows[0].id]).catch(() => {});
+      }
     }
 
     const approvedCw = await db.query(
@@ -271,7 +308,7 @@ exports.getAppointments = async (req, res) => {
       DELETE FROM appointments
       WHERE module = 'AICS' AND reference_no IN (
         SELECT reference_no FROM aics_applications 
-        WHERE status IN ('pending', 'submit_pending', 'rejected', 'denied', 'disapproved')
+        WHERE status IN ('rejected', 'denied', 'disapproved')
       )
     `).catch(() => {});
 
@@ -631,7 +668,27 @@ exports.updateAppointmentStatus = async (req, res) => {
       [newStatus, notes || null, rawId, cleanId, unhyphenated, targetModule, targetConcern ? `%${targetConcern}%` : '']
     );
 
-    const apptRow = apptUpdate.rows[0];
+    let apptRow = apptUpdate.rows[0];
+    if (!apptRow) {
+      const defaultConcern = targetModule === 'PWD' ? 'PWD Social Assistance' : 'Medical Assistance';
+      const insertRes = await db.query(
+        `INSERT INTO appointments
+          (reference_no, module, applicant_name, concern, status, office_location, notes)
+         VALUES ($1, $2, $3, $4, $5, 'Quezon City Hall', $6)
+         RETURNING *`,
+        [
+          cleanId,
+          targetModule || 'AICS',
+          applicantName || 'BENEFICIARY',
+          targetConcern || defaultConcern,
+          newStatus,
+          notes || null
+        ]
+      ).catch((err) => console.warn('Could not insert appointment on status update:', err.message));
+      if (insertRes && insertRes.rows.length > 0) {
+        apptRow = insertRes.rows[0];
+      }
+    }
     const resolvedModule = (apptRow?.module || targetModule).toUpperCase();
     const resolvedConcern = String(apptRow?.concern || targetConcern || '');
 

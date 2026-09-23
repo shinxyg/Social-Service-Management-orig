@@ -537,6 +537,29 @@ exports.createApplication = async (req, res) => {
           newApp.submittedAt || new Date().toISOString(),
         ]
       );
+
+      // Directly insert PWD/Senior Social Assistance appointment
+      try {
+        const isPwdApp = String(newApp.category || '').toUpperCase().includes('PWD');
+        const isAssist = String(newApp.type || '').toLowerCase().includes('assist') ||
+                         String(newApp.category || '').toLowerCase().includes('assist') ||
+                         String(newApp.applyingFor || '').toLowerCase().includes('assist') ||
+                         JSON.stringify(body).toLowerCase().includes('assist');
+        if (isAssist) {
+          const pwdMod = isPwdApp ? 'PWD' : 'Senior Citizen';
+          const pwdConcern = isPwdApp ? 'PWD Social Assistance' : 'Senior Social Assistance';
+          const pwdFullName = [newApp.firstName, newApp.middleName, newApp.lastName, newApp.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+          await db.query(
+            `INSERT INTO appointments
+              (reference_no, module, applicant_name, concern, status, office_location, notes)
+             VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall - PDAO Room 102', 'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.')
+             ON CONFLICT DO NOTHING`,
+            [newApp.referenceNumber, pwdMod, pwdFullName, pwdConcern]
+          );
+        }
+      } catch (pwdApptErr) {
+        console.warn('Could not insert appointment for PWD:', pwdApptErr.message);
+      }
     } catch (dbErr) {
       console.warn('[DB Error] Could not insert to DB, saving to memory fallback:', dbErr.message);
       memoryApplications = [
@@ -742,7 +765,7 @@ exports.updateApplicationStatus = async (req, res) => {
         const concernName = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
 
         try {
-          const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [refNo]);
+          const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1 AND module = $2', [refNo, isPwd ? 'PWD' : 'Senior Citizen']);
           if (checkAppt.rows.length === 0) {
             await db.query(
               `INSERT INTO appointments
@@ -760,7 +783,7 @@ exports.updateApplicationStatus = async (req, res) => {
       } else {
 
         try {
-          await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [refNo]);
+          await db.query(`DELETE FROM appointments WHERE reference_no = $1 AND module IN ('PWD', 'Senior Citizen')`, [refNo]);
           await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref = $1`, [refNo]);
         } catch (_) {}
       }
@@ -817,7 +840,7 @@ exports.updateApplicationStatus = async (req, res) => {
       }
     } else if (status === 'rejected') {
       try {
-        await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [refNo]);
+        await db.query(`DELETE FROM appointments WHERE reference_no = $1 AND module IN ('PWD', 'Senior Citizen')`, [refNo]);
         await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref = $1`, [refNo]);
       } catch (_) {}
     }

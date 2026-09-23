@@ -160,6 +160,20 @@ exports.createApplication = async (req, res) => {
     await client.query('COMMIT');
 
     try {
+      const cleanType = (finalAssistanceType.replace(/\s*assistance/gi, '').trim() || 'Medical') + ' Assistance';
+      const fullName = [finalFirstName, middleName, finalLastName, suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+      await db.query(
+        `INSERT INTO appointments
+          (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
+         VALUES ($1, 'AICS', $2, $3, 'pending', NULL, NULL, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS Medical / Assistance application.')
+         ON CONFLICT DO NOTHING`,
+        [referenceNo, fullName, cleanType]
+      );
+    } catch (apptErr) {
+      console.warn('AICS appointment direct insert warning:', apptErr.message);
+    }
+
+    try {
       const { ensureBeneficiaryForUser } = require('./beneficiaryController');
       ensureBeneficiaryForUser({
         qcid: qcId,
@@ -690,16 +704,31 @@ exports.updateApplicationStatus = async (req, res) => {
     }
 
     // Sync appointments table status
-    await db.query(
+    const apptUpRes = await db.query(
       `UPDATE appointments
        SET status = $1,
            updated_at = NOW()
-       WHERE reference_no = $2
+       WHERE (reference_no = $2
           OR reference_no = $3
           OR REPLACE(reference_no, '-', '') = $4
-          OR ($5 != '' AND applicant_name ILIKE $5)`,
+          OR ($5 != '' AND applicant_name ILIKE $5))
+         AND module = 'AICS'
+       RETURNING *`,
       [newStatus, rawId, cleanId, unhyphenated, applicantName ? `%${applicantName}%` : '']
-    ).catch(() => {});
+    ).catch(() => ({ rows: [] }));
+
+    if (apptUpRes.rows.length === 0 && appUpdate.rows.length > 0) {
+      const appRow = appUpdate.rows[0];
+      const fullName = [appRow.first_name, appRow.middle_name, appRow.last_name, appRow.suffix].filter(Boolean).join(' ').trim().toUpperCase() || (applicantName || 'BENEFICIARY').toUpperCase();
+      const rawType = (appRow.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
+      const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
+      await db.query(
+        `INSERT INTO appointments
+          (reference_no, module, applicant_name, concern, status, office_location, notes)
+         VALUES ($1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS status update.')`,
+        [appRow.reference_no || cleanId, fullName, cleanType, newStatus]
+      ).catch(() => {});
+    }
 
     // Sync financial_aid_disbursements if approved
     if (newStatus === 'approved' || newStatus === 'completed' || newStatus === 'for_release') {
