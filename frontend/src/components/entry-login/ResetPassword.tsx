@@ -8,7 +8,7 @@ export const ResetPassword = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const governmentSealImage = '/samples/Government Service Integrity Seal.png';
+  const governmentSealImage = '/gov-serves-seal.png';
 
   useEffect(() => {
     const syncTheme = () => {

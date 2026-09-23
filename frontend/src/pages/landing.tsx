@@ -103,7 +103,7 @@ export function LandingPage() {
         <nav className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <img
-              src="/samples/Government Service Integrity Seal.png"
+              src="/gov-serves-seal.png"
               alt="Government Seal"
               className="h-8 w-8 md:h-9 md:w-9 object-contain shrink-0"
             />

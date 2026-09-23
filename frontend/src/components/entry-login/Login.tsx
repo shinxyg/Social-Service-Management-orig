@@ -9,7 +9,7 @@ import { RecaptchaModal } from '../ui/recaptcha-modal';
 export const Login = () => {
   const navigate = useNavigate();
 
-  const governmentSealImage = '/samples/Government Service Integrity Seal.png';
+  const governmentSealImage = '/gov-serves-seal.png';
 
   useEffect(() => {
     const syncTheme = () => {

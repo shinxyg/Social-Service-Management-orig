@@ -23,7 +23,7 @@ export function AppSidebar({
             <Tooltip label="GovServe">
               <div className="h-11 w-11 flex items-center justify-center shrink-0">
                 <img
-                  src="/samples/Government Service Integrity Seal.png"
+                  src="/gov-serves-seal.png"
                   alt="GovServe"
                   className="h-9 w-9 object-contain"
                 />

@@ -719,7 +719,7 @@ export default function TrainingProgramAdmin() {
             >
               <div className="flex items-center justify-center gap-3">
                 <img
-                  src="/samples/Government Service Integrity Seal.png"
+                  src="/gov-serves-seal.png"
                   alt="QC Seal"
                   className="w-16 h-16 object-contain"
                   onError={(e) => {
