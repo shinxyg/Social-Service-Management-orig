@@ -129,26 +129,26 @@ function ReviewSection({
 }) {
   const [open, setOpen] = useState(true)
   return (
-    <div className="border border-border rounded-xl overflow-hidden shadow-xs">
-      <div className="flex items-center justify-between bg-gray-50/80 px-4 py-3 border-b border-border">
+    <div className="border border-border dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+      <div className="flex items-center justify-between bg-slate-50/90 dark:bg-slate-800/80 px-4 py-3 border-b border-border dark:border-slate-800">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2 text-sm font-bold text-foreground hover:text-blue-600 transition-colors cursor-pointer"
+          className="flex items-center gap-2 text-sm font-bold text-foreground dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
         >
-          <ChevronUp className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "" : "rotate-180"}`} />
+          <ChevronUp className={`h-4 w-4 text-muted-foreground dark:text-slate-400 transition-transform ${open ? "" : "rotate-180"}`} />
           {title}
         </button>
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors cursor-pointer"
         >
           <Pencil className="h-3 w-3" />
           I-EDIT
         </button>
       </div>
-      {open && <div className="p-4 bg-white">{children}</div>}
+      {open && <div className="p-4 bg-white dark:bg-slate-900/70 text-foreground dark:text-slate-100">{children}</div>}
     </div>
   )
 }
@@ -156,8 +156,8 @@ function ReviewSection({
 function ReviewField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
-      <p className="text-sm font-medium text-foreground mt-0.5">{value || "—"}</p>
+      <p className="text-xs font-semibold text-muted-foreground dark:text-slate-400 uppercase tracking-wide">{label}</p>
+      <p className="text-sm font-medium text-foreground dark:text-slate-100 mt-0.5">{value || "—"}</p>
     </div>
   )
 }
@@ -979,20 +979,20 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     ? "bg-blue-600 text-white"
                     : s.id < step
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-500"
+                    : "bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
                 }`}
               >
                 {s.id < step ? <Check className="h-4 w-4" /> : s.id}
               </div>
               {idx < STEPS.length - 1 && (
-                <div className={`h-px flex-1 mx-2 ${s.id < step ? "bg-blue-300" : "bg-gray-200"}`} />
+                <div className={`h-px flex-1 mx-2 ${s.id < step ? "bg-blue-300 dark:bg-blue-600" : "bg-gray-200 dark:bg-slate-800"}`} />
               )}
             </div>
           ))}
         </div>
 
         {/* Step labels */}
-        <div className="flex gap-2 border-b border-border bg-gray-50 p-2 overflow-x-auto">
+        <div className="flex gap-2 border-b border-border bg-gray-50 dark:bg-slate-900/50 p-2 overflow-x-auto">
           {STEPS.map((s) => (
             <div
               key={s.id}
@@ -1000,8 +1000,8 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 s.id === step
                   ? "bg-blue-600 text-white shadow-xs"
                   : s.id < step
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-500"
+                  ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
+                  : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
               }`}
             >
               {s.label}
@@ -2034,22 +2034,22 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                     ) : (
                       <div className="space-y-2">
                         {formData.familyMembers.map((m, i) => (
-                          <div key={i} className="p-2.5 rounded-lg border border-border bg-slate-50 dark:bg-slate-900/40 text-xs grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <div key={i} className="p-2.5 rounded-lg border border-border dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-xs grid grid-cols-2 sm:grid-cols-4 gap-2">
                             <div>
-                              <span className="text-gray-500 font-semibold block">Pangalan:</span>
-                              <span className="font-bold text-foreground">{m.name || "—"}</span>
+                              <span className="text-gray-500 dark:text-slate-400 font-semibold block">Pangalan:</span>
+                              <span className="font-bold text-foreground dark:text-slate-100">{m.name || "—"}</span>
                             </div>
                             <div>
-                              <span className="text-gray-500 font-semibold block">Relasyon / Edad:</span>
-                              <span className="text-foreground">{m.relationship} - {m.age || "—"} anyos</span>
+                              <span className="text-gray-500 dark:text-slate-400 font-semibold block">Relasyon / Edad:</span>
+                              <span className="text-foreground dark:text-slate-200">{m.relationship} - {m.age || "—"} anyos</span>
                             </div>
                             <div>
-                              <span className="text-gray-500 font-semibold block">Trabaho:</span>
-                              <span className="text-foreground">{m.occupation || "N/A"}</span>
+                              <span className="text-gray-500 dark:text-slate-400 font-semibold block">Trabaho:</span>
+                              <span className="text-foreground dark:text-slate-200">{m.occupation || "N/A"}</span>
                             </div>
                             <div>
-                              <span className="text-gray-500 font-semibold block">Kita / Notes:</span>
-                              <span className="text-foreground">{m.income || m.otherInfo || "N/A"}</span>
+                              <span className="text-gray-500 dark:text-slate-400 font-semibold block">Kita / Notes:</span>
+                              <span className="text-foreground dark:text-slate-200">{m.income || m.otherInfo || "N/A"}</span>
                             </div>
                           </div>
                         ))}
@@ -2141,14 +2141,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                             <button
                               type="button"
                               onClick={() => setPreviewDocModal({ title: doc.label, file })}
-                              className="w-full max-w-md border border-border hover:border-blue-400 rounded-lg overflow-hidden text-left bg-white cursor-pointer transition-colors shadow-xs"
+                              className="w-full max-w-md border border-border dark:border-slate-800 hover:border-blue-400 rounded-lg overflow-hidden text-left bg-white dark:bg-slate-900/70 cursor-pointer transition-colors shadow-xs"
                             >
-                              <div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                              <div className="h-28 w-full bg-gray-100 dark:bg-slate-800/80 flex items-center justify-center overflow-hidden">
                                 <FileThumbnail file={file} className="h-full w-full object-cover" />
                               </div>
-                              <div className="px-3 py-2 text-center border-t border-border bg-white">
-                                <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
-                                <p className="text-[10px] text-muted-foreground mt-0.5">{formatFileSize(file.size)}</p>
+                              <div className="px-3 py-2 text-center border-t border-border dark:border-slate-800 bg-white dark:bg-slate-900/70">
+                                <p className="text-xs font-medium text-foreground dark:text-slate-100 truncate">{file.name}</p>
+                                <p className="text-[10px] text-muted-foreground dark:text-slate-400 mt-0.5">{formatFileSize(file.size)}</p>
                               </div>
                             </button>
                           </div>
@@ -2165,14 +2165,14 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-between border-t border-border bg-gray-50 px-6 py-4">
+        <div className="flex items-center justify-between border-t border-border bg-gray-50 dark:bg-slate-900/60 px-6 py-4">
           {step === 1 && !onBack ? (
             <div />
           ) : (
             <button
               type="button"
               onClick={goBack}
-              className="px-5 py-2 rounded-lg text-xs font-semibold bg-white border border-border text-foreground hover:bg-gray-100 cursor-pointer transition-colors"
+              className="px-5 py-2 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-border dark:border-slate-700 text-foreground dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer transition-colors"
             >
               {t("backButton")?.toUpperCase() || "BACK"}
             </button>
@@ -2186,7 +2186,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
               className={`flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 canGoNext
                   ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer shadow-xs"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-500 cursor-not-allowed"
               }`}
             >
               <span>{t("nextButton")?.toUpperCase() || "NEXT"}</span>
@@ -2203,7 +2203,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
               className={`px-8 py-2.5 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center gap-2 ${
                 isStep4Valid
                   ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-500 cursor-not-allowed"
               }`}
             >
               <span>SUBMIT APPLICATION</span>
