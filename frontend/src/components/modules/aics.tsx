@@ -267,7 +267,27 @@ export default function AICS() {
         if (data.application) {
           setReviewingApp(data.application)
         }
-        setReviewingDocs(data.documents || [])
+        let mergedDocs: any[] = data.documents || []
+        const previews: any[] = data.application?.details?.uploadedDocumentPreviews || []
+        if (previews.length > 0) {
+          mergedDocs = mergedDocs.map((doc, idx) => {
+            const matchedPrev = previews.find((p: any) => p.label === doc.document_label || p.filename === doc.original_filename) || previews[idx]
+            return {
+              ...doc,
+              dataUrl: matchedPrev?.dataUrl || (doc as any).dataUrl,
+            }
+          })
+          if (mergedDocs.length === 0) {
+            mergedDocs = previews.map((p: any, idx: number) => ({
+              id: idx + 1,
+              document_label: p.label,
+              original_filename: p.filename,
+              file_type: 'image/png',
+              dataUrl: p.dataUrl,
+            }))
+          }
+        }
+        setReviewingDocs(mergedDocs)
       }
     } catch (err) {
       console.error('Error fetching application details:', err)
@@ -835,12 +855,16 @@ export default function AICS() {
                       </div>
                       
                       <div className="w-full h-24 rounded-lg bg-white border border-slate-200 overflow-hidden flex items-center justify-center text-slate-400">
-                        {doc.file_type?.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(doc.original_filename || '') ? (
+                        {(doc as any).dataUrl || (doc as any).file_url || doc.file_type?.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(doc.original_filename || '') ? (
                           <img
-                            src={`${API_BASE}/documents/${doc.id}/file`}
+                            src={(doc as any).dataUrl || (doc as any).file_url || `${API_BASE}/documents/${doc.id}/file`}
                             alt={doc.document_label}
                             className="w-full h-full object-cover group-hover:scale-105 transition"
                             onError={(e) => {
+                              if ((doc as any).dataUrl) {
+                                (e.currentTarget as HTMLImageElement).src = (doc as any).dataUrl;
+                                return;
+                              }
                               const lbl = (doc.document_label || '').toLowerCase();
                               let fb = '/samples/sample_valid_id.png';
                               if (lbl.includes('authoriz') || lbl.includes('letter')) fb = '/samples/AUTHORIZATION  PERSONAL LETTER.jpg';
@@ -1157,12 +1181,16 @@ export default function AICS() {
               </div>
 
               <div className="p-6 overflow-auto flex items-center justify-center bg-slate-100/50 min-h-[300px]">
-                {viewingDoc.file_type?.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(viewingDoc.original_filename || '') ? (
+                {(viewingDoc as any).dataUrl || (viewingDoc as any).file_url || viewingDoc.file_type?.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(viewingDoc.original_filename || '') ? (
                   <img
-                    src={`${API_BASE}/documents/${viewingDoc.id}/file`}
+                    src={(viewingDoc as any).dataUrl || (viewingDoc as any).file_url || `${API_BASE}/documents/${viewingDoc.id}/file`}
                     alt={viewingDoc.document_label}
                     className="max-h-[65vh] max-w-full rounded-lg shadow-sm object-contain"
                     onError={(e) => {
+                      if ((viewingDoc as any).dataUrl) {
+                        (e.currentTarget as HTMLImageElement).src = (viewingDoc as any).dataUrl;
+                        return;
+                      }
                       const lbl = (viewingDoc.document_label || '').toLowerCase();
                       let fb = '/samples/sample_valid_id.png';
                       if (lbl.includes('authoriz') || lbl.includes('letter')) fb = '/samples/AUTHORIZATION  PERSONAL LETTER.jpg';

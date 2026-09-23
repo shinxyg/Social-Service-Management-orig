@@ -112,11 +112,11 @@ async function syncAndCleanAppointments() {
         AND status IN ('pending', 'submit_pending', 'waiting_approval')
     `).catch(() => {});
 
-    // 2. Clean up rejected applications for other modules
+    // 2. Clean up unapproved or rejected applications for PWD / Senior Citizen (Strictly require Admin approval first)
     await db.query(`
       DELETE FROM appointments
       WHERE module IN ('PWD', 'Senior Citizen') AND reference_no IN (
-        SELECT reference_number FROM pwd_senior_applications WHERE status IN ('rejected', 'denied', 'disapproved')
+        SELECT reference_number FROM pwd_senior_applications WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
       )
     `).catch(() => {});
 
@@ -261,11 +261,11 @@ async function syncAndCleanAppointments() {
       ).catch(() => {});
     }
 
-    // Import active PWD and Senior assistance applications
+    // Import active PWD and Senior assistance applications ONLY when approved by Admin
     const activePwdSenior = await db.query(
       `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, status, submitted_at, created_at
        FROM pwd_senior_applications
-       WHERE status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled')
+       WHERE status IN ('approved', 'completed', 'for_release', 'released')
          AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')`
     ).catch(() => ({ rows: [] }));
 

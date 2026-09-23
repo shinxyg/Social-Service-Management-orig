@@ -933,7 +933,29 @@ const handleFinalSubmit = async () => {
           hospitalBillEstimate,
         }
 
-    formData.append("details", JSON.stringify(details))
+    const filePreviews: { label: string; filename: string; dataUrl: string }[] = []
+    for (const [docName, files] of Object.entries(uploadedDocs)) {
+      for (const file of files) {
+        try {
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve((reader.result as string) || "")
+            reader.onerror = () => resolve("")
+            reader.readAsDataURL(file)
+          })
+          if (dataUrl) {
+            filePreviews.push({ label: docName, filename: file.name, dataUrl })
+          }
+        } catch {}
+      }
+    }
+
+    const finalDetails = {
+      ...details,
+      uploadedDocumentPreviews: filePreviews,
+    }
+
+    formData.append("details", JSON.stringify(finalDetails))
 
     const allFiles = Object.values(uploadedDocs).flat()
     const labels: string[] = []
