@@ -4200,39 +4200,13 @@ export default function MyApplications() {
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1 border-t border-blue-100 dark:border-slate-700/60 flex-wrap">
-                          {!isProgressDone ? (
+                        {!isProgressDone && (
+                          <div className="pt-1 border-t border-blue-100 dark:border-slate-700/60">
                             <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
                               * Dalhin ang opisyal na Appointment Slip at orihinal na Medical Abstract sa araw ng interview.
                             </p>
-                          ) : <div />}
-                          <div className="flex items-center gap-1.5 flex-wrap ml-auto">
-                            {isProgressDone && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setGuaranteeLetterApp(app)
-                                }}
-                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
-                              >
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>View GL</span>
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setAppointmentSlipApp(app)
-                              }}
-                              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                              <span>View Slip</span>
-                            </button>
                           </div>
-                        </div>
+                        )}
                       </div>
                     )
                   }
