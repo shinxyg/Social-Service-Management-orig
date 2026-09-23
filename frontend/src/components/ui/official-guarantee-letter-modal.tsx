@@ -74,17 +74,27 @@ export function OfficialGuaranteeLetterModal({
   onClose,
   canPrint = true,
 }: OfficialGuaranteeLetterModalProps) {
+  const isHospital =
+    String(data.assistanceType || "").toLowerCase().includes("hospital") ||
+    String(data.diagnosis || "").toLowerCase().includes("hospital bill") ||
+    String(data.diagnosis || "").toLowerCase().includes("confinement")
+
   const isMedicineGL =
-    data.isMedicineVoucher === true ||
-    String(data.assistanceType || "").toLowerCase().includes("medicine") ||
-    String(data.assistanceType || "").toLowerCase().includes("gamot") ||
-    String(data.assistanceType || "").toLowerCase().includes("prescription") ||
-    String(data.diagnosis || "").toLowerCase().includes("medicine") ||
-    String(data.diagnosis || "").toLowerCase().includes("reseta") ||
-    String(data.diagnosis || "").toLowerCase().includes("gamot") ||
-    String(data.hospitalName || "").toLowerCase().includes("pharmacy") ||
-    String(data.hospitalName || "").toLowerCase().includes("mercury") ||
-    String(data.controlNo || "").toLowerCase().includes("med")
+    !isHospital && (
+      data.isMedicineVoucher === true ||
+      String(data.assistanceType || "").toLowerCase().includes("medical") ||
+      String(data.assistanceType || "").toLowerCase().includes("medicine") ||
+      String(data.assistanceType || "").toLowerCase().includes("gamot") ||
+      String(data.assistanceType || "").toLowerCase().includes("prescription") ||
+      String(data.diagnosis || "").toLowerCase().includes("medical") ||
+      String(data.diagnosis || "").toLowerCase().includes("medicine") ||
+      String(data.diagnosis || "").toLowerCase().includes("reseta") ||
+      String(data.diagnosis || "").toLowerCase().includes("gamot") ||
+      String(data.hospitalName || "").toLowerCase().includes("pharmacy") ||
+      String(data.hospitalName || "").toLowerCase().includes("mercury") ||
+      String(data.controlNo || "").toLowerCase().includes("md") ||
+      String(data.controlNo || "").toLowerCase().includes("med")
+    )
 
   const hospital = isMedicineGL
     ? data.hospitalName || "MERCURY DRUG (QUEZON CITY BRANCHES)"

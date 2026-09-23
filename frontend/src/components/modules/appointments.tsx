@@ -539,20 +539,35 @@ function AppointmentCard({
                     <span>✓ PWD Pension Active (₱500/mo)</span>
                   </span>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onPrintGL?.(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  <span>
-                    {String(appt.concern || '').toLowerCase().includes('medicine') || String(appt.concern || '').toLowerCase().includes('gamot') || String(appt.rawApp?.assistance_type || '').toLowerCase().includes('medicine') || String(appt.rawApp?.assistance_type || '').toLowerCase().includes('gamot') || String(appt.rawApp?.details?.assistanceSubType || '').toLowerCase().includes('medicine') || String(appt.rawApp?.details?.assistanceSubType || '').toLowerCase().includes('gamot')
-                      ? '🎁 Print Gift Certificate'
-                      : '📄 Print GL'}
-                  </span>
-                </button>
-              )
+              ) : (() => {
+                const isHospital =
+                  String(appt.concern || '').toLowerCase().includes('hospital bill') ||
+                  String(appt.concern || '').toLowerCase().includes('confinement') ||
+                  String(appt.concern || '').toLowerCase().includes('admission') ||
+                  String(appt.rawApp?.details?.assistanceSubType || '').toLowerCase().includes('medical bill') ||
+                  String(appt.rawApp?.details?.assistanceSubType || '').toLowerCase().includes('hospital bill')
+                const isMedicineAid = !isHospital && (
+                  String(appt.concern || '').toLowerCase().includes('med') ||
+                  String(appt.concern || '').toLowerCase().includes('gamot') ||
+                  String(appt.rawApp?.assistance_type || '').toLowerCase().includes('med') ||
+                  String(appt.rawApp?.assistance_type || '').toLowerCase().includes('gamot') ||
+                  String(appt.rawApp?.details?.assistanceSubType || '').toLowerCase().includes('med') ||
+                  String(appt.rawApp?.details?.assistanceSubType || '').toLowerCase().includes('gamot') ||
+                  String(appt.rawApp?.details?.assistanceSubType || '').toLowerCase().includes('supply') ||
+                  appt.module === 'AICS'
+                )
+
+                return (
+                  <button
+                    type="button"
+                    onClick={() => onPrintGL?.(appt)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    <span>{isMedicineAid ? '🎁 Print Gift Certificate' : '📄 Print GL'}</span>
+                  </button>
+                )
+              })()
             )}
 
             {/* 5. Referred Stage (Admin clicked Refer) */}
@@ -1730,14 +1745,23 @@ export default function Appointments() {
 
     const raw = appt.rawApp || {}
     const rawDetails = raw.details || {}
-    const isMedicine =
-      String(raw.assistance_type || '').toLowerCase().includes('medicine') ||
+    const isHospital =
+      String(appt.concern || '').toLowerCase().includes('hospital bill') ||
+      String(appt.concern || '').toLowerCase().includes('confinement') ||
+      String(appt.concern || '').toLowerCase().includes('admission') ||
+      String(rawDetails.assistanceSubType || '').toLowerCase().includes('medical bill') ||
+      String(rawDetails.assistanceSubType || '').toLowerCase().includes('hospital bill')
+
+    const isMedicine = !isHospital && (
+      String(raw.assistance_type || '').toLowerCase().includes('med') ||
       String(raw.assistance_type || '').toLowerCase().includes('gamot') ||
-      String(appt.concern || '').toLowerCase().includes('medicine') ||
+      String(appt.concern || '').toLowerCase().includes('med') ||
       String(appt.concern || '').toLowerCase().includes('gamot') ||
-      String(rawDetails.assistanceSubType || '').toLowerCase().includes('medicine') ||
+      String(rawDetails.assistanceSubType || '').toLowerCase().includes('med') ||
       String(rawDetails.assistanceSubType || '').toLowerCase().includes('gamot') ||
-      String(rawDetails.assistanceSubType || '').toLowerCase().includes('supply')
+      String(rawDetails.assistanceSubType || '').toLowerCase().includes('supply') ||
+      appt.module === 'AICS'
+    )
 
     setGlModalData({
       controlNo: isMedicine
