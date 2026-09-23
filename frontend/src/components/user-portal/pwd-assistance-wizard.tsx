@@ -1542,7 +1542,7 @@ export default function PWDSocialAssistanceWizard({
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Street name *">
                     <LockedField
                       value={formData.street || userProfile?.addressStreet || "ACACIA ST."}
@@ -1552,8 +1552,14 @@ export default function PWDSocialAssistanceWizard({
                   <Field label="Barangay *">
                     <LockedField value={formData.barangay || userProfile?.addressBarangay || "SAUYO"} placeholder="Barangay" />
                   </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Contact / Phone number *">
                     <LockedField value={formData.contactNumber || userProfile?.contactNo || "09155212353"} placeholder="0900 000 0000" />
+                  </Field>
+                  <Field label="Registered Email Address (for official notices) *">
+                    <LockedField value={formData.email || userProfile?.email || "citizen@quezoncity.gov.ph"} placeholder="email@example.com" />
                   </Field>
                 </div>
               </div>
