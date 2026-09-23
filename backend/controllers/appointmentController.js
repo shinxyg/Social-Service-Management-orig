@@ -169,8 +169,8 @@ async function syncAndCleanAppointments() {
     await db.query(`
       UPDATE appointments
       SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
-      WHERE (scheduled_date IS NULL OR scheduled_date = '' OR scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date = '2026-09-15' OR scheduled_date ILIKE '%Sep 15%')
-        AND status NOT IN ('rejected')
+      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date = '2026-09-15' OR scheduled_date ILIKE '%Sep 15%')
+        AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
     `).catch(() => {});
 
     // Import active AICS applications for appointment scheduling

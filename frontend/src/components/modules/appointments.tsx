@@ -937,21 +937,22 @@ export default function Appointments() {
 
             if (isAssistance) {
               const ref = app.referenceNumber || app.reference_number || `PWD-QC-2026-${app.id || 1}`
+              const isPwd = String(app.category || "").toUpperCase().includes("PWD")
+              const mod: ModuleKey = isPwd ? "PWD" : "Senior Citizen"
+              const concern = isPwd ? "PWD Social Assistance" : "Senior Social Assistance"
 
               // If already in dataDb.appointments for PWD/Senior, DO NOT synthesize!
               const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
                 const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
                 const dbid = String(dba.id || '').trim().toLowerCase()
                 const dbMod = String(dba.module || '').trim().toUpperCase()
+                const dbConcern = String(dba.concern || '').trim().toLowerCase()
                 const sameRef = (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
-                const sameMod = dbMod === mod.toUpperCase() || String(dba.concern || '').toLowerCase().includes(isPwd ? 'pwd' : 'senior')
+                const sameMod = dbMod === mod.toUpperCase() && dbConcern.includes(isPwd ? 'pwd' : 'senior')
                 return sameRef && sameMod
               })
               if (existsInDb) return
 
-              const isPwd = String(app.category || "").toUpperCase().includes("PWD")
-              const mod: ModuleKey = isPwd ? "PWD" : "Senior Citizen"
-              const concern = isPwd ? "PWD Social Assistance" : "Senior Social Assistance"
               const apptId = `pwd-senior-appt-${app.id || ref}`
               const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY"
               const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`${mod}_${ref}`] || undefined
@@ -1233,6 +1234,7 @@ export default function Appointments() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   status: 'under_review',
+                  category: isPwd ? 'pwd' : 'senior',
                 }),
               })
             )
@@ -1240,7 +1242,8 @@ export default function Appointments() {
               const rawPwd = localStorage.getItem("pwd_senior_applications") || "[]"
               const pwdList = JSON.parse(rawPwd)
               const updated = pwdList.map((p: any) => {
-                if (p.referenceNumber === targetAppt.referenceNo || p.id === targetAppt.referenceNo) {
+                const isMatchCat = isPwd ? String(p.category || '').toUpperCase().includes('PWD') : String(p.category || '').toUpperCase().includes('SENIOR')
+                if ((p.referenceNumber === targetAppt.referenceNo || p.id === targetAppt.referenceNo) && isMatchCat) {
                   return { ...p, status: "under_review" }
                 }
                 return p
