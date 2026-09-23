@@ -88,7 +88,7 @@ function getInitialDisbursementsForUser(): SyncedDisbursementRecord[] {
                 applicationRef: ref,
                 applicantName: [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ").toUpperCase() || userFull.toUpperCase(),
                 assistanceType: type,
-                fixedAmount: 2000,
+                fixedAmount: isPwd ? 1500 : 2000,
                 dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
                   year: "numeric",
                   month: "long",
@@ -295,7 +295,7 @@ export default function ApplyFinancialAid() {
                   applicationRef: ref,
                   applicantName: [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ").toUpperCase() || userFull.toUpperCase(),
                   assistanceType: assistanceType,
-                  fixedAmount: 2000,
+                  fixedAmount: isPwdApp ? 1500 : 2000,
                   dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
                     year: "numeric",
                     month: "long",
@@ -625,7 +625,7 @@ export default function ApplyFinancialAid() {
                           {isPwdAssistance ? "Consolidated 3-Month Payout" : (t("approvedFixedAmount") || "Approved Fixed Amount")}
                         </span>
                         <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                          ₱{d.fixedAmount.toLocaleString()}
+                          {isPwdAssistance ? "₱1,500" : `₱${d.fixedAmount.toLocaleString()}`}
                         </span>
                       </div>
                     </div>

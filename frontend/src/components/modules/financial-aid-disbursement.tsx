@@ -169,7 +169,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
                 applicationRef: ref,
                 applicantName: [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ").toUpperCase() || "BENEFICIARY APPLICANT",
                 assistanceType: type,
-                fixedAmount: 2000,
+                fixedAmount: isPwdApp ? 1500 : 2000,
                 dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
                 status: String(app.status || "").toLowerCase() === "released" ? "RELEASED" : "PENDING",
                 venue: "Quezon City Hall",
@@ -636,7 +636,7 @@ export default function FinancialAidDisbursement() {
               applicationRef: ref,
               applicantName: fullName.toUpperCase(),
               assistanceType: assistanceType,
-              fixedAmount: 2000,
+              fixedAmount: isPwdApp ? 1500 : 2000,
               dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
                 month: "short",
                 day: "numeric",

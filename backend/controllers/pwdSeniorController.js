@@ -756,31 +756,7 @@ exports.updateApplicationStatus = async (req, res) => {
           console.warn('Could not insert appointment for PWD/Senior:', e.message);
         }
 
-        try {
-          const disbCheck = await db.query('SELECT id FROM financial_aid_disbursements WHERE application_ref = $1', [refNo]);
-          if (disbCheck.rows.length === 0) {
-            const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-            await db.query(
-              `INSERT INTO financial_aid_disbursements (
-                disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-                date_approved, status, venue, remarks
-              ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
-              ON CONFLICT DO NOTHING`,
-              [
-                disbId,
-                refNo,
-                fullName,
-                concernName,
-                2000,
-                approvedDate || new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-                'Quezon City Hall',
-                'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.',
-              ]
-            );
-          }
-        } catch (e) {
-          console.warn('Could not insert financial disbursement for PWD/Senior:', e.message);
-        }
+        // Note: Financial Aid disbursement is strictly created only upon Social Worker interview approval in Step 4.
       } else {
 
         try {

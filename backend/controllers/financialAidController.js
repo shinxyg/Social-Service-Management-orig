@@ -8,7 +8,8 @@ const FIXED_ASSISTANCE_AMOUNTS = {
   'Burial Assistance': 10000,
   'Food Assistance': 1500,
   'Transportation Assistance': 1000,
-  'PWD Social Assistance': 2000,
+  'PWD Social Assistance': 1500,
+  'PWD Pension Assistance': 1500,
   'Senior Social Assistance': 2000,
   'Child Welfare Support': 5000,
   'Nutritional Assistance': 5000,
@@ -32,11 +33,12 @@ function resolveFixedAmount(concern) {
   if (FIXED_ASSISTANCE_AMOUNTS[formatted]) return FIXED_ASSISTANCE_AMOUNTS[formatted];
 
   const lower = c.toLowerCase();
+  if (lower.includes('pwd') || lower.includes('disability') || lower.includes('pension')) return 1500;
   if (lower.includes('funeral') || lower.includes('burial')) return 10000;
   if (lower.includes('livelihood')) return 15000;
   if (lower.includes('nutrition') || lower.includes('child') || lower.includes('medical') || lower.includes('emergency') || lower.includes('solo')) return 5000;
   if (lower.includes('education')) return 3000;
-  if (lower.includes('pwd') || lower.includes('senior')) return 2000;
+  if (lower.includes('senior')) return 2000;
   if (lower.includes('food')) return 1500;
   if (lower.includes('transport')) return 1000;
   return 5000;
@@ -329,6 +331,7 @@ exports.getDisbursements = async (req, res) => {
         if (disbCheck.rows.length === 0) {
           const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
           const fixedAmount = resolveFixedAmount(appt.concern);
+          const isPwdConcern = cleanType.toLowerCase().includes('pwd') || cleanType.toLowerCase().includes('disability') || cleanType.toLowerCase().includes('pension');
           await db.query(
             `INSERT INTO financial_aid_disbursements (
               disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
@@ -342,15 +345,16 @@ exports.getDisbursements = async (req, res) => {
               cleanType,
               fixedAmount,
               new Date(appt.updated_at || appt.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-              appt.scheduled_date || null,
-              appt.scheduled_time || null,
+              isPwdConcern ? null : (appt.scheduled_date || null),
+              isPwdConcern ? null : (appt.scheduled_time || null),
               appt.office_location || 'Quezon City Hall',
-              appt.notes || 'Approved appointment payout.',
+              isPwdConcern ? 'Approved PWD Social Pension (₱500/month). Accumulating for 3-month consolidated payout.' : (appt.notes || 'Approved appointment payout.'),
             ]
           );
         } else {
-          // If already exists, update appointment schedule if available
-          if (appt.scheduled_date) {
+          // If already exists, update appointment schedule if available (only for non-PWD)
+          const isPwdConcern = cleanType.toLowerCase().includes('pwd') || cleanType.toLowerCase().includes('disability') || cleanType.toLowerCase().includes('pension');
+          if (appt.scheduled_date && !isPwdConcern) {
             await db.query(
               `UPDATE financial_aid_disbursements
                SET appointment_date = COALESCE(appointment_date, $1),

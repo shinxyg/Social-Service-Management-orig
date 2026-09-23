@@ -551,13 +551,15 @@ export function syncAppointmentToFinancialAid(params: {
   const rawConcern = params.concern.replace(/\s*assistance/gi, "").trim()
   const formattedConcern = params.concern.includes("Assistance") ? params.concern : (rawConcern.charAt(0).toUpperCase() + rawConcern.slice(1) + " Assistance")
 
-  let formattedDate = params.date
-  try {
-    const d = new Date(params.date)
-    if (!isNaN(d.getTime())) {
-      formattedDate = d.toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })
-    }
-  } catch {}
+  let formattedDate = params.date ? params.date : undefined
+  if (params.date) {
+    try {
+      const d = new Date(params.date)
+      if (!isNaN(d.getTime())) {
+        formattedDate = d.toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })
+      }
+    } catch {}
+  }
 
   const updatedDisbursements = currentDisbursements.map((d) => {
     const isExactRef = d.applicationRef && d.applicationRef.trim().toLowerCase() === params.referenceNo.trim().toLowerCase()
@@ -567,9 +569,9 @@ export function syncAppointmentToFinancialAid(params: {
       return {
         ...d,
         applicationRef: params.referenceNo,
-        appointmentDate: formattedDate,
-        appointmentTime: params.time,
-        venue: params.location || "Quezon City Hall",
+        appointmentDate: formattedDate !== undefined ? formattedDate : d.appointmentDate,
+        appointmentTime: params.time !== undefined ? params.time : d.appointmentTime,
+        venue: params.location || d.venue || "Quezon City Hall",
       }
     }
     return d
@@ -596,13 +598,15 @@ export function syncAppointmentToFinancialAid(params: {
 
   saveDisbursements(updatedDisbursements)
 
-  pushUserNotification({
-    title: "Payout Appointment Scheduled",
-    desc: `Your Financial Aid payout appointment has been scheduled.\nDate: ${formattedDate}\nTime: ${params.time}\nLocation: ${params.location || "Quezon City Hall"}\nAmount: ₱${fixedAmount.toLocaleString()}`,
-    applicationRef: params.referenceNo,
-    assistanceType: formattedConcern,
-    amount: fixedAmount,
-  })
+  if (formattedDate) {
+    pushUserNotification({
+      title: "Payout Appointment Scheduled",
+      desc: `Naitakda ang inyong iskedyul ng payout sa ${formattedDate} (${params.time || "10:00 AM"}) sa ${params.location || "Quezon City Hall"}.\nHalaga: ₱${fixedAmount.toLocaleString()}`,
+      applicationRef: params.referenceNo,
+      type: "payout_scheduled",
+      amount: fixedAmount,
+    })
+  }
 
   try {
     fetch(`${API_BASE}/api/appointments/${encodeURIComponent(params.referenceNo)}/schedule`, {

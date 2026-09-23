@@ -2304,13 +2304,20 @@ export default function MyApplications() {
               ? "Senior Citizen ID Replacement"
               : "Senior Citizen ID"
 
+            const cachedAppt =
+              appointmentsScheduled[p.referenceNumber] ||
+              appointmentsScheduled[p.id] ||
+              appointmentsScheduled[`pwd-senior-appt-${p.id}`] ||
+              appointmentsScheduled[`appt_${p.referenceNumber}`]
+
             const rawSt = String(p.status || "pending").toLowerCase()
             let appStatus: ApplicationStatus = "Pending"
-            if (rawSt === "approved") appStatus = "Approved"
+            if (rawSt === "approved" || cachedAppt?.status === "approved" || cachedAppt?.decision === "approved") appStatus = "Approved"
             else if (rawSt === "released" || rawSt === "completed") appStatus = "Released"
             else if (rawSt === "for_release") appStatus = "For Release"
+            else if (rawSt === "rejected" || rawSt === "disapproved" || cachedAppt?.status === "rejected" || cachedAppt?.decision === "rejected") appStatus = "Rejected"
+            else if (cachedAppt?.scheduledDate && (cachedAppt?.status === "scheduled" || cachedAppt?.status === "under_review")) appStatus = "Scheduled"
             else if (rawSt === "under_review" || rawSt === "review" || rawSt === "for_assessment") appStatus = "Under Review"
-            else if (rawSt === "rejected" || rawSt === "disapproved") appStatus = "Rejected"
             else appStatus = "Pending"
 
             const isBooklet =
@@ -4303,6 +4310,86 @@ export default function MyApplications() {
                               Approved Package
                             </span>
                           )}
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  const isPwdAssistance =
+                    app.assistanceCategory === "PWD" ||
+                    app.assistance.toLowerCase().includes("pwd") ||
+                    app.assistance.toLowerCase().includes("disability")
+
+                  if (isPwdAssistance) {
+                    const isReleased = app.status === "Released"
+                    const savedDisbursements = getSavedDisbursements()
+                    const matchDisb = savedDisbursements.find(
+                      (d) =>
+                        d.applicationRef === app.applicationNo ||
+                        (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName.toLowerCase().trim())
+                    )
+                    const payoutVenue = matchDisb?.venue || "Quezon City Hall"
+
+                    return (
+                      <div className="bg-slate-50 dark:bg-slate-800/80 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl p-3.5 space-y-3 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                              <Coins className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-0.5 text-xs">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-[10px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700/80">
+                                  PWD Social Assistance Record
+                                </span>
+                                <span className="text-[11px] font-mono text-blue-700 dark:text-blue-300 font-bold">
+                                  {matchDisb?.disbursementId || `DISB-${app.applicationNo.slice(-4)}`}
+                                </span>
+                                <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                                  ₱500 / Month Benefit
+                                </span>
+                              </div>
+                              <p className="font-bold text-gray-900 dark:text-white">
+                                Consolidated 3-Month Payout: <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">₱1,500</span>
+                              </p>
+                              <p className="text-[11px] text-gray-600 dark:text-slate-300 flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                                {isReleased ? (
+                                  <span className="text-emerald-700 dark:text-emerald-400 font-bold">✓ Matagumpay na na-claim ang ₱1,500 Cash Pension sa Quezon City Hall.</span>
+                                ) : matchDisb?.appointmentDate ? (
+                                  <span>Payout Appointment: <strong className="text-gray-900 dark:text-white">{matchDisb.appointmentDate} – {matchDisb.appointmentTime || "10:00 AM"}</strong> ({payoutVenue})</span>
+                                ) : (
+                                  <span>3-Buwang Pensyon: <strong className="text-emerald-700 dark:text-emerald-400">Naiipon sa system (₱500/buwan) bago ang opisyal na payout sa Quezon City Hall.</strong></span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 sm:justify-end shrink-0 pt-1 sm:pt-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIdCardApp(app)
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                              title="View Official Digital PWD ID Card"
+                            >
+                              <IdCard className="w-3.5 h-3.5" />
+                              <span>View ID</span>
+                            </button>
+                            <a
+                              href="/portal/financial-aid"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                              title="Tingnan ang Pensyon sa Financial Aid"
+                            >
+                              <Coins className="w-3.5 h-3.5" />
+                              <span>Tingnan ang Pensyon ➔</span>
+                            </a>
+                          </div>
                         </div>
                       </div>
                     )

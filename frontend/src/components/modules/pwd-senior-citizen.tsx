@@ -2766,26 +2766,7 @@ export default function PWDSeniorCitizen() {
       const isPwdApp = isPWD(targetApp)
       const assistanceAmount = isPwdApp ? 1500 : 2000
 
-      try {
-        const currentDisbursements = getSavedDisbursements()
-        if (!currentDisbursements.some((d) => d.applicationRef === targetApp.referenceNumber)) {
-          const newRecord: SyncedDisbursementRecord = {
-            id: `disb-${Date.now()}`,
-            disbursementId: `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`,
-            applicationRef: targetApp.referenceNumber,
-            applicantName: displayName(targetApp).toUpperCase(),
-            assistanceType: assistanceName,
-            fixedAmount: assistanceAmount,
-            dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
-            status: "PENDING",
-            venue: "Quezon City Hall",
-            remarks: "Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.",
-          }
-          saveDisbursements([newRecord, ...currentDisbursements])
-        }
-      } catch (err) {
-        console.warn("Failed saving disbursement record:", err)
-      }
+      // Note: Financial Aid disbursement is strictly created only upon Social Worker interview approval in Step 4.
 
       try {
         const rawMap = localStorage.getItem("all_appointments_scheduled")

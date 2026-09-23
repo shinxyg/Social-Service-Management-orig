@@ -1212,11 +1212,11 @@ export default function Appointments() {
       syncAppointmentToFinancialAid({
         referenceNo: appt.referenceNo,
         applicantName: appt.applicantName,
-        concern: appt.concern,
-        date: appt.scheduledDate || new Date().toLocaleDateString("en-PH"),
-        time: appt.scheduledTime || "10:00 AM",
+        concern: isPwd ? "PWD Social Assistance" : appt.concern,
+        date: isPwd ? undefined : (appt.scheduledDate || new Date().toLocaleDateString("en-PH")),
+        time: isPwd ? undefined : (appt.scheduledTime || "10:00 AM"),
         location: appt.officeLocation || "Quezon City Hall",
-        notes: appt.notes || "Approved appointment for financial aid payout.",
+        notes: isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (appt.notes || "Approved appointment for financial aid payout."),
       })
 
       notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : 'aics', appt.referenceNo)
