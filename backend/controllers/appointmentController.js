@@ -186,6 +186,20 @@ async function syncAndCleanAppointments() {
         AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
     `).catch(() => {});
 
+    // Ensure pending/new AICS applications are strictly 'pending' and NEVER carried over as approved
+    await db.query(`
+      UPDATE appointments
+      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
+      WHERE module = 'AICS' AND (
+        reference_no IN (
+          SELECT reference_no FROM aics_applications WHERE status IN ('pending', 'submit_pending', 'waiting_approval')
+        )
+        OR reference_no IN (
+          SELECT qc_id FROM aics_applications WHERE status IN ('pending', 'submit_pending', 'waiting_approval') AND qc_id IS NOT NULL AND qc_id <> ''
+        )
+      )
+    `).catch(() => {});
+
     // Import active AICS applications ONLY after being screened/approved for scheduling in /aics OR if already scheduled
     const activeAics = await db.query(
       `SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
@@ -228,6 +242,11 @@ async function syncAndCleanAppointments() {
           await db.query(
             `UPDATE appointments SET status = $1, scheduled_date = $2, scheduled_time = $3, office_location = $4, updated_at = NOW() WHERE id = $5`,
             [initStatus, schedDate, schedTime, venue, existing.id]
+          ).catch(() => {});
+        } else if (isApproved && existing.status !== 'approved') {
+          await db.query(
+            `UPDATE appointments SET status = 'approved', updated_at = NOW() WHERE id = $1`,
+            [existing.id]
           ).catch(() => {});
         }
       }

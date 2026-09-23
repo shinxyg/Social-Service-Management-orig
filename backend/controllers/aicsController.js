@@ -85,15 +85,22 @@ exports.createApplication = async (req, res) => {
     const finalLastName = lastName || 'DIMAL';
     const finalAssistanceType = assistanceType || 'Educational Assistance';
 
-    let referenceNo = req.body.referenceNo || req.body.reference_no || (qcId && String(qcId).trim()) || generateReferenceNo(qcId);
+    const targetQcId = qcId ? String(qcId).trim() : null;
+    let baseRefNo = req.body.referenceNo || req.body.reference_no || targetQcId || generateReferenceNo(targetQcId);
+    let referenceNo = baseRefNo;
 
+    // Clean up old applications and old appointments for this user & assistance type so re-application starts completely fresh as 'pending'
     try {
-      const existingCheck = await client.query('SELECT id FROM aics_applications WHERE reference_no = $1', [referenceNo]);
-      if (existingCheck.rows.length > 0) {
-        referenceNo = `${referenceNo}-${Date.now().toString().slice(-4)}`;
+      if (targetQcId || referenceNo) {
+        await client.query(
+          `DELETE FROM aics_applications
+           WHERE (qc_id = $1 OR reference_no = $2 OR reference_no LIKE $3)
+             AND (LOWER(assistance_type) = LOWER($4) OR LOWER(assistance_type) LIKE '%med%' OR LOWER(assistance_type) LIKE '%gamot%')`,
+          [targetQcId || referenceNo, referenceNo, `${referenceNo}%`, finalAssistanceType]
+        );
       }
-    } catch {
-
+    } catch (delOldErr) {
+      console.warn('Old AICS cleanup error:', delOldErr.message);
     }
 
     let parsedAge = null;
@@ -127,7 +134,7 @@ exports.createApplication = async (req, res) => {
       [
         referenceNo,
         finalAssistanceType,
-        qcId || null,
+        targetQcId || null,
         finalFirstName,
         middleName || null,
         finalLastName,
@@ -162,11 +169,27 @@ exports.createApplication = async (req, res) => {
     try {
       const cleanType = (finalAssistanceType.replace(/\s*assistance/gi, '').trim() || 'Medical') + ' Assistance';
       const fullName = [finalFirstName, middleName, finalLastName, suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+
+      // Delete prior appointments and disbursements for this user & assistance type so old approved status is never retained
+      await db.query(
+        `DELETE FROM appointments
+         WHERE module = 'AICS'
+           AND (reference_no = $1 OR (reference_no = $2 AND $2 IS NOT NULL))
+           AND (concern = $3 OR LOWER(concern) LIKE '%med%' OR LOWER(concern) LIKE '%gamot%')`,
+        [referenceNo, targetQcId, cleanType]
+      );
+
+      await db.query(
+        `DELETE FROM financial_aid_disbursements
+         WHERE (application_ref = $1 OR (application_ref = $2 AND $2 IS NOT NULL) OR qc_id = $1 OR (qc_id = $2 AND $2 IS NOT NULL))
+           AND (LOWER(aid_type) LIKE '%med%' OR LOWER(aid_type) LIKE '%gamot%' OR LOWER(aid_type) = LOWER($3))`,
+        [referenceNo, targetQcId, finalAssistanceType]
+      );
+
       await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
-         VALUES ($1, 'AICS', $2, $3, 'pending', NULL, NULL, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS Medical / Assistance application.')
-         ON CONFLICT DO NOTHING`,
+         VALUES ($1, 'AICS', $2, $3, 'pending', NULL, NULL, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS Medical / Assistance application.')`,
         [referenceNo, fullName, cleanType]
       );
     } catch (apptErr) {

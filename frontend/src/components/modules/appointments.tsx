@@ -706,6 +706,7 @@ export default function Appointments() {
         }
 
         let unapprovedAicsRefs = new Set<string>()
+        let pendingAicsRefs = new Set<string>()
         if (resAicsSettled.status === "fulfilled" && resAicsSettled.value.ok) {
           try {
             const aicsClone = await resAicsSettled.value.clone().json()
@@ -718,6 +719,12 @@ export default function Appointments() {
                 if (!isApprovedOrEligible) {
                   if (app.reference_no) unapprovedAicsRefs.add(String(app.reference_no).trim().toLowerCase())
                   if (app.id) unapprovedAicsRefs.add(String(app.id).trim().toLowerCase())
+                  if (app.qc_id) unapprovedAicsRefs.add(String(app.qc_id).trim().toLowerCase())
+                }
+                if (['pending', 'submit_pending', 'waiting_approval', 'for_scheduling'].includes(s) && !hasSched) {
+                  if (app.reference_no) pendingAicsRefs.add(String(app.reference_no).trim().toLowerCase())
+                  if (app.id) pendingAicsRefs.add(String(app.id).trim().toLowerCase())
+                  if (app.qc_id) pendingAicsRefs.add(String(app.qc_id).trim().toLowerCase())
                 }
               })
             }
@@ -827,26 +834,28 @@ export default function Appointments() {
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || "").trim()
                   const rawStatus = String(a.status || '').toLowerCase()
                   const isExplicitPending = rawStatus === 'pending' || !a.scheduled_date
+                  const isAicsPending = (a.module === 'AICS' || String(a.concern || '').toLowerCase().includes('medical') || String(a.concern || '').toLowerCase().includes('gamot')) &&
+                    (pendingAicsRefs.has(ref.toLowerCase()) || pendingAicsRefs.has(rawId.toLowerCase()) || (rawStatus === 'pending' && !a.scheduled_date))
                   const hasExplicitLocalSched = Boolean(localScheduledMap[apptId]?.savedInSession && localScheduledMap[apptId]?.scheduledDate)
-                  const cached = hasExplicitLocalSched ? localScheduledMap[apptId] : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${a.concern}`] || localScheduledMap[`${a.module}_${ref}`] || undefined)
+                  const cached = (hasExplicitLocalSched && !isAicsPending) ? localScheduledMap[apptId] : (isAicsPending ? undefined : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${a.concern}`] || localScheduledMap[`${a.module}_${ref}`] || undefined))
 
-                  const schedDate = isExplicitPending ? (hasExplicitLocalSched ? cleanDate(cached?.scheduledDate) : null) : cleanDate(a.scheduled_date || cached?.scheduledDate)
+                  const schedDate = isExplicitPending ? (hasExplicitLocalSched && !isAicsPending ? cleanDate(cached?.scheduledDate) : null) : (isAicsPending ? null : cleanDate(a.scheduled_date || cached?.scheduledDate))
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
 
                   let statusVal: AppointmentStatus = 'pending'
                   let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
 
-                  if (rawStatus === 'approved' || rawStatus === 'completed' || cached?.decision === 'approved') {
+                  if (!isAicsPending && (rawStatus === 'approved' || rawStatus === 'completed' || cached?.decision === 'approved')) {
                     statusVal = 'approved'
                     cachedDecision = 'approved'
-                  } else if (rawStatus === 'referred' || cached?.decision === 'referred') {
+                  } else if (!isAicsPending && (rawStatus === 'referred' || cached?.decision === 'referred')) {
                     statusVal = 'referred'
                     cachedDecision = 'referred'
                   } else if (rawStatus === 'rejected' || cached?.decision === 'rejected') {
                     statusVal = 'rejected'
                     cachedDecision = 'rejected'
-                  } else if (hasDate) {
+                  } else if (hasDate && !isAicsPending) {
                     statusVal = 'scheduled'
                   } else {
                     statusVal = 'pending'
