@@ -3653,26 +3653,6 @@ export default function MyApplications() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {isGLIssued && (
-                      <button
-                        type="button"
-                        onClick={() => setGuaranteeLetterApp(selectedApp)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>{isMedicineApp ? "View Medicine GL / Voucher" : "View Guarantee Letter (GL)"}</span>
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setAppointmentSlipApp(selectedApp)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span>View Appointment Slip</span>
-                    </button>
-                  </div>
                 </div>
 
                 {/* 4-Stage Progress Pipeline */}
