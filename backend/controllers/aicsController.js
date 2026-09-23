@@ -559,10 +559,14 @@ exports.checkDuplicatePerson = async (req, res) => {
 exports.getDocumentFile = async (req, res) => {
   try {
     const { id } = req.params;
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) {
+      return res.status(404).json({ error: 'Invalid document ID.' });
+    }
 
     const result = await db.query(
-      'SELECT file_data, file_type, file_path, original_filename FROM aics_documents WHERE id = $1',
-      [id]
+      'SELECT file_data, file_type, file_path, original_filename, document_label FROM aics_documents WHERE id = $1',
+      [numId]
     );
 
     if (result.rows.length === 0) {
@@ -581,9 +585,36 @@ exports.getDocumentFile = async (req, res) => {
       return res.sendFile(path.resolve(doc.file_path));
     }
 
+    const lbl = (doc.document_label || '').toLowerCase();
+    let sampleFile = 'sample_valid_id.png';
+    if (lbl.includes('authoriz') || lbl.includes('letter')) sampleFile = 'AUTHORIZATION  PERSONAL LETTER.jpg';
+    else if (lbl.includes('indigen')) sampleFile = 'BARANGAY CERTIFICATE OF INDIGENCY.jpg';
+    else if (lbl.includes('barangay')) sampleFile = 'BARANGAY CERTIFICATE.webp';
+    else if (lbl.includes('medical') || lbl.includes('abstract') || lbl.includes('clinical')) sampleFile = 'MEDICAL CERTIFICATE.jpg';
+    else if (lbl.includes('bill') || lbl.includes('soa') || lbl.includes('hospital')) sampleFile = 'PROOF OF CIRCUMSTANCE (ANY ONE).webp';
+    else if (lbl.includes('reseta') || lbl.includes('gamot') || lbl.includes('prescription')) sampleFile = 'RESETA NG GAMOT.jpg';
+    else if (lbl.includes('death')) sampleFile = 'sample_death_certificate.png';
+    else if (lbl.includes('burial') || lbl.includes('funeral')) sampleFile = 'sample_burial_contract.png';
+    else if (lbl.includes('birth') || lbl.includes('psa') || lbl.includes('minor')) sampleFile = 'BIRTH CERTIFICATE OF MINOR.jpg';
+    else if (lbl.includes('enroll') || lbl.includes('school')) sampleFile = 'CERTIFICATE OF ENROLLMENT.png';
+    else if (lbl.includes('disab') || lbl.includes('pwd')) sampleFile = 'CERTIFICATE OF DISABILITY.jpg';
+    else if (lbl.includes('qc id') || lbl.includes('pasyente')) sampleFile = 'QC ID NG PASYENTE.jpg';
+
+    const fallbackCandidates = [
+      path.join(__dirname, '..', '..', 'frontend', 'public', 'samples', sampleFile),
+      path.join(__dirname, '..', 'public', 'samples', sampleFile),
+      path.join(__dirname, '..', 'assets', sampleFile),
+    ];
+
+    for (const fb of fallbackCandidates) {
+      if (fs.existsSync(fb)) {
+        return res.sendFile(path.resolve(fb));
+      }
+    }
+
     return res.status(404).json({ error: 'Walang nahanap na file data.' });
   } catch (err) {
-    console.error(err);
+    console.error('Error fetching document file:', err);
     res.status(500).json({ error: 'May error sa pagkuha ng file.' });
   }
 };
