@@ -12,6 +12,7 @@ import {
   X,
   Printer,
   FileText,
+  Lock,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import {
@@ -1353,15 +1354,40 @@ export default function FinancialAidDisbursement() {
                                 <Clock className="w-3.5 h-3.5 text-blue-600" />
                                 <span>{d.appointmentDate ? "Resched" : "Set Sched"}</span>
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => handleReleaseRecord(d)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
-                                title="Release Assistance Disbursement (₱1,500 Cash)"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>Release</span>
-                              </button>
+
+                              {isPwd ? (
+                                pwdState?.isMatured ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReleaseRecord(d)}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-300 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs animate-pulse"
+                                    title="Release ₱1,500 Full 3-Month PWD Pension Cash Disbursement"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                    <span>Release (₱1,500)</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 font-bold text-xs cursor-not-allowed"
+                                    title={`Naka-lock pa dahil Buwan ${pwdState?.monthIndex || 1} pa lang (₱${pwdState?.currentAccumulated || 500}). Mag-u-unlock kapag ₱1,500 na (Buwan 3).`}
+                                  >
+                                    <Lock className="w-3.5 h-3.5 text-gray-400" />
+                                    <span>Locked ({pwdState?.nextQuarterMonthName || "₱500/mo"})</span>
+                                  </button>
+                                )
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleReleaseRecord(d)}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
+                                  title="Release Assistance Disbursement"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>Release</span>
+                                </button>
+                              )}
                             </>
                           )}
                           <button
