@@ -1359,9 +1359,9 @@ export default function FinancialAidDisbursement() {
                                 pwdState?.isMatured ? (
                                   <button
                                     type="button"
-                                    onClick={() => handleReleaseRecord(d)}
+                                    onClick={() => setSchedulingRecord(d)}
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-300 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs animate-pulse"
-                                    title="Release ₱1,500 Full 3-Month PWD Pension Cash Disbursement"
+                                    title="Set Date/Time at Fixed QC Hall Location & Release Payout"
                                   >
                                     <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                                     <span>Release (₱1,500)</span>
@@ -1380,9 +1380,9 @@ export default function FinancialAidDisbursement() {
                               ) : (
                                 <button
                                   type="button"
-                                  onClick={() => handleReleaseRecord(d)}
+                                  onClick={() => setSchedulingRecord(d)}
                                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
-                                  title="Release Assistance Disbursement"
+                                  title="Set Date/Time & Release Assistance"
                                 >
                                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                                   <span>Release</span>
@@ -1410,9 +1410,6 @@ export default function FinancialAidDisbursement() {
         </div>
       </div>
 
-      {}
-      {}
-      {}
       {selectedDetailsRecord && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
           <div className="bg-white border border-gray-200 rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-5">
@@ -1459,7 +1456,7 @@ export default function FinancialAidDisbursement() {
                         onClick={() => toggleAmount(`modal-${selectedDetailsRecord.id}`)}
                         className="text-xs text-blue-600 hover:text-blue-800 font-semibold underline ml-1 cursor-pointer inline-flex items-center gap-1"
                       >
-                        <Eye className="w-3 h-3" />
+                        <Eye className="w-3.5 h-3.5" />
                         Show
                       </button>
                     </span>
@@ -1471,7 +1468,7 @@ export default function FinancialAidDisbursement() {
                         onClick={() => toggleAmount(`modal-${selectedDetailsRecord.id}`)}
                         className="text-xs text-gray-500 hover:text-gray-700 font-semibold underline ml-1 cursor-pointer inline-flex items-center gap-1"
                       >
-                        <EyeOff className="w-3 h-3" />
+                        <EyeOff className="w-3.5 h-3.5" />
                         Hide
                       </button>
                     </span>
@@ -1603,6 +1600,10 @@ export default function FinancialAidDisbursement() {
           record={schedulingRecord}
           onClose={() => setSchedulingRecord(null)}
           onSave={(date, time, venue) => handleSavePayoutSchedule(schedulingRecord, date, time, venue)}
+          onRelease={() => {
+            handleReleaseRecord(schedulingRecord)
+            setSchedulingRecord(null)
+          }}
         />
       )}
     </div>
@@ -1613,17 +1614,61 @@ function PayoutScheduleModal({
   record,
   onClose,
   onSave,
+  onRelease,
 }: {
   record: SyncedDisbursementRecord
   onClose: () => void
   onSave: (date: string, time: string, venue: string) => void
+  onRelease?: () => void
 }) {
-  const [date, setDate] = useState(record.appointmentDate || "")
-  const [time, setTime] = useState(record.appointmentTime || "10:00 AM")
-  const venue = "Quezon City Hall"
+  const getInitialDate = () => {
+    if (record.appointmentDate) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(record.appointmentDate)) return record.appointmentDate
+      const parsed = new Date(record.appointmentDate)
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString().split("T")[0]
+      }
+    }
+    const today = new Date()
+    return today.toISOString().split("T")[0]
+  }
+
+  const [date, setDate] = useState(getInitialDate())
+  const [time, setTime] = useState(record.appointmentTime || "09:00 AM - 12:00 PM")
+  const venue = "Quezon City Hall (PDAO Ground Floor Social Hall)"
 
   const isPwd = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
   const canSave = date.trim() !== "" && time.trim() !== ""
+
+  const setQuickDate = (daysAhead: number) => {
+    const d = new Date()
+    d.setDate(d.getDate() + daysAhead)
+    setDate(d.toISOString().split("T")[0])
+  }
+
+  const handleFinalSave = () => {
+    if (!canSave) return
+    const formattedDate = new Date(date).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
+    onSave(formattedDate, time, venue)
+  }
+
+  const handleFinalRelease = () => {
+    if (canSave) {
+      const formattedDate = new Date(date).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+      onSave(formattedDate, time, venue)
+    }
+    if (onRelease) {
+      onRelease()
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
@@ -1631,7 +1676,7 @@ function PayoutScheduleModal({
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-50/50 to-indigo-50/30">
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
-              {isPwd ? "PWD Pension Payout Schedule" : "Disbursement Payout Schedule"}
+              {isPwd ? "PWD Pension Payout & Disbursement Hub" : "Financial Aid Disbursement Hub"}
             </span>
             <h2 className="text-base font-bold text-gray-900 mt-1">{record.applicantName}</h2>
             <p className="text-xs text-gray-500 font-mono">{record.disbursementId} • Ref: {record.applicationRef}</p>
@@ -1646,36 +1691,74 @@ function PayoutScheduleModal({
 
         <div className="p-6 space-y-4">
           <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs text-blue-900 space-y-1">
-            <div className="font-bold flex items-center gap-1.5 text-blue-950">
-              <ShieldCheck className="w-4 h-4 text-blue-600" />
-              <span>Ayuda: {record.assistanceType} (₱{record.fixedAmount.toLocaleString()})</span>
+            <div className="font-bold flex items-center justify-between text-blue-950">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-blue-600" />
+                <span>Program: {record.assistanceType}</span>
+              </span>
+              <span className="font-black text-emerald-700 text-sm">₱{record.fixedAmount.toLocaleString()} CASH</span>
             </div>
-            <p className="text-blue-800 leading-relaxed text-[11px]">
+            <p className="text-blue-800 leading-relaxed text-[11px] mt-1">
               {isPwd
-                ? "Kapag na-save ang iskedyul, awtomatikong magpapadala ng Payout Notice Email at Bell Notification kasama ang 4-point requirement checklist at notice para sa pisikal na claiming sa City Hall."
-                : "Kapag na-save, awtomatikong magpapadala ng iskedyul sa citizen portal at notification."}
+                ? "📌 Hakbang 1: I-set ang Araw at Oras ng Payout sa QC Hall para magpadala ng Email 4 (kasama ang 5 requirements checklist).\n📌 Hakbang 2: Kapag personal nang pumunta at natanggap ang pera, i-click ang 'Mark as Released' para mag-send ng Email 5 (Official Receipt)."
+                : "I-set ang petsa at oras ng claiming sa Quezon City Hall."}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Payout Date *</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Payout Date *</label>
+                <div className="flex gap-1 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => setQuickDate(0)}
+                    className="text-blue-600 hover:underline font-semibold cursor-pointer"
+                  >
+                    Today
+                  </button>
+                  <span className="text-gray-300">•</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuickDate(1)}
+                    className="text-blue-600 hover:underline font-semibold cursor-pointer"
+                  >
+                    +1 Day
+                  </button>
+                </div>
+              </div>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Payout Time *</label>
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Payout Time Window *</label>
               <input
                 type="text"
-                placeholder="e.g. 10:00 AM"
+                placeholder="e.g. 09:00 AM - 12:00 PM"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
               />
+              <div className="flex gap-1.5 mt-1 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setTime("09:00 AM - 12:00 PM")}
+                  className="px-1.5 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+                >
+                  Morning (9-12)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTime("01:00 PM - 04:00 PM")}
+                  className="px-1.5 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+                >
+                  Afternoon (1-4)
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1688,28 +1771,40 @@ function PayoutScheduleModal({
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3">
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 rounded-xl transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 rounded-xl transition-colors cursor-pointer"
           >
             Cancel
           </button>
-          <button
-            type="button"
-            disabled={!canSave}
-            onClick={() => {
-              if (canSave) {
-                onSave(date, time, venue)
-              }
-            }}
-            className="px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs"
-          >
-            Confirm & Save Payout Schedule
-          </button>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+            <button
+              type="button"
+              disabled={!canSave}
+              onClick={handleFinalSave}
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs"
+              title="Save Payout Schedule and Dispatch Email 4 to Beneficiary"
+            >
+              📅 Save Sched & Send Notice (Email 4)
+            </button>
+
+            {onRelease && (
+              <button
+                type="button"
+                onClick={handleFinalRelease}
+                className="px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+                title="Mark ₱1,500 Cash as Released and Send Official Receipt (Email 5)"
+              >
+                💵 Mark as Released (Email 5)
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
   )
 }
+
