@@ -2149,7 +2149,12 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
                 )}
                 <Field
                   label="Living arrangement"
-                  value={(app as any).livingArrangement || (app as any).extra_data?.livingArrangement || "—"}
+                  value={
+                    (app as any).livingArrangement ||
+                    (app as any).extra_data?.livingArrangement ||
+                    ((app as any).isLivingAlone ? "Living Alone" : "Living with Family") ||
+                    "Living with Family"
+                  }
                 />
                 <Field
                   label="Number of household members"
@@ -2163,7 +2168,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
                     (app as any).extra_data?.householdMembersCount ||
                     (app as any).extra_data?.householdMembers ||
                     (app as any).extra_data?.numberOfHouseholdMembers ||
-                    "—"
+                    "1"
                   }
                 />
                 <Field
@@ -2188,27 +2193,33 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
                   value={(() => {
                     const raw =
                       (app as any).employmentStatus ||
+                      (app as any).employment_status ||
                       (app as any).pensionSource ||
                       (app as any).extra_data?.employmentStatus ||
+                      (app as any).extra_data?.employment_status ||
                       (app as any).extra_data?.pensionSource ||
-                      "—"
-                    if (typeof raw === "string") {
-                      if (raw.toLowerCase().includes("unemployed") || raw.toLowerCase().includes("walang trabaho")) return "Unemployed"
+                      (isPWD(app) ? "Unemployed" : "—")
+                    if (typeof raw === "string" && raw !== "—") {
+                      if (raw.toLowerCase().includes("unemployed") || raw.toLowerCase().includes("walang trabaho") || raw.toLowerCase().includes("jobless")) return "Unemployed"
                       if (raw.toLowerCase().includes("retired") || raw.toLowerCase().includes("pensyonado")) return "Retired / Pensioner"
                       if (raw.toLowerCase().includes("self-employed") || raw.toLowerCase().includes("negosyo")) return "Self-employed / Small Business"
                       if (raw.toLowerCase().includes("part-time")) return "Part-time Worker"
                       if (raw.toLowerCase().includes("employed") || raw.toLowerCase().includes("may trabaho")) return "Employed"
                     }
-                    return raw
+                    return raw || (isPWD(app) ? "Unemployed" : "—")
                   })()}
                 />
+                {Boolean((app as any).occupation || (app as any).extra_data?.occupation) && (
+                  <Field
+                    label="Occupation"
+                    value={(app as any).occupation || (app as any).extra_data?.occupation}
+                  />
+                )}
                 {Boolean((app as any).sourceOfIncome || (app as any).extra_data?.sourceOfIncome) && (
-                  <div className="col-span-2">
-                    <Field
-                      label="Source of income / pension"
-                      value={(app as any).sourceOfIncome || (app as any).extra_data?.sourceOfIncome}
-                    />
-                  </div>
+                  <Field
+                    label="Source of income / pension"
+                    value={(app as any).sourceOfIncome || (app as any).extra_data?.sourceOfIncome}
+                  />
                 )}
                 {Boolean(
                   !isSeniorBooklet && !String((app as any).service || "").toLowerCase().includes("senior") &&
