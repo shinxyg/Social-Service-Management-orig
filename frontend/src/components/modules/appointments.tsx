@@ -821,6 +821,12 @@ export default function Appointments() {
                   if (!hasDate) {
                     statusVal = 'pending'
                     cachedDecision = undefined
+                  } else if (hasExplicitLocalSched && cached?.decision === undefined) {
+                    statusVal = 'scheduled'
+                    cachedDecision = undefined
+                  } else if (rawStatus === 'scheduled') {
+                    statusVal = 'scheduled'
+                    cachedDecision = undefined
                   } else if (!isAicsPending && (rawStatus === 'approved' || rawStatus === 'completed' || cached?.decision === 'approved')) {
                     statusVal = 'approved'
                     cachedDecision = 'approved'
@@ -832,6 +838,7 @@ export default function Appointments() {
                     cachedDecision = 'rejected'
                   } else {
                     statusVal = 'scheduled'
+                    cachedDecision = undefined
                   }
 
                   return {
@@ -1233,6 +1240,29 @@ export default function Appointments() {
                 }),
               }))
             )
+          }
+
+          if (isPwd || targetAppt.module === "Senior Citizen" || String(targetAppt.concern || "").toLowerCase().includes("senior") || String(targetAppt.concern || "").toLowerCase().includes("pwd")) {
+            schedCalls.push(
+              fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(targetAppt.referenceNo)}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  status: 'under_review',
+                }),
+              })
+            )
+            try {
+              const rawPwd = localStorage.getItem("pwd_senior_applications") || "[]"
+              const pwdList = JSON.parse(rawPwd)
+              const updated = pwdList.map((p: any) => {
+                if (p.referenceNumber === targetAppt.referenceNo || p.id === targetAppt.referenceNo) {
+                  return { ...p, status: "under_review" }
+                }
+                return p
+              })
+              localStorage.setItem("pwd_senior_applications", JSON.stringify(updated))
+            } catch {}
           }
 
           await Promise.allSettled(schedCalls)
