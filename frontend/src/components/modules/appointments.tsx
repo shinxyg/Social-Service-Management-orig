@@ -619,7 +619,7 @@ export default function Appointments() {
             if (aicsClone.applications && Array.isArray(aicsClone.applications)) {
               aicsClone.applications.forEach((app: any) => {
                 const s = String(app.status || '').toLowerCase()
-                if (s === 'pending' || s === 'submit_pending' || s === 'rejected' || s === 'denied' || s === 'disapproved') {
+                if (s === 'rejected' || s === 'denied' || s === 'disapproved') {
                   if (app.reference_no) unacceptedAicsRefs.add(String(app.reference_no).trim().toLowerCase())
                   if (app.qc_id) unacceptedAicsRefs.add(String(app.qc_id).trim().toLowerCase())
                   if (app.id) unacceptedAicsRefs.add(String(app.id).trim().toLowerCase())
@@ -704,19 +704,7 @@ export default function Appointments() {
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
                 const rawAppStatus = String(app.status || '').toLowerCase()
-                // Only show in Appointments if APPROVED for scheduling by admin in AICS module (or already scheduled / under review / referred / completed).
-                // Do NOT show if still in initial intake (submit_pending / pending) or rejected!
-                if (
-                  rawAppStatus === 'waiting_approval' ||
-                  rawAppStatus === 'for_scheduling' ||
-                  rawAppStatus === 'for_screening' ||
-                  rawAppStatus === 'approved' ||
-                  rawAppStatus === 'completed' ||
-                  rawAppStatus === 'scheduled' ||
-                  rawAppStatus === 'under_review' ||
-                  rawAppStatus === 'for_referral' ||
-                  rawAppStatus === 'referred'
-                ) {
+                if (rawAppStatus !== 'rejected' && rawAppStatus !== 'denied' && rawAppStatus !== 'disapproved') {
                   const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                   const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
                   const ref = String(app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
