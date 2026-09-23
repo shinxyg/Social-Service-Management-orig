@@ -1533,7 +1533,7 @@ export default function FinancialAidDisbursement() {
               )}
             </div>
 
-            {selectedDetailsRecord.assistanceType.toLowerCase().includes("medical") && (
+            {(selectedDetailsRecord.assistanceType.toLowerCase().includes("medical") || selectedDetailsRecord.assistanceType.toLowerCase().includes("medicine") || selectedDetailsRecord.assistanceType.toLowerCase().includes("gamot")) && (
               <div className="flex items-center justify-end pt-2 border-t border-gray-100">
                 <button
                   type="button"
@@ -1541,7 +1541,11 @@ export default function FinancialAidDisbursement() {
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors cursor-pointer shadow-2xs"
                 >
                   <FileText className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Print Guarantee Letter (GL)</span>
+                  <span>
+                    {selectedDetailsRecord.assistanceType.toLowerCase().includes("medicine") || selectedDetailsRecord.assistanceType.toLowerCase().includes("gamot")
+                      ? "Print Mercury Drug Gift Certificate"
+                      : "Print Guarantee Letter (GL)"}
+                  </span>
                 </button>
               </div>
             )}
@@ -1557,8 +1561,9 @@ export default function FinancialAidDisbursement() {
             patientName: glModalRecord.applicantName,
             qcidNumber: glModalRecord.applicationRef,
             amount: glModalRecord.fixedAmount || 25000,
-            hospitalName: glModalRecord.hospitalName || glModalRecord.partnerHospital || "EAST AVENUE MEDICAL CENTER (EAMC)",
-            diagnosis: glModalRecord.remarks || "Chronic Kidney Disease (Stage 5) / Hemodialysis",
+            assistanceType: glModalRecord.assistanceType,
+            hospitalName: glModalRecord.hospitalName || glModalRecord.partnerHospital || (glModalRecord.assistanceType.toLowerCase().includes("medicine") || glModalRecord.assistanceType.toLowerCase().includes("gamot") ? "MERCURY DRUG (QUEZON CITY BRANCHES)" : "EAST AVENUE MEDICAL CENTER (EAMC)"),
+            diagnosis: glModalRecord.remarks || (glModalRecord.assistanceType.toLowerCase().includes("medicine") || glModalRecord.assistanceType.toLowerCase().includes("gamot") ? "Doctor's Prescription / Essential Medicines" : "Chronic Kidney Disease (Stage 5) / Hemodialysis"),
           }}
           onClose={() => setGlModalRecord(null)}
           canPrint={true}
