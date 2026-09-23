@@ -86,14 +86,8 @@ async function syncAndCleanAppointments() {
     const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
 
-    // 0. Reset any scheduled appointments that were erroneously marked 'approved' without an admin interview
-    await db.query(`
-      UPDATE appointments
-      SET status = 'scheduled', updated_at = NOW()
-      WHERE status = 'approved'
-        AND scheduled_date IS NOT NULL AND scheduled_date <> ''
-        AND (notes IS NULL OR (notes NOT LIKE '%Admin interview completed%' AND notes NOT LIKE '%Approved via appointment%' AND notes NOT LIKE '%Official Decision%'))
-    `).catch(() => {});
+    // 0. Ensure deleted reference set is loaded
+    // (Approved appointments must NEVER be automatically reverted to scheduled)
 
     // 1. Clean up rejected/denied AICS appointments (NEVER delete scheduled or pending applications that have active appointments)
     await db.query(`

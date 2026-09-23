@@ -791,25 +791,24 @@ export default function Appointments() {
                   const rawStatus = String(a.status || '').toLowerCase()
                   const isExplicitPending = rawStatus === 'pending' || !a.scheduled_date
                   const hasExplicitLocalSched = Boolean(localScheduledMap[apptId]?.savedInSession && localScheduledMap[apptId]?.scheduledDate)
-                  const cached = hasExplicitLocalSched ? localScheduledMap[apptId] : undefined
+                  const cached = hasExplicitLocalSched ? localScheduledMap[apptId] : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${a.concern}`] || localScheduledMap[`${a.module}_${ref}`] || undefined)
 
                   const schedDate = isExplicitPending ? (hasExplicitLocalSched ? cleanDate(cached?.scheduledDate) : null) : cleanDate(a.scheduled_date || cached?.scheduledDate)
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
 
-                  // CRITICAL: When an appointment has a scheduled date, it must transition:
-                  // scheduled (upcoming) -> under_review (due) -> approved/rejected (only after admin makes decision in interview).
-                  // It must NEVER default to 'approved' just because rawStatus was 'approved' or because parent application was approved!
-                  const isExplicitInterviewDecision = Boolean(cached?.decision && cached?.decision !== 'scheduled') || (Boolean(a.notes?.includes('Decision: approved') || a.notes?.includes('Approved during case assessment')))
-                  const cachedDecision: ("approved" | "referred" | "rejected" | undefined) = (isExplicitPending && !hasExplicitLocalSched)
-                    ? undefined
-                    : hasDate
-                      ? (isExplicitInterviewDecision ? (cached?.decision || (rawStatus === 'completed' ? 'approved' : undefined)) : undefined)
-                      : ((cached?.decision as ("approved" | "referred" | "rejected")) || (rawStatus === 'completed' ? 'approved' : undefined))
-                  
                   let statusVal: AppointmentStatus = 'pending'
-                  if (cachedDecision) {
-                    statusVal = cachedDecision
+                  let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
+
+                  if (rawStatus === 'approved' || rawStatus === 'completed' || cached?.decision === 'approved') {
+                    statusVal = 'approved'
+                    cachedDecision = 'approved'
+                  } else if (rawStatus === 'referred' || cached?.decision === 'referred') {
+                    statusVal = 'referred'
+                    cachedDecision = 'referred'
+                  } else if (rawStatus === 'rejected' || cached?.decision === 'rejected') {
+                    statusVal = 'rejected'
+                    cachedDecision = 'rejected'
                   } else if (hasDate) {
                     statusVal = 'scheduled'
                   } else {
@@ -867,14 +866,19 @@ export default function Appointments() {
                 const schedDate = (isAicsPending && !cached?.savedInSession) ? null : cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
                 const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
                 const hasDate = Boolean(schedDate)
-                const isExplicitInterviewDecision = Boolean(cached?.decision && cached?.decision !== 'scheduled')
-                const cachedDecision = hasDate
-                  ? (isExplicitInterviewDecision ? (cached?.decision as ("approved" | "referred" | "rejected")) : undefined)
-                  : ((cached?.decision as ("approved" | "referred" | "rejected")) || (['for_referral', 'referred'].includes(rawAppStatus) ? 'referred' : undefined))
-                
+
                 let apptStatus: AppointmentStatus = 'pending'
-                if (cachedDecision) {
-                  apptStatus = cachedDecision
+                let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
+
+                if (rawAppStatus === 'approved' || rawAppStatus === 'completed' || cached?.decision === 'approved') {
+                  apptStatus = 'approved'
+                  cachedDecision = 'approved'
+                } else if (rawAppStatus === 'for_referral' || rawAppStatus === 'referred' || cached?.decision === 'referred') {
+                  apptStatus = 'referred'
+                  cachedDecision = 'referred'
+                } else if (rawAppStatus === 'rejected' || cached?.decision === 'rejected') {
+                  apptStatus = 'rejected'
+                  cachedDecision = 'rejected'
                 } else if (hasDate) {
                   apptStatus = 'scheduled'
                 } else {
