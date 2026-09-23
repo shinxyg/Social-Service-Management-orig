@@ -502,13 +502,6 @@ export default function AICS() {
     }
   }, [applications])
 
-  const labelStyle = {
-    color: DESIGN.colors.foreground,
-    opacity: 0.6,
-    fontSize: '11px',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-  }
 
   // ==========================================
   // VIEW 1: DASHBOARD VIEW

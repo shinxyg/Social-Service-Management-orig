@@ -4003,7 +4003,7 @@ export default function MyApplications() {
 
             const effectiveAppStatus: ApplicationStatus = isAppApproved
               ? "Approved"
-              : isAppScheduled
+              : isApptScheduled
               ? "Scheduled"
               : isAppReferred
               ? "Referred"
