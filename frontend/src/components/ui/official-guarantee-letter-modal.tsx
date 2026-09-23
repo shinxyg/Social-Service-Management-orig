@@ -1,4 +1,4 @@
-import { Printer, X, ShieldCheck, Pill, Building2, CheckCircle2 } from "lucide-react"
+import { Printer, X, Pill, Building2 } from "lucide-react"
 
 export interface GuaranteeLetterData {
   controlNo?: string
