@@ -67,7 +67,7 @@ export default function AICSUser() {
     const loadApps = async () => {
       try {
         const prof = getCurrentUserProfile()
-        const qcId = prof?.qcId || ""
+        const qcId = prof?.qcId || prof?.qcidNumber || prof?.qcidNo || ""
         const email = prof?.email || ""
         const res = await fetch(`${API_BASE}/api/aics/applications?email=${encodeURIComponent(email)}&qcId=${encodeURIComponent(qcId)}`)
         if (res.ok) {

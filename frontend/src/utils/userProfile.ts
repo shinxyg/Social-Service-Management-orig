@@ -32,6 +32,7 @@ export interface LoggedInUserProfile {
   mobileNumber?: string
   contactNo?: string
   email?: string
+  qcId?: string
   qcidNo: string
   qcidNumber: string
   role?: string

@@ -24,8 +24,6 @@ import {
   Stethoscope,
   Heart,
   Package,
-  Utensils,
-  Bus,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { cachedApiFetch } from "../../utils/cachedApiFetch"
