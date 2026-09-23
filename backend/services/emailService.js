@@ -98,19 +98,19 @@ async function sendPwdApprovalEmail({
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="Gov Services Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
-          <h1>Gov Services</h1>
-          <p>Persons with Disability Affairs Division — Gov Services</p>
+          <img src="https://raw.githubusercontent.com/shinxyg/Social-Service-Management-orig/main/backend/assets/logo.png" alt="QC Seal" width="75" height="75" style="margin-bottom: 12px; display: inline-block; object-fit: contain;" />
+          <h1>Quezon City Government</h1>
+          <p>Persons with Disability Affairs Office (PDAO)</p>
         </div>
 
         <div class="content">
           <div style="text-align: center;">
-            <span class="badge">✓ OFFICIAL PWD ID ISSUED</span>
+            <span class="badge">✓ OFFICIAL PWD ID & PENSION APPROVED</span>
           </div>
 
           <h2 style="font-size: 18px; margin: 0 0 8px; color: #0f172a;">Greetings, ${recipientName || 'Applicant'}!</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
-            We are pleased to inform you that your application for an official <strong>Persons with Disability (PWD) ID</strong> has been officially <strong>APPROVED</strong> by Gov Services - Persons with Disability Affairs Division.
+            We are pleased to inform you that your application for an official <strong>Persons with Disability (PWD) ID & Social Pension</strong> has been officially <strong>APPROVED</strong> by the Quezon City Persons with Disability Affairs Office (PDAO).
           </p>
 
           <div class="card">
@@ -158,8 +158,8 @@ async function sendPwdApprovalEmail({
         </div>
 
         <div class="footer">
-          <p style="margin: 0 0 4px;">This is an official automated email notification from the Gov Services Portal.</p>
-          <p style="margin: 0;">Gov Services | Persons with Disability Affairs Division</p>
+          <p style="margin: 0 0 4px;">Official automated email notification from GovServe Portal.</p>
+          <p style="margin: 0;">Quezon City Government | Persons with Disability Affairs Office (PDAO)</p>
         </div>
       </div>
     </body>
@@ -1317,8 +1317,25 @@ async function sendPwdApplicationReceivedEmail({
           </p>
           <div class="ref-box">
             <div style="font-size: 11px; text-transform: uppercase; color: #1e40af; font-weight: 800; letter-spacing: 0.5px;">APPLICATION REFERENCE NUMBER</div>
-            <div style="font-size: 24px; font-family: monospace; font-weight: 800; color: #1d4ed8; letter-spacing: 2px; margin-top: 4px;">${referenceNumber}</div>
-            <div style="font-size: 12px; color: #64748b; margin-top: 6px;">Submitted Date: ${dateStr}</div>
+            <div style="font-size: 24px; font-family: monospace; font-weight: 800; color: #1d4ed8; letter-spacing: 2px; margin: 4px 0 10px;">${referenceNumber}</div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; border-top: 1px solid #bfdbfe; padding-top: 8px;">
+              <tr>
+                <td style="padding: 4px 0; color: #64748b; font-weight: 600;">Applicant:</td>
+                <td style="padding: 4px 0; color: #0f172a; font-weight: 700; text-align: right; text-transform: uppercase;">${recipientName || '—'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #64748b; font-weight: 600;">Program:</td>
+                <td style="padding: 4px 0; color: #0f172a; font-weight: 700; text-align: right;">PWD Social Pension Program</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #64748b; font-weight: 600;">Monthly Pension:</td>
+                <td style="padding: 4px 0; color: #1d4ed8; font-weight: 800; text-align: right;">₱500.00 / buwan (₱1,500 Target)</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #64748b; font-weight: 600;">Submitted Date:</td>
+                <td style="padding: 4px 0; color: #0f172a; font-weight: 700; text-align: right;">${dateStr}</td>
+              </tr>
+            </table>
           </div>
           <div style="background: #f8fafc; border-radius: 10px; padding: 16px; border: 1px solid #e2e8f0; font-size: 13px;">
             <div style="font-weight: 700; color: #0f172a; margin-bottom: 8px;">Next Steps:</div>
