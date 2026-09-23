@@ -714,24 +714,6 @@ export default function Appointments() {
           return s
         }
 
-        let pendingAicsRefs = new Set<string>()
-        if (resAicsSettled.status === "fulfilled" && resAicsSettled.value.ok) {
-          try {
-            const aicsClone = await resAicsSettled.value.clone().json()
-            if (aicsClone.applications && Array.isArray(aicsClone.applications)) {
-              aicsClone.applications.forEach((app: any) => {
-                const s = String(app.status || '').toLowerCase()
-                const hasSched = Boolean((app.details as any)?.appointmentDate)
-                if (['pending', 'submit_pending', 'waiting_approval', 'for_scheduling'].includes(s) && !hasSched) {
-                  if (app.reference_no) pendingAicsRefs.add(String(app.reference_no).trim().toLowerCase())
-                  if (app.id) pendingAicsRefs.add(String(app.id).trim().toLowerCase())
-                  if (app.qc_id) pendingAicsRefs.add(String(app.qc_id).trim().toLowerCase())
-                }
-              })
-            }
-          } catch {}
-        }
-
         let dataDb: any = { appointments: [] }
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
           try {
@@ -798,10 +780,6 @@ export default function Appointments() {
                   if (status === 'rejected' || status === 'denied' || status === 'disapproved') {
                     return false
                   }
-                  // Strictly exclude AICS appointments whose application is still unapproved / pending
-                  if (a.module === 'AICS' && (pendingAicsRefs.has(ref) || (rawId && pendingAicsRefs.has(rawId)))) {
-                    return false
-                  }
                   return true
                 })
                 .map((a: any) => {
@@ -810,13 +788,12 @@ export default function Appointments() {
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || "").trim()
                   const rawStatus = String(a.status || '').toLowerCase()
                   const isExplicitPending = rawStatus === 'pending' || !a.scheduled_date
-                  const isAicsPending = (a.module === 'AICS' || String(a.concern || '').toLowerCase().includes('medical') || String(a.concern || '').toLowerCase().includes('gamot')) &&
-                    (pendingAicsRefs.has(ref.toLowerCase()) || (rawId && pendingAicsRefs.has(rawId.toLowerCase())) || (rawStatus === 'pending' && !a.scheduled_date))
                   const hasExplicitLocalSched = Boolean(localScheduledMap[apptId]?.savedInSession && localScheduledMap[apptId]?.scheduledDate)
-                  const cached = (hasExplicitLocalSched && !isAicsPending) ? localScheduledMap[apptId] : (isAicsPending ? undefined : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${a.concern}`] || localScheduledMap[`${a.module}_${ref}`] || undefined))
+                  const cached = hasExplicitLocalSched ? localScheduledMap[apptId] : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${a.concern}`] || localScheduledMap[`${a.module}_${ref}`] || undefined)
 
-                  const schedDate = isExplicitPending ? (hasExplicitLocalSched && !isAicsPending ? cleanDate(cached?.scheduledDate) : null) : (isAicsPending ? null : cleanDate(a.scheduled_date || cached?.scheduledDate))
+                  const schedDate = isExplicitPending ? (hasExplicitLocalSched ? cleanDate(cached?.scheduledDate) : null) : cleanDate(a.scheduled_date || cached?.scheduledDate)
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
+                  const hasDate = Boolean(schedDate)
                   let statusVal: AppointmentStatus = 'pending'
                   let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
 
@@ -827,10 +804,10 @@ export default function Appointments() {
                   if (!hasDate) {
                     statusVal = 'pending'
                     cachedDecision = undefined
-                  } else if (isApprovedDecision && !isAicsPending) {
+                  } else if (isApprovedDecision) {
                     statusVal = 'approved'
                     cachedDecision = 'approved'
-                  } else if (isReferredDecision && !isAicsPending) {
+                  } else if (isReferredDecision) {
                     statusVal = 'referred'
                     cachedDecision = 'referred'
                   } else if (isRejectedDecision) {
@@ -867,7 +844,7 @@ export default function Appointments() {
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
                 const rawAppStatus = String(app.status || '').toLowerCase()
-                if (['rejected', 'denied', 'disapproved', 'cancelled', 'pending', 'submit_pending'].includes(rawAppStatus)) return
+                if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(rawAppStatus)) return
 
                 const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                 const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"

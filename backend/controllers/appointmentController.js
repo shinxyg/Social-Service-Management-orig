@@ -88,17 +88,17 @@ async function syncAndCleanAppointments() {
     // 0. Ensure deleted reference set is loaded
     // (Approved appointments must NEVER be automatically reverted to scheduled)
 
-    // 1. Clean up unapproved or rejected AICS appointments (AICS only enters Appointments when approved/pre-approved by Social Worker)
+    // 1. Clean up rejected or cancelled AICS appointments
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND (
         reference_no IN (
           SELECT reference_no FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+          WHERE status IN ('rejected', 'denied', 'disapproved', 'cancelled')
         )
         OR reference_no IN (
           SELECT qc_id FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+          WHERE status IN ('rejected', 'denied', 'disapproved', 'cancelled')
             AND qc_id IS NOT NULL AND qc_id <> ''
         )
       )
@@ -173,25 +173,11 @@ async function syncAndCleanAppointments() {
         AND status NOT IN ('rejected')
     `).catch(() => {});
 
-    // Ensure pending/new AICS applications are strictly 'pending' and NEVER carried over as approved
-    await db.query(`
-      UPDATE appointments
-      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
-      WHERE module = 'AICS' AND (
-        reference_no IN (
-          SELECT reference_no FROM aics_applications WHERE status IN ('pending', 'submit_pending', 'waiting_approval')
-        )
-        OR reference_no IN (
-          SELECT qc_id FROM aics_applications WHERE status IN ('pending', 'submit_pending', 'waiting_approval') AND qc_id IS NOT NULL AND qc_id <> ''
-        )
-      )
-    `).catch(() => {});
-
-    // Import ONLY approved or screened AICS applications for appointment scheduling
+    // Import active AICS applications for appointment scheduling
     const activeAics = await db.query(
       `SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
        FROM aics_applications
-       WHERE status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'pending', 'submit_pending')`
+       WHERE status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeAics.rows) {
