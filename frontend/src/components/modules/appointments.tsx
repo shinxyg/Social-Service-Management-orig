@@ -687,7 +687,8 @@ export default function Appointments() {
               pwdClone.forEach((app: any) => {
                 const s = String(app.status || '').toLowerCase()
                 // Strict Connection: Hanggat hindi pa approved sa /pwd-senior, bawal lumabas sa /appointments
-                if (s !== 'approved' && s !== 'completed' && s !== 'for_release' && s !== 'released') {
+                const isApprovedOrEligible = s === 'approved' || s === 'under_review' || s === 'completed' || s === 'for_release' || s === 'released'
+                if (!isApprovedOrEligible) {
                   const r = String(app.referenceNumber || app.reference_number || '').trim().toLowerCase()
                   const id = String(app.id || '').trim().toLowerCase()
                   if (r) unapprovedPwdRefs.add(r)
@@ -846,7 +847,9 @@ export default function Appointments() {
               String(app.category || "").toLowerCase().includes("assistance") ||
               String(app.service || "").toLowerCase().includes("assistance") ||
               String(app.assistanceType || "").toLowerCase().includes("assistance")
-            if (isAssistance && (app.status === "approved" || app.status === "completed" || app.status === "for_release" || app.status === "released")) {
+            const appSt = String(app.status || '').toLowerCase()
+            const isApprovedOrEligible = appSt === 'approved' || appSt === 'under_review' || appSt === 'completed' || appSt === 'for_release' || appSt === 'released'
+            if (isAssistance && isApprovedOrEligible) {
               const isPwd = String(app.category || "").toUpperCase().includes("PWD")
               const mod: ModuleKey = isPwd ? "PWD" : "Senior Citizen"
               const concern = isPwd ? "PWD Social Assistance" : "Senior Social Assistance"

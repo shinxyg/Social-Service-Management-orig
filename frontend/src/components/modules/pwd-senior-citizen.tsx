@@ -85,7 +85,7 @@ interface PWDApplicationSubmission {
 
   documents: ApplicationDocument[]
 
-  status: "pending" | "approved" | "rejected" | "needs_revision"
+  status: "pending" | "approved" | "rejected" | "needs_revision" | "under_review"
   assignedIdNumber?: string
   rejectionReason?: string
   approvedBy?: string
@@ -135,7 +135,7 @@ interface SeniorCitizenApplicationSubmission {
 
   documents: ApplicationDocument[]
 
-  status: "pending" | "approved" | "rejected" | "needs_revision"
+  status: "pending" | "approved" | "rejected" | "needs_revision" | "under_review"
   assignedIdNumber?: string
   rejectionReason?: string
   approvedBy?: string
@@ -631,6 +631,7 @@ function subLabelForApp(app: ApplicationSubmission) {
 const statusMeta = {
   pending: { dot: "gw-dot--pending", text: "gw-status--pending", label: "Pending" },
   approved: { dot: "gw-dot--approved", text: "gw-status--approved", label: "Approved" },
+  under_review: { dot: "gw-dot--approved", text: "gw-status--approved", label: "Approved" },
   rejected: { dot: "gw-dot--rejected", text: "gw-status--rejected", label: "Rejected" },
   needs_revision: { dot: "gw-dot--revision", text: "gw-status--revision", label: "Needs Revision" },
 } as const
@@ -2484,7 +2485,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
             </div>
           )}
 
-          {app.status === "approved" && (
+          {(app.status === "approved" || app.status === "under_review") && (
             <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200 text-sm space-y-1">
               <p className="font-bold flex items-center gap-1.5">
                 <Check className="h-4 w-4 text-emerald-600" />
@@ -2554,7 +2555,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
           </div>
 
           <div className="flex items-center gap-3">
-            {app.status === "pending" && actionMode === "view" && (
+            {(String(app.status || "").toLowerCase() === "pending" || !app.status) && actionMode === "view" && (
               <>
                 <button
                   type="button"
@@ -2574,7 +2575,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
                 </button>
               </>
             )}
-            {onShowCard && app.status === "approved" && !isAssistance && !isSeniorBooklet && (
+            {onShowCard && (app.status === "approved" || app.status === "under_review") && !isAssistance && !isSeniorBooklet && (
               <button
                 type="button"
                 onClick={() => onShowCard(app)}
@@ -2650,11 +2651,36 @@ export default function PWDSeniorCitizen() {
           } catch { }
         }
 
+        try {
+          const raw = localStorage.getItem("pwd_senior_applications")
+          if (raw && raw.includes('"under_review"')) {
+            localStorage.setItem("pwd_senior_applications", raw.replace(/"status":\s*"under_review"/g, '"status":"approved"'))
+          }
+        } catch {}
+
         combined = combined.map((a: any) => {
           if (!a) return a
           const isPwd = isPWD(a)
           const safeSubmittedAt = safeDateIso(a.submittedAt, a)
           let updated = { ...a, submittedAt: safeSubmittedAt || a.submittedAt || "" }
+          if (updated.status === "under_review") {
+            updated.status = "approved"
+            updated.approvedBy = updated.approvedBy || "Social Worker Admin"
+            updated.approvedDate = updated.approvedDate || (a as any).updated_at || new Date().toISOString()
+            fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(a.id || a.referenceNumber)}/status`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: a.id,
+                status: "approved",
+                approvedBy: updated.approvedBy,
+                approvedDate: updated.approvedDate,
+                referenceNumber: a.referenceNumber,
+                category: a.category,
+                type: a.type,
+              }),
+            }).catch(() => {})
+          }
           const rawAssigned = a.assignedIdNumber || (a as any).assigned_id_number
           if (rawAssigned && typeof rawAssigned === "string") {
             if (isPwd && (rawAssigned.toUpperCase().startsWith("SENIOR-") || rawAssigned.toUpperCase().startsWith("OSCA-"))) {
@@ -2724,7 +2750,7 @@ export default function PWDSeniorCitizen() {
       String((targetApp as any).assistanceType || "").toLowerCase().includes("assistance") ||
       (targetApp.documents || []).some((d: any) => String(d.name || "").toLowerCase().includes("indigency") || String(d.name || "").toLowerCase().includes("pwdqcid"))
 
-    const nextStatus = isAssistanceApp ? ("under_review" as const) : ("approved" as const)
+    const nextStatus = "approved" as const
     const nextIdNumber = isAssistanceApp ? undefined : idNumber
 
     updateApplications((prev) =>
@@ -2732,10 +2758,10 @@ export default function PWDSeniorCitizen() {
         app.id === id || (id && app.id === id) || (refNo && app.referenceNumber === refNo && String(app.type || "").toLowerCase() === String(targetApp.type || "").toLowerCase())
           ? {
             ...app,
-            status: nextStatus,
+            status: "approved",
             assignedIdNumber: nextIdNumber,
-            approvedBy: isAssistanceApp ? undefined : "Social Worker Admin",
-            approvedDate: isAssistanceApp ? undefined : approvedDate,
+            approvedBy: "Social Worker Admin",
+            approvedDate: approvedDate,
           }
           : app
       )
@@ -2747,10 +2773,10 @@ export default function PWDSeniorCitizen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: targetApp.id,
-          status: nextStatus,
+          status: "approved",
           assignedIdNumber: nextIdNumber,
-          approvedBy: isAssistanceApp ? undefined : "Social Worker Admin",
-          approvedDate: isAssistanceApp ? undefined : approvedDate,
+          approvedBy: "Social Worker Admin",
+          approvedDate: approvedDate,
           referenceNumber: refNo,
           category: targetApp.category,
           type: targetApp.type,

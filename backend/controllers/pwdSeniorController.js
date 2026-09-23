@@ -320,7 +320,13 @@ exports.getAllApplications = async (req, res) => {
         disabilityClass: row.disability_class || extra.disabilityClass || '',
         causeOfDisability: row.cause_of_disability || extra.causeOfDisability || '',
         applyingFor: row.applying_for || extra.applyingFor || 'myself',
-        status: row.status || 'pending',
+        status: (() => {
+          if (row.status === 'under_review') {
+            db.query(`UPDATE pwd_senior_applications SET status = 'approved', approved_by = COALESCE(approved_by, 'Social Worker Admin') WHERE id = $1`, [row.id]).catch(() => {});
+            return 'approved';
+          }
+          return row.status || 'pending';
+        })(),
         assignedIdNumber: (() => {
           const raw = row.assigned_id_number || extra.assignedIdNumber || null;
           if (!raw || typeof raw !== 'string') return null;
