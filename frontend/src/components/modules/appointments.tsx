@@ -851,11 +851,15 @@ export default function Appointments() {
                 const ref = String(app.reference_no || app.qc_id || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
                 const apptId = `aics-appt-${app.id || ref}`
 
-                // If already in dataDb.appointments, DO NOT synthesize a duplicate!
+                // If already in dataDb.appointments for AICS, DO NOT synthesize a duplicate!
                 const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
                   const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
                   const dbid = String(dba.id || '').trim().toLowerCase()
-                  return (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
+                  const dbMod = String(dba.module || '').trim().toUpperCase()
+                  const dbConcern = String(dba.concern || '').trim().toLowerCase()
+                  const sameRef = (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
+                  const sameMod = dbMod === 'AICS' || dbConcern.includes('medical') || dbConcern.includes('gamot') || dbConcern.includes('funeral') || dbConcern.includes('burial')
+                  return sameRef && sameMod
                 })
                 if (existsInDb) return
 
@@ -935,11 +939,14 @@ export default function Appointments() {
             if (isAssistance) {
               const ref = app.referenceNumber || app.reference_number || `PWD-QC-2026-${app.id || 1}`
 
-              // If already in dataDb.appointments, DO NOT synthesize! The database row is authoritative!
+              // If already in dataDb.appointments for PWD/Senior, DO NOT synthesize!
               const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
                 const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
                 const dbid = String(dba.id || '').trim().toLowerCase()
-                return (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
+                const dbMod = String(dba.module || '').trim().toUpperCase()
+                const sameRef = (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
+                const sameMod = dbMod === mod.toUpperCase() || String(dba.concern || '').toLowerCase().includes(isPwd ? 'pwd' : 'senior')
+                return sameRef && sameMod
               })
               if (existsInDb) return
 

@@ -190,14 +190,21 @@ exports.createApplication = async (req, res) => {
            AND (reference_no = $1 OR (reference_no = $2 AND $2 IS NOT NULL))
            AND (concern = $3 OR LOWER(concern) LIKE '%med%' OR LOWER(concern) LIKE '%gamot%')`,
         [referenceNo, targetQcId, cleanType]
-      );
+      ).catch(() => {});
+
+      await db.query(
+        `INSERT INTO appointments
+          (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+         VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.', NOW(), NOW())`,
+        [referenceNo, fullName, cleanType]
+      ).catch(() => {});
 
       await db.query(
         `DELETE FROM financial_aid_disbursements
          WHERE (application_ref = $1 OR (application_ref = $2 AND $2 IS NOT NULL) OR qc_id = $1 OR (qc_id = $2 AND $2 IS NOT NULL))
            AND (LOWER(aid_type) LIKE '%med%' OR LOWER(aid_type) LIKE '%gamot%' OR LOWER(aid_type) = LOWER($3))`,
         [referenceNo, targetQcId, finalAssistanceType]
-      );
+      ).catch(() => {});
     } catch (apptErr) {
       console.warn('AICS clean prior records warning:', apptErr.message);
     }
