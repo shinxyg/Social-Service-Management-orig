@@ -784,7 +784,6 @@ export default function Appointments() {
                 })
                 .map((a: any) => {
                   const apptId = `db-appt-${a.id}`
-                  const rawId = String(a.id || '').trim()
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || "").trim()
                   const rawStatus = String(a.status || '').toLowerCase()
                   const isExplicitPending = rawStatus === 'pending' || !a.scheduled_date
