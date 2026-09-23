@@ -350,13 +350,13 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
 }
 
 export function getApptEffectiveStatus(a: AppointmentRequest): AppointmentStatus {
-  // 1. Pending schedule: If no schedule has been set yet, it is ALWAYS pending!
-  if (!a.scheduledDate) return "pending"
+  // 1. Explicit admin decisions made during appointment assessment (or approved/completed status) take top priority
+  if (a.decision === "approved" || a.status === "approved" || a.status === "completed") return "approved"
+  if (a.decision === "referred" || a.status === "referred") return "referred"
+  if (a.decision === "rejected" || a.status === "rejected") return "rejected"
 
-  // 2. Explicit admin decisions made during appointment assessment (only valid once scheduled)
-  if (a.decision === "approved") return "approved"
-  if (a.decision === "referred") return "referred"
-  if (a.decision === "rejected") return "rejected"
+  // 2. Pending schedule: If no schedule has been set yet, it is ALWAYS pending!
+  if (!a.scheduledDate) return "pending"
 
   // 3. Time-based status: Scheduled before date/time, Under Review on/after date/time
   const isDue = isAppointmentDue(a.scheduledDate, a.scheduledTime)
@@ -819,27 +819,22 @@ export default function Appointments() {
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
 
-                  let statusVal: AppointmentStatus = 'pending'
-                  let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
+                  const isApprovedDecision = rawStatus === 'approved' || rawStatus === 'completed' || cached?.decision === 'approved' || cached?.status === 'approved' || cached?.status === 'completed'
+                  const isReferredDecision = rawStatus === 'referred' || cached?.decision === 'referred' || cached?.status === 'referred'
+                  const isRejectedDecision = rawStatus === 'rejected' || cached?.decision === 'rejected' || cached?.status === 'rejected'
 
-                  if (!hasDate) {
-                    statusVal = 'pending'
-                    cachedDecision = undefined
-                  } else if (hasExplicitLocalSched && cached?.decision === undefined) {
-                    statusVal = 'scheduled'
-                    cachedDecision = undefined
-                  } else if (rawStatus === 'scheduled') {
-                    statusVal = 'scheduled'
-                    cachedDecision = undefined
-                  } else if (!isAicsPending && (rawStatus === 'approved' || rawStatus === 'completed' || cached?.decision === 'approved')) {
+                  if (isApprovedDecision && !isAicsPending) {
                     statusVal = 'approved'
                     cachedDecision = 'approved'
-                  } else if (!isAicsPending && (rawStatus === 'referred' || cached?.decision === 'referred')) {
+                  } else if (isReferredDecision && !isAicsPending) {
                     statusVal = 'referred'
                     cachedDecision = 'referred'
-                  } else if (rawStatus === 'rejected' || cached?.decision === 'rejected') {
+                  } else if (isRejectedDecision) {
                     statusVal = 'rejected'
                     cachedDecision = 'rejected'
+                  } else if (!hasDate) {
+                    statusVal = 'pending'
+                    cachedDecision = undefined
                   } else {
                     statusVal = 'scheduled'
                     cachedDecision = undefined
@@ -977,12 +972,16 @@ export default function Appointments() {
               const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY"
               const isDone = app.status === "completed" || app.status === "released"
 
-              const hasExplicitLocalSched = Boolean(localScheduledMap[apptId]?.savedInSession && localScheduledMap[apptId]?.scheduledDate)
-              const cached = hasExplicitLocalSched ? localScheduledMap[apptId] : undefined
-              const schedDate = hasExplicitLocalSched ? cleanDate(cached?.scheduledDate) : null
-              const schedTime = hasExplicitLocalSched ? (cached?.scheduledTime || null) : null
-              const decision = hasExplicitLocalSched ? (cached?.decision as ("approved" | "referred" | "rejected")) : undefined
-              let statusVal: AppointmentStatus = isDone ? "completed" : hasExplicitLocalSched ? (decision || (schedDate ? "scheduled" : "pending")) : "pending"
+              const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`${mod}_${ref}`] || undefined
+              const hasExplicitLocalSched = Boolean(cached?.savedInSession && cached?.scheduledDate)
+              const schedDate = cleanDate(cached?.scheduledDate || (app as any).scheduled_date)
+              const schedTime = cached?.scheduledTime || (app as any).scheduled_time || null
+              const isApproved = app.status === "completed" || app.status === "released" || app.status === "approved" || cached?.decision === "approved" || cached?.status === "approved"
+              const isReferred = app.status === "referred" || cached?.decision === "referred" || cached?.status === "referred"
+              const isRejected = app.status === "rejected" || cached?.decision === "rejected" || cached?.status === "rejected"
+
+              const decision: ("approved" | "referred" | "rejected" | undefined) = isApproved ? "approved" : (isReferred ? "referred" : (isRejected ? "rejected" : undefined))
+              const statusVal: AppointmentStatus = isApproved ? "approved" : (isReferred ? "referred" : (isRejected ? "rejected" : (schedDate ? "scheduled" : "pending")))
 
               appts.push({
                 id: apptId,
@@ -1484,6 +1483,7 @@ function to12HourTime(timeStr?: string): string {
       const approvedPayload = {
         status: "approved",
         decision: "approved",
+        savedInSession: true,
         scheduledDate: finalDate,
         scheduledTime: finalTime,
         officeLocation: finalLocation,

@@ -684,6 +684,10 @@ exports.updateAppointmentStatus = async (req, res) => {
            notes = COALESCE($2, notes),
            updated_at = NOW()
        WHERE id::text = $3
+          OR id::text = $4
+          OR reference_no = $3
+          OR reference_no = $4
+          OR REPLACE(reference_no, '-', '') = $5
           OR (
             (reference_no = $3 OR reference_no = $4 OR REPLACE(reference_no, '-', '') = $5)
             AND ($6 = '' OR module ILIKE $6)
