@@ -675,8 +675,9 @@ export default function Appointments() {
             if (aicsClone.applications && Array.isArray(aicsClone.applications)) {
               aicsClone.applications.forEach((app: any) => {
                 const s = String(app.status || '').toLowerCase()
-                // Strict Connection: Hanggat hindi pa na-screen / approved for scheduling sa /aics, bawal lumabas sa /appointments
-                const isApprovedOrEligible = ['waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred'].includes(s)
+                const hasSched = Boolean((app.details as any)?.appointmentDate)
+                // Strict Connection: Hanggat hindi pa na-screen / approved for scheduling sa /aics nang walang schedule, bawal lumabas sa /appointments
+                const isApprovedOrEligible = ['waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred'].includes(s) || hasSched
                 if (!isApprovedOrEligible) {
                   if (app.reference_no) unapprovedAicsRefs.add(String(app.reference_no).trim().toLowerCase())
                   if (app.id) unapprovedAicsRefs.add(String(app.id).trim().toLowerCase())
@@ -768,7 +769,9 @@ export default function Appointments() {
                     return false
                   }
                   if (mod === 'AICS' && (unapprovedAicsRefs.has(ref) || unapprovedAicsRefs.has(rawId))) {
-                    return false
+                    if (!a.scheduled_date) {
+                      return false
+                    }
                   }
                   // Strict Guard: PWD/Senior records must be approved first in Pic 1 (/pwd-senior)
                   if ((mod === 'PWD' || mod.includes('SENIOR')) && (unapprovedPwdRefs.has(ref) || unapprovedPwdRefs.has(rawId))) {
@@ -839,8 +842,9 @@ export default function Appointments() {
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
                 const rawAppStatus = String(app.status || '').toLowerCase()
-                const isAicsEligible = ['waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred'].includes(rawAppStatus)
-                // Strict Connection: Hanggat pending/submit_pending pa sa /aics, bawal lumabas sa /appointments!
+                const hasSched = Boolean((app.details as any)?.appointmentDate)
+                const isAicsEligible = ['waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred'].includes(rawAppStatus) || hasSched
+                // Strict Connection: Hanggat pending/submit_pending pa sa /aics nang walang schedule, bawal lumabas sa /appointments!
                 if (!isAicsEligible) return
 
                 const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
@@ -856,7 +860,7 @@ export default function Appointments() {
                 })
                 if (existsInDb) return
 
-                const isAicsPending = ['waiting_approval', 'for_scheduling'].includes(rawAppStatus)
+                const isAicsPending = ['waiting_approval', 'for_scheduling'].includes(rawAppStatus) && !hasSched
                 const cached = (isAicsPending && !localScheduledMap[apptId]?.savedInSession)
                   ? undefined
                   : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${cleanType}`] || localScheduledMap[`AICS_${ref}`] || undefined)

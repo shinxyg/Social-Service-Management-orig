@@ -95,21 +95,28 @@ async function syncAndCleanAppointments() {
         AND (notes IS NULL OR (notes NOT LIKE '%Admin interview completed%' AND notes NOT LIKE '%Approved via appointment%' AND notes NOT LIKE '%Official Decision%'))
     `).catch(() => {});
 
-    // 1. Clean up rejected/denied or still-unscreened (pending/submit_pending) AICS appointments
-    // Strict Workflow: An AICS application MUST be screened and approved for scheduling in /aics before entering appointments!
+    // 1. Clean up rejected/denied AICS appointments (NEVER delete scheduled or pending applications that have active appointments)
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND (
         reference_no IN (
           SELECT reference_no FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+          WHERE status IN ('rejected', 'denied', 'disapproved')
         )
         OR reference_no IN (
           SELECT qc_id FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+          WHERE status IN ('rejected', 'denied', 'disapproved')
             AND qc_id IS NOT NULL AND qc_id <> ''
         )
       )
+    `).catch(() => {});
+
+    // Ensure AICS applications with existing appointment dates are marked as scheduled
+    await db.query(`
+      UPDATE aics_applications
+      SET status = 'scheduled', updated_at = NOW()
+      WHERE (details->>'appointmentDate' IS NOT NULL AND details->>'appointmentDate' <> '')
+        AND status IN ('pending', 'submit_pending', 'waiting_approval')
     `).catch(() => {});
 
     // 2. Clean up rejected applications for other modules
@@ -185,11 +192,12 @@ async function syncAndCleanAppointments() {
         AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
     `).catch(() => {});
 
-    // Import active AICS applications ONLY after being screened/approved for scheduling in /aics
+    // Import active AICS applications ONLY after being screened/approved for scheduling in /aics OR if already scheduled
     const activeAics = await db.query(
       `SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
        FROM aics_applications
-       WHERE status IN ('waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred')`
+       WHERE status IN ('waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred')
+          OR (details->>'appointmentDate' IS NOT NULL AND details->>'appointmentDate' <> '')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeAics.rows) {
@@ -201,12 +209,12 @@ async function syncAndCleanAppointments() {
       const isApproved = ['approved', 'completed', 'for_release', 'released'].includes(row.status);
       const isReferred = ['for_referral', 'referred'].includes(row.status);
       const isSched = ['scheduled', 'under_review'].includes(row.status);
-      const initStatus = isApproved ? 'approved' : isReferred ? 'referred' : isSched ? 'scheduled' : 'pending';
 
       const details = (typeof row.details === 'object' && row.details !== null) ? row.details : {};
       const schedDate = details.appointmentDate || null;
       const schedTime = details.appointmentTime || null;
       const venue = details.appointmentVenue || 'Quezon City Hall';
+      const initStatus = isApproved ? 'approved' : isReferred ? 'referred' : (isSched || schedDate) ? 'scheduled' : 'pending';
 
       const checkExists = await db.query(
         `SELECT id, status, scheduled_date FROM appointments WHERE reference_no = $1 AND module = 'AICS' AND concern = $2`,
@@ -342,15 +350,54 @@ exports.getAppointments = async (req, res) => {
       WHERE module = 'AICS' AND (
         reference_no IN (
           SELECT reference_no FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+          WHERE status IN ('rejected', 'denied', 'disapproved')
         )
         OR reference_no IN (
           SELECT qc_id FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+          WHERE status IN ('rejected', 'denied', 'disapproved')
             AND qc_id IS NOT NULL AND qc_id <> ''
         )
       )
     `).catch(() => {});
+
+    // Ensure any active AICS application with a scheduled date is present in appointments table
+    try {
+      const activeSchedAics = await db.query(`
+        SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
+        FROM aics_applications
+        WHERE (details->>'appointmentDate' IS NOT NULL AND details->>'appointmentDate' <> '')
+           OR status IN ('waiting_approval', 'for_scheduling', 'scheduled', 'under_review')
+      `);
+      for (const row of activeSchedAics.rows) {
+        const rNo = String(row.reference_no || row.qc_id || '').trim();
+        if (!rNo) continue;
+        const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
+        const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
+        const details = (typeof row.details === 'object' && row.details !== null) ? row.details : {};
+        const sDate = details.appointmentDate || null;
+        const sTime = details.appointmentTime || null;
+        const sVenue = details.appointmentVenue || 'Quezon City Hall';
+        const fName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+
+        const ex = await db.query(
+          `SELECT id, scheduled_date FROM appointments WHERE reference_no = $1 AND module = 'AICS' AND concern = $2`,
+          [rNo, cleanType]
+        );
+        if (ex.rows.length === 0) {
+          await db.query(
+            `INSERT INTO appointments
+              (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes, created_at, updated_at)
+             VALUES ($1, 'AICS', $2, $3, $4, $5, $6, $7, 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.', COALESCE($8, NOW()), NOW())`,
+            [rNo, fName, cleanType, sDate ? 'scheduled' : 'pending', sDate, sTime, sVenue, row.created_at || null]
+          );
+        } else if (sDate && !ex.rows[0].scheduled_date) {
+          await db.query(
+            `UPDATE appointments SET status = 'scheduled', scheduled_date = $1, scheduled_time = $2, office_location = $3, updated_at = NOW() WHERE id = $4`,
+            [sDate, sTime, sVenue, ex.rows[0].id]
+          );
+        }
+      }
+    } catch (_) {}
 
     // Un-tombstone any active appointments that exist in appointments table
     await db.query(`
