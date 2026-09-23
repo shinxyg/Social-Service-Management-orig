@@ -831,11 +831,12 @@ export default function Appointments() {
                 })
                 .map((a: any) => {
                   const apptId = `db-appt-${a.id}`
+                  const rawId = String(a.id || '').trim()
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || "").trim()
                   const rawStatus = String(a.status || '').toLowerCase()
                   const isExplicitPending = rawStatus === 'pending' || !a.scheduled_date
                   const isAicsPending = (a.module === 'AICS' || String(a.concern || '').toLowerCase().includes('medical') || String(a.concern || '').toLowerCase().includes('gamot')) &&
-                    (pendingAicsRefs.has(ref.toLowerCase()) || pendingAicsRefs.has(rawId.toLowerCase()) || (rawStatus === 'pending' && !a.scheduled_date))
+                    (pendingAicsRefs.has(ref.toLowerCase()) || (rawId && pendingAicsRefs.has(rawId.toLowerCase())) || (rawStatus === 'pending' && !a.scheduled_date))
                   const hasExplicitLocalSched = Boolean(localScheduledMap[apptId]?.savedInSession && localScheduledMap[apptId]?.scheduledDate)
                   const cached = (hasExplicitLocalSched && !isAicsPending) ? localScheduledMap[apptId] : (isAicsPending ? undefined : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${a.concern}`] || localScheduledMap[`${a.module}_${ref}`] || undefined))
 
