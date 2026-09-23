@@ -1145,7 +1145,9 @@ export default function PWDSocialAssistanceWizard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          recipientEmail: applicantEmail,
           to: applicantEmail,
+          recipientName: appApplicantName,
           applicantName: appApplicantName,
           referenceNumber: refNo,
           submissionDate: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
