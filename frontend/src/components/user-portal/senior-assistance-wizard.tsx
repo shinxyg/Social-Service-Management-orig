@@ -1962,129 +1962,158 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
                 </p>
               </div>
 
-              {/* Personal Info */}
-              <ReviewSection title="Personal Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  <ReviewField label="QCitizen ID Number" value={formData.qcidNumber} />
-                  <ReviewField label="Senior Citizen / OSCA ID" value={formData.seniorIdNumber} />
-                  <ReviewField
-                    label="Buong Pangalan"
-                    value={`${formData.firstName} ${formData.middleName} ${formData.lastName} ${formData.suffix}`.trim()}
-                  />
-                  <ReviewField
-                    label="Petsa ng Kapanganakan"
-                    value={`${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`}
-                  />
-                  <ReviewField label="Edad at Kasarian" value={`${formData.age} taong gulang, ${formData.sex}`} />
-                  <ReviewField label="Katayuang Sibil" value={formData.civilStatus} />
-                  <ReviewField label="Barangay" value={formData.barangay} />
-                  <ReviewField label="Contact Number" value={formData.contactNumber} />
-                  <div className="sm:col-span-4">
-                    <ReviewField
-                      label="Kumpletong Address"
-                      value={`${formData.addressHouseNo ? `${formData.addressHouseNo} ` : ""}${formData.addressStreet}, Brgy. ${formData.barangay}, Quezon City`}
-                    />
+              {/* Unified Step 2: Personal, Family & Socio-Economic Information */}
+              <ReviewSection
+                title="Personal & Socio-Economic Information"
+                onEdit={() => {
+                  setReturnToReview(true)
+                  setStep(2)
+                }}
+              >
+                <div className="space-y-6">
+                  {/* 1. Personal Information */}
+                  <div>
+                    <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3">
+                      1. Personal Information
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                      <ReviewField label="QCitizen ID Number" value={formData.qcidNumber} />
+                      <ReviewField label="Senior Citizen / OSCA ID" value={formData.seniorIdNumber} />
+                      <ReviewField
+                        label="Buong Pangalan"
+                        value={`${formData.firstName} ${formData.middleName} ${formData.lastName} ${formData.suffix}`.trim()}
+                      />
+                      <ReviewField
+                        label="Petsa ng Kapanganakan"
+                        value={`${formData.dobMonth}/${formData.dobDay}/${formData.dobYear}`}
+                      />
+                      <ReviewField label="Edad at Kasarian" value={`${formData.age} taong gulang, ${formData.sex}`} />
+                      <ReviewField label="Katayuang Sibil" value={formData.civilStatus} />
+                      <ReviewField label="Barangay" value={formData.barangay} />
+                      <ReviewField label="Contact Number" value={formData.contactNumber} />
+                      <div className="sm:col-span-4">
+                        <ReviewField
+                          label="Kumpletong Address"
+                          value={`${formData.addressHouseNo ? `${formData.addressHouseNo} ` : ""}${formData.addressStreet}, Brgy. ${formData.barangay}, Quezon City`}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </ReviewSection>
 
-              {/* Occupation & Financial */}
-              <ReviewSection title="Occupation & Financial Information" onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  <ReviewField label="Employment Status" value={formData.employmentStatus} />
-                  <ReviewField label="Current / Previous Occupation" value={formData.currentPreviousOccupation || "N/A"} />
-                  <ReviewField label="Source of Income" value={formData.sourceOfIncome || "N/A"} />
-                  <ReviewField label="Approximate Monthly Income" value={formData.approximateMonthlyIncome} />
-                  <div className="sm:col-span-4">
+                  {/* 2. Occupation & Financial Information */}
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3">
+                      2. Occupation &amp; Financial Information
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                      <ReviewField label="Employment Status" value={formData.employmentStatus} />
+                      <ReviewField label="Current / Previous Occupation" value={formData.currentPreviousOccupation || "N/A"} />
+                      <ReviewField label="Source of Income" value={formData.sourceOfIncome || "N/A"} />
+                      <ReviewField label="Approximate Monthly Income" value={formData.approximateMonthlyIncome} />
+                      <div className="sm:col-span-4">
+                        <ReviewField
+                          label="Pension / Benefits Received"
+                          value={[
+                            formData.pensionSSS ? "SSS" : null,
+                            formData.pensionGSIS ? "GSIS" : null,
+                            formData.pensionOther ? `Other: ${formData.pensionOtherSpecify || "Yes"}` : null,
+                            formData.pensionNone ? "None" : null,
+                          ].filter(Boolean).join(", ") || "None"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Family Composition */}
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3">
+                      3. Family Composition ({formData.familyMembers.length} Kasapi)
+                    </h4>
+                    {formData.familyMembers.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Walang nakatalang kasapi sa bahay.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {formData.familyMembers.map((m, i) => (
+                          <div key={i} className="p-2.5 rounded-lg border border-border bg-slate-50 dark:bg-slate-900/40 text-xs grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div>
+                              <span className="text-gray-500 font-semibold block">Pangalan:</span>
+                              <span className="font-bold text-foreground">{m.name || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-semibold block">Relasyon / Edad:</span>
+                              <span className="text-foreground">{m.relationship} - {m.age || "—"} anyos</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-semibold block">Trabaho:</span>
+                              <span className="text-foreground">{m.occupation || "N/A"}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 font-semibold block">Kita / Notes:</span>
+                              <span className="text-foreground">{m.income || m.otherInfo || "N/A"}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. Monthly Household Expenses */}
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3">
+                      4. Monthly Household Expenses
+                    </h4>
+                    <ReviewField label="Total Monthly Expenses" value={formData.totalMonthlyExpenses ? `₱ ${formData.totalMonthlyExpenses}` : "—"} />
+                  </div>
+
+                  {/* 5. Living Situation & Financial Support */}
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3">
+                      5. Living Situation &amp; Financial Support
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <ReviewField
+                        label="Living Arrangement"
+                        value={[
+                          ...formData.livingArrangements,
+                          formData.livingArrangements.includes("Other") && formData.livingArrangementOther ? `Other: ${formData.livingArrangementOther}` : null,
+                        ].filter(Boolean).join(", ") || "—"}
+                      />
+                      <ReviewField
+                        label="Source of Financial Support"
+                        value={[
+                          ...formData.financialSources,
+                          formData.financialSources.includes("Other") && formData.financialSourceOther ? `Other: ${formData.financialSourceOther}` : null,
+                        ].filter(Boolean).join(", ") || "—"}
+                      />
+                      <ReviewField
+                        label="Reason for Requesting Assistance"
+                        value={[
+                          ...formData.reasonsForAssistance,
+                          formData.reasonsForAssistance.includes("Other") && formData.reasonForAssistanceOther ? `Other: ${formData.reasonForAssistanceOther}` : null,
+                        ].filter(Boolean).join(", ") || "—"}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 6. Other Assistance / Benefits Received */}
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3">
+                      6. Other Assistance / Benefits Received
+                    </h4>
                     <ReviewField
-                      label="Pension / Benefits Received"
+                      label="Tulong / Benepisyo mula sa Gobyerno o Ibang Tanggapan"
                       value={[
-                        formData.pensionSSS ? "SSS" : null,
-                        formData.pensionGSIS ? "GSIS" : null,
-                        formData.pensionOther ? `Other: ${formData.pensionOtherSpecify || "Yes"}` : null,
-                        formData.pensionNone ? "None" : null,
+                        formData.dswdSocialPension ? "DSWD Social Pension" : null,
+                        formData.sssPensionBenefit ? "SSS Pension" : null,
+                        formData.gsisPensionBenefit ? "GSIS Pension" : null,
+                        formData.otherGovtAssistance ? `Other Govt: ${formData.otherGovtAssistanceSpecify || "Yes"}` : null,
+                        formData.otherFinancialAssistance ? `Other Financial: ${formData.otherFinancialAssistanceSpecify || "Yes"}` : null,
+                        formData.otherAssistanceType === "Other" ? `Other: ${formData.otherAssistanceSpecify || "Yes"}` : null,
+                        formData.otherAssistanceNone ? "None" : null,
                       ].filter(Boolean).join(", ") || "None"}
                     />
                   </div>
                 </div>
-              </ReviewSection>
-
-              {/* Family Composition */}
-              <ReviewSection title={`Family Composition - ${formData.familyMembers.length} Kasapi`} onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                {formData.familyMembers.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Walang nakatalang kasapi sa bahay.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {formData.familyMembers.map((m, i) => (
-                      <div key={i} className="p-2.5 rounded-lg border border-border bg-slate-50 text-xs grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <div>
-                          <span className="text-gray-500 font-semibold block">Pangalan:</span>
-                          <span className="font-bold text-gray-800">{m.name || "—"}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 font-semibold block">Relasyon / Edad:</span>
-                          <span>{m.relationship} - {m.age || "—"} anyos</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 font-semibold block">Trabaho:</span>
-                          <span>{m.occupation || "N/A"}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 font-semibold block">Kita / Notes:</span>
-                          <span>{m.income || m.otherInfo || "N/A"}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ReviewSection>
-
-              {/* Monthly Expenses */}
-              <ReviewSection title="Monthly Household Expenses" onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                <ReviewField label="Total Monthly Expenses" value={formData.totalMonthlyExpenses ? `₱ ${formData.totalMonthlyExpenses}` : "—"} />
-              </ReviewSection>
-
-              {/* Living Situation */}
-              <ReviewSection title="Living Situation & Financial Support" onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <ReviewField
-                    label="Living Arrangement"
-                    value={[
-                      ...formData.livingArrangements,
-                      formData.livingArrangements.includes("Other") && formData.livingArrangementOther ? `Other: ${formData.livingArrangementOther}` : null,
-                    ].filter(Boolean).join(", ") || "—"}
-                  />
-                  <ReviewField
-                    label="Source of Financial Support"
-                    value={[
-                      ...formData.financialSources,
-                      formData.financialSources.includes("Other") && formData.financialSourceOther ? `Other: ${formData.financialSourceOther}` : null,
-                    ].filter(Boolean).join(", ") || "—"}
-                  />
-                  <ReviewField
-                    label="Reason for Requesting Assistance"
-                    value={[
-                      ...formData.reasonsForAssistance,
-                      formData.reasonsForAssistance.includes("Other") && formData.reasonForAssistanceOther ? `Other: ${formData.reasonForAssistanceOther}` : null,
-                    ].filter(Boolean).join(", ") || "—"}
-                  />
-                </div>
-              </ReviewSection>
-
-              {/* Other Assistance Received */}
-              <ReviewSection title="Other Assistance / Benefits Received" onEdit={() => { setReturnToReview(true); setStep(2) }}>
-                <ReviewField
-                  label="Tulong / Benepisyo mula sa Gobyerno o Ibang Tanggapan"
-                  value={[
-                    formData.dswdSocialPension ? "DSWD Social Pension" : null,
-                    formData.sssPensionBenefit ? "SSS Pension" : null,
-                    formData.gsisPensionBenefit ? "GSIS Pension" : null,
-                    formData.otherGovtAssistance ? `Other Govt: ${formData.otherGovtAssistanceSpecify || "Yes"}` : null,
-                    formData.otherFinancialAssistance ? `Other Financial: ${formData.otherFinancialAssistanceSpecify || "Yes"}` : null,
-                    formData.otherAssistanceType === "Other" ? `Other: ${formData.otherAssistanceSpecify || "Yes"}` : null,
-                    formData.otherAssistanceNone ? "None" : null,
-                  ].filter(Boolean).join(", ") || "None"}
-                />
               </ReviewSection>
 
               {/* Documentary Requirements */}
