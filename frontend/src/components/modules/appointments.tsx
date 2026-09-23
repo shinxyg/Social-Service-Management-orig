@@ -793,9 +793,16 @@ export default function Appointments() {
                   const schedDate = isExplicitPending ? (hasExplicitLocalSched ? cleanDate(cached?.scheduledDate) : null) : cleanDate(a.scheduled_date || cached?.scheduledDate)
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
-                  const cachedDecision = (isExplicitPending && !hasExplicitLocalSched)
+
+                  // CRITICAL: When an appointment has a scheduled date, it must transition:
+                  // scheduled (upcoming) -> under_review (due) -> approved/rejected (only after admin makes decision in interview).
+                  // It must NEVER default to 'approved' just because rawStatus was 'approved' or because parent application was approved!
+                  const isExplicitInterviewDecision = Boolean(cached?.decision && cached?.decision !== 'scheduled') || (Boolean(a.notes?.includes('Decision: approved') || a.notes?.includes('Approved during case assessment')))
+                  const cachedDecision: ("approved" | "referred" | "rejected" | undefined) = (isExplicitPending && !hasExplicitLocalSched)
                     ? undefined
-                    : ((cached?.decision as ("approved" | "referred" | "rejected")) || (['approved', 'completed'].includes(rawStatus) ? 'approved' : rawStatus === 'referred' ? 'referred' : rawStatus === 'rejected' ? 'rejected' : undefined))
+                    : hasDate
+                      ? (isExplicitInterviewDecision ? (cached?.decision || (rawStatus === 'completed' ? 'approved' : undefined)) : undefined)
+                      : ((cached?.decision as ("approved" | "referred" | "rejected")) || (rawStatus === 'completed' ? 'approved' : undefined))
                   
                   let statusVal: AppointmentStatus = 'pending'
                   if (cachedDecision) {
@@ -856,7 +863,10 @@ export default function Appointments() {
                 const schedDate = (isAicsPending && !cached?.savedInSession) ? null : cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
                 const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
                 const hasDate = Boolean(schedDate)
-                const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || (['approved', 'completed'].includes(rawAppStatus) ? 'approved' : ['for_referral', 'referred'].includes(rawAppStatus) ? 'referred' : undefined)
+                const isExplicitInterviewDecision = Boolean(cached?.decision && cached?.decision !== 'scheduled')
+                const cachedDecision = hasDate
+                  ? (isExplicitInterviewDecision ? (cached?.decision as ("approved" | "referred" | "rejected")) : undefined)
+                  : ((cached?.decision as ("approved" | "referred" | "rejected")) || (['for_referral', 'referred'].includes(rawAppStatus) ? 'referred' : undefined))
                 
                 let apptStatus: AppointmentStatus = 'pending'
                 if (cachedDecision) {

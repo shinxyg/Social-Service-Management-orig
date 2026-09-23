@@ -86,6 +86,15 @@ async function syncAndCleanAppointments() {
     const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
 
+    // 0. Reset any scheduled appointments that were erroneously marked 'approved' without an admin interview
+    await db.query(`
+      UPDATE appointments
+      SET status = 'scheduled', updated_at = NOW()
+      WHERE status = 'approved'
+        AND scheduled_date IS NOT NULL AND scheduled_date <> ''
+        AND (notes IS NULL OR (notes NOT LIKE '%Admin interview completed%' AND notes NOT LIKE '%Approved via appointment%' AND notes NOT LIKE '%Official Decision%'))
+    `).catch(() => {});
+
     // 1. Clean up rejected/denied or still-unscreened (pending/submit_pending) AICS appointments
     // Strict Workflow: An AICS application MUST be screened and approved for scheduling in /aics before entering appointments!
     await db.query(`
@@ -213,9 +222,7 @@ async function syncAndCleanAppointments() {
         ).catch(() => {});
       } else {
         const existing = checkExists.rows[0];
-        if (isApproved && existing.status !== 'approved') {
-          await db.query(`UPDATE appointments SET status = 'approved', updated_at = NOW() WHERE id = $1`, [existing.id]).catch(() => {});
-        } else if (schedDate && !existing.scheduled_date) {
+        if (schedDate && !existing.scheduled_date) {
           await db.query(
             `UPDATE appointments SET status = $1, scheduled_date = $2, scheduled_time = $3, office_location = $4, updated_at = NOW() WHERE id = $5`,
             [initStatus, schedDate, schedTime, venue, existing.id]
@@ -260,12 +267,8 @@ async function syncAndCleanAppointments() {
       const mod = isPwd ? 'PWD' : 'Senior Citizen';
       const concern = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
       const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-      const isApproved = ['approved', 'completed', 'for_release', 'released'].includes(row.status);
-      const isSched = ['scheduled', 'under_review'].includes(row.status);
-      const initStatus = isApproved ? 'approved' : isSched ? 'scheduled' : 'pending';
-
       const checkExists = await db.query(
-        `SELECT id, status FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3`,
+        `SELECT id, status, scheduled_date FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3`,
         [refNo, mod, concern]
       ).catch(() => ({ rows: [] }));
 
@@ -273,11 +276,9 @@ async function syncAndCleanAppointments() {
         await db.query(
           `INSERT INTO appointments
             (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, 'Quezon City Hall - PDAO Room 102', 'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.', COALESCE($6, NOW()), NOW())`,
-          [refNo, mod, fullName, concern, initStatus, row.submitted_at || row.created_at || null]
+           VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall - PDAO Room 102', 'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.', COALESCE($5, NOW()), NOW())`,
+          [refNo, mod, fullName, concern, row.submitted_at || row.created_at || null]
         ).catch(() => {});
-      } else if (isApproved && checkExists.rows[0].status !== 'approved') {
-        await db.query(`UPDATE appointments SET status = 'approved', updated_at = NOW() WHERE id = $1`, [checkExists.rows[0].id]).catch(() => {});
       }
     }
 
