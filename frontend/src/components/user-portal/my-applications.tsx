@@ -27,6 +27,7 @@ import {
   Building2,
   Printer,
   XCircle,
+  Coins,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { cachedApiFetch } from "../../utils/cachedApiFetch"
