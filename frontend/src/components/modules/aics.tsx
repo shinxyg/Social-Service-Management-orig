@@ -843,13 +843,18 @@ export default function AICS() {
                             onError={(e) => {
                               const lbl = (doc.document_label || '').toLowerCase();
                               let fb = '/samples/sample_valid_id.png';
-                              if (lbl.includes('indigen')) fb = '/samples/BARANGAY CERTIFICATE OF INDIGENCY.jpg';
+                              if (lbl.includes('authoriz') || lbl.includes('letter')) fb = '/samples/AUTHORIZATION  PERSONAL LETTER.jpg';
+                              else if (lbl.includes('indigen')) fb = '/samples/BARANGAY CERTIFICATE OF INDIGENCY.jpg';
                               else if (lbl.includes('barangay')) fb = '/samples/BARANGAY CERTIFICATE.webp';
-                              else if (lbl.includes('medical')) fb = '/samples/MEDICAL CERTIFICATE.jpg';
+                              else if (lbl.includes('medical') || lbl.includes('abstract') || lbl.includes('clinical')) fb = '/samples/MEDICAL CERTIFICATE.jpg';
+                              else if (lbl.includes('bill') || lbl.includes('soa') || lbl.includes('hospital')) fb = '/samples/PROOF OF CIRCUMSTANCE (ANY ONE).webp';
+                              else if (lbl.includes('reseta') || lbl.includes('gamot') || lbl.includes('prescription')) fb = '/samples/RESETA NG GAMOT.jpg';
                               else if (lbl.includes('death')) fb = '/samples/sample_death_certificate.png';
-                              else if (lbl.includes('burial')) fb = '/samples/sample_burial_contract.png';
-                              else if (lbl.includes('birth') || lbl.includes('psa')) fb = '/samples/BIRTH CERTIFICATE OF MINOR.jpg';
-                              else if (lbl.includes('reseta')) fb = '/samples/RESETA NG GAMOT.jpg';
+                              else if (lbl.includes('burial') || lbl.includes('funeral')) fb = '/samples/sample_burial_contract.png';
+                              else if (lbl.includes('birth') || lbl.includes('psa') || lbl.includes('minor')) fb = '/samples/BIRTH CERTIFICATE OF MINOR.jpg';
+                              else if (lbl.includes('enroll') || lbl.includes('school')) fb = '/samples/CERTIFICATE OF ENROLLMENT.png';
+                              else if (lbl.includes('disab') || lbl.includes('pwd')) fb = '/samples/CERTIFICATE OF DISABILITY.jpg';
+                              else if (lbl.includes('qc id') || lbl.includes('pasyente')) fb = '/samples/QC ID NG PASYENTE.jpg';
                               (e.currentTarget as HTMLImageElement).src = fb;
                             }}
                           />
@@ -1160,13 +1165,18 @@ export default function AICS() {
                     onError={(e) => {
                       const lbl = (viewingDoc.document_label || '').toLowerCase();
                       let fb = '/samples/sample_valid_id.png';
-                      if (lbl.includes('indigen')) fb = '/samples/BARANGAY CERTIFICATE OF INDIGENCY.jpg';
+                      if (lbl.includes('authoriz') || lbl.includes('letter')) fb = '/samples/AUTHORIZATION  PERSONAL LETTER.jpg';
+                      else if (lbl.includes('indigen')) fb = '/samples/BARANGAY CERTIFICATE OF INDIGENCY.jpg';
                       else if (lbl.includes('barangay')) fb = '/samples/BARANGAY CERTIFICATE.webp';
-                      else if (lbl.includes('medical')) fb = '/samples/MEDICAL CERTIFICATE.jpg';
+                      else if (lbl.includes('medical') || lbl.includes('abstract') || lbl.includes('clinical')) fb = '/samples/MEDICAL CERTIFICATE.jpg';
+                      else if (lbl.includes('bill') || lbl.includes('soa') || lbl.includes('hospital')) fb = '/samples/PROOF OF CIRCUMSTANCE (ANY ONE).webp';
+                      else if (lbl.includes('reseta') || lbl.includes('gamot') || lbl.includes('prescription')) fb = '/samples/RESETA NG GAMOT.jpg';
                       else if (lbl.includes('death')) fb = '/samples/sample_death_certificate.png';
-                      else if (lbl.includes('burial')) fb = '/samples/sample_burial_contract.png';
-                      else if (lbl.includes('birth') || lbl.includes('psa')) fb = '/samples/BIRTH CERTIFICATE OF MINOR.jpg';
-                      else if (lbl.includes('reseta')) fb = '/samples/RESETA NG GAMOT.jpg';
+                      else if (lbl.includes('burial') || lbl.includes('funeral')) fb = '/samples/sample_burial_contract.png';
+                      else if (lbl.includes('birth') || lbl.includes('psa') || lbl.includes('minor')) fb = '/samples/BIRTH CERTIFICATE OF MINOR.jpg';
+                      else if (lbl.includes('enroll') || lbl.includes('school')) fb = '/samples/CERTIFICATE OF ENROLLMENT.png';
+                      else if (lbl.includes('disab') || lbl.includes('pwd')) fb = '/samples/CERTIFICATE OF DISABILITY.jpg';
+                      else if (lbl.includes('qc id') || lbl.includes('pasyente')) fb = '/samples/QC ID NG PASYENTE.jpg';
                       (e.currentTarget as HTMLImageElement).src = fb;
                     }}
                   />
