@@ -443,48 +443,19 @@ exports.updateApplicationStatus = async (req, res) => {
         );
       }
     } else if (status === 'approved') {
-      await db.query(
-        `UPDATE appointments
-         SET status = 'approved', updated_at = NOW()
-         WHERE (reference_no = $1
-            OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
-            OR applicant_name ILIKE $3)
-           AND module = 'AICS'`,
-        [app.reference_no, cleanNoDash, fullName]
-      ).catch(() => {});
-
-      const FIXED_AMOUNTS = {
-        'Medical Assistance': 5000,
-        'Funeral Assistance': 10000,
-        'Educational Assistance': 3000,
-        'Burial Assistance': 10000,
-        'Food Assistance': 1500,
-        'Transportation Assistance': 1000,
-        'PWD Social Assistance': 2000,
-        'Senior Social Assistance': 2000,
-      };
-      const fixedAmount = FIXED_AMOUNTS[cleanType] || FIXED_AMOUNTS[app.assistance_type] || 5000;
-      const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-      const disbCheck = await db.query(
-        'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1 AND assistance_type = $2',
-        [app.reference_no, cleanType]
+      // Approving the Medical Application case in /aics validates document eligibility.
+      // The Appointment in /appointments remains 'pending' (or 'scheduled' if date is set) so the Social Worker can set schedule and conduct the assessment interview.
+      const apptCheck = await db.query(
+        'SELECT id, status, scheduled_date FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3',
+        [app.reference_no, 'AICS', cleanType]
       );
-      if (disbCheck.rows.length === 0) {
+      if (apptCheck.rows.length === 0) {
         await db.query(
-          `INSERT INTO financial_aid_disbursements
-            (disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-             date_approved, status, venue, remarks)
-           VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'Quezon City Hall', 'Awtomatikong pumasok sa Financial Aid Disbursement mula sa na-aprubahang aplikasyon.')
-           ON CONFLICT (disbursement_id) DO NOTHING`,
-          [
-            disbId,
-            app.reference_no,
-            fullName.toUpperCase(),
-            cleanType,
-            fixedAmount,
-            new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-          ]
+          `INSERT INTO appointments
+            (reference_no, module, applicant_name, concern, status, office_location, notes)
+           VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Na-aprubahan ang Medical Application requirements. Handa na para sa appointment scheduling.')
+           ON CONFLICT DO NOTHING`,
+          [app.reference_no, fullName.toUpperCase(), cleanType]
         );
       }
     } else if (status === 'rejected') {
