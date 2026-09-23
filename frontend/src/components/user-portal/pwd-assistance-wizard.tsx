@@ -1095,6 +1095,7 @@ export default function PWDSocialAssistanceWizard({
       householdMembers: String(formData.familyMembers?.length || 0),
       numberOfHouseholdMembers: String(formData.familyMembers?.length || 0),
       isLivingAlone: formData.isLivingAlone || formData.familyMembers?.length === 0,
+      livingArrangement: (formData.isLivingAlone || formData.familyMembers?.length === 0) ? "Living Alone" : "Living with Family",
 
       // 5. Estimate Monthly Expenses
       monthlyHouseholdExpenses: formData.monthlyHouseholdExpenses || "",

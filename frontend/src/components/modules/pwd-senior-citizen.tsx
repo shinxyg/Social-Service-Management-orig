@@ -1984,7 +1984,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
               />
               <Field label="Age / Sex" value={`${app.age || "—"} / ${app.sex || (app as any).gender || "—"}`} />
               <Field label="Civil status" value={app.civilStatus || "—"} />
-              <div className={isAssistance ? "col-span-2" : ""}>
+              <div>
                 <Field
                   label="Phone number"
                   value={
@@ -2002,30 +2002,24 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
                   }
                 />
               </div>
-              {!isAssistance && (
-                <div>
-                  <Field
-                    label={
-                      isSeniorBooklet
-                        ? "Registered Email (for Booklet Number)"
-                        : "Registered Email (for Digital ID Delivery)"
-                    }
-                    value={
-                      <span className="inline-flex items-center gap-1.5 text-blue-700 font-medium truncate">
-                        <Mail className="h-3.5 w-3.5 shrink-0 text-blue-600" />
-                        <MaskedText
-                          value={emailAddress}
-                          type="email"
-                          showButtonLabel
-                          auditSubject={displayName(app)}
-                          auditField="Email Address"
-                          auditModule="PWD & Senior Citizen"
-                        />
-                      </span>
-                    }
-                  />
-                </div>
-              )}
+              <div>
+                <Field
+                  label="Registered Email Address"
+                  value={
+                    <span className="inline-flex items-center gap-1.5 text-blue-700 font-medium truncate">
+                      <Mail className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                      <MaskedText
+                        value={emailAddress}
+                        type="email"
+                        showButtonLabel
+                        auditSubject={displayName(app)}
+                        auditField="Email Address"
+                        auditModule="PWD & Senior Citizen"
+                      />
+                    </span>
+                  }
+                />
+              </div>
               <div className="col-span-2">
                 <Field
                   label="Registered residential address"
