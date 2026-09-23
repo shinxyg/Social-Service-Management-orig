@@ -103,6 +103,16 @@ async function syncAndCleanAppointments() {
       )
     `).catch(() => {});
 
+    // 2b. Clean up PWD/Senior appointments that are still 'pending' in pwd_senior_applications (NOT YET APPROVED in Pic 1 /pwd-senior)
+    await db.query(`
+      DELETE FROM appointments
+      WHERE module IN ('PWD', 'Senior Citizen')
+        AND reference_no IN (
+          SELECT reference_number FROM pwd_senior_applications
+          WHERE status = 'pending'
+        )
+    `).catch(() => {});
+
     // 3. Clean up orphaned appointments whose parent applications were deleted from the DB
     await db.query(`
       DELETE FROM appointments
@@ -227,15 +237,15 @@ async function syncAndCleanAppointments() {
       ).catch(() => {});
     }
 
-    // Import active PWD and Senior assistance applications
-    const activePwdSenior = await db.query(
+    // Import ONLY approved PWD and Senior assistance applications (Must be approved in Pic 1 /pwd-senior first!)
+    const approvedPwdSenior = await db.query(
       `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, status, submitted_at, created_at
        FROM pwd_senior_applications
-       WHERE status NOT IN ('rejected', 'denied', 'disapproved')
+       WHERE status IN ('approved', 'completed', 'for_release', 'released')
          AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')`
     ).catch(() => ({ rows: [] }));
 
-    for (const row of activePwdSenior.rows) {
+    for (const row of approvedPwdSenior.rows) {
       const refNo = String(row.reference_number || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
       const isPwd = String(row.category || '').toUpperCase().includes('PWD');

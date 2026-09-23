@@ -679,6 +679,25 @@ export default function Appointments() {
           } catch {}
         }
 
+        let unapprovedPwdRefs = new Set<string>()
+        if (resPwdSettled.status === "fulfilled" && resPwdSettled.value.ok) {
+          try {
+            const pwdClone = await resPwdSettled.value.clone().json()
+            if (Array.isArray(pwdClone)) {
+              pwdClone.forEach((app: any) => {
+                const s = String(app.status || '').toLowerCase()
+                // Strict Connection: Hanggat hindi pa approved sa /pwd-senior, bawal lumabas sa /appointments
+                if (s !== 'approved' && s !== 'completed' && s !== 'for_release' && s !== 'released') {
+                  const r = String(app.referenceNumber || app.reference_number || '').trim().toLowerCase()
+                  const id = String(app.id || '').trim().toLowerCase()
+                  if (r) unapprovedPwdRefs.add(r)
+                  if (id) unapprovedPwdRefs.add(id)
+                }
+              })
+            }
+          } catch {}
+        }
+
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
           try {
             const dataDb = await resDbSettled.value.json()
@@ -698,6 +717,10 @@ export default function Appointments() {
                     return false
                   }
                   if (mod === 'AICS' && (unacceptedAicsRefs.has(ref) || unacceptedAicsRefs.has(rawId))) {
+                    return false
+                  }
+                  // Strict Guard: PWD/Senior records must be approved first in Pic 1 (/pwd-senior)
+                  if ((mod === 'PWD' || mod.includes('SENIOR')) && (unapprovedPwdRefs.has(ref) || unapprovedPwdRefs.has(rawId))) {
                     return false
                   }
                   if (concern.includes('id card') || concern.includes('issuance') || concern.includes('replacement') || concern.includes('renewal')) {

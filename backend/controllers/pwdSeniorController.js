@@ -537,29 +537,6 @@ exports.createApplication = async (req, res) => {
           newApp.submittedAt || new Date().toISOString(),
         ]
       );
-
-      // Directly insert PWD/Senior Social Assistance appointment
-      try {
-        const isPwdApp = String(newApp.category || '').toUpperCase().includes('PWD');
-        const isAssist = String(newApp.type || '').toLowerCase().includes('assist') ||
-                         String(newApp.category || '').toLowerCase().includes('assist') ||
-                         String(newApp.applyingFor || '').toLowerCase().includes('assist') ||
-                         JSON.stringify(body).toLowerCase().includes('assist');
-        if (isAssist) {
-          const pwdMod = isPwdApp ? 'PWD' : 'Senior Citizen';
-          const pwdConcern = isPwdApp ? 'PWD Social Assistance' : 'Senior Social Assistance';
-          const pwdFullName = [newApp.firstName, newApp.middleName, newApp.lastName, newApp.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-          await db.query(
-            `INSERT INTO appointments
-              (reference_no, module, applicant_name, concern, status, office_location, notes)
-             VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall - PDAO Room 102', 'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.')
-             ON CONFLICT DO NOTHING`,
-            [newApp.referenceNumber, pwdMod, pwdFullName, pwdConcern]
-          );
-        }
-      } catch (pwdApptErr) {
-        console.warn('Could not insert appointment for PWD:', pwdApptErr.message);
-      }
     } catch (dbErr) {
       console.warn('[DB Error] Could not insert to DB, saving to memory fallback:', dbErr.message);
       memoryApplications = [
