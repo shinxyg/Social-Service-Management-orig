@@ -402,40 +402,8 @@ function AppointmentCard({
               </button>
             )}
 
-            {/* 2. PWD Direct Interview Assessment (Scheduled or Due) */}
-            {isPwdAppt && (effectiveStatus === "scheduled" || effectiveStatus === "under_review") && (
-              <div className="flex flex-wrap items-center gap-1.5 justify-end">
-                <button
-                  type="button"
-                  onClick={() => onApprove?.(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
-                  title="Approve PWD Application, issue official PWD ID and activate ₱500/month pension"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>Approve & Start ₱500/mo Pension</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSchedule(appt)}
-                  className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 text-xs font-medium cursor-pointer"
-                  title="Reschedule Interview"
-                >
-                  <span>Resched</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onReject?.(appt)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
-                  title="Reject PWD Application"
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  <span>Reject</span>
-                </button>
-              </div>
-            )}
-
-            {/* Non-PWD Scheduled Stage */}
-            {!isPwdAppt && effectiveStatus === "scheduled" && (
+            {/* 2. Scheduled Stage (Upcoming Interview - Waiting for exact appointment time) */}
+            {effectiveStatus === "scheduled" && (
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold">
                   <Calendar className="h-3.5 w-3.5" />
@@ -453,36 +421,75 @@ function AppointmentCard({
               </div>
             )}
 
-            {/* Non-PWD Under Review Stage */}
-            {!isPwdAppt && effectiveStatus === "under_review" && (
-              <div className="flex flex-wrap items-center gap-1.5 justify-end">
-                <button
-                  type="button"
-                  onClick={() => onApprove?.(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
-                  title="Approve QC Assistance & generate Guarantee Letter"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>✓ Approve Aid</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onRefer?.(appt)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
-                  title="Endorse to partner agency (PCSO / DSWD / DOH)"
-                >
-                  <Building2 className="h-3.5 w-3.5" />
-                  <span>🏛️ Refer</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onReject?.(appt)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  <span>Reject</span>
-                </button>
-              </div>
+            {/* 3. Under Review Stage (Due for Assessment / Interview - Approve and Reject actions unlocked) */}
+            {effectiveStatus === "under_review" && (
+              isPwdAppt ? (
+                <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => onApprove?.(appt)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
+                    title="Approve PWD Application, issue official PWD ID and activate ₱500/month pension"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Approve & Start ₱500/mo Pension</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSchedule(appt)}
+                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 text-xs font-medium cursor-pointer"
+                    title="Reschedule Interview"
+                  >
+                    <span>Resched</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onReject?.(appt)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+                    title="Reject PWD Application"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    <span>Reject</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => onApprove?.(appt)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
+                    title="Approve QC Assistance & generate Guarantee Letter"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>✓ Approve Aid</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRefer?.(appt)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-2xs"
+                    title="Endorse to partner agency (PCSO / DSWD / DOH)"
+                  >
+                    <Building2 className="h-3.5 w-3.5" />
+                    <span>🏛️ Refer</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSchedule(appt)}
+                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 text-xs font-medium cursor-pointer"
+                    title="Reschedule Appointment"
+                  >
+                    <span>Resched</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onReject?.(appt)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    <span>Reject</span>
+                  </button>
+                </div>
+              )
             )}
 
             {/* 4. Approved / Completed Stage (Admin clicked Approve) */}
