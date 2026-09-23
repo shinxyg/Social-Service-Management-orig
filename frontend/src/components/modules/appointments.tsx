@@ -702,8 +702,50 @@ export default function Appointments() {
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
           try {
             const dataDb = await resDbSettled.value.json()
+
+            // Un-dismiss any appointments that are currently alive in the database
+            if (dataDb.appointments && Array.isArray(dataDb.appointments)) {
+              dataDb.appointments.forEach((a: any) => {
+                const r = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || '').trim().toLowerCase()
+                const id = String(a.id || '').trim().toLowerCase()
+                if (r) dismissedSet.delete(r)
+                if (id) {
+                  dismissedSet.delete(id)
+                  dismissedSet.delete(`db-appt-${id}`)
+                }
+              })
+
+              try {
+                const dismissedRaw = localStorage.getItem("dismissed_appointments")
+                if (dismissedRaw) {
+                  let parsed = JSON.parse(dismissedRaw)
+                  if (Array.isArray(parsed)) {
+                    parsed = parsed.filter((item: string) => {
+                      const cleanItem = String(item).trim().toLowerCase()
+                      return !dataDb.appointments.some((a: any) => {
+                        const ar = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || '').trim().toLowerCase()
+                        const aid = String(a.id || '').trim().toLowerCase()
+                        return cleanItem === ar || cleanItem === aid || cleanItem === `db-appt-${aid}`
+                      })
+                    })
+                    localStorage.setItem("dismissed_appointments", JSON.stringify(parsed))
+                  }
+                }
+              } catch {}
+            }
+
             if (Array.isArray(dataDb.deletedReferences)) {
-              dataDb.deletedReferences.forEach((r: string) => dismissedSet.add(String(r).trim().toLowerCase()))
+              dataDb.deletedReferences.forEach((r: string) => {
+                const cleanR = String(r).trim().toLowerCase()
+                const isCurrentlyActive = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((a: any) => {
+                  const ar = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || '').trim().toLowerCase()
+                  const aid = String(a.id || '').trim().toLowerCase()
+                  return cleanR === ar || cleanR === aid
+                })
+                if (!isCurrentlyActive) {
+                  dismissedSet.add(cleanR)
+                }
+              })
             }
             if (dataDb.appointments && Array.isArray(dataDb.appointments)) {
               const mapped = dataDb.appointments

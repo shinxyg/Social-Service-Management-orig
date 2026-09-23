@@ -336,17 +336,19 @@ exports.getAppointments = async (req, res) => {
       )
     `).catch(() => {});
 
+    // Un-tombstone any active appointments that exist in appointments table
+    await db.query(`
+      DELETE FROM deleted_appointments
+      WHERE reference_no IN (SELECT reference_no FROM appointments)
+    `).catch(() => {});
+
     const [deletedRes, result] = await Promise.all([
-      db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] })),
-      db.query(
-        `SELECT a.* FROM appointments a
-         WHERE a.reference_no NOT IN (SELECT reference_no FROM deleted_appointments)
-         ORDER BY a.created_at DESC`
-      ).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 200')),
+      db.query('SELECT reference_no FROM deleted_appointments WHERE reference_no NOT IN (SELECT reference_no FROM appointments)').catch(() => ({ rows: [] })),
+      db.query(`SELECT * FROM appointments ORDER BY created_at DESC`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 200')),
     ]);
 
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
-    const rows = (result.rows || []).filter(r => !deletedSet.has(String(r.reference_no || '').toLowerCase().trim()));
+    const rows = result.rows || [];
 
     res.json({ appointments: rows, deletedReferences: Array.from(deletedSet) });
   } catch (err) {
@@ -372,6 +374,7 @@ exports.createAppointment = async (req, res) => {
 
     const initialStatus = scheduledDate ? 'scheduled' : 'pending';
 
+    await db.query(`DELETE FROM deleted_appointments WHERE reference_no = $1`, [referenceNo]).catch(() => {});
     await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [referenceNo]).catch(() => {});
 
     const result = await db.query(

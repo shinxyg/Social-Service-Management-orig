@@ -748,6 +748,7 @@ exports.updateApplicationStatus = async (req, res) => {
         const concernName = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
 
         try {
+          await db.query(`DELETE FROM deleted_appointments WHERE reference_no = $1`, [refNo]).catch(() => {});
           const checkAppt = await db.query('SELECT id FROM appointments WHERE reference_no = $1 AND module = $2', [refNo, isPwd ? 'PWD' : 'Senior Citizen']);
           if (checkAppt.rows.length === 0) {
             await db.query(
