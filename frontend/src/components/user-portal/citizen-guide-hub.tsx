@@ -343,24 +343,6 @@ function getAicsServices(lang: Language) {
         path: "/portal/aics?type=material",
         desc: "Direktang pamamahagi ng kagamitang pantulong, emergency hygiene packs, at materyal na ayuda para sa mga nasalanta.",
         requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Pagsusuri ng Social Worker"]
-      },
-      {
-        type: "food",
-        title: "Tulong sa Pagkain (Food Assistance)",
-        icon: Utensils,
-        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
-        path: "/portal/aics?type=food",
-        desc: "Agarang tulong sa pagkain at subsistence vouchers para sa mga pamilyang nahaharap sa biglaang krisis sa kabuhayan.",
-        requirements: ["Barangay Certificate of Indigency", "Valid QCID / Government ID", "Patunay ng Bilang ng Pamilya"]
-      },
-      {
-        type: "transportation",
-        title: "Tulong sa Pamasahe (Transportation)",
-        icon: Bus,
-        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
-        path: "/portal/aics?type=transportation",
-        desc: "Ayuda sa pamasahe para sa mga na-stranded o residenteng kailangang bumalik sa kanilang probinsya sa oras ng emergency.",
-        requirements: ["Barangay Certificate / Police Blotter Report kung stranded", "Valid QCID / Gov ID", "Patunay ng Pangangailangan sa Pagbiyahe"]
       }
     ]
   }
@@ -402,24 +384,6 @@ function getAicsServices(lang: Language) {
         path: "/portal/aics?type=material",
         desc: "Direktang paghatag og gamit, emergency hygiene packs, ug materyal nga hinabang para sa mga biktima sa kalamidad.",
         requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Pagsusi sa Social Worker"]
-      },
-      {
-        type: "food",
-        title: "Tabang sa Pagkaon (Food Assistance)",
-        icon: Utensils,
-        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
-        path: "/portal/aics?type=food",
-        desc: "Dinalian nga ayuda sa pagkaon ug subsistence vouchers para sa mga pamilya nga kalit nawad-an og kita.",
-        requirements: ["Barangay Certificate of Indigency", "Valid QCID / Government ID", "Pamatuod sa Dependents sa Pamilya"]
-      },
-      {
-        type: "transportation",
-        title: "Tabang sa Plete (Transportation)",
-        icon: Bus,
-        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
-        path: "/portal/aics?type=transportation",
-        desc: "Plete para sa mga na-stranded o lungsuranon nga kinahanglang mouli sa ilang probinsya sa panahon sa emerhensya.",
-        requirements: ["Barangay Certificate / Police Blotter Report kung stranded", "Valid QCID / Gov ID", "Pamatuod sa Katuyoan sa Pagbiyahe"]
       }
     ]
   }
@@ -460,24 +424,6 @@ function getAicsServices(lang: Language) {
       path: "/portal/aics?type=material",
       desc: "Direct provisions of assistive supplies, emergency hygiene packs, and material relief for displaced or distressed citizens.",
       requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Social Worker Case Validation"]
-    },
-    {
-      type: "food",
-      title: "Food Assistance",
-      icon: Utensils,
-      iconColor: "text-blue-600 bg-blue-50 border-blue-200",
-      path: "/portal/aics?type=food",
-      desc: "Emergency nutritional food support and subsistence vouchers for families facing sudden economic crisis.",
-      requirements: ["Barangay Certificate of Indigency", "Valid QCID / Government ID", "Proof of Family Dependency"]
-    },
-    {
-      type: "transportation",
-      title: "Transportation Assistance",
-      icon: Bus,
-      iconColor: "text-blue-600 bg-blue-50 border-blue-200",
-      path: "/portal/aics?type=transportation",
-      desc: "Travel allowance for stranded individuals or residents needing emergency transit/repatriation to their home provinces.",
-      requirements: ["Barangay Certificate / Police or Blotter Report if stranded", "Valid QCID / Gov ID", "Proof of Travel Necessity"]
     }
   ]
 }

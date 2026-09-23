@@ -19,8 +19,6 @@ export const FIXED_ASSISTANCE_AMOUNTS: Record<string, number> = {
   "Funeral Assistance": 10000,
   "Educational Assistance": 3000,
   "Burial Assistance": 10000,
-  "Food Assistance": 1500,
-  "Transportation Assistance": 1000,
 }
 
 export function resolveFixedAmount(concern: string): number {

@@ -54,24 +54,6 @@ const AICS_PROGRAMS: AICSProgramCard[] = [
     key: "aicsMaterial",
     reqKey: "aicsMaterial",
   },
-  {
-    id: "food",
-    title: "Food Assistance",
-    titleEn: "Food Assistance",
-    desc: "Ang Food Assistance Program ay nagbibigay ng agarang tulong-pagkain, emergency food packs, at grocery vouchers para sa mga indigent families at indibidwal na apektado ng biglaang krisis, kalamidad, o matinding kakapusan.",
-    descEn: "The Food Assistance Program provides emergency nutritional food packages, relief groceries, and subsistence assistance for indigent families facing severe crisis or hardship.",
-    key: "aicsFood",
-    reqKey: "aicsFood",
-  },
-  {
-    id: "transportation",
-    title: "Transportation Assistance",
-    titleEn: "Transportation Assistance",
-    desc: "Ang Transportation Assistance Program ay nagbibigay ng tulong-pamasahe o pabalik na biyahe (Balik Probinsya) para sa mga residenteng na-stranded, naipit sa krisis, o may agarang pangangailangan sa transportasyon pabalik sa kanilang sariling probinsya.",
-    descEn: "The Transportation Assistance Program provides emergency fare allowances and repatriation transit assistance for stranded citizens returning to their home provinces.",
-    key: "aicsTransportation",
-    reqKey: "aicsTransportation",
-  },
 ]
 
 export default function AICSUser() {

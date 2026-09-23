@@ -6,8 +6,6 @@ const FIXED_ASSISTANCE_AMOUNTS = {
   'Funeral Assistance': 10000,
   'Educational Assistance': 3000,
   'Burial Assistance': 10000,
-  'Food Assistance': 1500,
-  'Transportation Assistance': 1000,
   'PWD Social Assistance': 1500,
   'PWD Pension Assistance': 1500,
   'Senior Social Assistance': 2000,
