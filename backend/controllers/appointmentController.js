@@ -86,12 +86,20 @@ async function syncAndCleanAppointments() {
     const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
 
-    // 1. Clean up ONLY rejected/denied AICS appointments
+    // 1. Clean up rejected/denied or still-unscreened (pending/submit_pending) AICS appointments
+    // Strict Workflow: An AICS application MUST be screened and approved for scheduling in /aics before entering appointments!
     await db.query(`
       DELETE FROM appointments
-      WHERE module = 'AICS' AND reference_no IN (
-        SELECT reference_no FROM aics_applications 
-        WHERE status IN ('rejected', 'denied', 'disapproved')
+      WHERE module = 'AICS' AND (
+        reference_no IN (
+          SELECT reference_no FROM aics_applications 
+          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+        )
+        OR reference_no IN (
+          SELECT qc_id FROM aics_applications 
+          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+            AND qc_id IS NOT NULL AND qc_id <> ''
+        )
       )
     `).catch(() => {});
 
@@ -168,11 +176,11 @@ async function syncAndCleanAppointments() {
         AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
     `).catch(() => {});
 
-    // Import active AICS applications (Medical, Funeral, Food, Educational, etc.)
+    // Import active AICS applications ONLY after being screened/approved for scheduling in /aics
     const activeAics = await db.query(
       `SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
        FROM aics_applications
-       WHERE status NOT IN ('rejected', 'denied', 'disapproved')`
+       WHERE status IN ('waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeAics.rows) {
@@ -330,9 +338,16 @@ exports.getAppointments = async (req, res) => {
 
     await db.query(`
       DELETE FROM appointments
-      WHERE module = 'AICS' AND reference_no IN (
-        SELECT reference_no FROM aics_applications 
-        WHERE status IN ('rejected', 'denied', 'disapproved')
+      WHERE module = 'AICS' AND (
+        reference_no IN (
+          SELECT reference_no FROM aics_applications 
+          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+        )
+        OR reference_no IN (
+          SELECT qc_id FROM aics_applications 
+          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
+            AND qc_id IS NOT NULL AND qc_id <> ''
+        )
       )
     `).catch(() => {});
 
@@ -722,15 +737,14 @@ exports.updateAppointmentStatus = async (req, res) => {
     const resolvedConcern = String(apptRow?.concern || targetConcern || '');
 
     // 2. Only update corresponding module table
-    if (resolvedModule === 'AICS' || resolvedConcern.toLowerCase().includes('medical')) {
+    if (resolvedModule === 'AICS') {
       await db.query(
         `UPDATE aics_applications
          SET status = $1, updated_at = NOW()
-         WHERE id::text = $2
+         WHERE (id::text = $2
             OR reference_no = $2
-            OR qc_id = $2
-            OR REPLACE(reference_no, '-', '') = $3
-            OR REPLACE(qc_id, '-', '') = $3`,
+            OR REPLACE(reference_no, '-', '') = $3)
+           AND status != $1`,
         [newStatus, cleanId, unhyphenated]
       ).catch(() => {});
     } else if (resolvedModule === 'PWD' || resolvedModule.includes('SENIOR') || resolvedConcern.toLowerCase().includes('pwd') || resolvedConcern.toLowerCase().includes('senior')) {

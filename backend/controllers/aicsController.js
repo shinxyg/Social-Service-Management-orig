@@ -251,16 +251,24 @@ async function enrichApplicationWithSuffix(app) {
 
 exports.getApplications = async (req, res) => {
   try {
-    // Proactively sync aics_applications status with appointments table
+    // 1. Reset any erroneously auto-approved AICS applications where status was overwritten without an approved AICS appointment
+    await db.query(`
+      UPDATE aics_applications
+      SET status = 'pending', updated_at = NOW()
+      WHERE status IN ('approved', 'completed')
+        AND reference_no NOT IN (
+          SELECT reference_no FROM appointments WHERE module = 'AICS' AND status IN ('approved', 'completed')
+        )
+    `).catch(() => {});
+
+    // 2. Strictly sync AICS status ONLY with actual AICS appointments by exact reference_no
     await db.query(`
       UPDATE aics_applications a
       SET status = appt.status, updated_at = NOW()
       FROM appointments appt
-      WHERE (appt.reference_no = a.reference_no 
-             OR appt.reference_no = a.qc_id 
-             OR REPLACE(COALESCE(appt.reference_no,''), '-', '') = REPLACE(COALESCE(a.reference_no,''), '-', '')
-             OR REPLACE(COALESCE(appt.reference_no,''), '-', '') = REPLACE(COALESCE(a.qc_id,''), '-', '')
-             OR (appt.applicant_name IS NOT NULL AND LOWER(appt.applicant_name) = LOWER(CONCAT(a.first_name, ' ', a.last_name))))
+      WHERE appt.module = 'AICS'
+        AND (appt.reference_no = a.reference_no 
+             OR REPLACE(COALESCE(appt.reference_no,''), '-', '') = REPLACE(COALESCE(a.reference_no,''), '-', ''))
         AND LOWER(appt.status) IN ('approved', 'completed', 'referred', 'rejected')
         AND LOWER(COALESCE(a.status, '')) != LOWER(appt.status)
     `).catch((syncErr) => {
@@ -439,9 +447,10 @@ exports.updateApplicationStatus = async (req, res) => {
       await db.query(
         `UPDATE appointments
          SET status = 'approved', updated_at = NOW()
-         WHERE reference_no = $1
+         WHERE (reference_no = $1
             OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
-            OR applicant_name ILIKE $3`,
+            OR applicant_name ILIKE $3)
+           AND module = 'AICS'`,
         [app.reference_no, cleanNoDash, fullName]
       ).catch(() => {});
 

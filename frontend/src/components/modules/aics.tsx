@@ -159,52 +159,11 @@ export function getStatusBadgeInfo(status: string) {
 
 export function getEffectiveAppStatus(app?: AicsApplication | null): string {
   if (!app) return 'pending'
-  try {
-    const rawGL = typeof window !== 'undefined' ? localStorage.getItem("printed_gl_applications") : null
-    const glMap = rawGL ? JSON.parse(rawGL) : {}
-    const cleanRef = String(app.reference_no || '').toLowerCase().trim()
-    const cleanQc = String(app.qc_id || '').toLowerCase().trim()
-    const cleanId = String(app.id || '').toLowerCase().trim()
-
-    if (
-      (cleanRef && glMap[cleanRef]) ||
-      (cleanQc && glMap[cleanQc]) ||
-      (cleanId && glMap[cleanId])
-    ) {
-      return 'approved'
-    }
-
-    const rawSched = typeof window !== 'undefined' ? localStorage.getItem("all_appointments_scheduled") : null
-    const schedMap = rawSched ? JSON.parse(rawSched) : {}
-
-    const isAicsMatch = (rec: any) => {
-      if (!rec) return false
-      const mod = String(rec.module || '').toUpperCase()
-      const c = String(rec.concern || '').toLowerCase()
-      if (mod === 'PWD' || c.includes('pwd') || c.includes('disability') || mod === 'SENIOR' || c.includes('senior')) {
-        return false
-      }
-      return true
-    }
-
-    const candidate =
-      (cleanId && schedMap[`aics-appt-${cleanId}`]) ||
-      (cleanRef && schedMap[`aics-appt-${cleanRef}`]) ||
-      (cleanRef && schedMap[`AICS_${cleanRef}`]) ||
-      (cleanRef && schedMap[cleanRef]) ||
-      (cleanQc && schedMap[cleanQc]) ||
-      (cleanId && schedMap[cleanId]) ||
-      (cleanRef && schedMap[`appt_${cleanRef}`]) ||
-      (cleanQc && schedMap[`appt_${cleanQc}`])
-
-    const cached = isAicsMatch(candidate) ? candidate : null
-
-    if (cached?.status === 'approved' || cached?.decision === 'approved') return 'approved'
-    if (cached?.status === 'referred' || cached?.decision === 'referred') return 'referred'
-    if (cached?.status === 'rejected' || cached?.decision === 'rejected') return 'rejected'
-  } catch {}
-
-  return String(app.status || 'pending').toLowerCase()
+  const rawSt = String(app.status || 'pending').toLowerCase()
+  if (rawSt === 'submit_pending' || rawSt === 'pending') {
+    return 'submit_pending'
+  }
+  return rawSt
 }
 
 export default function AICS() {

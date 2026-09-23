@@ -668,17 +668,18 @@ export default function Appointments() {
           return s
         }
 
-        let unacceptedAicsRefs = new Set<string>()
+        let unapprovedAicsRefs = new Set<string>()
         if (resAicsSettled.status === "fulfilled" && resAicsSettled.value.ok) {
           try {
             const aicsClone = await resAicsSettled.value.clone().json()
             if (aicsClone.applications && Array.isArray(aicsClone.applications)) {
               aicsClone.applications.forEach((app: any) => {
                 const s = String(app.status || '').toLowerCase()
-                if (s === 'rejected' || s === 'denied' || s === 'disapproved') {
-                  if (app.reference_no) unacceptedAicsRefs.add(String(app.reference_no).trim().toLowerCase())
-                  if (app.qc_id) unacceptedAicsRefs.add(String(app.qc_id).trim().toLowerCase())
-                  if (app.id) unacceptedAicsRefs.add(String(app.id).trim().toLowerCase())
+                // Strict Connection: Hanggat hindi pa na-screen / approved for scheduling sa /aics, bawal lumabas sa /appointments
+                const isApprovedOrEligible = ['waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred'].includes(s)
+                if (!isApprovedOrEligible) {
+                  if (app.reference_no) unapprovedAicsRefs.add(String(app.reference_no).trim().toLowerCase())
+                  if (app.id) unapprovedAicsRefs.add(String(app.id).trim().toLowerCase())
                 }
               })
             }
@@ -765,7 +766,7 @@ export default function Appointments() {
                   if (dismissedSet.has(ref) || dismissedSet.has(rawId) || dismissedSet.has(`db-appt-${rawId}`)) {
                     return false
                   }
-                  if (mod === 'AICS' && (unacceptedAicsRefs.has(ref) || unacceptedAicsRefs.has(rawId))) {
+                  if (mod === 'AICS' && (unapprovedAicsRefs.has(ref) || unapprovedAicsRefs.has(rawId))) {
                     return false
                   }
                   // Strict Guard: PWD/Senior records must be approved first in Pic 1 (/pwd-senior)
@@ -831,46 +832,57 @@ export default function Appointments() {
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
                 const rawAppStatus = String(app.status || '').toLowerCase()
-                if (rawAppStatus !== 'rejected' && rawAppStatus !== 'denied' && rawAppStatus !== 'disapproved') {
-                  const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
-                  const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
-                  const ref = String(app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
-                  const apptId = `aics-appt-${app.id || ref}`
-                  const isAicsPending = ['pending', 'submit_pending', 'waiting_approval', 'for_scheduling'].includes(rawAppStatus)
-                  const cached = (isAicsPending && !localScheduledMap[apptId]?.savedInSession)
-                    ? undefined
-                    : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${cleanType}`] || localScheduledMap[`AICS_${ref}`] || undefined)
-                  const schedDate = (isAicsPending && !cached?.savedInSession) ? null : cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
-                  const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
-                  const hasDate = Boolean(schedDate)
-                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || (['approved', 'completed'].includes(rawAppStatus) ? 'approved' : ['for_referral', 'referred'].includes(rawAppStatus) ? 'referred' : undefined)
-                  
-                  let apptStatus: AppointmentStatus = 'pending'
-                  if (cachedDecision) {
-                    apptStatus = cachedDecision
-                  } else if (hasDate) {
-                    apptStatus = 'scheduled'
-                  } else {
-                    apptStatus = 'pending'
-                  }
+                const isAicsEligible = ['waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred'].includes(rawAppStatus)
+                // Strict Connection: Hanggat pending/submit_pending pa sa /aics, bawal lumabas sa /appointments!
+                if (!isAicsEligible) return
 
-                  appts.push({
-                    id: apptId,
-                    rawAppId: app.id,
-                    referenceNo: ref,
-                    module: "AICS",
-                    applicantName: `${app.first_name || ""} ${app.middle_name || ""} ${app.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY APPLICANT",
-                    submittedAt: app.created_at || new Date().toISOString(),
-                    concern: cleanType,
-                    status: apptStatus,
-                    decision: cachedDecision,
-                    scheduledDate: schedDate,
-                    scheduledTime: schedTime,
-                    officeLocation: cached?.officeLocation || (app.details as any)?.appointmentVenue || "Quezon City Hall",
-                    notes: cached?.notes,
-                    rawApp: app,
-                  })
+                const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
+                const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
+                const ref = String(app.reference_no || app.qc_id || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
+                const apptId = `aics-appt-${app.id || ref}`
+
+                // If already in dataDb.appointments, DO NOT synthesize a duplicate!
+                const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
+                  const dbr = String(dba.reference_no || '').trim().toLowerCase()
+                  const dbid = String(dba.id || '').trim().toLowerCase()
+                  return (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
+                })
+                if (existsInDb) return
+
+                const isAicsPending = ['waiting_approval', 'for_scheduling'].includes(rawAppStatus)
+                const cached = (isAicsPending && !localScheduledMap[apptId]?.savedInSession)
+                  ? undefined
+                  : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${cleanType}`] || localScheduledMap[`AICS_${ref}`] || undefined)
+                const schedDate = (isAicsPending && !cached?.savedInSession) ? null : cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
+                const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
+                const hasDate = Boolean(schedDate)
+                const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || (['approved', 'completed'].includes(rawAppStatus) ? 'approved' : ['for_referral', 'referred'].includes(rawAppStatus) ? 'referred' : undefined)
+                
+                let apptStatus: AppointmentStatus = 'pending'
+                if (cachedDecision) {
+                  apptStatus = cachedDecision
+                } else if (hasDate) {
+                  apptStatus = 'scheduled'
+                } else {
+                  apptStatus = 'pending'
                 }
+
+                appts.push({
+                  id: apptId,
+                  rawAppId: app.id,
+                  referenceNo: ref,
+                  module: "AICS",
+                  applicantName: `${app.first_name || ""} ${app.middle_name || ""} ${app.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY APPLICANT",
+                  submittedAt: app.created_at || new Date().toISOString(),
+                  concern: cleanType,
+                  status: apptStatus,
+                  decision: cachedDecision,
+                  scheduledDate: schedDate,
+                  scheduledTime: schedTime,
+                  officeLocation: cached?.officeLocation || (app.details as any)?.appointmentVenue || "Quezon City Hall",
+                  notes: cached?.notes,
+                  rawApp: app,
+                })
               })
             }
           } catch {}
