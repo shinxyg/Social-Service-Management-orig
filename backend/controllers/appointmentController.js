@@ -329,7 +329,7 @@ async function syncAndCleanAppointments() {
 
 function triggerAppointmentSyncIfStale() {
   const now = Date.now();
-  if (isAppointmentSyncInProgress || (now - lastAppointmentSyncTime < 30 * 1000)) {
+  if (isAppointmentSyncInProgress || (now - lastAppointmentSyncTime < 3 * 60 * 1000)) {
     return;
   }
   isAppointmentSyncInProgress = true;
@@ -347,80 +347,12 @@ function triggerAppointmentSyncIfStale() {
 
 exports.getAppointments = async (req, res) => {
   try {
+    // Trigger background sync non-blockingly
     triggerAppointmentSyncIfStale();
-
-    await db.query(`
-      UPDATE appointments
-      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
-      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date ILIKE '%2026-09-19%'
-          OR scheduled_date = '2026-09-15' OR scheduled_date ILIKE '%Sep 15%' OR scheduled_date ILIKE '%2026-09-15%'
-          OR scheduled_date IS NULL OR scheduled_date = '')
-        AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
-    `).catch(() => {});
-
-    await db.query(`
-      DELETE FROM appointments
-      WHERE module = 'AICS' AND (
-        reference_no IN (
-          SELECT reference_no FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved')
-        )
-        OR reference_no IN (
-          SELECT qc_id FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved')
-            AND qc_id IS NOT NULL AND qc_id <> ''
-        )
-      )
-    `).catch(() => {});
-
-    // Ensure any active AICS application with a scheduled date is present in appointments table
-    try {
-      const activeSchedAics = await db.query(`
-        SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
-        FROM aics_applications
-        WHERE (details->>'appointmentDate' IS NOT NULL AND details->>'appointmentDate' <> '')
-           OR status IN ('waiting_approval', 'for_scheduling', 'scheduled', 'under_review')
-      `);
-      for (const row of activeSchedAics.rows) {
-        const rNo = String(row.reference_no || row.qc_id || '').trim();
-        if (!rNo) continue;
-        const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
-        const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
-        const details = (typeof row.details === 'object' && row.details !== null) ? row.details : {};
-        const sDate = details.appointmentDate || null;
-        const sTime = details.appointmentTime || null;
-        const sVenue = details.appointmentVenue || 'Quezon City Hall';
-        const fName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-
-        const ex = await db.query(
-          `SELECT id, scheduled_date FROM appointments WHERE reference_no = $1 AND module = 'AICS' AND concern = $2`,
-          [rNo, cleanType]
-        );
-        if (ex.rows.length === 0) {
-          await db.query(
-            `INSERT INTO appointments
-              (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes, created_at, updated_at)
-             VALUES ($1, 'AICS', $2, $3, $4, $5, $6, $7, 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.', COALESCE($8, NOW()), NOW())`,
-            [rNo, fName, cleanType, sDate ? 'scheduled' : 'pending', sDate, sTime, sVenue, row.created_at || null]
-          );
-        } else if (sDate && !ex.rows[0].scheduled_date) {
-          await db.query(
-            `UPDATE appointments SET status = 'scheduled', scheduled_date = $1, scheduled_time = $2, office_location = $3, updated_at = NOW() WHERE id = $4`,
-            [sDate, sTime, sVenue, ex.rows[0].id]
-          );
-        }
-      }
-    } catch (_) {}
-
-    // Un-tombstone any active appointments that exist in appointments table
-    await db.query(`
-      DELETE FROM deleted_appointments
-      WHERE reference_no IN (SELECT reference_no FROM appointments)
-    `).catch(() => {});
 
     const [deletedRes, result] = await Promise.all([
       db.query('SELECT reference_no FROM deleted_appointments WHERE reference_no NOT IN (SELECT reference_no FROM appointments)').catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM appointments ORDER BY created_at DESC`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 200')),
+      db.query(`SELECT * FROM appointments ORDER BY created_at DESC LIMIT 300`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),
     ]);
 
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
