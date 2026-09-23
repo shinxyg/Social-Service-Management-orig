@@ -706,9 +706,10 @@ export default function Appointments() {
           } catch {}
         }
 
+        let dataDb: any = { appointments: [] }
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
           try {
-            const dataDb = await resDbSettled.value.json()
+            dataDb = await resDbSettled.value.json()
 
             // Un-dismiss any appointments that are currently alive in the database
             if (dataDb.appointments && Array.isArray(dataDb.appointments)) {
@@ -786,7 +787,6 @@ export default function Appointments() {
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || "").trim()
                   const rawStatus = String(a.status || '').toLowerCase()
                   const isExplicitPending = rawStatus === 'pending' || !a.scheduled_date
-                  const aicsMod = String(a.module || "AICS").toUpperCase()
                   const hasExplicitLocalSched = Boolean(localScheduledMap[apptId]?.savedInSession && localScheduledMap[apptId]?.scheduledDate)
                   const cached = hasExplicitLocalSched ? localScheduledMap[apptId] : undefined
 
