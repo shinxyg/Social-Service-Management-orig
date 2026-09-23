@@ -215,7 +215,24 @@ export function isTrainingApplication(app?: { assistance?: string; assistanceCat
 }
 
 export function isIdOrDocumentApplication(app?: { assistance?: string; assistanceCategory?: string } | null) {
-  if (!app || isTrainingApplication(app)) return false
+  if (!app || isTrainingApplication(app) || isAicsMedicalApplication(app)) return false
+  const cat = String(app.assistanceCategory || "").toLowerCase()
+  const ast = String(app.assistance || "").toLowerCase()
+  if (
+    cat.includes("aics") ||
+    cat.includes("medical") ||
+    ast.includes("medical") ||
+    ast.includes("hospital") ||
+    ast.includes("dialysis") ||
+    ast.includes("financial") ||
+    ast.includes("burial") ||
+    ast.includes("funeral") ||
+    ast.includes("educational") ||
+    ast.includes("food") ||
+    ast.includes("transportation")
+  ) {
+    return false
+  }
   return isIdOrDocumentService(`${app.assistanceCategory || ""} ${app.assistance || ""}`)
 }
 

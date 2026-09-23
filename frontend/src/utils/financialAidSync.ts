@@ -182,9 +182,13 @@ export function isNonCashOrGLService(serviceOrConcern?: string): boolean {
 export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
   if (!serviceOrConcern) return false
   if (isTrainingService(serviceOrConcern)) return false
-  if (isNonCashOrGLService(serviceOrConcern)) return true
   const lower = serviceOrConcern.toLowerCase()
   if (
+    lower.includes("medical") ||
+    lower.includes("hospital") ||
+    lower.includes("dialysis") ||
+    lower.includes("guarantee letter") ||
+    lower.includes("aics") ||
     lower.includes("social assistance") ||
     lower.includes("financial assistance") ||
     lower.includes("cash assistance") ||
@@ -204,11 +208,17 @@ export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
   }
 
   return (
-    lower.includes("id") ||
-    lower.includes("booklet") ||
-    (lower.includes("solo parent") && !lower.includes("child welfare") && !lower.includes("assistance")) ||
-    lower.includes("pwd") ||
-    lower.includes("senior")
+    lower.includes("id card") ||
+    lower.includes("identification") ||
+    lower.includes("id booklet") ||
+    lower.includes("purchase booklet") ||
+    lower.includes("pwd id") ||
+    lower.includes("senior id") ||
+    lower.includes("osca id") ||
+    lower.includes("pdao id") ||
+    lower.includes("solo parent id") ||
+    lower.endsWith(" id") ||
+    lower.includes(" id ")
   )
 }
 
