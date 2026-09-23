@@ -601,12 +601,18 @@ export default function Appointments() {
           if (raw) localScheduledMap = JSON.parse(raw)
         } catch {}
 
-        // Sanitize legacy contaminated naked keys in localScheduledMap
+        // Sanitize legacy contaminated keys in localScheduledMap
         try {
           let cleaned = false
           for (const key of Object.keys(localScheduledMap)) {
-            // Naked QC ID or applicant name keys that cross-contaminate between AICS and PWD
-            if (/^\d{10,}$/.test(key) || key.startsWith("appt_1100") || key === "110000262304143") {
+            const lk = key.toLowerCase()
+            if (
+              lk.includes("110000262304143") ||
+              lk.includes("66") ||
+              /^\d{10,}$/.test(key) ||
+              key.startsWith("appt_1100") ||
+              !localScheduledMap[key]?.savedInSession
+            ) {
               delete localScheduledMap[key]
               cleaned = true
             }
@@ -780,13 +786,15 @@ export default function Appointments() {
                   const rawStatus = String(a.status || '').toLowerCase()
                   const isExplicitPending = rawStatus === 'pending' || !a.scheduled_date
                   const aicsMod = String(a.module || "AICS").toUpperCase()
-                  const cached = (isExplicitPending && !localScheduledMap[apptId]?.savedInSession)
-                    ? undefined
-                    : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${a.concern}`] || localScheduledMap[`${aicsMod}_${ref}`] || undefined)
-                  const schedDate = (isExplicitPending && !cached?.savedInSession) ? null : cleanDate(a.scheduled_date || cached?.scheduledDate)
+                  const hasExplicitLocalSched = Boolean(localScheduledMap[apptId]?.savedInSession && localScheduledMap[apptId]?.scheduledDate)
+                  const cached = hasExplicitLocalSched ? localScheduledMap[apptId] : undefined
+
+                  const schedDate = isExplicitPending ? (hasExplicitLocalSched ? cleanDate(cached?.scheduledDate) : null) : cleanDate(a.scheduled_date || cached?.scheduledDate)
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
-                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || (['approved', 'completed'].includes(rawStatus) ? 'approved' : rawStatus === 'referred' ? 'referred' : rawStatus === 'rejected' ? 'rejected' : undefined)
+                  const cachedDecision = (isExplicitPending && !hasExplicitLocalSched)
+                    ? undefined
+                    : ((cached?.decision as ("approved" | "referred" | "rejected")) || (['approved', 'completed'].includes(rawStatus) ? 'approved' : rawStatus === 'referred' ? 'referred' : rawStatus === 'rejected' ? 'rejected' : undefined))
                   
                   let statusVal: AppointmentStatus = 'pending'
                   if (cachedDecision) {
@@ -892,15 +900,30 @@ export default function Appointments() {
             const appSt = String(app.status || '').toLowerCase()
             const isApprovedOrEligible = appSt === 'approved' || appSt === 'under_review' || appSt === 'completed' || appSt === 'for_release' || appSt === 'released'
             if (isAssistance && isApprovedOrEligible) {
+              const ref = app.referenceNumber || app.reference_number || "PWD-QC-2026"
+
+              // If already in dataDb.appointments, DO NOT synthesize! The database row is authoritative!
+              const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
+                const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
+                const dbid = String(dba.id || '').trim().toLowerCase()
+                return (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
+              })
+              if (existsInDb) return
+
               const isPwd = String(app.category || "").toUpperCase().includes("PWD")
               const mod: ModuleKey = isPwd ? "PWD" : "Senior Citizen"
               const concern = isPwd ? "PWD Social Assistance" : "Senior Social Assistance"
-              const ref = app.referenceNumber || app.reference_number || "PWD-QC-2026"
               const apptId = `pwd-senior-appt-${app.id || ref}`
-              const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`${mod}_${ref}`] || undefined
               const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY"
-              const isDone = app.status === "completed" || app.status === "released" || cached?.status === "completed"
-              const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
+              const isDone = app.status === "completed" || app.status === "released"
+
+              const hasExplicitLocalSched = Boolean(localScheduledMap[apptId]?.savedInSession && localScheduledMap[apptId]?.scheduledDate)
+              const cached = hasExplicitLocalSched ? localScheduledMap[apptId] : undefined
+              const schedDate = hasExplicitLocalSched ? cleanDate(cached?.scheduledDate) : null
+              const schedTime = hasExplicitLocalSched ? (cached?.scheduledTime || null) : null
+              const decision = hasExplicitLocalSched ? (cached?.decision as ("approved" | "referred" | "rejected")) : undefined
+              let statusVal: AppointmentStatus = isDone ? "completed" : hasExplicitLocalSched ? (decision || (schedDate ? "scheduled" : "pending")) : "pending"
+
               appts.push({
                 id: apptId,
                 referenceNo: ref,
@@ -908,10 +931,10 @@ export default function Appointments() {
                 applicantName: fullName,
                 submittedAt: app.submittedAt || app.created_at || new Date().toISOString(),
                 concern,
-                status: isDone ? "completed" : ((cached?.status || "pending") as AppointmentStatus),
-                decision: cachedDecision,
-                scheduledDate: cached?.scheduledDate,
-                scheduledTime: cached?.scheduledTime,
+                status: statusVal,
+                decision,
+                scheduledDate: schedDate,
+                scheduledTime: schedTime,
                 officeLocation: cached?.officeLocation || "Quezon City Hall",
                 notes: cached?.notes,
               })
