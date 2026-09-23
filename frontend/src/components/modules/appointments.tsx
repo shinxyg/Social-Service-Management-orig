@@ -817,7 +817,8 @@ export default function Appointments() {
 
                   const schedDate = isExplicitPending ? (hasExplicitLocalSched && !isAicsPending ? cleanDate(cached?.scheduledDate) : null) : (isAicsPending ? null : cleanDate(a.scheduled_date || cached?.scheduledDate))
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
-                  const hasDate = Boolean(schedDate)
+                  let statusVal: AppointmentStatus = 'pending'
+                  let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
 
                   const isApprovedDecision = rawStatus === 'approved' || rawStatus === 'completed' || cached?.decision === 'approved' || cached?.status === 'approved' || cached?.status === 'completed'
                   const isReferredDecision = rawStatus === 'referred' || cached?.decision === 'referred' || cached?.status === 'referred'
@@ -970,10 +971,7 @@ export default function Appointments() {
               const concern = isPwd ? "PWD Social Assistance" : "Senior Social Assistance"
               const apptId = `pwd-senior-appt-${app.id || ref}`
               const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY"
-              const isDone = app.status === "completed" || app.status === "released"
-
               const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`${mod}_${ref}`] || undefined
-              const hasExplicitLocalSched = Boolean(cached?.savedInSession && cached?.scheduledDate)
               const schedDate = cleanDate(cached?.scheduledDate || (app as any).scheduled_date)
               const schedTime = cached?.scheduledTime || (app as any).scheduled_time || null
               const isApproved = app.status === "completed" || app.status === "released" || app.status === "approved" || cached?.decision === "approved" || cached?.status === "approved"
