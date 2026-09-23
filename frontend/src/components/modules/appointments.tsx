@@ -525,16 +525,31 @@ function AppointmentCard({
 }
 
 function getAppointmentDeduplicationKey(a: { id?: string; referenceNo?: string; applicantName?: string; concern?: string; module?: string }): string {
+  const mod = String(a.module || "AICS").toUpperCase().trim()
+  const c = String(a.concern || "").toLowerCase()
+  let cleanConcern = "general"
+  if (c.includes("pwd") || c.includes("disability")) cleanConcern = "pwd"
+  else if (c.includes("medical") || c.includes("gamot") || c.includes("hospital")) cleanConcern = "medical"
+  else if (c.includes("senior")) cleanConcern = "senior"
+  else if (c.includes("funeral") || c.includes("burial")) cleanConcern = "burial"
+  else if (c.includes("food")) cleanConcern = "food"
+  else if (c.includes("education")) cleanConcern = "education"
+  else if (c.includes("transport")) cleanConcern = "transport"
+  else if (c.includes("livelihood")) cleanConcern = "livelihood"
+  else if (c.includes("child")) cleanConcern = "child_welfare"
+  else if (c.includes("solo")) cleanConcern = "solo_parent"
+  else cleanConcern = c.replace(/[^a-z0-9]/g, "")
+
   const ref = String(a.referenceNo || "").toLowerCase().trim()
   const id = String(a.id || "").toLowerCase().trim()
   if (ref) {
-    return `ref_${ref}`
+    return `${mod}_${cleanConcern}_ref_${ref}`
   }
   if (id) {
-    return `id_${id}`
+    return `${mod}_${cleanConcern}_id_${id}`
   }
   const cleanName = String(a.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
-  return `name_${cleanName}_${Date.now()}`
+  return `${mod}_${cleanConcern}_name_${cleanName}_${Date.now()}`
 }
 
 export default function Appointments() {

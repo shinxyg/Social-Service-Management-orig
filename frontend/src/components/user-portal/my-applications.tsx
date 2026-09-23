@@ -1694,6 +1694,32 @@ function getInitialDeletedApplications(): ApplicationRecord[] {
   return []
 }
 
+export function isApptConcernMatch(app: any, record: any): boolean {
+  if (!record) return false
+  const appConcern = String(app.assistance || app.concern || app.service || app.assistanceCategory || app.module || "").toLowerCase()
+  const recConcern = String(record.concern || record.assistance || record.service || record.module || "").toLowerCase()
+
+  const isAppPwd = appConcern.includes("pwd") || appConcern.includes("disability")
+  const isRecPwd = recConcern.includes("pwd") || recConcern.includes("disability")
+  if (isAppPwd || isRecPwd) {
+    return isAppPwd === isRecPwd
+  }
+
+  const isAppMedical = appConcern.includes("medical") || appConcern.includes("gamot") || appConcern.includes("hospital")
+  const isRecMedical = recConcern.includes("medical") || recConcern.includes("gamot") || recConcern.includes("hospital")
+  if (isAppMedical || isRecMedical) {
+    return isAppMedical === isRecMedical
+  }
+
+  const isAppSenior = appConcern.includes("senior")
+  const isRecSenior = recConcern.includes("senior")
+  if (isAppSenior || isRecSenior) {
+    return isAppSenior === isRecSenior
+  }
+
+  return true
+}
+
 export function findCachedAppointmentRecord(
   schedMap: Record<string, any>,
   app: { applicationNo?: string; id?: any; rawAppId?: any; applicantName?: string; referenceNumber?: string; qc_id?: string; reference_no?: string; [key: string]: any }
@@ -1703,17 +1729,27 @@ export function findCachedAppointmentRecord(
   const cleanRef = appNo.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim()
   const rawId = String(app.id || app.rawAppId || "").trim()
   const cleanName = String(app.applicantName || "").toLowerCase().trim()
+  const concern = String(app.assistance || app.concern || app.service || "").toLowerCase().trim()
 
-  if (appNo && schedMap[appNo]) return schedMap[appNo]
-  if (appNo && schedMap[`appt_${appNo}`]) return schedMap[`appt_${appNo}`]
-  if (rawId && schedMap[rawId]) return schedMap[rawId]
-  if (rawId && schedMap[`appt_${rawId}`]) return schedMap[`appt_${rawId}`]
-  if (cleanRef && schedMap[cleanRef]) return schedMap[cleanRef]
-  if (cleanRef && schedMap[`appt_${cleanRef}`]) return schedMap[`appt_${cleanRef}`]
-  if (cleanName && schedMap[cleanName]) return schedMap[cleanName]
-  if (cleanName && schedMap[`appt_${cleanName}`]) return schedMap[`appt_${cleanName}`]
+  // 1. Try composite key first (ref + concern)
+  if (appNo && concern && schedMap[`${appNo}_${concern}`] && isApptConcernMatch(app, schedMap[`${appNo}_${concern}`])) {
+    return schedMap[`${appNo}_${concern}`]
+  }
+  if (cleanRef && concern && schedMap[`${cleanRef}_${concern}`] && isApptConcernMatch(app, schedMap[`${cleanRef}_${concern}`])) {
+    return schedMap[`${cleanRef}_${concern}`]
+  }
+
+  // 2. Try ID / AppNo with strict concern validation
+  if (rawId && schedMap[rawId] && isApptConcernMatch(app, schedMap[rawId])) return schedMap[rawId]
+  if (rawId && schedMap[`appt_${rawId}`] && isApptConcernMatch(app, schedMap[`appt_${rawId}`])) return schedMap[`appt_${rawId}`]
+  if (appNo && schedMap[appNo] && isApptConcernMatch(app, schedMap[appNo])) return schedMap[appNo]
+  if (appNo && schedMap[`appt_${appNo}`] && isApptConcernMatch(app, schedMap[`appt_${appNo}`])) return schedMap[`appt_${appNo}`]
+  if (cleanRef && schedMap[cleanRef] && isApptConcernMatch(app, schedMap[cleanRef])) return schedMap[cleanRef]
+  if (cleanRef && schedMap[`appt_${cleanRef}`] && isApptConcernMatch(app, schedMap[`appt_${cleanRef}`])) return schedMap[`appt_${cleanRef}`]
 
   for (const [key, val] of Object.entries(schedMap)) {
+    if (!val || !isApptConcernMatch(app, val)) continue
+
     const kClean = key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim()
     if (cleanRef && kClean && (kClean === cleanRef || (kClean.length >= 6 && cleanRef.includes(kClean)) || (cleanRef.length >= 6 && kClean.includes(cleanRef)))) {
       return val

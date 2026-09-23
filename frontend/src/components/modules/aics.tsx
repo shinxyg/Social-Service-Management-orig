@@ -177,14 +177,27 @@ export function getEffectiveAppStatus(app?: AicsApplication | null): string {
     const rawSched = typeof window !== 'undefined' ? localStorage.getItem("all_appointments_scheduled") : null
     const schedMap = rawSched ? JSON.parse(rawSched) : {}
 
-    const cached =
+    const isAicsMatch = (rec: any) => {
+      if (!rec) return false
+      const mod = String(rec.module || '').toUpperCase()
+      const c = String(rec.concern || '').toLowerCase()
+      if (mod === 'PWD' || c.includes('pwd') || c.includes('disability') || mod === 'SENIOR' || c.includes('senior')) {
+        return false
+      }
+      return true
+    }
+
+    const candidate =
+      (cleanId && schedMap[`aics-appt-${cleanId}`]) ||
+      (cleanRef && schedMap[`aics-appt-${cleanRef}`]) ||
+      (cleanRef && schedMap[`AICS_${cleanRef}`]) ||
       (cleanRef && schedMap[cleanRef]) ||
       (cleanQc && schedMap[cleanQc]) ||
       (cleanId && schedMap[cleanId]) ||
       (cleanRef && schedMap[`appt_${cleanRef}`]) ||
-      (cleanQc && schedMap[`appt_${cleanQc}`]) ||
-      (cleanId && schedMap[`aics-appt-${cleanId}`]) ||
-      (cleanRef && schedMap[`aics-appt-${cleanRef}`])
+      (cleanQc && schedMap[`appt_${cleanQc}`])
+
+    const cached = isAicsMatch(candidate) ? candidate : null
 
     if (cached?.status === 'approved' || cached?.decision === 'approved') return 'approved'
     if (cached?.status === 'referred' || cached?.decision === 'referred') return 'referred'
