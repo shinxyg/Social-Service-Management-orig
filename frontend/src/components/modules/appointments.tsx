@@ -383,6 +383,7 @@ function AppointmentCard({
   const effectiveStatus: AppointmentStatus = getApptEffectiveStatus(appt)
   const st = getAppointmentStatusTheme(effectiveStatus)
   const isPwdAppt = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
+  const isSeniorAppt = appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")
 
   return (
     <div className={`border rounded-xl p-4 ${st?.card || 'bg-slate-50/60 border-slate-200'}`}>
@@ -470,6 +471,27 @@ function AppointmentCard({
                     <span>Reject</span>
                   </button>
                 </div>
+              ) : isSeniorAppt ? (
+                <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => onApprove?.(appt)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-colors cursor-pointer shadow-2xs"
+                    title="Approve Senior Citizen Application and activate ₱500/month (₱3,000 / 6 mos) social pension"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Approve & Start ₱500/mo Pension</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onReject?.(appt)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+                    title="Reject Senior Application"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    <span>Reject</span>
+                  </button>
+                </div>
               ) : (
                 <div className="flex flex-wrap items-center gap-1.5 justify-end">
                   <button
@@ -509,6 +531,13 @@ function AppointmentCard({
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 text-xs font-bold shadow-2xs">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                     <span>✓ PWD Pension Active (₱500/mo)</span>
+                  </span>
+                </div>
+              ) : isSeniorAppt ? (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 text-xs font-bold shadow-2xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-amber-600" />
+                    <span>✓ Senior Pension Active (₱500/mo)</span>
                   </span>
                 </div>
               ) : (() => {
@@ -1310,7 +1339,8 @@ export default function Appointments() {
 
   const handleApproveAid = (appt: AppointmentRequest) => {
     const isPwd = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
-    if (isPwd) {
+    const isSenior = appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")
+    if (isPwd || isSenior) {
       executeApproveAid(appt)
       return
     }
@@ -1352,7 +1382,8 @@ export default function Appointments() {
       const cleanRef = String(appt.referenceNo || '').replace(/[^a-zA-Z0-9]/g, '')
       const cleanName = String(appt.applicantName || '').toLowerCase().trim()
       const isPwd = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
-      const isAics = appt.module === "AICS" || String(appt.concern || "").toLowerCase().includes("medical")
+      const isSenior = appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")
+      const isAics = (appt.module === "AICS" || String(appt.concern || "").toLowerCase().includes("medical") || String(appt.concern || "").toLowerCase().includes("funeral") || String(appt.concern || "").toLowerCase().includes("educational")) && !isPwd && !isSenior
 
       const pwdIdNumber = `PWD-137404-2026-${String(Math.floor(1000 + Math.random() * 9000))}`
       const approvedIsoDate = new Date().toISOString()
@@ -1380,6 +1411,19 @@ export default function Appointments() {
             body: JSON.stringify({
               status: 'approved',
               assignedIdNumber: pwdIdNumber,
+              approvedDate: approvedIsoDate,
+              approvedBy: "Social Worker Admin",
+            }),
+          })
+        )
+      } else if (isSenior) {
+        calls.push(
+          fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(targetRef)}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              status: 'approved',
+              category: 'senior',
               approvedDate: approvedIsoDate,
               approvedBy: "Social Worker Admin",
             }),
@@ -1437,7 +1481,7 @@ export default function Appointments() {
 
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
 
-      // Update pwd_senior_applications in localStorage if PWD
+      // Update pwd_senior_applications in localStorage if PWD or Senior
       if (isPwd) {
         try {
           const rawPwd = localStorage.getItem("pwd_senior_applications") || "[]"
@@ -1484,6 +1528,35 @@ export default function Appointments() {
           amount: 1500,
           link: '/portal/financial-aid',
         })
+      } else if (isSenior) {
+        try {
+          const rawSenior = localStorage.getItem("pwd_senior_applications") || "[]"
+          const seniorList = JSON.parse(rawSenior)
+          const updatedSenior = seniorList.map((p: any) => {
+            const match = p.referenceNumber === appt.referenceNo || p.id === appt.referenceNo || (cleanName && [p.firstName, p.lastName].filter(Boolean).join(" ").toLowerCase().includes(cleanName))
+            if (match) {
+              return {
+                ...p,
+                status: "approved",
+                approvedDate: approvedIsoDate,
+                approvedBy: "Social Worker Admin",
+              }
+            }
+            return p
+          })
+          localStorage.setItem("pwd_senior_applications", JSON.stringify(updatedSenior))
+        } catch {}
+
+        // Dispatch Bell Notification (Senior Pension)
+        pushUserNotification({
+          userId: appt.referenceNo || 'all',
+          title: 'Senior Citizen Social Pension Approved',
+          desc: `Congratulations! Your Senior Citizen Social Pension (₱500/month) has been approved. Payout is scheduled every 6-month cycle (₱3,000).`,
+          applicationRef: appt.referenceNo,
+          type: 'senior_pension',
+          amount: 3000,
+          link: '/portal/financial-aid',
+        })
       } else {
         pushUserNotification({
           userId: appt.referenceNo || 'all',
@@ -1505,14 +1578,16 @@ export default function Appointments() {
       syncAppointmentToFinancialAid({
         referenceNo: appt.referenceNo,
         applicantName: appt.applicantName,
-        concern: isPwd ? "PWD Social Assistance" : appt.concern,
-        date: isPwd ? undefined : (appt.scheduledDate || new Date().toLocaleDateString("en-PH")),
-        time: isPwd ? undefined : (appt.scheduledTime || "10:00 AM"),
+        concern: isSenior ? "Senior Social Assistance" : (isPwd ? "PWD Social Assistance" : appt.concern),
+        date: (isPwd || isSenior) ? undefined : (appt.scheduledDate || new Date().toLocaleDateString("en-PH")),
+        time: (isPwd || isSenior) ? undefined : (appt.scheduledTime || "10:00 AM"),
         location: appt.officeLocation || "Quezon City Hall",
-        notes: isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (appt.notes || "Approved appointment for financial aid payout."),
+        notes: isSenior
+          ? "Approved Senior Citizen Pension (₱500/month). Accumulating for 6-month consolidated payout (₱3,000)."
+          : (isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (appt.notes || "Approved appointment for financial aid payout.")),
       })
 
-      notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : 'aics', appt.referenceNo)
+      notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : (isSenior ? 'pwd_senior' : 'aics'), appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("pwd_senior_applications_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))

@@ -8,7 +8,10 @@ const FIXED_ASSISTANCE_AMOUNTS = {
   'Burial Assistance': 10000,
   'PWD Social Assistance': 1500,
   'PWD Pension Assistance': 1500,
-  'Senior Social Assistance': 2000,
+  'Senior Social Assistance': 3000,
+  'Senior Citizen Social Pension': 3000,
+  'Senior Citizen Assistance': 3000,
+  'Senior Citizen': 3000,
   'Child Welfare Support': 5000,
   'Nutritional Assistance': 5000,
   'Nutritional Assistance (Child Welfare)': 5000,
@@ -36,9 +39,7 @@ function resolveFixedAmount(concern) {
   if (lower.includes('livelihood')) return 15000;
   if (lower.includes('nutrition') || lower.includes('child') || lower.includes('medical') || lower.includes('emergency') || lower.includes('solo')) return 5000;
   if (lower.includes('education')) return 3000;
-  if (lower.includes('senior')) return 2000;
-  if (lower.includes('food')) return 1500;
-  if (lower.includes('transport')) return 1000;
+  if (lower.includes('senior') || lower.includes('osca')) return 3000;
   return 5000;
 }
 

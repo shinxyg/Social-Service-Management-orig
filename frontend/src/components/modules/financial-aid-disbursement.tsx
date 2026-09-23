@@ -171,7 +171,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
                 applicationRef: ref,
                 applicantName: [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ").toUpperCase() || "BENEFICIARY APPLICANT",
                 assistanceType: type,
-                fixedAmount: isPwdApp ? 1500 : 2000,
+                fixedAmount: resolveFixedAmount(type),
                 dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
                 status: String(app.status || "").toLowerCase() === "released" ? "RELEASED" : "PENDING",
                 venue: "Quezon City Hall",
@@ -271,10 +271,10 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         return false
       }
 
-      const isPwdAid = String(d.assistanceType || "").toLowerCase().includes("pwd") || String(d.assistanceType || "").toLowerCase().includes("disability")
-      if (isPwdAid && (appt || cachedSched)) {
+      // If an appointment exists for this aid request, wait until it is approved before showing in Financial Aid
+      if (appt || cachedSched) {
         if (apptStatus !== "approved" && apptDecision !== "approved") {
-          // Still in interview scheduling/review phase (Step 2 or 3)
+          // Still in interview scheduling/review phase
           return false
         }
       }
@@ -317,6 +317,7 @@ export default function FinancialAidDisbursement() {
     saveDisbursements(updated)
 
     const isPwdAid = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
+    const isSeniorAid = String(record.assistanceType || "").toLowerCase().includes("senior") || String(record.assistanceType || "").toLowerCase().includes("osca")
     if (isPwdAid) {
       // Dispatch Email 4: Payout Schedule Notice with 4-point physical checklist
       const recipientEmail = findApplicantEmail({ email: (record as any).email, referenceNo: record.applicationRef, applicantName: record.applicantName })
@@ -343,6 +344,15 @@ export default function FinancialAidDisbursement() {
         applicationRef: record.applicationRef,
         type: "payout_scheduled",
         amount: 1500,
+      })
+    } else if (isSeniorAid) {
+      pushUserNotification({
+        userId: record.applicationRef || "all",
+        title: "Senior Pension Payout Scheduled",
+        desc: `Payout Notice: Your ₱3,000.00 cash pension payout (6-month cycle) is scheduled on ${date} at ${time} at ${venue || "Quezon City Hall"}. Bring physical Senior Citizen ID / QC ID.`,
+        applicationRef: record.applicationRef,
+        type: "payout_scheduled",
+        amount: 3000,
       })
     }
 
@@ -380,6 +390,7 @@ export default function FinancialAidDisbursement() {
     } catch {}
 
     const isPwdAid = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
+    const isSeniorAid = String(record.assistanceType || "").toLowerCase().includes("senior") || String(record.assistanceType || "").toLowerCase().includes("osca")
     if (isPwdAid) {
       // Update pwd_senior_applications with releasedDate to reset accumulator for next 3-month cycle
       try {
@@ -423,6 +434,34 @@ export default function FinancialAidDisbursement() {
         applicationRef: record.applicationRef,
         type: "payout_released",
         amount: 1500,
+      })
+
+      window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+    } else if (isSeniorAid) {
+      try {
+        const rawSenior = localStorage.getItem("pwd_senior_applications") || "[]"
+        const seniorList = JSON.parse(rawSenior)
+        const updatedSenior = seniorList.map((p: any) => {
+          if (p.referenceNumber === record.applicationRef || p.id === record.applicationRef) {
+            return {
+              ...p,
+              status: "released",
+              releasedDate: releaseIsoStr,
+              releasedAmount: 3000,
+            }
+          }
+          return p
+        })
+        localStorage.setItem("pwd_senior_applications", JSON.stringify(updatedSenior))
+      } catch {}
+
+      pushUserNotification({
+        userId: record.applicationRef || "all",
+        title: "Senior Pension Cash Claimed",
+        desc: `Official Receipt: ₱3,000.00 cash payout has been claimed at Quezon City Hall. Receipt No: ${record.disbursementId}. Next 6-month cycle activated.`,
+        applicationRef: record.applicationRef,
+        type: "payout_released",
+        amount: 3000,
       })
 
       window.dispatchEvent(new Event("pwd_senior_applications_updated"))
@@ -651,7 +690,7 @@ export default function FinancialAidDisbursement() {
               applicationRef: ref,
               applicantName: fullName.toUpperCase(),
               assistanceType: assistanceType,
-              fixedAmount: isPwdApp ? 1500 : 2000,
+              fixedAmount: resolveFixedAmount(assistanceType),
               dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", {
                 month: "short",
                 day: "numeric",
@@ -915,6 +954,14 @@ export default function FinancialAidDisbursement() {
           if (apptStatus === "rejected" || apptStatus === "referred" || apptDecision === "rejected" || apptDecision === "referred") {
             return false
           }
+
+          // If an appointment exists for this aid request, wait until it is approved before showing in Financial Aid
+          if (appt || cachedSched) {
+            if (apptStatus !== "approved" && apptDecision !== "approved") {
+              return false
+            }
+          }
+
           return true
         })
 
