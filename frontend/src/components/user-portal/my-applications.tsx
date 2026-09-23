@@ -2305,11 +2305,15 @@ export default function MyApplications() {
               ? "Senior Citizen ID Replacement"
               : "Senior Citizen ID"
 
-            const cachedAppt =
-              appointmentsScheduled[p.referenceNumber] ||
-              appointmentsScheduled[p.id] ||
-              appointmentsScheduled[`pwd-senior-appt-${p.id}`] ||
-              appointmentsScheduled[`appt_${p.referenceNumber}`]
+            const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+            const schedMap = rawSched ? JSON.parse(rawSched) : {}
+            const pAppNo = p.assignedIdNumber || p.referenceNumber || p.qcidNo || qcId
+            const pName = [p.firstName, p.middleName, p.lastName, p.suffix].filter(Boolean).join(" ") || `${userProfile.firstName} ${userProfile.lastName}`
+            const cachedAppt = findCachedAppointmentRecord(schedMap, {
+              ...p,
+              applicationNo: pAppNo,
+              applicantName: pName,
+            })
 
             const rawSt = String(p.status || "pending").toLowerCase()
             let appStatus: ApplicationStatus = "Pending"
