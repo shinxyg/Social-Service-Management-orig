@@ -88,17 +88,17 @@ async function syncAndCleanAppointments() {
     // 0. Ensure deleted reference set is loaded
     // (Approved appointments must NEVER be automatically reverted to scheduled)
 
-    // 1. Clean up rejected/denied AICS appointments (NEVER delete scheduled or pending applications that have active appointments)
+    // 1. Clean up unapproved or rejected AICS appointments (AICS only enters Appointments when approved/pre-approved by Social Worker)
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND (
         reference_no IN (
           SELECT reference_no FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved')
+          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
         )
         OR reference_no IN (
           SELECT qc_id FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved')
+          WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
             AND qc_id IS NOT NULL AND qc_id <> ''
         )
       )
@@ -189,11 +189,11 @@ async function syncAndCleanAppointments() {
       )
     `).catch(() => {});
 
-    // Import active AICS applications for appointment scheduling
+    // Import ONLY approved or screened AICS applications for appointment scheduling
     const activeAics = await db.query(
       `SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
        FROM aics_applications
-       WHERE status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled')`
+       WHERE status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'pending', 'submit_pending')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeAics.rows) {

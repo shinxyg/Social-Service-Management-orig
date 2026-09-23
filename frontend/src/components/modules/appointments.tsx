@@ -798,6 +798,10 @@ export default function Appointments() {
                   if (status === 'rejected' || status === 'denied' || status === 'disapproved') {
                     return false
                   }
+                  // Strictly exclude AICS appointments whose application is still unapproved / pending
+                  if (a.module === 'AICS' && (pendingAicsRefs.has(ref) || (rawId && pendingAicsRefs.has(rawId)))) {
+                    return false
+                  }
                   return true
                 })
                 .map((a: any) => {
@@ -867,7 +871,7 @@ export default function Appointments() {
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
                 const rawAppStatus = String(app.status || '').toLowerCase()
-                if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(rawAppStatus)) return
+                if (['rejected', 'denied', 'disapproved', 'cancelled', 'pending', 'submit_pending'].includes(rawAppStatus)) return
 
                 const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                 const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"

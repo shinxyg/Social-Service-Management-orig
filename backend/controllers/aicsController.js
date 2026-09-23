@@ -197,16 +197,8 @@ exports.createApplication = async (req, res) => {
          WHERE (application_ref = $1 OR (application_ref = $2 AND $2 IS NOT NULL) OR qc_id = $1 OR (qc_id = $2 AND $2 IS NOT NULL))
            AND (LOWER(aid_type) LIKE '%med%' OR LOWER(aid_type) LIKE '%gamot%' OR LOWER(aid_type) = LOWER($3))`,
         [referenceNo, targetQcId, finalAssistanceType]
-      );
-
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
-         VALUES ($1, 'AICS', $2, $3, 'pending', NULL, NULL, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS Medical / Assistance application.')`,
-        [referenceNo, fullName, cleanType]
-      );
     } catch (apptErr) {
-      console.warn('AICS appointment direct insert warning:', apptErr.message);
+      console.warn('AICS clean prior records warning:', apptErr.message);
     }
 
     try {
