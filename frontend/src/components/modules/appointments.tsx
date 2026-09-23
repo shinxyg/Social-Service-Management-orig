@@ -2135,20 +2135,6 @@ export default function Appointments() {
                 </div>
               </div>
 
-              {/* Notes / Instructions for Applicant */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  📝 Paalala / Instructions para sa Aplikante
-                </label>
-                <textarea
-                  rows={2}
-                  value={approvalNotes}
-                  onChange={(e) => setApprovalNotes(e.target.value)}
-                  placeholder="Hal. Dalhin ang Valid ID, Original Medical Abstract/Prescription sa 2nd Floor PAD..."
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition resize-none placeholder:text-slate-400"
-                />
-              </div>
-
               <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-start gap-2.5 text-xs text-emerald-900">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <p>
