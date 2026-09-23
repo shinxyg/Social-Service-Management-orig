@@ -872,35 +872,41 @@ export default function AICS() {
 
               {/* Bottom Action Footer */}
               <div className="mt-8 pt-5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                {/* Left Side: Approve and Reject Actions */}
+                {/* Left Side: Approve and Reject Actions if pending, or Badge if already resolved */}
                 <div className="flex items-center gap-3 flex-wrap">
-                  <button
-                    type="button"
-                    disabled={actionLoading || currentStatus === 'approved'}
-                    onClick={() => updateStatus('approved')}
-                    className={`px-5 py-2.5 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
-                      currentStatus === 'approved'
-                        ? 'bg-emerald-700 opacity-90 cursor-default'
-                        : 'bg-emerald-600 hover:bg-emerald-700'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{currentStatus === 'approved' ? '✓ Case Approved' : 'Approve Application'}</span>
-                  </button>
+                  {currentStatus === 'approved' ? (
+                    <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-xl flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Case Evaluated & Approved</span>
+                    </span>
+                  ) : currentStatus === 'rejected' ? (
+                    <span className="px-4 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold rounded-xl flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-rose-400" />
+                      <span>Case Disqualified / Rejected</span>
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => updateStatus('approved')}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Approve Application</span>
+                      </button>
 
-                  <button
-                    type="button"
-                    disabled={actionLoading || currentStatus === 'rejected'}
-                    onClick={() => setShowRejectModal(true)}
-                    className={`px-5 py-2.5 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
-                      currentStatus === 'rejected'
-                        ? 'bg-rose-700 opacity-90 cursor-default'
-                        : 'bg-rose-600 hover:bg-rose-700'
-                    }`}
-                  >
-                    <XCircle className="w-4 h-4" />
-                    <span>{currentStatus === 'rejected' ? '✕ Disqualified / Rejected' : 'Reject Application'}</span>
-                  </button>
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => setShowRejectModal(true)}
+                        className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        <span>Reject Application</span>
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 {/* Right Side: Close Button */}
