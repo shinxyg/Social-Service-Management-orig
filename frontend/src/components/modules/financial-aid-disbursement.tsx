@@ -268,6 +268,15 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       if (apptStatus === "rejected" || apptStatus === "referred" || apptDecision === "rejected" || apptDecision === "referred") {
         return false
       }
+
+      const isPwdAid = String(d.assistanceType || "").toLowerCase().includes("pwd") || String(d.assistanceType || "").toLowerCase().includes("disability")
+      if (isPwdAid && (appt || cachedSched)) {
+        if (apptStatus !== "approved" && apptDecision !== "approved") {
+          // Still in interview scheduling/review phase (Step 2 or 3)
+          return false
+        }
+      }
+
       return true
     })
 

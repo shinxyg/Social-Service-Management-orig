@@ -42,11 +42,28 @@ function getInitialDisbursementsForUser(): SyncedDisbursementRecord[] {
     const results: SyncedDisbursementRecord[] = []
     const seenRefs = new Set<string>()
 
+    const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+    const schedMap = rawSched ? JSON.parse(rawSched) : {}
+
     if (Array.isArray(saved) && saved.length > 0) {
       saved.forEach((s) => {
+        const cleanRef = String(s.applicationRef || "").trim()
+        const unhyphenated = cleanRef.replace(/[^a-zA-Z0-9]/g, "")
+        const appt = schedMap[cleanRef] || schedMap[unhyphenated] || (s.applicantName ? schedMap[s.applicantName.toLowerCase().trim()] : null)
+        const isPwdAid = String(s.assistanceType || "").toLowerCase().includes("pwd") || String(s.assistanceType || "").toLowerCase().includes("disability")
+
+        if (isPwdAid && appt) {
+          const st = String(appt.status || "").toLowerCase()
+          const dec = String(appt.decision || "").toLowerCase()
+          if (st !== "approved" && dec !== "approved") {
+            // Still in interview stage (Step 2 or 3)
+            return
+          }
+        }
+
         const name = (s.applicantName || "").toLowerCase().trim()
         const match =
-          (s.applicationRef && qcId && s.applicationRef === qcId) ||
+          (s.applicationRef && qcId && (s.applicationRef === qcId || cleanRef === qcId || unhyphenated === qcId)) ||
           (userFull && name === userFull) ||
           (userFirst && userLast && name.startsWith(userFirst) && name.endsWith(userLast))
         if (match) {
@@ -73,7 +90,18 @@ function getInitialDisbursementsForUser(): SyncedDisbursementRecord[] {
             app.type === "social-assistance" ||
             String(app.category || "").toLowerCase().includes("assistance") ||
             String(app.disabilityClass || "").toLowerCase().includes("assistance")
-          const isApproved = app.status === "approved" || app.status === "completed" || app.status === "for_release" || app.status === "released"
+
+          const pAppNo = app.assignedIdNumber || app.referenceNumber || app.reference_number || app.qcidNo || qcId
+          const pName = [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ") || userFull
+          const cachedAppt = schedMap[pAppNo] || (pName ? schedMap[pName.toLowerCase().trim()] : null)
+          const isApptApproved = cachedAppt?.status === "approved" || cachedAppt?.decision === "approved"
+          const isApptScheduledOrReview = (cachedAppt?.scheduledDate || cachedAppt?.status === "scheduled" || cachedAppt?.status === "under_review") && !isApptApproved
+
+          if (isApptScheduledOrReview) {
+            return
+          }
+
+          const isApproved = isApptApproved || app.status === "approved" || app.status === "completed" || app.status === "for_release" || app.status === "released"
 
           if (matchUser && isAssistance && isApproved) {
             const isPwd = String(app.category || "").toUpperCase().includes("PWD")
@@ -273,6 +301,9 @@ export default function ApplyFinancialAid() {
                 }
               })
 
+              const rawSched = typeof window !== "undefined" ? localStorage.getItem("all_appointments_scheduled") : null
+              const schedMap = rawSched ? JSON.parse(rawSched) : {}
+
               const myApprovedPwd = pwdApps.filter((app: any) => {
                 const matchUser = (app.referenceNumber === qcId || app.reference_number === qcId || app.id === qcId || isUserMatch([app.firstName, app.lastName].join(" ")))
                 const isAssistance =
@@ -282,7 +313,18 @@ export default function ApplyFinancialAid() {
                   String(app.service || "").toLowerCase().includes("assistance") ||
                   String(app.assistanceType || "").toLowerCase().includes("assistance") ||
                   String(app.disabilityClass || "").toLowerCase().includes("assistance")
-                return matchUser && isAssistance && (app.status === "approved" || app.status === "completed" || app.status === "for_release")
+
+                const pAppNo = app.assignedIdNumber || app.referenceNumber || app.reference_number || app.qcidNo || qcId
+                const pName = [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ") || userFull
+                const cachedAppt = schedMap[pAppNo] || (pName ? schedMap[pName.toLowerCase().trim()] : null)
+                const isApptApproved = cachedAppt?.status === "approved" || cachedAppt?.decision === "approved"
+                const isApptScheduledOrReview = (cachedAppt?.scheduledDate || cachedAppt?.status === "scheduled" || cachedAppt?.status === "under_review") && !isApptApproved
+
+                if (isApptScheduledOrReview) {
+                  return false
+                }
+
+                return matchUser && isAssistance && (isApptApproved || app.status === "approved" || app.status === "completed" || app.status === "for_release")
               })
 
               pwdSeniorRecords = myApprovedPwd.map((app: any) => {
@@ -432,9 +474,19 @@ export default function ApplyFinancialAid() {
           const appt = appointmentsMap[d.applicationRef] || appointmentsMap[d.applicantName?.toLowerCase()?.trim()]
           const cachedSched = localScheduledMap[d.applicationRef] || localScheduledMap[d.applicantName?.toLowerCase()?.trim()]
 
-          const finalApptDate = d.appointmentDate || appt?.scheduled_date || cachedSched?.scheduledDate || null
-          const finalApptTime = d.appointmentTime || appt?.scheduled_time || cachedSched?.scheduledTime || null
-          const finalVenue = d.venue || appt?.office_location || cachedSched?.officeLocation || "Quezon City Hall"
+          const isPwdAid = String(d.assistanceType || "").toLowerCase().includes("pwd") || String(d.assistanceType || "").toLowerCase().includes("disability")
+
+          // For PWD Social Assistance, interview date is NOT the payout date.
+          // Payout date is only set when Admin schedules the payout in Step 6.
+          const finalApptDate = isPwdAid
+            ? (d.appointmentDate || null)
+            : (d.appointmentDate || appt?.scheduled_date || cachedSched?.scheduledDate || null)
+
+          const finalApptTime = isPwdAid
+            ? (d.appointmentTime || null)
+            : (d.appointmentTime || appt?.scheduled_time || cachedSched?.scheduledTime || null)
+
+          const finalVenue = d.venue || (isPwdAid ? "Quezon City Hall" : (appt?.office_location || cachedSched?.officeLocation || "Quezon City Hall"))
           const isApptCompleted = appt?.status === "completed" || cachedSched?.status === "completed"
 
           let isTimeReached = false

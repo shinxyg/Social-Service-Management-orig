@@ -737,7 +737,7 @@ exports.updateApplicationStatus = async (req, res) => {
       return app;
     });
 
-    if (status === 'approved') {
+    if (status === 'approved' || status === 'under_review') {
       if (isAssistance) {
         const concernName = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
 
@@ -747,7 +747,7 @@ exports.updateApplicationStatus = async (req, res) => {
             await db.query(
               `INSERT INTO appointments
                 (reference_no, module, applicant_name, concern, status, office_location, notes)
-               VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-aprubahang PWD/Senior Social Assistance aplikasyon para sa scheduling.')
+               VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon para sa scheduling.')
                ON CONFLICT DO NOTHING`,
               [refNo, isPwd ? 'PWD' : 'Senior Citizen', fullName, concernName]
             );

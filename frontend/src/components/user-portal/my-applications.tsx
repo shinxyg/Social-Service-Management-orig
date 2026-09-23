@@ -2315,15 +2315,43 @@ export default function MyApplications() {
               applicantName: pName,
             })
 
+            const isAssistanceType =
+              String(p.type || "").toLowerCase().includes("assistance") ||
+              String(p.category || "").toLowerCase().includes("assistance") ||
+              String(p.disabilityClass || "").toLowerCase().includes("assistance") ||
+              String(serviceTitle).toLowerCase().includes("assistance")
+
             const rawSt = String(p.status || "pending").toLowerCase()
             let appStatus: ApplicationStatus = "Pending"
-            if (rawSt === "approved" || cachedAppt?.status === "approved" || cachedAppt?.decision === "approved") appStatus = "Approved"
-            else if (rawSt === "released" || rawSt === "completed") appStatus = "Released"
-            else if (rawSt === "for_release") appStatus = "For Release"
-            else if (rawSt === "rejected" || rawSt === "disapproved" || cachedAppt?.status === "rejected" || cachedAppt?.decision === "rejected") appStatus = "Rejected"
-            else if (cachedAppt?.scheduledDate && (cachedAppt?.status === "scheduled" || cachedAppt?.status === "under_review")) appStatus = "Scheduled"
-            else if (rawSt === "under_review" || rawSt === "review" || rawSt === "for_assessment") appStatus = "Under Review"
-            else appStatus = "Pending"
+
+            const isApptApproved = cachedAppt?.status === "approved" || cachedAppt?.decision === "approved"
+            const isApptRejected = cachedAppt?.status === "rejected" || cachedAppt?.decision === "rejected"
+            const isApptScheduled = Boolean(
+              (cachedAppt?.scheduledDate || cachedAppt?.status === "scheduled" || cachedAppt?.status === "under_review" || rawSt === "scheduled") &&
+              !isApptApproved &&
+              !isApptRejected
+            )
+
+            if (isApptApproved) {
+              appStatus = (rawSt === "released" || rawSt === "completed") ? "Released" : "Approved"
+            } else if (isApptRejected || rawSt === "rejected" || rawSt === "disapproved") {
+              appStatus = "Rejected"
+            } else if (isApptScheduled) {
+              appStatus = "Scheduled"
+            } else if (rawSt === "released" || rawSt === "completed") {
+              appStatus = "Released"
+            } else if (rawSt === "for_release") {
+              appStatus = "For Release"
+            } else if (rawSt === "under_review" || rawSt === "review" || rawSt === "for_assessment") {
+              appStatus = "Under Review"
+            } else if (rawSt === "approved" && !isAssistanceType) {
+              appStatus = "Approved"
+            } else if (rawSt === "approved" && isAssistanceType) {
+              // PWD/Senior Assistance needs interview decision in appointments
+              appStatus = cachedAppt?.scheduledDate ? "Scheduled" : "Under Review"
+            } else {
+              appStatus = "Pending"
+            }
 
             const isBooklet =
               String(p.type || "").toLowerCase().includes("booklet") ||
@@ -3907,17 +3935,26 @@ export default function MyApplications() {
               (app.status as any) === "waiting_approval" ||
               (app.status as any) === "pending"
 
+            const isApptApproved = cachedAppt?.status === "approved" || cachedAppt?.decision === "approved"
+            const isApptRejected = cachedAppt?.status === "rejected" || cachedAppt?.decision === "rejected"
+            const isApptScheduled = Boolean(
+              (cachedAppt?.scheduledDate || cachedAppt?.status === "scheduled" || cachedAppt?.status === "under_review" || app.status === "Scheduled") &&
+              !isApptApproved &&
+              !isApptRejected
+            )
+
             const isAppApproved =
-              isGLPrinted ||
-              (!isNewIntake &&
-                (app.status === "Approved" ||
-                  app.status === "Completed" ||
-                  app.status === "Released" ||
-                  app.status === "For Release" ||
-                  cachedAppt?.decision === "approved" ||
-                  cachedAppt?.status === "approved"))
+              !isApptScheduled &&
+              (isGLPrinted ||
+                (!isNewIntake &&
+                  (app.status === "Approved" ||
+                    app.status === "Completed" ||
+                    app.status === "Released" ||
+                    app.status === "For Release" ||
+                    isApptApproved)))
 
             const isAppReferred =
+              !isApptScheduled &&
               !isNewIntake &&
               (app.status === "Referred" ||
                 app.status === "For Referral" ||
@@ -3925,12 +3962,13 @@ export default function MyApplications() {
                 cachedAppt?.status === "referred")
 
             const isAppRejected =
-              app.status === "Rejected" ||
-              cachedAppt?.decision === "rejected" ||
-              cachedAppt?.status === "rejected"
+              isApptRejected ||
+              app.status === "Rejected"
 
             const effectiveAppStatus: ApplicationStatus = isAppApproved
               ? "Approved"
+              : isAppScheduled
+              ? "Scheduled"
               : isAppReferred
               ? "Referred"
               : isAppRejected
@@ -4163,8 +4201,47 @@ export default function MyApplications() {
                     )
                   }
 
+                  if (effectiveAppStatus === "Scheduled" || (cachedAppt?.scheduledDate && !isAppApproved)) {
+                    const appDateStr = cachedAppt?.scheduledDate || app.appointmentDate || "Sep 23, 2026"
+                    const appTimeStr = cachedAppt?.scheduledTime || app.appointmentTime || "10:00 AM"
+                    const venueStr = cachedAppt?.officeLocation || cachedAppt?.venue || "Quezon City Hall PDAO Room 102"
+
+                    return (
+                      <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-3.5 space-y-3 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-100 dark:border-slate-800 pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                            <span className="text-xs font-bold text-gray-900 dark:text-white">
+                              Interview Schedule: <strong className="text-blue-700 dark:text-blue-300">{appDateStr} @ {appTimeStr}</strong>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-600 dark:text-slate-300">
+                            <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                            <span>{venueStr}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-0.5">
+                          <p className="text-[11px] text-gray-600 dark:text-slate-300">
+                            * Dalhin ang opisyal na Appointment Slip, Valid ID, at Medical Certificate sa araw ng inyong interbyu sa Quezon City Hall.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setAppointmentSlipApp(app)
+                            }}
+                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0 ml-auto"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Download Appointment Slip</span>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   const isApprovedOrReleased =
-                    app.status === "Approved" || app.status === "For Release" || app.status === "Released"
+                    effectiveAppStatus === "Approved" || effectiveAppStatus === "For Release" || effectiveAppStatus === "Released"
 
                   if (!isApprovedOrReleased) {
                     return null

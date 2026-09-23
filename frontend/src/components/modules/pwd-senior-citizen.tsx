@@ -2716,17 +2716,26 @@ export default function PWDSeniorCitizen() {
     const targetIdentifier = id || refNo
     const approvedDate = new Date().toISOString()
 
-    clearApiCache("/api/pwd-senior/applications")
+    const isAssistanceApp =
+      targetApp.type === "assistance" ||
+      (targetApp as any).type === "social-assistance" ||
+      String(targetApp.category || "").toLowerCase().includes("assistance") ||
+      String((targetApp as any).service || "").toLowerCase().includes("assistance") ||
+      String((targetApp as any).assistanceType || "").toLowerCase().includes("assistance") ||
+      (targetApp.documents || []).some((d: any) => String(d.name || "").toLowerCase().includes("indigency") || String(d.name || "").toLowerCase().includes("pwdqcid"))
+
+    const nextStatus = isAssistanceApp ? ("under_review" as const) : ("approved" as const)
+    const nextIdNumber = isAssistanceApp ? undefined : idNumber
 
     updateApplications((prev) =>
       prev.map((app) =>
         app.id === id || (id && app.id === id) || (refNo && app.referenceNumber === refNo && String(app.type || "").toLowerCase() === String(targetApp.type || "").toLowerCase())
           ? {
             ...app,
-            status: "approved" as const,
-            assignedIdNumber: idNumber,
-            approvedBy: "Social Worker Admin",
-            approvedDate,
+            status: nextStatus,
+            assignedIdNumber: nextIdNumber,
+            approvedBy: isAssistanceApp ? undefined : "Social Worker Admin",
+            approvedDate: isAssistanceApp ? undefined : approvedDate,
           }
           : app
       )
@@ -2738,10 +2747,10 @@ export default function PWDSeniorCitizen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: targetApp.id,
-          status: "approved",
-          assignedIdNumber: idNumber,
-          approvedBy: "Social Worker Admin",
-          approvedDate,
+          status: nextStatus,
+          assignedIdNumber: nextIdNumber,
+          approvedBy: isAssistanceApp ? undefined : "Social Worker Admin",
+          approvedDate: isAssistanceApp ? undefined : approvedDate,
           referenceNumber: refNo,
           category: targetApp.category,
           type: targetApp.type,
@@ -2751,14 +2760,6 @@ export default function PWDSeniorCitizen() {
     } catch (err) {
       console.warn("Failed updating backend status:", err)
     }
-
-    const isAssistanceApp =
-      targetApp.type === "assistance" ||
-      (targetApp as any).type === "social-assistance" ||
-      String(targetApp.category || "").toLowerCase().includes("assistance") ||
-      String((targetApp as any).service || "").toLowerCase().includes("assistance") ||
-      String((targetApp as any).assistanceType || "").toLowerCase().includes("assistance") ||
-      (targetApp.documents || []).some((d: any) => String(d.name || "").toLowerCase().includes("indigency") || String(d.name || "").toLowerCase().includes("pwdqcid"))
 
     if (isAssistanceApp) {
       const assistanceName = isPWD(targetApp) ? "PWD Social Assistance" : "Senior Social Assistance"
