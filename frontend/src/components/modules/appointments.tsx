@@ -1397,6 +1397,11 @@ export default function Appointments() {
   }
 
   const handlePrintGL = async (appt: AppointmentRequest) => {
+    const isPwd = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability") || String(appt.concern || "").toLowerCase().includes("pension")
+    if (isPwd) {
+      console.warn("Strict Guard: PWD Social Assistance uses ID card and direct pension disbursements, not Guarantee Letters.")
+      return
+    }
     try {
       const rawStored = localStorage.getItem("printed_gl_applications") || "{}"
       const stored = JSON.parse(rawStored)
