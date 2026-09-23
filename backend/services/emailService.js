@@ -138,6 +138,10 @@ async function sendPwdApprovalEmail({
                 <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right;">${dateStr}</td>
               </tr>
               <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Monthly Pension:</td>
+                <td style="padding: 6px 0; color: #1d4ed8; font-weight: 800; text-align: right;">₱500.00 / buwan (₱1,500 Quarterly Target)</td>
+              </tr>
+              <tr>
                 <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Status:</td>
                 <td style="padding: 6px 0; color: #047857; font-weight: 800; text-align: right;">ACTIVE AND REGISTERED</td>
               </tr>
@@ -145,7 +149,7 @@ async function sendPwdApprovalEmail({
           </div>
 
           <div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 8px; font-size: 12px; color: #1e40af; line-height: 1.5;">
-            <strong>Privileges and Benefits:</strong> You can now access and view your <strong>Digital PWD ID</strong> via the Gov Services User Portal to avail of statutory discounts (20% discount &amp; VAT exemption) and government assistance programs.
+            <strong>Privileges, Benefits & Pension:</strong> Your monthly pension of <strong>₱500.00/month</strong> is now actively accumulating in your Citizen Financial Aid Hub. You can also view your <strong>Digital PWD ID</strong> via the User Portal for 20% statutory discounts and VAT exemption.
           </div>
 
           <a href="https://frontend-production-1c51.up.railway.app/portal" class="button" target="_blank">

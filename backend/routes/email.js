@@ -31,10 +31,10 @@ router.post('/send-pwd-interview-scheduled', async (req, res) => {
     const recipientEmail = req.body.recipientEmail || req.body.to || req.body.email;
     const recipientName = req.body.recipientName || req.body.applicantName || req.body.name || 'Valued QCitizen';
     const referenceNumber = req.body.referenceNumber || req.body.refNo || req.body.referenceNo || '';
-    const interviewDate = req.body.interviewDate || req.body.date || '';
-    const interviewTime = req.body.interviewTime || req.body.time || '';
-    const venue = req.body.venue || 'Quezon City Hall';
-    const officeLocation = req.body.officeLocation || req.body.venue || 'Quezon City Hall';
+    const interviewDate = req.body.interviewDate || req.body.scheduledDate || req.body.date || '';
+    const interviewTime = req.body.interviewTime || req.body.scheduledTime || req.body.time || '';
+    const venue = req.body.venue || req.body.officeLocation || 'Quezon City Hall (PDAO Room 102)';
+    const officeLocation = req.body.officeLocation || req.body.venue || 'Quezon City Hall (PDAO Room 102)';
 
     if (!recipientEmail) return res.status(400).json({ error: 'Recipient email is required' });
     const result = await sendPwdInterviewScheduledEmail({ recipientEmail, recipientName, referenceNumber, interviewDate, interviewTime, venue, officeLocation });
@@ -50,10 +50,10 @@ router.post('/send-pwd-payout-scheduled', async (req, res) => {
     const recipientName = req.body.recipientName || req.body.applicantName || req.body.name || 'Valued QCitizen';
     const pwdIdNumber = req.body.pwdIdNumber || req.body.idNumber || '';
     const referenceNumber = req.body.referenceNumber || req.body.refNo || req.body.referenceNo || '';
-    const payoutDate = req.body.payoutDate || req.body.date || '';
-    const payoutTime = req.body.payoutTime || req.body.time || '8:00 AM - 5:00 PM';
-    const venue = req.body.venue || 'Quezon City Hall';
-    const amount = req.body.amount || '₱1,500.00';
+    const payoutDate = req.body.payoutDate || req.body.scheduledDate || req.body.date || '';
+    const payoutTime = req.body.payoutTime || req.body.scheduledTime || req.body.time || '9:00 AM - 12:00 PM';
+    const venue = req.body.venue || req.body.officeLocation || 'Quezon City Hall';
+    const amount = req.body.amount || '1,500.00';
 
     if (!recipientEmail) return res.status(400).json({ error: 'Recipient email is required' });
     const result = await sendPwdPayoutScheduledEmail({ recipientEmail, recipientName, pwdIdNumber, referenceNumber, payoutDate, payoutTime, venue, amount });
@@ -70,8 +70,8 @@ router.post('/send-pwd-payout-released', async (req, res) => {
     const disbursementId = req.body.disbursementId || req.body.id || '';
     const pwdIdNumber = req.body.pwdIdNumber || req.body.idNumber || '';
     const referenceNumber = req.body.referenceNumber || req.body.refNo || req.body.referenceNo || '';
-    const releasedDate = req.body.releasedDate || req.body.date || new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
-    const amount = req.body.amount || '₱1,500.00';
+    const releasedDate = req.body.releasedDate || req.body.releaseDate || req.body.date || new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+    const amount = req.body.amount || '1,500.00';
 
     if (!recipientEmail) return res.status(400).json({ error: 'Recipient email is required' });
     const result = await sendPwdPayoutReleaseReceiptEmail({ recipientEmail, recipientName, disbursementId, pwdIdNumber, referenceNumber, releasedDate, amount });
