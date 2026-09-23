@@ -24,6 +24,7 @@ import { fetchPwdSeniorApplications } from "../../utils/cachedApiFetch"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { readFileAsDataUrl } from "../../utils/fileUpload"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
+import { pushUserNotification } from "../../utils/financialAidSync"
 import { formatAppDate } from "./my-applications"
 
 export interface UserProfile {
@@ -1117,7 +1118,6 @@ export default function PWDSocialAssistanceWizard({
     }
 
     try {
-
       await fetch(`${API_BASE}/api/pwd-senior/applications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1134,8 +1134,34 @@ export default function PWDSocialAssistanceWizard({
         }
         localStorage.setItem("pwd_senior_applications", JSON.stringify([lightApp]))
       }
-      window.dispatchEvent(new Event("pwd_senior_applications_updated"))
 
+      // 1. Dispatch Email 1: Application Received Notice
+      const appApplicantName = [formData.firstName, formData.middleName, formData.lastName, formData.suffix].filter(Boolean).join(" ")
+      const applicantEmail = formData.email || userProfile?.email || "citizen@quezoncity.gov.ph"
+      const refNo = newApp.referenceNumber || qcid || newApp.id
+
+      fetch(`${API_BASE}/api/email/send-pwd-received`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: applicantEmail,
+          applicantName: appApplicantName,
+          referenceNumber: refNo,
+          submissionDate: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
+          assistanceType: formData.assistanceType || "Bedridden",
+        }),
+      }).catch((err) => console.warn("Email 1 send warning:", err))
+
+      // 2. Dispatch Bell Notification (Dynamic English/Tagalog)
+      pushUserNotification({
+        userId: refNo,
+        title: "PWD Application Received",
+        desc: `Your PWD Social Welfare Pension application (Ref: ${refNo}) has been submitted and is currently undergoing document validation.`,
+        applicationRef: refNo,
+        assistanceType: "PWD Social Assistance",
+      })
+
+      window.dispatchEvent(new Event("pwd_senior_applications_updated"))
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)
     } catch {
       notifyApplicationChange("APPLICATION_SUBMITTED", "pwd_senior", qcid)

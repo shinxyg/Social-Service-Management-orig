@@ -27,6 +27,7 @@ import {
   isNonCashOrGLService,
   isDisbursementManuallyReleased,
   markDisbursementAsManuallyReleased,
+  pushUserNotification,
 } from "../../utils/financialAidSync"
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import MaskedText from "../ui/masked-text"
@@ -278,6 +279,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
 export default function FinancialAidDisbursement() {
   const [disbursements, setDisbursements] = useState<SyncedDisbursementRecord[]>(() => getInitialDisbursementsForAdmin())
   const [glModalRecord, setGlModalRecord] = useState<SyncedDisbursementRecord | null>(null)
+  const [schedulingRecord, setSchedulingRecord] = useState<SyncedDisbursementRecord | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedStatusTab, setSelectedStatusTab] = useState<string>("ALL")
   const [selectedDetailsRecord, setSelectedDetailsRecord] = useState<SyncedDisbursementRecord | null>(null)
@@ -287,9 +289,58 @@ export default function FinancialAidDisbursement() {
     setRevealedAmounts((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
+  const handleSavePayoutSchedule = (record: SyncedDisbursementRecord, date: string, time: string, venue: string) => {
+    setSchedulingRecord(null)
+    const updated = disbursements.map((d) => {
+      if (d.id === record.id || d.disbursementId === record.disbursementId || d.applicationRef === record.applicationRef) {
+        return {
+          ...d,
+          appointmentDate: date,
+          appointmentTime: time,
+          venue: venue || "Quezon City Hall",
+        }
+      }
+      return d
+    })
+    setDisbursements(updated)
+    saveDisbursements(updated)
+
+    const isPwdAid = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
+    if (isPwdAid) {
+      // Dispatch Email 4: Payout Schedule Notice with 4-point physical checklist
+      fetch(`${API_BASE}/api/email/send-pwd-payout-scheduled`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: (record as any).email || "citizen@quezoncity.gov.ph",
+          applicantName: record.applicantName,
+          referenceNumber: record.applicationRef,
+          disbursementId: record.disbursementId,
+          amount: "1,500.00",
+          payoutDate: date,
+          payoutTime: time,
+          venue: venue || "Quezon City Hall",
+        }),
+      }).catch((err) => console.warn("Email 4 send warning:", err))
+
+      pushUserNotification({
+        userId: record.applicationRef || "all",
+        title: "PWD Pension Payout Scheduled",
+        desc: `Payout Notice: Your ₱1,500.00 cash pension payout is scheduled on ${date} at ${time} at ${venue || "Quezon City Hall"}. Bring physical PWD ID & requirements.`,
+        applicationRef: record.applicationRef,
+        type: "payout_scheduled",
+        amount: 1500,
+      })
+    }
+
+    window.dispatchEvent(new Event("financial_disbursements_updated"))
+    window.dispatchEvent(new Event("storage"))
+  }
+
   const handleReleaseRecord = (record: SyncedDisbursementRecord) => {
     markDisbursementAsManuallyReleased(record)
     const releaseDateStr = new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
+    const releaseIsoStr = new Date().toISOString()
     const updated = disbursements.map((d) => {
       if (d.id === record.id || d.disbursementId === record.disbursementId || d.applicationRef === record.applicationRef) {
         return {
@@ -314,6 +365,53 @@ export default function FinancialAidDisbursement() {
       })
       localStorage.setItem("all_financial_disbursements", JSON.stringify(nextList))
     } catch {}
+
+    const isPwdAid = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
+    if (isPwdAid) {
+      // Update pwd_senior_applications with releasedDate to reset accumulator for next 3-month cycle
+      try {
+        const rawPwd = localStorage.getItem("pwd_senior_applications") || "[]"
+        const pwdList = JSON.parse(rawPwd)
+        const updatedPwd = pwdList.map((p: any) => {
+          if (p.referenceNumber === record.applicationRef || p.id === record.applicationRef) {
+            return {
+              ...p,
+              status: "released",
+              releasedDate: releaseIsoStr,
+              releasedAmount: 1500,
+            }
+          }
+          return p
+        })
+        localStorage.setItem("pwd_senior_applications", JSON.stringify(updatedPwd))
+      } catch {}
+
+      // Dispatch Email 5: Official Payout Release Receipt
+      fetch(`${API_BASE}/api/email/send-pwd-payout-released`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: (record as any).email || "citizen@quezoncity.gov.ph",
+          applicantName: record.applicantName,
+          referenceNumber: record.applicationRef,
+          disbursementId: record.disbursementId,
+          amount: "1,500.00",
+          releaseDate: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
+          disbursingOfficer: "Social Services Cashier (Quezon City Hall)",
+        }),
+      }).catch((err) => console.warn("Email 5 send warning:", err))
+
+      pushUserNotification({
+        userId: record.applicationRef || "all",
+        title: "PWD Pension Cash Claimed",
+        desc: `Official Receipt: ₱1,500.00 cash payout has been claimed at Quezon City Hall. Receipt No: ${record.disbursementId}. Next 3-month cycle activated.`,
+        applicationRef: record.applicationRef,
+        type: "payout_released",
+        amount: 1500,
+      })
+
+      window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+    }
 
     // Patch status to backend and dispatch events
     ;(async () => {
@@ -1182,15 +1280,26 @@ export default function FinancialAidDisbursement() {
                       <td className="px-4 py-3.5 text-right">
                         <div className="inline-flex items-center justify-end gap-1.5 flex-wrap">
                           {d.status === "PENDING" && (
-                            <button
-                              type="button"
-                              onClick={() => handleReleaseRecord(d)}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
-                              title="Release Assistance Disbursement"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Release</span>
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setSchedulingRecord(d)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
+                                title="Set Payout Appointment Schedule at Quezon City Hall"
+                              >
+                                <Clock className="w-3.5 h-3.5 text-blue-600" />
+                                <span>{d.appointmentDate ? "Resched" : "Set Sched"}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleReleaseRecord(d)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors cursor-pointer shadow-2xs hover:shadow-xs"
+                                title="Release Assistance Disbursement (₱1,500 Cash)"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Release</span>
+                              </button>
+                            </>
                           )}
                           <button
                             type="button"
@@ -1399,6 +1508,119 @@ export default function FinancialAidDisbursement() {
           canPrint={true}
         />
       )}
+
+      {schedulingRecord && (
+        <PayoutScheduleModal
+          record={schedulingRecord}
+          onClose={() => setSchedulingRecord(null)}
+          onSave={(date, time, venue) => handleSavePayoutSchedule(schedulingRecord, date, time, venue)}
+        />
+      )}
+    </div>
+  )
+}
+
+function PayoutScheduleModal({
+  record,
+  onClose,
+  onSave,
+}: {
+  record: SyncedDisbursementRecord
+  onClose: () => void
+  onSave: (date: string, time: string, venue: string) => void
+}) {
+  const [date, setDate] = useState(record.appointmentDate || "")
+  const [time, setTime] = useState(record.appointmentTime || "10:00 AM")
+  const venue = "Quezon City Hall"
+
+  const isPwd = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
+  const canSave = date.trim() !== "" && time.trim() !== ""
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-50/50 to-indigo-50/30">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+              {isPwd ? "PWD Pension Payout Schedule" : "Disbursement Payout Schedule"}
+            </span>
+            <h2 className="text-base font-bold text-gray-900 mt-1">{record.applicantName}</h2>
+            <p className="text-xs text-gray-500 font-mono">{record.disbursementId} • Ref: {record.applicationRef}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 text-2xl font-light cursor-pointer w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs text-blue-900 space-y-1">
+            <div className="font-bold flex items-center gap-1.5 text-blue-950">
+              <ShieldCheck className="w-4 h-4 text-blue-600" />
+              <span>Ayuda: {record.assistanceType} (₱{record.fixedAmount.toLocaleString()})</span>
+            </div>
+            <p className="text-blue-800 leading-relaxed text-[11px]">
+              {isPwd
+                ? "Kapag na-save ang iskedyul, awtomatikong magpapadala ng Payout Notice Email at Bell Notification kasama ang 4-point requirement checklist at notice para sa pisikal na claiming sa City Hall."
+                : "Kapag na-save, awtomatikong magpapadala ng iskedyul sa citizen portal at notification."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Payout Date *</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Payout Time *</label>
+              <input
+                type="text"
+                placeholder="e.g. 10:00 AM"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Payout Venue</label>
+            <div className="w-full mt-1.5 px-3.5 py-2.5 text-sm bg-slate-50 border border-gray-200 rounded-xl text-gray-900 font-semibold flex items-center justify-between">
+              <span>{venue}</span>
+              <span className="text-[10px] font-extrabold text-blue-700 bg-blue-100 px-2 py-0.5 rounded uppercase tracking-wider">Fixed Venue</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 rounded-xl transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={!canSave}
+            onClick={() => {
+              if (canSave) {
+                onSave(date, time, venue)
+              }
+            }}
+            className="px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs"
+          >
+            Confirm & Save Payout Schedule
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

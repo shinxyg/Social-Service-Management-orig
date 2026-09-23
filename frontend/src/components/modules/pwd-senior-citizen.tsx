@@ -2758,6 +2758,9 @@ export default function PWDSeniorCitizen() {
     if (isAssistanceApp) {
       const assistanceName = isPWD(targetApp) ? "PWD Social Assistance" : "Senior Social Assistance"
 
+      const isPwdApp = isPWD(targetApp)
+      const assistanceAmount = isPwdApp ? 1500 : 2000
+
       try {
         const currentDisbursements = getSavedDisbursements()
         if (!currentDisbursements.some((d) => d.applicationRef === targetApp.referenceNumber)) {
@@ -2767,7 +2770,7 @@ export default function PWDSeniorCitizen() {
             applicationRef: targetApp.referenceNumber,
             applicantName: displayName(targetApp).toUpperCase(),
             assistanceType: assistanceName,
-            fixedAmount: 2000,
+            fixedAmount: assistanceAmount,
             dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
             status: "PENDING",
             venue: "Quezon City Hall",
@@ -2786,7 +2789,7 @@ export default function PWDSeniorCitizen() {
           body: JSON.stringify({
             referenceNo: targetApp.referenceNumber,
             reference_no: targetApp.referenceNumber,
-            module: isPWD(targetApp) ? "PWD" : "Senior Citizen",
+            module: isPwdApp ? "PWD" : "Senior Citizen",
             applicantName: displayName(targetApp),
             applicant_name: displayName(targetApp),
             concern: assistanceName,
@@ -2800,11 +2803,11 @@ export default function PWDSeniorCitizen() {
       window.dispatchEvent(new Event("storage"))
 
       pushUserNotification({
-        title: `${assistanceName}: Approved`,
-        desc: `Congratulations! Your application for ${assistanceName} has been approved and forwarded to Appointments for payout scheduling and Financial Aid Disbursement (₱2,000).`,
+        title: `${assistanceName}: Document Validated`,
+        desc: `Your ${assistanceName} documents have been validated and forwarded to Appointments for interview scheduling at Quezon City Hall.`,
         applicationRef: targetApp.referenceNumber,
         assistanceType: assistanceName,
-        amount: 2000,
+        amount: assistanceAmount,
       })
     } else {
 

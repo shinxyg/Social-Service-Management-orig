@@ -1799,6 +1799,36 @@ const translations: Record<string, { en: string; tl: string; bis: string }> = {
     tl: "Pakitingnan ang permission settings sa address bar ng inyong browser upang i-allow ang Camera.",
     bis: "Palihug tan-awa ang settings sa address bar sa inyong browser aron i-allow ang Camera.",
   },
+  notifPwdSubmittedTitle: {
+    en: "PWD Application Submitted",
+    tl: "Naisumite ang PWD Aplikasyon",
+    bis: "Napasa na ang PWD Aplikasyon",
+  },
+  notifPwdScheduledTitle: {
+    en: "PWD Interview Scheduled",
+    tl: "Naitakda ang Interview sa PWD",
+    bis: "Naitakda ang Interbyu sa PWD",
+  },
+  notifPwdPensionApprovedTitle: {
+    en: "PWD Application Approved!",
+    tl: "Aprobado ang PWD Aplikasyon!",
+    bis: "Aprobado ang PWD Aplikasyon!",
+  },
+  notifPwdPensionRejectedTitle: {
+    en: "PWD Application Not Approved",
+    tl: "Hindi Naaprubahan ang PWD Aplikasyon",
+    bis: "Wala Maaprobahi ang PWD Aplikasyon",
+  },
+  notifPwdPayoutScheduledTitle: {
+    en: "PWD Pension Payout Scheduled",
+    tl: "Nakatakda ang PWD Pension Payout",
+    bis: "Nakatakda ang PWD Pension Payout",
+  },
+  notifPwdPayoutReleasedTitle: {
+    en: "PWD Pension Payout Claimed",
+    tl: "Matagumpay na Na-claim ang PWD Pensyon",
+    bis: "Malampusong Na-claim ang PWD Pensyon",
+  },
 }
 
 interface LanguageContextValue {

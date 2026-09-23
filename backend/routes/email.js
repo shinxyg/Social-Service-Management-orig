@@ -2,10 +2,58 @@ const express = require('express');
 const router = express.Router();
 const {
   sendPwdApprovalEmail,
+  sendPwdApplicationReceivedEmail,
+  sendPwdInterviewScheduledEmail,
+  sendPwdPayoutScheduledEmail,
+  sendPwdPayoutReleaseReceiptEmail,
   sendSeniorCitizenApprovalEmail,
   sendSeniorBookletApprovalEmail,
   sendSoloParentApprovalEmail,
 } = require('../services/emailService');
+
+router.post('/send-pwd-received', async (req, res) => {
+  try {
+    const { recipientEmail, recipientName, referenceNumber, submissionDate } = req.body;
+    if (!recipientEmail) return res.status(400).json({ error: 'Recipient email is required' });
+    const result = await sendPwdApplicationReceivedEmail({ recipientEmail, recipientName, referenceNumber, submissionDate });
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/send-pwd-interview-scheduled', async (req, res) => {
+  try {
+    const { recipientEmail, recipientName, referenceNumber, interviewDate, interviewTime, venue, officeLocation } = req.body;
+    if (!recipientEmail) return res.status(400).json({ error: 'Recipient email is required' });
+    const result = await sendPwdInterviewScheduledEmail({ recipientEmail, recipientName, referenceNumber, interviewDate, interviewTime, venue, officeLocation });
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/send-pwd-payout-scheduled', async (req, res) => {
+  try {
+    const { recipientEmail, recipientName, pwdIdNumber, referenceNumber, payoutDate, payoutTime, venue, amount } = req.body;
+    if (!recipientEmail) return res.status(400).json({ error: 'Recipient email is required' });
+    const result = await sendPwdPayoutScheduledEmail({ recipientEmail, recipientName, pwdIdNumber, referenceNumber, payoutDate, payoutTime, venue, amount });
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/send-pwd-payout-released', async (req, res) => {
+  try {
+    const { recipientEmail, recipientName, disbursementId, pwdIdNumber, referenceNumber, releasedDate, amount } = req.body;
+    if (!recipientEmail) return res.status(400).json({ error: 'Recipient email is required' });
+    const result = await sendPwdPayoutReleaseReceiptEmail({ recipientEmail, recipientName, disbursementId, pwdIdNumber, referenceNumber, releasedDate, amount });
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 router.post('/send-pwd-id', async (req, res) => {
   try {

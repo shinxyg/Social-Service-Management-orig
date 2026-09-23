@@ -8,6 +8,10 @@ import {
   Info,
   MapPin,
   FileText,
+  Coins,
+  AlertCircle,
+  Check,
+  Receipt,
 } from "lucide-react"
 import {
   FIXED_ASSISTANCE_AMOUNTS,
@@ -18,6 +22,7 @@ import {
   parseAppointmentDateTime,
   isIdOrDocumentService,
   purgeLegacyLocalTestData,
+  getPwdPensionAccumulation,
 } from "../../utils/financialAidSync"
 import { API_BASE } from "../../config/api"
 import { getLoggedInUserQcid, getCurrentUserProfile } from "../../utils/userProfile"
@@ -147,7 +152,15 @@ function getInitialDisbursementsForUser(): SyncedDisbursementRecord[] {
 export default function ApplyFinancialAid() {
   const { t } = useLanguage()
   const [disbursements, setDisbursements] = useState<SyncedDisbursementRecord[]>(() => getInitialDisbursementsForUser())
+  const [nowMs, setNowMs] = useState<number>(Date.now())
   const isFetchingRef = useRef(false)
+
+  useEffect(() => {
+    const ticker = setInterval(() => {
+      setNowMs(Date.now())
+    }, 1000)
+    return () => clearInterval(ticker)
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -569,18 +582,22 @@ export default function ApplyFinancialAid() {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {disbursements.map((d) => {
               const isReleased = d.status === "RELEASED"
               const hasAppt = Boolean(d.appointmentDate)
               const badge = getStageBadge(d.status, hasAppt)
+              const isPwdAssistance = String(d.assistanceType || "").toLowerCase().includes("pwd") || String(d.assistanceType || "").toLowerCase().includes("disability")
+
+              // PWD Dynamic 2-Minute Demo Accumulator State
+              const pension = isPwdAssistance ? getPwdPensionAccumulation(d.dateApproved, (d as any).releasedDate, nowMs) : null
 
               return (
                 <div
                   key={d.id || d.disbursementId}
                   className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 md:p-6 shadow-xs space-y-5 transition-all hover:border-gray-300 dark:hover:border-slate-700"
                 >
-                  {}
+                  {/* Top Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-slate-800 pb-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -592,13 +609,20 @@ export default function ApplyFinancialAid() {
                           {t("applicationRefLabel") || "Application Ref:"} <strong className="text-gray-700 dark:text-slate-300 font-mono">{d.applicationRef}</strong>
                         </span>
                       </div>
-                      <h3 className="text-base font-bold text-gray-900 dark:text-white">{d.assistanceType}</h3>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span>{d.assistanceType}</span>
+                        {isPwdAssistance && (
+                          <span className="text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                            ₱500 / Month Benefit
+                          </span>
+                        )}
+                      </h3>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <span className="text-[10px] text-gray-400 dark:text-slate-400 uppercase font-bold block">
-                          {t("approvedFixedAmount") || "Approved Fixed Amount"}
+                          {isPwdAssistance ? "Consolidated 3-Month Payout" : (t("approvedFixedAmount") || "Approved Fixed Amount")}
                         </span>
                         <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                           ₱{d.fixedAmount.toLocaleString()}
@@ -607,9 +631,93 @@ export default function ApplyFinancialAid() {
                     </div>
                   </div>
 
-                  {}
+                  {/* PWD 2-Minute Demo Pension Accumulator Hub */}
+                  {isPwdAssistance && pension && (
+                    <div className="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/25 rounded-2xl p-4 md:p-5 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                            <Coins className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                              3-Month Pension Accumulation Status
+                            </h4>
+                            <p className="text-[11px] text-emerald-800 dark:text-emerald-400">
+                              Demo Interval: 2 minutes = 1 Month (+₱500) • Total 4 minutes = ₱1,500 (Matured)
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
+                            pension.isMatured
+                              ? "bg-emerald-600 text-white shadow-xs animate-pulse"
+                              : "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300"
+                          }`}>
+                            {pension.isMatured ? <Check className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                            {pension.isMatured ? "🟢 ₱1,500 MATURED / READY FOR PAYOUT" : `Accumulating: ₱${pension.currentAccumulated.toLocaleString()} (${pension.nextQuarterMonthName})`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 3-Step Visual Accumulator Progress */}
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                          <div className={`p-2.5 rounded-xl border transition-all ${
+                            pension.currentMonthNumber >= 1
+                              ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-950 dark:text-emerald-100 font-bold"
+                              : "bg-white/60 dark:bg-slate-800 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block text-[10px] uppercase font-semibold text-emerald-700 dark:text-emerald-300">Month 1</span>
+                            <span className="text-sm font-extrabold">₱500</span>
+                            <span className="block text-[10px] text-emerald-600 font-mono mt-0.5">Locked</span>
+                          </div>
+
+                          <div className={`p-2.5 rounded-xl border transition-all ${
+                            pension.currentMonthNumber >= 2
+                              ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-950 dark:text-emerald-100 font-bold"
+                              : "bg-white/60 dark:bg-slate-800 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block text-[10px] uppercase font-semibold text-emerald-700 dark:text-emerald-300">Month 2</span>
+                            <span className="text-sm font-extrabold">₱1,000</span>
+                            <span className="block text-[10px] text-emerald-600 font-mono mt-0.5">Locked</span>
+                          </div>
+
+                          <div className={`p-2.5 rounded-xl border transition-all ${
+                            pension.isMatured
+                              ? "bg-emerald-600 text-white font-extrabold shadow-sm ring-2 ring-emerald-400/50"
+                              : "bg-white/60 dark:bg-slate-800 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className={`block text-[10px] uppercase font-semibold ${pension.isMatured ? "text-emerald-100" : "text-gray-400"}`}>Month 3</span>
+                            <span className="text-sm font-black">₱1,500</span>
+                            <span className={`block text-[10px] font-mono mt-0.5 ${pension.isMatured ? "text-white font-bold" : "text-gray-400"}`}>
+                              {pension.isMatured ? "🟢 Matured" : "Pending"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="w-full bg-emerald-950/10 dark:bg-emerald-950/40 rounded-full h-2.5 overflow-hidden">
+                          <div
+                            className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${pension.progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Policy Rule Reminder */}
+                      <div className="flex items-start gap-2 text-[11px] text-emerald-900/90 dark:text-emerald-300 bg-white/70 dark:bg-slate-800/80 p-2.5 rounded-xl border border-emerald-200/60">
+                        <AlertCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Strict Policy Rule:</strong> Walang monthly claiming. Awtomatikong naiipon ang ₱500/buwan sa loob ng 3 buwan (₱1,500 total) bago ipapamahagi sa payout counter sa Quezon City Hall.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Schedule & Venue Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {}
                     <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 space-y-2">
                       <span className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" />
@@ -632,13 +740,12 @@ export default function ApplyFinancialAid() {
                             Hinihintay ang Iskedyul mula sa Admin
                           </p>
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                            Itatakda ng Social Worker ang inyong petsa at oras ng appointment sa City Hall.
+                            Itatakda ng Social Worker ang petsa at oras ng payout sa Quezon City Hall kapag handa na ang payroll.
                           </p>
                         </div>
                       )}
                     </div>
 
-                    {}
                     <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 space-y-2">
                       <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-red-500" />
@@ -648,12 +755,45 @@ export default function ApplyFinancialAid() {
                         {d.venue || "Quezon City Hall"}
                       </p>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Social Services Development Department Counter
+                        PDAO / Social Services Development Department Payout Counter
                       </p>
                     </div>
                   </div>
 
-                  {}
+                  {/* 4-Point Physical Claiming Checklist (Strictly No QR Codes) */}
+                  {isPwdAssistance && (
+                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h5 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                          <Receipt className="w-4 h-4 text-blue-600" />
+                          <span>On-Site Physical Claiming Requirements (No QR Code Needed)</span>
+                        </h5>
+                        <span className="text-[10px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                          Physical Payout
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-700 dark:text-slate-300">
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/60">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>1. Physical PWD ID or Valid Government ID</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/60">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>2. Original Barangay Indigency Certificate</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/60">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>3. Medical Certificate / Clinical Abstract</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/60">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>4. Sign Paper Payroll Masterlist with Cashier</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status Steps */}
                   <div className="bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-gray-700 dark:text-slate-200">
@@ -681,12 +821,12 @@ export default function ApplyFinancialAid() {
                           Step 1
                         </span>
                         <span className="text-xs font-bold text-gray-900 dark:text-white">
-                          {hasAppt ? "STEP 1: APPOINTMENT SCHEDULED" : "STEP 1: FOR SCHEDULING"}
+                          {hasAppt ? "STEP 1: PAYOUT SCHEDULED" : "STEP 1: FOR SCHEDULING"}
                         </span>
                         <p className="text-[10px] text-slate-600 dark:text-slate-300 mt-0.5">
                           {hasAppt
-                            ? `Pumunta sa City Hall sa ${d.appointmentDate} ${d.appointmentTime || ""}`
-                            : "Hinihintay ang pagtakda ng iskedyul ng Admin sa Appointments"}
+                            ? `Pumunta sa Quezon City Hall sa ${d.appointmentDate} ${d.appointmentTime || ""}`
+                            : "Hinihintay ang pagtakda ng iskedyul ng Admin sa City Hall"}
                         </p>
                       </div>
 
@@ -702,21 +842,18 @@ export default function ApplyFinancialAid() {
                           {t("step2Released") || "STEP 2: CLAIMED / RELEASED"}
                         </span>
                         <p className="text-[10px] text-slate-600 dark:text-slate-300 mt-0.5">
-                          {t("step2ReleasedDesc") || "Naipagkaloob na ang ayuda sa benepisyaryo."}
+                          {isReleased
+                            ? "Naipagkaloob na ang ₱1,500 cash. Awtomatikong aktibo na ang susunod na 3-buwang cycle."
+                            : (t("step2ReleasedDesc") || "Naipagkaloob na ang ayuda sa benepisyaryo.")}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {}
                   <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 text-xs text-slate-700 dark:text-slate-200 flex items-start gap-2">
                     <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                     <div>
-                      {t("payoutReminderNotice") || (
-                        <>
-                          <span className="font-bold text-gray-900 dark:text-white">Appointment Reminder:</span> Please bring your <strong className="text-gray-900 dark:text-white">QCitizen ID</strong> or 1 Valid Government-Issued ID along with original copies of your documents at the designated payout time.
-                        </>
-                      )}
+                      <span className="font-bold text-gray-900 dark:text-white">Quezon City Hall Reminders:</span> Dalhin ang orihinal na PWD ID / Valid ID at supporting documents. Ang pension ay direktang ipinagkakaloob ng Disbursing Officer sa PDAO Counter.
                     </div>
                   </div>
                 </div>

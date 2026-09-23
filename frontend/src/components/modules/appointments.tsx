@@ -345,6 +345,7 @@ function AppointmentCard({
 }) {
   const effectiveStatus: AppointmentStatus = getApptEffectiveStatus(appt)
   const st = getAppointmentStatusTheme(effectiveStatus)
+  const isPwdAppt = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
 
   return (
     <div className={`border rounded-xl p-4 ${st?.card || 'bg-slate-50/60 border-slate-200'}`}>
@@ -401,8 +402,40 @@ function AppointmentCard({
               </button>
             )}
 
-            {/* 2. Scheduled Stage (Schedule is set, waiting for exact date & time to arrive) */}
-            {effectiveStatus === "scheduled" && (
+            {/* 2. PWD Direct Interview Assessment (Scheduled or Due) */}
+            {isPwdAppt && (effectiveStatus === "scheduled" || effectiveStatus === "under_review") && (
+              <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                <button
+                  type="button"
+                  onClick={() => onApprove?.(appt)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
+                  title="Approve PWD Application, issue official PWD ID and activate ₱500/month pension"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>Approve & Start ₱500/mo Pension</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSchedule(appt)}
+                  className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 text-xs font-medium cursor-pointer"
+                  title="Reschedule Interview"
+                >
+                  <span>Resched</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onReject?.(appt)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+                  title="Reject PWD Application"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  <span>Reject</span>
+                </button>
+              </div>
+            )}
+
+            {/* Non-PWD Scheduled Stage */}
+            {!isPwdAppt && effectiveStatus === "scheduled" && (
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 text-xs font-semibold">
                   <Calendar className="h-3.5 w-3.5" />
@@ -420,8 +453,8 @@ function AppointmentCard({
               </div>
             )}
 
-            {/* 3. Under Review Stage (Exact Date & Time reached — Ready for Social Worker Assessment) */}
-            {effectiveStatus === "under_review" && (
+            {/* Non-PWD Under Review Stage */}
+            {!isPwdAppt && effectiveStatus === "under_review" && (
               <div className="flex flex-wrap items-center gap-1.5 justify-end">
                 <button
                   type="button"
@@ -996,16 +1029,44 @@ export default function Appointments() {
             })),
           ])
 
-          pushUserNotification({
-            userId: targetAppt.referenceNo || 'all',
-            title: 'AICS: Interview Scheduled — Under Review',
-            message: `Nakatakda ang inyong interview sa ${date} (${time}) sa ${location}. Ang inyong aplikasyon ay kasalukuyang under review.`,
-            type: 'appointment',
-            link: '/portal/aics',
-          })
+          // PWD Module Email 2 & Notification
+          const isPwd = targetAppt.module === "PWD" || String(targetAppt.concern || "").toLowerCase().includes("pwd") || String(targetAppt.concern || "").toLowerCase().includes("disability")
 
-          notifyApplicationChange('STATUS_CHANGED', 'aics', targetAppt.referenceNo)
+          if (isPwd) {
+            fetch(`${API_BASE}/api/email/send-pwd-interview-scheduled`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: (targetAppt as any).email || "citizen@quezoncity.gov.ph",
+                applicantName: targetAppt.applicantName,
+                referenceNumber: targetAppt.referenceNo,
+                scheduledDate: date,
+                scheduledTime: time,
+                officeLocation: location || "Quezon City Hall - PDAO Room 102",
+              }),
+            }).catch((err) => console.warn("Email 2 send warning:", err))
+
+            pushUserNotification({
+              userId: targetAppt.referenceNo || 'all',
+              title: 'Interview Scheduled',
+              desc: `Notice to Appear: Your interview is scheduled on ${date} at ${time} at ${location || "Quezon City Hall - PDAO Room 102"}. Please bring valid IDs and original documents.`,
+              applicationRef: targetAppt.referenceNo,
+              type: 'appointment',
+              link: '/portal/my-applications',
+            })
+          } else {
+            pushUserNotification({
+              userId: targetAppt.referenceNo || 'all',
+              title: 'AICS: Interview Scheduled — Under Review',
+              message: `Nakatakda ang inyong interview sa ${date} (${time}) sa ${location}. Ang inyong aplikasyon ay kasalukuyang under review.`,
+              type: 'appointment',
+              link: '/portal/aics',
+            })
+          }
+
+          notifyApplicationChange('STATUS_CHANGED', isPwd ? 'pwd_senior' : 'aics', targetAppt.referenceNo)
           window.dispatchEvent(new Event("aics_applications_updated"))
+          window.dispatchEvent(new Event("pwd_senior_applications_updated"))
           window.dispatchEvent(new Event("appointments_updated"))
           window.dispatchEvent(new Event("user_notifications_updated"))
         } catch (err) {
@@ -1030,6 +1091,10 @@ export default function Appointments() {
       const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
       const cleanRef = String(appt.referenceNo || '').replace(/[^a-zA-Z0-9]/g, '')
       const cleanName = String(appt.applicantName || '').toLowerCase().trim()
+      const isPwd = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
+
+      const pwdIdNumber = `PWD-137404-2026-${String(Math.floor(1000 + Math.random() * 9000))}`
+      const approvedIsoDate = new Date().toISOString()
 
       // 1. Call Backend Endpoints
       await Promise.allSettled([
@@ -1046,7 +1111,12 @@ export default function Appointments() {
         fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(targetRef)}/status`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'approved' }),
+          body: JSON.stringify({
+            status: 'approved',
+            assignedIdNumber: pwdIdNumber,
+            approvedDate: approvedIsoDate,
+            approvedBy: "Social Worker Admin",
+          }),
         }),
       ])
 
@@ -1062,6 +1132,8 @@ export default function Appointments() {
         applicantName: appt.applicantName,
         referenceNo: appt.referenceNo,
         concern: appt.concern,
+        pwdIdNumber: isPwd ? pwdIdNumber : undefined,
+        approvedDate: approvedIsoDate,
       }
 
       localMap[appt.id] = approvedPayload
@@ -1082,15 +1154,63 @@ export default function Appointments() {
       }
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
 
-      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "approved" as const, decision: "approved" as const } : a))
+      // Update pwd_senior_applications in localStorage if PWD
+      if (isPwd) {
+        try {
+          const rawPwd = localStorage.getItem("pwd_senior_applications") || "[]"
+          const pwdList = JSON.parse(rawPwd)
+          const updatedPwd = pwdList.map((p: any) => {
+            const match = p.referenceNumber === appt.referenceNo || p.id === appt.referenceNo || (cleanName && [p.firstName, p.lastName].filter(Boolean).join(" ").toLowerCase().includes(cleanName))
+            if (match) {
+              return {
+                ...p,
+                status: "approved",
+                assignedIdNumber: pwdIdNumber,
+                approvedDate: approvedIsoDate,
+                approvedBy: "Social Worker Admin",
+              }
+            }
+            return p
+          })
+          localStorage.setItem("pwd_senior_applications", JSON.stringify(updatedPwd))
+        } catch {}
 
-      pushUserNotification({
-        userId: appt.referenceNo || 'all',
-        title: 'AICS: Application APPROVED',
-        message: `Malugod naming ipinababatid na APPROVED ang inyong ${appt.concern}. Ang inyong Guarantee Letter ay handa na.`,
-        type: 'payout',
-        link: '/portal/aics',
-      })
+        // Send Email 3: PWD ID Issuance & ₱500/month Pension Activation Notice
+        fetch(`${API_BASE}/api/email/send-pwd-approval`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: (appt as any).email || "citizen@quezoncity.gov.ph",
+            applicantName: appt.applicantName,
+            referenceNumber: appt.referenceNo,
+            pwdIdNumber: pwdIdNumber,
+            approvalDate: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
+            monthlyRate: "500.00",
+            firstQuarterTotal: "1,500.00",
+          }),
+        }).catch((err) => console.warn("Email 3 send warning:", err))
+
+        // Dispatch Bell Notification (Dynamic English/Tagalog)
+        pushUserNotification({
+          userId: appt.referenceNo || 'all',
+          title: 'PWD ID & Pension Approved',
+          desc: `Congratulations! Official PWD ID ${pwdIdNumber} has been issued. Your ₱500/month Social Welfare Pension is now active (₱1,500 every 3-month cycle).`,
+          applicationRef: appt.referenceNo,
+          type: 'pwd_pension',
+          amount: 1500,
+          link: '/portal/financial-aid',
+        })
+      } else {
+        pushUserNotification({
+          userId: appt.referenceNo || 'all',
+          title: 'AICS: Application APPROVED',
+          message: `Malugod naming ipinababatid na APPROVED ang inyong ${appt.concern}. Ang inyong Guarantee Letter ay handa na.`,
+          type: 'payout',
+          link: '/portal/aics',
+        })
+      }
+
+      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "approved" as const, decision: "approved" as const } : a))
 
       syncAppointmentToFinancialAid({
         referenceNo: appt.referenceNo,
@@ -1102,8 +1222,9 @@ export default function Appointments() {
         notes: appt.notes || "Approved appointment for financial aid payout.",
       })
 
-      notifyApplicationChange('APPLICATION_APPROVED', 'aics', appt.referenceNo)
+      notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : 'aics', appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
+      window.dispatchEvent(new Event("pwd_senior_applications_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
       window.dispatchEvent(new Event("applications_updated"))
       window.dispatchEvent(new Event("financial_disbursements_updated"))

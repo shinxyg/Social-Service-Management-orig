@@ -758,6 +758,18 @@ function ResidentHeader({
                     translatedTitle = t("notifLivelihoodApprovedTitle") || n.title
                   } else if (n.title.includes("Livelihood") && n.title.includes("Not Approved")) {
                     translatedTitle = t("notifLivelihoodRejectedTitle") || n.title
+                  } else if (n.title.includes("PWD") && (n.title.includes("Submit") || n.title.includes("Received"))) {
+                    translatedTitle = t("notifPwdSubmittedTitle") || n.title
+                  } else if (n.title.includes("PWD") && (n.title.includes("Interview") || n.title.includes("Scheduled"))) {
+                    translatedTitle = t("notifPwdScheduledTitle") || n.title
+                  } else if (n.title.includes("PWD") && n.title.includes("Approved")) {
+                    translatedTitle = t("notifPwdApprovedTitle") || n.title
+                  } else if (n.title.includes("PWD") && (n.title.includes("Rejected") || n.title.includes("Not Approved") || n.title.includes("Disapproved"))) {
+                    translatedTitle = t("notifPwdRejectedTitle") || n.title
+                  } else if (n.title.includes("PWD") && n.title.includes("Payout Scheduled")) {
+                    translatedTitle = t("notifPwdPayoutScheduledTitle") || n.title
+                  } else if (n.title.includes("PWD") && (n.title.includes("Claimed") || n.title.includes("Released"))) {
+                    translatedTitle = t("notifPwdPayoutReleasedTitle") || n.title
                   }
 
                   const formattedNotifTime = n.created_at && !isNaN(new Date(n.created_at).getTime())
