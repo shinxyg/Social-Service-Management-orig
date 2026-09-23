@@ -28,6 +28,7 @@ import {
   isDisbursementManuallyReleased,
   markDisbursementAsManuallyReleased,
   pushUserNotification,
+  getPwdPensionAccumulation,
 } from "../../utils/financialAidSync"
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import MaskedText from "../ui/masked-text"
@@ -1124,19 +1125,27 @@ export default function FinancialAidDisbursement() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {Object.entries(FIXED_ASSISTANCE_AMOUNTS).map(([type, amount]) => (
-            <div
-              key={type}
-              className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-left space-y-0.5 hover:border-blue-300 transition-colors"
-            >
-              <p className="text-[11px] text-gray-600 font-semibold truncate" title={type}>
-                {type}
-              </p>
-              <p className="text-base font-extrabold text-blue-700">
-                ₱{amount.toLocaleString()}
-              </p>
-            </div>
-          ))}
+          {Object.entries(FIXED_ASSISTANCE_AMOUNTS).map(([type, amount]) => {
+            const isPwd = type.toLowerCase().includes("pwd")
+            return (
+              <div
+                key={type}
+                className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-left space-y-0.5 hover:border-blue-300 transition-colors"
+              >
+                <p className="text-[11px] text-gray-600 font-semibold truncate" title={type}>
+                  {type}
+                </p>
+                <p className="text-base font-extrabold text-blue-700">
+                  ₱{amount.toLocaleString()}{isPwd ? " / buwan" : ""}
+                </p>
+                {isPwd && (
+                  <p className="text-[10px] text-blue-600 font-bold">
+                    ₱1,500 Quarterly Target
+                  </p>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -1216,6 +1225,8 @@ export default function FinancialAidDisbursement() {
                 filteredDisbursements.map((d) => {
                   const isPending = d.status === "PENDING"
                   const isRevealed = Boolean(revealedAmounts[d.id])
+                  const isPwd = String(d.assistanceType).toLowerCase().includes("pwd") || String(d.assistanceType).toLowerCase().includes("disability")
+                  const pwdState = isPwd ? getPwdPensionAccumulation(d.dateApproved || d.appointmentDate, d.releasedDate) : null
 
                   return (
                     <tr key={d.id} className="hover:bg-gray-50/60 transition-colors">
@@ -1230,28 +1241,44 @@ export default function FinancialAidDisbursement() {
                       </td>
                       <td className="px-4 py-3.5 font-black text-emerald-700 text-sm">
                         {!isRevealed ? (
-                          <div className="inline-flex items-center gap-1.5">
-                            <span className="font-mono tracking-wider text-gray-400 select-none">₱••••••</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleAmount(d.id)}
-                              className="p-1 rounded-md hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors cursor-pointer"
-                              title="Click to reveal payout amount"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
+                          <div className="space-y-0.5">
+                            <div className="inline-flex items-center gap-1.5">
+                              <span className="font-mono tracking-wider text-gray-400 select-none">₱••••••</span>
+                              <button
+                                type="button"
+                                onClick={() => toggleAmount(d.id)}
+                                className="p-1 rounded-md hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors cursor-pointer"
+                                title="Click to reveal payout amount"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            {isPwd && pwdState && (
+                              <span className="block text-[10px] font-bold text-blue-600">
+                                ₱500 / buwan • {pwdState.nextQuarterMonthName}
+                              </span>
+                            )}
                           </div>
                         ) : (
-                          <div className="inline-flex items-center gap-1.5">
-                            <span>₱{d.fixedAmount.toLocaleString()}</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleAmount(d.id)}
-                              className="p-1 rounded-md hover:bg-gray-100 text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
-                              title="Click to hide payout amount"
-                            >
-                              <EyeOff className="w-3.5 h-3.5" />
-                            </button>
+                          <div className="space-y-0.5">
+                            <div className="inline-flex items-center gap-1.5">
+                              <span>{isPwd ? "₱500 / buwan" : `₱${d.fixedAmount.toLocaleString()}`}</span>
+                              <button
+                                type="button"
+                                onClick={() => toggleAmount(d.id)}
+                                className="p-1 rounded-md hover:bg-gray-100 text-gray-400 hover:text-amber-600 transition-colors cursor-pointer"
+                                title="Click to hide payout amount"
+                              >
+                                <EyeOff className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            {isPwd && pwdState && (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
+                                  ₱{pwdState.currentAccumulated.toLocaleString()} Naipon ({pwdState.nextQuarterMonthName})
+                                </span>
+                              </div>
+                            )}
                           </div>
                         )}
                       </td>
@@ -1271,20 +1298,42 @@ export default function FinancialAidDisbursement() {
                         </span>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase border ${
-                            isPending
-                              ? "bg-amber-50 text-amber-800 border-amber-300"
-                              : "bg-emerald-50 text-emerald-800 border-emerald-300"
-                          }`}
-                        >
-                          {isPending ? (
-                            <Clock className="w-3 h-3 text-amber-600 animate-pulse" />
-                          ) : (
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          )}
-                          {d.status}
-                        </span>
+                        {isPwd && isPending && pwdState ? (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase border ${
+                              pwdState.isMatured
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                : "bg-blue-50 text-blue-800 border-blue-300"
+                            }`}
+                          >
+                            {pwdState.isMatured ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                <span>Ready (₱1,500)</span>
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="w-3 h-3 text-blue-600 animate-pulse" />
+                                <span>Accumulating (₱500/mo)</span>
+                              </>
+                            )}
+                          </span>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase border ${
+                              isPending
+                                ? "bg-amber-50 text-amber-800 border-amber-300"
+                                : "bg-emerald-50 text-emerald-800 border-emerald-300"
+                            }`}
+                          >
+                            {isPending ? (
+                              <Clock className="w-3 h-3 text-amber-600 animate-pulse" />
+                            ) : (
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            )}
+                            {d.status}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3.5 text-right">
                         <div className="inline-flex items-center justify-end gap-1.5 flex-wrap">

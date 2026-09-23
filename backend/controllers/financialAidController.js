@@ -8,8 +8,9 @@ const FIXED_ASSISTANCE_AMOUNTS = {
   'Burial Assistance': 10000,
   'Food Assistance': 1500,
   'Transportation Assistance': 1000,
-  'PWD Social Assistance': 1500,
-  'PWD Pension Assistance': 1500,
+  'PWD Social Assistance': 500,
+  'PWD Pension Assistance': 500,
+  'PWD Social Pension': 500,
   'Senior Social Assistance': 2000,
   'Child Welfare Support': 5000,
   'Nutritional Assistance': 5000,
@@ -189,6 +190,14 @@ exports.getDisbursements = async (req, res) => {
     } catch (_) {}
 
     try {
+      await db.query(`
+        UPDATE financial_aid_disbursements
+        SET fixed_amount = 500
+        WHERE assistance_type ILIKE '%PWD%' AND (fixed_amount = 2000 OR fixed_amount = 1500 OR fixed_amount IS NULL)
+      `);
+    } catch (_) {}
+
+    try {
       const approvedPwdAssistance = await db.query(
         `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, approved_date
          FROM pwd_senior_applications
@@ -216,7 +225,7 @@ exports.getDisbursements = async (req, res) => {
               row.reference_number,
               fullName,
               assistanceType,
-              2000,
+              isPwd ? 500 : 2000,
               row.approved_date || new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
               'Quezon City Hall',
               'Approved PWD/Senior Social Assistance. Ready for Appointment scheduling and payout.',

@@ -1,14 +1,9 @@
 import { API_BASE } from "../config/api"
 
 export const FIXED_ASSISTANCE_AMOUNTS: Record<string, number> = {
-  "Funeral Assistance": 10000,
-  "Educational Assistance": 3000,
-  "Burial Assistance": 10000,
-  "Food Assistance": 1500,
-  "Transportation Assistance": 1000,
-  "PWD Social Assistance": 1500,
-  "PWD Pension Assistance": 1500,
-  "PWD Social Pension": 1500,
+  "PWD Social Assistance": 500,
+  "PWD Pension Assistance": 500,
+  "PWD Social Pension": 500,
   "Senior Social Assistance": 2000,
   "Child Welfare Support": 5000,
   "Nutritional Assistance": 5000,
@@ -21,6 +16,11 @@ export const FIXED_ASSISTANCE_AMOUNTS: Record<string, number> = {
   "Livelihood Capital Assistance": 15000,
   "Livelihood Assistance": 15000,
   "Livelihood Program": 15000,
+  "Funeral Assistance": 10000,
+  "Educational Assistance": 3000,
+  "Burial Assistance": 10000,
+  "Food Assistance": 1500,
+  "Transportation Assistance": 1000,
 }
 
 export function resolveFixedAmount(concern: string): number {
