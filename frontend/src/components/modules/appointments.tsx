@@ -714,7 +714,6 @@ export default function Appointments() {
           return s
         }
 
-        let unapprovedAicsRefs = new Set<string>()
         let pendingAicsRefs = new Set<string>()
         if (resAicsSettled.status === "fulfilled" && resAicsSettled.value.ok) {
           try {
@@ -723,37 +722,10 @@ export default function Appointments() {
               aicsClone.applications.forEach((app: any) => {
                 const s = String(app.status || '').toLowerCase()
                 const hasSched = Boolean((app.details as any)?.appointmentDate)
-                // Strict Connection: Hanggat hindi pa na-screen / approved for scheduling sa /aics nang walang schedule, bawal lumabas sa /appointments
-                const isApprovedOrEligible = ['waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred'].includes(s) || hasSched
-                if (!isApprovedOrEligible) {
-                  if (app.reference_no) unapprovedAicsRefs.add(String(app.reference_no).trim().toLowerCase())
-                  if (app.id) unapprovedAicsRefs.add(String(app.id).trim().toLowerCase())
-                  if (app.qc_id) unapprovedAicsRefs.add(String(app.qc_id).trim().toLowerCase())
-                }
                 if (['pending', 'submit_pending', 'waiting_approval', 'for_scheduling'].includes(s) && !hasSched) {
                   if (app.reference_no) pendingAicsRefs.add(String(app.reference_no).trim().toLowerCase())
                   if (app.id) pendingAicsRefs.add(String(app.id).trim().toLowerCase())
                   if (app.qc_id) pendingAicsRefs.add(String(app.qc_id).trim().toLowerCase())
-                }
-              })
-            }
-          } catch {}
-        }
-
-        let unapprovedPwdRefs = new Set<string>()
-        if (resPwdSettled.status === "fulfilled" && resPwdSettled.value.ok) {
-          try {
-            const pwdClone = await resPwdSettled.value.clone().json()
-            if (Array.isArray(pwdClone)) {
-              pwdClone.forEach((app: any) => {
-                const s = String(app.status || '').toLowerCase()
-                // Strict Connection: Hanggat hindi pa approved sa /pwd-senior, bawal lumabas sa /appointments
-                const isApprovedOrEligible = s === 'approved' || s === 'under_review' || s === 'completed' || s === 'for_release' || s === 'released'
-                if (!isApprovedOrEligible) {
-                  const r = String(app.referenceNumber || app.reference_number || '').trim().toLowerCase()
-                  const id = String(app.id || '').trim().toLowerCase()
-                  if (r) unapprovedPwdRefs.add(r)
-                  if (id) unapprovedPwdRefs.add(id)
                 }
               })
             }
@@ -816,18 +788,8 @@ export default function Appointments() {
                   const concern = String(a.concern || '').toLowerCase()
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || '').trim().toLowerCase()
                   const rawId = String(a.id || '').trim().toLowerCase()
-                  const mod = String(a.module || '').toUpperCase()
 
                   if (dismissedSet.has(ref) || dismissedSet.has(rawId) || dismissedSet.has(`db-appt-${rawId}`)) {
-                    return false
-                  }
-                  if (mod === 'AICS' && (unapprovedAicsRefs.has(ref) || unapprovedAicsRefs.has(rawId))) {
-                    if (!a.scheduled_date) {
-                      return false
-                    }
-                  }
-                  // Strict Guard: PWD/Senior records must be approved first in Pic 1 (/pwd-senior)
-                  if ((mod === 'PWD' || mod.includes('SENIOR')) && (unapprovedPwdRefs.has(ref) || unapprovedPwdRefs.has(rawId))) {
                     return false
                   }
                   if (concern.includes('id card') || concern.includes('issuance') || concern.includes('replacement') || concern.includes('renewal')) {
@@ -898,10 +860,7 @@ export default function Appointments() {
             if (data.applications && Array.isArray(data.applications)) {
               data.applications.forEach((app: any) => {
                 const rawAppStatus = String(app.status || '').toLowerCase()
-                const hasSched = Boolean((app.details as any)?.appointmentDate)
-                const isAicsEligible = ['waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred'].includes(rawAppStatus) || hasSched
-                // Strict Connection: Hanggat pending/submit_pending pa sa /aics nang walang schedule, bawal lumabas sa /appointments!
-                if (!isAicsEligible) return
+                if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(rawAppStatus)) return
 
                 const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
                 const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
@@ -910,13 +869,14 @@ export default function Appointments() {
 
                 // If already in dataDb.appointments, DO NOT synthesize a duplicate!
                 const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
-                  const dbr = String(dba.reference_no || '').trim().toLowerCase()
+                  const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
                   const dbid = String(dba.id || '').trim().toLowerCase()
                   return (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
                 })
                 if (existsInDb) return
 
-                const isAicsPending = ['waiting_approval', 'for_scheduling'].includes(rawAppStatus) && !hasSched
+                const hasSched = Boolean((app.details as any)?.appointmentDate)
+                const isAicsPending = ['pending', 'submit_pending', 'waiting_approval', 'for_scheduling'].includes(rawAppStatus) && !hasSched
                 const cached = (isAicsPending && !localScheduledMap[apptId]?.savedInSession)
                   ? undefined
                   : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${cleanType}`] || localScheduledMap[`AICS_${ref}`] || undefined)
@@ -986,9 +946,10 @@ export default function Appointments() {
               String(app.service || "").toLowerCase().includes("assistance") ||
               String(app.assistanceType || "").toLowerCase().includes("assistance")
             const appSt = String(app.status || '').toLowerCase()
-            const isApprovedOrEligible = appSt === 'approved' || appSt === 'under_review' || appSt === 'completed' || appSt === 'for_release' || appSt === 'released'
-            if (isAssistance && isApprovedOrEligible) {
-              const ref = app.referenceNumber || app.reference_number || "PWD-QC-2026"
+            if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(appSt)) return
+
+            if (isAssistance) {
+              const ref = app.referenceNumber || app.reference_number || `PWD-QC-2026-${app.id || 1}`
 
               // If already in dataDb.appointments, DO NOT synthesize! The database row is authoritative!
               const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {

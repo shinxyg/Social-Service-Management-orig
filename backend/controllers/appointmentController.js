@@ -120,16 +120,6 @@ async function syncAndCleanAppointments() {
       )
     `).catch(() => {});
 
-    // 2b. Clean up PWD/Senior appointments that are still 'pending' in pwd_senior_applications (NOT YET APPROVED in Pic 1 /pwd-senior)
-    await db.query(`
-      DELETE FROM appointments
-      WHERE module IN ('PWD', 'Senior Citizen')
-        AND reference_no IN (
-          SELECT reference_number FROM pwd_senior_applications
-          WHERE status = 'pending'
-        )
-    `).catch(() => {});
-
     // 3. Clean up orphaned appointments whose parent applications were deleted from the DB
     await db.query(`
       DELETE FROM appointments
@@ -199,12 +189,11 @@ async function syncAndCleanAppointments() {
       )
     `).catch(() => {});
 
-    // Import active AICS applications ONLY after being screened/approved for scheduling in /aics OR if already scheduled
+    // Import active AICS applications for appointment scheduling
     const activeAics = await db.query(
       `SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
        FROM aics_applications
-       WHERE status IN ('waiting_approval', 'for_scheduling', 'scheduled', 'under_review', 'approved', 'completed', 'for_referral', 'referred')
-          OR (details->>'appointmentDate' IS NOT NULL AND details->>'appointmentDate' <> '')`
+       WHERE status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeAics.rows) {
@@ -272,15 +261,15 @@ async function syncAndCleanAppointments() {
       ).catch(() => {});
     }
 
-    // Import ONLY approved PWD and Senior assistance applications (Must be approved in Pic 1 /pwd-senior first!)
-    const approvedPwdSenior = await db.query(
+    // Import active PWD and Senior assistance applications
+    const activePwdSenior = await db.query(
       `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, status, submitted_at, created_at
        FROM pwd_senior_applications
-       WHERE status IN ('approved', 'completed', 'for_release', 'released')
+       WHERE status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled')
          AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')`
     ).catch(() => ({ rows: [] }));
 
-    for (const row of approvedPwdSenior.rows) {
+    for (const row of activePwdSenior.rows) {
       const refNo = String(row.reference_number || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
       const isPwd = String(row.category || '').toUpperCase().includes('PWD');
