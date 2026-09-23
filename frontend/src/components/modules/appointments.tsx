@@ -581,6 +581,21 @@ export default function Appointments() {
           if (raw) localScheduledMap = JSON.parse(raw)
         } catch {}
 
+        // Sanitize legacy contaminated naked keys in localScheduledMap
+        try {
+          let cleaned = false
+          for (const key of Object.keys(localScheduledMap)) {
+            // Naked QC ID or applicant name keys that cross-contaminate between AICS and PWD
+            if (/^\d{10,}$/.test(key) || key.startsWith("appt_1100") || key === "110000262304143") {
+              delete localScheduledMap[key]
+              cleaned = true
+            }
+          }
+          if (cleaned) {
+            localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
+          }
+        } catch {}
+
         let dismissedSet = new Set<string>()
         try {
           const dismissedRaw = localStorage.getItem("dismissed_appointments")
@@ -678,7 +693,10 @@ export default function Appointments() {
                   const ref = String(a.qc_id || a.qcid || a.reference_no || a.reference_number || "").trim()
                   const rawStatus = String(a.status || '').toLowerCase()
                   const isExplicitPending = rawStatus === 'pending' || !a.scheduled_date
-                  const cached = (isExplicitPending && !localScheduledMap[apptId]?.savedInSession) ? undefined : (localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined))
+                  const aicsMod = String(a.module || "AICS").toUpperCase()
+                  const cached = (isExplicitPending && !localScheduledMap[apptId]?.savedInSession)
+                    ? undefined
+                    : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${a.concern}`] || localScheduledMap[`${aicsMod}_${ref}`] || undefined)
                   const schedDate = (isExplicitPending && !cached?.savedInSession) ? null : cleanDate(a.scheduled_date || cached?.scheduledDate)
                   const schedTime = schedDate ? (a.scheduled_time || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
@@ -725,7 +743,9 @@ export default function Appointments() {
                   const ref = String(app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
                   const apptId = `aics-appt-${app.id || ref}`
                   const isAicsPending = ['pending', 'submit_pending', 'waiting_approval', 'for_scheduling'].includes(rawAppStatus)
-                  const cached = (isAicsPending && !localScheduledMap[apptId]?.savedInSession) ? undefined : (localScheduledMap[apptId] || (ref ? localScheduledMap[`appt_${ref}`] : undefined))
+                  const cached = (isAicsPending && !localScheduledMap[apptId]?.savedInSession)
+                    ? undefined
+                    : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${cleanType}`] || localScheduledMap[`AICS_${ref}`] || undefined)
                   const schedDate = (isAicsPending && !cached?.savedInSession) ? null : cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
                   const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
                   const hasDate = Boolean(schedDate)
@@ -788,7 +808,7 @@ export default function Appointments() {
               const concern = isPwd ? "PWD Social Assistance" : "Senior Social Assistance"
               const ref = app.referenceNumber || app.reference_number || "PWD-QC-2026"
               const apptId = `pwd-senior-appt-${app.id || ref}`
-              const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`]
+              const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`${mod}_${ref}`] || undefined
               const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY"
               const isDone = app.status === "completed" || app.status === "released" || cached?.status === "completed"
               const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
@@ -998,18 +1018,25 @@ export default function Appointments() {
           scheduledTime: time,
           officeLocation: location,
           notes,
+          concern: targetAppt.concern,
+          module: targetAppt.module,
         }
         localScheduledMap[targetAppt.id] = schedObj
         localScheduledMap[`${targetAppt.referenceNo}_${targetAppt.concern}`] = schedObj
-        localScheduledMap[targetAppt.referenceNo] = schedObj
+        localScheduledMap[`${targetAppt.module}_${targetAppt.referenceNo}`] = schedObj
+        delete localScheduledMap[targetAppt.referenceNo]
+        delete localScheduledMap[`appt_${targetAppt.referenceNo}`]
         localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
       } catch {}
 
-      // Run network calls in background
+      // Run network calls in background strictly by module
       ;(async () => {
         try {
+          const isAics = targetAppt.module === "AICS" || String(targetAppt.concern || "").toLowerCase().includes("medical")
+          const isPwd = targetAppt.module === "PWD" || String(targetAppt.concern || "").toLowerCase().includes("pwd") || String(targetAppt.concern || "").toLowerCase().includes("disability")
           const targetAppId = targetAppt.rawAppId || targetAppt.id.replace('aics-appt-', '').replace('db-appt-', '')
-          await Promise.allSettled([
+
+          const schedCalls: Promise<any>[] = [
             fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetAppt.referenceNo)}/schedule`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
@@ -1020,30 +1047,36 @@ export default function Appointments() {
                 notes,
                 applicantName: targetAppt.applicantName,
                 concern: targetAppt.concern,
+                module: targetAppt.module,
               }),
             }),
-            fetch(`${API_BASE}/api/aics/applications/${targetAppId}/status`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                status: 'under_review',
-                appointmentDate: date,
-                appointmentVenue: location,
-              }),
-            }).catch(() => fetch(`${API_BASE}/applications/${targetAppId}/status`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                status: 'under_review',
-                appointmentDate: date,
-                appointmentVenue: location,
-              }),
-            })),
-          ])
+          ]
+
+          if (isAics) {
+            schedCalls.push(
+              fetch(`${API_BASE}/api/aics/applications/${targetAppId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  status: 'under_review',
+                  appointmentDate: date,
+                  appointmentVenue: location,
+                }),
+              }).catch(() => fetch(`${API_BASE}/applications/${targetAppId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  status: 'under_review',
+                  appointmentDate: date,
+                  appointmentVenue: location,
+                }),
+              }))
+            )
+          }
+
+          await Promise.allSettled(schedCalls)
 
           // PWD Module Email 2 & Notification
-          const isPwd = targetAppt.module === "PWD" || String(targetAppt.concern || "").toLowerCase().includes("pwd") || String(targetAppt.concern || "").toLowerCase().includes("disability")
-
           if (isPwd) {
             fetch(`${API_BASE}/api/email/send-pwd-interview-scheduled`, {
               method: "POST",
@@ -1104,35 +1137,52 @@ export default function Appointments() {
       const cleanRef = String(appt.referenceNo || '').replace(/[^a-zA-Z0-9]/g, '')
       const cleanName = String(appt.applicantName || '').toLowerCase().trim()
       const isPwd = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
+      const isAics = appt.module === "AICS" || String(appt.concern || "").toLowerCase().includes("medical")
 
       const pwdIdNumber = `PWD-137404-2026-${String(Math.floor(1000 + Math.random() * 9000))}`
       const approvedIsoDate = new Date().toISOString()
 
-      // 1. Call Backend Endpoints
-      await Promise.allSettled([
+      // 1. Call Backend Endpoints STRICTLY by module
+      const calls: Promise<any>[] = [
         fetch(`${API_BASE}/api/appointments/${encodeURIComponent(targetRef)}/status`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'approved', decision: 'approved', applicantName: appt.applicantName }),
-        }),
-        fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'approved', applicantName: appt.applicantName }),
-        }),
-        fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(targetRef)}/status`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             status: 'approved',
-            assignedIdNumber: pwdIdNumber,
-            approvedDate: approvedIsoDate,
-            approvedBy: "Social Worker Admin",
+            decision: 'approved',
+            applicantName: appt.applicantName,
+            module: appt.module,
+            concern: appt.concern,
           }),
         }),
-      ])
+      ]
 
-      // 2. Comprehensive LocalStorage Cache with Multi-Key Aliases
+      if (isPwd) {
+        calls.push(
+          fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(targetRef)}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              status: 'approved',
+              assignedIdNumber: pwdIdNumber,
+              approvedDate: approvedIsoDate,
+              approvedBy: "Social Worker Admin",
+            }),
+          })
+        )
+      } else if (isAics) {
+        calls.push(
+          fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(targetRef)}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'approved', applicantName: appt.applicantName }),
+          })
+        )
+      }
+
+      await Promise.allSettled(calls)
+
+      // 2. Comprehensive LocalStorage Cache with Multi-Key Aliases (MODULE ISOLATED)
       const raw = localStorage.getItem("all_appointments_scheduled") || "{}"
       const localMap = JSON.parse(raw)
       const approvedPayload = {
@@ -1144,26 +1194,30 @@ export default function Appointments() {
         applicantName: appt.applicantName,
         referenceNo: appt.referenceNo,
         concern: appt.concern,
+        module: appt.module,
         pwdIdNumber: isPwd ? pwdIdNumber : undefined,
         approvedDate: approvedIsoDate,
       }
 
       localMap[appt.id] = approvedPayload
       if (appt.referenceNo) {
-        localMap[appt.referenceNo] = approvedPayload
-        localMap[`appt_${appt.referenceNo}`] = approvedPayload
+        localMap[`${appt.referenceNo}_${appt.concern}`] = approvedPayload
+        localMap[`${appt.module}_${appt.referenceNo}`] = approvedPayload
       }
       if (cleanRef) {
-        localMap[cleanRef] = approvedPayload
-        localMap[`appt_${cleanRef}`] = approvedPayload
-      }
-      if (cleanName) {
-        localMap[cleanName] = approvedPayload
-        localMap[`appt_${cleanName}`] = approvedPayload
+        localMap[`${appt.module}_${cleanRef}`] = approvedPayload
       }
       if (appt.rawAppId) {
         localMap[String(appt.rawAppId)] = approvedPayload
       }
+      // Delete any cross-contaminating naked key
+      delete localMap[appt.referenceNo]
+      delete localMap[cleanRef]
+      delete localMap[cleanName]
+      delete localMap[`appt_${appt.referenceNo}`]
+      delete localMap[`appt_${cleanRef}`]
+      delete localMap[`appt_${cleanName}`]
+
       localStorage.setItem("all_appointments_scheduled", JSON.stringify(localMap))
 
       // Update pwd_senior_applications in localStorage if PWD

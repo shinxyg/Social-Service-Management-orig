@@ -347,7 +347,7 @@ exports.createAppointment = async (req, res) => {
 exports.scheduleAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { scheduledDate, scheduledTime, officeLocation, notes, applicantName, concern } = req.body;
+    const { scheduledDate, scheduledTime, officeLocation, notes, applicantName, concern, module: apptModule } = req.body;
 
     if (!scheduledDate || !scheduledTime) {
       return res.status(400).json({ error: 'Date and time are required.' });
@@ -362,6 +362,9 @@ exports.scheduleAppointment = async (req, res) => {
     } catch {}
 
     const cleanId = String(id || '').trim();
+    const cleanNoDash = cleanId.replace(/[^a-zA-Z0-9]/g, '');
+    const targetModule = String(apptModule || '').trim();
+    const targetConcern = String(concern || '').trim();
 
     const result = await db.query(
       `UPDATE appointments
@@ -371,23 +374,28 @@ exports.scheduleAppointment = async (req, res) => {
            office_location = COALESCE($3, office_location),
            notes = COALESCE($4, notes),
            updated_at = NOW()
-       WHERE reference_no = $5 OR id::text = $5
+       WHERE id::text = $5
+          OR (
+            (reference_no = $5 OR REPLACE(reference_no, '-', '') = $6)
+            AND ($7 = '' OR module ILIKE $7)
+            AND ($8 = '' OR concern ILIKE $8)
+          )
        RETURNING *`,
-      [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', notes, cleanId]
+      [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', notes, cleanId, cleanNoDash, targetModule, targetConcern ? `%${targetConcern}%` : '']
     );
 
     let appt;
     if (result.rows.length === 0) {
-
       const insertRes = await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes)
-         VALUES ($1, 'AICS', $2, $3, 'scheduled', $4, $5, $6, $7)
+         VALUES ($1, $2, $3, $4, 'scheduled', $5, $6, $7, $8)
          RETURNING *`,
         [
           cleanId,
+          targetModule || 'AICS',
           applicantName || 'BENEFICIARY',
-          concern || 'Social Assistance',
+          targetConcern || 'Social Assistance',
           formattedDate,
           scheduledTime,
           officeLocation || 'Quezon City Hall',
@@ -399,110 +407,34 @@ exports.scheduleAppointment = async (req, res) => {
       appt = result.rows[0];
     }
 
-    // Note: Do NOT sync with financial_aid_disbursements on schedule alone.
-    // Financial Aid disbursement is strictly created only upon Social Worker APPROVAL.
-
-    try {
-      await db.query(
-        `UPDATE aics_applications
-         SET status = 'under_review',
-             details = COALESCE(details, '{}'::jsonb) || jsonb_build_object(
-               'appointmentDate', $1::text,
-               'appointmentTime', $2::text,
-               'appointmentVenue', $3::text
-             ),
-             updated_at = NOW()
-         WHERE reference_no = $4 OR id::text = $4 OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = REPLACE(REPLACE($4, '-', ''), ' ', '') OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = REPLACE(REPLACE($4, '-', ''), ' ', '')`,
-        [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', cleanId]
-      );
-    } catch (aicsSyncErr) {
-      console.warn('Could not update aics_applications status to under_review:', aicsSyncErr.message);
+    // Only update aics_applications if module is AICS
+    if ((appt?.module || targetModule).toUpperCase() === 'AICS' || targetConcern.toLowerCase().includes('medical')) {
+      try {
+        await db.query(
+          `UPDATE aics_applications
+           SET status = 'under_review',
+               details = COALESCE(details, '{}'::jsonb) || jsonb_build_object(
+                 'appointmentDate', $1::text,
+                 'appointmentTime', $2::text,
+                 'appointmentVenue', $3::text
+               ),
+               updated_at = NOW()
+           WHERE reference_no = $4 OR id::text = $4 OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = REPLACE(REPLACE($4, '-', ''), ' ', '') OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = REPLACE(REPLACE($4, '-', ''), ' ', '')`,
+          [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', cleanId]
+        );
+      } catch (aicsSyncErr) {
+        console.warn('Could not update aics_applications status to under_review:', aicsSyncErr.message);
+      }
     }
 
-    res.json({ message: 'Appointment scheduled and synced with AICS case review.', appointment: appt });
+    res.json({ message: 'Appointment scheduled and synced with case review.', appointment: appt });
   } catch (err) {
     console.error('Error scheduling appointment:', err);
     res.status(500).json({ error: 'Failed to schedule appointment.', details: err.message });
   }
 };
 
-exports.updateAppointmentStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status, decision, applicantName, notes } = req.body;
-    const cleanId = String(id || '').trim();
-    const cleanNoDash = cleanId.replace(/[^a-zA-Z0-9]/g, '');
-    const finalStatus = status || decision || 'approved';
 
-    const result = await db.query(
-      `UPDATE appointments
-       SET status = $1,
-           notes = COALESCE($2, notes),
-           updated_at = NOW()
-       WHERE reference_no = $3
-          OR id::text = $3
-          OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $4
-          OR (applicant_name IS NOT NULL AND $5 <> '' AND LOWER(applicant_name) = LOWER($5))
-       RETURNING *`,
-      [finalStatus, notes || null, cleanId, cleanNoDash, applicantName || '']
-    );
-
-    // Also sync the status across individual module application tables
-    if (finalStatus === 'approved') {
-      await db.query(
-        `UPDATE aics_applications
-         SET status = 'approved', updated_at = NOW()
-         WHERE reference_no = $1
-            OR id::text = $1
-            OR qc_id = $1
-            OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
-            OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = $2
-            OR ($3 <> '' AND LOWER(CONCAT(first_name, ' ', last_name)) = LOWER($3))`,
-        [cleanId, cleanNoDash, applicantName || '']
-      ).catch(() => {});
-
-      await db.query(
-        `UPDATE pwd_senior_applications
-         SET status = 'approved', updated_at = NOW()
-         WHERE reference_number = $1
-            OR id::text = $1
-            OR REPLACE(REPLACE(COALESCE(reference_number, ''), '-', ''), ' ', '') = $2
-            OR ($3 <> '' AND LOWER(CONCAT(first_name, ' ', last_name)) = LOWER($3))`,
-        [cleanId, cleanNoDash, applicantName || '']
-      ).catch(() => {});
-    } else if (finalStatus === 'referred') {
-      await db.query(
-        `UPDATE aics_applications
-         SET status = 'referred', updated_at = NOW()
-         WHERE reference_no = $1
-            OR id::text = $1
-            OR qc_id = $1
-            OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
-            OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = $2`,
-        [cleanId, cleanNoDash]
-      ).catch(() => {});
-    } else if (finalStatus === 'rejected') {
-      await db.query(
-        `UPDATE aics_applications
-         SET status = 'rejected', updated_at = NOW()
-         WHERE reference_no = $1
-            OR id::text = $1
-            OR qc_id = $1
-            OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
-            OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = $2`,
-        [cleanId, cleanNoDash]
-      ).catch(() => {});
-    }
-
-    res.json({
-      message: `Appointment status updated to ${finalStatus}.`,
-      appointment: result.rows[0] || null,
-    });
-  } catch (err) {
-    console.error('Error updating appointment status:', err);
-    res.status(500).json({ error: 'Failed to update appointment status.', details: err.message });
-  }
-};
 
 async function syncAppointmentWithDisbursement(appt) {
   try {
@@ -675,84 +607,97 @@ exports.deleteUserAppointments = async (req, res) => {
 exports.updateAppointmentStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, decision, applicantName, notes } = req.body;
+    const { status, decision, applicantName, notes, module: apptModule, concern: apptConcern } = req.body;
     const rawId = String(id || '').trim();
-    const cleanId = rawId.replace(/^db-appt-/, '').replace(/^aics-appt-/, '').replace(/^pwd-senior-appt-/, '').replace(/^cw-appt-/, '').replace(/^appt_/, '').trim();
+    const cleanId = rawId.replace(/^(db-appt-|aics-appt-|pwd-senior-appt-|cw-appt-|liv-appt-|appt_)/, '').trim();
     const unhyphenated = cleanId.replace(/[^a-zA-Z0-9]/g, '');
     const newStatus = String(status || decision || 'approved').toLowerCase();
+    const targetModule = String(apptModule || '').trim();
+    const targetConcern = String(apptConcern || '').trim();
 
-    // 1. Update appointments table
+    // 1. Update appointments table STRICTLY for this appointment (by id or by reference_no + module/concern)
     const apptUpdate = await db.query(
       `UPDATE appointments
        SET status = $1,
            notes = COALESCE($2, notes),
            updated_at = NOW()
        WHERE id::text = $3
-          OR reference_no = $3
-          OR id::text = $4
-          OR reference_no = $4
-          OR REPLACE(reference_no, '-', '') = $5
-          OR ($6 != '' AND applicant_name ILIKE $6)
+          OR (
+            (reference_no = $3 OR reference_no = $4 OR REPLACE(reference_no, '-', '') = $5)
+            AND ($6 = '' OR module ILIKE $6)
+            AND ($7 = '' OR concern ILIKE $7)
+          )
        RETURNING *`,
-      [newStatus, notes || null, rawId, cleanId, unhyphenated, applicantName ? `%${applicantName}%` : '']
+      [newStatus, notes || null, rawId, cleanId, unhyphenated, targetModule, targetConcern ? `%${targetConcern}%` : '']
     );
 
-    // 2. Also update corresponding aics_applications status
-    await db.query(
-      `UPDATE aics_applications
-       SET status = $1,
-           updated_at = NOW()
-       WHERE id::text = $2
-          OR reference_no = $2
-          OR qc_id = $2
-          OR id::text = $3
-          OR reference_no = $3
-          OR qc_id = $3
-          OR REPLACE(reference_no, '-', '') = $4
-          OR REPLACE(qc_id, '-', '') = $4
-          OR ($5 != '' AND LOWER(first_name || ' ' || last_name) = LOWER($5))`,
-      [newStatus, rawId, cleanId, unhyphenated, applicantName || '']
-    ).catch(() => {});
+    const apptRow = apptUpdate.rows[0];
+    const resolvedModule = (apptRow?.module || targetModule).toUpperCase();
+    const resolvedConcern = String(apptRow?.concern || targetConcern || '');
 
-    // 3. If approved, make sure it is inserted into financial_aid_disbursements table
+    // 2. Only update corresponding module table
+    if (resolvedModule === 'AICS' || resolvedConcern.toLowerCase().includes('medical')) {
+      await db.query(
+        `UPDATE aics_applications
+         SET status = $1, updated_at = NOW()
+         WHERE id::text = $2
+            OR reference_no = $2
+            OR qc_id = $2
+            OR REPLACE(reference_no, '-', '') = $3
+            OR REPLACE(qc_id, '-', '') = $3`,
+        [newStatus, cleanId, unhyphenated]
+      ).catch(() => {});
+    } else if (resolvedModule === 'PWD' || resolvedModule.includes('SENIOR') || resolvedConcern.toLowerCase().includes('pwd') || resolvedConcern.toLowerCase().includes('senior')) {
+      await db.query(
+        `UPDATE pwd_senior_applications
+         SET status = $1, updated_at = NOW()
+         WHERE id::text = $2
+            OR reference_number = $2
+            OR REPLACE(reference_number, '-', '') = $3`,
+        [newStatus, cleanId, unhyphenated]
+      ).catch(() => {});
+    }
+
+    // 3. Financial aid disbursement creation ONLY for approved non-GL cash assistance
     if (newStatus === 'approved' || newStatus === 'completed' || newStatus === 'for_release') {
-      const apptRow = apptUpdate.rows[0];
-      const targetRef = apptRow?.reference_no || cleanId;
-      const targetName = (apptRow?.applicant_name || applicantName || 'BENEFICIARY').toUpperCase();
-      const targetConcern = apptRow?.concern || 'Medical Assistance';
-      const fixedAmount = resolveFixedAmount(targetConcern);
+      const isPwdApp = resolvedModule === 'PWD' || resolvedConcern.toLowerCase().includes('pwd') || resolvedConcern.toLowerCase().includes('disability');
+      const isAicsMedical = resolvedModule === 'AICS' || resolvedConcern.toLowerCase().includes('medical');
 
-      const existingDisb = await db.query(
-        `SELECT id FROM financial_aid_disbursements
-         WHERE application_ref = $1
-            OR application_ref = $2
-            OR REPLACE(application_ref, '-', '') = $3
-            OR (applicant_name ILIKE $4 AND status != 'RELEASED')`,
-        [rawId, targetRef, unhyphenated, `%${targetName}%`]
-      );
+      // Note: AICS Medical uses Guarantee Letter (GL), NOT cash disbursement!
+      if (!isAicsMedical) {
+        const targetRef = apptRow?.reference_no || cleanId;
+        const targetName = (apptRow?.applicant_name || applicantName || 'BENEFICIARY').toUpperCase();
+        const fixedAmount = resolveFixedAmount(resolvedConcern);
 
-      if (existingDisb.rows.length === 0) {
-        const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        const isPwdConcern = String(targetConcern || '').toLowerCase().includes('pwd') || String(targetConcern || '').toLowerCase().includes('disability') || String(targetConcern || '').toLowerCase().includes('pension');
-        await db.query(
-          `INSERT INTO financial_aid_disbursements (
-            disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-            date_approved, status, appointment_date, appointment_time, venue, remarks
-          ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10)
-          ON CONFLICT DO NOTHING`,
-          [
-            disbId,
-            targetRef,
-            targetName,
-            targetConcern,
-            fixedAmount,
-            new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-            isPwdConcern ? null : (apptRow?.scheduled_date || null),
-            isPwdConcern ? null : (apptRow?.scheduled_time || null),
-            apptRow?.office_location || 'Quezon City Hall',
-            isPwdConcern ? 'Approved PWD Social Pension (₱500/month). Accumulating for 3-month consolidated payout.' : (apptRow?.notes || 'Approved appointment ready for payout release.'),
-          ]
-        ).catch(() => {});
+        const existingDisb = await db.query(
+          `SELECT id FROM financial_aid_disbursements
+           WHERE (application_ref = $1 OR application_ref = $2 OR REPLACE(application_ref, '-', '') = $3)
+             AND assistance_type = $4`,
+          [rawId, targetRef, unhyphenated, resolvedConcern]
+        );
+
+        if (existingDisb.rows.length === 0) {
+          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          await db.query(
+            `INSERT INTO financial_aid_disbursements (
+              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+              date_approved, status, appointment_date, appointment_time, venue, remarks
+            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10)
+            ON CONFLICT DO NOTHING`,
+            [
+              disbId,
+              targetRef,
+              targetName,
+              resolvedConcern,
+              fixedAmount,
+              new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+              isPwdApp ? null : (apptRow?.scheduled_date || null),
+              isPwdApp ? null : (apptRow?.scheduled_time || null),
+              'Quezon City Hall',
+              isPwdApp ? 'PWD 3-Month Pension Hold Period started.' : 'Appointment approved aid voucher.',
+            ]
+          ).catch((disbErr) => console.warn('Could not insert disbursement on appointment approval:', disbErr.message));
+        }
       }
     } else if (newStatus === 'rejected') {
       await db.query(
@@ -775,7 +720,7 @@ exports.updateAppointmentStatus = async (req, res) => {
     res.json({
       success: true,
       message: `Status updated to ${newStatus}.`,
-      appointment: apptUpdate.rows[0] || null,
+      appointment: apptRow || null,
     });
   } catch (err) {
     console.error('Error updating appointment status:', err);
