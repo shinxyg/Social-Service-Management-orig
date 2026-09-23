@@ -21,6 +21,8 @@ export interface GuaranteeLetterData {
   validUntil?: string
   assistanceType?: string
   isMedicineVoucher?: boolean
+  pharmacyBranch?: string
+  voucherNotes?: string
 }
 
 export const PARTNER_HOSPITAL_ADDRESSES: Record<string, string> = {
@@ -279,9 +281,20 @@ export function OfficialGuaranteeLetterModal({
                     ₱{voucherAmount.toLocaleString()}.00
                   </span>
                   <span className="font-serif text-slate-600 text-sm sm:text-base">
-                    worth of purchase on a one-time basis at Mercury Drug
+                    worth of purchase on a one-time basis at
+                  </span>
+                  <span className="font-bold font-sans text-slate-950 border-b border-dashed border-slate-700 px-2 text-sm sm:text-base">
+                    {data.pharmacyBranch || "Mercury Drug (Authorized Branches, Quezon City)"}
                   </span>
                 </div>
+
+                {data.voucherNotes && (
+                  <div className="pt-2 text-center">
+                    <p className="inline-block text-xs font-sans bg-amber-50 border border-amber-200 text-amber-900 px-3 py-1 rounded-md max-w-xl text-left">
+                      <span className="font-bold">📝 Doctor&apos;s Prescription / Rx Notes:</span> {data.voucherNotes}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Bottom Security Guilloche Waves Border */}
@@ -465,6 +478,12 @@ export function OfficialGuaranteeLetterModal({
                     <span className="font-bold text-gray-600">Medical Diagnosis: </span>
                     <span className="font-semibold text-slate-900">{data.diagnosis || "Chronic Kidney Disease (Stage 5) / Hemodialysis"}</span>
                   </p>
+                  {data.voucherNotes && (
+                    <p className="sm:col-span-2 bg-blue-50/80 border border-blue-200 rounded p-1.5 text-[11px] text-blue-950">
+                      <span className="font-bold text-blue-800">📝 Doctor&apos;s Prescription / Clinical Notes: </span>
+                      <span>{data.voucherNotes}</span>
+                    </p>
+                  )}
                   <p className="sm:col-span-2">
                     <span className="font-bold text-gray-600">Authorized Claimant: </span>
                     <span className="font-bold">{data.claimantName || data.patientName} {data.claimantRelation ? `(${data.claimantRelation})` : "(Patient / Representative)"}</span>
