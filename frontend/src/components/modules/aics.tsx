@@ -14,7 +14,8 @@ import {
   Building2, 
   XCircle, 
   FileText,
-  Search
+  Search,
+  Printer
 } from 'lucide-react'
 
 const API_BASE = `${APP_API_BASE}/api/aics`
