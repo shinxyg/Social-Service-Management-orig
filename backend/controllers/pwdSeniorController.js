@@ -680,7 +680,10 @@ exports.updateApplicationStatus = async (req, res) => {
     );
 
     if (status === 'approved') {
-      if (isPwd) {
+      if (isAssistance) {
+        // Do not generate or overwrite a new ID number for Social Assistance applications!
+        assignedIdNumber = targetApp?.assigned_id_number || targetApp?.pwd_id_number || targetApp?.senior_id_number || assignedIdNumber || null;
+      } else if (isPwd) {
         if (assignedIdNumber) {
           assignedIdNumber = assignedIdNumber.replace(/^(SENIOR|OSCA)-/i, 'PWD-');
           if (!assignedIdNumber.startsWith('PWD-')) {

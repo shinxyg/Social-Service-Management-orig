@@ -313,7 +313,9 @@ exports.getNotifications = async (req, res) => {
             if (!isItemDismissed(notifId, appDate)) {
               const isApproved = st === 'approved' || st === 'completed' || st === 'for_release';
               const isSenior = (app.category || '').toLowerCase().includes('senior');
-              const isAssistance = String(app.service || app.category || '').toLowerCase().includes('assistance');
+              const isAssistance = String(app.service || app.category || app.type || '').toLowerCase().includes('assist') ||
+                                   String(app.disability_class || '').toLowerCase().includes('assist') ||
+                                   String(app.extra_data || '').toLowerCase().includes('assist');
               const isRenewal = String(app.application_type || '').toLowerCase() === 'renewal';
               const isLoss = String(app.application_type || '').toLowerCase() === 'replacement' || String(app.application_type || '').toLowerCase() === 'loss';
 
@@ -321,7 +323,7 @@ exports.getNotifications = async (req, res) => {
               let serviceLabel = '';
               if (isAssistance) {
                 serviceLabel = isSenior ? 'Senior Citizen Social Assistance' : 'PWD Social Assistance';
-                title = isApproved ? `${serviceLabel} Application: Approved` : `${serviceLabel} Application: Not Approved`;
+                title = isApproved ? `${serviceLabel}: Approved` : `${serviceLabel}: Not Approved`;
               } else if (isSenior) {
                 serviceLabel = `Senior Citizen Services (${isRenewal ? 'Renewal' : isLoss ? 'Replacement' : 'New Application'})`;
                 title = isApproved
@@ -337,11 +339,15 @@ exports.getNotifications = async (req, res) => {
               items.push({
                 id: notifId,
                 title,
-                desc: `${serviceLabel} — Ref: ${app.assigned_id_number || app.reference_number || app.id}`,
+                desc: isAssistance
+                  ? (isApproved
+                      ? `Congratulations! Your ${serviceLabel} application has been approved. Your ₱500/month Social Welfare Pension is now active (₱1,500 every 3-month cycle).`
+                      : `Your ${serviceLabel} application was not approved.`)
+                  : `${serviceLabel} — Ref: ${app.assigned_id_number || app.reference_number || app.id}`,
                 time: formatManilaTime(appDate),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
                 reason: app.rejection_reason || null,
-                reference_no: app.assigned_id_number || app.reference_number || app.id,
+                reference_no: app.reference_number || app.assigned_id_number || app.id,
                 created_at: appDate,
               });
             }

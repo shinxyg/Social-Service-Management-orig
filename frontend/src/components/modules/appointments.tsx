@@ -1385,7 +1385,6 @@ function to12HourTime(timeStr?: string): string {
       const finalLocation = locationOverride || appt.officeLocation || defaultLoc
       const finalNotes = notesOverride || appt.notes || ""
 
-      const pwdIdNumber = `PWD-137404-2026-${String(Math.floor(1000 + Math.random() * 9000))}`
       const approvedIsoDate = new Date().toISOString()
 
       // 1. Call Backend Endpoints STRICTLY by module
@@ -1414,7 +1413,7 @@ function to12HourTime(timeStr?: string): string {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               status: 'approved',
-              assignedIdNumber: pwdIdNumber,
+              category: 'pwd',
               approvedDate: approvedIsoDate,
               approvedBy: "Social Worker Admin",
             }),
@@ -1458,7 +1457,6 @@ function to12HourTime(timeStr?: string): string {
         referenceNo: appt.referenceNo,
         concern: appt.concern,
         module: appt.module,
-        pwdIdNumber: isPwd ? pwdIdNumber : undefined,
         approvedDate: approvedIsoDate,
         notes: finalNotes,
       }
@@ -1495,7 +1493,6 @@ function to12HourTime(timeStr?: string): string {
               return {
                 ...p,
                 status: "approved",
-                assignedIdNumber: pwdIdNumber,
                 approvedDate: approvedIsoDate,
                 approvedBy: "Social Worker Admin",
               }
@@ -1505,27 +1502,11 @@ function to12HourTime(timeStr?: string): string {
           localStorage.setItem("pwd_senior_applications", JSON.stringify(updatedPwd))
         } catch {}
 
-        // Send Email 3: PWD ID Issuance & ₱500/month Pension Activation Notice
-        const recipientEmail = findApplicantEmail(appt)
-        fetch(`${API_BASE}/api/email/send-pwd-approval`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            to: recipientEmail,
-            recipientEmail,
-            applicantName: appt.applicantName,
-            referenceNumber: appt.referenceNo,
-            pwdIdNumber: pwdIdNumber,
-            approvedDate: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
-            disabilityType: appt.concern || "Physical / Visual Disability",
-          }),
-        }).catch((err) => console.warn("Email 3 send warning:", err))
-
-        // Dispatch Bell Notification (Dynamic English/Tagalog)
+        // Dispatch Bell Notification (PWD Social Assistance)
         pushUserNotification({
           userId: appt.referenceNo || 'all',
-          title: 'PWD ID & Pension Approved',
-          desc: `Congratulations! Official PWD ID ${pwdIdNumber} has been issued. Your ₱500/month Social Welfare Pension is now active (₱1,500 every 3-month cycle).`,
+          title: 'PWD Social Assistance: Approved',
+          desc: `Congratulations! Your PWD Social Assistance application has been approved. Your ₱500/month Social Welfare Pension is now active (₱1,500 every 3-month cycle).`,
           applicationRef: appt.referenceNo,
           type: 'pwd_pension',
           amount: 1500,
