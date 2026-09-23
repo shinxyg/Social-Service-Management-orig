@@ -349,13 +349,13 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
 }
 
 export function getApptEffectiveStatus(a: AppointmentRequest): AppointmentStatus {
-  // 1. Explicit admin decisions made during appointment assessment
+  // 1. Pending schedule: If no schedule has been set yet, it is ALWAYS pending!
+  if (!a.scheduledDate) return "pending"
+
+  // 2. Explicit admin decisions made during appointment assessment (only valid once scheduled)
   if (a.decision === "approved") return "approved"
   if (a.decision === "referred") return "referred"
   if (a.decision === "rejected") return "rejected"
-
-  // 2. Pending schedule (no date set yet)
-  if (!a.scheduledDate) return "pending"
 
   // 3. Time-based status: Scheduled before date/time, Under Review on/after date/time
   const isDue = isAppointmentDue(a.scheduledDate, a.scheduledTime)
@@ -851,7 +851,10 @@ export default function Appointments() {
                   let statusVal: AppointmentStatus = 'pending'
                   let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
 
-                  if (!isAicsPending && (rawStatus === 'approved' || rawStatus === 'completed' || cached?.decision === 'approved')) {
+                  if (!hasDate) {
+                    statusVal = 'pending'
+                    cachedDecision = undefined
+                  } else if (!isAicsPending && (rawStatus === 'approved' || rawStatus === 'completed' || cached?.decision === 'approved')) {
                     statusVal = 'approved'
                     cachedDecision = 'approved'
                   } else if (!isAicsPending && (rawStatus === 'referred' || cached?.decision === 'referred')) {
@@ -860,10 +863,8 @@ export default function Appointments() {
                   } else if (rawStatus === 'rejected' || cached?.decision === 'rejected') {
                     statusVal = 'rejected'
                     cachedDecision = 'rejected'
-                  } else if (hasDate && !isAicsPending) {
-                    statusVal = 'scheduled'
                   } else {
-                    statusVal = 'pending'
+                    statusVal = 'scheduled'
                   }
 
                   return {
@@ -921,7 +922,10 @@ export default function Appointments() {
                 let apptStatus: AppointmentStatus = 'pending'
                 let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
 
-                if (rawAppStatus === 'approved' || rawAppStatus === 'completed' || cached?.decision === 'approved') {
+                if (!hasDate) {
+                  apptStatus = 'pending'
+                  cachedDecision = undefined
+                } else if (rawAppStatus === 'approved' || rawAppStatus === 'completed' || cached?.decision === 'approved') {
                   apptStatus = 'approved'
                   cachedDecision = 'approved'
                 } else if (rawAppStatus === 'for_referral' || rawAppStatus === 'referred' || cached?.decision === 'referred') {
@@ -930,10 +934,8 @@ export default function Appointments() {
                 } else if (rawAppStatus === 'rejected' || cached?.decision === 'rejected') {
                   apptStatus = 'rejected'
                   cachedDecision = 'rejected'
-                } else if (hasDate) {
-                  apptStatus = 'scheduled'
                 } else {
-                  apptStatus = 'pending'
+                  apptStatus = 'scheduled'
                 }
 
                 appts.push({
