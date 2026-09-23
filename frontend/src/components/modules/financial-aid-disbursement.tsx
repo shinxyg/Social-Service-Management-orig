@@ -33,6 +33,7 @@ import {
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import MaskedText from "../ui/masked-text"
 import { OfficialGuaranteeLetterModal } from "../ui/official-guarantee-letter-modal"
+import { findApplicantEmail } from "./appointments"
 
 export { FIXED_ASSISTANCE_AMOUNTS, type DisbursementStage, type SyncedDisbursementRecord }
 
@@ -318,11 +319,13 @@ export default function FinancialAidDisbursement() {
     const isPwdAid = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
     if (isPwdAid) {
       // Dispatch Email 4: Payout Schedule Notice with 4-point physical checklist
+      const recipientEmail = findApplicantEmail({ email: (record as any).email, referenceNo: record.applicationRef, applicantName: record.applicantName })
       fetch(`${API_BASE}/api/email/send-pwd-payout-scheduled`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: (record as any).email || "citizen@quezoncity.gov.ph",
+          to: recipientEmail,
+          recipientEmail,
           applicantName: record.applicantName,
           referenceNumber: record.applicationRef,
           disbursementId: record.disbursementId,
@@ -397,17 +400,19 @@ export default function FinancialAidDisbursement() {
       } catch {}
 
       // Dispatch Email 5: Official Payout Release Receipt
+      const recipientEmail = findApplicantEmail({ email: (record as any).email, referenceNo: record.applicationRef, applicantName: record.applicantName })
       fetch(`${API_BASE}/api/email/send-pwd-payout-released`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: (record as any).email || "citizen@quezoncity.gov.ph",
+          to: recipientEmail,
+          recipientEmail,
           applicantName: record.applicantName,
           referenceNumber: record.applicationRef,
           disbursementId: record.disbursementId,
           amount: "1,500.00",
-          releaseDate: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
-          disbursingOfficer: "Social Services Cashier (Quezon City Hall)",
+          releasedDate: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
+          releasedBy: "Disbursing Officer (Quezon City Hall)",
         }),
       }).catch((err) => console.warn("Email 5 send warning:", err))
 

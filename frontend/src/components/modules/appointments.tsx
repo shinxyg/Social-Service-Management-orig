@@ -42,6 +42,43 @@ interface AppointmentRequest {
   officeLocation?: string
   notes?: string
   rawApp?: any
+  email?: string
+}
+
+export function findApplicantEmail(appt: { email?: string; referenceNo?: string; applicantName?: string; rawApp?: any }): string {
+  if (appt.email && appt.email.includes("@")) return appt.email.trim()
+  if (appt.rawApp?.email && appt.rawApp.email.includes("@")) return appt.rawApp.email.trim()
+  if (appt.rawApp?.applicant_email && appt.rawApp.applicant_email.includes("@")) return appt.rawApp.applicant_email.trim()
+  try {
+    const rawPwd = localStorage.getItem("pwd_senior_applications")
+    if (rawPwd) {
+      const parsed = JSON.parse(rawPwd)
+      const found = parsed.find((p: any) =>
+        (appt.referenceNo && (p.referenceNumber === appt.referenceNo || p.id === appt.referenceNo)) ||
+        (appt.applicantName && [p.firstName, p.lastName].filter(Boolean).join(" ").toLowerCase() === appt.applicantName.toLowerCase())
+      )
+      if (found?.email && found.email.includes("@")) return found.email.trim()
+    }
+  } catch {}
+  try {
+    const rawAics = localStorage.getItem("aics_applications")
+    if (rawAics) {
+      const parsed = JSON.parse(rawAics)
+      const found = parsed.find((p: any) =>
+        (appt.referenceNo && (p.reference_no === appt.referenceNo || p.qc_id === appt.referenceNo)) ||
+        (appt.applicantName && [p.first_name, p.last_name].filter(Boolean).join(" ").toLowerCase() === appt.applicantName.toLowerCase())
+      )
+      if (found?.email && found.email.includes("@")) return found.email.trim()
+    }
+  } catch {}
+  try {
+    const userProf = localStorage.getItem("user_profile")
+    if (userProf) {
+      const p = JSON.parse(userProf)
+      if (p.email && p.email.includes("@")) return p.email.trim()
+    }
+  } catch {}
+  return "citizen@quezoncity.gov.ph"
 }
 
 const MODULE_OPTIONS: ModuleKey[] = [
@@ -1220,11 +1257,13 @@ export default function Appointments() {
 
           // PWD Module Email 2 & Notification
           if (isPwd) {
+            const recipientEmail = findApplicantEmail(targetAppt)
             fetch(`${API_BASE}/api/email/send-pwd-interview-scheduled`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                to: (targetAppt as any).email || "citizen@quezoncity.gov.ph",
+                to: recipientEmail,
+                recipientEmail,
                 applicantName: targetAppt.applicantName,
                 referenceNumber: targetAppt.referenceNo,
                 scheduledDate: date,
@@ -1384,17 +1423,18 @@ export default function Appointments() {
         } catch {}
 
         // Send Email 3: PWD ID Issuance & ₱500/month Pension Activation Notice
+        const recipientEmail = findApplicantEmail(appt)
         fetch(`${API_BASE}/api/email/send-pwd-approval`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            to: (appt as any).email || "citizen@quezoncity.gov.ph",
+            to: recipientEmail,
+            recipientEmail,
             applicantName: appt.applicantName,
             referenceNumber: appt.referenceNo,
             pwdIdNumber: pwdIdNumber,
-            approvalDate: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
-            monthlyRate: "500.00",
-            firstQuarterTotal: "1,500.00",
+            approvedDate: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
+            disabilityType: appt.concern || "Physical / Visual Disability",
           }),
         }).catch((err) => console.warn("Email 3 send warning:", err))
 
