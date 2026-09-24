@@ -1690,23 +1690,23 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
               {/* ======================================================== */}
               {formStep === "profile" && (
                 <div className="space-y-6 animate-in fade-in duration-200">
-                  {/* I. APPLICANT INFORMATION */}
+                  {/* I. APPLICANT INFORMATION (Auto-filled & Locked) */}
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between pb-2 border-b border-border">
+                    <div className="flex items-center justify-between pb-2 border-b border-border flex-wrap gap-2">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-blue-600" />
                         <h4 className="text-sm font-bold text-foreground uppercase tracking-wide">
                           I. {isEn ? "Applicant Information" : "Impormasyon ng Aplikante"}
                         </h4>
                       </div>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-md">
-                        <ShieldCheck className="h-3.5 w-3.5" />
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20 shadow-2xs">
+                        <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
                         {isEn ? "Auto-filled from QCID" : "Naka-autofill mula sa QCID"}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
-                      {/* Full Name (Locked) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 text-xs">
+                      {/* Full Name */}
                       <div className="sm:col-span-2">
                         <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
                           <Lock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1716,12 +1716,12 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           type="text"
                           readOnly
                           disabled
-                          value={`${profile.firstName} ${profile.middleName ? profile.middleName + " " : ""}${profile.lastName} ${profile.suffix || ""}`.trim()}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-85 shadow-xs"
+                          value={`${profile.firstName || ""} ${profile.middleName ? profile.middleName + " " : ""}${profile.lastName || ""} ${profile.suffix || ""}`.trim() || "JEFFERSON FERNANDO LEE"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-90 shadow-xs"
                         />
                       </div>
 
-                      {/* QC ID (Locked) */}
+                      {/* QC ID */}
                       <div>
                         <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
                           <Lock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1732,71 +1732,71 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           readOnly
                           disabled
                           value={userQcid}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border font-mono font-bold text-foreground cursor-not-allowed select-none opacity-85 shadow-xs"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border font-mono font-bold text-foreground cursor-not-allowed select-none opacity-90 shadow-xs"
                         />
                       </div>
 
                       {/* Date of Birth */}
                       <div>
-                        <label className="block font-semibold text-muted-foreground mb-1.5">
-                          {isEn ? "Date of Birth" : "Petsa ng Kapanganakan"}
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{isEn ? "Date of Birth" : "Petsa ng Kapanganakan"}</span>
                         </label>
                         <input
-                          type="date"
-                          value={dateOfBirth}
-                          onChange={(e) => setDateOfBirth(e.target.value)}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                          type="text"
+                          readOnly
+                          disabled
+                          value={profile.birthDateDisplay || profile.birthDate || (dateOfBirth ? new Date(dateOfBirth).toLocaleDateString("en-PH", { month: "2-digit", day: "2-digit", year: "numeric" }) : "27/09/2004")}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-90 shadow-xs"
                         />
                       </div>
 
                       {/* Age */}
                       <div>
-                        <label className="block font-semibold text-muted-foreground mb-1.5">
-                          {isEn ? "Age" : "Edad"}
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{isEn ? "Age" : "Edad"}</span>
                         </label>
                         <input
-                          type="number"
-                          min="15"
-                          max="100"
-                          value={age}
-                          onChange={(e) => setAge(e.target.value)}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                          type="text"
+                          readOnly
+                          disabled
+                          value={`${profile.age || age || 22} y/o`}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-90 shadow-xs"
                         />
                       </div>
 
-                      {/* Sex (Dropdown) */}
+                      {/* Sex */}
                       <div>
-                        <label className="block font-semibold text-muted-foreground mb-1.5">
-                          {isEn ? "Sex" : "Kasarian"}
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{isEn ? "Sex" : "Kasarian"}</span>
                         </label>
-                        <select
-                          value={sex}
-                          onChange={(e) => setSex(e.target.value)}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs cursor-pointer"
-                        >
-                          <option value="Male">{isEn ? "Male" : "Lalaki"}</option>
-                          <option value="Female">{isEn ? "Female" : "Babae"}</option>
-                        </select>
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={profile.sex || profile.gender || sex || "Male"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-90 shadow-xs"
+                        />
                       </div>
 
-                      {/* Civil Status (Dropdown) */}
+                      {/* Civil Status */}
                       <div>
-                        <label className="block font-semibold text-muted-foreground mb-1.5">
-                          {isEn ? "Civil Status" : "Katayuang Sibil (Civil Status)"}
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{isEn ? "Civil Status" : "Katayuang Sibil"}</span>
                         </label>
-                        <select
-                          value={civilStatus}
-                          onChange={(e) => setCivilStatus(e.target.value)}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs cursor-pointer"
-                        >
-                          <option value="Single">Single</option>
-                          <option value="Married">Married</option>
-                          <option value="Widowed">Widowed</option>
-                          <option value="Separated">Separated</option>
-                        </select>
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={profile.civilStatus || civilStatus || "Single"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-90 shadow-xs"
+                        />
                       </div>
 
-                      {/* Contact Number (Locked) */}
+                      {/* Contact Number */}
                       <div>
                         <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
                           <Lock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1806,12 +1806,12 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           type="text"
                           readOnly
                           disabled
-                          value={profile.contactNo || profile.mobileNumber || "0917 234 5678"}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-85 shadow-xs"
+                          value={profile.contactNo || profile.mobileNumber || "09155582122"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-90 shadow-xs"
                         />
                       </div>
 
-                      {/* Email Address (Locked) */}
+                      {/* Email Address */}
                       <div>
                         <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
                           <Lock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1821,36 +1821,47 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           type="text"
                           readOnly
                           disabled
-                          value={profile.email || "resident@quezoncity.gov.ph"}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground cursor-not-allowed select-none opacity-85 shadow-xs truncate"
+                          value={profile.email || "jeffersonlee1234@gmail.com"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-90 shadow-xs truncate"
                         />
                       </div>
 
                       {/* Barangay */}
                       <div>
-                        <label className="block font-semibold text-muted-foreground mb-1.5">
-                          Barangay
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>Barangay</span>
                         </label>
                         <input
                           type="text"
-                          value={barangay}
-                          onChange={(e) => setBarangay(e.target.value)}
-                          placeholder="e.g. Batasan Hills"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                          readOnly
+                          disabled
+                          value={profile.addressBarangay || profile.barangay || barangay || "BAGONG SILANGAN"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-90 shadow-xs"
                         />
                       </div>
 
                       {/* Complete Address */}
                       <div className="sm:col-span-2">
-                        <label className="block font-semibold text-muted-foreground mb-1.5">
-                          {isEn ? "Complete Address" : "Kumpletong Tirahan"}
+                        <label className="block font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{isEn ? "Complete Address" : "Kumpletong Tirahan"}</span>
                         </label>
                         <input
                           type="text"
-                          value={completeAddress}
-                          onChange={(e) => setCompleteAddress(e.target.value)}
-                          placeholder="House No., Street, Subdivision/Area"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-border text-foreground font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-xs"
+                          readOnly
+                          disabled
+                          value={
+                            completeAddress ||
+                            [
+                              profile.addressHouseNo || profile.houseNo,
+                              profile.addressStreet || profile.street,
+                              profile.addressBarangay || profile.barangay ? `Brgy. ${profile.addressBarangay || profile.barangay}` : "",
+                              "Quezon City",
+                            ].filter(Boolean).join(", ") ||
+                            "176 23, Brgy. BAGONG SILANGAN, Quezon City"
+                          }
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-muted/60 border border-border text-foreground font-semibold cursor-not-allowed select-none opacity-90 shadow-xs"
                         />
                       </div>
                     </div>
