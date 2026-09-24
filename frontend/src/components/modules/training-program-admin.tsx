@@ -9,6 +9,9 @@ import {
   User,
   Send,
   Eye,
+  FileText,
+  Download,
+  X,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { useLanguage } from "../ui/language-context"
@@ -25,6 +28,11 @@ export default function TrainingProgramAdmin() {
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [selectedApp, setSelectedApp] = useState<TrainingApplicationRecord | null>(null)
+  const [previewDocModal, setPreviewDocModal] = useState<{
+    title: string
+    url: string
+    filename: string
+  } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -803,26 +811,100 @@ export default function TrainingProgramAdmin() {
 
               {/* Documentary Attachments */}
               <div className="pt-2 border-t border-border/60">
-                <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
-                  Attached Documentary Proofs:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="flex items-center justify-between p-2 rounded-lg border border-border bg-background">
-                    <span className="truncate text-[11px] font-medium text-foreground">
-                      🪪 {selectedApp.applicantInfo?.documents?.qcIdProof || "QCID_Verified.pdf"}
-                    </span>
-                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                      Verified
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg border border-border bg-background">
-                    <span className="truncate text-[11px] font-medium text-foreground">
-                      📄 {selectedApp.applicantInfo?.documents?.requestLetter || "Barangay_Indigency_Cert.pdf"}
-                    </span>
-                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                      Attached
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider">
+                    Attached Documentary Proofs (Click to View):
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* QC ID Document */}
+                  {(() => {
+                    const docName = selectedApp.applicantInfo?.documents?.qcIdProof || "QCID_Verified.png"
+                    const docUrl = selectedApp.applicantInfo?.documents?.qcIdProofUrl || "/samples/sample-qcid.png"
+                    return (
+                      <div
+                        onClick={() =>
+                          setPreviewDocModal({
+                            title: "Government Valid ID / QC ID",
+                            filename: docName,
+                            url: docUrl,
+                          })
+                        }
+                        className="flex items-center justify-between p-2.5 rounded-xl border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/15 transition-all cursor-pointer group shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-xs font-bold text-foreground group-hover:text-blue-600 block truncate">
+                              {docName}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">Government Valid ID / QC ID</span>
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-500/10 px-2 py-1 rounded-md shrink-0 border border-blue-500/20 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                          <Eye className="h-3 w-3" /> View
+                        </span>
+                      </div>
+                    )
+                  })()}
+
+                  {/* Request Letter / Barangay Certificate */}
+                  {(() => {
+                    const docName = selectedApp.applicantInfo?.documents?.requestLetter || "Barangay_Certificate.png"
+                    const docUrl = selectedApp.applicantInfo?.documents?.requestLetterUrl || "/samples/LETTER OF INTENT.png"
+                    return (
+                      <div
+                        onClick={() =>
+                          setPreviewDocModal({
+                            title: "Request Letter / Barangay Certificate",
+                            filename: docName,
+                            url: docUrl,
+                          })
+                        }
+                        className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 transition-all cursor-pointer group shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-xs font-bold text-foreground group-hover:text-emerald-600 block truncate">
+                              {docName}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">Proof of Residency / Request Letter</span>
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-md shrink-0 border border-emerald-500/20 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                          <Eye className="h-3 w-3" /> View
+                        </span>
+                      </div>
+                    )
+                  })()}
+
+                  {/* ID Picture Proof if present */}
+                  {selectedApp.applicantInfo?.documents?.idPicProof && (
+                    <div
+                      onClick={() =>
+                        setPreviewDocModal({
+                          title: "1x1 / 2x2 ID Picture or Indigency Proof",
+                          filename: selectedApp.applicantInfo?.documents?.idPicProof || "ID_Photo.jpg",
+                          url: selectedApp.applicantInfo?.documents?.idPicProofUrl || "/samples/sample-id.png",
+                        })
+                      }
+                      className="flex items-center justify-between p-2.5 rounded-xl border border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/15 transition-all cursor-pointer group shadow-2xs sm:col-span-2"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <FileText className="h-4 w-4 text-purple-600 shrink-0" />
+                        <div className="truncate">
+                          <span className="text-xs font-bold text-foreground group-hover:text-purple-600 block truncate">
+                            {selectedApp.applicantInfo?.documents?.idPicProof}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">ID Photo / Supporting Document</span>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-600 bg-purple-500/10 px-2 py-1 rounded-md shrink-0 border border-purple-500/20 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                        <Eye className="h-3 w-3" /> View
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1177,6 +1259,79 @@ export default function TrainingProgramAdmin() {
                 className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer"
               >
                 {isProcessing ? "Rejecting..." : "Confirm Rejection"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DOCUMENT PREVIEW MODAL */}
+      {previewDocModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-card border border-border w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
+              <div className="flex items-center gap-2.5 truncate mr-2">
+                <FileText className="h-5 w-5 text-blue-600 shrink-0" />
+                <div className="truncate">
+                  <h3 className="text-sm font-bold text-foreground truncate">{previewDocModal.title}</h3>
+                  <p className="text-xs text-muted-foreground font-mono truncate">{previewDocModal.filename}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {previewDocModal.url && (
+                  <a
+                    href={previewDocModal.url}
+                    download={previewDocModal.filename}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted/60 text-foreground transition-colors text-xs flex items-center gap-1 font-semibold"
+                    title="Download document"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">Download</span>
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPreviewDocModal(null)}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 overflow-y-auto flex-1 flex items-center justify-center bg-slate-950/80 min-h-[300px]">
+              {previewDocModal.url ? (
+                previewDocModal.url.startsWith("data:application/pdf") || previewDocModal.filename.toLowerCase().endsWith(".pdf") ? (
+                  <iframe
+                    src={previewDocModal.url}
+                    title={previewDocModal.title}
+                    className="w-full h-[65vh] rounded-xl border border-border bg-white"
+                  />
+                ) : (
+                  <img
+                    src={previewDocModal.url}
+                    alt={previewDocModal.title}
+                    className="max-h-[65vh] max-w-full rounded-xl object-contain shadow-md"
+                  />
+                )
+              ) : (
+                <div className="text-center text-muted-foreground p-8">
+                  <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground/60" />
+                  <p className="text-xs font-semibold">Walang preview image na available para sa dokumentong ito.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 border-t border-border bg-card flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">SSDD Official Document Verification</span>
+              <button
+                type="button"
+                onClick={() => setPreviewDocModal(null)}
+                className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+              >
+                Close Preview
               </button>
             </div>
           </div>

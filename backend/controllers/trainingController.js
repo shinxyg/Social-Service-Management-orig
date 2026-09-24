@@ -449,6 +449,7 @@ exports.applyForTraining = async (req, res) => {
     const refNum = await getUniqueTrainingReference(baseRef);
 
     const fullApplicantInfo = {
+      ...applicantInfo,
       fullName: applicantInfo?.fullName || `${applicantInfo?.firstName || ''} ${applicantInfo?.lastName || ''}`.trim(),
       firstName: applicantInfo?.firstName || '',
       middleName: applicantInfo?.middleName || '',
@@ -456,13 +457,23 @@ exports.applyForTraining = async (req, res) => {
       suffix: applicantInfo?.suffix || '',
       email: applicantInfo?.email || '',
       contactNo: applicantInfo?.contactNo || applicantInfo?.mobileNumber || '',
-      address: applicantInfo?.address || '',
+      address: applicantInfo?.address || applicantInfo?.completeAddress || '',
+      completeAddress: applicantInfo?.completeAddress || applicantInfo?.address || '',
       barangay: applicantInfo?.barangay || '',
       city: applicantInfo?.city || 'Quezon City',
       sex: applicantInfo?.sex || '',
+      civilStatus: applicantInfo?.civilStatus || 'Single',
       dateOfBirth: applicantInfo?.dateOfBirth || applicantInfo?.birthDate || '',
       age: applicantInfo?.age || '',
       occupation: applicantInfo?.occupation || '',
+      highestEducation: applicantInfo?.highestEducation || '',
+      schoolInstitution: applicantInfo?.schoolInstitution || '',
+      trainingPurpose: applicantInfo?.trainingPurpose || '',
+      reasonForApplying: applicantInfo?.reasonForApplying || '',
+      hasAttendedTraining: applicantInfo?.hasAttendedTraining || 'No',
+      previousTrainingCourse: applicantInfo?.previousTrainingCourse || '',
+      previousYearCompleted: applicantInfo?.previousYearCompleted || '',
+      documents: applicantInfo?.documents || {},
     };
 
     const scheduleData = {

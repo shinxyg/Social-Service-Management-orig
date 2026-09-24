@@ -768,7 +768,8 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         barangay: barangay || profile.barangay || "Sauyo",
         city: "Quezon City",
         highestEducation: highestEducation || "Senior High School",
-        schoolInstitution: schoolInstitution || "Quezon City School",
+        schoolInstitution: schoolInstitution || "",
+        occupation: profile.occupation || "Self-employed / Resident",
         trainingPurpose: trainingPurpose === "Other" && otherPurpose ? `Other: ${otherPurpose}` : trainingPurpose,
         reasonForApplying: reasonForApplying || "",
         hasAttendedTraining: hasAttendedTraining || "No",
@@ -776,8 +777,11 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
         previousYearCompleted: hasAttendedTraining === "Yes" ? previousYearCompleted : "",
         documents: {
           requestLetter: requestLetterDoc?.name || null,
+          requestLetterUrl: requestLetterDoc?.dataUrl || null,
           qcIdProof: qcIdDoc?.name || null,
+          qcIdProofUrl: qcIdDoc?.dataUrl || null,
           idPicProof: idPicDoc?.name || null,
+          idPicProofUrl: idPicDoc?.dataUrl || null,
         },
       },
     }
@@ -2115,7 +2119,12 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                               onChange={(e) => {
                                 const f = e.target.files?.[0]
                                 if (f) {
-                                  setRequestLetterDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
+                                  const reader = new FileReader()
+                                  reader.onload = (ev) => {
+                                    const dataUrl = (ev.target?.result as string) || URL.createObjectURL(f)
+                                    setRequestLetterDoc({ file: f, dataUrl, name: f.name })
+                                  }
+                                  reader.readAsDataURL(f)
                                 }
                                 e.target.value = ""
                               }}
@@ -2190,7 +2199,12 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             onChange={(e) => {
                               const f = e.target.files?.[0]
                               if (f) {
-                                setQcIdDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
+                                const reader = new FileReader()
+                                reader.onload = (ev) => {
+                                  const dataUrl = (ev.target?.result as string) || URL.createObjectURL(f)
+                                  setQcIdDoc({ file: f, dataUrl, name: f.name })
+                                }
+                                reader.readAsDataURL(f)
                               }
                               e.target.value = ""
                             }}
@@ -2263,7 +2277,12 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                             onChange={(e) => {
                               const f = e.target.files?.[0]
                               if (f) {
-                                setIdPicDoc({ file: f, dataUrl: URL.createObjectURL(f), name: f.name })
+                                const reader = new FileReader()
+                                reader.onload = (ev) => {
+                                  const dataUrl = (ev.target?.result as string) || URL.createObjectURL(f)
+                                  setIdPicDoc({ file: f, dataUrl, name: f.name })
+                                }
+                                reader.readAsDataURL(f)
                               }
                               e.target.value = ""
                             }}
