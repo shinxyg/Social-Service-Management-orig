@@ -827,46 +827,91 @@ export default function FinancialAidDisbursement() {
           } catch {}
         }
 
+        let soloParentApps: any[] = []
         if (resSoloSettled.status === "fulfilled" && resSoloSettled.value.ok) {
           try {
             const dataSolo = await resSoloSettled.value.json()
-            const soloApps = Array.isArray(dataSolo) ? dataSolo : (Array.isArray(dataSolo?.applications) ? dataSolo.applications : [])
-            const approvedSolo = soloApps.filter((s: any) => {
-              const st = String(s.application_status || s.status).toLowerCase()
-              return st === "approved" || st === "for_release" || st === "for_distribution" || st === "released" || st === "completed"
-            })
-            approvedSolo.forEach((s: any) => {
-              const ref = s.referenceNumber || s.reference_number || (s.id ? (String(s.id).startsWith("SP-") ? s.id : `SP-${s.id}`) : "SP-QC-2026")
-              const idStr = `remote-solo-${s.id || ref}`
-              const disbId = `DISB-2026-${String(s.id || ref).slice(-4).padStart(4, "0")}`
-              if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId) || deletedKeys.has(String(s.id))) {
-                return
-              }
-
-              if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
-                const fullName = [s.firstName, s.middleName, s.lastName, s.suffix].filter(Boolean).join(" ").toUpperCase() || "SOLO PARENT BENEFICIARY"
-                const isReleased = String(s.status || "").toLowerCase() === "released" || String(s.status || "").toLowerCase() === "completed"
-                const type = "Solo Parent Financial Subsidy"
-                remoteRecords.push({
-                  id: idStr,
-                  disbursementId: disbId,
-                  applicationRef: ref,
-                  applicantName: fullName,
-                  assistanceType: type,
-                  fixedAmount: resolveFixedAmount(type),
-                  dateApproved: new Date(s.approvedDate || s.submittedAt || Date.now()).toLocaleDateString("en-PH", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  }),
-                  status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
-                  venue: "Quezon City Hall - SSDD Solo Parent Welfare Section",
-                  remarks: "Automatically generated from Solo Parent Financial Subsidy application.",
-                })
-              }
-            })
+            if (Array.isArray(dataSolo)) soloParentApps = dataSolo
+            else if (Array.isArray(dataSolo?.applications)) soloParentApps = dataSolo.applications
           } catch {}
         }
+        if (!soloParentApps || soloParentApps.length === 0) {
+          try {
+            const localSolo = localStorage.getItem("solo_parent_applications")
+            if (localSolo) soloParentApps = JSON.parse(localSolo)
+          } catch {}
+        }
+        if (Array.isArray(soloParentApps)) {
+          const approvedSolo = soloParentApps.filter((s: any) => {
+            const st = String(s.application_status || s.status).toLowerCase()
+            return st === "approved" || st === "for_release" || st === "for_distribution" || st === "released" || st === "completed"
+          })
+          approvedSolo.forEach((s: any) => {
+            const ref = s.referenceNumber || s.reference_number || (s.id ? (String(s.id).startsWith("SP-") ? s.id : `SP-${s.id}`) : "SP-QC-2026")
+            const idStr = `remote-solo-${s.id || ref}`
+            const disbId = `DISB-2026-${String(s.id || ref).slice(-4).padStart(4, "0")}`
+            if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId) || deletedKeys.has(String(s.id))) {
+              return
+            }
+
+            if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
+              const fullName = [s.firstName, s.middleName, s.lastName, s.suffix].filter(Boolean).join(" ").toUpperCase() || "SOLO PARENT BENEFICIARY"
+              const isReleased = String(s.status || "").toLowerCase() === "released" || String(s.status || "").toLowerCase() === "completed"
+              const type = "Solo Parent Financial Subsidy"
+              remoteRecords.push({
+                id: idStr,
+                disbursementId: disbId,
+                applicationRef: ref,
+                applicantName: fullName,
+                assistanceType: type,
+                fixedAmount: resolveFixedAmount(type),
+                dateApproved: new Date(s.approvedDate || s.submittedAt || Date.now()).toLocaleDateString("en-PH", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+                status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
+                venue: "Quezon City Hall - SSDD Solo Parent Welfare Section",
+                remarks: "Automatically generated from Solo Parent Financial Subsidy application.",
+              })
+            }
+          })
+        }
+
+        try {
+          const rawApptList = localStorage.getItem("cached_appointments_list") || localStorage.getItem("all_appointments") || "[]"
+          const apptList = JSON.parse(rawApptList)
+          if (Array.isArray(apptList)) {
+            apptList.forEach((a: any) => {
+              if (a.module === "Solo Parent" || String(a.concern || "").toLowerCase().includes("solo parent")) {
+                const ref = a.referenceNo || a.referenceNumber || a.id
+                const idStr = `appt-solo-${ref}`
+                const disbId = `DISB-2026-${String(ref).slice(-4).padStart(4, "0")}`
+                if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId)) return
+                if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
+                  remoteRecords.push({
+                    id: idStr,
+                    disbursementId: disbId,
+                    applicationRef: ref,
+                    applicantName: String(a.applicantName || "SOLO PARENT BENEFICIARY").toUpperCase(),
+                    assistanceType: "Solo Parent Financial Subsidy",
+                    fixedAmount: resolveFixedAmount("Solo Parent Financial Subsidy"),
+                    dateApproved: new Date(a.submittedAt || Date.now()).toLocaleDateString("en-PH", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }),
+                    status: (a.status === "completed" || a.status === "released") ? "RELEASED" : "PENDING",
+                    appointmentDate: a.scheduledDate,
+                    appointmentTime: a.scheduledTime,
+                    venue: a.officeLocation || "Quezon City Hall - SSDD Solo Parent Welfare Section",
+                    remarks: a.notes || "Approved Solo Parent Financial Subsidy.",
+                  })
+                }
+              }
+            })
+          }
+        } catch {}
 
         if (resApptsSettled.status === "fulfilled" && resApptsSettled.value.ok) {
           try {
@@ -1032,9 +1077,13 @@ export default function FinancialAidDisbursement() {
             return false
           }
 
-          // If an appointment exists for this aid request, wait until it is approved before showing in Financial Aid
+          // If an appointment exists for this aid request, only hide if rejected/referred
           if (appt || cachedSched) {
-            if (apptStatus !== "approved" && apptDecision !== "approved") {
+            if (
+              !["approved", "scheduled", "completed", "for_distribution", "for_release"].includes(apptStatus) &&
+              !["approved", "scheduled"].includes(apptDecision) &&
+              !String(d.assistanceType).toLowerCase().includes("solo")
+            ) {
               return false
             }
           }
@@ -1241,50 +1290,9 @@ export default function FinancialAidDisbursement() {
         </div>
       </div>
 
-      {}
-      {}
-      {}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
-          <h2 className="text-xs font-bold uppercase text-gray-700 flex items-center gap-1.5">
-            <Banknote className="w-4 h-4 text-emerald-600" />
-            Configured Fixed Amount Rates
-          </h2>
-          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
-            Automated Rates
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {Object.entries(FIXED_ASSISTANCE_AMOUNTS).map(([type, amount]) => {
-            const isPwd = type.toLowerCase().includes("pwd")
-            return (
-              <div
-                key={type}
-                className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-left space-y-0.5 hover:border-blue-300 transition-colors"
-              >
-                <p className="text-[11px] text-gray-600 font-semibold truncate" title={type}>
-                  {type}
-                </p>
-                <p className="text-base font-extrabold text-blue-700">
-                  ₱{amount.toLocaleString()}{isPwd ? " / buwan" : ""}
-                </p>
-                {isPwd && (
-                  <p className="text-[10px] text-blue-600 font-bold">
-                    ₱1,500 Quarterly Target
-                  </p>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {}
-      {}
-      {}
+      {/* Main Table Card */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-xs overflow-hidden space-y-0">
-        {}
+        {/* Table Toolbar */}
         <div className="p-4 sm:p-5 border-b border-gray-100 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -1297,7 +1305,6 @@ export default function FinancialAidDisbursement() {
               </p>
             </div>
 
-            {}
             <div className="relative w-full sm:w-72">
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -1310,7 +1317,6 @@ export default function FinancialAidDisbursement() {
             </div>
           </div>
 
-          {}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
               {["ALL", "PENDING", "RELEASED"].map((tab) => (
@@ -1330,7 +1336,6 @@ export default function FinancialAidDisbursement() {
           </div>
         </div>
 
-        {}
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
@@ -1338,7 +1343,7 @@ export default function FinancialAidDisbursement() {
                 <th className="px-4 py-3">Disbursement ID</th>
                 <th className="px-4 py-3">Applicant Name</th>
                 <th className="px-4 py-3">Assistance Type</th>
-                <th className="px-4 py-3">Fixed Amount</th>
+                <th className="px-4 py-3">Base Amount</th>
                 <th className="px-4 py-3">Appointment Schedule</th>
                 <th className="px-4 py-3">Payout Location</th>
                 <th className="px-4 py-3">Status</th>
