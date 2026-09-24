@@ -361,6 +361,14 @@ export default function ApplySoloParent() {
     }
   })
 
+  const [liveSpApps, setLiveSpApps] = useState<any[]>(() => {
+    try {
+      return getLocalSoloParentApplications()
+    } catch {
+      return []
+    }
+  })
+
   const [showRequirementsModal, setShowRequirementsModal] = useState(false)
   const [blockedApp, setBlockedApp] = useState<any>(initialBlockedState.blockedApp)
   const [isBlocked, setIsBlocked] = useState<boolean>(initialBlockedState.isBlocked)
@@ -396,40 +404,33 @@ export default function ApplySoloParent() {
         const uid = userProf?.id || (userProf as any)?.userId || ""
         const currentEmail = (userProf?.email || "").toLowerCase().trim()
 
-        const localApps = getLocalSoloParentApplications()
-        const localRes = evaluateSoloParentBlockedState(localApps, userProf, currentQcid)
-        if (isMounted && localRes.isBlocked) {
-          setIsBlocked(true)
-          setBlockedApp(localRes.blockedApp)
-        }
-
         let backendApps: any[] = []
+        let backendFetched = false
         try {
-          const data = await cachedApiFetch(
-            `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(currentQcid)}&email=${encodeURIComponent(currentEmail)}`,
-            { headers: getAuthHeaders() },
-            15000
-          ).catch(() => null)
-          if (data) {
+          const res = await fetch(
+            `${API_BASE}/api/solo-parent/user/${uid || "0"}?qcid=${encodeURIComponent(currentQcid)}&email=${encodeURIComponent(currentEmail)}&_t=${Date.now()}`,
+            { headers: getAuthHeaders() }
+          )
+          if (res.ok) {
+            const data = await res.json()
             const raw = Array.isArray(data) ? data : data.applications || []
             if (Array.isArray(raw)) {
               backendApps = raw
+              backendFetched = true
             }
           }
         } catch {}
 
-        let allApps = [...backendApps]
-        for (const la of localApps) {
-          if (la && !allApps.some((ba) => (ba.id && ba.id === la.id) || (ba.reference_number && ba.reference_number === la.reference_number))) {
-            allApps.push(la)
-          }
+        let allApps = backendFetched ? backendApps : getLocalSoloParentApplications()
+        if (backendFetched) {
+          try {
+            localStorage.setItem("solo_parent_applications", JSON.stringify(backendApps))
+          } catch {}
         }
-        try {
-          localStorage.setItem("solo_parent_applications", JSON.stringify(allApps))
-        } catch {}
 
-        const finalRes = evaluateSoloParentBlockedState(allApps, userProf, currentQcid)
         if (isMounted) {
+          setLiveSpApps(allApps)
+          const finalRes = evaluateSoloParentBlockedState(allApps, userProf, currentQcid)
           setIsBlocked(finalRes.isBlocked)
           setBlockedApp(finalRes.blockedApp)
         }
@@ -647,13 +648,12 @@ export default function ApplySoloParent() {
   if (!isChildWelfare && !rawTypeParam) {
     const currentQcid = getLoggedInUserQcid() || "110000572516915"
     const userProf = getCurrentUserProfile()
-    const localSpApps = getLocalSoloParentApplications()
 
     return (
       <div className="py-8 px-6 sm:px-10 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-150">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {SOLO_PARENT_PROGRAMS.map((program) => {
-            const cardRes = evaluateSoloParentCardState(localSpApps, program.key, userProf, currentQcid)
+            const cardRes = evaluateSoloParentCardState(liveSpApps, program.key, userProf, currentQcid)
             const isApproved = cardRes.isApproved
             const isOngoing = cardRes.isOngoing
 
@@ -723,24 +723,38 @@ export default function ApplySoloParent() {
                   )}
 
                   {/* Action Button */}
-                  <div className="pt-2 flex justify-center">
+                  <div className="pt-2 flex flex-col items-center gap-2">
                     {isApproved || isOngoing ? (
-                      <button
-                        type="button"
-                        onClick={() => navigate("/portal/my-applications")}
-                        className={`font-bold text-xs md:text-sm tracking-wider uppercase cursor-pointer transition-colors py-2 px-4 rounded-xl flex items-center gap-2 shadow-xs ${
-                          isApproved
-                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }`}
-                      >
-                        <span>
-                          {isApproved
-                            ? (language === "en" ? "VIEW IN APPLICATION HISTORY" : "TINGNAN SA APPLICATION HISTORY")
-                            : (language === "en" ? "TRACK APPLICATION STATUS" : "SUBAYBAYAN ANG STATUS")}
-                        </span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => navigate("/portal/my-applications")}
+                          className={`w-full font-bold text-xs md:text-sm tracking-wider uppercase cursor-pointer transition-colors py-2 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xs ${
+                            isApproved
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                              : "bg-blue-600 hover:bg-blue-700 text-white"
+                          }`}
+                        >
+                          <span>
+                            {isApproved
+                              ? (language === "en" ? "VIEW IN APPLICATION HISTORY" : "TINGNAN SA APPLICATION HISTORY")
+                              : (language === "en" ? "TRACK APPLICATION STATUS" : "SUBAYBAYAN ANG STATUS")}
+                          </span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            localStorage.setItem("solo_parent_reapplying", "true")
+                            bypassedBlockRef.current = true
+                            setBypassedBlock(true)
+                            setSearchParams({ category: "solo-parent", type: program.key, reapply: "true" })
+                          }}
+                          className="text-[11px] text-blue-600 dark:text-sky-400 hover:underline font-semibold cursor-pointer py-1"
+                        >
+                          {language === "en" ? "+ Submit New / Additional Application" : "+ Magpasa ng Bagong Aplikasyon"}
+                        </button>
+                      </>
                     ) : (
                       <button
                         type="button"
