@@ -176,43 +176,6 @@ export const AICS_REQUIREMENTS: Record<string, ProgramRequirements> = {
       },
     ],
   },
-  aicsMaterial: {
-    key: "aicsMaterial",
-    programTitle: "SERVICE REQUIREMENTS FOR THE MATERIAL ASSISTANCE PROGRAM",
-    sections: [
-      {
-        heading: "I. Ano ang Material Assistance Program?",
-        body:
-          "Ang Material Assistance Program ay nagbibigay ng tulong sa mga indibidwal o pamilyang nakakaranas ng crisis situation at nangangailangan ng non-food items o pangunahing gamit, depende sa assessment ng social worker.",
-      },
-      {
-        heading: "II. Sino ang maaaring mag-apply?",
-        list: [
-          "Mga residenteng nangangailangan ng material assistance dahil sa crisis situation.",
-          "Mga indibidwal o pamilyang nangangailangan ng basic non-food items.",
-        ],
-        listClassName: "text-blue-600 list-disc",
-      },
-      {
-        heading: "III. Requirements",
-        body: "Para sa Applicant:",
-        list: [
-          "Barangay Certificate of Indigency / Residency",
-          "Gov Service ID o Valid Government-Issued ID",
-          "Supporting document, kung applicable",
-        ],
-        note: "Depende sa uri ng assistance:",
-        noteList: [
-          "Hygiene Kit",
-          "Sleeping Kit",
-          "Clothing Assistance",
-          "School Supplies",
-          "Starter Kit",
-          "Assistive Devices",
-        ],
-      },
-    ],
-  },
   aicsFood: {
     key: "aicsFood",
     programTitle: "SERVICE REQUIREMENTS FOR THE FOOD ASSISTANCE PROGRAM",

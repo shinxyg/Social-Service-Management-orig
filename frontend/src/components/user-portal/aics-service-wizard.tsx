@@ -21,7 +21,7 @@ import { API_BASE } from "../../config/api"
 import { FIXED_ASSISTANCE_AMOUNTS } from "../modules/financial-aid-disbursement"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 
-export type AICSServiceType = "material" | "food" | "transportation"
+export type AICSServiceType = "food" | "transportation"
 
 interface AICSServiceWizardProps {
   serviceType: AICSServiceType
@@ -181,9 +181,7 @@ export default function AICSServiceWizard({
   const { t, language } = useLanguage()
 
   const reqKey =
-    serviceType === "material"
-      ? "aicsMaterial"
-      : serviceType === "food"
+    serviceType === "food"
       ? "aicsFood"
       : "aicsTransportation"
 
@@ -422,9 +420,7 @@ export default function AICSServiceWizard({
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
 
   const serviceTitle =
-    serviceType === "material"
-      ? "Material Assistance"
-      : serviceType === "food"
+    serviceType === "food"
       ? "Food Assistance"
       : "Transportation Assistance"
 

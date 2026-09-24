@@ -110,8 +110,6 @@ export default function ApplyAICS({ initialType, initialTypeKey, onBack: _onBack
       ? "aicsFuneral"
       : isEducationalAssistance
       ? "aicsEducational"
-      : type?.toLowerCase().includes("material")
-      ? "aicsMaterial"
       : type?.toLowerCase().includes("food") || type?.toLowerCase().includes("pagkain")
       ? "aicsFood"
       : type?.toLowerCase().includes("transport") || type?.toLowerCase().includes("biyahe")
@@ -848,8 +846,6 @@ const handleFinalSubmit = async () => {
       ? "Educational Assistance"
       : isFuneralAssistance
       ? "Funeral Assistance"
-      : type?.toLowerCase().includes("material")
-      ? "Material Assistance"
       : type?.toLowerCase().includes("food")
       ? "Food Assistance"
       : type?.toLowerCase().includes("transport")

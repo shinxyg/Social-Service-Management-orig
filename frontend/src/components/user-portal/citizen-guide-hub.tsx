@@ -23,7 +23,6 @@ import {
   PhoneCall,
   Stethoscope,
   Heart,
-  Package,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { cachedApiFetch } from "../../utils/cachedApiFetch"
@@ -332,15 +331,6 @@ function getAicsServices(lang: Language) {
         path: "/portal/aics?type=educational",
         desc: "Tulong-pinansyal para sa matrikula, gamit sa eskwela, learning materials, at allowance para sa kapus-palad na mag-aaral.",
         requirements: ["Certificate of Enrollment / Registration", "School ID / Student Assessment Form", "Barangay Indigency", "Valid ID ng Magulang/Tagapag-alaga"]
-      },
-      {
-        type: "material",
-        title: "Tulong Materyal (Material Assistance)",
-        icon: Package,
-        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
-        path: "/portal/aics?type=material",
-        desc: "Direktang pamamahagi ng kagamitang pantulong, emergency hygiene packs, at materyal na ayuda para sa mga nasalanta.",
-        requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Pagsusuri ng Social Worker"]
       }
     ]
   }
@@ -373,15 +363,6 @@ function getAicsServices(lang: Language) {
         path: "/portal/aics?type=educational",
         desc: "Tabang pinansyal sa matrikula, gamit sa eskwelahan, learning materials, ug allowance para sa kabus nga estudyante.",
         requirements: ["Certificate of Enrollment / Registration", "School ID / Student Assessment Form", "Barangay Indigency", "Valid ID sa Ginikanan/Guardian"]
-      },
-      {
-        type: "material",
-        title: "Tabang Materyal (Material Assistance)",
-        icon: Package,
-        iconColor: "text-blue-600 bg-blue-50 border-blue-200",
-        path: "/portal/aics?type=material",
-        desc: "Direktang paghatag og gamit, emergency hygiene packs, ug materyal nga hinabang para sa mga biktima sa kalamidad.",
-        requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Pagsusi sa Social Worker"]
       }
     ]
   }
@@ -413,15 +394,6 @@ function getAicsServices(lang: Language) {
       path: "/portal/aics?type=educational",
       desc: "Financial grant for school fees, supplies, learning materials, and student allowance for indigent students.",
       requirements: ["Certificate of Enrollment / Registration", "School ID / Student Assessment Form", "Barangay Indigency", "Parent/Guardian Valid ID"]
-    },
-    {
-      type: "material",
-      title: "Material Assistance",
-      icon: Package,
-      iconColor: "text-blue-600 bg-blue-50 border-blue-200",
-      path: "/portal/aics?type=material",
-      desc: "Direct provisions of assistive supplies, emergency hygiene packs, and material relief for displaced or distressed citizens.",
-      requirements: ["Barangay Certificate of Indigency / Incident Report", "Valid QCID / Government ID", "Social Worker Case Validation"]
     }
   ]
 }

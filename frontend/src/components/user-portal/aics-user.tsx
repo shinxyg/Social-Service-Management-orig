@@ -45,15 +45,6 @@ const AICS_PROGRAMS: AICSProgramCard[] = [
     key: "aicsMedical",
     reqKey: "aicsMedical",
   },
-  {
-    id: "material",
-    title: "Material Assistance",
-    titleEn: "Material Assistance",
-    desc: "Ang Material Assistance Program ay nagbibigay ng tulong-materyal tulad ng mga assistive devices (wheelchair, saklay, walker), emergency relief supplies, at kagamitang pang-ayuda para sa mga residenteng may kapansanan o lubos na nangangailangan dulot ng krisis.",
-    descEn: "The Material Assistance Program provides material aid such as assistive medical devices (wheelchairs, crutches, walkers), relief supplies, and emergency essentials for citizens in crisis.",
-    key: "aicsMaterial",
-    reqKey: "aicsMaterial",
-  },
 ]
 
 export default function AICSUser() {
@@ -107,7 +98,6 @@ export default function AICSUser() {
       if (programId === "medical") return ast.includes("medical") || ast.includes("gamot") || ast.includes("hospital") || ast.includes("medicine")
       if (programId === "funeral") return ast.includes("funeral") || ast.includes("burial") || ast.includes("libing")
       if (programId === "educational") return ast.includes("education") || ast.includes("aral") || ast.includes("school")
-      if (programId === "material") return ast.includes("material")
       if (programId === "food") return ast.includes("food") || ast.includes("pagkain")
       if (programId === "transportation") return ast.includes("transport") || ast.includes("pamasahe")
       return false
@@ -117,8 +107,8 @@ export default function AICSUser() {
   // If no specific service type selected, render the Card Grid matching Pic 1
   if (!selectedProgram) {
     return (
-      <div className="py-8 px-6 sm:px-10 max-w-5xl mx-auto space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="py-8 px-6 sm:px-10 max-w-6xl mx-auto space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {AICS_PROGRAMS.map((program) => {
             const existingApp = getProgramMatch(program.id)
             const rawGL = typeof window !== "undefined" ? localStorage.getItem("printed_gl_applications") : null
@@ -239,7 +229,6 @@ export default function AICSUser() {
 
   // Render the specific service wizard / form
   const isSpecialWizard =
-    selectedProgram.id === "material" ||
     selectedProgram.id === "food" ||
     selectedProgram.id === "transportation"
 
