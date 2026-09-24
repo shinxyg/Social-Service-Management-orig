@@ -2182,72 +2182,47 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           </div>
 
                           {requestLetterDoc && (
-                            <div className="mt-4 p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-in fade-in zoom-in-98 duration-150">
+                            <div
+                              onClick={() =>
+                                setPreviewUploadedDoc({
+                                  title: isEn ? "Request Letter" : "Liham Kahilingan (Request Letter)",
+                                  name: requestLetterDoc.name,
+                                  dataUrl: requestLetterDoc.dataUrl,
+                                })
+                              }
+                              className="mt-3.5 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 flex items-center justify-between gap-3 shadow-xs cursor-pointer group hover:bg-emerald-500/10 transition-colors animate-in fade-in zoom-in-98"
+                              title="Pindutin para makita ang buong litrato"
+                            >
                               <div className="flex items-center gap-3 min-w-0">
-                                <div
-                                  onClick={() =>
-                                    setPreviewUploadedDoc({
-                                      title: isEn ? "Request Letter" : "Liham Kahilingan (Request Letter)",
-                                      name: requestLetterDoc.name,
-                                      dataUrl: requestLetterDoc.dataUrl,
-                                    })
-                                  }
-                                  className="h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900/60 shrink-0 flex items-center justify-center cursor-pointer group relative shadow-inner"
-                                  title="Click to zoom / preview"
-                                >
+                                <div className="h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900/60 shrink-0 flex items-center justify-center shadow-inner">
                                   {requestLetterDoc.dataUrl.startsWith("data:image") ||
                                   requestLetterDoc.dataUrl.startsWith("blob:") ||
                                   /\.(jpg|jpeg|png|webp|gif)$/i.test(requestLetterDoc.name) ? (
                                     <img
                                       src={requestLetterDoc.dataUrl}
                                       alt={requestLetterDoc.name}
-                                      className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-200"
+                                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
                                     />
                                   ) : (
-                                    <FileText className="h-8 w-8 text-emerald-500 group-hover:scale-110 transition-transform" />
+                                    <FileText className="h-8 w-8 text-emerald-500" />
                                   )}
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                    <Eye className="h-5 w-5 text-white" />
-                                  </div>
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-1.5 mb-1">
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                      <CheckCircle2 className="h-3 w-3" /> {isEn ? "Uploaded & Ready" : "Nai-upload at Handa Na"}
+                                      <CheckCircle2 className="h-3 w-3" /> {isEn ? "Uploaded & Ready" : "Nai-upload na"}
                                     </span>
                                   </div>
-                                  <p className="text-xs font-bold text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md" title={requestLetterDoc.name}>
+                                  <p className="text-xs font-bold text-foreground truncate max-w-[240px] sm:max-w-xs md:max-w-md" title={requestLetterDoc.name}>
                                     {requestLetterDoc.name}
                                   </p>
                                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                                    {isEn ? "Click photo or button to view full size" : "Pindutin ang litrato para i-preview"}
+                                    {isEn ? "Click to view full photo" : "Pindutin para makita ang buong litrato"}
                                   </p>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-emerald-500/20">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setPreviewUploadedDoc({
-                                      title: isEn ? "Request Letter" : "Liham Kahilingan (Request Letter)",
-                                      name: requestLetterDoc.name,
-                                      dataUrl: requestLetterDoc.dataUrl,
-                                    })
-                                  }
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                  <span>{isEn ? "View Photo" : "Tingnan"}</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setRequestLetterDoc(null)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-600 text-xs font-semibold transition-colors cursor-pointer"
-                                  title="Remove"
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                  <span>{isEn ? "Remove" : "Alisin"}</span>
-                                </button>
+                              <div className="shrink-0 pr-1 text-muted-foreground group-hover:text-emerald-600 transition-colors">
+                                <Eye className="h-5 w-5" />
                               </div>
                             </div>
                           )}
@@ -2314,72 +2289,47 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         </div>
 
                         {qcIdDoc && (
-                          <div className="mt-4 p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-in fade-in zoom-in-98 duration-150">
+                          <div
+                            onClick={() =>
+                              setPreviewUploadedDoc({
+                                title: isEn ? "QC ID / Proof of Residency" : "QC ID / Katunayan ng Paninirahan",
+                                name: qcIdDoc.name,
+                                dataUrl: qcIdDoc.dataUrl,
+                              })
+                            }
+                            className="mt-3.5 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 flex items-center justify-between gap-3 shadow-xs cursor-pointer group hover:bg-emerald-500/10 transition-colors animate-in fade-in zoom-in-98"
+                            title="Pindutin para makita ang buong litrato"
+                          >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div
-                                onClick={() =>
-                                  setPreviewUploadedDoc({
-                                    title: isEn ? "QC ID / Proof of Residency" : "QC ID / Katunayan ng Paninirahan",
-                                    name: qcIdDoc.name,
-                                    dataUrl: qcIdDoc.dataUrl,
-                                  })
-                                }
-                                className="h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900/60 shrink-0 flex items-center justify-center cursor-pointer group relative shadow-inner"
-                                title="Click to zoom / preview"
-                              >
+                              <div className="h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900/60 shrink-0 flex items-center justify-center shadow-inner">
                                 {qcIdDoc.dataUrl.startsWith("data:image") ||
                                 qcIdDoc.dataUrl.startsWith("blob:") ||
                                 /\.(jpg|jpeg|png|webp|gif)$/i.test(qcIdDoc.name) ? (
                                   <img
                                     src={qcIdDoc.dataUrl}
                                     alt={qcIdDoc.name}
-                                    className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-200"
+                                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
                                   />
                                 ) : (
-                                  <FileText className="h-8 w-8 text-emerald-500 group-hover:scale-110 transition-transform" />
+                                  <FileText className="h-8 w-8 text-emerald-500" />
                                 )}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                  <Eye className="h-5 w-5 text-white" />
-                                </div>
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 mb-1">
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                    <CheckCircle2 className="h-3 w-3" /> {isEn ? "Uploaded & Ready" : "Nai-upload at Handa Na"}
+                                    <CheckCircle2 className="h-3 w-3" /> {isEn ? "Uploaded & Ready" : "Nai-upload na"}
                                   </span>
                                 </div>
-                                <p className="text-xs font-bold text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md" title={qcIdDoc.name}>
+                                <p className="text-xs font-bold text-foreground truncate max-w-[240px] sm:max-w-xs md:max-w-md" title={qcIdDoc.name}>
                                   {qcIdDoc.name}
                                 </p>
                                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                                  {isEn ? "Click photo or button to view full size" : "Pindutin ang litrato para i-preview"}
+                                  {isEn ? "Click to view full photo" : "Pindutin para makita ang buong litrato"}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-emerald-500/20">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPreviewUploadedDoc({
-                                    title: isEn ? "QC ID / Proof of Residency" : "QC ID / Katunayan ng Paninirahan",
-                                    name: qcIdDoc.name,
-                                    dataUrl: qcIdDoc.dataUrl,
-                                  })
-                                }
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span>{isEn ? "View Photo" : "Tingnan"}</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setQcIdDoc(null)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-600 text-xs font-semibold transition-colors cursor-pointer"
-                                title="Remove"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                                <span>{isEn ? "Remove" : "Alisin"}</span>
-                              </button>
+                            <div className="shrink-0 pr-1 text-muted-foreground group-hover:text-emerald-600 transition-colors">
+                              <Eye className="h-5 w-5" />
                             </div>
                           </div>
                         )}
@@ -2444,72 +2394,47 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         </div>
 
                         {idPicDoc && (
-                          <div className="mt-4 p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-in fade-in zoom-in-98 duration-150">
+                          <div
+                            onClick={() =>
+                              setPreviewUploadedDoc({
+                                title: isEn ? "Barangay Indigency" : "Barangay Certificate of Indigency",
+                                name: idPicDoc.name,
+                                dataUrl: idPicDoc.dataUrl,
+                              })
+                            }
+                            className="mt-3.5 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 flex items-center justify-between gap-3 shadow-xs cursor-pointer group hover:bg-emerald-500/10 transition-colors animate-in fade-in zoom-in-98"
+                            title="Pindutin para makita ang buong litrato"
+                          >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div
-                                onClick={() =>
-                                  setPreviewUploadedDoc({
-                                    title: isEn ? "Barangay Indigency" : "Barangay Certificate of Indigency",
-                                    name: idPicDoc.name,
-                                    dataUrl: idPicDoc.dataUrl,
-                                  })
-                                }
-                                className="h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900/60 shrink-0 flex items-center justify-center cursor-pointer group relative shadow-inner"
-                                title="Click to zoom / preview"
-                              >
+                              <div className="h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900/60 shrink-0 flex items-center justify-center shadow-inner">
                                 {idPicDoc.dataUrl.startsWith("data:image") ||
                                 idPicDoc.dataUrl.startsWith("blob:") ||
                                 /\.(jpg|jpeg|png|webp|gif)$/i.test(idPicDoc.name) ? (
                                   <img
                                     src={idPicDoc.dataUrl}
                                     alt={idPicDoc.name}
-                                    className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-200"
+                                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
                                   />
                                 ) : (
-                                  <FileText className="h-8 w-8 text-emerald-500 group-hover:scale-110 transition-transform" />
+                                  <FileText className="h-8 w-8 text-emerald-500" />
                                 )}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                  <Eye className="h-5 w-5 text-white" />
-                                </div>
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5 mb-1">
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                    <CheckCircle2 className="h-3 w-3" /> {isEn ? "Uploaded & Ready" : "Nai-upload at Handa Na"}
+                                    <CheckCircle2 className="h-3 w-3" /> {isEn ? "Uploaded & Ready" : "Nai-upload na"}
                                   </span>
                                 </div>
-                                <p className="text-xs font-bold text-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md" title={idPicDoc.name}>
+                                <p className="text-xs font-bold text-foreground truncate max-w-[240px] sm:max-w-xs md:max-w-md" title={idPicDoc.name}>
                                   {idPicDoc.name}
                                 </p>
                                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                                  {isEn ? "Click photo or button to view full size" : "Pindutin ang litrato para i-preview"}
+                                  {isEn ? "Click to view full photo" : "Pindutin para makita ang buong litrato"}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-emerald-500/20">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPreviewUploadedDoc({
-                                    title: isEn ? "Barangay Indigency" : "Barangay Certificate of Indigency",
-                                    name: idPicDoc.name,
-                                    dataUrl: idPicDoc.dataUrl,
-                                  })
-                                }
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span>{isEn ? "View Photo" : "Tingnan"}</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setIdPicDoc(null)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-600 text-xs font-semibold transition-colors cursor-pointer"
-                                title="Remove"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                                <span>{isEn ? "Remove" : "Alisin"}</span>
-                              </button>
+                            <div className="shrink-0 pr-1 text-muted-foreground group-hover:text-emerald-600 transition-colors">
+                              <Eye className="h-5 w-5" />
                             </div>
                           </div>
                         )}
@@ -3327,19 +3252,6 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {previewUploadedDoc.dataUrl && (
-                  <a
-                    href={previewUploadedDoc.dataUrl}
-                    download={previewUploadedDoc.name}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted/60 text-foreground transition-colors text-xs flex items-center gap-1 font-semibold"
-                    title="Download photo"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span className="hidden sm:inline">Download</span>
-                  </a>
-                )}
                 <button
                   type="button"
                   onClick={() => setPreviewUploadedDoc(null)}
