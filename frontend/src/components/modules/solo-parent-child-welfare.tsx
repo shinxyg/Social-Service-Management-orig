@@ -2043,299 +2043,230 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
         {}
         <div className="px-6 py-6 overflow-y-auto space-y-7">
           {isSoloParent(app) ? (
-            <>
-              {}
-              <div>
-                <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>Personal information</SectionHeading>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                  <Field label="Full name" value={displayName(app)} />
-                  <Field
-                    label="Date of birth"
-                    value={
-                      <span className="inline-flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                        {dobDisplay}
-                      </span>
-                    }
-                  />
-                  <Field label="Age / sex" value={`${app.age || "—"} / ${app.sex || "—"}`} />
-                  <Field label="Civil status" value={app.civilStatus || "—"} />
-                  <Field
-                    label="Contact number"
-                    value={
-                      <span className="inline-flex items-center gap-1.5">
-                        <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                        <MaskedText
-                          value={app.contactNo}
-                          type="phone"
-                          showButtonLabel
-                          auditSubject={displayName(app)}
-                          auditField="Contact Number"
-                          auditModule="Solo Parent & Child Welfare"
-                        />
-                      </span>
-                    }
-                  />
-                  <Field
-                    label="QCID number"
-                    value={
-                      <MaskedText
-                        value={app.qcidNumber}
-                        type="id"
-                        showButtonLabel
-                        auditSubject={displayName(app)}
-                        auditField="QCID Number"
-                        auditModule="Solo Parent & Child Welfare"
-                      />
-                    }
-                  />
-                  <Field
-                    label="Email address"
-                    value={
-                      app.email ? (
-                        <span className="inline-flex items-center gap-1.5">
-                          <Mail className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                          <MaskedText
-                            value={app.email}
-                            type="email"
-                            showButtonLabel
-                            auditSubject={displayName(app)}
-                            auditField="Email Address"
-                            auditModule="Solo Parent & Child Welfare"
-                          />
-                        </span>
-                      ) : (
-                        "—"
-                      )
-                    }
-                  />
-                  <Field label="Barangay" value={app.addressBarangay || "—"} />
-                  <div className="col-span-2">
-                    <Field
-                      label="Complete address"
-                      value={
-                        <span className="inline-flex items-start gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
-                          {address}
-                        </span>
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
+            (() => {
+              const rawFd = (app as any).formData || (app as any).form_data || {}
+              const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+              const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+              const rawEd = (app as any).extraData || (app as any).extra_data || {}
+              const ed = typeof rawEd === "string" ? parseJsonSafe(rawEd, {}) : (rawEd || {})
 
-              {/* Section 02: Solo Parent Financial Subsidy Details */}
-              <div>
-                <SectionHeading number={nextNum()} icon={<ClipboardList className="h-4 w-4" />}>
-                  Solo Parent Financial Subsidy Details
-                </SectionHeading>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                  <Field
-                    label="Program"
-                    value={
-                      <span className="font-semibold text-blue-700 dark:text-blue-400">
-                        Solo Parent Financial Subsidy Program (₱1,000 / month)
-                      </span>
-                    }
-                  />
-                  <Field
-                    label="Solo Parent ID (SPIC)"
-                    value={
-                      <span className="font-mono font-bold text-foreground">
-                        {app.soloParentIdNumber || app.assignedIdNumber || "—"}
-                      </span>
-                    }
-                  />
-                  <Field
-                    label="Solo Parent Status"
-                    value={
-                      <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
-                        <Check className="h-3.5 w-3.5 stroke-[3]" />
-                        {app.soloParentStatus || "Active / Verified Solo Parent"}
-                      </span>
-                    }
-                  />
-                  <Field
-                    label="Employment Status"
-                    value={
-                      <span className="font-semibold text-foreground">
-                        {app.employmentStatus || "—"}
-                      </span>
-                    }
-                  />
-                  <div className="col-span-2">
-                    <Field
-                      label="Solo Parent Category / Reason"
-                      value={app.soloParentCategory || app.classification || "Solo Parent Beneficiary"}
-                    />
-                  </div>
-                  <Field
-                    label="Occupation"
-                    value={app.occupation || "—"}
-                  />
-                  <Field
-                    label="Employer / Source of Income"
-                    value={app.employerOrIncomeSource || app.companyAgency || "—"}
-                  />
-                  <Field
-                    label="Monthly Income"
-                    value={
-                      app.monthlyIncome
-                        ? (String(app.monthlyIncome).startsWith("₱") ? app.monthlyIncome : `₱${app.monthlyIncome}`)
-                        : "—"
-                    }
-                  />
-                  <Field
-                    label="Other Source of Income"
-                    value={app.otherSourceOfIncome || "None"}
-                  />
-                  <Field
-                    label="Dependents Info"
-                    value={`${app.numberOfDependents || "1"} dependent(s) (Youngest: ${app.ageOfYoungestDependent ? `${app.ageOfYoungestDependent} y/o` : "—"})`}
-                  />
-                  <Field
-                    label="Receiving Pension"
-                    value={app.receivingPension === "Yes" ? (app.pensionType || "Yes") : "None"}
-                  />
-                  {app.receivingGovAssistance === "Yes" && (
-                    <div className="col-span-2">
-                      <Field
-                        label="Other Government Assistance"
-                        value={`${app.govAssistanceProgramName || "Government Program"} ${app.govAssistanceAmountFreq ? `(${app.govAssistanceAmountFreq})` : ""}`}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              const getVal = (...candidates: any[]) => {
+                for (const c of candidates) {
+                  if (c !== undefined && c !== null && String(c).trim() !== "" && c !== "null" && c !== "undefined" && c !== "—") {
+                    return String(c).trim()
+                  }
+                }
+                return ""
+              }
 
-              {}
-              {app.familyMembers && app.familyMembers.length > 0 && (
-                <div>
-                  <SectionHeading number={nextNum()} icon={<Users className="h-4 w-4" />}>Family composition</SectionHeading>
-                  <div className="space-y-2">
-                    {app.familyMembers.map((m, idx) => (
-                      <div key={m.id} className="p-4 rounded-lg text-sm" style={{ background: "var(--surface-sunk)" }}>
-                        <p className="gw-serif font-semibold mb-2" style={{ color: "var(--ink)" }}>Member {idx + 1} — {m.name || "—"}</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
-                          <Field label="Relationship" value={m.relationship} />
-                          <Field label="Age" value={m.age} />
-                          <Field label="Birthday" value={m.birthday} />
-                          <Field label="Status" value={m.status} />
-                          <Field label="Education" value={m.educationalAttainment} />
-                          <Field label="Occupation / income" value={m.occupationMonthlyIncome} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              const spDob = (() => {
+                const rawDob = getVal((app as any).birthDate, (app as any).birth_date, (app as any).dob, fdForm.birthDate, fd.birthDate, ed.birthDate)
+                if (rawDob) {
+                  const d = new Date(rawDob)
+                  if (!isNaN(d.getTime())) {
+                    return d.toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+                  }
+                  return rawDob
+                }
+                const parts = [app.dobMonth || fdForm.dobMonth, app.dobDay || fdForm.dobDay, app.dobYear || fdForm.dobYear].filter(Boolean)
+                return parts.length > 0 ? parts.join(" ") : "—"
+              })()
 
-              {}
-              {(() => {
-                const rawFd = (app as any).formData || (app as any).form_data || {}
-                const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
-                const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
-                const rawEd = (app as any).extraData || (app as any).extra_data || {}
-                const ed = typeof rawEd === "string" ? parseJsonSafe(rawEd, {}) : (rawEd || {})
+              const spAge = getVal(app.age, (app as any).age, fdForm.age, fd.age, ed.age, "—")
+              const spSex = getVal(app.sex, (app as any).sex, (app as any).gender, fdForm.sex, fd.sex, ed.sex, "—")
+              const spCivilStatus = getVal(app.civilStatus, (app as any).civil_status, fdForm.civilStatus, fd.civilStatus, ed.civilStatus, "Single")
+              const spContactNo = getVal(app.contactNo, (app as any).contact_no, (app as any).contactNumber, (app as any).contact_number, (app as any).phone, fdForm.contactNo, fd.contactNo, ed.contactNo, "—")
+              const spQcid = getVal(app.qcidNumber, (app as any).qcid_number, (app as any).qcid, fdForm.qcidNumber, fd.qcidNumber, ed.qcidNumber, (app as any).reference_number, "—")
+              const spEmail = getVal(app.email, (app as any).email, fdForm.email, fd.email, ed.email, "")
+              const spBarangay = getVal(app.addressBarangay, (app as any).address_barangay, (app as any).barangay, fdForm.addressBarangay, fd.addressBarangay, ed.addressBarangay, "—")
+              
+              const spIdNum = getVal(app.soloParentIdNumber, (app as any).solo_parent_id_number, (app as any).assignedIdNumber, (app as any).assigned_id_number, fdForm.soloParentIdNumber, fd.soloParentIdNumber, ed.soloParentIdNumber, "—")
+              const spStatus = getVal(app.soloParentStatus, (app as any).solo_parent_status, fdForm.soloParentStatus, fd.soloParentStatus, "Active / Verified Solo Parent")
+              const spEmpStatus = getVal(app.employmentStatus, (app as any).employment_status, fdForm.employmentStatus, fd.employmentStatus, "Unemployed")
+              const spCategory = getVal(app.soloParentCategory, (app as any).solo_parent_category, (app as any).classification, (app as any).classification_title, fdForm.soloParentCategory, fd.soloParentCategory, "Solo Parent Beneficiary")
+              
+              const spOccupation = getVal(app.occupation, (app as any).occupation, fdForm.occupation, fd.occupation, ed.occupation, "—")
+              const spEmployer = getVal(app.employerOrIncomeSource, (app as any).employer_or_income_source, (app as any).companyAgency, (app as any).company_agency, fdForm.employerOrIncomeSource, fd.employerOrIncomeSource, "—")
+              const rawIncome = getVal(app.monthlyIncome, (app as any).monthly_income, fdForm.monthlyIncome, fd.monthlyIncome)
+              const spIncomeDisplay = rawIncome ? (rawIncome.startsWith("₱") ? rawIncome : `₱${rawIncome}`) : "—"
+              const spOtherIncome = getVal(app.otherSourceOfIncome, (app as any).other_source_of_income, fdForm.otherSourceOfIncome, fd.otherSourceOfIncome, "None")
+              
+              const spDependents = getVal(app.numberOfDependents, (app as any).number_of_dependents, fdForm.numberOfDependents, fd.numberOfDependents, "1")
+              const spYoungest = getVal(app.ageOfYoungestDependent, (app as any).age_of_youngest_dependent, fdForm.ageOfYoungestDependent, fd.ageOfYoungestDependent, "—")
+              
+              const spPension = getVal(app.receivingPension, (app as any).receiving_pension, fdForm.receivingPension, fd.receivingPension, "No")
+              const spPensionType = getVal(app.pensionType, (app as any).pension_type, fdForm.pensionType, fd.pensionType, "")
+              
+              const spGovAssist = getVal(app.receivingGovAssistance, (app as any).receiving_gov_assistance, fdForm.receivingGovAssistance, fd.receivingGovAssistance, "No")
+              const spGovProgram = getVal(app.govAssistanceProgramName, (app as any).gov_assistance_program, fdForm.govAssistanceProgramName, fd.govAssistanceProgramName, "")
+              const spGovAmount = getVal(app.govAssistanceAmountFreq, (app as any).gov_assistance_amount_freq, fdForm.govAssistanceAmountFreq, fd.govAssistanceAmountFreq, "")
 
-                const emFirst = app.emergencyFirstName || fdForm.emergencyFirstName || fd.emergencyFirstName || ed.emergencyFirstName || (app as any).emergency_first_name || ""
-                const emLast = app.emergencyLastName || fdForm.emergencyLastName || fd.emergencyLastName || ed.emergencyLastName || (app as any).emergency_last_name || ""
-                const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
-
-                const emPerson =
-                  emCombined ||
-                  fdForm.emergencyName ||
-                  fdForm.emergencyContactPerson ||
-                  app.emergencyName ||
-                  (app as any).emergency_name ||
-                  fd.emergencyName ||
-                  fd.emergencyContactPerson ||
-                  ed.emergencyName ||
-                  (app as any).emergencyContactPerson ||
-                  "—"
-
-                const emPhone =
-                  fdForm.emergencyContactNo ||
-                  fdForm.emergencyPhone ||
-                  app.emergencyContactNo ||
-                  (app as any).emergency_contact_no ||
-                  fd.emergencyContactNo ||
-                  fd.emergencyPhone ||
-                  (app as any).emergencyPhone ||
-                  ed.emergencyContactNo ||
-                  "—"
-
-                const emRel =
-                  fdForm.emergencyRelationship ||
-                  app.emergencyRelationship ||
-                  (app as any).emergency_relationship ||
-                  fd.emergencyRelationship ||
-                  ed.emergencyRelationship ||
-                  (app as any).relationshipToApplicant ||
-                  "—"
-
-                const emAddr =
-                  fdForm.emergencyAddress ||
-                  app.emergencyAddress ||
-                  (app as any).emergency_address ||
-                  fd.emergencyAddress ||
-                  ed.emergencyAddress ||
-                  "—"
-
-                const bType =
-                  fdForm.bloodType ||
-                  app.bloodType ||
-                  (app as any).blood_type ||
-                  fd.bloodType ||
-                  ed.bloodType ||
-                  "O+"
-
-                return (
+              return (
+                <>
+                  {/* Section 01: Personal Information */}
                   <div>
-                    <SectionHeading number={nextNum()} icon={<Phone className="h-4 w-4" />}>
-                      Emergency Contact
+                    <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>
+                      Personal Information
                     </SectionHeading>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
-                      <Field label="Contact Person" value={emPerson} />
-                      <Field label="Relationship" value={emRel} />
+                      <Field label="Full Name" value={displayName(app)} />
                       <Field
-                        label="Phone Number"
+                        label="Date of Birth"
                         value={
                           <span className="inline-flex items-center gap-1.5">
-                            <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                            {emPhone}
+                            <Calendar className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                            {spDob}
                           </span>
                         }
                       />
-                      <Field label="Blood Type" value={bType} />
+                      <Field label="Age / Sex" value={`${spAge} / ${spSex}`} />
+                      <Field label="Civil Status" value={spCivilStatus} />
+                      <Field
+                        label="Contact Number"
+                        value={
+                          <span className="inline-flex items-center gap-1.5">
+                            <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                            <MaskedText
+                              value={spContactNo}
+                              type="phone"
+                              showButtonLabel
+                              auditSubject={displayName(app)}
+                              auditField="Contact Number"
+                              auditModule="Solo Parent & Child Welfare"
+                            />
+                          </span>
+                        }
+                      />
+                      <Field
+                        label="QCID Number"
+                        value={
+                          <MaskedText
+                            value={spQcid}
+                            type="id"
+                            showButtonLabel
+                            auditSubject={displayName(app)}
+                            auditField="QCID Number"
+                            auditModule="Solo Parent & Child Welfare"
+                          />
+                        }
+                      />
+                      <Field
+                        label="Email Address"
+                        value={
+                          spEmail ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <Mail className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                              <MaskedText
+                                value={spEmail}
+                                type="email"
+                                showButtonLabel
+                                auditSubject={displayName(app)}
+                                auditField="Email Address"
+                                auditModule="Solo Parent & Child Welfare"
+                              />
+                            </span>
+                          ) : (
+                            "—"
+                          )
+                        }
+                      />
+                      <Field label="Barangay" value={spBarangay} />
                       <div className="col-span-2">
                         <Field
-                          label="Emergency Address"
+                          label="Complete Address"
                           value={
                             <span className="inline-flex items-start gap-1.5">
                               <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
-                              {emAddr}
+                              {address}
                             </span>
                           }
                         />
                       </div>
                     </div>
                   </div>
-                )
-              })()}
 
-              {}
-              {(app.circumstanceDetails || app.needsProblems || app.familyResources) && (
-                <div>
-                  <SectionHeading number={nextNum()} icon={<HeartHandshake className="h-4 w-4" />}>Circumstances and needs</SectionHeading>
-                  <div className="space-y-4 p-4 rounded-lg text-sm" style={{ background: "var(--surface-sunk)" }}>
-                    {app.circumstanceDetails && <Field label="Situation described" value={app.circumstanceDetails} />}
-                    {app.needsProblems && <Field label="Needs / problems" value={app.needsProblems} />}
-                    {app.familyResources && <Field label="Family resources" value={app.familyResources} />}
+                  {/* Section 02: Solo Parent Financial Subsidy Details */}
+                  <div>
+                    <SectionHeading number={nextNum()} icon={<ClipboardList className="h-4 w-4" />}>
+                      Solo Parent Financial Subsidy Details
+                    </SectionHeading>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                      <Field
+                        label="Program"
+                        value={
+                          <span className="font-semibold text-blue-700 dark:text-blue-400">
+                            Solo Parent Financial Subsidy Program (₱1,000 / month)
+                          </span>
+                        }
+                      />
+                      <Field
+                        label="Solo Parent ID (SPIC)"
+                        value={
+                          <span className="font-mono font-bold text-foreground">
+                            {spIdNum}
+                          </span>
+                        }
+                      />
+                      <Field
+                        label="Solo Parent Status"
+                        value={
+                          <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
+                            <Check className="h-3.5 w-3.5 stroke-[3]" />
+                            {spStatus}
+                          </span>
+                        }
+                      />
+                      <Field
+                        label="Employment Status"
+                        value={
+                          <span className="font-semibold text-foreground">
+                            {spEmpStatus}
+                          </span>
+                        }
+                      />
+                      <div className="col-span-2">
+                        <Field
+                          label="Solo Parent Category / Reason"
+                          value={spCategory}
+                        />
+                      </div>
+                      <Field
+                        label="Occupation"
+                        value={spOccupation}
+                      />
+                      <Field
+                        label="Employer / Source of Income"
+                        value={spEmployer}
+                      />
+                      <Field
+                        label="Monthly Income"
+                        value={spIncomeDisplay}
+                      />
+                      <Field
+                        label="Other Source of Income"
+                        value={spOtherIncome}
+                      />
+                      <Field
+                        label="Dependents Info"
+                        value={`${spDependents} dependent(s) (Youngest: ${spYoungest !== "—" ? `${spYoungest} y/o` : "—"})`}
+                      />
+                      <Field
+                        label="Receiving Pension"
+                        value={spPension === "Yes" ? (spPensionType || "Yes") : "None"}
+                      />
+                      {spGovAssist === "Yes" && (
+                        <div className="col-span-2">
+                          <Field
+                            label="Other Government Assistance"
+                            value={`${spGovProgram || "Government Program"} ${spGovAmount ? `(${spGovAmount})` : ""}`}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
+                </>
+              )
+            })()
           ) : (
             <>
               {}

@@ -376,15 +376,18 @@ exports.createApplication = async (req, res) => {
     await initSoloParentColumns();
     const { userId, applicationData, requiredDocumentIds } = req.body;
     const appData = applicationData || req.body || {};
-    const fd = appData.formData || req.body.formData || {};
-    const familyMembers = appData.familyMembers || req.body.familyMembers || [];
-    const isResident = appData.isResident ?? req.body.isResident ?? true;
-    const idStatus = appData.idStatus || req.body.idStatus || 'new';
-    const selectedCategoryId = appData.selectedCategoryId || req.body.selectedCategoryId || null;
-    const selectedCategory = appData.selectedCategory || req.body.selectedCategory || null;
-    const existingIdNumber = appData.existingIdNumber || req.body.existingIdNumber || null;
-    const isIdVerified = appData.isIdVerified ?? req.body.isIdVerified ?? false;
-    const initialDocs = appData.documents || req.body.documents || appData.uploadedDocuments || [];
+    const rawFd = appData.form_data || appData.formData || req.body.form_data || req.body.formData || {};
+    const fd = typeof rawFd === 'string' ? JSON.parse(rawFd) : (rawFd || {});
+    const combinedData = { ...fd, ...appData };
+
+    const familyMembers = appData.familyMembers || fd.familyMembers || [];
+    const isResident = appData.isResident ?? fd.isResident ?? true;
+    const idStatus = appData.idStatus || fd.idStatus || 'new';
+    const selectedCategoryId = appData.selectedCategoryId || fd.selectedCategoryId || null;
+    const selectedCategory = appData.selectedCategory || fd.selectedCategory || null;
+    const existingIdNumber = appData.existingIdNumber || fd.existingIdNumber || null;
+    const isIdVerified = appData.isIdVerified ?? fd.isIdVerified ?? false;
+    const initialDocs = appData.documents || fd.documents || appData.uploadedDocuments || [];
 
     if (userId) {
       await db.query(
@@ -394,32 +397,95 @@ exports.createApplication = async (req, res) => {
       ).catch(() => {});
     }
 
-    const baseRef = req.body.referenceNumber || req.body.reference_number || (fd && (fd.qcidNumber || fd.qcidNo || fd.qcId)) || generateReference();
+    const baseRef = req.body.referenceNumber || req.body.reference_number || appData.referenceNumber || appData.reference_number || fd.qcidNumber || fd.qcid_number || generateReference();
     const referenceNumber = await getUniqueReferenceNumber(baseRef, idStatus);
 
-    const parsedAge = fd.age ? parseInt(fd.age, 10) : null;
-    const safeAge = isNaN(parsedAge) ? null : parsedAge;
-    const soloParentIdNum = existingIdNumber || fd.soloParentIdNumber || null;
+    const firstName = fd.firstName || fd.first_name || appData.firstName || appData.first_name || null;
+    const middleName = fd.middleName || fd.middle_name || appData.middleName || appData.middle_name || null;
+    const lastName = fd.lastName || fd.last_name || appData.lastName || appData.last_name || null;
+    const suffix = fd.suffix || appData.suffix || null;
 
-    const emergencyFirstName = fd.emergencyFirstName || appData.emergencyFirstName || (fd.emergencyName ? fd.emergencyName.split(' ')[0] : null) || null;
-    const emergencyLastName = fd.emergencyLastName || appData.emergencyLastName || (fd.emergencyName && fd.emergencyName.split(' ').length > 1 ? fd.emergencyName.split(' ').slice(1).join(' ') : null) || null;
-    const emergencyName = [emergencyFirstName, emergencyLastName].filter(Boolean).join(' ') || fd.emergencyName || fd.emergencyContactPerson || appData.emergencyName || null;
-    const emergencyPhone = fd.emergencyContactNo || fd.emergencyPhone || appData.emergencyContactNo || appData.emergencyPhone || null;
-    const emergencyRel = fd.emergencyRelationship || fd.relationshipToApplicant || fd.relationship || appData.emergencyRelationship || null;
-    const emergencyAddr = fd.emergencyAddress || appData.emergencyAddress || null;
-    const bloodType = fd.bloodType || appData.bloodType || 'O+';
+    const parsedAge = fd.age ? parseInt(fd.age, 10) : (appData.age ? parseInt(appData.age, 10) : null);
+    const safeAge = isNaN(parsedAge) ? null : parsedAge;
+    const sex = fd.sex || fd.gender || appData.sex || null;
+    const civilStatus = fd.civilStatus || fd.civil_status || appData.civilStatus || 'Single';
+    const qcidNumber = fd.qcidNumber || fd.qcid_number || appData.qcid_number || appData.qcidNumber || null;
+    const contactNo = fd.contactNo || fd.contact_no || appData.contact_no || appData.contactNo || null;
+    const email = fd.email || appData.email || null;
+
+    const addressHouseNo = fd.addressHouseNo || fd.address_house_no || null;
+    const addressStreet = fd.addressStreet || fd.address_street || appData.addressStreet || null;
+    const addressBarangay = fd.addressBarangay || fd.address_barangay || appData.address_barangay || appData.addressBarangay || null;
+    const addressCityMunicipality = fd.addressCityMunicipality || fd.address_city_municipality || 'QUEZON CITY';
+
+    const soloParentIdNum = fd.soloParentIdNumber || fd.solo_parent_id_number || appData.solo_parent_id_number || appData.soloParentIdNumber || existingIdNumber || null;
+    const soloParentCategory = fd.soloParentCategory || fd.solo_parent_category || appData.solo_parent_category || selectedCategory?.title || 'Solo Parent Beneficiary';
+    const employmentStatus = fd.employmentStatus || fd.employment_status || appData.employment_status || 'Unemployed';
+    const numberOfDependents = fd.numberOfDependents || fd.number_of_dependents || appData.number_of_dependents || '1';
+    const ageOfYoungestDependent = fd.ageOfYoungestDependent || fd.age_of_youngest_dependent || appData.age_of_youngest_dependent || null;
+
+    const occupation = fd.occupation || appData.occupation || null;
+    const employerOrIncomeSource = fd.employerOrIncomeSource || fd.employer_or_income_source || appData.employer_or_income_source || null;
+    const monthlyIncome = fd.monthlyIncome || fd.monthly_income || appData.monthly_income || null;
+    const otherSourceOfIncome = fd.otherSourceOfIncome || fd.other_source_of_income || appData.other_source_of_income || null;
+
+    const receivingGovAssistance = fd.receivingGovAssistance || fd.receiving_gov_assistance || appData.receiving_gov_assistance || 'No';
+    const govAssistanceProgramName = fd.govAssistanceProgramName || fd.gov_assistance_program || appData.gov_assistance_program || null;
+    const govAssistanceAmountFreq = fd.govAssistanceAmountFreq || fd.gov_assistance_amount_freq || appData.gov_assistance_amount_freq || null;
+
+    const receivingPension = fd.receivingPension || fd.receiving_pension || appData.receiving_pension || 'No';
+    const pensionType = fd.pensionType || fd.pension_type || appData.pension_type || null;
+
+    let dobMonth = fd.dobMonth || fd.dob_month || null;
+    let dobDay = fd.dobDay || fd.dob_day || null;
+    let dobYear = fd.dobYear || fd.dob_year || null;
+    const birthDate = fd.birthDate || fd.birth_date || fd.dob || null;
+
+    if (birthDate && (!dobMonth || !dobDay || !dobYear)) {
+      const d = new Date(birthDate);
+      if (!isNaN(d.getTime())) {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        if (!dobMonth) dobMonth = monthNames[d.getMonth()];
+        if (!dobDay) dobDay = String(d.getDate());
+        if (!dobYear) dobYear = String(d.getFullYear());
+      }
+    }
 
     const mergedFormData = {
-      ...fd,
-      emergencyFirstName,
-      emergencyLastName,
-      emergencyName,
-      emergencyContactPerson: emergencyName,
-      emergencyContactNo: emergencyPhone,
-      emergencyPhone,
-      emergencyRelationship: emergencyRel,
-      emergencyAddress: emergencyAddr,
-      bloodType,
+      ...combinedData,
+      firstName,
+      middleName,
+      lastName,
+      suffix,
+      birthDate,
+      dobMonth,
+      dobDay,
+      dobYear,
+      age: safeAge,
+      sex,
+      civilStatus,
+      qcidNumber,
+      contactNo,
+      email,
+      addressHouseNo,
+      addressStreet,
+      addressBarangay,
+      addressCityMunicipality,
+      soloParentIdNumber: soloParentIdNum,
+      soloParentStatus: fd.soloParentStatus || appData.soloParentStatus || 'Active / Verified Solo Parent',
+      employmentStatus,
+      soloParentCategory,
+      numberOfDependents,
+      ageOfYoungestDependent,
+      occupation,
+      employerOrIncomeSource,
+      monthlyIncome,
+      otherSourceOfIncome,
+      receivingGovAssistance,
+      govAssistanceProgramName,
+      govAssistanceAmountFreq,
+      receivingPension,
+      pensionType,
     };
 
     const applicantPhoto =
@@ -449,9 +515,7 @@ exports.createApplication = async (req, res) => {
           dob_month, dob_day, dob_year, civil_status, contact_no,
           address_house_no, address_street, address_barangay, address_city_municipality,
           qcid_number, email,
-          emergency_first_name, emergency_last_name, emergency_name,
-          emergency_contact_no, emergency_relationship, emergency_address,
-          blood_type, form_data, family_members, extra_data, uploaded_documents,
+          form_data, family_members, extra_data, uploaded_documents,
           applicant_photo, photo_url
         ) VALUES (
           $1, $2, $3, $4,
@@ -461,22 +525,18 @@ exports.createApplication = async (req, res) => {
           $17, $18, $19, $20, $21,
           $22, $23, $24, $25,
           $26, $27,
-          $28, $29, $30,
-          $31, $32, $33,
-          $34, $35::jsonb, $36::jsonb, $37::jsonb, $38::jsonb,
-          $39, $40
+          $28::jsonb, $29::jsonb, $30::jsonb, $31::jsonb,
+          $32, $33
         ) RETURNING id, reference_number`,
         [
           referenceNumber, String(userId || '0'), initialStatus, idStatus,
-          Boolean(isResident), selectedCategoryId, selectedCategory?.title || null, JSON.stringify(requiredDocumentIds || []),
+          Boolean(isResident), selectedCategoryId, soloParentCategory, JSON.stringify(requiredDocumentIds || []),
           soloParentIdNum, Boolean(isIdVerified),
-          fd.firstName || null, fd.middleName || null, fd.lastName || null, fd.suffix || null, safeAge, fd.sex || null,
-          fd.dobMonth || null, fd.dobDay || null, fd.dobYear || null, fd.civilStatus || null, fd.contactNo || null,
-          fd.addressHouseNo || null, fd.addressStreet || null, fd.addressBarangay || null, fd.addressCityMunicipality || null,
-          fd.qcidNumber || null, fd.email || null,
-          emergencyFirstName, emergencyLastName, emergencyName,
-          emergencyPhone, emergencyRel, emergencyAddr,
-          bloodType, JSON.stringify(mergedFormData || {}), JSON.stringify(familyMembers || []), JSON.stringify({ formData: mergedFormData, familyMembers, applicantPhoto }),
+          firstName, middleName, lastName, suffix, safeAge, sex,
+          dobMonth, dobDay, dobYear, civilStatus, contactNo,
+          addressHouseNo, addressStreet, addressBarangay, addressCityMunicipality,
+          qcidNumber, email,
+          JSON.stringify(mergedFormData || {}), JSON.stringify(familyMembers || []), JSON.stringify({ formData: mergedFormData, familyMembers, applicantPhoto }),
           JSON.stringify(initialDocs || []),
           applicantPhoto, applicantPhoto
         ]
