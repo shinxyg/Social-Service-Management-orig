@@ -45,63 +45,7 @@ function resolveFixedAmount(concern) {
 
 async function initAppointmentTables() {
   try {
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS appointments (
-        id SERIAL PRIMARY KEY,
-        reference_no VARCHAR(100) NOT NULL,
-        module VARCHAR(100) NOT NULL,
-        applicant_name VARCHAR(255) NOT NULL,
-        concern VARCHAR(255) NOT NULL,
-        status VARCHAR(50) DEFAULT 'pending',
-        scheduled_date VARCHAR(100),
-        scheduled_time VARCHAR(100),
-        office_location VARCHAR(255) DEFAULT 'Quezon City Hall',
-        notes TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-      );
-      CREATE INDEX IF NOT EXISTS idx_appointments_ref ON appointments(reference_no);
-      CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
-
-      CREATE TABLE IF NOT EXISTS deleted_appointments (
-        id SERIAL PRIMARY KEY,
-        reference_no VARCHAR(100) UNIQUE NOT NULL,
-        deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-  } catch (e) {
-    console.warn('[Appointments init tables]:', e.message);
-  }
-}
-initAppointmentTables().then(() => {
-  syncAndCleanAppointments();
-});
-
-let lastAppointmentSyncTime = 0;
-let isAppointmentSyncInProgress = false;
-
-async function syncAndCleanAppointments() {
-  try {
-    const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
-    const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
-
-    // Clean up phantom Senior records for Jefferson Fernando Lee and DISB-2026-9929
-    await db.query(`
-      DELETE FROM appointments
-      WHERE applicant_name ILIKE '%JEFFERSON%' AND (concern ILIKE '%Senior%' OR module ILIKE '%Senior%');
-    `).catch(() => {});
-
-    await db.query(`
-      DELETE FROM financial_aid_disbursements
-      WHERE disbursement_id = 'DISB-2026-9929'
-         OR (applicant_name ILIKE '%JEFFERSON%' AND (assistance_type ILIKE '%Senior%' OR assistance_type ILIKE '%OSCA%'));
-    `).catch(() => {});
-
-    await db.query(`
-      DELETE FROM pwd_senior_applications
-      WHERE (first_name ILIKE '%JEFFERSON%' AND last_name ILIKE '%LEE%')
-         OR (extra_data::text ILIKE '%JEFFERSON%LEE%');
-    `).catch(() => {});
+    
 
     // 0. Ensure deleted reference set is loaded
     // (Approved appointments must NEVER be automatically reverted to scheduled)
@@ -269,8 +213,7 @@ async function syncAndCleanAppointments() {
       `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, status, submitted_at, created_at
        FROM pwd_senior_applications
        WHERE status IN ('approved', 'completed', 'for_release', 'released')
-         AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')
-         AND NOT (first_name ILIKE '%JEFFERSON%' AND last_name ILIKE '%LEE%')`
+         AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activePwdSenior.rows) {
@@ -280,7 +223,6 @@ async function syncAndCleanAppointments() {
       const isSenior = String(row.category || '').toUpperCase().includes('SENIOR');
       if (!isPwd && !isSenior) continue;
       const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-      if (fullName.includes('JEFFERSON') && isSenior) continue;
       const mod = isPwd ? 'PWD' : 'Senior Citizen';
       const concern = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
       const checkExists = await db.query(
@@ -367,7 +309,7 @@ exports.getAppointments = async (req, res) => {
 
     const [deletedRes, result] = await Promise.all([
       db.query('SELECT reference_no FROM deleted_appointments WHERE reference_no NOT IN (SELECT reference_no FROM appointments)').catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM appointments WHERE NOT (applicant_name ILIKE '%JEFFERSON%' AND (concern ILIKE '%Senior%' OR module ILIKE '%Senior%')) ORDER BY created_at DESC LIMIT 300`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),
+      db.query(`SELECT * FROM appointments WHERE reference_no != 'DISB-2026-9929' AND NOT ((module = 'Senior Citizen' OR concern ILIKE '%Senior%') AND reference_no NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%')) ORDER BY created_at DESC LIMIT 300`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),
     ]);
 
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));

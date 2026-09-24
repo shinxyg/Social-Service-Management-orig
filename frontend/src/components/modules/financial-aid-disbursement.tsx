@@ -201,7 +201,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
 
             const type = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
             const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY APPLICANT"
-            if (fullName.includes("JEFFERSON") && type === "Senior Social Assistance") return
+            if (String(app.referenceNumber || app.reference_number || app.id || "").includes("9929")) return
 
             const ref = app.referenceNumber || app.reference_number || "PWD-QC-2026"
             const key = `${ref}_${type}`
@@ -286,8 +286,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         r.disbursementId === "DISB-2026-9929" ||
         r.id === "local-appt-9929" ||
         r.id === "remote-pwd-9929" ||
-        (String(r.applicantName || "").toUpperCase().includes("JEFFERSON") &&
-         String(r.assistanceType || "").toLowerCase().includes("senior"))
+        String(r.applicationRef || "").includes("9929")
       return !isGhostSenior
     })
 
@@ -297,7 +296,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       const appt =
         appointmentsMap[`${d.applicationRef}_${cleanAssistance}`] ||
         appointmentsMap[d.applicationRef] ||
-        (d.applicantName ? appointmentsMap[d.applicantName.toLowerCase().trim()] : null) ||
+        (d.applicantName ? appointmentsMap[`${d.applicantName.toLowerCase().trim()}_${cleanAssistance}`] : null) ||
         (isSolo
           ? (appointmentsMap[`Solo Parent_${d.applicationRef}`] ||
              appointmentsMap[`${d.applicationRef}_Solo Parent Financial Subsidy Payout`] ||
@@ -479,7 +478,8 @@ export default function FinancialAidDisbursement() {
     const releaseDateStr = new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
     const releaseIsoStr = new Date().toISOString()
     const updated = disbursements.map((d) => {
-      if (d.id === record.id || d.disbursementId === record.disbursementId || d.applicationRef === record.applicationRef) {
+      const isSameRefAndType = d.applicationRef && d.applicationRef === record.applicationRef && d.assistanceType === record.assistanceType
+      if (d.id === record.id || d.disbursementId === record.disbursementId || isSameRefAndType) {
         return {
           ...d,
           status: "RELEASED" as DisbursementStage,
@@ -495,7 +495,8 @@ export default function FinancialAidDisbursement() {
       const raw = localStorage.getItem("all_financial_disbursements")
       const list = raw ? JSON.parse(raw) : []
       const nextList = list.map((item: any) => {
-        if (item.id === record.id || item.disbursementId === record.disbursementId || item.applicationRef === record.applicationRef) {
+        const isSameRefAndType = item.applicationRef && item.applicationRef === record.applicationRef && item.assistanceType === record.assistanceType
+        if (item.id === record.id || item.disbursementId === record.disbursementId || isSameRefAndType) {
           return { ...item, status: "RELEASED", releasedDate: releaseDateStr, releasedBy: "Disbursing Officer" }
         }
         return item
@@ -505,6 +506,7 @@ export default function FinancialAidDisbursement() {
 
     const isPwdAid = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
     const isSeniorAid = String(record.assistanceType || "").toLowerCase().includes("senior") || String(record.assistanceType || "").toLowerCase().includes("osca")
+    const isSoloAid = String(record.assistanceType || "").toLowerCase().includes("solo")
     if (isPwdAid) {
       // Update pwd_senior_applications with releasedDate to reset accumulator for next 3-month cycle
       try {
@@ -579,6 +581,34 @@ export default function FinancialAidDisbursement() {
       })
 
       window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+    } else if (isSoloAid) {
+      try {
+        const rawSolo = localStorage.getItem("solo_parent_applications") || "[]"
+        const soloList = JSON.parse(rawSolo)
+        const updatedSolo = soloList.map((s: any) => {
+          if (s.referenceNumber === record.applicationRef || s.id === record.applicationRef) {
+            return {
+              ...s,
+              status: "released",
+              releasedDate: releaseIsoStr,
+              releasedAmount: 3000,
+            }
+          }
+          return s
+        })
+        localStorage.setItem("solo_parent_applications", JSON.stringify(updatedSolo))
+      } catch {}
+
+      pushUserNotification({
+        userId: record.applicationRef || "all",
+        title: "Solo Parent Subsidy Cash Claimed",
+        desc: `Official Receipt: ₱3,000.00 cash subsidy (Month 3 of 3 naipon) has been claimed at Quezon City Hall. Receipt No: ${record.disbursementId}. Next cycle activated.`,
+        applicationRef: record.applicationRef,
+        type: "payout_released",
+        amount: 3000,
+      })
+
+      window.dispatchEvent(new Event("solo_parent_applications_updated"))
     }
 
     // Patch status to backend and dispatch events
@@ -1080,8 +1110,7 @@ export default function FinancialAidDisbursement() {
             !(d.disbursementId === "DISB-2026-9929" ||
               d.id === "local-appt-9929" ||
               d.id === "remote-pwd-9929" ||
-              (String(d.applicantName || "").toUpperCase().includes("JEFFERSON") &&
-               String(d.assistanceType || "").toLowerCase().includes("senior")))
+              String(d.applicationRef || "").includes("9929"))
         )
 
         merged = merged.map((d) => {
@@ -1094,7 +1123,7 @@ export default function FinancialAidDisbursement() {
             appointmentsMap[`${baseRef}_${cleanAssistance}`] ||
             appointmentsMap[d.applicationRef] ||
             appointmentsMap[baseRef] ||
-            (d.applicantName ? appointmentsMap[d.applicantName.toLowerCase().trim()] : null) ||
+            (d.applicantName ? appointmentsMap[`${d.applicantName.toLowerCase().trim()}_${cleanAssistance}`] : null) ||
             (isSolo
               ? (appointmentsMap[`Solo Parent_${d.applicationRef}`] ||
                  appointmentsMap[`${d.applicationRef}_Solo Parent Financial Subsidy Payout`] ||
@@ -1113,7 +1142,7 @@ export default function FinancialAidDisbursement() {
             localScheduledMap[`${baseRef}_${d.assistanceType}`] ||
             localScheduledMap[d.applicationRef] ||
             localScheduledMap[baseRef] ||
-            (d.applicantName ? localScheduledMap[d.applicantName.toLowerCase().trim()] : null) ||
+            (d.applicantName ? localScheduledMap[`${d.applicantName.toLowerCase().trim()}_${d.assistanceType}`] : null) ||
             (isSolo
               ? (localScheduledMap[`Solo Parent_${d.applicationRef}`] ||
                  localScheduledMap[`${d.applicationRef}_Solo Parent Financial Subsidy Payout`] ||

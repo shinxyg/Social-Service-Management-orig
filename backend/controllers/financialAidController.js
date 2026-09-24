@@ -100,21 +100,22 @@ exports.getDisbursements = async (req, res) => {
   try {
     autoReleaseScheduledDisbursements().catch(() => {});
 
-    // Clean up ghost Senior records for Jefferson Fernando Lee and DISB-2026-9929
+    // Clean up corrupted test disbursement DISB-2026-9929 and any orphaned senior disbursements/appointments with no application
     try {
       await db.query(`
         DELETE FROM financial_aid_disbursements
         WHERE disbursement_id = 'DISB-2026-9929'
-           OR (applicant_name ILIKE '%JEFFERSON%' AND (assistance_type ILIKE '%Senior%' OR assistance_type ILIKE '%OSCA%'));
+           OR (assistance_type ILIKE '%Senior%' AND application_ref NOT IN (
+             SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%'
+           ));
       `);
       await db.query(`
         DELETE FROM appointments
-        WHERE applicant_name ILIKE '%JEFFERSON%' AND (concern ILIKE '%Senior%' OR module ILIKE '%Senior%');
-      `);
-      await db.query(`
-        DELETE FROM pwd_senior_applications
-        WHERE (first_name ILIKE '%JEFFERSON%' AND last_name ILIKE '%LEE%')
-           OR (extra_data::text ILIKE '%JEFFERSON%LEE%');
+        WHERE reference_no = 'DISB-2026-9929'
+           OR reference_no ILIKE '%9929%'
+           OR ((module = 'Senior Citizen' OR concern ILIKE '%Senior%') AND reference_no NOT IN (
+             SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%'
+           ));
       `);
     } catch (_) {}
 
@@ -219,15 +220,13 @@ exports.getDisbursements = async (req, res) => {
         `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, approved_date
          FROM pwd_senior_applications
          WHERE status IN ('approved', 'completed', 'for_release')
-           AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%')
-           AND NOT (first_name ILIKE '%JEFFERSON%' AND last_name ILIKE '%LEE%')`
+           AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%')`
       );
       for (const row of approvedPwdAssistance.rows) {
         const isPwd = String(row.category || '').toUpperCase().includes('PWD');
         const isSenior = String(row.category || '').toUpperCase().includes('SENIOR');
         if (!isPwd && !isSenior) continue;
         const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-        if (fullName.includes('JEFFERSON') && isSenior) continue;
         const assistanceType = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
 
         const disbCheck = await db.query(
@@ -480,10 +479,23 @@ exports.getDisbursements = async (req, res) => {
          f.application_ref = a.reference_no 
          OR REPLACE(f.application_ref, '-', '') = REPLACE(a.reference_no, '-', '')
          OR LOWER(TRIM(f.applicant_name)) = LOWER(TRIM(a.applicant_name))
-         OR (f.assistance_type = 'Solo Parent Financial Subsidy' AND (a.module = 'Solo Parent' OR a.concern ILIKE '%solo parent%' OR LOWER(TRIM(a.applicant_name)) ILIKE '%jefferson%'))
+         OR (
+            LOWER(TRIM(f.applicant_name)) = LOWER(TRIM(a.applicant_name))
+            AND (
+              (f.assistance_type ILIKE '%solo%' AND (a.module = 'Solo Parent' OR a.concern ILIKE '%solo%'))
+              OR (f.assistance_type ILIKE '%pwd%' AND (a.module = 'PWD' OR a.concern ILIKE '%pwd%'))
+              OR (f.assistance_type ILIKE '%senior%' AND (a.module = 'Senior Citizen' OR a.concern ILIKE '%senior%'))
+              OR (f.assistance_type ILIKE '%livelihood%' AND (a.module = 'Livelihood' OR a.concern ILIKE '%livelihood%'))
+              OR (f.assistance_type ILIKE '%child%' AND (a.module = 'Child Welfare' OR a.concern ILIKE '%child%'))
+              OR (f.assistance_type ILIKE '%medical%' AND (a.module = 'AICS' OR a.concern ILIKE '%medical%'))
+            )
+          )
        )
        WHERE f.disbursement_id != 'DISB-2026-9929'
-         AND NOT (f.applicant_name ILIKE '%JEFFERSON%' AND (f.assistance_type ILIKE '%Senior%' OR f.assistance_type ILIKE '%OSCA%'))
+         AND NOT (
+           f.assistance_type ILIKE '%Senior%' 
+           AND f.application_ref NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%')
+         )
        ORDER BY f.created_at DESC`
     );
 
