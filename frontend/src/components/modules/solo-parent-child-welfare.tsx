@@ -13,20 +13,17 @@ import {
   Paperclip,
   Baby,
   ClipboardList,
-  IdCard,
   ShieldAlert,
 } from "lucide-react"
 import { API_BASE } from "../../config/api"
 import { cachedApiFetch } from "../../utils/cachedApiFetch"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
-import { useLanguage } from "../ui/language-context"
 import {
   getSavedDisbursements,
   saveDisbursements,
   pushUserNotification,
   type SyncedDisbursementRecord,
 } from "../../utils/financialAidSync"
-import { getApplicantPhotoUrl, ApplicantPhotoDisplay } from "./pwd-senior-citizen"
 import MaskedText from "../ui/masked-text"
 
 interface ApplicationDocument {
