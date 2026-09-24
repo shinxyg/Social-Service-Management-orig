@@ -9,6 +9,7 @@ const {
   sendSeniorCitizenApprovalEmail,
   sendSeniorBookletApprovalEmail,
   sendSoloParentApprovalEmail,
+  sendTrainingScheduleAssignedEmail,
 } = require('../services/emailService');
 
 router.post('/send-pwd-received', async (req, res) => {
@@ -222,6 +223,49 @@ router.post('/send-senior-booklet', async (req, res) => {
     return res.status(200).json(result);
   } catch (err) {
     console.error('Error in send-senior-booklet endpoint:', err);
+    return res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
+
+router.post('/send-training-scheduled', async (req, res) => {
+  try {
+    const recipientEmail = req.body.recipientEmail || req.body.to || req.body.email;
+    const recipientName = req.body.recipientName || req.body.applicantName || req.body.name || 'Valued Resident';
+    const referenceNumber = req.body.referenceNumber || req.body.refNo || req.body.referenceNo || '';
+    const trainingProgram = req.body.trainingProgram || req.body.trainingName || 'Skills Training Program';
+    const batchName = req.body.batchName || req.body.batch || '3rd Batch 2026';
+    const startDate = req.body.startDate || req.body.trainingDate || 'October 15, 2026';
+    const endDate = req.body.endDate || 'November 5, 2026';
+    const trainingTime = req.body.trainingTime || '8:00 AM – 12:00 PM (Mon-Fri)';
+    const venue = req.body.venue || req.body.location || 'QC Skills Development Center';
+    const trainerName = req.body.trainerName || req.body.instructor || '';
+    const orientationDate = req.body.orientationDate || '';
+    const orientationTime = req.body.orientationTime || '';
+    const orientationVenue = req.body.orientationVenue || venue;
+
+    if (!recipientEmail) {
+      return res.status(400).json({ error: 'Recipient email is required' });
+    }
+
+    const result = await sendTrainingScheduleAssignedEmail({
+      recipientEmail,
+      recipientName,
+      referenceNumber,
+      trainingProgram,
+      batchName,
+      startDate,
+      endDate,
+      trainingTime,
+      venue,
+      trainerName,
+      orientationDate,
+      orientationTime,
+      orientationVenue,
+    });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('Error in send-training-scheduled endpoint:', err);
     return res.status(500).json({ error: 'Internal Server Error', details: err.message });
   }
 });

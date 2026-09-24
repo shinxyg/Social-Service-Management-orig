@@ -1716,6 +1716,93 @@ async function sendGenericMail({ recipientEmail, recipientName, subject, text, h
   };
 }
 
+async function sendTrainingScheduleAssignedEmail({
+  recipientEmail,
+  recipientName,
+  referenceNumber,
+  trainingProgram,
+  batchName,
+  startDate,
+  endDate,
+  trainingTime,
+  venue,
+  trainerName,
+  orientationDate,
+  orientationTime,
+  orientationVenue,
+}) {
+  const subject = `[Official Schedule] Training & Orientation: ${trainingProgram} (${batchName || 'Batch Schedule'})`;
+  const htmlContent = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+      <div style="background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); padding: 24px; text-align: center; color: #ffffff;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 0.5px;">SSDD Skills & Livelihood Training Program</h2>
+        <p style="margin: 6px 0 0; font-size: 13px; opacity: 0.9;">Social Services Development Department • Official Notice</p>
+      </div>
+
+      <div style="padding: 24px; color: #334155;">
+        <p style="font-size: 15px; margin-top: 0;">Kumusta <strong>${recipientName || 'Valued Resident'}</strong>,</p>
+        <p style="font-size: 14px; line-height: 1.6; color: #475569;">
+          Magandang balita! Ang iyong aplikasyon para sa <strong>${trainingProgram}</strong> ay opisyal nang <strong>SCHEDULED</strong>.
+        </p>
+
+        <!-- ORIENTATION BOX -->
+        ${orientationDate ? `
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb; border-radius: 8px; padding: 16px; margin: 18px 0;">
+          <h4 style="margin: 0 0 8px; color: #1e40af; font-size: 14px; text-transform: uppercase;">
+            📌 1. Araw ng Oryentasyon (Face-to-Face)
+          </h4>
+          <table style="width: 100%; font-size: 13px; line-height: 1.7; color: #1e3a8a;">
+            <tr><td style="width: 32%; font-weight: 600;">Petsa:</td><td><strong>${orientationDate}</strong></td></tr>
+            <tr><td style="font-weight: 600;">Oras:</td><td>${orientationTime || '9:00 AM – 11:00 AM'}</td></tr>
+            <tr><td style="font-weight: 600;">Lugar:</td><td>${orientationVenue || venue || 'SSDD Skills Center'}</td></tr>
+          </table>
+          <p style="margin: 8px 0 0; font-size: 12px; color: #3b82f6;">
+            * Magtungo sa takdang oras dala ang isang (1) Valid ID at ang inyong Reference Number.
+          </p>
+        </div>
+        ` : ''}
+
+        <!-- TRAINING CLASSES BOX -->
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 18px 0;">
+          <h4 style="margin: 0 0 10px; color: #1e293b; font-size: 14px; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;">
+            🍞 2. Iskedyul ng Regular na Klase
+          </h4>
+          <table style="width: 100%; font-size: 13px; line-height: 1.8; color: #1e293b;">
+            <tr><td style="width: 32%; color: #64748b;">Kurso:</td><td><strong>${trainingProgram}</strong></td></tr>
+            <tr><td style="color: #64748b;">Batch:</td><td>${batchName || '3rd Batch 2026'}</td></tr>
+            <tr><td style="color: #64748b;">Petsa:</td><td><strong>${startDate} – ${endDate}</strong></td></tr>
+            <tr><td style="color: #64748b;">Oras:</td><td>${trainingTime || '8:00 AM – 12:00 PM (Mon-Fri)'}</td></tr>
+            <tr><td style="color: #64748b;">Silid-Aralan:</td><td>${venue || 'QC Skills Center Room 204'}</td></tr>
+            ${trainerName ? `<tr><td style="color: #64748b;">Trainer:</td><td>${trainerName}</td></tr>` : ''}
+            <tr><td style="color: #64748b;">Reference No.:</td><td><span style="font-family: monospace; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: 600;">${referenceNumber}</span></td></tr>
+          </table>
+        </div>
+
+        <div style="background: #fefce8; border-left: 4px solid #eab308; padding: 12px 16px; border-radius: 4px; margin-bottom: 20px;">
+          <p style="margin: 0; font-size: 12px; color: #854d0e; line-height: 1.5;">
+            ⏰ <strong>Paalala:</strong> Makakatanggap ka rin ng awtomatikong paalala (SMS at Email) pitong (7) araw bago magsimula ang klase.
+          </p>
+        </div>
+
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">
+          Para sa karagdagang katanungan, mag-log in sa inyong Citizen Portal account.
+        </p>
+      </div>
+
+      <div style="background: #f1f5f9; padding: 14px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+        Social Services Development Department (SSDD) • Quezon City Government
+      </div>
+    </div>
+  `;
+
+  return await sendGenericEmail({
+    recipientEmail,
+    recipientName,
+    subject,
+    htmlContent,
+  });
+}
+
 module.exports = {
   sendPwdApprovalEmail,
   sendPwdApplicationReceivedEmail,
@@ -1727,4 +1814,5 @@ module.exports = {
   sendSoloParentApprovalEmail,
   sendOtpEmail,
   sendPasswordResetEmail,
+  sendTrainingScheduleAssignedEmail,
 };

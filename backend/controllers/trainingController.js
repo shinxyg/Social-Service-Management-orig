@@ -564,7 +564,7 @@ exports.applyForTraining = async (req, res) => {
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, rejectionReason, revisionNotes, attendance, trainingStatus, approvedBy } = req.body;
+    const { status, rejectionReason, revisionNotes, attendance, trainingStatus, approvedBy, schedule } = req.body;
 
     let updatedApp = null;
 
@@ -585,7 +585,11 @@ exports.updateApplicationStatus = async (req, res) => {
         let newAttendance = typeof row.attendance === 'string' ? JSON.parse(row.attendance) : (row.attendance || {});
         let newCertificate = typeof row.certificate === 'string' ? JSON.parse(row.certificate) : (row.certificate || null);
 
-        if (status === 'approved') {
+        if (schedule) {
+          newSchedule = { ...newSchedule, ...schedule };
+        }
+
+        if (status === 'approved' || status === 'qualified') {
           newApprovedBy = approvedBy || 'Gov Services Skills Development Division';
           newApprovedDate = new Date().toISOString();
           newRejectionReason = null;
@@ -657,7 +661,7 @@ exports.updateApplicationStatus = async (req, res) => {
       const app = memoryApplications[idx];
       if (status) {
         app.status = status;
-        if (status === 'approved') {
+        if (status === 'approved' || status === 'qualified') {
           app.approvedBy = approvedBy || 'Gov Services Skills Development Division';
           app.approvedDate = new Date().toISOString();
           app.rejectionReason = undefined;
@@ -667,6 +671,9 @@ exports.updateApplicationStatus = async (req, res) => {
         } else if (status === 'needs_revision') {
           app.revisionNotes = revisionNotes || 'Please verify or update your contact details or required information.';
         }
+      }
+      if (schedule) {
+        app.schedule = { ...(app.schedule || {}), ...schedule };
       }
       if (trainingStatus && app.schedule) {
         app.schedule.trainingStatus = trainingStatus;
@@ -698,14 +705,33 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Application not found.' });
     }
 
-    if (status === 'approved' || status === 'rejected' || status === 'needs_revision') {
+    if (status) {
       try {
-        const notifTitle = status === 'approved'
-          ? 'Gov Services Training: Approved'
-          : status === 'needs_revision'
-          ? 'Gov Services Training: Needs Revision'
-          : 'Gov Services Training: Not Approved';
-        const notifDesc = `${updatedApp.trainingName || 'Skills Training'} — ${status === 'approved' ? 'Aprubado ang inyong aplikasyon sa training.' : status === 'rejected' ? (rejectionReason || updatedApp.rejectionReason || 'Hindi naaprubahan ang inyong aplikasyon.') : (revisionNotes || updatedApp.revisionNotes || 'Nangangailangan ng karagdagang impormasyon.')} (Ref: ${updatedApp.referenceNumber || updatedApp.qcid})`;
+        let notifTitle = 'Gov Services Training Update';
+        let notifDesc = `${updatedApp.trainingName || 'Skills Training'} — Update on your application.`;
+        
+        if (status === 'under_review') {
+          notifTitle = 'Gov Services Training: Under Review';
+          notifDesc = `${updatedApp.trainingName} — Sinusuri na ng SSDD ang inyong mga dokumento (ID at Indigency).`;
+        } else if (status === 'qualified' || status === 'approved') {
+          notifTitle = 'Gov Services Training: Qualified';
+          notifDesc = `${updatedApp.trainingName} — Binabati kita! Ikaw ay QUALIFIED na para sa pagsasanay. Hintayin ang anunsyo ng Batch Schedule.`;
+        } else if (status === 'scheduled') {
+          notifTitle = 'Gov Services Training: Schedule Assigned';
+          notifDesc = `${updatedApp.trainingName} — Na-set na ang inyong iskedyul! Tingnan ang inyong Appointment Slip sa Tab 2.`;
+        } else if (status === 'enrolled') {
+          notifTitle = 'Gov Services Training: Officially Enrolled';
+          notifDesc = `${updatedApp.trainingName} — Matagumpay ang oryentasyon! Officially Enrolled ka na para sa Day 1 ng klase.`;
+        } else if (status === 'in_progress') {
+          notifTitle = 'Gov Services Training: In Progress';
+          notifDesc = `${updatedApp.trainingName} — Nagsimula na ang inyong pagsasanay. Laging pumasok sa tamang oras.`;
+        } else if (status === 'completed') {
+          notifTitle = 'Gov Services Training: Completed & Graduated';
+          notifDesc = `${updatedApp.trainingName} — Malugod na pagbati! Matagumpay mong natapos ang kurso. Maaari ka nang mag-apply ng Livelihood Capital Grant / Starter Kit.`;
+        } else if (status === 'rejected') {
+          notifTitle = 'Gov Services Training: Not Approved';
+          notifDesc = `${updatedApp.trainingName} — ${rejectionReason || updatedApp.rejectionReason || 'Hindi naaprubahan ang inyong aplikasyon sa pagsasanay.'}`;
+        }
 
         await db.query(
           `INSERT INTO user_notifications (user_id, title, description, application_ref)
