@@ -239,30 +239,48 @@ async function syncAndCleanAppointments() {
       }
     }
 
-    const approvedSoloParent = await db.query(
-      `SELECT reference_number, application_type, first_name, middle_name, last_name, suffix, created_at, updated_at
+    const activeSoloParent = await db.query(
+      `SELECT reference_number, application_type, application_status, first_name, middle_name, last_name, suffix, created_at, updated_at
        FROM solo_parent_child_welfare_applications
        WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
-         AND application_status IN ('approved', 'completed', 'for_release', 'released')`
+         AND application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')`
     ).catch(() => ({ rows: [] }));
 
-    for (const row of approvedSoloParent.rows) {
+    for (const row of activeSoloParent.rows) {
       const refNo = String(row.reference_number || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
       const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'JEFFERSON FERNANDO LEE';
       const isEdu = String(row.application_type || row.reference_number || '').toUpperCase().includes('SP-EDU') ||
                     String(row.application_type || '').toUpperCase() === 'EDUCATIONAL_ASSISTANCE';
       const concern = isEdu ? 'Solo Parent Educational Assistance' : 'Solo Parent Financial Subsidy';
+      const isApproved = ['approved', 'completed', 'for_release', 'released'].includes(String(row.application_status || '').toLowerCase());
       const notes = isEdu
-        ? 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent Educational Assistance para sa grant disbursement.'
-        : 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent aplikasyon para sa scheduling.';
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, 'Solo Parent', $2, $3, 'pending', 'Quezon City Hall - SSDD Solo Parent Welfare Section', $4
-         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
-        [refNo, fullName, concern, notes]
-      ).catch(() => {});
+        ? (isApproved
+            ? 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent Educational Assistance para sa grant disbursement.'
+            : 'Awtomatikong pumasok mula sa Solo Parent Educational Assistance aplikasyon.')
+        : (isApproved
+            ? 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent aplikasyon para sa scheduling.'
+            : 'Awtomatikong pumasok mula sa Solo Parent Financial Subsidy aplikasyon.');
+      const initialStatus = isApproved ? 'approved' : 'pending';
+
+      const checkExists = await db.query(
+        `SELECT id, status FROM appointments WHERE reference_no = $1 AND concern = $2`,
+        [refNo, concern]
+      ).catch(() => ({ rows: [] }));
+
+      if (checkExists.rows.length === 0) {
+        await db.query(
+          `INSERT INTO appointments
+            (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+           VALUES ($1, 'Solo Parent', $2, $3, $4, 'Quezon City Hall - SSDD Solo Parent Welfare Section', $5, COALESCE($6, NOW()), NOW())`,
+          [refNo, fullName, concern, initialStatus, notes, row.created_at || null]
+        ).catch(() => {});
+      } else if (isApproved && checkExists.rows[0].status === 'pending') {
+        await db.query(
+          `UPDATE appointments SET status = 'approved', updated_at = NOW() WHERE id = $1`,
+          [checkExists.rows[0].id]
+        ).catch(() => {});
+      }
     }
 
     const approvedCw = await db.query(
@@ -290,6 +308,11 @@ async function syncAndCleanAppointments() {
   }
 }
 
+// Automatically trigger sync on server startup
+setTimeout(() => {
+  syncAndCleanAppointments().catch(() => {});
+}, 3000);
+
 async function initAppointmentTables() {
   return syncAndCleanAppointments();
 }
@@ -299,7 +322,7 @@ let lastAppointmentSyncTime = 0;
 
 function triggerAppointmentSyncIfStale() {
   const now = Date.now();
-  if (isAppointmentSyncInProgress || (now - lastAppointmentSyncTime < 3 * 60 * 1000)) {
+  if (isAppointmentSyncInProgress || (now - lastAppointmentSyncTime < 2 * 60 * 1000)) {
     return;
   }
   isAppointmentSyncInProgress = true;

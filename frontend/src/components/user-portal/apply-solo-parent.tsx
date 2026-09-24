@@ -832,6 +832,11 @@ export default function ApplySoloParent() {
 
   // Blocked View for when applying inside wizard
   if (isBlocked && (!bypassedBlock || isAppApproved) && !isChildWelfare) {
+    const isEduBlocked =
+      rawTypeParam === "educational-assistance" ||
+      Boolean(blockedApp?.isEducational || blockedApp?.isEdu) ||
+      String(blockedApp?.service || blockedApp?.service_name || blockedApp?.application_type || "").toLowerCase().includes("educational") ||
+      String(blockedApp?.reference_number || blockedApp?.referenceNumber || "").toUpperCase().includes("SP-EDU")
     const rejectionReason = blockedApp?.rejection_reason || blockedApp?.rejectionReason || blockedApp?.admin_notes || ""
     const displayRef =
       blockedApp?.reference_number ||
