@@ -11,8 +11,6 @@ import {
   MapPin,
   Calendar,
   Paperclip,
-  Users,
-  HeartHandshake,
   Baby,
   ClipboardList,
   IdCard,
@@ -1385,18 +1383,13 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 interface CardProps {
   app: WelfareSubmission
   onView: (app: WelfareSubmission) => void
-  onShowCard?: (app: WelfareSubmission) => void
   allSubmissions?: WelfareSubmission[]
 }
 
-function ApplicationCard({ app, onView, onShowCard, allSubmissions }: CardProps) {
+function ApplicationCard({ app, onView }: CardProps) {
   const subLabel = isSoloParent(app)
     ? (app as any).applicationType === "new" ? "New application" : (app as any).applicationType === "renewal" ? "Renewal" : "Lost ID replacement"
     : app.supportCategory.replace(/^\d+\.\s*/, "")
-
-  const soloOfficialId = isSoloParent(app) && app.status === "approved"
-    ? (app as any).assignedIdNumber || (app as any).soloParentIdNumber || generateOfficialSoloParentId(app, allSubmissions)
-    : ""
 
   return (
     <div
@@ -1454,7 +1447,6 @@ function getStableSequence(refOrId: string): string {
   let hash = 0
   for (let i = 0; i < refOrId.length; i++) {
     hash = (hash << 5) - hash + refOrId.charCodeAt(i)
-    hash |= 0
   }
   const positive = Math.abs(hash)
   return String(100000 + (positive % 900000))
@@ -1540,423 +1532,15 @@ function generateOfficialSoloParentId(app: WelfareSubmission, allSubmissions?: W
   return `SP-137404-${year}-${stableSeq}`
 }
 
-function SoloParentCardFront({
-  app,
-  photoUrl,
-  idNumber,
-  appDate,
-  expiryDateStr,
-  cardRef,
-}: {
-  app: WelfareSubmission
-  photoUrl: string
-  idNumber: string
-  appDate: string
-  expiryDateStr: string
-  cardRef?: React.Ref<HTMLDivElement>
-}) {
-  return (
-    <div
-      ref={cardRef}
-      className="official-id-card-render w-[500px] h-[315px] rounded-2xl overflow-hidden shadow-xl border border-slate-300 relative bg-white select-none flex flex-col justify-between"
-      style={{
-        background: "linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #eff6ff 100%)",
-        WebkitPrintColorAdjust: "exact",
-        printColorAdjust: "exact",
-      }}
-    >
-      {}
-      <div
-        className="px-3.5 py-2.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs"
-        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-      >
-        <div className="flex items-center gap-2">
-          <img src="/gov-serves-seal.png" alt="QC Seal" crossOrigin="anonymous" className="w-7 h-7 object-contain drop-shadow-xs rounded-full bg-white/20 p-0.5" />
-          <div>
-            <p className="text-[7.5px] font-bold tracking-widest uppercase opacity-90 leading-tight">Republic of the Philippines</p>
-            <p className="text-xs font-black tracking-wide leading-tight uppercase">GOV SERVICES</p>
-          </div>
-        </div>
-        <span
-          className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30"
-          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-        >
-          SOLO PARENT ID
-        </span>
-      </div>
-
-      {}
-      <div
-        className="py-1 text-center text-[9.5px] font-black uppercase tracking-widest bg-amber-400 text-slate-950"
-        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-      >
-        Social Services Development Department — Solo Parent Welfare
-      </div>
-
-      {}
-      <div className="p-3 flex gap-2.5 items-start relative">
-        <ApplicantPhotoDisplay
-          photoUrl={photoUrl}
-          tag="QC SSDD"
-        />
-
-        <div className="flex-1 min-w-0 space-y-1 relative z-10">
-          <div>
-            <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">QC Solo Parent ID</span>
-            <p className="text-sm font-black text-red-700 font-mono tracking-wide leading-none">{idNumber}</p>
-          </div>
-
-          <div className="pt-0.5">
-            <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Cardholder Full Name</span>
-            <p className="text-xs font-black text-slate-900 leading-tight uppercase truncate">{displayName(app)}</p>
-          </div>
-
-          <div className="pt-0.5">
-            <span className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Classification</span>
-            <p className="text-[9.5px] font-bold text-emerald-800 leading-tight truncate">{(app as any).classification || (app as any).selectedCategory || "Solo Parent Beneficiary"}</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-1 pt-0.5 text-[8.5px] text-slate-700">
-            <div>
-              <span className="text-[7px] font-semibold text-slate-400 uppercase">Birthdate:</span> {(app as any).dobYear ? `${(app as any).dobYear}-${(app as any).dobMonth || "01"}-${(app as any).dobDay || "01"}` : "—"}
-            </div>
-            <div>
-              <span className="text-[7px] font-semibold text-slate-400 uppercase">Children:</span> {(app as any).familyMembers?.length || 1} Dependent(s)
-            </div>
-          </div>
-
-          <div className="text-[8.5px] text-slate-700 truncate pt-0.5">
-            <span className="text-[7px] font-semibold text-slate-400 uppercase">Address:</span> {getAddress(app)}
-          </div>
-        </div>
-
-        {}
-        <div className="shrink-0 flex flex-col items-center justify-center pl-1 z-10 self-center">
-          <img
-            src="/gov-serves-seal.png"
-            alt="QC Official Seal"
-            crossOrigin="anonymous"
-            className="w-14 h-14 object-contain drop-shadow-md hover:scale-105 transition-transform"
-          />
-          <span className="text-[6px] font-black uppercase text-slate-600 tracking-tighter mt-0.5">QC SEAL</span>
-        </div>
-      </div>
-
-      {}
-      <div
-        className="px-3 py-1.5 border-t border-slate-200/80 bg-slate-50/90 flex items-center justify-between text-[7.5px]"
-        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-      >
-        <div>
-          <p className="font-mono font-bold text-slate-700 tracking-widest text-[8.5px]">|||| | || |||| | | ||| ||||</p>
-          <div className="flex items-center gap-1.5 text-[6.5px] uppercase tracking-wider font-semibold">
-            <span className="text-slate-400">Issued: {appDate}</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-amber-800 font-bold">Expires: {expiryDateStr}</span>
-          </div>
-        </div>
-        <div className="text-center">
-          <div className="w-18 border-b border-slate-400 mx-auto mb-0.5" />
-          <p className="font-bold text-slate-800 text-[7.5px] leading-tight uppercase">MA. JOSEFINA G. BELMONTE</p>
-          <p className="text-[6.5px] text-slate-500 uppercase leading-none">City Mayor</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function SoloParentCardBack({
-  app,
-  emergencyPerson,
-  emergencyPhone,
-  emergencyRel,
-  emergencyAddr,
-  cardRef,
-}: {
-  app: WelfareSubmission
-  emergencyPerson: string
-  emergencyPhone: string
-  emergencyRel: string
-  emergencyAddr: string
-  cardRef?: React.Ref<HTMLDivElement>
-}) {
-  return (
-    <div
-      ref={cardRef}
-      className="official-id-card-render w-[500px] h-[315px] rounded-2xl overflow-hidden shadow-xl border border-slate-300 relative bg-white select-none flex flex-col justify-between text-slate-900"
-      style={{
-        background: "linear-gradient(135deg, #fff5f5 0%, #ffffff 50%, #fef2f2 100%)",
-        WebkitPrintColorAdjust: "exact",
-        printColorAdjust: "exact",
-      }}
-    >
-      {}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
-        <img src="/gov-serves-seal.png" alt="" crossOrigin="anonymous" className="w-48 h-48 object-contain" />
-      </div>
-
-      {}
-      <div
-        className="px-3.5 py-1.5 flex items-center justify-between text-white bg-gradient-to-r from-red-700 via-red-600 to-red-800 shadow-xs relative z-10"
-        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-      >
-        <div className="flex items-center gap-1.5">
-          <img src="/gov-serves-seal.png" alt="QC Seal" crossOrigin="anonymous" className="w-4 h-4 object-contain rounded-full bg-white/20 p-0.5" />
-          <p className="text-[8.5px] font-black uppercase tracking-wide leading-tight">
-            Republic Act 11861 — Expanded Solo Parents Welfare Act
-          </p>
-        </div>
-        <span
-          className="text-[7.5px] font-black text-amber-900 bg-amber-300 px-2 py-0.5 rounded-full border border-amber-400/80 shadow-xs"
-          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-        >
-          QC-SSDD
-        </span>
-      </div>
-
-      <div className="p-3 pt-2 space-y-2 relative z-10 flex-1 flex flex-col justify-between">
-        <div>
-          {}
-          <div
-            className="bg-red-50/70 border border-red-200/80 rounded-lg p-2 space-y-1 text-[7.5px] text-slate-800 leading-tight"
-            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-          >
-            <p className="flex items-start gap-1">
-              <span className="text-red-600 font-bold shrink-0">✓</span>
-              <span><strong>10% Discount &amp; VAT Exemption</strong> on infant formula, baby food, prescribed medicines, and essential supplies.</span>
-            </p>
-            <p className="flex items-start gap-1">
-              <span className="text-red-600 font-bold shrink-0">✓</span>
-              <span><strong>Prioritization</strong> in local government housing, educational scholarships, and livelihood grants.</span>
-            </p>
-            <p className="flex items-start gap-1">
-              <span className="text-red-600 font-bold shrink-0">✓</span>
-              <span>Non-transferable official municipal privilege card valid nationwide across the Philippines.</span>
-            </p>
-          </div>
-
-          {}
-          <div className="mt-1.5">
-            <p className="text-[7.5px] font-black text-red-900 uppercase tracking-wider mb-0.5 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span>
-              Registered Children / Dependents:
-            </p>
-            <div
-              className="grid grid-cols-2 gap-1 text-[7.5px] text-slate-700 bg-white/90 p-1.5 rounded-lg border border-red-200/60 max-h-11 overflow-y-auto"
-              style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-            >
-              {((app as any).familyMembers && (app as any).familyMembers.length > 0) ? (
-                (app as any).familyMembers.map((m: any, i: number) => (
-                  <div key={i} className="truncate flex items-center gap-1">
-                    <span className="font-bold text-slate-900">• {m.name || (m as any).fullName || `${m.relationship}: child`}</span>
-                    <span className="text-slate-400">({m.age || "—"} yo)</span>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-2 text-slate-400 italic">1 Dependent on file</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {}
-        <div
-          className="border-t border-red-200/70 pt-1.5"
-          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-        >
-          <p className="text-[7.5px] font-black text-slate-800 uppercase tracking-wider mb-1">In case of emergency, please notify:</p>
-          <div
-            className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7px] text-slate-700 bg-white/90 p-1.5 rounded-lg border border-red-200/60 shadow-xs"
-            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
-          >
-            <div>
-              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Contact Person: </span>
-              <span className="font-bold text-slate-900 truncate">{emergencyPerson}</span>
-            </div>
-            <div>
-              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Phone: </span>
-              <span className="font-mono font-bold text-red-700">{emergencyPhone}</span>
-            </div>
-            <div>
-              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Relation: </span>
-              <span className="font-semibold text-slate-800 truncate">{emergencyRel}</span>
-            </div>
-            <div>
-              <span className="font-bold text-slate-400 uppercase tracking-wider text-[6px]">Address: </span>
-              <span className="font-semibold text-slate-800 truncate">{emergencyAddr}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function OfficialSoloParentIdCardModal({
-  app,
-  onClose,
-  allSubmissions,
-}: {
-  app: WelfareSubmission | null
-  onClose: () => void
-  allSubmissions?: WelfareSubmission[]
-}) {
-  if (!app) return null
-  const idNumber =
-    (app as any).assignedIdNumber ||
-    (app as any).soloParentIdNumber ||
-    generateOfficialSoloParentId(app, allSubmissions)
-  const issueDateObj = new Date((app as any).dateApproved || app.submittedAt || Date.now())
-  const validIssueDate = isNaN(issueDateObj.getTime()) ? new Date() : issueDateObj
-  const appDate = validIssueDate.toLocaleDateString("en-PH", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-  const expiryDateObj = new Date(validIssueDate)
-  expiryDateObj.setFullYear(expiryDateObj.getFullYear() + 1)
-  const expiryDateStr = expiryDateObj.toLocaleDateString("en-PH", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-
-  const [activeSide, setActiveSide] = useState<"front" | "back">("front")
-
-  const photoUrl = getApplicantPhotoUrl(app)
-
-  const fdCard = (app as any).formData || (app as any).form_data || (app as any).extra_data?.formData || {}
-  const edCard = (app as any).extraData || (app as any).extra_data || {}
-
-  const emFirstCard = (app as any).emergencyFirstName || fdCard.emergencyFirstName || edCard.emergencyFirstName || (app as any).emergency_first_name || ""
-  const emLastCard = (app as any).emergencyLastName || fdCard.emergencyLastName || edCard.emergencyLastName || (app as any).emergency_last_name || ""
-  const emCombinedCard = [emFirstCard, emLastCard].filter(Boolean).join(" ")
-
-  const emergencyPerson =
-    emCombinedCard ||
-    (app as any).emergencyContactPerson ||
-    (app as any).emergency_contact_person ||
-    fdCard.emergencyContactPerson ||
-    edCard.emergencyContactPerson ||
-    (app as any).emergencyName ||
-    "—"
-
-  const emergencyPhone =
-    (app as any).emergencyContactNo ||
-    (app as any).emergency_contact_no ||
-    fdCard.emergencyContactNo ||
-    edCard.emergencyContactNo ||
-    (app as any).contactNumber ||
-    "—"
-
-  const emergencyRel =
-    (app as any).emergencyRelationship ||
-    (app as any).emergency_relationship ||
-    fdCard.emergencyRelationship ||
-    edCard.emergencyRelationship ||
-    (app as any).relationshipToApplicant ||
-    "—"
-
-  const emergencyAddr =
-    (app as any).emergencyAddress ||
-    (app as any).emergency_address ||
-    fdCard.emergencyAddress ||
-    edCard.emergencyAddress ||
-    getAddress(app) ||
-    "Quezon City"
-
-  return (
-    <div
-      className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-slate-50">
-          <div className="flex items-center gap-2">
-            <IdCard className="w-5 h-5 text-blue-600" />
-            <div>
-              <h3 className="text-sm font-bold text-gray-900 leading-none">
-                Official Quezon City Solo Parent ID Card
-              </h3>
-              <p className="text-[11px] text-gray-500 mt-1">
-                Card ID: <span className="font-mono font-bold text-blue-700">{idNumber}</span>
-              </p>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl font-light leading-none p-1 cursor-pointer">×</button>
-        </div>
-
-        {}
-        <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-3">
-          <button
-            onClick={() => setActiveSide("front")}
-            className={`pb-2 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
-              activeSide === "front" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-900"
-            }`}
-          >
-            FRONT OF ID CARD
-          </button>
-          <button
-            onClick={() => setActiveSide("back")}
-            className={`pb-2 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
-              activeSide === "back" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-900"
-            }`}
-          >
-            BACK OF ID CARD (BENEFICIARIES &amp; PRIVILEGES)
-          </button>
-        </div>
-
-        {}
-        <div className="p-6 bg-slate-100/80 flex flex-col items-center justify-center overflow-x-auto min-h-[380px]">
-          {activeSide === "front" ? (
-            <SoloParentCardFront
-              app={app}
-              photoUrl={photoUrl}
-              idNumber={idNumber}
-              appDate={appDate}
-              expiryDateStr={expiryDateStr}
-            />
-          ) : (
-            <SoloParentCardBack
-              app={app}
-              emergencyPerson={emergencyPerson}
-              emergencyPhone={emergencyPhone}
-              emergencyRel={emergencyRel}
-              emergencyAddr={emergencyAddr}
-            />
-          )}
-        </div>
-
-        {}
-        <div className="p-4 border-t border-gray-200 bg-slate-50 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 interface DetailedViewProps {
   app: WelfareSubmission
   onClose: () => void
   onApprove: (id: string, value: string) => void
   onReject: (id: string, reason: string) => void
-  onShowCard?: (app: WelfareSubmission) => void
   allSubmissions?: WelfareSubmission[]
 }
 
-function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmissions }: DetailedViewProps) {
-  const { t } = useLanguage()
+function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: DetailedViewProps) {
   const isSolo = isSoloParent(app)
   const idNumber = isSolo
     ? ((app as any).assignedIdNumber || (app as any).soloParentIdNumber || generateOfficialSoloParentId(app, allSubmissions))
@@ -1972,17 +1556,6 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
 
   let sectionNum = 0
   const nextNum = () => String(++sectionNum).padStart(2, "0")
-
-  const dobDisplay = (() => {
-    if ((app as any).birthDate) {
-      const d = new Date((app as any).birthDate)
-      if (!isNaN(d.getTime())) {
-        return d.toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
-      }
-    }
-    const parts = [app.dobMonth, app.dobDay, app.dobYear].filter(Boolean)
-    return parts.length > 0 ? parts.join(" ") : "—"
-  })()
 
   return (
     <div
