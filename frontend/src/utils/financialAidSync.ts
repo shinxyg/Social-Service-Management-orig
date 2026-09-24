@@ -635,8 +635,13 @@ export function syncAppointmentToFinancialAid(params: {
   let found = false
 
   const fixedAmount = resolveFixedAmount(params.concern)
-  const rawConcern = params.concern.replace(/\s*assistance/gi, "").trim()
-  const formattedConcern = params.concern.includes("Assistance") ? params.concern : (rawConcern.charAt(0).toUpperCase() + rawConcern.slice(1) + " Assistance")
+  let formattedConcern = params.concern
+  if (params.concern.toLowerCase().includes("solo parent")) {
+    formattedConcern = "Solo Parent Financial Subsidy"
+  } else if (!params.concern.toLowerCase().includes("assistance") && !params.concern.toLowerCase().includes("pension") && !params.concern.toLowerCase().includes("subsidy")) {
+    const rawConcern = params.concern.replace(/\s*assistance/gi, "").trim()
+    formattedConcern = rawConcern.charAt(0).toUpperCase() + rawConcern.slice(1) + " Assistance"
+  }
 
   let formattedDate = params.date ? params.date : undefined
   if (params.date) {
@@ -648,24 +653,44 @@ export function syncAppointmentToFinancialAid(params: {
     } catch {}
   }
 
+  const isSoloParentConcern = formattedConcern.toLowerCase().includes("solo parent")
   const updatedDisbursements = currentDisbursements.map((d) => {
     const isExactRef = d.applicationRef && d.applicationRef.trim().toLowerCase() === params.referenceNo.trim().toLowerCase()
+    const isSoloMatch = isSoloParentConcern && (
+      String(d.assistanceType).toLowerCase().includes("solo parent") ||
+      String(d.applicationRef || "").toLowerCase().includes("sp-") ||
+      String(d.applicantName || "").toLowerCase().includes("solo parent") ||
+      (params.applicantName && d.applicantName && d.applicantName.trim().toUpperCase() === params.applicantName.trim().toUpperCase())
+    )
 
-    if (isExactRef) {
+    if (isExactRef || isSoloMatch) {
       found = true
       return {
         ...d,
-        applicationRef: params.referenceNo,
+        applicationRef: params.referenceNo || d.applicationRef,
+        applicantName: params.applicantName ? params.applicantName.toUpperCase() : d.applicantName,
+        assistanceType: formattedConcern,
         appointmentDate: formattedDate !== undefined ? formattedDate : d.appointmentDate,
         appointmentTime: params.time !== undefined ? params.time : d.appointmentTime,
-        venue: params.location || d.venue || "Quezon City Hall",
+        venue: params.location || d.venue || (isSoloParentConcern ? "Quezon City Hall - SSDD Solo Parent Welfare Section" : "Quezon City Hall"),
       }
     }
     return d
   })
 
+  // Purge any ghost Senior records for Jefferson or DISB-2026-9929
+  const filteredDisbursements = updatedDisbursements.filter((d) => {
+    const isGhostSenior =
+      d.disbursementId === "DISB-2026-9929" ||
+      d.id === "local-appt-9929" ||
+      d.id === "remote-pwd-9929" ||
+      (String(d.applicantName || "").toUpperCase().includes("JEFFERSON") &&
+       String(d.assistanceType || "").toLowerCase().includes("senior"))
+    return !isGhostSenior
+  })
+
   if (!found) {
-    const newId = `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`
+    const newId = `DISB-2026-${String(filteredDisbursements.length + 1).padStart(4, "0")}`
     const newRecord: SyncedDisbursementRecord = {
       id: `disb-${Date.now()}`,
       disbursementId: newId,
@@ -677,13 +702,13 @@ export function syncAppointmentToFinancialAid(params: {
       status: "PENDING",
       appointmentDate: formattedDate,
       appointmentTime: params.time,
-      venue: params.location || "Quezon City Hall",
+      venue: params.location || (isSoloParentConcern ? "Quezon City Hall - SSDD Solo Parent Welfare Section" : "Quezon City Hall"),
       remarks: params.notes || "Scheduled appointment for financial aid payout.",
     }
-    updatedDisbursements.unshift(newRecord)
+    filteredDisbursements.unshift(newRecord)
   }
 
-  saveDisbursements(updatedDisbursements)
+  saveDisbursements(filteredDisbursements)
 
   if (formattedDate) {
     pushUserNotification({
@@ -817,6 +842,8 @@ export const TARGET_TEST_MATCHES = [
   "millares",
   "renzoe09062",
   "disb-2026-4213",
+  "disb-2026-9929",
+  "local-appt-9929",
 ]
 
 export const ALL_STORAGE_KEYS = [
@@ -846,14 +873,21 @@ export function purgeLegacyLocalTestData() {
         if (Array.isArray(list)) {
           const filtered = list.filter((item: any) => {
             const str = JSON.stringify(item).toLowerCase()
-            return !TARGET_TEST_MATCHES.some((m) => str.includes(m))
+            const isMatch = TARGET_TEST_MATCHES.some((m) => str.includes(m))
+            const isJeffersonSenior = str.includes("jefferson") && (str.includes("senior") || str.includes("osca"))
+            return !isMatch && !isJeffersonSenior
           })
           localStorage.setItem(k, JSON.stringify(filtered))
         } else if (typeof list === "object" && list !== null) {
           const newObj = { ...list }
           Object.keys(newObj).forEach((objKey) => {
             const lowerKey = objKey.toLowerCase()
-            if (TARGET_TEST_MATCHES.some((m) => lowerKey.includes(m))) {
+            const valStr = JSON.stringify(newObj[objKey] || "").toLowerCase()
+            if (
+              TARGET_TEST_MATCHES.some((m) => lowerKey.includes(m)) ||
+              (valStr.includes("jefferson") && (valStr.includes("senior") || valStr.includes("osca"))) ||
+              (lowerKey.includes("jefferson") && (lowerKey.includes("senior") || lowerKey.includes("osca")))
+            ) {
               delete newObj[objKey]
             }
           })

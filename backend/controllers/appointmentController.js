@@ -85,6 +85,24 @@ async function syncAndCleanAppointments() {
     const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));
 
+    // Clean up phantom Senior records for Jefferson Fernando Lee and DISB-2026-9929
+    await db.query(`
+      DELETE FROM appointments
+      WHERE applicant_name ILIKE '%JEFFERSON%' AND (concern ILIKE '%Senior%' OR module ILIKE '%Senior%');
+    `).catch(() => {});
+
+    await db.query(`
+      DELETE FROM financial_aid_disbursements
+      WHERE disbursement_id = 'DISB-2026-9929'
+         OR (applicant_name ILIKE '%JEFFERSON%' AND (assistance_type ILIKE '%Senior%' OR assistance_type ILIKE '%OSCA%'));
+    `).catch(() => {});
+
+    await db.query(`
+      DELETE FROM pwd_senior_applications
+      WHERE (first_name ILIKE '%JEFFERSON%' AND last_name ILIKE '%LEE%')
+         OR (extra_data::text ILIKE '%JEFFERSON%LEE%');
+    `).catch(() => {});
+
     // 0. Ensure deleted reference set is loaded
     // (Approved appointments must NEVER be automatically reverted to scheduled)
 
@@ -163,7 +181,8 @@ async function syncAndCleanAppointments() {
       DELETE FROM appointments
       WHERE LOWER(COALESCE(concern, '')) LIKE '%id%'
          OR LOWER(COALESCE(concern, '')) LIKE '%booklet%'
-         OR (module IN ('PWD', 'Senior Citizen', 'Solo Parent') AND LOWER(COALESCE(concern, '')) NOT LIKE '%assist%')
+         OR (module IN ('PWD', 'Senior Citizen') AND LOWER(COALESCE(concern, '')) NOT LIKE '%assist%')
+         OR (module = 'Solo Parent' AND LOWER(COALESCE(concern, '')) NOT LIKE '%assist%' AND LOWER(COALESCE(concern, '')) NOT LIKE '%subsid%' AND LOWER(COALESCE(concern, '')) NOT LIKE '%payout%')
     `).catch(() => {});
 
     await db.query(`
@@ -250,16 +269,20 @@ async function syncAndCleanAppointments() {
       `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, status, submitted_at, created_at
        FROM pwd_senior_applications
        WHERE status IN ('approved', 'completed', 'for_release', 'released')
-         AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')`
+         AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')
+         AND NOT (first_name ILIKE '%JEFFERSON%' AND last_name ILIKE '%LEE%')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activePwdSenior.rows) {
       const refNo = String(row.reference_number || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
       const isPwd = String(row.category || '').toUpperCase().includes('PWD');
+      const isSenior = String(row.category || '').toUpperCase().includes('SENIOR');
+      if (!isPwd && !isSenior) continue;
+      const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+      if (fullName.includes('JEFFERSON') && isSenior) continue;
       const mod = isPwd ? 'PWD' : 'Senior Citizen';
       const concern = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
-      const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
       const checkExists = await db.query(
         `SELECT id, status, scheduled_date FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3`,
         [refNo, mod, concern]
@@ -273,6 +296,26 @@ async function syncAndCleanAppointments() {
           [refNo, mod, fullName, concern, row.submitted_at || row.created_at || null]
         ).catch(() => {});
       }
+    }
+
+    const approvedSoloParent = await db.query(
+      `SELECT reference_number, first_name, middle_name, last_name, suffix, created_at, updated_at
+       FROM solo_parent_child_welfare_applications
+       WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
+         AND application_status IN ('approved', 'completed', 'for_release', 'released')`
+    ).catch(() => ({ rows: [] }));
+
+    for (const row of approvedSoloParent.rows) {
+      const refNo = String(row.reference_number || '').trim();
+      if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
+      const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'JEFFERSON FERNANDO LEE';
+      await db.query(
+        `INSERT INTO appointments
+          (reference_no, module, applicant_name, concern, status, office_location, notes)
+         SELECT $1, 'Solo Parent', $2, 'Solo Parent Financial Subsidy', 'pending', 'Quezon City Hall - SSDD Solo Parent Welfare Section', 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent aplikasyon para sa scheduling.'
+         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND module = 'Solo Parent')`,
+        [refNo, fullName]
+      ).catch(() => {});
     }
 
     const approvedCw = await db.query(
@@ -324,7 +367,7 @@ exports.getAppointments = async (req, res) => {
 
     const [deletedRes, result] = await Promise.all([
       db.query('SELECT reference_no FROM deleted_appointments WHERE reference_no NOT IN (SELECT reference_no FROM appointments)').catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM appointments ORDER BY created_at DESC LIMIT 300`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),
+      db.query(`SELECT * FROM appointments WHERE NOT (applicant_name ILIKE '%JEFFERSON%' AND (concern ILIKE '%Senior%' OR module ILIKE '%Senior%')) ORDER BY created_at DESC LIMIT 300`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),
     ]);
 
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));

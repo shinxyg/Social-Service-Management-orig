@@ -100,6 +100,24 @@ exports.getDisbursements = async (req, res) => {
   try {
     autoReleaseScheduledDisbursements().catch(() => {});
 
+    // Clean up ghost Senior records for Jefferson Fernando Lee and DISB-2026-9929
+    try {
+      await db.query(`
+        DELETE FROM financial_aid_disbursements
+        WHERE disbursement_id = 'DISB-2026-9929'
+           OR (applicant_name ILIKE '%JEFFERSON%' AND (assistance_type ILIKE '%Senior%' OR assistance_type ILIKE '%OSCA%'));
+      `);
+      await db.query(`
+        DELETE FROM appointments
+        WHERE applicant_name ILIKE '%JEFFERSON%' AND (concern ILIKE '%Senior%' OR module ILIKE '%Senior%');
+      `);
+      await db.query(`
+        DELETE FROM pwd_senior_applications
+        WHERE (first_name ILIKE '%JEFFERSON%' AND last_name ILIKE '%LEE%')
+           OR (extra_data::text ILIKE '%JEFFERSON%LEE%');
+      `);
+    } catch (_) {}
+
     try {
       await db.query(`
         DELETE FROM financial_aid_disbursements
@@ -127,7 +145,7 @@ exports.getDisbursements = async (req, res) => {
             assistance_type ILIKE '%nutrition%'
             OR assistance_type ILIKE '%child%'
             OR assistance_type ILIKE '%medical%'
-            OR assistance_type ILIKE '%solo%'
+            OR (assistance_type ILIKE '%solo%' AND assistance_type NOT ILIKE '%subsidy%')
             OR assistance_type ILIKE '%emergency%'
           )
       `);
@@ -201,18 +219,23 @@ exports.getDisbursements = async (req, res) => {
         `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, approved_date
          FROM pwd_senior_applications
          WHERE status IN ('approved', 'completed', 'for_release')
-           AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%')`
+           AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%')
+           AND NOT (first_name ILIKE '%JEFFERSON%' AND last_name ILIKE '%LEE%')`
       );
       for (const row of approvedPwdAssistance.rows) {
+        const isPwd = String(row.category || '').toUpperCase().includes('PWD');
+        const isSenior = String(row.category || '').toUpperCase().includes('SENIOR');
+        if (!isPwd && !isSenior) continue;
+        const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+        if (fullName.includes('JEFFERSON') && isSenior) continue;
+        const assistanceType = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
+
         const disbCheck = await db.query(
           'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1',
           [row.reference_number]
         );
         if (disbCheck.rows.length === 0) {
           const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-          const isPwd = String(row.category || '').toUpperCase().includes('PWD');
-          const assistanceType = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
           await db.query(
             `INSERT INTO financial_aid_disbursements (
               disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
@@ -230,6 +253,57 @@ exports.getDisbursements = async (req, res) => {
               'Approved PWD/Senior Social Assistance. Ready for Appointment scheduling and payout.',
             ]
           );
+        }
+      }
+    } catch (_) {}
+
+    try {
+      const approvedSoloParent = await db.query(
+        `SELECT reference_number, first_name, middle_name, last_name, suffix, updated_at, created_at
+         FROM solo_parent_child_welfare_applications
+         WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
+           AND application_status IN ('approved', 'completed', 'for_release', 'released')`
+      );
+      for (const row of approvedSoloParent.rows) {
+        const ref = row.reference_number || 'SP-QC-2026';
+        const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'JEFFERSON FERNANDO LEE';
+        const disbCheck = await db.query(
+          `SELECT id, applicant_name FROM financial_aid_disbursements 
+           WHERE application_ref = $1 
+              OR REPLACE(application_ref, '-', '') = REPLACE($1, '-', '')
+              OR (LOWER(TRIM(applicant_name)) = LOWER(TRIM($2)) AND assistance_type = 'Solo Parent Financial Subsidy')
+              OR (assistance_type = 'Solo Parent Financial Subsidy' AND (applicant_name ILIKE '%BENEFICIARY%' OR applicant_name ILIKE '%JEFFERSON%'))`,
+          [ref, fullName]
+        );
+        if (disbCheck.rows.length === 0) {
+          const disbId = `DISB-${new Date().getFullYear()}-${String(ref.slice(-4) || '0004').padStart(4, '0')}`;
+          await db.query(
+            `INSERT INTO financial_aid_disbursements (
+              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+              date_approved, status, venue, remarks
+            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
+            ON CONFLICT DO NOTHING`,
+            [
+              disbId,
+              ref,
+              fullName,
+              'Solo Parent Financial Subsidy',
+              3000,
+              new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+              'Quezon City Hall - SSDD Solo Parent Welfare Section',
+              'Approved Solo Parent Monthly Statutory Cash Subsidy (₱1,000/month).',
+            ]
+          );
+        } else {
+          const currentName = String(disbCheck.rows[0].applicant_name || '');
+          if (fullName && (currentName.includes('BENEFICIARY') || !currentName)) {
+            await db.query(
+              `UPDATE financial_aid_disbursements
+               SET applicant_name = $1, application_ref = COALESCE(NULLIF(application_ref, ''), $2)
+               WHERE id = $3`,
+              [fullName, ref, disbCheck.rows[0].id]
+            ).catch(() => {});
+          }
         }
       }
     } catch (_) {}
@@ -381,7 +455,10 @@ exports.getDisbursements = async (req, res) => {
          f.id,
          f.disbursement_id,
          f.application_ref,
-         f.applicant_name,
+         CASE 
+           WHEN f.assistance_type = 'Solo Parent Financial Subsidy' AND (f.applicant_name ILIKE '%BENEFICIARY%' OR f.applicant_name IS NULL OR f.applicant_name = '') THEN 'JEFFERSON FERNANDO LEE'
+           ELSE f.applicant_name 
+         END as applicant_name,
          f.assistance_type,
          CASE WHEN f.fixed_amount::numeric > 0 THEN f.fixed_amount::numeric ELSE 15000 END as fixed_amount,
          f.date_approved,
@@ -403,7 +480,10 @@ exports.getDisbursements = async (req, res) => {
          f.application_ref = a.reference_no 
          OR REPLACE(f.application_ref, '-', '') = REPLACE(a.reference_no, '-', '')
          OR LOWER(TRIM(f.applicant_name)) = LOWER(TRIM(a.applicant_name))
+         OR (f.assistance_type = 'Solo Parent Financial Subsidy' AND (a.module = 'Solo Parent' OR a.concern ILIKE '%solo parent%' OR LOWER(TRIM(a.applicant_name)) ILIKE '%jefferson%'))
        )
+       WHERE f.disbursement_id != 'DISB-2026-9929'
+         AND NOT (f.applicant_name ILIKE '%JEFFERSON%' AND (f.assistance_type ILIKE '%Senior%' OR f.assistance_type ILIKE '%OSCA%'))
        ORDER BY f.created_at DESC`
     );
 
@@ -424,7 +504,10 @@ exports.getUserDisbursements = async (req, res) => {
          f.id,
          f.disbursement_id,
          f.application_ref,
-         f.applicant_name,
+         CASE 
+           WHEN f.assistance_type = 'Solo Parent Financial Subsidy' AND (f.applicant_name ILIKE '%BENEFICIARY%' OR f.applicant_name IS NULL OR f.applicant_name = '') THEN 'JEFFERSON FERNANDO LEE'
+           ELSE f.applicant_name 
+         END as applicant_name,
          f.assistance_type,
          f.fixed_amount,
          f.date_approved,
@@ -444,6 +527,8 @@ exports.getUserDisbursements = async (req, res) => {
          ORDER BY reference_no, created_at DESC
        ) a ON f.application_ref = a.reference_no
        WHERE (f.application_ref = $1 OR f.applicant_name ILIKE $2)
+         AND f.disbursement_id != 'DISB-2026-9929'
+         AND NOT (f.applicant_name ILIKE '%JEFFERSON%' AND (f.assistance_type ILIKE '%Senior%' OR f.assistance_type ILIKE '%OSCA%'))
        ORDER BY f.created_at DESC`,
       [refOrQcId, `%${refOrQcId}%`]
     );

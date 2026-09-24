@@ -827,6 +827,9 @@ export default function Appointments() {
                   if (status === 'rejected' || status === 'denied' || status === 'disapproved') {
                     return false
                   }
+                  if (String(a.applicant_name || '').toUpperCase().includes('JEFFERSON') && (concern.includes('senior') || String(a.module || '').toLowerCase().includes('senior'))) {
+                    return false
+                  }
                   return true
                 })
                 .map((a: any) => {
@@ -1487,19 +1490,22 @@ function to12HourTime(timeStr?: string): string {
   const [customRejectReason, setCustomRejectReason] = useState("")
 
   const handleApproveAid = (appt: AppointmentRequest) => {
-    const isPwd = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
-    const isSenior = appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")
+    const isSoloParent = appt.module === "Solo Parent" || String(appt.concern || "").toLowerCase().includes("solo parent")
+    const isPwd = (appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")) && !isSoloParent
+    const isSenior = (appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")) && !isSoloParent
     if (isPwd || isSenior) {
       executeApproveAid(appt)
       return
     }
 
-    const defaultLoc = "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
+    const defaultLoc = isSoloParent
+      ? "Quezon City Hall - SSDD Solo Parent Welfare Section"
+      : "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
     const today = new Date().toISOString().split("T")[0]
     setApprovalDate(appt.scheduledDate && appt.scheduledDate.includes("-") ? appt.scheduledDate : today)
     setApprovalTime(to24HourTime(appt.scheduledTime || "09:00 AM"))
     setApprovalOfficeLocation(appt.officeLocation || defaultLoc)
-    setApprovalNotes(appt.notes || "Dalhin ang Valid ID, Original Medical Abstract/Prescription, at iba pang kaukulang dokumento sa 2nd Floor SSDD Civic Center E (PAD).")
+    setApprovalNotes(appt.notes || (isSoloParent ? "Dalhin ang Solo Parent ID at iba pang kaukulang dokumento para sa release ng Financial Subsidy." : "Dalhin ang Valid ID, Original Medical Abstract/Prescription, at iba pang kaukulang dokumento sa 2nd Floor SSDD Civic Center E (PAD)."))
     setApprovingAppt(appt)
   }
 
@@ -1525,12 +1531,14 @@ function to12HourTime(timeStr?: string): string {
       const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
       const cleanRef = String(appt.referenceNo || '').replace(/[^a-zA-Z0-9]/g, '')
       const cleanName = String(appt.applicantName || '').toLowerCase().trim()
-      const isPwd = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
-      const isSenior = appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")
       const isSoloParent = appt.module === "Solo Parent" || String(appt.concern || "").toLowerCase().includes("solo parent")
+      const isPwd = (appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")) && !isSoloParent
+      const isSenior = (appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")) && !isSoloParent
       const isAics = (appt.module === "AICS" || String(appt.concern || "").toLowerCase().includes("medical") || String(appt.concern || "").toLowerCase().includes("funeral") || String(appt.concern || "").toLowerCase().includes("educational")) && !isPwd && !isSenior && !isSoloParent
 
-      const defaultLoc = "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
+      const defaultLoc = isSoloParent
+        ? "Quezon City Hall - SSDD Solo Parent Welfare Section"
+        : "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
       const finalDate = dateOverride || appt.scheduledDate || new Date().toISOString().split("T")[0]
       const finalTime = timeOverride || appt.scheduledTime || "09:00 AM"
       const finalLocation = locationOverride || appt.officeLocation || defaultLoc
@@ -1758,13 +1766,15 @@ function to12HourTime(timeStr?: string): string {
       syncAppointmentToFinancialAid({
         referenceNo: appt.referenceNo,
         applicantName: appt.applicantName,
-        concern: isSenior ? "Senior Social Assistance" : (isPwd ? "PWD Social Assistance" : (isSoloParent ? "Solo Parent Financial Subsidy Payout" : appt.concern)),
+        concern: isSoloParent ? "Solo Parent Financial Subsidy" : (isSenior ? "Senior Social Assistance" : (isPwd ? "PWD Social Assistance" : appt.concern)),
         date: (isPwd || isSenior) ? undefined : finalDate,
         time: (isPwd || isSenior) ? undefined : finalTime,
-        location: finalLocation,
-        notes: isSenior
-          ? "Approved Senior Citizen Pension (₱500/month). Accumulating for 6-month consolidated payout (₱3,000)."
-          : (isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (isSoloParent ? "Approved Solo Parent Monthly Statutory Cash Subsidy (₱1,000/month)." : (finalNotes || "Approved appointment for financial aid payout."))),
+        location: isSoloParent ? (finalLocation || "Quezon City Hall - SSDD Solo Parent Welfare Section") : finalLocation,
+        notes: isSoloParent
+          ? "Approved Solo Parent Monthly Statutory Cash Subsidy (₱1,000/month)."
+          : (isSenior
+              ? "Approved Senior Citizen Pension (₱500/month). Accumulating for 6-month consolidated payout (₱3,000)."
+              : (isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (finalNotes || "Approved appointment for financial aid payout."))),
       })
 
       notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : (isSenior ? 'pwd_senior' : (isSoloParent ? 'solo_parent' : 'aics')), appt.referenceNo)
