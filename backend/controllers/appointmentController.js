@@ -43,12 +43,11 @@ function resolveFixedAmount(concern) {
   return 5000;
 }
 
-async function initAppointmentTables() {
+async function syncAndCleanAppointments() {
   try {
-    
-
     // 0. Ensure deleted reference set is loaded
-    // (Approved appointments must NEVER be automatically reverted to scheduled)
+    const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
+    const deletedSet = new Set((deletedRes.rows || []).map((r) => String(r.reference_no).toLowerCase().trim()));
 
     // 1. Clean up rejected or cancelled AICS appointments
     await db.query(`
@@ -106,7 +105,7 @@ async function initAppointmentTables() {
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'Child Welfare' AND reference_no IN (
-        SELECT reference_number FROM child_welfare_applications WHERE application_status IN ('rejected', 'disapproved')
+        SELECT reference_number FROM solo_parent_child_welfare_applications WHERE module_type = 'CHILD_WELFARE' AND application_status IN ('rejected', 'disapproved')
       )
     `).catch(() => {});
 
@@ -262,8 +261,9 @@ async function initAppointmentTables() {
 
     const approvedCw = await db.query(
       `SELECT reference_number, category_title, guardian_first_name, guardian_last_name, child_name
-       FROM child_welfare_applications
-       WHERE application_status IN ('approved', 'completed', 'for_release', 'released')`
+       FROM solo_parent_child_welfare_applications
+       WHERE module_type = 'CHILD_WELFARE'
+         AND application_status IN ('approved', 'completed', 'for_release', 'released')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of approvedCw.rows) {
@@ -282,6 +282,10 @@ async function initAppointmentTables() {
   } catch (err) {
     console.warn('⚠️ Background appointment sync error:', err.message);
   }
+}
+
+async function initAppointmentTables() {
+  return syncAndCleanAppointments();
 }
 
 let isAppointmentSyncInProgress = false;
