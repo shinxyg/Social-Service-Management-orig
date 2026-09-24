@@ -1430,9 +1430,9 @@ function ApplicationCard({ app, onView, onShowCard, allSubmissions }: CardProps)
               {app.documents.length} documents
             </span>
             {isSoloParent(app)
-              ? app.status === "approved" && soloOfficialId && (
+              ? app.status === "approved" && (
                   <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>
-                    ID {soloOfficialId}
+                    ₱1,000 / mo Subsidy Approved
                   </span>
                 )
               : app.status === "approved" && (app as any).approvedAmount && (
@@ -1444,19 +1444,6 @@ function ApplicationCard({ app, onView, onShowCard, allSubmissions }: CardProps)
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
           <StatusBadge status={app.status} />
-          {onShowCard && app.status === "approved" && isSoloParent(app) && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onShowCard(app)
-              }}
-              className="gw-btn-ghost px-2.5 py-1 text-xs text-blue-700 hover:text-blue-800 border-blue-200 bg-blue-50/60 inline-flex items-center gap-1 cursor-pointer"
-            >
-              <IdCard className="h-3.5 w-3.5 text-blue-600" />
-              View ID
-            </button>
-          )}
         </div>
       </div>
     </div>
@@ -2624,20 +2611,8 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
           )}
         </div>
 
-        {}
-        <div className="px-6 py-4 flex items-center justify-between gap-3 shrink-0" style={{ borderTop: "1px solid var(--line)", background: "var(--surface)" }}>
-          <div>
-            {onShowCard && app.status === "approved" && isSolo && (
-              <button
-                type="button"
-                onClick={() => onShowCard(app)}
-                className="px-4 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl inline-flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-              >
-                <IdCard className="h-4 w-4 text-blue-600" />
-                View ID Card
-              </button>
-            )}
-          </div>
+        {/* Footer */}
+        <div className="px-6 py-4 flex items-center justify-end gap-3 shrink-0" style={{ borderTop: "1px solid var(--line)", background: "var(--surface)" }}>
           <button onClick={onClose} className="gw-btn-ghost px-6 py-2">
             Close
           </button>
@@ -2696,7 +2671,6 @@ export default function SoloParentChildWelfareAdmin() {
   }, [])
 
   const [selectedApp, setSelectedApp] = useState<WelfareSubmission | null>(null)
-  const [cardApp, setCardApp] = useState<WelfareSubmission | null>(null)
   const [filterCategory, setFilterCategory] = useState<"all" | "Solo Parent" | "Child Welfare">("all")
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected" | "needs_revision">("all")
   const [searchTerm, setSearchTerm] = useState("")
@@ -3037,7 +3011,6 @@ export default function SoloParentChildWelfareAdmin() {
                   key={app.id}
                   app={app}
                   onView={() => setSelectedApp(app)}
-                  onShowCard={(app) => setCardApp(app)}
                   allSubmissions={applications}
                 />
               ))}
@@ -3053,15 +3026,6 @@ export default function SoloParentChildWelfareAdmin() {
           onClose={() => setSelectedApp(null)}
           onApprove={handleApprove}
           onReject={handleReject}
-          onShowCard={(app) => setCardApp(app)}
-        />
-      )}
-
-      {cardApp && (
-        <OfficialSoloParentIdCardModal
-          app={cardApp}
-          onClose={() => setCardApp(null)}
-          allSubmissions={applications}
         />
       )}
     </div>
