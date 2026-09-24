@@ -739,27 +739,90 @@ export default function TrainingProgramAdmin() {
               </button>
             </div>
 
-            {/* Applicant Information */}
-            <div className="bg-muted/20 p-4 rounded-xl border border-border space-y-2 text-xs">
-              <span className="font-bold text-[11px] text-muted-foreground uppercase tracking-wider block">
-                Applicant Information & Requirements
+            {/* Applicant Information & Documentary Requirements */}
+            <div className="bg-muted/20 p-4 rounded-xl border border-border space-y-3 text-xs">
+              <span className="font-bold text-[11px] text-muted-foreground uppercase tracking-wider block border-b border-border/60 pb-1.5">
+                Full Applicant Information & Background
               </span>
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
                 <div>
                   <span className="text-muted-foreground block text-[10px]">QC ID Number:</span>
-                  <span className="font-bold text-foreground">{selectedApp.qcid}</span>
+                  <span className="font-bold font-mono text-foreground">{selectedApp.qcid}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground block text-[10px]">Barangay & City:</span>
-                  <span className="font-bold text-foreground">Brgy. {selectedApp.applicantInfo?.barangay}, {selectedApp.applicantInfo?.city || "Quezon City"}</span>
+                  <span className="text-muted-foreground block text-[10px]">Birthdate & Age:</span>
+                  <span className="font-bold text-foreground">{selectedApp.applicantInfo?.dateOfBirth || "N/A"} ({selectedApp.applicantInfo?.age || "N/A"} y/o)</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-[10px]">Gender & Civil Status:</span>
+                  <span className="font-bold text-foreground">{selectedApp.applicantInfo?.sex || "N/A"} • {selectedApp.applicantInfo?.civilStatus || "Single"}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground block text-[10px]">Contact Phone:</span>
-                  <span className="font-bold text-foreground">{selectedApp.applicantInfo?.contactNo}</span>
+                  <span className="font-bold text-foreground">{selectedApp.applicantInfo?.contactNo || "N/A"}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground block text-[10px]">Email Address:</span>
                   <span className="font-bold text-foreground">{selectedApp.applicantInfo?.email || "N/A"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-[10px]">Barangay & City:</span>
+                  <span className="font-bold text-foreground">Brgy. {selectedApp.applicantInfo?.barangay || "Sauyo"}, {selectedApp.applicantInfo?.city || "Quezon City"}</span>
+                </div>
+                <div className="sm:col-span-3">
+                  <span className="text-muted-foreground block text-[10px]">Complete Residential Address:</span>
+                  <span className="font-bold text-foreground">{selectedApp.applicantInfo?.completeAddress || selectedApp.applicantInfo?.address || `Brgy. ${selectedApp.applicantInfo?.barangay || "Sauyo"}, Quezon City`}</span>
+                </div>
+              </div>
+
+              {/* Educational & Employment Background */}
+              <div className="pt-2 border-t border-border/60 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <span className="text-muted-foreground block text-[10px]">Highest Educational Attainment:</span>
+                  <span className="font-bold text-foreground">{selectedApp.applicantInfo?.highestEducation || "College Level / High School Graduate"}</span>
+                  {selectedApp.applicantInfo?.schoolInstitution && (
+                    <span className="text-[10px] text-muted-foreground block italic">School: {selectedApp.applicantInfo.schoolInstitution}</span>
+                  )}
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-[10px]">Occupation / Employment Status:</span>
+                  <span className="font-bold text-foreground">{selectedApp.applicantInfo?.occupation || "Self-employed / Unemployed"}</span>
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-muted-foreground block text-[10px]">Reason & Purpose for Applying:</span>
+                  <p className="font-medium text-foreground bg-background/50 p-2 rounded-lg border border-border/50 text-[11px] mt-0.5 leading-relaxed">
+                    {selectedApp.applicantInfo?.reasonForApplying || selectedApp.applicantInfo?.trainingPurpose || "Nais matuto ng kasanayan upang makapagsimula ng sariling negosyo pangkabuhayan o makahanap ng trabaho."}
+                  </p>
+                </div>
+                {selectedApp.applicantInfo?.hasAttendedTraining === "Yes" && (
+                  <div className="sm:col-span-2 text-[10px] text-muted-foreground bg-blue-500/5 p-2 rounded-lg border border-blue-500/20">
+                    Previous Course Completed: <strong>{selectedApp.applicantInfo?.previousTrainingCourse || "N/A"}</strong> ({selectedApp.applicantInfo?.previousYearCompleted || "Year N/A"})
+                  </div>
+                )}
+              </div>
+
+              {/* Documentary Attachments */}
+              <div className="pt-2 border-t border-border/60">
+                <span className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider block mb-1.5">
+                  Attached Documentary Proofs:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-border bg-background">
+                    <span className="truncate text-[11px] font-medium text-foreground">
+                      🪪 {selectedApp.applicantInfo?.documents?.qcIdProof || "QCID_Verified.pdf"}
+                    </span>
+                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                      Verified
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-border bg-background">
+                    <span className="truncate text-[11px] font-medium text-foreground">
+                      📄 {selectedApp.applicantInfo?.documents?.requestLetter || "Barangay_Indigency_Cert.pdf"}
+                    </span>
+                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                      Attached
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
