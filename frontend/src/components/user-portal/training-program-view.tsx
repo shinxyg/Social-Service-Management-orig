@@ -627,9 +627,9 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   const [previousYearCompleted, setPreviousYearCompleted] = useState<string>("")
 
   // IV. Requirements (Supporting Documents)
-  const [requestLetterDoc, setRequestLetterDoc] = useState<{ file: File | null; dataUrl: string; name: string } | null>(null)
-  const [qcIdDoc, setQcIdDoc] = useState<{ file: File | null; dataUrl: string; name: string } | null>(null)
-  const [idPicDoc, setIdPicDoc] = useState<{ file: File | null; dataUrl: string; name: string } | null>(null)
+  const [requestLetterDoc, setRequestLetterDoc] = useState<{ file: File | null; dataUrl: string; name: string; size?: number } | null>(null)
+  const [qcIdDoc, setQcIdDoc] = useState<{ file: File | null; dataUrl: string; name: string; size?: number } | null>(null)
+  const [idPicDoc, setIdPicDoc] = useState<{ file: File | null; dataUrl: string; name: string; size?: number } | null>(null)
   const [cameraModalDocType, setCameraModalDocType] = useState<"requestLetter" | "qcId" | "idPic" | null>(null)
   const [sampleDocModal, setSampleDocModal] = useState<{
     title: string
@@ -642,6 +642,13 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
     name: string
     dataUrl: string
   } | null>(null)
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return "Attached"
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
 
   const fetchTrainingData = async () => {
     try {
@@ -2156,7 +2163,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                                   const reader = new FileReader()
                                   reader.onload = (ev) => {
                                     const dataUrl = (ev.target?.result as string) || URL.createObjectURL(f)
-                                    setRequestLetterDoc({ file: f, dataUrl, name: f.name })
+                                    setRequestLetterDoc({ file: f, dataUrl, name: f.name, size: f.size })
                                   }
                                   reader.readAsDataURL(f)
                                 }
@@ -2182,47 +2189,35 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                           </div>
 
                           {requestLetterDoc && (
-                            <div
-                              onClick={() =>
-                                setPreviewUploadedDoc({
-                                  title: isEn ? "Request Letter" : "Liham Kahilingan (Request Letter)",
-                                  name: requestLetterDoc.name,
-                                  dataUrl: requestLetterDoc.dataUrl,
-                                })
-                              }
-                              className="mt-3.5 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 flex items-center justify-between gap-3 shadow-xs cursor-pointer group hover:bg-emerald-500/10 transition-colors animate-in fade-in zoom-in-98"
-                              title="Pindutin para makita ang buong litrato"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900/60 shrink-0 flex items-center justify-center shadow-inner">
+                            <div className="flex flex-wrap gap-3 pt-3">
+                              <div className="relative w-36 sm:w-40 border border-border rounded-lg bg-card dark:bg-slate-900/90 shadow-sm p-3 flex flex-col items-center text-center shadow-xs">
+                                <button
+                                  type="button"
+                                  onClick={() => setRequestLetterDoc(null)}
+                                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-slate-700 hover:bg-red-600 flex items-center justify-center text-white transition-colors z-10 cursor-pointer shadow-xs"
+                                  title="Remove"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                                <div className="h-14 w-14 rounded-md overflow-hidden border border-border mb-2 flex items-center justify-center bg-muted/40 dark:bg-slate-800">
                                   {requestLetterDoc.dataUrl.startsWith("data:image") ||
                                   requestLetterDoc.dataUrl.startsWith("blob:") ||
                                   /\.(jpg|jpeg|png|webp|gif)$/i.test(requestLetterDoc.name) ? (
                                     <img
                                       src={requestLetterDoc.dataUrl}
                                       alt={requestLetterDoc.name}
-                                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                      className="h-full w-full object-cover"
                                     />
                                   ) : (
-                                    <FileText className="h-8 w-8 text-emerald-500" />
+                                    <FileText className="h-6 w-6 text-muted-foreground" />
                                   )}
                                 </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 mb-1">
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                      <CheckCircle2 className="h-3 w-3" /> {isEn ? "Uploaded & Ready" : "Nai-upload na"}
-                                    </span>
-                                  </div>
-                                  <p className="text-xs font-bold text-foreground truncate max-w-[240px] sm:max-w-xs md:max-w-md" title={requestLetterDoc.name}>
-                                    {requestLetterDoc.name}
-                                  </p>
-                                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                                    {isEn ? "Click to view full photo" : "Pindutin para makita ang buong litrato"}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="shrink-0 pr-1 text-muted-foreground group-hover:text-emerald-600 transition-colors">
-                                <Eye className="h-5 w-5" />
+                                <p className="text-xs font-medium text-foreground truncate w-full" title={requestLetterDoc.name}>
+                                  {requestLetterDoc.name}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">
+                                  {formatFileSize(requestLetterDoc.size)}
+                                </p>
                               </div>
                             </div>
                           )}
@@ -2263,7 +2258,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                                 const reader = new FileReader()
                                 reader.onload = (ev) => {
                                   const dataUrl = (ev.target?.result as string) || URL.createObjectURL(f)
-                                  setQcIdDoc({ file: f, dataUrl, name: f.name })
+                                  setQcIdDoc({ file: f, dataUrl, name: f.name, size: f.size })
                                 }
                                 reader.readAsDataURL(f)
                               }
@@ -2289,47 +2284,35 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         </div>
 
                         {qcIdDoc && (
-                          <div
-                            onClick={() =>
-                              setPreviewUploadedDoc({
-                                title: isEn ? "QC ID / Proof of Residency" : "QC ID / Katunayan ng Paninirahan",
-                                name: qcIdDoc.name,
-                                dataUrl: qcIdDoc.dataUrl,
-                              })
-                            }
-                            className="mt-3.5 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 flex items-center justify-between gap-3 shadow-xs cursor-pointer group hover:bg-emerald-500/10 transition-colors animate-in fade-in zoom-in-98"
-                            title="Pindutin para makita ang buong litrato"
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900/60 shrink-0 flex items-center justify-center shadow-inner">
+                          <div className="flex flex-wrap gap-3 pt-3">
+                            <div className="relative w-36 sm:w-40 border border-border rounded-lg bg-card dark:bg-slate-900/90 shadow-sm p-3 flex flex-col items-center text-center shadow-xs">
+                              <button
+                                type="button"
+                                onClick={() => setQcIdDoc(null)}
+                                className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-slate-700 hover:bg-red-600 flex items-center justify-center text-white transition-colors z-10 cursor-pointer shadow-xs"
+                                title="Remove"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                              <div className="h-14 w-14 rounded-md overflow-hidden border border-border mb-2 flex items-center justify-center bg-muted/40 dark:bg-slate-800">
                                 {qcIdDoc.dataUrl.startsWith("data:image") ||
                                 qcIdDoc.dataUrl.startsWith("blob:") ||
                                 /\.(jpg|jpeg|png|webp|gif)$/i.test(qcIdDoc.name) ? (
                                   <img
                                     src={qcIdDoc.dataUrl}
                                     alt={qcIdDoc.name}
-                                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    className="h-full w-full object-cover"
                                   />
                                 ) : (
-                                  <FileText className="h-8 w-8 text-emerald-500" />
+                                  <FileText className="h-6 w-6 text-muted-foreground" />
                                 )}
                               </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                    <CheckCircle2 className="h-3 w-3" /> {isEn ? "Uploaded & Ready" : "Nai-upload na"}
-                                  </span>
-                                </div>
-                                <p className="text-xs font-bold text-foreground truncate max-w-[240px] sm:max-w-xs md:max-w-md" title={qcIdDoc.name}>
-                                  {qcIdDoc.name}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">
-                                  {isEn ? "Click to view full photo" : "Pindutin para makita ang buong litrato"}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="shrink-0 pr-1 text-muted-foreground group-hover:text-emerald-600 transition-colors">
-                              <Eye className="h-5 w-5" />
+                              <p className="text-xs font-medium text-foreground truncate w-full" title={qcIdDoc.name}>
+                                {qcIdDoc.name}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {formatFileSize(qcIdDoc.size)}
+                              </p>
                             </div>
                           </div>
                         )}
@@ -2368,7 +2351,7 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                                 const reader = new FileReader()
                                 reader.onload = (ev) => {
                                   const dataUrl = (ev.target?.result as string) || URL.createObjectURL(f)
-                                  setIdPicDoc({ file: f, dataUrl, name: f.name })
+                                  setIdPicDoc({ file: f, dataUrl, name: f.name, size: f.size })
                                 }
                                 reader.readAsDataURL(f)
                               }
@@ -2394,47 +2377,35 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                         </div>
 
                         {idPicDoc && (
-                          <div
-                            onClick={() =>
-                              setPreviewUploadedDoc({
-                                title: isEn ? "Barangay Indigency" : "Barangay Certificate of Indigency",
-                                name: idPicDoc.name,
-                                dataUrl: idPicDoc.dataUrl,
-                              })
-                            }
-                            className="mt-3.5 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 flex items-center justify-between gap-3 shadow-xs cursor-pointer group hover:bg-emerald-500/10 transition-colors animate-in fade-in zoom-in-98"
-                            title="Pindutin para makita ang buong litrato"
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900/60 shrink-0 flex items-center justify-center shadow-inner">
+                          <div className="flex flex-wrap gap-3 pt-3">
+                            <div className="relative w-36 sm:w-40 border border-border rounded-lg bg-card dark:bg-slate-900/90 shadow-sm p-3 flex flex-col items-center text-center shadow-xs">
+                              <button
+                                type="button"
+                                onClick={() => setIdPicDoc(null)}
+                                className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-slate-700 hover:bg-red-600 flex items-center justify-center text-white transition-colors z-10 cursor-pointer shadow-xs"
+                                title="Remove"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                              <div className="h-14 w-14 rounded-md overflow-hidden border border-border mb-2 flex items-center justify-center bg-muted/40 dark:bg-slate-800">
                                 {idPicDoc.dataUrl.startsWith("data:image") ||
                                 idPicDoc.dataUrl.startsWith("blob:") ||
                                 /\.(jpg|jpeg|png|webp|gif)$/i.test(idPicDoc.name) ? (
                                   <img
                                     src={idPicDoc.dataUrl}
                                     alt={idPicDoc.name}
-                                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    className="h-full w-full object-cover"
                                   />
                                 ) : (
-                                  <FileText className="h-8 w-8 text-emerald-500" />
+                                  <FileText className="h-6 w-6 text-muted-foreground" />
                                 )}
                               </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                    <CheckCircle2 className="h-3 w-3" /> {isEn ? "Uploaded & Ready" : "Nai-upload na"}
-                                  </span>
-                                </div>
-                                <p className="text-xs font-bold text-foreground truncate max-w-[240px] sm:max-w-xs md:max-w-md" title={idPicDoc.name}>
-                                  {idPicDoc.name}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">
-                                  {isEn ? "Click to view full photo" : "Pindutin para makita ang buong litrato"}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="shrink-0 pr-1 text-muted-foreground group-hover:text-emerald-600 transition-colors">
-                              <Eye className="h-5 w-5" />
+                              <p className="text-xs font-medium text-foreground truncate w-full" title={idPicDoc.name}>
+                                {idPicDoc.name}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {formatFileSize(idPicDoc.size)}
+                              </p>
                             </div>
                           </div>
                         )}
@@ -3170,18 +3141,21 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
                 file,
                 dataUrl: dataUrl || URL.createObjectURL(file),
                 name: file.name || "request-letter-camera.jpg",
+                size: file.size,
               })
             } else if (cameraModalDocType === "qcId") {
               setQcIdDoc({
                 file,
                 dataUrl: dataUrl || URL.createObjectURL(file),
                 name: file.name || "qcid-proof-camera.jpg",
+                size: file.size,
               })
             } else if (cameraModalDocType === "idPic") {
               setIdPicDoc({
                 file,
                 dataUrl: dataUrl || URL.createObjectURL(file),
                 name: file.name || "id-pic-camera.jpg",
+                size: file.size,
               })
             }
             setCameraModalDocType(null)
