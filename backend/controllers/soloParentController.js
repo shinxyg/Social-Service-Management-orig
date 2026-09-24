@@ -1050,6 +1050,29 @@ exports.updateApplicationStatus = async (req, res) => {
       } catch (notifErr) {
         console.warn('[Notification Error]:', notifErr.message);
       }
+
+      if (isApproved) {
+        try {
+          const isEduApp = String(updatedRow.application_type || updatedRow.reference_number || '').toUpperCase().includes('SP-EDU') ||
+                           String(updatedRow.application_type || '').toUpperCase() === 'EDUCATIONAL_ASSISTANCE';
+          const apptConcern = isEduApp ? 'Solo Parent Educational Assistance' : 'Solo Parent Financial Subsidy';
+          const apptFullName = [updatedRow.first_name, updatedRow.middle_name, updatedRow.last_name, updatedRow.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+          const apptRef = updatedRow.reference_number || targetRef;
+          const apptNotes = isEduApp
+            ? 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent Educational Assistance para sa grant disbursement.'
+            : 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent aplikasyon para sa scheduling.';
+
+          await db.query(
+            `INSERT INTO appointments
+              (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+             SELECT $1, 'Solo Parent', $2, $3, 'pending', 'Quezon City Hall - SSDD Solo Parent Welfare Section', $4, NOW(), NOW()
+             WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
+            [apptRef, apptFullName, apptConcern, apptNotes]
+          );
+        } catch (apptErr) {
+          console.warn('[Solo Parent Appt Insert Error]:', apptErr.message);
+        }
+      }
     }
 
     invalidateSoloCache();

@@ -1145,13 +1145,16 @@ export default function Appointments() {
 
             const ref = sp.referenceNumber || sp.reference_number || (sp.id ? (String(sp.id).startsWith("SP-") ? sp.id : `SP-${sp.id}`) : (isEdu ? `SP-EDU-2026-0001` : `SP-2026-0001`))
 
-            // If already in dataDb.appointments for Solo Parent, DO NOT synthesize a duplicate!
+            // If already in dataDb.appointments for Solo Parent with the same assistance type, DO NOT synthesize a duplicate!
             const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
               const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
               const dbid = String(dba.id || '').trim().toLowerCase()
               const dbMod = String(dba.module || '').trim().toUpperCase()
+              const dbConcern = String(dba.concern || '').trim().toLowerCase()
               const sameRef = (ref && dbr === String(ref).trim().toLowerCase()) || (sp.id && dbid === String(sp.id).trim().toLowerCase())
-              const sameMod = dbMod === 'SOLO PARENT' || dbMod === 'SOLO_PARENT' || dbMod === 'SOLO'
+              const isEduDb = dbConcern.includes("educational") || dbr.includes("sp-edu")
+              const isEduSp = Boolean(isEdu)
+              const sameMod = (dbMod === 'SOLO PARENT' || dbMod === 'SOLO_PARENT' || dbMod === 'SOLO') && (isEduDb === isEduSp)
               return sameRef && sameMod
             })
             if (existsInDb) return

@@ -240,7 +240,7 @@ async function syncAndCleanAppointments() {
     }
 
     const approvedSoloParent = await db.query(
-      `SELECT reference_number, first_name, middle_name, last_name, suffix, created_at, updated_at
+      `SELECT reference_number, application_type, first_name, middle_name, last_name, suffix, created_at, updated_at
        FROM solo_parent_child_welfare_applications
        WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
          AND application_status IN ('approved', 'completed', 'for_release', 'released')`
@@ -250,12 +250,18 @@ async function syncAndCleanAppointments() {
       const refNo = String(row.reference_number || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
       const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'JEFFERSON FERNANDO LEE';
+      const isEdu = String(row.application_type || row.reference_number || '').toUpperCase().includes('SP-EDU') ||
+                    String(row.application_type || '').toUpperCase() === 'EDUCATIONAL_ASSISTANCE';
+      const concern = isEdu ? 'Solo Parent Educational Assistance' : 'Solo Parent Financial Subsidy';
+      const notes = isEdu
+        ? 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent Educational Assistance para sa grant disbursement.'
+        : 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent aplikasyon para sa scheduling.';
       await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, 'Solo Parent', $2, 'Solo Parent Financial Subsidy', 'pending', 'Quezon City Hall - SSDD Solo Parent Welfare Section', 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent aplikasyon para sa scheduling.'
-         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND module = 'Solo Parent')`,
-        [refNo, fullName]
+         SELECT $1, 'Solo Parent', $2, $3, 'pending', 'Quezon City Hall - SSDD Solo Parent Welfare Section', $4
+         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
+        [refNo, fullName, concern, notes]
       ).catch(() => {});
     }
 
@@ -347,7 +353,7 @@ exports.createAppointment = async (req, res) => {
     const initialStatus = scheduledDate ? 'scheduled' : 'pending';
 
     await db.query(`DELETE FROM deleted_appointments WHERE reference_no = $1`, [referenceNo]).catch(() => {});
-    await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [referenceNo]).catch(() => {});
+    await db.query(`DELETE FROM appointments WHERE reference_no = $1 AND (module = $2 OR concern = $3)`, [referenceNo, module, concern]).catch(() => {});
 
     const result = await db.query(
       `INSERT INTO appointments
