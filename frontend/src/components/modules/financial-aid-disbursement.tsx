@@ -7,7 +7,6 @@ import {
   Search,
   Eye,
   EyeOff,
-  Banknote,
   Users,
   X,
   FileText,
