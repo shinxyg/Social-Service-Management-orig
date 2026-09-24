@@ -14,6 +14,8 @@ export const FIXED_ASSISTANCE_AMOUNTS: Record<string, number> = {
   "Child Protection Assistance": 5000,
   "Emergency Assistance": 5000,
   "Child Welfare Assistance": 5000,
+  "Solo Parent Educational Assistance": 5000,
+  "Educational Assistance (Solo Parent)": 5000,
   "Solo Parent Financial Subsidy": 3000,
   "Solo Parent Subsidy": 3000,
   "Solo Parent Welfare Assistance": 3000,
@@ -36,6 +38,7 @@ export function resolveFixedAmount(concern: string): number {
 
   const lower = c.toLowerCase()
   if (lower.includes("pwd") || lower.includes("disability") || lower.includes("pension")) return 1500
+  if (lower.includes("solo") && (lower.includes("education") || lower.includes("school") || lower.includes("aral"))) return 5000
   if (lower.includes("solo") && (lower.includes("subsidy") || lower.includes("financial"))) return 3000
   if (lower.includes("funeral") || lower.includes("burial")) return 10000
   if (lower.includes("livelihood")) return 15000

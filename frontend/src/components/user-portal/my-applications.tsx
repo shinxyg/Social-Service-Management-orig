@@ -2496,11 +2496,51 @@ export default function MyApplications() {
                   ? "Rejected"
                   : "Pending (SSDD Validation)"
 
-              const serviceTitle =
-                app.service_name ||
-                app.classification_title ||
-                (app.form_data?.serviceName || app.form_data?.service) ||
-                "Solo Parent Financial Subsidy Program"
+              const isEdu =
+                String(app.category_title || "").toLowerCase().includes("educational") ||
+                String(app.service_name || "").toLowerCase().includes("educational") ||
+                String(app.service || "").toLowerCase().includes("educational") ||
+                String(app.assistanceType || "").toLowerCase().includes("educational") ||
+                String(app.application_type || "").toLowerCase().includes("educational") ||
+                String(app.applicationType || "").toLowerCase().includes("educational") ||
+                String(app.form_data?.serviceName || app.form_data?.service || "").toLowerCase().includes("educational") ||
+                String(app.reference_number || app.referenceNumber || "").toUpperCase().includes("SP-EDU")
+
+              const serviceTitle = isEdu
+                ? "Solo Parent Educational Assistance"
+                : (app.service_name ||
+                  app.classification_title ||
+                  (app.form_data?.serviceName || app.form_data?.service) ||
+                  "Solo Parent Financial Subsidy Program")
+
+              const childName = app.child_name || app.childName || app.form_data?.childName || app.form_data?.formData?.childName || ""
+              const schoolName = app.child_school_name || app.child_school_daycare || app.childSchoolName || app.form_data?.childSchoolName || app.form_data?.childSchoolDaycare || ""
+              const gradeLevel = app.child_grade_level || app.childGradeLevel || app.form_data?.childGradeLevel || ""
+              const lrnOrId = app.child_lrn || app.child_lrn_or_id || app.childLrnOrId || app.form_data?.childLrnOrId || ""
+
+              const remarksText = isEdu
+                ? (app.admin_notes ||
+                   (rawStatus === "approved"
+                     ? "Approved for ₱5,000.00 Educational Cash Grant (Annual Educational Assistance)"
+                     : rawStatus === "for_distribution" || rawStatus === "for_release"
+                     ? "For distribution: Educational assistance payout scheduled"
+                     : rawStatus === "assistance_released" || rawStatus === "released" || rawStatus === "completed"
+                     ? "Matagumpay na natanggap ang ₱5,000.00 Educational Cash Assistance"
+                     : rawStatus === "for_approval" || rawStatus === "under_assessment"
+                     ? "Under assessment & verification by Solo Parent Division"
+                     : rawStatus === "interview_scheduled" || rawStatus === "scheduled"
+                     ? "Interview scheduled at QC Hall Solo Parent Division"
+                     : "SSDD Intake Officer is validating the Certificate of Enrollment and SPIC ID"))
+                : (app.admin_notes ||
+                   (rawStatus === "approved"
+                     ? "Approved for ₱1,000/month statutory subsidy (Quarterly Payout)"
+                     : rawStatus === "interview_scheduled"
+                     ? "Interview scheduled at QC Hall Solo Parent Division"
+                     : rawStatus === "for_distribution"
+                     ? "For distribution: Payout scheduled"
+                     : rawStatus === "assistance_released"
+                     ? "Financial assistance successfully released"
+                     : "Under SSDD validation & review"))
 
               return {
                 applicationNo: app.reference_number || app.referenceNumber || app.assigned_id_number || app.solo_parent_id_number || qcId,
@@ -2518,17 +2558,12 @@ export default function MyApplications() {
                   `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
                 contactNumber: app.contact_no || app.contact_number || app.contactNo || userProfile.mobileNumber,
                 email: app.email || userProfile.email,
-                remarks:
-                  app.admin_notes ||
-                  (rawStatus === "approved"
-                    ? "Approved for ₱1,000/month statutory subsidy (Quarterly Payout)"
-                    : rawStatus === "interview_scheduled"
-                    ? "Interview scheduled at QC Hall Solo Parent Division"
-                    : rawStatus === "for_distribution"
-                    ? "For distribution: Payout scheduled"
-                    : rawStatus === "assistance_released"
-                    ? "Financial assistance successfully released"
-                    : "Under SSDD validation & review"),
+                childName,
+                schoolName,
+                gradeLevel,
+                lrnOrId,
+                isEducational: isEdu,
+                remarks: remarksText,
               }
             })
           allFoundApps.push(...mappedSp)
@@ -3775,6 +3810,120 @@ export default function MyApplications() {
             )
           }
 
+          const isSoloEduApp =
+            selectedApp.assistanceCategory === "Solo Parent" &&
+            (selectedApp.assistance.toLowerCase().includes("educational") ||
+             String(selectedApp.applicationNo).toUpperCase().includes("SP-EDU") ||
+             Boolean(selectedApp.isEducational))
+
+          if (isSoloEduApp) {
+            const isApproved = selectedApp.status === "Approved" || selectedApp.status === "For Distribution" || selectedApp.status === "Released" || selectedApp.status === "Assistance Released"
+            const isDistribution = selectedApp.status === "For Distribution" || selectedApp.status === "Released" || selectedApp.status === "Assistance Released"
+            const isReleased = selectedApp.status === "Released" || selectedApp.status === "Assistance Released"
+
+            const s1 = "completed"
+            const s2 = isApproved ? "completed" : "current"
+            const s3 = isApproved ? "completed" : "pending"
+            const s4 = isApproved ? "completed" : "pending"
+            const s5 = isDistribution ? (isReleased ? "completed" : "current") : "pending"
+            const s6 = isReleased ? "completed" : "pending"
+
+            const getStageBoxClass = (st: string) => {
+              if (st === "completed") {
+                return "bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700/80 text-emerald-900 dark:text-emerald-200 font-bold"
+              }
+              if (st === "current") {
+                return "bg-amber-50 dark:bg-amber-950/60 border-amber-400 dark:border-amber-500 text-amber-950 dark:text-amber-100 ring-2 ring-amber-400/50 font-black shadow-xs"
+              }
+              return "bg-white/60 dark:bg-slate-900/30 border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-500"
+            }
+
+            return (
+              <div className="bg-slate-50 dark:bg-slate-900 border border-blue-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-5">
+                <div className="flex items-center justify-between border-b border-blue-200/80 dark:border-slate-800 pb-3 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <div>
+                      <h3 className="text-sm font-bold text-blue-950 dark:text-white">
+                        SOLO PARENT EDUCATIONAL ASSISTANCE (6-STAGE LIFECYCLE)
+                      </h3>
+                      <p className="text-[11px] text-slate-500">
+                        Educational Grant &amp; Academic Support Protocol (₱5,000.00 Annual Payout)
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
+                    {isReleased ? "✓ Assistance Released" : isApproved ? "✓ Grant Approved (₱5,000)" : "SSDD Validation in Progress"}
+                  </span>
+                </div>
+
+                {/* 6-Stage Visual Progress Pipeline */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-0.5">
+                  <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s1)}`}>
+                    <span className="block font-black">1. SSDD VALIDATION</span>
+                    <span className="text-[9px] block">✓ Documents Intake</span>
+                  </div>
+
+                  <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s2)}`}>
+                    <span className="block font-black">2. ASSESSMENT</span>
+                    <span className="text-[9px] block">{s2 === "completed" ? "✓ Verified" : "● In Review"}</span>
+                  </div>
+
+                  <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s3)}`}>
+                    <span className="block font-black">3. FOR APPROVAL</span>
+                    <span className="text-[9px] block">{s3 === "completed" ? "✓ Endorsed" : "○ Pending"}</span>
+                  </div>
+
+                  <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s4)}`}>
+                    <span className="block font-black">4. APPROVED</span>
+                    <span className="text-[9px] block">{s4 === "completed" ? "✓ ₱5,000 Grant" : "○ Pending"}</span>
+                  </div>
+
+                  <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s5)}`}>
+                    <span className="block font-black">5. DISTRIBUTION</span>
+                    <span className="text-[9px] block">{s5 === "completed" ? "✓ Payroll Ready" : s5 === "current" ? "● Scheduled" : "○ In Queue"}</span>
+                  </div>
+
+                  <div className={`p-2 rounded-lg border text-center text-[10px] space-y-0.5 ${getStageBoxClass(s6)}`}>
+                    <span className="block font-black">6. RELEASED</span>
+                    <span className="text-[9px] block">{s6 === "completed" ? "✓ Cash Released" : "○ Pending"}</span>
+                  </div>
+                </div>
+
+                {/* Case Particulars */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Approved Educational Grant</span>
+                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 block">₱5,000.00</span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Annual Academic Assistance Grant</p>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Beneficiary Student</span>
+                    <span className="text-sm font-extrabold text-blue-950 dark:text-white block">{selectedApp.childName || "Dependent Child"}</span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">{selectedApp.schoolName ? `${selectedApp.schoolName} (${selectedApp.gradeLevel || "Enrolled"})` : "Enrolled Student"}</p>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800/80 rounded-xl p-3.5 border border-blue-100 dark:border-slate-700 space-y-1">
+                    <span className="text-gray-500 dark:text-slate-400 block uppercase font-bold text-[10px]">Release Frequency</span>
+                    <span className="text-sm font-extrabold text-gray-900 dark:text-white block">Once a Year (Annual)</span>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400">Renewable for next Academic Year</p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-blue-50/90 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-xs text-blue-950 dark:text-blue-200 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
+                    Paalala sa Educational Assistance Payout:
+                  </p>
+                  <p className="leading-relaxed">
+                    Dalhin ang orihinal na SPIC ID, QCitizen ID, Certificate of Enrollment (COE) / Registration Form, at Report Card / Copy of Grades sa itinakdang araw ng release sa Quezon City Hall - SSDD Solo Parent Welfare Division.
+                  </p>
+                </div>
+              </div>
+            )
+          }
+
           const rawType = (selectedApp.assistance || "").replace(/\s*assistance/gi, "").trim()
           const formattedType = rawType.charAt(0).toUpperCase() + rawType.slice(1) + " Assistance"
           const fixedAmt = FIXED_ASSISTANCE_AMOUNTS[formattedType] || FIXED_ASSISTANCE_AMOUNTS[selectedApp.assistance] || 1000
@@ -4005,7 +4154,7 @@ export default function MyApplications() {
             })
 
             const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
-            const isDisbReleased = isDisbClaimed || matchDisb?.status === "RELEASED" || matchDisb?.status === "released"
+            const isDisbReleased = isDisbClaimed || String(matchDisb?.status).toUpperCase() === "RELEASED"
 
             const isAppExplicitlyReleased =
               isDisbReleased ||
@@ -4043,7 +4192,7 @@ export default function MyApplications() {
             const isAppRejected =
               isApptRejected ||
               app.status === "Rejected" ||
-              app.status === "Disapproved"
+              (app.status as string) === "Disapproved"
 
             const effectiveAppStatus: ApplicationStatus = isAppExplicitlyReleased
               ? "Released"
@@ -4536,15 +4685,73 @@ export default function MyApplications() {
                   const isSoloParent =
                     app.assistanceCategory === "Solo Parent" ||
                     app.assistance.toLowerCase().includes("solo")
+                  const isSoloEdu =
+                    isSoloParent &&
+                    (app.assistance.toLowerCase().includes("educational") ||
+                     String(app.applicationNo).toUpperCase().includes("SP-EDU") ||
+                     Boolean(app.isEducational))
                   const isSeniorCitizen =
                     app.assistanceCategory === "Senior Citizen" ||
                     app.assistance.toLowerCase().includes("senior") ||
                     app.assistance.toLowerCase().includes("osca")
 
-                  const fixedAmt = isSoloParent ? 3000 : isSeniorCitizen ? 3000 : resolveFixedAmount(app.assistance)
+                  const fixedAmt = isSoloEdu ? 5000 : isSoloParent ? 3000 : isSeniorCitizen ? 3000 : resolveFixedAmount(app.assistance)
                   const isReleased = effectiveAppStatus === "Released" || isDisbReleased
 
                   const payoutVenue = matchDisb?.venue || "Quezon City Hall"
+
+                  if (isSoloEdu) {
+                    return (
+                      <div className="bg-slate-50 dark:bg-slate-800/80 border border-blue-200/80 dark:border-blue-800/60 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                            <GraduationCap className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-0.5 text-xs">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[10px] font-extrabold uppercase text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-300 dark:border-blue-700/80">
+                                Solo Parent Educational Assistance
+                              </span>
+                              <span className="text-[11px] font-mono text-blue-700 dark:text-blue-300 font-bold">
+                                {matchDisb?.disbursementId || `DISB-${app.applicationNo.slice(-4)}`}
+                              </span>
+                              <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                                ₱5,000 / Taon (Annual Grant)
+                              </span>
+                            </div>
+                            <p className="font-bold text-gray-900 dark:text-white">
+                              Approved Educational Grant: <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">₱5,000.00</span>
+                              {app.studentName && <span className="text-gray-600 dark:text-slate-300 font-normal ml-1">para kay <strong>{app.studentName}</strong> ({app.studentGradeLevel || "Mag-aaral"})</span>}
+                            </p>
+                            <p className="text-[11px] text-gray-600 dark:text-slate-300 flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                              {isReleased ? (
+                                <span className="text-emerald-700 dark:text-emerald-400 font-bold">✓ Matagumpay na na-claim ang ₱5,000 Educational Cash Assistance sa {payoutVenue}.</span>
+                              ) : matchDisb?.appointmentDate ? (
+                                <span>Payout Appointment: <strong className="text-gray-900 dark:text-white">{matchDisb.appointmentDate} – {matchDisb.appointmentTime || "10:00 AM"}</strong> ({payoutVenue})</span>
+                              ) : (
+                                <span>Payout Schedule: <strong className="text-amber-700 dark:text-amber-400">Inihahanda ng SSDD para sa Distribution</strong> ({payoutVenue})</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 sm:justify-end shrink-0 pt-1 sm:pt-0">
+                          <a
+                            href="/portal/financial-aid"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                            title="Tingnan ang Ayuda sa Financial Aid Disbursement"
+                          >
+                            <Banknote className="w-3.5 h-3.5" />
+                            <span>Tingnan sa Financial Aid ➔</span>
+                          </a>
+                        </div>
+                      </div>
+                    )
+                  }
 
                   return (
                     <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">

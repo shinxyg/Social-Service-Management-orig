@@ -5,6 +5,10 @@ const FIXED_ASSISTANCE_AMOUNTS = {
   'Medical Assistance': 5000,
   'Funeral Assistance': 10000,
   'Educational Assistance': 3000,
+  'Solo Parent Educational Assistance': 5000,
+  'Educational Assistance (Solo Parent)': 5000,
+  'Solo Parent Education Assistance': 5000,
+  'Solo Parent Education': 5000,
   'Burial Assistance': 10000,
   'PWD Social Assistance': 500,
   'PWD Pension Assistance': 500,
@@ -21,6 +25,7 @@ const FIXED_ASSISTANCE_AMOUNTS = {
   'Child Welfare Assistance': 5000,
   'Solo Parent Welfare Assistance': 5000,
   'Solo Parent Assistance': 5000,
+  'Solo Parent Financial Subsidy': 3000,
   'Livelihood Capital Assistance': 15000,
   'Livelihood Assistance': 15000,
   'Livelihood Program': 15000,
@@ -35,6 +40,8 @@ function resolveFixedAmount(concern) {
   if (FIXED_ASSISTANCE_AMOUNTS[formatted]) return FIXED_ASSISTANCE_AMOUNTS[formatted];
 
   const lower = c.toLowerCase();
+  if (lower.includes('solo') && (lower.includes('education') || lower.includes('aral') || lower.includes('school'))) return 5000;
+  if (lower.includes('solo') && (lower.includes('subsidy') || lower.includes('statutory'))) return 3000;
   if (lower.includes('pwd') || lower.includes('disability') || lower.includes('pension')) return 1500;
   if (lower.includes('funeral') || lower.includes('burial')) return 10000;
   if (lower.includes('livelihood')) return 15000;
@@ -258,21 +265,26 @@ exports.getDisbursements = async (req, res) => {
 
     try {
       const approvedSoloParent = await db.query(
-        `SELECT reference_number, first_name, middle_name, last_name, suffix, updated_at, created_at
+        `SELECT reference_number, application_type, category_title, first_name, middle_name, last_name, suffix, child_name, approved_amount, updated_at, created_at
          FROM solo_parent_child_welfare_applications
          WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
-           AND application_status IN ('approved', 'completed', 'for_release', 'released')`
+           AND application_status IN ('approved', 'completed', 'for_release', 'for_distribution', 'released')`
       );
       for (const row of approvedSoloParent.rows) {
         const ref = row.reference_number || 'SP-QC-2026';
         const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'JEFFERSON FERNANDO LEE';
+        const isEdu = String(row.application_type || '').toUpperCase().includes('EDUCATIONAL') || String(row.category_title || '').toLowerCase().includes('educational') || String(row.category_title || '').toLowerCase().includes('edukasyon');
+        const assistanceTitle = isEdu ? 'Solo Parent Educational Assistance' : 'Solo Parent Financial Subsidy';
+        const targetAmount = isEdu ? (Number(row.approved_amount) > 0 ? Number(row.approved_amount) : 5000) : 3000;
+        const remarksText = isEdu 
+          ? `Approved Solo Parent Educational Assistance (₱5,000 Annual Grant) for student: ${row.child_name || 'Dependent Child'}.`
+          : 'Approved Solo Parent Monthly Statutory Cash Subsidy (₱1,000/month).';
+
         const disbCheck = await db.query(
           `SELECT id, applicant_name FROM financial_aid_disbursements 
-           WHERE application_ref = $1 
-              OR REPLACE(application_ref, '-', '') = REPLACE($1, '-', '')
-              OR (LOWER(TRIM(applicant_name)) = LOWER(TRIM($2)) AND assistance_type = 'Solo Parent Financial Subsidy')
-              OR (assistance_type = 'Solo Parent Financial Subsidy' AND (applicant_name ILIKE '%BENEFICIARY%' OR applicant_name ILIKE '%JEFFERSON%'))`,
-          [ref, fullName]
+           WHERE (application_ref = $1 OR REPLACE(application_ref, '-', '') = REPLACE($1, '-', ''))
+             AND assistance_type = $2`,
+          [ref, assistanceTitle]
         );
         if (disbCheck.rows.length === 0) {
           const disbId = `DISB-${new Date().getFullYear()}-${String(ref.slice(-4) || '0004').padStart(4, '0')}`;
@@ -286,11 +298,11 @@ exports.getDisbursements = async (req, res) => {
               disbId,
               ref,
               fullName,
-              'Solo Parent Financial Subsidy',
-              3000,
+              assistanceTitle,
+              targetAmount,
               new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
               'Quezon City Hall - SSDD Solo Parent Welfare Section',
-              'Approved Solo Parent Monthly Statutory Cash Subsidy (₱1,000/month).',
+              remarksText,
             ]
           );
         } else {

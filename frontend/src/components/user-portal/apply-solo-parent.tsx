@@ -17,7 +17,6 @@ import SoloParentApplicationWizard from "./solo-parent-wizard"
 import ChildWelfareApplicationWizard, { getLocalizedChildWelfarePrograms } from "./child-welfare-wizard"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE, getAuthHeaders } from "../../config/api"
-import { cachedApiFetch } from "../../utils/cachedApiFetch"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { formatAppDate } from "./my-applications"
@@ -242,7 +241,8 @@ const SOLO_PARENT_PROGRAMS: ProgramCard[] = [
 function evaluateSoloParentBlockedState(
   allApps: any[],
   userProf: any,
-  currentQcid: string
+  currentQcid: string,
+  programKey?: string
 ): { isBlocked: boolean; blockedApp: any; hasApprovedApp: boolean } {
   const uid = userProf?.id || (userProf as any)?.userId || ""
   const currentEmail = (userProf?.email || "").toLowerCase().trim()
@@ -265,12 +265,45 @@ function evaluateSoloParentBlockedState(
     return false
   })
 
-  const blockedApp = userApps.find((a) => {
+  const relevantApps = programKey
+    ? userApps.filter((a) => {
+        const srv = String(
+          a.service ||
+          a.service_name ||
+          a.classification_title ||
+          a.type ||
+          a.application_type ||
+          a.program ||
+          a.program_name ||
+          a.category_title ||
+          ""
+        ).toLowerCase()
+        const ref = String(a.reference_number || a.referenceNumber || a.id || "").toUpperCase()
+        const isEdu =
+          Boolean(a.isEducational || a.isEdu) ||
+          srv.includes("education") ||
+          srv.includes("educational") ||
+          srv.includes("edukasyon") ||
+          ref.includes("SP-EDU") ||
+          a.application_type === "EDUCATIONAL_ASSISTANCE" ||
+          a.applicationType === "EDUCATIONAL_ASSISTANCE"
+
+        if (programKey === "educational-assistance") {
+          return isEdu
+        }
+        if (programKey === "financial-subsidy") {
+          return !isEdu
+        }
+        return false
+      })
+    : userApps
+
+  const blockedApp = relevantApps.find((a) => {
     const s = String(a.application_status || a.status || "pending").toLowerCase()
     return s === "pending" || s === "draft" || s === "under_review" || s === "approved" || s === "active"
   })
 
-  const approvedApp = userApps.find((a) => {
+  const approvedApp = relevantApps.find((a) => {
     const s = String(a.application_status || a.status || "").toLowerCase()
     return s === "approved" || s === "completed" || s === "for_release" || s === "active"
   })
@@ -310,11 +343,34 @@ function evaluateSoloParentCardState(
   })
 
   const programApps = userApps.filter((a) => {
-    const srv = String(a.service || a.service_name || a.classification_title || a.type || a.application_type || "").toLowerCase()
-    if (programKey === "financial-subsidy") {
-      return srv.includes("subsidy") || srv.includes("financial")
+    const srv = String(
+      a.service ||
+      a.service_name ||
+      a.classification_title ||
+      a.type ||
+      a.application_type ||
+      a.program ||
+      a.program_name ||
+      a.category_title ||
+      ""
+    ).toLowerCase()
+    const ref = String(a.reference_number || a.referenceNumber || a.id || "").toUpperCase()
+    const isEdu =
+      Boolean(a.isEducational || a.isEdu) ||
+      srv.includes("education") ||
+      srv.includes("educational") ||
+      srv.includes("edukasyon") ||
+      ref.includes("SP-EDU") ||
+      a.application_type === "EDUCATIONAL_ASSISTANCE" ||
+      a.applicationType === "EDUCATIONAL_ASSISTANCE"
+
+    if (programKey === "educational-assistance") {
+      return isEdu
     }
-    return srv.includes("education") || srv.includes("educational") || (!srv.includes("subsidy") && !srv.includes("child-welfare"))
+    if (programKey === "financial-subsidy") {
+      return !isEdu
+    }
+    return false
   })
 
   const approved = programApps.find((a) => {
@@ -355,7 +411,7 @@ export default function ApplySoloParent() {
       const prof = getCurrentUserProfile()
       const currentQcid = getLoggedInUserQcid() || "110000572516915"
       const localApps = getLocalSoloParentApplications()
-      return evaluateSoloParentBlockedState(localApps, prof, currentQcid)
+      return evaluateSoloParentBlockedState(localApps, prof, currentQcid, rawTypeParam)
     } catch {
       return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
     }
@@ -430,7 +486,7 @@ export default function ApplySoloParent() {
 
         if (isMounted) {
           setLiveSpApps(allApps)
-          const finalRes = evaluateSoloParentBlockedState(allApps, userProf, currentQcid)
+          const finalRes = evaluateSoloParentBlockedState(allApps, userProf, currentQcid, rawTypeParam)
           setIsBlocked(finalRes.isBlocked)
           setBlockedApp(finalRes.blockedApp)
         }
@@ -827,25 +883,38 @@ export default function ApplySoloParent() {
                 ? "Aduna Ka Nay Aktibo nga Aplikasyon"
                 : "May Kasalukuyan Ka Nang Aktibong Aplikasyon"}
             </h2>
-            <p className="text-xs text-gray-600 max-w-md mt-1 leading-relaxed">
-              {isAppApproved
-                ? language === "en"
-                  ? "Your application for Solo Parent Educational Assistance has been officially approved! You already have an active assistance record."
-                  : language === "bis"
-                  ? "Ang imong aplikasyon para sa Solo Parent Educational Assistance opisyal nga na-aprobahan sa Gov Service."
-                  : "Ang inyong aplikasyon para sa Solo Parent Educational Assistance ay opisyal nang na-apruba ng QC Social Services Development Department."
-                : isAppRejected
-                ? language === "en"
-                  ? "Your application for Solo Parent Educational Assistance was reviewed and not approved. You can review the reason below and submit a new application with the complete requirements."
-                  : language === "bis"
-                  ? "Ang imong aplikasyon para sa Educational Assistance gisusi ug wala na-aprobahan. Mahimo nimong susihon ang hinungdan sa ubos ug mag-apply pag-usab."
-                  : "Ang inyong aplikasyon para sa Solo Parent Educational Assistance ay sinuri ng Social Worker at hindi na-aprubahan. Maaari ninyong suriin ang dahilan sa ibaba at mag-apply muli kalakip ang kumpletong mga dokumento."
-                : language === "en"
-                ? "Your application for Solo Parent Educational Assistance has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment."
-                : language === "bis"
-                ? "Ang imong aplikasyon para sa Solo Parent Educational Assistance nasumite na ug kasamtangang girebyu sa Social Worker."
-                : "Ang inyong aplikasyon para sa Solo Parent Educational Assistance ay matagumpay na naisumite at kasalukuyang sinusuri ng Social Worker."}
-            </p>
+            {(() => {
+              const isEduBlocked =
+                rawTypeParam === "educational-assistance" ||
+                Boolean(blockedApp?.isEducational || blockedApp?.isEdu) ||
+                String(blockedApp?.service || blockedApp?.service_name || blockedApp?.application_type || "").toLowerCase().includes("educational") ||
+                String(blockedApp?.reference_number || blockedApp?.referenceNumber || "").toUpperCase().includes("SP-EDU")
+              const progNameEn = isEduBlocked ? "Solo Parent Educational Assistance" : "Solo Parent Financial Subsidy"
+              const progNameFil = isEduBlocked ? "Solo Parent Educational Assistance" : "Solo Parent Financial Subsidy Program"
+              const progNameBis = isEduBlocked ? "Solo Parent Educational Assistance" : "Solo Parent Financial Subsidy"
+
+              return (
+                <p className="text-xs text-gray-600 max-w-md mt-1 leading-relaxed">
+                  {isAppApproved
+                    ? language === "en"
+                      ? `Your application for ${progNameEn} has been officially approved! You already have an active assistance record.`
+                      : language === "bis"
+                      ? `Ang imong aplikasyon para sa ${progNameBis} opisyal nga na-aprobahan sa Gov Service.`
+                      : `Ang inyong aplikasyon para sa ${progNameFil} ay opisyal nang na-apruba ng QC Social Services Development Department.`
+                    : isAppRejected
+                    ? language === "en"
+                      ? `Your application for ${progNameEn} was reviewed and not approved. You can review the reason below and submit a new application with the complete requirements.`
+                      : language === "bis"
+                      ? `Ang imong aplikasyon para sa ${progNameBis} gisusi ug wala na-aprobahan. Mahimo nimong susihon ang hinungdan sa ubos ug mag-apply pag-usab.`
+                      : `Ang inyong aplikasyon para sa ${progNameFil} ay sinuri ng Social Worker at hindi na-aprubahan. Maaari ninyong suriin ang dahilan sa ibaba at mag-apply muli kalakip ang kumpletong mga dokumento.`
+                    : language === "en"
+                    ? `Your application for ${progNameEn} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment.`
+                    : language === "bis"
+                    ? `Ang imong aplikasyon para sa ${progNameBis} nasumite na ug kasamtangang girebyu sa Social Worker.`
+                    : `Ang inyong aplikasyon para sa ${progNameFil} ay matagumpay na naisumite at kasalukuyang sinusuri ng Social Worker.`}
+                </p>
+              )
+            })()}
           </div>
 
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2.5 text-xs">

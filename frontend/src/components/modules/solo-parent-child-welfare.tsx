@@ -100,6 +100,17 @@ interface SoloParentSubmission {
   receivingPension?: string
   pensionType?: string
 
+  childName?: string
+  childAge?: string | number
+  childBirthday?: string
+  childSex?: string
+  childRelationship?: string
+  childSchoolName?: string
+  childGradeLevel?: string
+  childLrnOrId?: string
+  childSchoolAddress?: string
+  approvedAmount?: string
+
   familyMembers: FamilyMember[]
 
   emergencyName: string
@@ -587,16 +598,47 @@ function mapSoloParentRow(row: any): SoloParentSubmission {
   const emergencyAddress = getVal(fdFormData.emergencyAddress, formData.emergencyAddress, extraData.emergencyAddress, row.emergency_address, row.emergencyResidentialAddress, row.emergencyAddress)
   const bloodType = getVal(fdFormData.bloodType, formData.bloodType, extraData.bloodType, row.blood_type, row.bloodType, "O+")
 
+  const isEdu =
+    String(row.application_type || row.applicationType || fdFormData.applicationType || fdFormData.application_type || formData.applicationType || formData.application_type || edFormData.applicationType || row.service || row.category_title || row.service_name || "").toLowerCase().includes("educational") ||
+    String(refNum).toUpperCase().includes("SP-EDU") ||
+    String(row.id || "").toUpperCase().includes("SP-EDU")
+
+  const service = isEdu ? "Solo Parent Educational Assistance" : "Solo Parent Financial Subsidy Program"
+  const serviceName = isEdu ? "Solo Parent Educational Assistance" : "Solo Parent Financial Subsidy Program"
+  const assistanceType = isEdu ? "Solo Parent Educational Assistance" : "Financial Subsidy"
+  const applicationType = isEdu ? "educational-assistance" : (row.application_type || row.applicationType || "financial-subsidy")
+  const approvedAmount = isEdu ? getVal(row.approved_amount, row.approvedAmount, fdFormData.approvedAmount, "5000") : undefined
+
+  const childName = getVal(row.child_name, row.childName, fdFormData.childName, formData.childName, edFormData.childName, extraData.childName)
+  const childAge = getVal(row.child_age, row.childAge, fdFormData.childAge, formData.childAge, edFormData.childAge, extraData.childAge)
+  const childBirthday = getVal(row.child_birthday, row.childBirthday, fdFormData.childBirthday, formData.childBirthday, edFormData.childBirthday, extraData.childBirthday)
+  const childSex = getVal(row.child_sex, row.childSex, fdFormData.childSex, formData.childSex, edFormData.childSex, extraData.childSex)
+  const childRelationship = getVal(row.child_relationship, row.childRelationship, fdFormData.childRelationship, formData.childRelationship, edFormData.childRelationship, "Child")
+  const childSchoolName = getVal(row.child_school_name, row.child_school_daycare, row.childSchoolName, row.childSchoolDaycare, fdFormData.childSchoolName, fdFormData.childSchoolDaycare, formData.childSchoolName, formData.childSchoolDaycare)
+  const childGradeLevel = getVal(row.child_grade_level, row.childGradeLevel, fdFormData.childGradeLevel, formData.childGradeLevel, edFormData.childGradeLevel)
+  const childLrnOrId = getVal(row.child_lrn, row.child_lrn_or_id, row.childLrnOrId, row.childLrn, fdFormData.childLrnOrId, fdFormData.childLrn, formData.childLrnOrId, formData.childLrn)
+  const childSchoolAddress = getVal(row.child_school_address, row.childSchoolAddress, fdFormData.childSchoolAddress, formData.childSchoolAddress, edFormData.childSchoolAddress)
+
   return {
     id: `SP-${rawId}`,
     submittedAt: safeSubmittedAt,
     referenceNumber: refNum,
     category: "Solo Parent",
-    service: "Solo Parent Financial Subsidy Program",
-    serviceName: "Solo Parent Financial Subsidy Program",
-    assistanceType: "Financial Subsidy",
-    applicationType: "financial-subsidy",
-    classification: soloParentCategory,
+    service,
+    serviceName,
+    assistanceType,
+    applicationType,
+    classification: isEdu ? "Solo Parent Educational Assistance" : soloParentCategory,
+    approvedAmount,
+    childName,
+    childAge,
+    childBirthday,
+    childSex,
+    childRelationship,
+    childSchoolName,
+    childGradeLevel,
+    childLrnOrId,
+    childSchoolAddress,
     firstName,
     middleName,
     lastName,
@@ -1385,8 +1427,19 @@ interface CardProps {
 }
 
 function ApplicationCard({ app, onView }: CardProps) {
+  const isEdu = isSoloParent(app) && (
+    String((app as any).service || (app as any).serviceName || (app as any).applicationType || (app as any).application_type || (app as any).category_title || "").toLowerCase().includes("educational") ||
+    String(app.referenceNumber || "").toUpperCase().includes("SP-EDU")
+  )
+
   const subLabel = isSoloParent(app)
-    ? (app as any).applicationType === "new" ? "New application" : (app as any).applicationType === "renewal" ? "Renewal" : "Lost ID replacement"
+    ? isEdu
+      ? "Educational Assistance"
+      : (app as any).applicationType === "new"
+      ? "New application"
+      : (app as any).applicationType === "renewal"
+      ? "Renewal"
+      : "Financial Subsidy"
     : app.supportCategory.replace(/^\d+\.\s*/, "")
 
   return (
@@ -1423,7 +1476,7 @@ function ApplicationCard({ app, onView }: CardProps) {
             {isSoloParent(app)
               ? app.status === "approved" && (
                   <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>
-                    ₱1,000 / mo Subsidy Approved
+                    {isEdu ? "₱5,000 / yr Educational Grant Approved" : "₱1,000 / mo Subsidy Approved"}
                   </span>
                 )
               : app.status === "approved" && (app as any).approvedAmount && (
@@ -1617,6 +1670,10 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
                 return ""
               }
 
+              const isEdu =
+                String((app as any).service || (app as any).serviceName || (app as any).applicationType || (app as any).application_type || (app as any).category_title || "").toLowerCase().includes("educational") ||
+                String(app.referenceNumber || "").toUpperCase().includes("SP-EDU")
+
               const spDob = (() => {
                 const rawDob = getVal((app as any).birthDate, (app as any).birth_date, (app as any).dob, fdForm.birthDate, fd.birthDate, ed.birthDate)
                 if (rawDob) {
@@ -1658,6 +1715,200 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
               const spGovAssist = getVal(app.receivingGovAssistance, (app as any).receiving_gov_assistance, fdForm.receivingGovAssistance, fd.receivingGovAssistance, "No")
               const spGovProgram = getVal(app.govAssistanceProgramName, (app as any).gov_assistance_program, fdForm.govAssistanceProgramName, fd.govAssistanceProgramName, "")
               const spGovAmount = getVal(app.govAssistanceAmountFreq, (app as any).gov_assistance_amount_freq, fdForm.govAssistanceAmountFreq, fd.govAssistanceAmountFreq, "")
+
+              // Educational Assistance fields
+              const childNameVal = getVal(app.childName, (app as any).child_name, fdForm.childName, fd.childName, ed.childName, "—")
+              const childRelVal = getVal(app.childRelationship, (app as any).child_relationship, fdForm.childRelationship, fd.childRelationship, ed.childRelationship, "Child")
+              const childBdayVal = getVal(app.childBirthday, (app as any).child_birthday, fdForm.childBirthday, fd.childBirthday, ed.childBirthday, "—")
+              const childAgeVal = getVal(app.childAge, (app as any).child_age, fdForm.childAge, fd.childAge, ed.childAge, "—")
+              const childSexVal = getVal(app.childSex, (app as any).child_sex, fdForm.childSex, fd.childSex, ed.childSex, "—")
+              const childSchoolVal = getVal(app.childSchoolName, (app as any).child_school_name, (app as any).child_school_daycare, app.childSchoolName, fdForm.childSchoolName, fd.childSchoolName, ed.childSchoolName, fdForm.childSchoolDaycare, "—")
+              const childGradeVal = getVal(app.childGradeLevel, (app as any).child_grade_level, fdForm.childGradeLevel, fd.childGradeLevel, ed.childGradeLevel, "—")
+              const childLrnVal = getVal(app.childLrnOrId, (app as any).child_lrn, (app as any).child_lrn_or_id, fdForm.childLrnOrId, fd.childLrnOrId, ed.childLrnOrId, fdForm.childLrn, "—")
+              const childSchoolAddrVal = getVal(app.childSchoolAddress, (app as any).child_school_address, fdForm.childSchoolAddress, fd.childSchoolAddress, ed.childSchoolAddress, "Quezon City")
+
+              if (isEdu) {
+                return (
+                  <>
+                    {/* Section 01: Solo Parent / Guardian Information */}
+                    <div>
+                      <SectionHeading number={nextNum()} icon={<User className="h-4 w-4" />}>
+                        Solo Parent / Guardian Information
+                      </SectionHeading>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                        <Field label="Full Name" value={displayName(app)} />
+                        <Field
+                          label="Date of Birth"
+                          value={
+                            <span className="inline-flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                              {spDob}
+                            </span>
+                          }
+                        />
+                        <Field label="Age / Sex" value={`${spAge} / ${spSex}`} />
+                        <Field label="Civil Status" value={spCivilStatus} />
+                        <Field
+                          label="Contact Number"
+                          value={
+                            <span className="inline-flex items-center gap-1.5">
+                              <Phone className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                              <MaskedText
+                                value={spContactNo}
+                                type="phone"
+                                showButtonLabel
+                                auditSubject={displayName(app)}
+                                auditField="Contact Number"
+                                auditModule="Solo Parent & Child Welfare"
+                              />
+                            </span>
+                          }
+                        />
+                        <Field
+                          label="QCID Number"
+                          value={
+                            <MaskedText
+                              value={spQcid}
+                              type="id"
+                              showButtonLabel
+                              auditSubject={displayName(app)}
+                              auditField="QCID Number"
+                              auditModule="Solo Parent & Child Welfare"
+                            />
+                          }
+                        />
+                        <Field
+                          label="Solo Parent ID (SPIC)"
+                          value={
+                            <span className="font-mono font-bold text-foreground">
+                              {spIdNum}
+                            </span>
+                          }
+                        />
+                        <Field
+                          label="Email Address"
+                          value={
+                            spEmail ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Mail className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                                <MaskedText
+                                  value={spEmail}
+                                  type="email"
+                                  showButtonLabel
+                                  auditSubject={displayName(app)}
+                                  auditField="Email Address"
+                                  auditModule="Solo Parent & Child Welfare"
+                                />
+                              </span>
+                            ) : (
+                              "—"
+                            )
+                          }
+                        />
+                        <Field label="Barangay" value={spBarangay} />
+                        <Field
+                          label="Residency / Status"
+                          value={
+                            <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
+                              <Check className="h-3.5 w-3.5 stroke-[3]" />
+                              {spStatus}
+                            </span>
+                          }
+                        />
+                        <div className="col-span-2">
+                          <Field
+                            label="Complete Address"
+                            value={
+                              <span className="inline-flex items-start gap-1.5">
+                                <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
+                                {address}
+                              </span>
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 02: Student Information */}
+                    <div>
+                      <SectionHeading number={nextNum()} icon={<Baby className="h-4 w-4" />}>
+                        Student / Child Information
+                      </SectionHeading>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                        <Field label="Student Full Name" value={<span className="font-bold text-blue-700 dark:text-blue-400">{childNameVal}</span>} />
+                        <Field label="Relationship to Solo Parent" value={childRelVal} />
+                        <Field
+                          label="Date of Birth"
+                          value={
+                            <span className="inline-flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
+                              {childBdayVal}
+                            </span>
+                          }
+                        />
+                        <Field label="Age / Sex" value={`${childAgeVal} y/o / ${childSexVal}`} />
+                      </div>
+                    </div>
+
+                    {/* Section 03: School & Academic Details */}
+                    <div>
+                      <SectionHeading number={nextNum()} icon={<FileText className="h-4 w-4" />}>
+                        School &amp; Academic Details
+                      </SectionHeading>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                        <Field label="School / Institution Name" value={<span className="font-semibold">{childSchoolVal}</span>} />
+                        <Field label="Grade / Year Level" value={<span className="font-semibold">{childGradeVal}</span>} />
+                        <Field label="LRN / Student ID Number" value={<span className="font-mono font-bold text-foreground">{childLrnVal}</span>} />
+                        <Field label="Academic Year Grant" value="AY 2026 - 2027" />
+                        <div className="col-span-2">
+                          <Field
+                            label="School Address"
+                            value={
+                              <span className="inline-flex items-start gap-1.5">
+                                <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--ink-faint)" }} />
+                                {childSchoolAddrVal}
+                              </span>
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 04: Educational Grant Details */}
+                    <div>
+                      <SectionHeading number={nextNum()} icon={<ClipboardList className="h-4 w-4" />}>
+                        Educational Grant Details
+                      </SectionHeading>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
+                        <Field
+                          label="Program"
+                          value={
+                            <span className="font-bold text-blue-700 dark:text-blue-400">
+                              Solo Parent Educational Assistance
+                            </span>
+                          }
+                        />
+                        <Field
+                          label="Educational Grant Amount"
+                          value={
+                            <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono text-base">
+                              ₱5,000.00 / Academic Year
+                            </span>
+                          }
+                        />
+                        <Field label="Assistance Type" value="Educational Cash Assistance" />
+                        <Field label="Release Frequency" value="Once per Academic Year (Renewable next SY)" />
+                        <div className="col-span-2">
+                          <Field
+                            label="Purpose &amp; Coverage"
+                            value="Tuition fees, school supplies, textbooks, uniforms, and student learning assistance for dependent children of qualified solo parents."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )
+              }
 
               return (
                 <>
@@ -2045,40 +2296,87 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
 
               {actionMode === "approve" && (
                 isSolo ? (
-                  <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                          Confirm Solo Parent Financial Subsidy Approval
-                        </label>
-                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md font-mono">
-                          Subsidy: ₱1,000 / mo (Quarterly ₱3,000)
-                        </span>
+                  (() => {
+                    const isEdu =
+                      String((app as any).service || (app as any).serviceName || (app as any).applicationType || (app as any).application_type || (app as any).category_title || "").toLowerCase().includes("educational") ||
+                      String(app.referenceNumber || "").toUpperCase().includes("SP-EDU")
+
+                    if (isEdu) {
+                      return (
+                        <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                                Confirm Solo Parent Educational Assistance Approval
+                              </label>
+                              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2.5 py-1 rounded-md font-mono">
+                                Fixed Grant: ₱5,000 / yr
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                              Approving will validate the citizen's eligibility for the <strong>Solo Parent Educational Assistance</strong> (₱5,000 fixed annual grant). The grant will be automatically recorded in <strong>Financial Aid Disbursement</strong> and scheduled in <strong>Appointments</strong> for payout release.
+                            </p>
+                          </div>
+                          <div className="flex gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setActionMode("view")}
+                              className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onApprove(app.id, "5000")
+                                onClose()
+                              }}
+                              className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer font-semibold"
+                            >
+                              Confirm Approval &amp; Schedule Educational Grant (₱5,000)
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                              Confirm Solo Parent Financial Subsidy Approval
+                            </label>
+                            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md font-mono">
+                              Subsidy: ₱1,000 / mo (Quarterly ₱3,000)
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                            Approving will validate the citizen's eligibility for the <strong>Solo Parent Financial Subsidy Program</strong> (₱1,000/month statutory benefit). The 3-month quarterly accumulation period will begin, automatically recording this grant in <strong>Financial Aid Disbursement</strong> and connecting to <strong>Appointments</strong> for the upcoming payout cycle.
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setActionMode("view")}
+                            className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onApprove(app.id, idNumber || "3000")
+                              onClose()
+                            }}
+                            className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
+                          >
+                            Confirm Approval &amp; Schedule Subsidy
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                        Approving will validate the citizen's eligibility for the <strong>Solo Parent Financial Subsidy Program</strong> (₱1,000/month statutory benefit). The 3-month quarterly accumulation period will begin, automatically recording this grant in <strong>Financial Aid Disbursement</strong> and connecting to <strong>Appointments</strong> for the upcoming payout cycle.
-                      </p>
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setActionMode("view")}
-                        className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onApprove(app.id, idNumber || "3000")
-                          onClose()
-                        }}
-                        className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
-                      >
-                        Confirm Approval &amp; Schedule Subsidy
-                      </button>
-                    </div>
-                  </div>
+                    )
+                  })()
                 ) : (
                   <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
                     <div>
@@ -2253,15 +2551,20 @@ export default function SoloParentChildWelfareAdmin() {
     const approvedDate = new Date().toISOString()
     const targetRef = app.referenceNumber || ""
 
+    const isEdu = isSoloParent(app) && (
+      String((app as any).service || (app as any).serviceName || (app as any).applicationType || (app as any).application_type || (app as any).category_title || "").toLowerCase().includes("educational") ||
+      String(app.referenceNumber || "").toUpperCase().includes("SP-EDU")
+    )
+
     setApplications((prev) =>
       prev.map((a) => {
         if (a.id === app.id || (targetRef && a.referenceNumber === targetRef)) {
           return {
             ...a,
             status: "approved",
-            assignedIdNumber: value,
-            soloParentIdNumber: value,
-            approvedAmount: isSoloParent(app) ? undefined : value,
+            assignedIdNumber: isEdu ? (a as any).assignedIdNumber : value,
+            soloParentIdNumber: isEdu ? (a as any).soloParentIdNumber : value,
+            approvedAmount: isEdu ? "5000" : isSoloParent(app) ? undefined : value,
             approvedBy: "Social Worker Staff",
             approvedDate,
           }
@@ -2275,7 +2578,7 @@ export default function SoloParentChildWelfareAdmin() {
         const localSolo = JSON.parse(localStorage.getItem("solo_parent_applications") || "[]")
         const nextSolo = localSolo.map((a: any) =>
           a.id === app.id || (targetRef && a.referenceNumber === targetRef)
-            ? { ...a, status: "approved", assigned_id_number: value, solo_parent_id_number: value, approved_by: "Social Worker Staff", updated_at: approvedDate, approved_date: approvedDate, approvedDate, submittedAt: a.submittedAt || a.created_at || approvedDate }
+            ? { ...a, status: "approved", approved_amount: isEdu ? "5000" : a.approved_amount, assigned_id_number: isEdu ? a.assigned_id_number : value, solo_parent_id_number: isEdu ? a.solo_parent_id_number : value, approved_by: "Social Worker Staff", updated_at: approvedDate, approved_date: approvedDate, approvedDate, submittedAt: a.submittedAt || a.created_at || approvedDate }
             : a
         )
         localStorage.setItem("solo_parent_applications", JSON.stringify(nextSolo))
@@ -2291,76 +2594,122 @@ export default function SoloParentChildWelfareAdmin() {
     } catch {}
 
     try {
-
-      await approveSubmission(app, value)
+      await approveSubmission(app, isEdu ? "5000" : value)
 
       if (isSoloParent(app)) {
-        if (app.email) {
+        if (isEdu) {
           try {
-            fetch(`${API_BASE}/api/email/send-solo-parent-id`, {
-              method: "POST",
-              headers: authHeaders(),
-              body: JSON.stringify({
-                recipientEmail: app.email,
-                recipientName: displayName(app),
-                soloParentIdNumber: value,
-                referenceNumber: app.referenceNumber,
-                classification: app.classification,
-                applicationType: app.applicationType,
-                approvedDate,
-                contactNumber: app.contactNo,
-                address: [app.addressHouseNo, app.addressStreet, app.addressBarangay, app.addressCityMunicipality].filter(Boolean).join(", "),
-              }),
-            }).catch((e) => console.warn("[Solo Parent Email Error]:", e))
-          } catch (mailErr) {
-            console.warn("[Solo Parent Email Dispatch Failed]:", mailErr)
-          }
-        }
-
-        try {
-          const currentDisbursements = getSavedDisbursements()
-          if (!currentDisbursements.some((d) => d.applicationRef === app.referenceNumber)) {
-            const newRecord: SyncedDisbursementRecord = {
-              id: `disb-sp-${app.referenceNumber || Date.now()}`,
-              disbursementId: `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`,
-              applicationRef: app.referenceNumber,
-              applicantName: displayName(app).toUpperCase(),
-              assistanceType: "Solo Parent Financial Subsidy",
-              fixedAmount: 3000,
-              dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
-              status: "PENDING",
-              venue: "Quezon City Hall - Social Services Development Department (Solo Parent Welfare)",
-              remarks: "Awtomatikong pumasok mula sa Solo Parent Financial Subsidy (₱1,000/buwan - 3 Months Quarterly Payout).",
+            const currentDisbursements = getSavedDisbursements()
+            if (!currentDisbursements.some((d) => d.applicationRef === app.referenceNumber)) {
+              const newRecord: SyncedDisbursementRecord = {
+                id: `disb-sp-edu-${app.referenceNumber || Date.now()}`,
+                disbursementId: `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`,
+                applicationRef: app.referenceNumber,
+                applicantName: displayName(app).toUpperCase(),
+                assistanceType: "Solo Parent Educational Assistance",
+                fixedAmount: 5000,
+                dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
+                status: "PENDING",
+                venue: "Quezon City Hall - Social Services Development Department (Solo Parent Welfare)",
+                remarks: `Awtomatikong pumasok mula sa Solo Parent Educational Assistance (₱5,000.00 Annual Grant) para kay ${app.childName || "Mag-aaral"}.`,
+              }
+              saveDisbursements([newRecord, ...currentDisbursements])
             }
-            saveDisbursements([newRecord, ...currentDisbursements])
+          } catch (err) {
+            console.warn("Failed saving solo parent educational disbursement record:", err)
           }
-        } catch (err) {
-          console.warn("Failed saving solo parent subsidy disbursement record:", err)
+
+          try {
+            fetch(`${API_BASE}/api/appointments`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                referenceNo: app.referenceNumber,
+                reference_no: app.referenceNumber,
+                module: "Solo Parent",
+                applicantName: displayName(app),
+                applicant_name: displayName(app),
+                concern: "Solo Parent Educational Assistance Payout (₱5,000)",
+                status: "pending",
+              }),
+            }).catch(() => {})
+          } catch {}
+
+          pushUserNotification({
+            title: "Solo Parent Educational Assistance: Approved",
+            desc: "Congratulations! Your ₱5,000 Solo Parent Educational Assistance grant has been approved and forwarded to Appointments & Financial Aid Disbursement for payout release.",
+            applicationRef: app.referenceNumber,
+            assistanceType: "Solo Parent Educational Assistance",
+            amount: 5000,
+          })
+        } else {
+          if (app.email) {
+            try {
+              fetch(`${API_BASE}/api/email/send-solo-parent-id`, {
+                method: "POST",
+                headers: authHeaders(),
+                body: JSON.stringify({
+                  recipientEmail: app.email,
+                  recipientName: displayName(app),
+                  soloParentIdNumber: value,
+                  referenceNumber: app.referenceNumber,
+                  classification: app.classification,
+                  applicationType: app.applicationType,
+                  approvedDate,
+                  contactNumber: app.contactNo,
+                  address: [app.addressHouseNo, app.addressStreet, app.addressBarangay, app.addressCityMunicipality].filter(Boolean).join(", "),
+                }),
+              }).catch((e) => console.warn("[Solo Parent Email Error]:", e))
+            } catch (mailErr) {
+              console.warn("[Solo Parent Email Dispatch Failed]:", mailErr)
+            }
+          }
+
+          try {
+            const currentDisbursements = getSavedDisbursements()
+            if (!currentDisbursements.some((d) => d.applicationRef === app.referenceNumber)) {
+              const newRecord: SyncedDisbursementRecord = {
+                id: `disb-sp-${app.referenceNumber || Date.now()}`,
+                disbursementId: `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`,
+                applicationRef: app.referenceNumber,
+                applicantName: displayName(app).toUpperCase(),
+                assistanceType: "Solo Parent Financial Subsidy",
+                fixedAmount: 3000,
+                dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
+                status: "PENDING",
+                venue: "Quezon City Hall - Social Services Development Department (Solo Parent Welfare)",
+                remarks: "Awtomatikong pumasok mula sa Solo Parent Financial Subsidy (₱1,000/buwan - 3 Months Quarterly Payout).",
+              }
+              saveDisbursements([newRecord, ...currentDisbursements])
+            }
+          } catch (err) {
+            console.warn("Failed saving solo parent subsidy disbursement record:", err)
+          }
+
+          try {
+            fetch(`${API_BASE}/api/appointments`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                referenceNo: app.referenceNumber,
+                reference_no: app.referenceNumber,
+                module: "Solo Parent",
+                applicantName: displayName(app),
+                applicant_name: displayName(app),
+                concern: "Solo Parent Financial Subsidy Payout",
+                status: "pending",
+              }),
+            }).catch(() => {})
+          } catch {}
+
+          pushUserNotification({
+            title: "Solo Parent Financial Subsidy: Approved",
+            desc: "Congratulations! Your ₱1,000/month subsidy has been approved. The 3-month quarterly accumulation period has started.",
+            applicationRef: app.referenceNumber,
+            assistanceType: "Solo Parent Financial Subsidy",
+            amount: 3000,
+          })
         }
-
-        try {
-          fetch(`${API_BASE}/api/appointments`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              referenceNo: app.referenceNumber,
-              reference_no: app.referenceNumber,
-              module: "Solo Parent",
-              applicantName: displayName(app),
-              applicant_name: displayName(app),
-              concern: "Solo Parent Financial Subsidy Payout",
-              status: "pending",
-            }),
-          }).catch(() => {})
-        } catch {}
-
-        pushUserNotification({
-          title: "Solo Parent Financial Subsidy: Approved",
-          desc: "Congratulations! Your ₱1,000/month subsidy has been approved. The 3-month quarterly accumulation period has started.",
-          applicationRef: app.referenceNumber,
-          assistanceType: "Solo Parent Financial Subsidy",
-          amount: 3000,
-        })
       } else {
 
         const grantAmount = Number(value) || 5000

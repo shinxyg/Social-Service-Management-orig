@@ -505,26 +505,33 @@ function AppointmentCard({
                   </button>
                 </div>
               ) : isSoloParentAppt ? (
-                <div className="flex flex-wrap items-center gap-1.5 justify-end">
-                  <button
-                    type="button"
-                    onClick={() => onApprove?.(appt)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors cursor-pointer shadow-2xs"
-                    title="Approve Solo Parent Financial Subsidy"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>Approve Subsidy (₱1,000/mo)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onReject?.(appt)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
-                    title="Reject Solo Parent Application"
-                  >
-                    <XCircle className="h-3.5 w-3.5" />
-                    <span>Reject</span>
-                  </button>
-                </div>
+                (() => {
+                  const isEdu =
+                    String(appt.concern || "").toLowerCase().includes("educational") ||
+                    String(appt.referenceNo || "").toUpperCase().includes("SP-EDU")
+                  return (
+                    <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => onApprove?.(appt)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${isEdu ? "bg-blue-600 hover:bg-blue-700" : "bg-violet-600 hover:bg-violet-700"} text-white text-xs font-bold transition-colors cursor-pointer shadow-2xs`}
+                        title={isEdu ? "Approve Solo Parent Educational Assistance" : "Approve Solo Parent Financial Subsidy"}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span>{isEdu ? "Approve Grant (₱5,000 / yr)" : "Approve Subsidy (₱1,000/mo)"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onReject?.(appt)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+                        title="Reject Solo Parent Application"
+                      >
+                        <XCircle className="h-3.5 w-3.5" />
+                        <span>Reject</span>
+                      </button>
+                    </div>
+                  )
+                })()
               ) : (
                 <div className="flex flex-wrap items-center gap-1.5 justify-end">
                   <button
@@ -574,12 +581,19 @@ function AppointmentCard({
                   </span>
                 </div>
               ) : isSoloParentAppt ? (
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60 text-xs font-bold shadow-2xs">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-violet-600" />
-                    <span>✓ Solo Parent Subsidy Approved (₱1,000/mo)</span>
-                  </span>
-                </div>
+                (() => {
+                  const isEdu =
+                    String(appt.concern || "").toLowerCase().includes("educational") ||
+                    String(appt.referenceNo || "").toUpperCase().includes("SP-EDU")
+                  return (
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${isEdu ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60" : "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60"} text-xs font-bold shadow-2xs`}>
+                        <CheckCircle2 className={`h-3.5 w-3.5 ${isEdu ? "text-blue-600" : "text-violet-600"}`} />
+                        <span>{isEdu ? "✓ Solo Parent Educational Grant Approved (₱5,000 / yr)" : "✓ Solo Parent Subsidy Approved (₱1,000/mo)"}</span>
+                      </span>
+                    </div>
+                  )
+                })()
               ) : (() => {
                 const isHospital =
                   String(appt.concern || '').toLowerCase().includes('hospital bill') ||

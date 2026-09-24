@@ -269,10 +269,13 @@ export default function SoloParentApplicationWizard({
   onSubmissionStageChange,
 }: SoloParentApplicationWizardProps) {
   const userProfile = propUserProfile || getCurrentUserProfile()
+  const isEducational =
+    String(programType || "").toLowerCase().includes("educational") ||
+    String(initialType || "").toLowerCase().includes("educational")
 
   const STEPS = [
     { id: 1, label: "VERIFICATION" },
-    { id: 2, label: "APPLICATION FORM" },
+    { id: 2, label: isEducational ? "EDUCATIONAL FORM" : "APPLICATION FORM" },
     { id: 3, label: "REQUIRED DOCUMENTS" },
     { id: 4, label: "REVIEW & SUBMIT" },
   ]
@@ -293,7 +296,7 @@ export default function SoloParentApplicationWizard({
   const [soloParentStatus, setSoloParentStatus] = useState("")
   const [employmentStatus, setEmploymentStatus] = useState("")
 
-  // Step 2: Section A. Applicant Information
+  // Step 2: Section A. Solo Parent / Guardian Information
   const [formData, setFormData] = useState({
     firstName: userProfile?.firstName || "",
     middleName: userProfile?.middleName || "",
@@ -316,23 +319,30 @@ export default function SoloParentApplicationWizard({
     email: userProfile?.email || "soloparent@example.com",
   })
 
-  // Step 2: Section B. Solo Parent Information
+  // Financial Subsidy Specific Fields
   const [soloParentCategory, setSoloParentCategory] = useState("")
   const [numberOfDependents, setNumberOfDependents] = useState("")
   const [ageOfYoungestDependent, setAgeOfYoungestDependent] = useState("")
-
-  // Step 2: Section C. Employment & Income Information
   const [occupation, setOccupation] = useState("")
   const [employerOrIncomeSource, setEmployerOrIncomeSource] = useState("")
   const [monthlyIncome, setMonthlyIncome] = useState("")
   const [otherSourceOfIncome, setOtherSourceOfIncome] = useState("")
-
-  // Step 2: Section D. Other Government Assistance
   const [receivingGovAssistance, setReceivingGovAssistance] = useState<"No" | "Yes" | "">("")
   const [govAssistanceProgramName, setGovAssistanceProgramName] = useState("")
   const [govAssistanceAmountFreq, setGovAssistanceAmountFreq] = useState("")
   const [receivingPension, setReceivingPension] = useState<"No" | "Yes" | "">("")
   const [pensionType, setPensionType] = useState("")
+
+  // Educational Assistance Specific Fields
+  const [childName, setChildName] = useState("")
+  const [childAge, setChildAge] = useState("")
+  const [childBirthday, setChildBirthday] = useState("")
+  const [childSex, setChildSex] = useState("Male")
+  const [childRelationship, setChildRelationship] = useState("Child / Dependent")
+  const [childSchoolName, setChildSchoolName] = useState("")
+  const [childSchoolAddress, setChildSchoolAddress] = useState("")
+  const [childGradeLevel, setChildGradeLevel] = useState("")
+  const [childLrnOrId, setChildLrnOrId] = useState("")
 
   useEffect(() => {
     if (userProfile) {
@@ -366,7 +376,7 @@ export default function SoloParentApplicationWizard({
     }, 600)
   }
 
-  // Step 3: Documents based on Employment Status
+  // Step 3: Documents based on Program Type & Employment Status
   const getProofDocumentLabel = () => {
     if (employmentStatus === "Unemployed") {
       return {
@@ -391,30 +401,68 @@ export default function SoloParentApplicationWizard({
 
   const proofDocInfo = getProofDocumentLabel()
 
-  const requiredDocuments: SampleDocument[] = [
-    {
-      id: "spicIdCard",
-      label: "SOLO PARENT IDENTIFICATION CARD (SPIC)",
-      description: "Photocopy or clear scan/photo of your valid Solo Parent ID (SPIC).",
-      images: ["/samples/QC ID.png"],
-      downloadUrl: "/samples/QC ID.png",
-    },
-    {
-      id: "qcidCard",
-      label: "QCITIZEN ID / APPLICABLE IDENTIFICATION",
-      description: "Clear photo of your QCitizen ID or any applicable identification card (front and back).",
-      images: ["/samples/QC ID.png"],
-      downloadUrl: "/samples/QC ID.png",
-    },
-    {
-      id: "proofOfIndigencyOrIncome",
-      label: proofDocInfo.label,
-      description: proofDocInfo.description,
-      note: proofDocInfo.note,
-      images: ["/samples/BARANGAY CERTIFICATE.webp"],
-      downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
-    },
-  ]
+  const requiredDocuments: SampleDocument[] = isEducational
+    ? [
+        {
+          id: "certOfEnrollment",
+          label: "CERTIFICATE OF ENROLLMENT / REGISTRATION FORM",
+          description: "Official Certificate of Matriculation, Registration Form, or School Certification for current academic year.",
+          images: ["/samples/BIRTH CERTIFICATE OF MINOR.jpg"],
+          downloadUrl: "/samples/BIRTH CERTIFICATE OF MINOR.jpg",
+        },
+        {
+          id: "reportCard",
+          label: "REPORT CARD / COPY OF GRADES",
+          description: "Latest School Report Card (Form 138) or Copy of Official Grades of the enrolled student.",
+          images: ["/samples/BIRTH CERTIFICATE OF MINOR.jpg"],
+          downloadUrl: "/samples/BIRTH CERTIFICATE OF MINOR.jpg",
+        },
+        {
+          id: "spicIdCard",
+          label: "SOLO PARENT IDENTIFICATION CARD (SPIC)",
+          description: "Photocopy or clear scan/photo of your valid Solo Parent ID (SPIC).",
+          images: ["/samples/QC ID.png"],
+          downloadUrl: "/samples/QC ID.png",
+        },
+        {
+          id: "qcidCard",
+          label: "QCITIZEN ID / APPLICABLE IDENTIFICATION",
+          description: "Clear photo of your QCitizen ID or any applicable identification card (front and back).",
+          images: ["/samples/QC ID.png"],
+          downloadUrl: "/samples/QC ID.png",
+        },
+        {
+          id: "proofOfIndigencyOrIncome",
+          label: "BARANGAY CERTIFICATE OF INDIGENCY / LOW INCOME",
+          description: "Barangay Certificate of Indigency or Certificate of Low Income.",
+          images: ["/samples/BARANGAY CERTIFICATE.webp"],
+          downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
+        },
+      ]
+    : [
+        {
+          id: "spicIdCard",
+          label: "SOLO PARENT IDENTIFICATION CARD (SPIC)",
+          description: "Photocopy or clear scan/photo of your valid Solo Parent ID (SPIC).",
+          images: ["/samples/QC ID.png"],
+          downloadUrl: "/samples/QC ID.png",
+        },
+        {
+          id: "qcidCard",
+          label: "QCITIZEN ID / APPLICABLE IDENTIFICATION",
+          description: "Clear photo of your QCitizen ID or any applicable identification card (front and back).",
+          images: ["/samples/QC ID.png"],
+          downloadUrl: "/samples/QC ID.png",
+        },
+        {
+          id: "proofOfIndigencyOrIncome",
+          label: proofDocInfo.label,
+          description: proofDocInfo.description,
+          note: proofDocInfo.note,
+          images: ["/samples/BARANGAY CERTIFICATE.webp"],
+          downloadUrl: "/samples/BARANGAY CERTIFICATE.webp",
+        },
+      ]
 
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, File[]>>({})
   const [uploadedDocsBase64, setUploadedDocsBase64] = useState<Record<string, string>>({})
@@ -451,17 +499,34 @@ export default function SoloParentApplicationWizard({
 
   const step1Valid = Boolean(soloParentIdNumber.trim() && employmentStatus)
 
-  const step2Valid = Boolean(
-    formData.firstName.trim() &&
-    formData.lastName.trim() &&
-    formData.qcidNumber.trim() &&
-    formData.contactNo.replace(/\D/g, "").length >= 10 &&
-    formData.addressBarangay.trim() &&
-    formData.email.trim() &&
-    soloParentCategory &&
-    numberOfDependents.trim() &&
-    ageOfYoungestDependent.trim()
-  )
+  const step2Valid = isEducational
+    ? Boolean(
+        formData.firstName.trim() &&
+        formData.lastName.trim() &&
+        formData.qcidNumber.trim() &&
+        formData.contactNo.replace(/\D/g, "").length >= 10 &&
+        formData.addressBarangay.trim() &&
+        formData.email.trim() &&
+        childName.trim() &&
+        childAge.trim() &&
+        childBirthday.trim() &&
+        childSex.trim() &&
+        childSchoolName.trim() &&
+        childSchoolAddress.trim() &&
+        childGradeLevel.trim() &&
+        childLrnOrId.trim()
+      )
+    : Boolean(
+        formData.firstName.trim() &&
+        formData.lastName.trim() &&
+        formData.qcidNumber.trim() &&
+        formData.contactNo.replace(/\D/g, "").length >= 10 &&
+        formData.addressBarangay.trim() &&
+        formData.email.trim() &&
+        soloParentCategory &&
+        numberOfDependents.trim() &&
+        ageOfYoungestDependent.trim()
+      )
 
   const step3Valid = requiredDocuments.every(
     (doc) => (uploadedDocs[doc.id]?.length ?? 0) > 0
@@ -503,7 +568,7 @@ export default function SoloParentApplicationWizard({
   const handleSubmit = async () => {
     setSubmitting(true)
     const randNum = Math.floor(100000 + Math.random() * 900000)
-    const generatedRef = `SP-SUB-2026-${randNum}`
+    const generatedRef = isEducational ? `SP-EDU-2026-${randNum}` : `SP-SUB-2026-${randNum}`
     setReference(generatedRef)
 
     const docPayload = requiredDocuments.map((doc) => ({
@@ -521,13 +586,13 @@ export default function SoloParentApplicationWizard({
       reference_number: generatedRef,
       referenceNumber: generatedRef,
       category: "Solo Parent",
-      module_type: "solo-parent",
-      service: "Solo Parent Financial Subsidy Program",
-      service_name: "Solo Parent Financial Subsidy Program",
-      classification_title: "Solo Parent Financial Subsidy Program",
-      assistanceType: "Financial Subsidy",
-      type: programType || "financial-subsidy",
-      application_type: programType || "financial-subsidy",
+      module_type: "SOLO_PARENT",
+      service: isEducational ? "Solo Parent Educational Assistance Program" : "Solo Parent Financial Subsidy Program",
+      service_name: isEducational ? "Solo Parent Educational Assistance Program" : "Solo Parent Financial Subsidy Program",
+      classification_title: isEducational ? "Solo Parent Educational Assistance Program" : "Solo Parent Financial Subsidy Program",
+      assistanceType: isEducational ? "Solo Parent Educational Assistance" : "Financial Subsidy",
+      type: isEducational ? "educational-assistance" : (programType || "financial-subsidy"),
+      application_type: isEducational ? "EDUCATIONAL_ASSISTANCE" : (programType || "financial-subsidy"),
       solo_parent_id_number: soloParentIdNumber.startsWith("SP-") ? soloParentIdNumber : `SP-${soloParentIdNumber}`,
       soloParentStatus: soloParentStatus || "Active / Verified Solo Parent",
       employment_status: employmentStatus,
@@ -538,43 +603,67 @@ export default function SoloParentApplicationWizard({
       email: formData.email,
       contact_no: formData.contactNo,
       address_barangay: formData.addressBarangay,
-      solo_parent_category: soloParentCategory,
-      number_of_dependents: numberOfDependents,
-      age_of_youngest_dependent: ageOfYoungestDependent,
-      occupation,
-      employer_or_income_source: employerOrIncomeSource,
-      monthly_income: monthlyIncome,
-      other_source_of_income: otherSourceOfIncome,
-      receiving_gov_assistance: receivingGovAssistance,
-      gov_assistance_program: govAssistanceProgramName,
-      gov_assistance_amount_freq: govAssistanceAmountFreq,
-      receiving_pension: receivingPension,
-      pension_type: pensionType,
-      financial_assistance_amount: "Financial Subsidy (Subject to assessment)",
+      // Educational Specific Details
+      child_name: isEducational ? childName : undefined,
+      child_age: isEducational ? childAge : undefined,
+      child_birthday: isEducational ? childBirthday : undefined,
+      child_sex: isEducational ? childSex : undefined,
+      child_relationship: isEducational ? childRelationship : undefined,
+      child_school_daycare: isEducational ? childSchoolName : undefined,
+      child_school_name: isEducational ? childSchoolName : undefined,
+      child_school_address: isEducational ? childSchoolAddress : undefined,
+      child_grade_level: isEducational ? childGradeLevel : undefined,
+      lrn: isEducational ? childLrnOrId : undefined,
+      childLrnOrId: isEducational ? childLrnOrId : undefined,
+      // Subsidy Specific Details
+      solo_parent_category: isEducational ? "Solo Parent with Studying Child" : soloParentCategory,
+      number_of_dependents: isEducational ? "1" : numberOfDependents,
+      age_of_youngest_dependent: isEducational ? childAge : ageOfYoungestDependent,
+      occupation: isEducational ? undefined : occupation,
+      employer_or_income_source: isEducational ? undefined : employerOrIncomeSource,
+      monthly_income: isEducational ? undefined : monthlyIncome,
+      other_source_of_income: isEducational ? undefined : otherSourceOfIncome,
+      receiving_gov_assistance: isEducational ? undefined : receivingGovAssistance,
+      gov_assistance_program: isEducational ? undefined : govAssistanceProgramName,
+      gov_assistance_amount_freq: isEducational ? undefined : govAssistanceAmountFreq,
+      receiving_pension: isEducational ? undefined : receivingPension,
+      pension_type: isEducational ? undefined : pensionType,
+      approved_amount: isEducational ? "5000" : undefined,
+      financial_assistance_amount: isEducational ? "₱5,000.00 (Annual Educational Grant)" : "Financial Subsidy (Subject to assessment)",
       status: "pending",
-      application_status: "pending",
+      application_status: isEducational ? "ssdd_validation" : "pending",
       created_at: new Date().toISOString(),
       submittedAt: new Date().toISOString(),
       submitted_at: new Date().toISOString(),
       form_data: {
         ...formData,
+        isEducational,
         soloParentIdNumber,
         soloParentStatus,
         employmentStatus,
-        soloParentCategory,
-        numberOfDependents,
-        ageOfYoungestDependent,
-        occupation,
-        employerOrIncomeSource,
-        monthlyIncome,
-        otherSourceOfIncome,
-        receivingGovAssistance,
-        govAssistanceProgramName,
-        govAssistanceAmountFreq,
-        receivingPension,
-        pensionType,
-        assistanceAmount: "Financial Subsidy",
-        assessmentStatus: "Pending Social Worker Assessment & Verification",
+        childName: isEducational ? childName : undefined,
+        childAge: isEducational ? childAge : undefined,
+        childBirthday: isEducational ? childBirthday : undefined,
+        childSex: isEducational ? childSex : undefined,
+        childRelationship: isEducational ? childRelationship : undefined,
+        childSchoolName: isEducational ? childSchoolName : undefined,
+        childSchoolAddress: isEducational ? childSchoolAddress : undefined,
+        childGradeLevel: isEducational ? childGradeLevel : undefined,
+        childLrnOrId: isEducational ? childLrnOrId : undefined,
+        soloParentCategory: isEducational ? "Solo Parent with Studying Child" : soloParentCategory,
+        numberOfDependents: isEducational ? "1" : numberOfDependents,
+        ageOfYoungestDependent: isEducational ? childAge : ageOfYoungestDependent,
+        occupation: isEducational ? undefined : occupation,
+        employerOrIncomeSource: isEducational ? undefined : employerOrIncomeSource,
+        monthlyIncome: isEducational ? undefined : monthlyIncome,
+        otherSourceOfIncome: isEducational ? undefined : otherSourceOfIncome,
+        receivingGovAssistance: isEducational ? undefined : receivingGovAssistance,
+        govAssistanceProgramName: isEducational ? undefined : govAssistanceProgramName,
+        govAssistanceAmountFreq: isEducational ? undefined : govAssistanceAmountFreq,
+        receivingPension: isEducational ? undefined : receivingPension,
+        pensionType: isEducational ? undefined : pensionType,
+        assistanceAmount: isEducational ? "₱5,000.00 (Annual Educational Grant)" : "Financial Subsidy",
+        assessmentStatus: isEducational ? "SSDD Validation (Stage 1 of 6)" : "Pending Social Worker Assessment & Verification",
       },
       documents: docPayload,
     }
@@ -614,10 +703,14 @@ export default function SoloParentApplicationWizard({
           </div>
           <div>
             <h2 className="text-xl font-bold text-foreground">
-              Application Submitted Successfully!
+              {isEducational
+                ? "Educational Assistance Application Submitted!"
+                : "Application Submitted Successfully!"}
             </h2>
             <p className="text-xs text-muted-foreground max-w-md mt-1.5 leading-relaxed">
-              Your application for the Solo Parent Financial Subsidy Program has been submitted. A Social Worker will conduct document verification and assessment before approval.
+              {isEducational
+                ? "Your application for the Solo Parent Educational Assistance Program (₱5,000.00 Annual Grant) has been submitted. SSDD Intake Officers are validating your enrollment documents."
+                : "Your application for the Solo Parent Financial Subsidy Program has been submitted. A Social Worker will conduct document verification and assessment before approval."}
             </p>
           </div>
 
@@ -634,17 +727,34 @@ export default function SoloParentApplicationWizard({
             </div>
             <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
               <span className="text-muted-foreground font-medium">Program:</span>
-              <span className="font-semibold text-foreground">Solo Parent Financial Subsidy Program</span>
+              <span className="font-semibold text-foreground">
+                {isEducational
+                  ? "Solo Parent Educational Assistance Program"
+                  : "Solo Parent Financial Subsidy Program"}
+              </span>
             </div>
-            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
-              <span className="text-muted-foreground font-medium">Employment Status:</span>
-              <span className="font-semibold text-foreground">{employmentStatus || "—"}</span>
-            </div>
+            {isEducational ? (
+              <>
+                <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
+                  <span className="text-muted-foreground font-medium">Student / Dependent:</span>
+                  <span className="font-semibold text-foreground">{childName || "—"} ({childGradeLevel || "—"})</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
+                  <span className="text-muted-foreground font-medium">Fixed Annual Grant:</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">₱5,000.00 / Academic Year</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
+                <span className="text-muted-foreground font-medium">Employment Status:</span>
+                <span className="font-semibold text-foreground">{employmentStatus || "—"}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground font-medium">Status:</span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Under Review / Assessment
+                {isEducational ? "SSDD Validation (Stage 1 of 6)" : "Under Review / Assessment"}
               </span>
             </div>
           </div>
@@ -726,10 +836,14 @@ export default function SoloParentApplicationWizard({
                 <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="space-y-1 text-xs">
                   <p className="text-xs md:text-sm font-bold text-blue-950 dark:text-blue-200">
-                    SOLO PARENT SECTOR: Qualified applicants may receive financial subsidy.
+                    {isEducational
+                      ? "SOLO PARENT EDUCATIONAL ASSISTANCE PROGRAM (₱5,000.00 ANNUAL GRANT)"
+                      : "SOLO PARENT SECTOR: Qualified applicants may receive financial subsidy."}
                   </p>
                   <p className="text-blue-900/90 dark:text-blue-300/90 leading-relaxed text-justify">
-                    For qualified Solo Parents who meet the applicable income and program requirements. Eligibility is subject to document verification and assessment before approval.
+                    {isEducational
+                      ? "Educational financial assistance for qualified dependent children of Solo Parents who are currently enrolled in public school. Provides an annual financial grant of ₱5,000.00 per qualified beneficiary."
+                      : "For qualified Solo Parents who meet the applicable income and program requirements. Eligibility is subject to document verification and assessment before approval."}
                   </p>
                 </div>
               </div>
@@ -853,19 +967,21 @@ export default function SoloParentApplicationWizard({
             <div className="space-y-6 animate-in fade-in duration-150">
               <div className="border-b border-border pb-3">
                 <h2 className="text-base font-bold text-foreground uppercase tracking-wide">
-                  APPLICATION FORM
+                  {isEducational ? "SOLO PARENT EDUCATIONAL ASSISTANCE FORM" : "APPLICATION FORM"}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Please review and complete the applicant information and family details below.
+                  {isEducational
+                    ? "Please provide the student details and academic information below for the ₱5,000.00 educational grant."
+                    : "Please review and complete the applicant information and family details below."}
                 </p>
               </div>
 
-              {/* A. APPLICANT INFORMATION */}
+              {/* A. SOLO PARENT / GUARDIAN INFORMATION */}
               <div className="space-y-4">
                 <div className="border-b border-border pb-2">
                   <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
-                    <span>A. Applicant Information</span>
+                    <span>A. Solo Parent / Guardian Information</span>
                   </h3>
                 </div>
 
@@ -1028,231 +1144,402 @@ export default function SoloParentApplicationWizard({
                 </div>
               </div>
 
-              {/* B. SOLO PARENT INFORMATION */}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                  <User className="w-4 h-4 text-blue-600" />
-                  <span>B. Solo Parent Information</span>
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Solo Parent Category / Reason *
-                    </label>
-                    <SelectInput
-                      value={soloParentCategory}
-                      onChange={setSoloParentCategory}
-                      placeholder="Select Solo Parent Category..."
-                      options={[
-                        { label: "Unmarried parent", value: "Unmarried parent" },
-                        { label: "Widow / Widower", value: "Widow/Widower" },
-                        { label: "Abandoned by spouse", value: "Abandoned by spouse" },
-                        { label: "Separated", value: "Separated" },
-                        { label: "Spouse with disability/incapacity", value: "Spouse with disability/incapacity" },
-                        { label: "Other qualified category", value: "Other qualified category" },
-                      ]}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Number of Dependents *
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={numberOfDependents}
-                      onChange={(e) => setNumberOfDependents(e.target.value.replace(/\D/g, ""))}
-                      placeholder="Enter number of dependents"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Age of Youngest Dependent *
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={ageOfYoungestDependent}
-                      onChange={(e) => setAgeOfYoungestDependent(e.target.value.replace(/\D/g, ""))}
-                      placeholder="Enter age of youngest dependent"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* C. EMPLOYMENT & INCOME INFORMATION */}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-blue-600" />
-                  <span>C. Employment & Income Information</span>
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Employment Status (from Step 1)
-                    </label>
-                    <input
-                      type="text"
-                      value={employmentStatus || "Not Specified"}
-                      readOnly
-                      disabled
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800 text-foreground font-semibold cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Occupation
-                    </label>
-                    <input
-                      type="text"
-                      value={occupation}
-                      onChange={(e) => setOccupation(e.target.value)}
-                      placeholder="e.g. Vendor, Clerk, Freelancer"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Employer / Source of Income
-                    </label>
-                    <input
-                      type="text"
-                      value={employerOrIncomeSource}
-                      onChange={(e) => setEmployerOrIncomeSource(e.target.value)}
-                      placeholder="e.g. Self-employed, Company Name"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Monthly Income (Estimated)
-                    </label>
-                    <input
-                      type="text"
-                      value={monthlyIncome}
-                      onChange={(e) => setMonthlyIncome(e.target.value)}
-                      placeholder="e.g. ₱5,000 - ₱10,000"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground font-mono"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                      Other Source of Income
-                    </label>
-                    <input
-                      type="text"
-                      value={otherSourceOfIncome}
-                      onChange={(e) => setOtherSourceOfIncome(e.target.value)}
-                      placeholder="e.g. Remittance, Sideline, None"
-                      className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* D. OTHER GOVERNMENT ASSISTANCE */}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-blue-600" />
-                  <span>D. Other Government Assistance</span>
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Government Assistance */}
-                  <div className="space-y-3 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-border">
-                    <label className="text-xs font-semibold text-foreground block">
-                      Currently receiving government assistance?
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
-                        <input
-                          type="radio"
-                          name="govAssistance"
-                          value="Yes"
-                          checked={receivingGovAssistance === "Yes"}
-                          onChange={() => setReceivingGovAssistance("Yes")}
-                        />
-                        <span>Yes</span>
-                      </label>
-                      <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
-                        <input
-                          type="radio"
-                          name="govAssistance"
-                          value="No"
-                          checked={receivingGovAssistance === "No"}
-                          onChange={() => setReceivingGovAssistance("No")}
-                        />
-                        <span>No</span>
-                      </label>
-                    </div>
-                    {receivingGovAssistance === "Yes" && (
-                      <div className="space-y-2 pt-2">
+              {/* Branch based on Program Type */}
+              {isEducational ? (
+                <>
+                  {/* B. STUDENT / DEPENDENT CHILD INFORMATION */}
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <User className="w-4 h-4 text-blue-600" />
+                      <span>B. Student / Dependent Child Information</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Student Full Name (Anak / Mag-aaral) *
+                        </label>
                         <input
                           type="text"
-                          value={govAssistanceProgramName}
-                          onChange={(e) => setGovAssistanceProgramName(e.target.value)}
-                          placeholder="Program Name (e.g. 4Ps, UCT)"
-                          className="w-full border border-border rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-foreground"
+                          value={childName}
+                          onChange={(e) => setChildName(e.target.value)}
+                          placeholder="e.g. Juan Dela Cruz Jr."
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground ${
+                            attemptedNext && !childName.trim() ? "border-red-400 bg-red-50" : "border-border"
+                          }`}
                         />
-                        <input
-                          type="text"
-                          value={govAssistanceAmountFreq}
-                          onChange={(e) => setGovAssistanceAmountFreq(e.target.value)}
-                          placeholder="Amount / Frequency (e.g. ₱1,500/month)"
-                          className="w-full border border-border rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-foreground"
+                        {attemptedNext && !childName.trim() && (
+                          <p className="text-xs text-red-500 mt-1">Please enter the student full name.</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Relationship to Solo Parent *
+                        </label>
+                        <SelectInput
+                          value={childRelationship}
+                          onChange={setChildRelationship}
+                          options={[
+                            { label: "Son / Anak na Lalaki", value: "Son" },
+                            { label: "Daughter / Anak na Babae", value: "Daughter" },
+                            { label: "Legal Dependent / Beneficiary", value: "Legal Dependent" },
+                          ]}
                         />
                       </div>
-                    )}
-                  </div>
-
-                  {/* Pension */}
-                  <div className="space-y-3 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-border">
-                    <label className="text-xs font-semibold text-foreground block">
-                      Receiving pension?
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
-                        <input
-                          type="radio"
-                          name="pensionRadio"
-                          value="Yes"
-                          checked={receivingPension === "Yes"}
-                          onChange={() => setReceivingPension("Yes")}
-                        />
-                        <span>Yes</span>
-                      </label>
-                      <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
-                        <input
-                          type="radio"
-                          name="pensionRadio"
-                          value="No"
-                          checked={receivingPension === "No"}
-                          onChange={() => setReceivingPension("No")}
-                        />
-                        <span>No</span>
-                      </label>
-                    </div>
-                    {receivingPension === "Yes" && (
-                      <div className="pt-2">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Age (Edad) *
+                        </label>
                         <input
                           type="text"
-                          value={pensionType}
-                          onChange={(e) => setPensionType(e.target.value)}
-                          placeholder="Type of Pension (e.g. SSS Survivorship, GSIS)"
-                          className="w-full border border-border rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-foreground"
+                          inputMode="numeric"
+                          value={childAge}
+                          onChange={(e) => setChildAge(e.target.value.replace(/\D/g, ""))}
+                          placeholder="e.g. 14"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground ${
+                            attemptedNext && !childAge.trim() ? "border-red-400 bg-red-50" : "border-border"
+                          }`}
                         />
                       </div>
-                    )}
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Date of Birth (YYYY-MM-DD) *
+                        </label>
+                        <input
+                          type="date"
+                          value={childBirthday}
+                          onChange={(e) => setChildBirthday(e.target.value)}
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground ${
+                            attemptedNext && !childBirthday.trim() ? "border-red-400 bg-red-50" : "border-border"
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Sex (Kasarian) *
+                        </label>
+                        <SelectInput
+                          value={childSex}
+                          onChange={setChildSex}
+                          options={[
+                            { label: "Male / Lalaki", value: "Male" },
+                            { label: "Female / Babae", value: "Female" },
+                          ]}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+
+                  {/* C. SCHOOL & ACADEMIC DETAILS */}
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-blue-600" />
+                      <span>C. School & Academic Details</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Name of School / Institution *
+                        </label>
+                        <input
+                          type="text"
+                          value={childSchoolName}
+                          onChange={(e) => setChildSchoolName(e.target.value)}
+                          placeholder="e.g. Sauyo High School / Quezon City Public School"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground ${
+                            attemptedNext && !childSchoolName.trim() ? "border-red-400 bg-red-50" : "border-border"
+                          }`}
+                        />
+                        {attemptedNext && !childSchoolName.trim() && (
+                          <p className="text-xs text-red-500 mt-1">Please enter the school name.</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Grade Level / Academic Year *
+                        </label>
+                        <input
+                          type="text"
+                          value={childGradeLevel}
+                          onChange={(e) => setChildGradeLevel(e.target.value)}
+                          placeholder="e.g. Grade 7 / Grade 10 / 1st Year College"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground ${
+                            attemptedNext && !childGradeLevel.trim() ? "border-red-400 bg-red-50" : "border-border"
+                          }`}
+                        />
+                        {attemptedNext && !childGradeLevel.trim() && (
+                          <p className="text-xs text-red-500 mt-1">Please enter the current grade level.</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Learner Reference Number (LRN) / Student ID *
+                        </label>
+                        <input
+                          type="text"
+                          value={childLrnOrId}
+                          onChange={(e) => setChildLrnOrId(e.target.value)}
+                          placeholder="e.g. 136548190234"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 font-mono bg-white dark:bg-slate-900 text-foreground ${
+                            attemptedNext && !childLrnOrId.trim() ? "border-red-400 bg-red-50" : "border-border"
+                          }`}
+                        />
+                        {attemptedNext && !childLrnOrId.trim() && (
+                          <p className="text-xs text-red-500 mt-1">Please enter the student's LRN or Student ID.</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Complete School Address *
+                        </label>
+                        <input
+                          type="text"
+                          value={childSchoolAddress}
+                          onChange={(e) => setChildSchoolAddress(e.target.value)}
+                          placeholder="e.g. Sauyo Road, Novaliches, Quezon City"
+                          className={`w-full border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground ${
+                            attemptedNext && !childSchoolAddress.trim() ? "border-red-400 bg-red-50" : "border-border"
+                          }`}
+                        />
+                        {attemptedNext && !childSchoolAddress.trim() && (
+                          <p className="text-xs text-red-500 mt-1">Please enter the school address.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* B. SOLO PARENT INFORMATION */}
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <User className="w-4 h-4 text-blue-600" />
+                      <span>B. Solo Parent Information</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Solo Parent Category / Reason *
+                        </label>
+                        <SelectInput
+                          value={soloParentCategory}
+                          onChange={setSoloParentCategory}
+                          placeholder="Select Solo Parent Category..."
+                          options={[
+                            { label: "Unmarried parent", value: "Unmarried parent" },
+                            { label: "Widow / Widower", value: "Widow/Widower" },
+                            { label: "Abandoned by spouse", value: "Abandoned by spouse" },
+                            { label: "Separated", value: "Separated" },
+                            { label: "Spouse with disability/incapacity", value: "Spouse with disability/incapacity" },
+                            { label: "Other qualified category", value: "Other qualified category" },
+                          ]}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Number of Dependents *
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={numberOfDependents}
+                          onChange={(e) => setNumberOfDependents(e.target.value.replace(/\D/g, ""))}
+                          placeholder="Enter number of dependents"
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Age of Youngest Dependent *
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={ageOfYoungestDependent}
+                          onChange={(e) => setAgeOfYoungestDependent(e.target.value.replace(/\D/g, ""))}
+                          placeholder="Enter age of youngest dependent"
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* C. EMPLOYMENT & INCOME INFORMATION */}
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-blue-600" />
+                      <span>C. Employment & Income Information</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Employment Status (from Step 1)
+                        </label>
+                        <input
+                          type="text"
+                          value={employmentStatus || "Not Specified"}
+                          readOnly
+                          disabled
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-gray-100 dark:bg-slate-800 text-foreground font-semibold cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Occupation
+                        </label>
+                        <input
+                          type="text"
+                          value={occupation}
+                          onChange={(e) => setOccupation(e.target.value)}
+                          placeholder="e.g. Vendor, Clerk, Freelancer"
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Employer / Source of Income
+                        </label>
+                        <input
+                          type="text"
+                          value={employerOrIncomeSource}
+                          onChange={(e) => setEmployerOrIncomeSource(e.target.value)}
+                          placeholder="e.g. Self-employed, Company Name"
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Monthly Income (Estimated)
+                        </label>
+                        <input
+                          type="text"
+                          value={monthlyIncome}
+                          onChange={(e) => setMonthlyIncome(e.target.value)}
+                          placeholder="e.g. ₱5,000 - ₱10,000"
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground font-mono"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                          Other Source of Income
+                        </label>
+                        <input
+                          type="text"
+                          value={otherSourceOfIncome}
+                          onChange={(e) => setOtherSourceOfIncome(e.target.value)}
+                          placeholder="e.g. Remittance, Sideline, None"
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 bg-white dark:bg-slate-900 text-foreground"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* D. OTHER GOVERNMENT ASSISTANCE */}
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <HelpCircle className="w-4 h-4 text-blue-600" />
+                      <span>D. Other Government Assistance</span>
+                    </h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Government Assistance */}
+                      <div className="space-y-3 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-border">
+                        <label className="text-xs font-semibold text-foreground block">
+                          Currently receiving government assistance?
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                            <input
+                              type="radio"
+                              name="govAssistance"
+                              value="Yes"
+                              checked={receivingGovAssistance === "Yes"}
+                              onChange={() => setReceivingGovAssistance("Yes")}
+                            />
+                            <span>Yes</span>
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                            <input
+                              type="radio"
+                              name="govAssistance"
+                              value="No"
+                              checked={receivingGovAssistance === "No"}
+                              onChange={() => setReceivingGovAssistance("No")}
+                            />
+                            <span>No</span>
+                          </label>
+                        </div>
+                        {receivingGovAssistance === "Yes" && (
+                          <div className="space-y-2 pt-2">
+                            <input
+                              type="text"
+                              value={govAssistanceProgramName}
+                              onChange={(e) => setGovAssistanceProgramName(e.target.value)}
+                              placeholder="Program Name (e.g. 4Ps, UCT)"
+                              className="w-full border border-border rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-foreground"
+                            />
+                            <input
+                              type="text"
+                              value={govAssistanceAmountFreq}
+                              onChange={(e) => setGovAssistanceAmountFreq(e.target.value)}
+                              placeholder="Amount / Frequency (e.g. ₱1,500/month)"
+                              className="w-full border border-border rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-foreground"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Pension */}
+                      <div className="space-y-3 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-border">
+                        <label className="text-xs font-semibold text-foreground block">
+                          Receiving pension?
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                            <input
+                              type="radio"
+                              name="pensionRadio"
+                              value="Yes"
+                              checked={receivingPension === "Yes"}
+                              onChange={() => setReceivingPension("Yes")}
+                            />
+                            <span>Yes</span>
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                            <input
+                              type="radio"
+                              name="pensionRadio"
+                              value="No"
+                              checked={receivingPension === "No"}
+                              onChange={() => setReceivingPension("No")}
+                            />
+                            <span>No</span>
+                          </label>
+                        </div>
+                        {receivingPension === "Yes" && (
+                          <div className="pt-2">
+                            <input
+                              type="text"
+                              value={pensionType}
+                              onChange={(e) => setPensionType(e.target.value)}
+                              placeholder="Type of Pension (e.g. SSS Survivorship, GSIS)"
+                              className="w-full border border-border rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-foreground"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {attemptedNext && !step2Valid && (
                 <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-                  <span>Please ensure all required personal details, family members, and contact numbers are provided.</span>
+                  <span>
+                    {isEducational
+                      ? "Please provide all required student and school information before proceeding."
+                      : "Please ensure all required personal details, family members, and contact numbers are provided."}
+                  </span>
                 </div>
               )}
             </div>
@@ -1274,7 +1561,9 @@ export default function SoloParentApplicationWizard({
               <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-border text-xs text-muted-foreground flex items-center gap-2">
                 <Info className="w-4 h-4 text-blue-600 shrink-0" />
                 <span>
-                  Employment Status: <strong className="text-foreground font-semibold">{employmentStatus || "Unemployed"}</strong> — Document requirements for Proof of Indigency/Income are tailored accordingly.
+                  {isEducational
+                    ? "Solo Parent Educational Assistance (₱5,000.00 Annual Grant) requires official proof of current academic enrollment and grades."
+                    : `Employment Status: ${employmentStatus || "Unemployed"} — Document requirements for Proof of Indigency/Income are tailored accordingly.`}
                 </span>
               </div>
 
@@ -1404,7 +1693,9 @@ export default function SoloParentApplicationWizard({
                   REVIEW & SUBMIT INFORMATION
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Please review all your details carefully before submitting your application for the Solo Parent Financial Subsidy Program.
+                  {isEducational
+                    ? "Please review all your details carefully before submitting your application for the Solo Parent Educational Assistance Program."
+                    : "Please review all your details carefully before submitting your application for the Solo Parent Financial Subsidy Program."}
                 </p>
               </div>
 
@@ -1423,9 +1714,9 @@ export default function SoloParentApplicationWizard({
                 </div>
               </AccordionSection>
 
-              {/* Applicant Information */}
+              {/* Applicant / Guardian Information */}
               <AccordionSection
-                title="2. Applicant Information"
+                title="2. Solo Parent / Guardian Information"
                 onEdit={() => {
                   setStep(2)
                   setReturnToReview(true)
@@ -1441,29 +1732,66 @@ export default function SoloParentApplicationWizard({
                 </div>
               </AccordionSection>
 
-              {/* Solo Parent & Employment Info */}
-              <AccordionSection
-                title="3. Solo Parent, Employment & Other Assistance"
-                onEdit={() => {
-                  setStep(2)
-                  setReturnToReview(true)
-                }}
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <ReviewField label="Category / Reason" value={soloParentCategory} />
-                  <ReviewField label="Dependents Info" value={`${numberOfDependents} dependent(s) (Youngest Age: ${ageOfYoungestDependent})`} />
-                  <ReviewField label="Occupation" value={occupation || "—"} />
-                  <ReviewField label="Employer / Source of Income" value={employerOrIncomeSource || "—"} />
-                  <ReviewField label="Monthly Income" value={monthlyIncome || "—"} />
-                  <ReviewField label="Other Source of Income" value={otherSourceOfIncome || "—"} />
-                  <ReviewField label="Other Gov Assistance" value={receivingGovAssistance === "Yes" ? `${govAssistanceProgramName} (${govAssistanceAmountFreq})` : "None"} />
-                  <ReviewField label="Pension" value={receivingPension === "Yes" ? pensionType : "None"} />
-                </div>
-              </AccordionSection>
+              {/* Program Specific Review Sections */}
+              {isEducational ? (
+                <>
+                  <AccordionSection
+                    title="3. Student / Dependent Child Details"
+                    onEdit={() => {
+                      setStep(2)
+                      setReturnToReview(true)
+                    }}
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <ReviewField label="Student Full Name" value={childName} />
+                      <ReviewField label="Relationship" value={childRelationship} />
+                      <ReviewField label="Age / Date of Birth" value={`${childAge} y/o (${childBirthday || "—"})`} />
+                      <ReviewField label="Sex" value={childSex} />
+                    </div>
+                  </AccordionSection>
+
+                  <AccordionSection
+                    title="4. School & Academic Details"
+                    onEdit={() => {
+                      setStep(2)
+                      setReturnToReview(true)
+                    }}
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <ReviewField label="School Name" value={childSchoolName} />
+                      <ReviewField label="Grade Level" value={childGradeLevel} />
+                      <ReviewField label="Learner Reference No. (LRN)" value={childLrnOrId} />
+                      <ReviewField label="School Address" value={childSchoolAddress} />
+                      <div className="sm:col-span-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-300 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200">
+                        <strong>Fixed Educational Assistance:</strong> ₱5,000.00 / academic year (Once a year grant upon SSDD verification).
+                      </div>
+                    </div>
+                  </AccordionSection>
+                </>
+              ) : (
+                <AccordionSection
+                  title="3. Solo Parent, Employment & Other Assistance"
+                  onEdit={() => {
+                    setStep(2)
+                    setReturnToReview(true)
+                  }}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <ReviewField label="Category / Reason" value={soloParentCategory} />
+                    <ReviewField label="Dependents Info" value={`${numberOfDependents} dependent(s) (Youngest Age: ${ageOfYoungestDependent})`} />
+                    <ReviewField label="Occupation" value={occupation || "—"} />
+                    <ReviewField label="Employer / Source of Income" value={employerOrIncomeSource || "—"} />
+                    <ReviewField label="Monthly Income" value={monthlyIncome || "—"} />
+                    <ReviewField label="Other Source of Income" value={otherSourceOfIncome || "—"} />
+                    <ReviewField label="Other Gov Assistance" value={receivingGovAssistance === "Yes" ? `${govAssistanceProgramName} (${govAssistanceAmountFreq})` : "None"} />
+                    <ReviewField label="Pension" value={receivingPension === "Yes" ? pensionType : "None"} />
+                  </div>
+                </AccordionSection>
+              )}
 
               {/* Uploaded Documents */}
               <AccordionSection
-                title="4. Required Documents"
+                title={isEducational ? "5. Required Documents" : "4. Required Documents"}
                 onEdit={() => {
                   setStep(3)
                   setReturnToReview(true)

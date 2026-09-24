@@ -257,8 +257,13 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       if (Array.isArray(solo)) {
         solo.forEach((app: any) => {
           if (app.status === "approved" || app.status === "for_distribution" || app.status === "completed" || app.status === "released") {
-            const type = "Solo Parent Financial Subsidy"
-            const ref = app.referenceNumber || app.reference_number || (app.id ? (String(app.id).startsWith("SP-") ? app.id : `SP-${app.id}`) : "SP-QC-2026")
+            const isEdu =
+              app.application_type === "EDUCATIONAL_ASSISTANCE" ||
+              app.applicationType === "EDUCATIONAL_ASSISTANCE" ||
+              String(app.referenceNumber || app.reference_number || "").toUpperCase().includes("SP-EDU") ||
+              String(app.id || "").toUpperCase().includes("SP-EDU")
+            const type = isEdu ? "Solo Parent Educational Assistance" : "Solo Parent Financial Subsidy"
+            const ref = app.referenceNumber || app.reference_number || (app.id ? (String(app.id).startsWith("SP-") ? app.id : `SP-${app.id}`) : (isEdu ? "SP-EDU-2026" : "SP-QC-2026"))
             const key = `${ref}_${type}`
             if (!seenKeys.has(key) && !deletedKeys.has(ref)) {
               seenKeys.add(key)
@@ -268,11 +273,11 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
                 applicationRef: ref,
                 applicantName: extractSoloParentName(app),
                 assistanceType: type,
-                fixedAmount: resolveFixedAmount(type),
+                fixedAmount: isEdu ? 5000 : resolveFixedAmount(type),
                 dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
                 status: String(app.status || "").toLowerCase() === "released" || String(app.status || "").toLowerCase() === "completed" ? "RELEASED" : "PENDING",
                 venue: "Quezon City Hall - SSDD Solo Parent Welfare Section",
-                remarks: "Automatically synced from Solo Parent Financial Subsidy application.",
+                remarks: isEdu ? "Automatically synced from Solo Parent Educational Assistance application." : "Automatically synced from Solo Parent Financial Subsidy application.",
               })
             }
           }
@@ -299,6 +304,9 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         (d.applicantName ? appointmentsMap[`${d.applicantName.toLowerCase().trim()}_${cleanAssistance}`] : null) ||
         (isSolo
           ? (appointmentsMap[`Solo Parent_${d.applicationRef}`] ||
+             appointmentsMap[`${d.applicationRef}_Solo Parent Educational Assistance Payout (₱5,000)`] ||
+             appointmentsMap[`${d.applicationRef}_Solo Parent Educational Assistance Payout`] ||
+             appointmentsMap[`${d.applicationRef}_Solo Parent Educational Assistance`] ||
              appointmentsMap[`${d.applicationRef}_Solo Parent Financial Subsidy Payout`] ||
              appointmentsMap[`${d.applicationRef}_Solo Parent Financial Subsidy`] ||
              appointmentsMap["jefferson fernando lee"] ||
@@ -316,6 +324,8 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         (d.applicantName ? localScheduledMap[d.applicantName.toLowerCase().trim()] : null) ||
         (isSolo
           ? (localScheduledMap[`Solo Parent_${d.applicationRef}`] ||
+             localScheduledMap[`${d.applicationRef}_Solo Parent Educational Assistance Payout`] ||
+             localScheduledMap[`${d.applicationRef}_Solo Parent Educational Assistance`] ||
              localScheduledMap[`${d.applicationRef}_Solo Parent Financial Subsidy Payout`] ||
              localScheduledMap[`${d.applicationRef}_Solo Parent Financial Subsidy`] ||
              localScheduledMap["jefferson fernando lee"] ||
@@ -410,66 +420,6 @@ export default function FinancialAidDisbursement() {
 
   const toggleAmount = (id: string) => {
     setRevealedAmounts((prev) => ({ ...prev, [id]: !prev[id] }))
-  }
-
-  const handleSavePayoutSchedule = (record: SyncedDisbursementRecord, date: string, time: string, venue: string) => {
-    setSchedulingRecord(null)
-    const updated = disbursements.map((d) => {
-      if (d.id === record.id || d.disbursementId === record.disbursementId || d.applicationRef === record.applicationRef) {
-        return {
-          ...d,
-          appointmentDate: date,
-          appointmentTime: time,
-          venue: venue || "Quezon City Hall",
-        }
-      }
-      return d
-    })
-    setDisbursements(updated)
-    saveDisbursements(updated)
-
-    const isPwdAid = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
-    const isSeniorAid = String(record.assistanceType || "").toLowerCase().includes("senior") || String(record.assistanceType || "").toLowerCase().includes("osca")
-    if (isPwdAid) {
-      // Dispatch Email 4: Payout Schedule Notice with 4-point physical checklist
-      const recipientEmail = findApplicantEmail({ email: (record as any).email, referenceNo: record.applicationRef, applicantName: record.applicantName })
-      fetch(`${API_BASE}/api/email/send-pwd-payout-scheduled`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: recipientEmail,
-          recipientEmail,
-          applicantName: record.applicantName,
-          referenceNumber: record.applicationRef,
-          disbursementId: record.disbursementId,
-          amount: "1,500.00",
-          payoutDate: date,
-          payoutTime: time,
-          venue: venue || "Quezon City Hall",
-        }),
-      }).catch((err) => console.warn("Email 4 send warning:", err))
-
-      pushUserNotification({
-        userId: record.applicationRef || "all",
-        title: "PWD Pension Payout Scheduled",
-        desc: `Payout Notice: Your ₱1,500.00 cash pension payout is scheduled on ${date} at ${time} at ${venue || "Quezon City Hall"}. Bring physical PWD ID & requirements.`,
-        applicationRef: record.applicationRef,
-        type: "payout_scheduled",
-        amount: 1500,
-      })
-    } else if (isSeniorAid) {
-      pushUserNotification({
-        userId: record.applicationRef || "all",
-        title: "Senior Pension Payout Scheduled",
-        desc: `Payout Notice: Your ₱3,000.00 cash pension payout (6-month cycle) is scheduled on ${date} at ${time} at ${venue || "Quezon City Hall"}. Bring physical Senior Citizen ID / QC ID.`,
-        applicationRef: record.applicationRef,
-        type: "payout_scheduled",
-        amount: 3000,
-      })
-    }
-
-    window.dispatchEvent(new Event("financial_disbursements_updated"))
-    window.dispatchEvent(new Event("storage"))
   }
 
   const handleReleaseRecord = (record: SyncedDisbursementRecord, customDate?: string, customTime?: string, customVenue?: string) => {
@@ -606,6 +556,11 @@ export default function FinancialAidDisbursement() {
 
       window.dispatchEvent(new Event("pwd_senior_applications_updated"))
     } else if (isSoloAid) {
+      const isSoloEdu =
+        String(record.assistanceType || "").toLowerCase().includes("educational") ||
+        String(record.applicationRef || "").toUpperCase().includes("SP-EDU")
+      const releasedAmount = isSoloEdu ? 5000 : 3000
+
       try {
         const rawSolo = localStorage.getItem("solo_parent_applications") || "[]"
         const soloList = JSON.parse(rawSolo)
@@ -621,7 +576,7 @@ export default function FinancialAidDisbursement() {
               application_status: "released",
               payout_status: "released",
               releasedDate: releaseIsoStr,
-              releasedAmount: 3000,
+              releasedAmount,
             }
           }
           return s
@@ -629,14 +584,25 @@ export default function FinancialAidDisbursement() {
         localStorage.setItem("solo_parent_applications", JSON.stringify(updatedSolo))
       } catch {}
 
-      pushUserNotification({
-        userId: record.applicationRef || "all",
-        title: "Solo Parent Subsidy Cash Claimed",
-        desc: `Official Receipt: ₱3,000.00 cash subsidy (Month 3 of 3 naipon) has been claimed at Quezon City Hall. Receipt No: ${record.disbursementId}. Next cycle activated.`,
-        applicationRef: record.applicationRef,
-        type: "payout_released",
-        amount: 3000,
-      })
+      if (isSoloEdu) {
+        pushUserNotification({
+          userId: record.applicationRef || "all",
+          title: "Solo Parent Educational Assistance Cash Claimed",
+          desc: `Official Receipt: ₱5,000.00 educational assistance cash grant has been claimed at Quezon City Hall. Receipt No: ${record.disbursementId}. Renewable next academic year.`,
+          applicationRef: record.applicationRef,
+          type: "payout_released",
+          amount: 5000,
+        })
+      } else {
+        pushUserNotification({
+          userId: record.applicationRef || "all",
+          title: "Solo Parent Subsidy Cash Claimed",
+          desc: `Official Receipt: ₱3,000.00 cash subsidy (Month 3 of 3 naipon) has been claimed at Quezon City Hall. Receipt No: ${record.disbursementId}. Next cycle activated.`,
+          applicationRef: record.applicationRef,
+          type: "payout_released",
+          amount: 3000,
+        })
+      }
 
       window.dispatchEvent(new Event("solo_parent_applications_updated"))
     } else {
