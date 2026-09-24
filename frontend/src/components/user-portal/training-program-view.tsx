@@ -570,15 +570,18 @@ export default function TrainingProgramView({ initialTab = "available" }: Traini
   const profile: LoggedInUserProfile = getCurrentUserProfile()
   const userQcid = getLoggedInUserQcid() || profile.qcidNo || "110000116932100"
 
-  // Step 2: Form Details State
-  const [civilStatus, setCivilStatus] = useState<string>("Single")
-  const [sex, setSex] = useState<string>(profile.sex || "Female")
-  const [dateOfBirth, setDateOfBirth] = useState<string>(profile.birthDate || "1998-05-12")
-  const [age, setAge] = useState<string | number>(profile.age || 26)
-  const [completeAddress, setCompleteAddress] = useState<string>(
-    `${profile.houseNo || ""} ${profile.street || ""}, Brgy. ${profile.barangay || "Sauyo"}, Quezon City`.trim()
-  )
-  const [barangay, setBarangay] = useState<string>(profile.barangay || "Sauyo")
+  // Step 2: Form Details (Auto-derived from verified QCID profile)
+  const civilStatus = profile.civilStatus || "Single"
+  const sex = profile.sex || profile.gender || "Female"
+  const dateOfBirth = profile.birthDateDisplay || profile.birthDate || "1998-05-12"
+  const age = profile.age || 26
+  const barangay = profile.addressBarangay || profile.barangay || "Sauyo"
+  const completeAddress = [
+    profile.addressHouseNo || profile.houseNo,
+    profile.addressStreet || profile.street,
+    barangay ? `Brgy. ${barangay}` : "",
+    profile.addressCityMunicipality || profile.addressCity || profile.city || "Quezon City"
+  ].filter(Boolean).join(", ") || `${profile.houseNo || ""} ${profile.street || ""}, Brgy. ${barangay}, Quezon City`.trim()
 
   // II. Educational Background
   const [highestEducation, setHighestEducation] = useState<string>("Senior High School")
