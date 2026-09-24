@@ -158,6 +158,8 @@ export default function Reports() {
 
             const localPwd = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
             const localLivelihood = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
+            const localTraining = JSON.parse(localStorage.getItem("training_applications") || "[]")
+            const combinedLocalLiveAndTraining = [...localLivelihood, ...localTraining]
             const localDisb = JSON.parse(localStorage.getItem("all_financial_disbursements") || "[]")
 
             const finalStats = apiStats.map((s) => {
@@ -167,11 +169,11 @@ export default function Reports() {
                 const rej = localPwd.filter((a: any) => String(a.status).toLowerCase() === "rejected").length
                 return { module: s.module, total: localPwd.length, pending: p, approved: app, rejected: rej }
               }
-              if (s.module === "Livelihood & Training" && localLivelihood.length > s.total) {
-                const p = localLivelihood.filter((a: any) => ["pending", "under_review"].includes(String(a.application_status || a.status).toLowerCase())).length
-                const app = localLivelihood.filter((a: any) => String(a.application_status || a.status).toLowerCase() === "approved").length
-                const rej = localLivelihood.filter((a: any) => String(a.application_status || a.status).toLowerCase() === "rejected").length
-                return { module: s.module, total: localLivelihood.length, pending: p, approved: app, rejected: rej }
+              if (s.module === "Livelihood & Training" && combinedLocalLiveAndTraining.length > s.total) {
+                const p = combinedLocalLiveAndTraining.filter((a: any) => ["pending", "under_review", "submitted"].includes(String(a.application_status || a.status).toLowerCase())).length
+                const app = combinedLocalLiveAndTraining.filter((a: any) => ["approved", "completed", "for_release", "qualified", "scheduled", "enrolled", "in_progress"].includes(String(a.application_status || a.status).toLowerCase())).length
+                const rej = combinedLocalLiveAndTraining.filter((a: any) => ["rejected", "denied"].includes(String(a.application_status || a.status).toLowerCase())).length
+                return { module: s.module, total: combinedLocalLiveAndTraining.length, pending: p, approved: app, rejected: rej }
               }
               return s
             })
@@ -211,10 +213,11 @@ export default function Reports() {
       }
 
       if (!backendSuccess) {
-        const [aicsRes, pwdRes, liveRes, disbRes] = await Promise.all([
+        const [aicsRes, pwdRes, liveRes, trainRes, disbRes] = await Promise.all([
           fetch(`${API_BASE}/api/aics/applications`).catch(() => null),
           fetch(`${API_BASE}/api/pwd-senior/applications`).catch(() => null),
           fetch(`${API_BASE}/api/livelihood/applications`).catch(() => null),
+          fetch(`${API_BASE}/api/training/applications`).catch(() => null),
           fetch(`${API_BASE}/api/financial-aid`).catch(() => null),
         ])
 
@@ -231,8 +234,14 @@ export default function Reports() {
           const lData = await liveRes.json()
           liveList = lData.applications || lData || []
         }
+        let trainList: any[] = []
+        if (trainRes?.ok) {
+          const tData = await trainRes.json()
+          trainList = tData.applications || tData || []
+        }
         const localLive = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
-        if (localLive.length > liveList.length) liveList = localLive
+        const localTrain = JSON.parse(localStorage.getItem("training_applications") || "[]")
+        const combinedLiveAndTrain = [...(liveList.length > localLive.length ? liveList : localLive), ...(trainList.length > localTrain.length ? trainList : localTrain)]
 
         let disbList: any[] = []
         if (disbRes?.ok) {
@@ -242,7 +251,7 @@ export default function Reports() {
         const localDisb = JSON.parse(localStorage.getItem("all_financial_disbursements") || "[]")
         if (localDisb.length > disbList.length) disbList = localDisb
 
-        const isApp = (s: string) => ["approved", "completed", "for_release"].includes(String(s || "").toLowerCase())
+        const isApp = (s: string) => ["approved", "completed", "for_release", "qualified", "scheduled", "enrolled", "in_progress"].includes(String(s || "").toLowerCase())
         const isPen = (s: string) => ["pending", "under_review", "submitted"].includes(String(s || "").toLowerCase())
         const isRej = (s: string) => ["rejected", "denied"].includes(String(s || "").toLowerCase())
 
@@ -256,10 +265,10 @@ export default function Reports() {
         const pwdA = pwdList.length > 0 ? pwdList.filter((a: any) => isApp(a.status)).length : 68
         const pwdR = pwdList.length > 0 ? pwdList.filter((a: any) => isRej(a.status)).length : 7
 
-        const liveCount = Math.max(liveList.length, 4)
-        const liveP = liveList.length > 0 ? liveList.filter((a: any) => isPen(a.application_status || a.status)).length : 2
-        const liveA = liveList.length > 0 ? liveList.filter((a: any) => isApp(a.application_status || a.status)).length : 1
-        const liveR = liveList.length > 0 ? liveList.filter((a: any) => isRej(a.application_status || a.status)).length : 1
+        const liveCount = Math.max(combinedLiveAndTrain.length, 4)
+        const liveP = combinedLiveAndTrain.length > 0 ? combinedLiveAndTrain.filter((a: any) => isPen(a.application_status || a.status)).length : 2
+        const liveA = combinedLiveAndTrain.length > 0 ? combinedLiveAndTrain.filter((a: any) => isApp(a.application_status || a.status)).length : 1
+        const liveR = combinedLiveAndTrain.length > 0 ? combinedLiveAndTrain.filter((a: any) => isRej(a.application_status || a.status)).length : 1
 
         const updatedStats: ModuleStat[] = [
           { module: "AICS", total: aicsCount, pending: aicsP, approved: aicsA, rejected: aicsR },

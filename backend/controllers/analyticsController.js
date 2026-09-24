@@ -10,6 +10,7 @@ exports.getAnalyticsOverview = async (req, res) => {
       soloParentRes,
       childWelfareRes,
       livelihoodRes,
+      trainingRes,
       disbRes,
     ] = await Promise.all([
       db.query(`SELECT id, status, created_at, assistance_type FROM aics_applications WHERE (is_archived IS NOT true)`).catch(() =>
@@ -20,7 +21,12 @@ exports.getAnalyticsOverview = async (req, res) => {
       ),
       db.query(`SELECT id, application_status as status, created_at, application_type FROM solo_parent_child_welfare_applications WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL) AND application_status != 'draft' AND (is_archived IS NOT true)`).catch(() => ({ rows: [] })),
       db.query(`SELECT id, application_status as status, created_at FROM solo_parent_child_welfare_applications WHERE module_type = 'CHILD_WELFARE' AND application_status != 'draft' AND (is_archived IS NOT true)`).catch(() => ({ rows: [] })),
-      db.query(`SELECT id, application_status as status, created_at FROM livelihood_applications WHERE (is_archived IS NOT true)`).catch(() => ({ rows: [] })),
+      db.query(`SELECT id, application_status as status, created_at FROM livelihood_applications WHERE (is_archived IS NOT true)`).catch(() =>
+        db.query(`SELECT id, application_status as status, created_at FROM livelihood_applications`).catch(() => ({ rows: [] }))
+      ),
+      db.query(`SELECT id, status, created_at FROM training_applications WHERE (is_archived IS NOT true)`).catch(() =>
+        db.query(`SELECT id, status, created_at FROM training_applications`).catch(() => ({ rows: [] }))
+      ),
       db.query(`SELECT id, fixed_amount, assistance_type, status, date_approved, released_date, created_at FROM financial_aid_disbursements WHERE (is_archived IS NOT true)`).catch(() =>
         db.query(`SELECT id, fixed_amount, assistance_type, status, date_approved, released_date, created_at FROM financial_aid_disbursements`).catch(() => ({ rows: [] }))
       ),
@@ -28,7 +34,15 @@ exports.getAnalyticsOverview = async (req, res) => {
 
     const isApproved = (s) => {
       const lower = String(s || '').toLowerCase();
-      return lower === 'approved' || lower === 'completed' || lower === 'for_release';
+      return (
+        lower === 'approved' ||
+        lower === 'completed' ||
+        lower === 'for_release' ||
+        lower === 'qualified' ||
+        lower === 'scheduled' ||
+        lower === 'enrolled' ||
+        lower === 'in_progress'
+      );
     };
     const isPending = (s) => {
       const lower = String(s || '').toLowerCase();
@@ -43,6 +57,8 @@ exports.getAnalyticsOverview = async (req, res) => {
     const pwdSeniorApps = pwdSeniorRes.rows || [];
     const soloWelfareApps = [...(soloParentRes.rows || []), ...(childWelfareRes.rows || [])];
     const livelihoodApps = livelihoodRes.rows || [];
+    const trainingApps = trainingRes.rows || [];
+    const liveAndTrainingApps = [...livelihoodApps, ...trainingApps];
     const disbursements = disbRes.rows || [];
 
     const stats = [
@@ -69,10 +85,10 @@ exports.getAnalyticsOverview = async (req, res) => {
       },
       {
         module: 'Livelihood & Training',
-        total: livelihoodApps.length,
-        pending: livelihoodApps.filter((a) => isPending(a.status)).length,
-        approved: livelihoodApps.filter((a) => isApproved(a.status)).length,
-        rejected: livelihoodApps.filter((a) => isRejected(a.status)).length,
+        total: liveAndTrainingApps.length,
+        pending: liveAndTrainingApps.filter((a) => isPending(a.status)).length,
+        approved: liveAndTrainingApps.filter((a) => isApproved(a.status)).length,
+        rejected: liveAndTrainingApps.filter((a) => isRejected(a.status)).length,
       },
     ];
 
@@ -136,7 +152,7 @@ exports.getAnalyticsOverview = async (req, res) => {
         aicsApps.filter((a) => isSameMonth(a.created_at)).length +
         pwdSeniorApps.filter((a) => isSameMonth(a.created_at)).length +
         soloWelfareApps.filter((a) => isSameMonth(a.created_at)).length +
-        livelihoodApps.filter((a) => isSameMonth(a.created_at)).length;
+        liveAndTrainingApps.filter((a) => isSameMonth(a.created_at || a.submitted_at)).length;
 
       const monthDisbursed = disbursements
         .filter((disb) => isSameMonth(disb.released_date || disb.date_approved || disb.created_at))
