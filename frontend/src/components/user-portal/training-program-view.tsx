@@ -104,24 +104,50 @@ export interface TrainingApplicationRecord {
     previousYearCompleted?: string
     documents?: {
       requestLetter?: string | null
+      requestLetterUrl?: string | null
       qcIdProof?: string | null
+      qcIdProofUrl?: string | null
+      idPicProof?: string | null
+      idPicProofUrl?: string | null
+      [key: string]: any
     }
+    [key: string]: any
   }
-  status: "pending" | "under_review" | "approved" | "rejected" | "needs_revision"
+  status:
+    | "pending"
+    | "under_review"
+    | "qualified"
+    | "scheduled"
+    | "enrolled"
+    | "in_progress"
+    | "completed"
+    | "rejected"
+    | "needs_revision"
+    | "approved"
   submittedAt: string
   approvedBy?: string
   approvedDate?: string
   rejectionReason?: string
   revisionNotes?: string
-  schedule: {
-    trainingName: string
-    trainingDate: string
-    trainingTime: string
-    trainingLocation: string
-    landmark: string
-    trainingStatus: "Upcoming" | "Ongoing" | "Completed"
+  schedule?: {
+    batchName?: string
+    trainingName?: string
+    trainingDate?: string
+    trainingTime?: string
+    trainingLocation?: string
+    orientationDate?: string
+    orientationTime?: string
+    orientationVenue?: string
+    startDate?: string
+    endDate?: string
+    venue?: string
+    trainerName?: string
+    instructor?: string
+    landmark?: string
+    trainingStatus?: "Upcoming" | "Ongoing" | "Completed" | string
+    [key: string]: any
   }
-  attendance: {
+  attendance?: {
     totalHours: number
     hoursCompleted: number
     completed: boolean
@@ -141,6 +167,7 @@ export interface TrainingApplicationRecord {
     hoursCompleted: number
     status: string
   } | null
+  [key: string]: any
 }
 
 const DEFAULT_COURSES: TrainingCourse[] = [
