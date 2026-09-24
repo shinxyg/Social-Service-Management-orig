@@ -284,6 +284,9 @@ async function initAppointmentTables() {
   }
 }
 
+let isAppointmentSyncInProgress = false;
+let lastAppointmentSyncTime = 0;
+
 function triggerAppointmentSyncIfStale() {
   const now = Date.now();
   if (isAppointmentSyncInProgress || (now - lastAppointmentSyncTime < 3 * 60 * 1000)) {
@@ -308,8 +311,8 @@ exports.getAppointments = async (req, res) => {
     triggerAppointmentSyncIfStale();
 
     const [deletedRes, result] = await Promise.all([
-      db.query('SELECT reference_no FROM deleted_appointments WHERE reference_no NOT IN (SELECT reference_no FROM appointments)').catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM appointments WHERE reference_no != 'DISB-2026-9929' AND NOT ((module = 'Senior Citizen' OR concern ILIKE '%Senior%') AND reference_no NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%')) ORDER BY created_at DESC LIMIT 300`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),
+      db.query('SELECT reference_no FROM deleted_appointments WHERE reference_no NOT IN (SELECT reference_no FROM appointments WHERE reference_no IS NOT NULL)').catch(() => ({ rows: [] })),
+      db.query(`SELECT * FROM appointments WHERE reference_no != 'DISB-2026-9929' AND NOT ((module = 'Senior Citizen' OR concern ILIKE '%Senior%') AND reference_no NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL)) ORDER BY created_at DESC LIMIT 300`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),
     ]);
 
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));

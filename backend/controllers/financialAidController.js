@@ -106,7 +106,7 @@ exports.getDisbursements = async (req, res) => {
         DELETE FROM financial_aid_disbursements
         WHERE disbursement_id = 'DISB-2026-9929'
            OR (assistance_type ILIKE '%Senior%' AND application_ref NOT IN (
-             SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%'
+             SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL
            ));
       `);
       await db.query(`
@@ -114,7 +114,7 @@ exports.getDisbursements = async (req, res) => {
         WHERE reference_no = 'DISB-2026-9929'
            OR reference_no ILIKE '%9929%'
            OR ((module = 'Senior Citizen' OR concern ILIKE '%Senior%') AND reference_no NOT IN (
-             SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%'
+             SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL
            ));
       `);
     } catch (_) {}
@@ -494,7 +494,7 @@ exports.getDisbursements = async (req, res) => {
        WHERE f.disbursement_id != 'DISB-2026-9929'
          AND NOT (
            f.assistance_type ILIKE '%Senior%' 
-           AND f.application_ref NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%')
+           AND f.application_ref NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL)
          )
        ORDER BY f.created_at DESC`
     );
