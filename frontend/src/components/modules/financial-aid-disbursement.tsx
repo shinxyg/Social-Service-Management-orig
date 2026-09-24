@@ -29,6 +29,7 @@ import {
   markDisbursementAsManuallyReleased,
   pushUserNotification,
   getPwdPensionAccumulation,
+  getSoloParentSubsidyAccumulation,
 } from "../../utils/financialAidSync"
 import { subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import MaskedText from "../ui/masked-text"
@@ -1278,7 +1279,9 @@ export default function FinancialAidDisbursement() {
                   const isPending = d.status === "PENDING"
                   const isRevealed = Boolean(revealedAmounts[d.id])
                   const isPwd = String(d.assistanceType).toLowerCase().includes("pwd") || String(d.assistanceType).toLowerCase().includes("disability")
+                  const isSoloSubsidy = String(d.assistanceType).toLowerCase().includes("solo") && (String(d.assistanceType).toLowerCase().includes("subsidy") || String(d.assistanceType).toLowerCase().includes("financial") || String(d.assistanceType).toLowerCase().includes("welfare"))
                   const pwdState = isPwd ? getPwdPensionAccumulation(d.dateApproved || d.appointmentDate, d.releasedDate) : null
+                  const soloState = isSoloSubsidy ? getSoloParentSubsidyAccumulation(d.dateApproved || d.appointmentDate, d.releasedDate) : null
 
                   return (
                     <tr key={d.id} className="hover:bg-gray-50/60 transition-colors">
@@ -1310,11 +1313,16 @@ export default function FinancialAidDisbursement() {
                                 ₱500 / buwan • {pwdState.nextQuarterMonthName}
                               </span>
                             )}
+                            {isSoloSubsidy && soloState && (
+                              <span className="block text-[10px] font-bold text-sky-600">
+                                ₱1,000 / buwan • {soloState.nextQuarterMonthName}
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <div className="space-y-0.5">
                             <div className="inline-flex items-center gap-1.5">
-                              <span>{isPwd ? "₱500 / buwan" : `₱${d.fixedAmount.toLocaleString()}`}</span>
+                              <span>{isPwd ? "₱500 / buwan" : isSoloSubsidy ? "₱1,000 / buwan" : `₱${d.fixedAmount.toLocaleString()}`}</span>
                               <button
                                 type="button"
                                 onClick={() => toggleAmount(d.id)}
@@ -1328,6 +1336,13 @@ export default function FinancialAidDisbursement() {
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
                                   ₱{pwdState.currentAccumulated.toLocaleString()} Naipon ({pwdState.nextQuarterMonthName})
+                                </span>
+                              </div>
+                            )}
+                            {isSoloSubsidy && soloState && (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-sky-50 text-sky-700 border border-sky-200">
+                                  ₱{soloState.currentAccumulated.toLocaleString()} Naipon ({soloState.nextQuarterMonthName})
                                 </span>
                               </div>
                             )}

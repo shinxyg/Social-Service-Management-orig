@@ -379,21 +379,13 @@ exports.getNotifications = async (req, res) => {
             if (!isItemDismissed(notifId, appDate)) {
               const isApproved = st === 'approved' || st === 'completed' || st === 'for_release';
               const idNum = app.assigned_id_number || app.solo_parent_id_number || app.reference_number;
-              const isRenewal = String(app.application_type || '').toLowerCase() === 'renewal';
-              const isLoss = String(app.application_type || '').toLowerCase() === 'replacement' || String(app.application_type || '').toLowerCase() === 'loss';
-
-              let title = '';
-              if (isApproved) {
-                title = isRenewal ? 'Solo Parent ID (Renewal): Approved' : isLoss ? 'Solo Parent ID (Replacement): Approved' : 'Solo Parent Application: Approved';
-              } else {
-                title = isRenewal ? 'Solo Parent ID (Renewal): Not Approved' : isLoss ? 'Solo Parent ID (Replacement): Not Approved' : 'Solo Parent Application: Not Approved';
-              }
+              const title = isApproved ? 'Solo Parent Application: Approved' : 'Solo Parent Application: Not Approved';
 
               items.push({
                 id: notifId,
                 title,
                 desc: isApproved
-                  ? `Congratulations! Your Solo Parent ID application (ID No. ${idNum}) has been approved and forwarded to Appointments for claiming schedule.`
+                  ? `Congratulations! Your Solo Parent application (Ref: ${app.reference_number}) has been approved.`
                   : `Solo Parent Application: ${app.rejection_reason || 'Not approved'} (Ref: ${app.reference_number})`,
                 time: formatManilaTime(appDate),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,

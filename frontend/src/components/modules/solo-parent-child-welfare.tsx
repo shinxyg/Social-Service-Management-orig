@@ -58,7 +58,7 @@ interface SoloParentSubmission {
   submittedAt: string
   referenceNumber: string
   category: "Solo Parent"
-  applicationType: "new" | "renewal" | "loss"
+  applicationType?: string
   classification: string
 
   firstName: string
@@ -2756,6 +2756,27 @@ export default function SoloParentChildWelfareAdmin() {
         }
 
         try {
+          const currentDisbursements = getSavedDisbursements()
+          if (!currentDisbursements.some((d) => d.applicationRef === app.referenceNumber)) {
+            const newRecord: SyncedDisbursementRecord = {
+              id: `disb-sp-${app.referenceNumber || Date.now()}`,
+              disbursementId: `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`,
+              applicationRef: app.referenceNumber,
+              applicantName: displayName(app).toUpperCase(),
+              assistanceType: "Solo Parent Financial Subsidy",
+              fixedAmount: 3000,
+              dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
+              status: "PENDING",
+              venue: "Quezon City Hall - Social Services Development Department (Solo Parent Welfare)",
+              remarks: "Awtomatikong pumasok mula sa Solo Parent Financial Subsidy (₱1,000/buwan - 3 Months Quarterly Payout).",
+            }
+            saveDisbursements([newRecord, ...currentDisbursements])
+          }
+        } catch (err) {
+          console.warn("Failed saving solo parent subsidy disbursement record:", err)
+        }
+
+        try {
           fetch(`${API_BASE}/api/appointments`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2765,17 +2786,18 @@ export default function SoloParentChildWelfareAdmin() {
               module: "Solo Parent",
               applicantName: displayName(app),
               applicant_name: displayName(app),
-              concern: "Solo Parent ID Card Claiming",
+              concern: "Solo Parent Financial Subsidy Payout",
               status: "pending",
             }),
           }).catch(() => {})
         } catch {}
 
         pushUserNotification({
-          title: "Solo Parent ID: Approved",
-          desc: `Congratulations! Your Solo Parent ID application (ID No. ${value}) has been approved and forwarded to Appointments for claiming schedule.`,
+          title: "Solo Parent Financial Subsidy: Approved",
+          desc: "Congratulations! Your ₱1,000/month subsidy has been approved. The 3-month quarterly accumulation period has started.",
           applicationRef: app.referenceNumber,
-          assistanceType: "Solo Parent ID",
+          assistanceType: "Solo Parent Financial Subsidy",
+          amount: 3000,
         })
       } else {
 

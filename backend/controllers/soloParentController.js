@@ -243,8 +243,7 @@ async function getUniqueReferenceNumber(baseRef, appType) {
         return candidate;
       }
       attempt++;
-      const suffix = appType === 'renewal' ? `-RNW${attempt}` : appType === 'loss' ? `-REP${attempt}` : `-${attempt}`;
-      candidate = `${clean}${suffix}`;
+      candidate = `${clean}-${attempt}`;
     }
   } catch (e) {
     console.warn('getUniqueReferenceNumber check warning:', e.message);
@@ -976,13 +975,11 @@ exports.updateApplicationStatus = async (req, res) => {
     if (updatedRow) {
       try {
         const notifUserId = updatedRow.user_id || updatedRow.qcid_number || updatedRow.reference_number;
-        const isRenewal = String(updatedRow.application_type || '').toLowerCase() === 'renewal';
-        const isLoss = String(updatedRow.application_type || '').toLowerCase() === 'replacement' || String(updatedRow.application_type || '').toLowerCase() === 'loss';
         const notifTitle = isApproved
-          ? (isRenewal ? 'Solo Parent ID (Renewal): Approved' : isLoss ? 'Solo Parent ID (Replacement): Approved' : 'Solo Parent Application: Approved')
-          : (isRenewal ? 'Solo Parent ID (Renewal): Not Approved' : isLoss ? 'Solo Parent ID (Replacement): Not Approved' : 'Solo Parent Application: Not Approved');
+          ? 'Solo Parent Application: Approved'
+          : 'Solo Parent Application: Not Approved';
         const notifDesc = isApproved
-          ? `Congratulations! Your Solo Parent ID application (ID No. ${assignedId || updatedRow.solo_parent_id_number || updatedRow.assigned_id_number || updatedRow.reference_number}) has been approved and forwarded to Appointments for claiming schedule.`
+          ? `Congratulations! Your Solo Parent application (Ref: ${updatedRow.reference_number}) has been approved.`
           : `Solo Parent Application: ${rejectionReason || 'Not approved'} (Ref: ${updatedRow.reference_number})`;
 
         await db.query(
@@ -1077,15 +1074,9 @@ exports.checkEligibility = async (req, res) => {
       WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
       AND (${orClauses.join(' OR ')})
       AND application_status = 'pending'
-      AND (
-        application_type = $${typeParamIdx}
-        OR ($${typeParamIdx} = 'new' AND (application_type = 'new' OR application_type IS NULL))
-        OR ($${typeParamIdx} = 'renewal' AND application_type = 'renewal')
-        OR ($${typeParamIdx} = 'loss' AND (application_type = 'loss' OR application_type = 'replacement'))
-      )
       ORDER BY created_at DESC LIMIT 1
     `;
-    const pendingResult = await db.query(pendingQuery, params);
+    const pendingResult = await db.query(pendingQuery, params.slice(0, -1).length > 0 ? params.slice(0, -1) : params);
 
     if (pendingResult.rows.length > 0) {
       const app = pendingResult.rows[0];
@@ -1101,19 +1092,15 @@ exports.checkEligibility = async (req, res) => {
     }
 
     if (req.query.reapply !== 'true') {
+      const filterParams = params.slice(0, -1).length > 0 ? params.slice(0, -1) : params;
       const approvedQuery = `
         SELECT * FROM solo_parent_child_welfare_applications
         WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
         AND (${orClauses.join(' OR ')})
         AND application_status IN ('approved', 'completed', 'for_release', 'active')
-        AND (
-          $${typeParamIdx} = 'new'
-          OR ($${typeParamIdx} = 'renewal' AND application_type = 'renewal')
-          OR ($${typeParamIdx} = 'loss' AND (application_type = 'loss' OR application_type = 'replacement'))
-        )
         ORDER BY created_at DESC LIMIT 1
       `;
-      const approvedResult = await db.query(approvedQuery, params);
+      const approvedResult = await db.query(approvedQuery, filterParams);
 
       if (approvedResult.rows.length > 0) {
         const app = approvedResult.rows[0];
@@ -1133,14 +1120,9 @@ exports.checkEligibility = async (req, res) => {
         WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
         AND (${orClauses.join(' OR ')})
         AND application_status = 'rejected'
-        AND (
-          $${typeParamIdx} = 'new'
-          OR ($${typeParamIdx} = 'renewal' AND application_type = 'renewal')
-          OR ($${typeParamIdx} = 'loss' AND (application_type = 'loss' OR application_type = 'replacement'))
-        )
         ORDER BY updated_at DESC, created_at DESC LIMIT 1
       `;
-      const rejectedResult = await db.query(rejectedQuery, params);
+      const rejectedResult = await db.query(rejectedQuery, filterParams);
 
       if (rejectedResult.rows.length > 0) {
         const app = rejectedResult.rows[0];

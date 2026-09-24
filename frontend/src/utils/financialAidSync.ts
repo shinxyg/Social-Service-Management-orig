@@ -14,8 +14,10 @@ export const FIXED_ASSISTANCE_AMOUNTS: Record<string, number> = {
   "Child Protection Assistance": 5000,
   "Emergency Assistance": 5000,
   "Child Welfare Assistance": 5000,
-  "Solo Parent Welfare Assistance": 5000,
-  "Solo Parent Assistance": 5000,
+  "Solo Parent Financial Subsidy": 3000,
+  "Solo Parent Subsidy": 3000,
+  "Solo Parent Welfare Assistance": 3000,
+  "Solo Parent Assistance": 3000,
   "Livelihood Capital Assistance": 15000,
   "Livelihood Assistance": 15000,
   "Livelihood Program": 15000,
@@ -34,9 +36,10 @@ export function resolveFixedAmount(concern: string): number {
 
   const lower = c.toLowerCase()
   if (lower.includes("pwd") || lower.includes("disability") || lower.includes("pension")) return 1500
+  if (lower.includes("solo") && (lower.includes("subsidy") || lower.includes("financial"))) return 3000
   if (lower.includes("funeral") || lower.includes("burial")) return 10000
   if (lower.includes("livelihood")) return 15000
-  if (lower.includes("nutrition") || lower.includes("child") || lower.includes("medical") || lower.includes("emergency") || lower.includes("solo")) return 5000
+  if (lower.includes("nutrition") || lower.includes("child") || lower.includes("medical") || lower.includes("emergency")) return 5000
   if (lower.includes("education")) return 3000
   if (lower.includes("senior") || lower.includes("osca")) return 3000
   return 5000
@@ -52,6 +55,79 @@ export interface PwdPensionState {
   elapsedMinutes: number
   nextQuarterMonthName: string
   approvedDateStr: string
+}
+
+export interface SoloParentSubsidyState {
+  monthlyRate: number
+  currentAccumulated: number
+  totalTarget: number
+  currentMonthNumber: number
+  isMatured: boolean
+  progressPercent: number
+  elapsedMinutes: number
+  nextQuarterMonthName: string
+  approvedDateStr: string
+}
+
+export function getSoloParentSubsidyAccumulation(
+  approvedDate?: string | number | Date | null,
+  releasedDate?: string | number | Date | null,
+  nowMs: number = Date.now()
+): SoloParentSubsidyState {
+  const MONTHLY_RATE = 1000
+  const TARGET_AMOUNT = 3000
+  const MINUTES_PER_MONTH = 2 // 2-minute demo interval = 1 month
+
+  if (!approvedDate) {
+    return {
+      monthlyRate: MONTHLY_RATE,
+      currentAccumulated: 0,
+      totalTarget: TARGET_AMOUNT,
+      currentMonthNumber: 1,
+      isMatured: false,
+      progressPercent: 0,
+      elapsedMinutes: 0,
+      nextQuarterMonthName: "Month 1 of 3",
+      approvedDateStr: "",
+    }
+  }
+
+  const appDateObj = new Date(approvedDate)
+  const appMs = isNaN(appDateObj.getTime()) ? nowMs : appDateObj.getTime()
+
+  let baseStartMs = appMs
+  if (releasedDate) {
+    const relDateObj = new Date(releasedDate)
+    if (!isNaN(relDateObj.getTime()) && relDateObj.getTime() > appMs) {
+      baseStartMs = relDateObj.getTime()
+    }
+  }
+
+  const diffMs = Math.max(0, nowMs - baseStartMs)
+  const elapsedMinutes = diffMs / (60 * 1000)
+
+  // 0 to <2 mins = Month 1 (₱1,000)
+  // 2 to <4 mins = Month 2 (₱2,000)
+  // >= 4 mins = Month 3 (₱3,000 - Matured)
+  let monthIndex = Math.floor(elapsedMinutes / MINUTES_PER_MONTH) + 1
+  if (monthIndex > 3) monthIndex = 3
+  if (monthIndex < 1) monthIndex = 1
+
+  const currentAccumulated = monthIndex * MONTHLY_RATE
+  const isMatured = currentAccumulated >= TARGET_AMOUNT
+  const progressPercent = Math.min(100, Math.round((currentAccumulated / TARGET_AMOUNT) * 100))
+
+  return {
+    monthlyRate: MONTHLY_RATE,
+    currentAccumulated,
+    totalTarget: TARGET_AMOUNT,
+    currentMonthNumber: monthIndex,
+    isMatured,
+    progressPercent,
+    elapsedMinutes: Math.floor(elapsedMinutes),
+    nextQuarterMonthName: `Month ${monthIndex} of 3`,
+    approvedDateStr: appDateObj.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
+  }
 }
 
 export function getPwdPensionAccumulation(

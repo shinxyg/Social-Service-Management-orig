@@ -23,6 +23,7 @@ import {
   isIdOrDocumentService,
   purgeLegacyLocalTestData,
   getPwdPensionAccumulation,
+  getSoloParentSubsidyAccumulation,
 } from "../../utils/financialAidSync"
 import { API_BASE } from "../../config/api"
 import { getLoggedInUserQcid, getCurrentUserProfile } from "../../utils/userProfile"
@@ -640,9 +641,12 @@ export default function ApplyFinancialAid() {
               const hasAppt = Boolean(d.appointmentDate)
               const badge = getStageBadge(d.status, hasAppt)
               const isPwdAssistance = String(d.assistanceType || "").toLowerCase().includes("pwd") || String(d.assistanceType || "").toLowerCase().includes("disability")
+              const isSoloParentSubsidy = String(d.assistanceType || "").toLowerCase().includes("solo") && (String(d.assistanceType || "").toLowerCase().includes("subsidy") || String(d.assistanceType || "").toLowerCase().includes("financial") || String(d.assistanceType || "").toLowerCase().includes("welfare"))
 
               // PWD Dynamic 2-Minute Demo Accumulator State
               const pension = isPwdAssistance ? getPwdPensionAccumulation(d.dateApproved, (d as any).releasedDate, nowMs) : null
+              // Solo Parent 2-Minute Demo Accumulator State (₱1,000/mo -> ₱3,000 Matured)
+              const soloSubsidy = isSoloParentSubsidy ? getSoloParentSubsidyAccumulation(d.dateApproved, (d as any).releasedDate, nowMs) : null
 
               return (
                 <div
@@ -668,16 +672,21 @@ export default function ApplyFinancialAid() {
                             ₱500 / Month Benefit
                           </span>
                         )}
+                        {isSoloParentSubsidy && (
+                          <span className="text-[11px] font-semibold bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 px-2 py-0.5 rounded-full border border-sky-300 dark:border-sky-800">
+                            ₱1,000 / Month Benefit
+                          </span>
+                        )}
                       </h3>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <div className="text-right">
                         <span className="text-[10px] text-gray-400 dark:text-slate-400 uppercase font-bold block">
-                          {isPwdAssistance ? "Consolidated 3-Month Payout" : (t("approvedFixedAmount") || "Approved Fixed Amount")}
+                          {isPwdAssistance ? "Consolidated 3-Month Payout" : isSoloParentSubsidy ? "Consolidated 3-Month Subsidy" : (t("approvedFixedAmount") || "Approved Fixed Amount")}
                         </span>
                         <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                          {isPwdAssistance ? "₱1,500" : `₱${d.fixedAmount.toLocaleString()}`}
+                          {isPwdAssistance ? "₱1,500" : isSoloParentSubsidy ? "₱3,000" : `₱${d.fixedAmount.toLocaleString()}`}
                         </span>
                       </div>
                     </div>
@@ -763,6 +772,91 @@ export default function ApplyFinancialAid() {
                         <AlertCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                         <span>
                           <strong>Strict Policy Rule:</strong> Walang monthly claiming. Awtomatikong naiipon ang ₱500/buwan sa loob ng 3 buwan (₱1,500 total) bago ipapamahagi sa payout counter sa Quezon City Hall.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Solo Parent 2-Minute Demo Subsidy Accumulator Hub */}
+                  {isSoloParentSubsidy && soloSubsidy && (
+                    <div className="bg-gradient-to-br from-sky-500/10 via-blue-500/5 to-transparent border border-sky-500/25 rounded-2xl p-4 md:p-5 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-xs">
+                            <Coins className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-sky-950 dark:text-sky-200">
+                              3-Month Solo Parent Subsidy Accumulation Status
+                            </h4>
+                            <p className="text-[11px] text-sky-800 dark:text-sky-400">
+                              Demo Interval: 2 minutes = 1 Month (+₱1,000) • Total 4 minutes = ₱3,000 (Matured)
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${
+                            soloSubsidy.isMatured
+                              ? "bg-sky-600 text-white shadow-xs animate-pulse"
+                              : "bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 border border-sky-300"
+                          }`}>
+                            {soloSubsidy.isMatured ? <Check className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                            {soloSubsidy.isMatured ? "🟢 ₱3,000 MATURED / READY FOR PAYOUT" : `Accumulating: ₱${soloSubsidy.currentAccumulated.toLocaleString()} (${soloSubsidy.nextQuarterMonthName})`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 3-Step Visual Accumulator Progress */}
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                          <div className={`p-2.5 rounded-xl border transition-all ${
+                            soloSubsidy.currentMonthNumber >= 1
+                              ? "bg-sky-500/20 border-sky-500/50 text-sky-950 dark:text-sky-100 font-bold"
+                              : "bg-white/60 dark:bg-slate-800 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block text-[10px] uppercase font-semibold text-sky-700 dark:text-sky-300">Month 1</span>
+                            <span className="text-sm font-extrabold">₱1,000</span>
+                            <span className="block text-[10px] text-sky-600 font-mono mt-0.5">Locked</span>
+                          </div>
+
+                          <div className={`p-2.5 rounded-xl border transition-all ${
+                            soloSubsidy.currentMonthNumber >= 2
+                              ? "bg-sky-500/20 border-sky-500/50 text-sky-950 dark:text-sky-100 font-bold"
+                              : "bg-white/60 dark:bg-slate-800 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className="block text-[10px] uppercase font-semibold text-sky-700 dark:text-sky-300">Month 2</span>
+                            <span className="text-sm font-extrabold">₱2,000</span>
+                            <span className="block text-[10px] text-sky-600 font-mono mt-0.5">Locked</span>
+                          </div>
+
+                          <div className={`p-2.5 rounded-xl border transition-all ${
+                            soloSubsidy.isMatured
+                              ? "bg-sky-600 text-white font-extrabold shadow-sm ring-2 ring-sky-400/50"
+                              : "bg-white/60 dark:bg-slate-800 border-gray-200 text-gray-400"
+                          }`}>
+                            <span className={`block text-[10px] uppercase font-semibold ${soloSubsidy.isMatured ? "text-sky-100" : "text-gray-400"}`}>Month 3</span>
+                            <span className="text-sm font-black">₱3,000</span>
+                            <span className={`block text-[10px] font-mono mt-0.5 ${soloSubsidy.isMatured ? "text-white font-bold" : "text-gray-400"}`}>
+                              {soloSubsidy.isMatured ? "🟢 Matured" : "Pending"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="w-full bg-sky-950/10 dark:bg-sky-950/40 rounded-full h-2.5 overflow-hidden">
+                          <div
+                            className="bg-sky-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${soloSubsidy.progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Policy Rule Reminder */}
+                      <div className="flex items-start gap-2 text-[11px] text-sky-900/90 dark:text-sky-300 bg-white/70 dark:bg-slate-800/80 p-2.5 rounded-xl border border-sky-200/60">
+                        <AlertCircle className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Statutory Policy Rule (RA 11861):</strong> Monthly cash subsidy of ₱1,000 is consolidated and released quarterly (₱3,000 total) at the Quezon City Hall SSDD Payout Counter.
                         </span>
                       </div>
                     </div>

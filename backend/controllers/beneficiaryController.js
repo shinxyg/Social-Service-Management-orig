@@ -742,13 +742,7 @@ async function getAllBeneficiaries(req, res) {
 
       soloList.forEach((app) => {
         if (matchesApplicant(b, app)) {
-          let typeLabel = "Solo Parent ID";
-          const appType = String(app.application_type || '').toLowerCase();
-          if (appType === 'new') typeLabel = "Solo Parent ID (New)";
-          else if (appType === 'renewal') typeLabel = "Solo Parent ID (Renewal)";
-          else if (appType === 'lost_id' || appType === 'loss' || appType === 'replacement') typeLabel = "Solo Parent ID (Replacement / Lost)";
-          else if (app.classification_title) typeLabel = `Solo Parent ID - ${app.classification_title}`;
-          else if (app.application_type) typeLabel = `Solo Parent ID (${app.application_type})`;
+          let typeLabel = app.classification_title || (app.service_name || "Solo Parent Assistance");
 
           const dateStr = app.submitted_at || app.created_at || new Date().toISOString();
           enrolledPrograms.push({

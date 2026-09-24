@@ -50,14 +50,19 @@ import { OfficialReferralLetterModal, type ReferralLetterData } from "../ui/offi
 
 export type ApplicationStatus =
   | "Pending"
+  | "Pending (SSDD Validation)"
   | "Submit Pending"
   | "Waiting to Approve"
   | "Scheduled"
+  | "Interview Scheduled"
   | "Under Review"
   | "For Assessment"
+  | "Under Assessment"
   | "Approved"
+  | "For Distribution"
   | "For Release"
   | "Released"
+  | "Assistance Released"
   | "For Referral"
   | "Referred"
   | "Completed"
@@ -2475,20 +2480,35 @@ export default function MyApplications() {
                 app.updated_at
               const appDate = extractAnyDateFromApp(app)
 
+              const rawStatus = String(app.application_status || app.status || "pending").toLowerCase()
+              const displayStatus =
+                rawStatus === "approved"
+                  ? "Approved"
+                  : rawStatus === "assistance_released" || rawStatus === "released" || rawStatus === "completed"
+                  ? "Assistance Released"
+                  : rawStatus === "for_distribution" || rawStatus === "for_release"
+                  ? "For Distribution"
+                  : rawStatus === "interview_scheduled" || rawStatus === "scheduled"
+                  ? "Interview Scheduled"
+                  : rawStatus === "for_approval" || rawStatus === "under_assessment"
+                  ? "Under Assessment"
+                  : rawStatus === "rejected" || rawStatus === "disapproved"
+                  ? "Rejected"
+                  : "Pending (SSDD Validation)"
+
+              const serviceTitle =
+                app.service_name ||
+                app.classification_title ||
+                (app.form_data?.serviceName || app.form_data?.service) ||
+                "Solo Parent Financial Subsidy Program"
+
               return {
                 applicationNo: app.reference_number || app.referenceNumber || app.assigned_id_number || app.solo_parent_id_number || qcId,
-                assistance: `Solo Parent ID (${(app.application_type || app.applicationType || "New").charAt(0).toUpperCase() + (app.application_type || app.applicationType || "New").slice(1)})`,
+                assistance: serviceTitle,
                 assistanceCategory: "Solo Parent",
                 rawTimestamp: appDate.getTime(),
                 dateApplied: formatAppDate(rawDate, app),
-                status:
-                  app.application_status === "approved" || app.status === "approved"
-                    ? "Approved"
-                    : app.application_status === "released" || app.status === "released"
-                    ? "Released"
-                    : app.application_status === "for_release" || app.status === "for_release"
-                    ? "For Release"
-                    : "Under Review",
+                status: displayStatus,
                 applicantName:
                   [app.first_name || app.firstName, app.last_name || app.lastName].filter(Boolean).join(" ") ||
                   `${userProfile.firstName} ${userProfile.lastName}`,
@@ -2500,11 +2520,15 @@ export default function MyApplications() {
                 email: app.email || userProfile.email,
                 remarks:
                   app.admin_notes ||
-                  (app.application_status === "approved" || app.status === "approved"
-                    ? app.assigned_id_number || app.solo_parent_id_number
-                      ? `Approved. Official ID: ${app.assigned_id_number || app.solo_parent_id_number}`
-                      : "Application approved"
-                    : "Under review"),
+                  (rawStatus === "approved"
+                    ? "Approved for ₱1,000/month statutory subsidy (Quarterly Payout)"
+                    : rawStatus === "interview_scheduled"
+                    ? "Interview scheduled at QC Hall Solo Parent Division"
+                    : rawStatus === "for_distribution"
+                    ? "For distribution: Payout scheduled"
+                    : rawStatus === "assistance_released"
+                    ? "Financial assistance successfully released"
+                    : "Under SSDD validation & review"),
               }
             })
           allFoundApps.push(...mappedSp)
