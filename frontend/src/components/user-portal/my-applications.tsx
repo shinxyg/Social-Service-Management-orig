@@ -3983,6 +3983,9 @@ export default function MyApplications() {
             const glMap = rawGL ? JSON.parse(rawGL) : {}
             const savedDisbs = getSavedDisbursements()
             const cleanRef = String(app.applicationNo || app.id || app.referenceNumber || "").toLowerCase().trim()
+            const isGLPrinted = !!(cleanRef && (glMap[cleanRef] || (app.id && glMap[String(app.id).toLowerCase().trim()])))
+            const isApptApproved = cachedAppt?.status === "approved" || cachedAppt?.decision === "approved"
+            const isApptRejected = cachedAppt?.status === "rejected" || cachedAppt?.decision === "rejected" || cachedAppt?.status === "disapproved" || cachedAppt?.decision === "disapproved"
             const unhyphenated = cleanRef.replace(/[^a-zA-Z0-9]/g, "")
             const appName = String(app.applicantName || "").toLowerCase().trim()
             const isSolo = String(app.assistanceCategory || "").toLowerCase().includes("solo") || String(app.assistance || "").toLowerCase().includes("solo")
@@ -4019,6 +4022,8 @@ export default function MyApplications() {
               isApptApproved ||
               (matchDisb && (matchDisb.status === "PENDING" || matchDisb.status === "RELEASED"))
 
+            const isAppApproved = isAppExplicitlyApproved
+
             const isApptScheduled = Boolean(
               !isAppExplicitlyReleased &&
               !isAppExplicitlyApproved &&
@@ -4034,6 +4039,11 @@ export default function MyApplications() {
                 app.status === "For Referral" ||
                 cachedAppt?.decision === "referred" ||
                 cachedAppt?.status === "referred")
+
+            const isAppRejected =
+              isApptRejected ||
+              app.status === "Rejected" ||
+              app.status === "Disapproved"
 
             const effectiveAppStatus: ApplicationStatus = isAppExplicitlyReleased
               ? "Released"
@@ -4526,8 +4536,12 @@ export default function MyApplications() {
                   const isSoloParent =
                     app.assistanceCategory === "Solo Parent" ||
                     app.assistance.toLowerCase().includes("solo")
+                  const isSeniorCitizen =
+                    app.assistanceCategory === "Senior Citizen" ||
+                    app.assistance.toLowerCase().includes("senior") ||
+                    app.assistance.toLowerCase().includes("osca")
 
-                  const fixedAmt = isSoloParent ? 3000 : resolveFixedAmount(app.assistance)
+                  const fixedAmt = isSoloParent ? 3000 : isSeniorCitizen ? 3000 : resolveFixedAmount(app.assistance)
                   const isReleased = effectiveAppStatus === "Released" || isDisbReleased
 
                   const payoutVenue = matchDisb?.venue || "Quezon City Hall"
@@ -4541,7 +4555,7 @@ export default function MyApplications() {
                         <div className="space-y-0.5 text-xs">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[10px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700/80">
-                              {isSoloParent ? "Solo Parent Financial Subsidy" : "Financial Aid Record"}
+                              {isSoloParent ? "Solo Parent Financial Subsidy" : isSeniorCitizen ? "Senior Citizen Social Assistance" : "Financial Aid Record"}
                             </span>
                             <span className="text-[11px] font-mono text-blue-700 dark:text-blue-300 font-bold">
                               {matchDisb?.disbursementId || `DISB-${app.applicationNo.slice(-4)}`}
@@ -4551,14 +4565,19 @@ export default function MyApplications() {
                                 ₱1,000 / Buwan (Quarterly)
                               </span>
                             )}
+                            {isSeniorCitizen && (
+                              <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                                ₱3,000 Grant
+                              </span>
+                            )}
                           </div>
                           <p className="font-bold text-gray-900 dark:text-white">
-                            {isSoloParent ? "Consolidated 3-Month Subsidy:" : "Approved Fixed Amount:"} <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">₱{fixedAmt.toLocaleString()}</span>
+                            {isSoloParent ? "Consolidated 3-Month Subsidy:" : isSeniorCitizen ? "Approved Assistance Grant:" : "Approved Fixed Amount:"} <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">₱{fixedAmt.toLocaleString()}</span>
                           </p>
                           <p className="text-[11px] text-gray-600 dark:text-slate-300 flex items-center gap-1">
                             <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
                             {isReleased ? (
-                              <span className="text-emerald-700 dark:text-emerald-400 font-bold">✓ Matagumpay na na-claim ang ₱{fixedAmt.toLocaleString()} {isSoloParent ? "Cash Subsidy (Month 3 of 3)" : "Financial Aid"} sa {payoutVenue}.</span>
+                              <span className="text-emerald-700 dark:text-emerald-400 font-bold">✓ Matagumpay na na-claim ang ₱{fixedAmt.toLocaleString()} {isSoloParent ? "Cash Subsidy (Month 3 of 3)" : isSeniorCitizen ? "Senior Citizen Aid" : "Financial Aid"} sa {payoutVenue}.</span>
                             ) : matchDisb?.appointmentDate ? (
                               <span>Payout Appointment: <strong className="text-gray-900 dark:text-white">{matchDisb.appointmentDate} – {matchDisb.appointmentTime || "10:00 AM"}</strong> ({payoutVenue})</span>
                             ) : (
