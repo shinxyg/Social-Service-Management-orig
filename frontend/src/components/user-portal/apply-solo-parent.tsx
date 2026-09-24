@@ -985,7 +985,8 @@ export default function ApplySoloParent() {
                     setBypassedBlock(true)
                     setIsBlocked(false)
                     setBlockedApp(null)
-                    window.history.replaceState(null, "", "/portal/apply-solo-parent?category=solo-parent&type=educational-assistance&reapply=true")
+                    const targetProgKey = rawTypeParam || (isEduBlocked ? "educational-assistance" : "financial-subsidy")
+                    window.history.replaceState(null, "", `/portal/apply-solo-parent?category=solo-parent&type=${targetProgKey}&reapply=true`)
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
                 >
