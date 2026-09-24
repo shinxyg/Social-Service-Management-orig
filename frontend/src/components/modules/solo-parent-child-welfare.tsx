@@ -60,12 +60,16 @@ interface SoloParentSubmission {
   category: "Solo Parent"
   applicationType?: string
   classification: string
+  service?: string
+  serviceName?: string
+  assistanceType?: string
 
   firstName: string
   middleName: string
   lastName: string
   suffix: string
-  age: string
+  birthDate?: string
+  age: string | number
   sex: string
   dobMonth: string
   dobDay: string
@@ -77,7 +81,9 @@ interface SoloParentSubmission {
   educationalAttainment: string
   occupation: string
   companyAgency: string
+  employerOrIncomeSource?: string
   monthlyIncome: string
+  otherSourceOfIncome?: string
   totalFamilyIncome: string
   contactNo: string
 
@@ -85,6 +91,18 @@ interface SoloParentSubmission {
   addressStreet: string
   addressBarangay: string
   addressCityMunicipality: string
+
+  soloParentIdNumber?: string
+  soloParentStatus?: string
+  employmentStatus?: string
+  soloParentCategory?: string
+  numberOfDependents?: string | number
+  ageOfYoungestDependent?: string | number
+  receivingGovAssistance?: string
+  govAssistanceProgramName?: string
+  govAssistanceAmountFreq?: string
+  receivingPension?: string
+  pensionType?: string
 
   familyMembers: FamilyMember[]
 
@@ -104,8 +122,7 @@ interface SoloParentSubmission {
 
   documents: ApplicationDocument[]
 
-  status: "pending" | "approved" | "rejected" | "needs_revision"
-  soloParentIdNumber?: string
+  status: "pending" | "approved" | "rejected" | "needs_revision" | "for_distribution" | "completed"
   assignedIdNumber?: string
   applicantPhoto?: string
   photoUrl?: string
@@ -491,168 +508,160 @@ function mapSoloParentRow(row: any): SoloParentSubmission {
   }
   const safeSubmittedAt = safeDateIso(rawDate)
 
-  if (row.id && String(row.id).startsWith("SP-") && row.category === "Solo Parent") {
-    return {
-      ...row,
-      submittedAt: safeSubmittedAt,
-      documents: (row.uploaded_documents && Array.isArray(row.uploaded_documents) && row.uploaded_documents.length > 0)
-        ? mapUploadedDocuments(row, false)
-        : (Array.isArray(row.documents) && row.documents.length > 0 ? row.documents : mapUploadedDocuments(row, false)),
+  const formData = parseJsonSafe(row.form_data, {})
+  const extraData = parseJsonSafe(row.extra_data, {})
+  const fdFormData = typeof formData.formData === "object" && formData.formData !== null ? formData.formData : formData
+  const edFormData = typeof extraData.formData === "object" && extraData.formData !== null ? extraData.formData : extraData
+
+  const getVal = (...candidates: any[]) => {
+    for (const c of candidates) {
+      if (c !== undefined && c !== null && c !== "" && c !== "null" && c !== "undefined") {
+        return c
+      }
+    }
+    return ""
+  }
+
+  const rawId = String(row.id || "").replace(/^SP-/, "")
+  const refNum = getVal(row.referenceNumber, row.reference_number, row.refNo, row.ref_no, row.id, `SP-${Date.now()}`)
+
+  const firstName = getVal(row.firstName, row.first_name, fdFormData.firstName, formData.firstName, edFormData.firstName, extraData.firstName)
+  const middleName = getVal(row.middleName, row.middle_name, fdFormData.middleName, formData.middleName, edFormData.middleName, extraData.middleName)
+  const lastName = getVal(row.lastName, row.last_name, fdFormData.lastName, formData.lastName, edFormData.lastName, extraData.lastName)
+  const suffix = getVal(row.suffix, fdFormData.suffix, formData.suffix, edFormData.suffix)
+
+  const birthDate = getVal(row.birthDate, row.birth_date, row.dob, fdFormData.birthDate, formData.birthDate, fdFormData.dob, formData.dob)
+  let dobMonth = getVal(row.dobMonth, row.dob_month, fdFormData.dobMonth, formData.dobMonth)
+  let dobDay = getVal(row.dobDay, row.dob_day, fdFormData.dobDay, formData.dobDay)
+  let dobYear = getVal(row.dobYear, row.dob_year, fdFormData.dobYear, formData.dobYear)
+
+  if (birthDate && (!dobMonth || !dobDay || !dobYear)) {
+    const d = new Date(birthDate)
+    if (!isNaN(d.getTime())) {
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+      if (!dobMonth) dobMonth = monthNames[d.getMonth()]
+      if (!dobDay) dobDay = String(d.getDate())
+      if (!dobYear) dobYear = String(d.getFullYear())
     }
   }
 
-  const formData = parseJsonSafe(row.form_data, {})
-  const extraData = parseJsonSafe(row.extra_data, {})
-  const fdFormData = typeof formData.formData === "object" ? formData.formData : formData
+  const age = getVal(row.age, fdFormData.age, formData.age, edFormData.age, extraData.age)
+  const sex = getVal(row.sex, row.gender, fdFormData.sex, formData.sex, edFormData.sex, extraData.sex)
+  const civilStatus = getVal(row.civilStatus, row.civil_status, fdFormData.civilStatus, formData.civilStatus, edFormData.civilStatus, "Single")
+  const qcidNumber = getVal(row.qcidNumber, row.qcid_number, row.qcid, fdFormData.qcidNumber, formData.qcidNumber, edFormData.qcidNumber, extraData.qcidNumber)
+  const contactNo = getVal(row.contactNo, row.contact_no, row.contactNumber, row.contact_number, row.phone, fdFormData.contactNo, formData.contactNo, edFormData.contactNo)
+  const email = getVal(row.email, fdFormData.email, formData.email, edFormData.email, extraData.email)
+
+  const addressHouseNo = getVal(row.addressHouseNo, row.address_house_no, fdFormData.addressHouseNo, formData.addressHouseNo)
+  const addressStreet = getVal(row.addressStreet, row.address_street, fdFormData.addressStreet, formData.addressStreet)
+  const addressBarangay = getVal(row.addressBarangay, row.address_barangay, fdFormData.addressBarangay, formData.addressBarangay)
+  const addressCityMunicipality = getVal(row.addressCityMunicipality, row.address_city_municipality, fdFormData.addressCityMunicipality, formData.addressCityMunicipality, "QUEZON CITY")
+
+  const soloParentIdNumber = getVal(row.solo_parent_id_number, row.soloParentIdNumber, row.assigned_id_number, row.assignedIdNumber, fdFormData.soloParentIdNumber, formData.soloParentIdNumber, edFormData.soloParentIdNumber)
+  const soloParentStatus = getVal(row.soloParentStatus, row.solo_parent_status, fdFormData.soloParentStatus, formData.soloParentStatus, "Active / Verified Solo Parent")
+  const employmentStatus = getVal(row.employment_status, row.employmentStatus, fdFormData.employmentStatus, formData.employmentStatus, "Unemployed")
+  const soloParentCategory = getVal(row.solo_parent_category, row.soloParentCategory, row.classification, row.classification_title, fdFormData.soloParentCategory, formData.soloParentCategory, "Solo Parent Beneficiary")
+  const numberOfDependents = getVal(row.number_of_dependents, row.numberOfDependents, fdFormData.numberOfDependents, formData.numberOfDependents, "1")
+  const ageOfYoungestDependent = getVal(row.age_of_youngest_dependent, row.ageOfYoungestDependent, fdFormData.ageOfYoungestDependent, formData.ageOfYoungestDependent, "—")
+
+  const occupation = getVal(row.occupation, fdFormData.occupation, formData.occupation)
+  const employerOrIncomeSource = getVal(row.employer_or_income_source, row.employerOrIncomeSource, row.companyAgency, row.company_agency, fdFormData.employerOrIncomeSource, formData.employerOrIncomeSource)
+  const monthlyIncome = getVal(row.monthly_income, row.monthlyIncome, fdFormData.monthlyIncome, formData.monthlyIncome)
+  const otherSourceOfIncome = getVal(row.other_source_of_income, row.otherSourceOfIncome, fdFormData.otherSourceOfIncome, formData.otherSourceOfIncome)
+
+  const receivingGovAssistance = getVal(row.receiving_gov_assistance, row.receivingGovAssistance, fdFormData.receivingGovAssistance, formData.receivingGovAssistance, "No")
+  const govAssistanceProgramName = getVal(row.gov_assistance_program, row.govAssistanceProgramName, fdFormData.govAssistanceProgramName, formData.govAssistanceProgramName)
+  const govAssistanceAmountFreq = getVal(row.gov_assistance_amount_freq, row.govAssistanceAmountFreq, fdFormData.govAssistanceAmountFreq, formData.govAssistanceAmountFreq)
+
+  const receivingPension = getVal(row.receiving_pension, row.receivingPension, fdFormData.receivingPension, formData.receivingPension, "No")
+  const pensionType = getVal(row.pension_type, row.pensionType, fdFormData.pensionType, formData.pensionType)
+
   const familyMembers = Array.isArray(row.family_members)
     ? row.family_members
+    : Array.isArray(row.familyMembers)
+    ? row.familyMembers
     : parseJsonSafe(row.family_members, parseJsonSafe(fdFormData.familyMembers || formData.familyMembers, []))
 
-  const emFirst =
-    fdFormData.emergencyFirstName ||
-    formData.emergencyFirstName ||
-    extraData.emergencyFirstName ||
-    row.emergency_first_name ||
-    row.emergencyFirstName ||
-    ""
-
-  const emLast =
-    fdFormData.emergencyLastName ||
-    formData.emergencyLastName ||
-    extraData.emergencyLastName ||
-    row.emergency_last_name ||
-    row.emergencyLastName ||
-    ""
-
+  const emFirst = getVal(fdFormData.emergencyFirstName, formData.emergencyFirstName, extraData.emergencyFirstName, row.emergency_first_name, row.emergencyFirstName)
+  const emLast = getVal(fdFormData.emergencyLastName, formData.emergencyLastName, extraData.emergencyLastName, row.emergency_last_name, row.emergencyLastName)
   const emCombined = [emFirst, emLast].filter(Boolean).join(" ")
-
-  let emergencyName =
-    emCombined ||
-    fdFormData.emergencyName ||
-    fdFormData.emergencyContactPerson ||
-    formData.emergencyName ||
-    formData.emergencyContactPerson ||
-    extraData.emergencyName ||
-    row.emergency_name ||
-    row.emergencyName ||
-    ""
-
-  let emergencyContactNo =
-    fdFormData.emergencyContactNo ||
-    fdFormData.emergencyPhone ||
-    formData.emergencyContactNo ||
-    formData.emergencyPhone ||
-    extraData.emergencyContactNo ||
-    row.emergency_contact_no ||
-    row.emergency_phone ||
-    row.emergencyContactNo ||
-    ""
-
-  let emergencyRelationship =
-    fdFormData.emergencyRelationship ||
-    formData.emergencyRelationship ||
-    extraData.emergencyRelationship ||
-    row.emergency_relationship ||
-    row.relationshipToApplicant ||
-    row.emergencyRelationship ||
-    ""
-
-  let emergencyAddress =
-    fdFormData.emergencyAddress ||
-    formData.emergencyAddress ||
-    extraData.emergencyAddress ||
-    row.emergency_address ||
-    row.emergencyResidentialAddress ||
-    row.emergencyAddress ||
-    ""
-
-  let bloodType =
-    fdFormData.bloodType ||
-    formData.bloodType ||
-    extraData.bloodType ||
-    row.blood_type ||
-    row.bloodType ||
-    "O+"
-
-  const rawId = String(row.id || "").replace(/^SP-/, "")
+  const emergencyName = getVal(emCombined, fdFormData.emergencyName, fdFormData.emergencyContactPerson, formData.emergencyName, formData.emergencyContactPerson, extraData.emergencyName, row.emergency_name, row.emergencyName)
+  const emergencyContactNo = getVal(fdFormData.emergencyContactNo, fdFormData.emergencyPhone, formData.emergencyContactNo, formData.emergencyPhone, extraData.emergencyContactNo, row.emergency_contact_no, row.emergency_phone, row.emergencyContactNo)
+  const emergencyRelationship = getVal(fdFormData.emergencyRelationship, formData.emergencyRelationship, extraData.emergencyRelationship, row.emergency_relationship, row.relationshipToApplicant, row.emergencyRelationship)
+  const emergencyAddress = getVal(fdFormData.emergencyAddress, formData.emergencyAddress, extraData.emergencyAddress, row.emergency_address, row.emergencyResidentialAddress, row.emergencyAddress)
+  const bloodType = getVal(fdFormData.bloodType, formData.bloodType, extraData.bloodType, row.blood_type, row.bloodType, "O+")
 
   return {
     id: `SP-${rawId}`,
     submittedAt: safeSubmittedAt,
-    referenceNumber: row.referenceNumber || row.reference_number || "",
+    referenceNumber: refNum,
     category: "Solo Parent",
-    applicationType: row.applicationType || row.application_type || fdFormData.idStatus || formData.idStatus || "new",
-    classification: row.classification || row.classification_title || fdFormData.selectedCategory?.title || formData.selectedCategory?.title || "Solo Parent Beneficiary",
-    firstName: row.firstName || row.first_name || fdFormData.firstName || formData.firstName || "",
-    middleName: row.middleName || row.middle_name || fdFormData.middleName || formData.middleName || "",
-    lastName: row.lastName || row.last_name || fdFormData.lastName || formData.lastName || "",
-    suffix: row.suffix || fdFormData.suffix || formData.suffix || "",
-    age: row.age || (fdFormData.age ? parseInt(fdFormData.age, 10) : undefined) || (formData.age ? parseInt(formData.age, 10) : undefined),
-    sex: row.sex || fdFormData.sex || formData.sex || "",
-    dobMonth: row.dobMonth || row.dob_month || fdFormData.dobMonth || formData.dobMonth || "",
-    dobDay: row.dobDay || row.dob_day || fdFormData.dobDay || formData.dobDay || "",
-    dobYear: row.dobYear || row.dob_year || fdFormData.dobYear || formData.dobYear || "",
-    placeOfBirth: row.placeOfBirth || row.place_of_birth || fdFormData.placeOfBirth || formData.placeOfBirth || "",
-    educationalAttainment: row.educationalAttainment || row.educational_attainment || fdFormData.educationalAttainment || formData.educationalAttainment || "",
-    occupation: row.occupation || fdFormData.occupation || formData.occupation || "",
-    companyAgency: row.companyAgency || row.company_agency || fdFormData.companyAgency || formData.companyAgency || "",
-    monthlyIncome: row.monthlyIncome || row.monthly_income || fdFormData.monthlyIncome || formData.monthlyIncome || "",
-    totalFamilyIncome: row.totalFamilyIncome || row.total_family_income || fdFormData.totalFamilyIncome || formData.totalFamilyIncome || "",
-    contactNo: row.contactNo || row.contact_no || fdFormData.contactNo || formData.contactNo || "",
-    addressHouseNo: row.addressHouseNo || row.address_house_no || fdFormData.addressHouseNo || formData.addressHouseNo || "",
-    addressStreet: row.addressStreet || row.address_street || fdFormData.addressStreet || formData.addressStreet || "",
-    addressBarangay: row.addressBarangay || row.address_barangay || fdFormData.addressBarangay || formData.addressBarangay || "",
-    addressCityMunicipality: row.addressCityMunicipality || row.address_city_municipality || fdFormData.addressCityMunicipality || formData.addressCityMunicipality || "QUEZON CITY",
-    civilStatus: row.civilStatus || row.civil_status || fdFormData.civilStatus || formData.civilStatus || "",
-    qcidNumber: row.qcidNumber || row.qcid_number || fdFormData.qcidNumber || formData.qcidNumber || "",
-    email: row.email || fdFormData.email || formData.email || "",
+    service: "Solo Parent Financial Subsidy Program",
+    serviceName: "Solo Parent Financial Subsidy Program",
+    assistanceType: "Financial Subsidy",
+    applicationType: "financial-subsidy",
+    classification: soloParentCategory,
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    birthDate,
+    dobMonth,
+    dobDay,
+    dobYear,
+    age,
+    sex,
+    civilStatus,
+    qcidNumber,
+    email,
+    contactNo,
+    addressHouseNo,
+    addressStreet,
+    addressBarangay,
+    addressCityMunicipality,
+    placeOfBirth: getVal(row.placeOfBirth, row.place_of_birth, fdFormData.placeOfBirth, formData.placeOfBirth),
+    educationalAttainment: getVal(row.educationalAttainment, row.educational_attainment, fdFormData.educationalAttainment, formData.educationalAttainment),
+    occupation,
+    employerOrIncomeSource,
+    companyAgency: employerOrIncomeSource,
+    monthlyIncome,
+    otherSourceOfIncome,
+    totalFamilyIncome: monthlyIncome,
+    soloParentIdNumber,
+    soloParentStatus,
+    employmentStatus,
+    soloParentCategory,
+    numberOfDependents,
+    ageOfYoungestDependent,
+    receivingGovAssistance,
+    govAssistanceProgramName,
+    govAssistanceAmountFreq,
+    receivingPension,
+    pensionType,
     familyMembers: familyMembers || [],
-    emergencyName: emergencyName,
+    emergencyName,
     emergencyFirstName: emFirst,
     emergencyLastName: emLast,
-    emergencyRelationship: emergencyRelationship,
-    emergencyAddress: emergencyAddress,
-    emergencyContactNo: emergencyContactNo,
-    bloodType: bloodType,
-    formData: formData,
-    extraData: extraData,
-    circumstanceDetails: row.circumstanceDetails || row.circumstance_details || formData.circumstanceDetails || "",
-    needsProblems: row.needsProblems || row.needs_problems || formData.needsProblems || "",
-    familyResources: row.familyResources || row.family_resources || formData.familyResources || "",
-    documents: mapUploadedDocuments(row, false),
+    emergencyRelationship,
+    emergencyAddress,
+    emergencyContactNo,
+    bloodType,
+    formData,
+    extraData,
+    circumstanceDetails: getVal(row.circumstanceDetails, row.circumstance_details, formData.circumstanceDetails),
+    needsProblems: getVal(row.needsProblems, row.needs_problems, formData.needsProblems),
+    familyResources: getVal(row.familyResources, row.family_resources, formData.familyResources),
+    documents: (row.uploaded_documents && Array.isArray(row.uploaded_documents) && row.uploaded_documents.length > 0)
+      ? mapUploadedDocuments(row, false)
+      : (Array.isArray(row.documents) && row.documents.length > 0 ? row.documents : mapUploadedDocuments(row, false)),
     status: row.status || row.application_status || "pending",
-    soloParentIdNumber: row.soloParentIdNumber || row.solo_parent_id_number || row.assigned_id_number || undefined,
-    assignedIdNumber: row.assignedIdNumber || row.assigned_id_number || row.solo_parent_id_number || undefined,
-    applicantPhoto:
-      row.applicantPhoto ||
-      row.applicant_photo ||
-      row.photoUrl ||
-      row.photo_url ||
-      row.idPhoto ||
-      row.id_photo ||
-      formData.applicantPhoto ||
-      formData.idPhoto ||
-      formData.photoUrl ||
-      extraData.applicantPhoto ||
-      extraData.photoUrl ||
-      undefined,
-    photoUrl:
-      row.photoUrl ||
-      row.applicantPhoto ||
-      row.applicant_photo ||
-      row.photo_url ||
-      row.id_photo ||
-      row.idPhoto ||
-      formData.applicantPhoto ||
-      formData.idPhoto ||
-      formData.photoUrl ||
-      extraData.applicantPhoto ||
-      extraData.photoUrl ||
-      undefined,
-    rejectionReason: row.rejectionReason || row.rejection_reason || undefined,
+    assignedIdNumber: soloParentIdNumber,
+    applicantPhoto: getVal(row.applicantPhoto, row.applicant_photo, row.photoUrl, row.photo_url, row.idPhoto, row.id_photo, formData.applicantPhoto, formData.photoUrl),
+    photoUrl: getVal(row.photoUrl, row.photo_url, row.applicantPhoto, row.applicant_photo, formData.photoUrl, formData.applicantPhoto),
+    rejectionReason: getVal(row.rejectionReason, row.rejection_reason),
     approvedBy: row.approvedBy ? String(row.approvedBy) : row.approved_by ? String(row.approved_by) : undefined,
     approvedDate: row.approvedDate || row.updated_at,
-    notes: row.notes || row.admin_notes || undefined,
+    notes: getVal(row.notes, row.admin_notes),
   }
 }
 
@@ -987,19 +996,33 @@ const Tokens = React.memo(function Tokens() {
 
 function displayName(app: WelfareSubmission) {
   if (isSoloParent(app)) {
-    return [app.firstName, app.middleName, app.lastName, app.suffix]
+    const rawFd = (app as any).formData || (app as any).form_data || {}
+    const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+    const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+    const rawEd = (app as any).extraData || (app as any).extra_data || {}
+    const ed = typeof rawEd === "string" ? parseJsonSafe(rawEd, {}) : (rawEd || {})
+
+    const first = app.firstName || fdForm.firstName || fd.firstName || ed.firstName || (app as any).first_name || ""
+    const middle = app.middleName || fdForm.middleName || fd.middleName || ed.middleName || (app as any).middle_name || ""
+    const last = app.lastName || fdForm.lastName || fd.lastName || ed.lastName || (app as any).last_name || ""
+    const suffix = app.suffix || fdForm.suffix || fd.suffix || ed.suffix || ""
+
+    const name = [first, middle, last, suffix]
       .filter(Boolean)
       .filter((s) => s !== "null" && s !== "undefined")
       .join(" ")
+    return name || "Solo Parent Applicant"
   }
   const child = (app as ChildWelfareSubmission).childName || (app as any).child_name
   if (child && String(child).trim()) {
     return String(child).trim()
   }
-  return [app.guardianFirstName, app.guardianMiddleName, app.guardianLastName]
-    .filter(Boolean)
-    .filter((s) => s !== "null" && s !== "undefined")
-    .join(" ")
+  return (
+    [app.guardianFirstName, app.guardianMiddleName, app.guardianLastName]
+      .filter(Boolean)
+      .filter((s) => s !== "null" && s !== "undefined")
+      .join(" ") || "Child Welfare Applicant"
+  )
 }
 
 function initials(app: WelfareSubmission) {
@@ -1032,7 +1055,23 @@ function AvatarCircle({
 }
 
 function getAddress(app: WelfareSubmission) {
-  return `${[app.addressHouseNo, app.addressStreet].filter(Boolean).join(" ")}, Brgy. ${app.addressBarangay}, ${app.addressCityMunicipality}`
+  const rawFd = (app as any).formData || (app as any).form_data || {}
+  const fd = typeof rawFd === "string" ? parseJsonSafe(rawFd, {}) : (rawFd || {})
+  const fdForm = typeof fd.formData === "object" && fd.formData !== null ? fd.formData : fd
+  const rawEd = (app as any).extraData || (app as any).extra_data || {}
+  const ed = typeof rawEd === "string" ? parseJsonSafe(rawEd, {}) : (rawEd || {})
+
+  const house = app.addressHouseNo || fdForm.addressHouseNo || fd.addressHouseNo || ed.addressHouseNo || (app as any).address_house_no || ""
+  const street = app.addressStreet || fdForm.addressStreet || fd.addressStreet || ed.addressStreet || (app as any).address_street || ""
+  const brgy = app.addressBarangay || fdForm.addressBarangay || fd.addressBarangay || ed.addressBarangay || (app as any).address_barangay || ""
+  const city = app.addressCityMunicipality || fdForm.addressCityMunicipality || fd.addressCityMunicipality || ed.addressCityMunicipality || (app as any).address_city_municipality || "QUEZON CITY"
+
+  const streetPart = [house, street].filter(Boolean).join(" ")
+  const parts = []
+  if (streetPart) parts.push(streetPart)
+  if (brgy) parts.push(`Brgy. ${brgy.replace(/^Brgy\.?\s*/i, "")}`)
+  if (city) parts.push(city)
+  return parts.join(", ") || "Quezon City"
 }
 
 function isPdfFile(filename?: string, fileUrl?: string) {
@@ -1941,15 +1980,22 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
 
   const address = getAddress(app)
   const subLabel = isSoloParent(app)
-    ? (app as any).applicationType === "new"
-      ? "New application"
-      : (app as any).applicationType === "renewal"
-      ? "Renewal"
-      : "Lost ID replacement"
+    ? ((app as any).service || (app as any).serviceName || "Solo Parent Financial Subsidy Program")
     : app.supportCategory
 
   let sectionNum = 0
   const nextNum = () => String(++sectionNum).padStart(2, "0")
+
+  const dobDisplay = (() => {
+    if ((app as any).birthDate) {
+      const d = new Date((app as any).birthDate)
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
+      }
+    }
+    const parts = [app.dobMonth, app.dobDay, app.dobYear].filter(Boolean)
+    return parts.length > 0 ? parts.join(" ") : "—"
+  })()
 
   return (
     <div
@@ -2008,7 +2054,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                     value={
                       <span className="inline-flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5" style={{ color: "var(--ink-faint)" }} />
-                        {[app.dobMonth, app.dobDay, app.dobYear].filter(Boolean).join(" ")}
+                        {dobDisplay}
                       </span>
                     }
                   />
@@ -2078,35 +2124,85 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                 </div>
               </div>
 
-              {}
+              {/* Section 02: Solo Parent Financial Subsidy Details */}
               <div>
                 <SectionHeading number={nextNum()} icon={<ClipboardList className="h-4 w-4" />}>
-                  {app.applicationType === "new"
-                    ? (t("spAppDetailsTitle") && t("spAppDetailsTitle") !== "spAppDetailsTitle" ? t("spAppDetailsTitle") : "Application Details & Basis")
-                    : (t("spRecordVerificationTitle") && t("spRecordVerificationTitle") !== "spRecordVerificationTitle" ? t("spRecordVerificationTitle") : "Record Verification Details")}
+                  Solo Parent Financial Subsidy Details
                 </SectionHeading>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm p-4 rounded-lg" style={{ background: "var(--surface-sunk)" }}>
                   <Field
-                    label={t("spLabelAppType") || "Application type"}
+                    label="Program"
                     value={
-                      app.applicationType === "new"
-                        ? (t("spAppTypeNew") || "New Solo Parent ID")
-                        : app.applicationType === "renewal"
-                        ? (t("spAppTypeRenewal") || "Renewal Solo Parent ID")
-                        : (t("spAppTypeLoss") || "Replacement / Lost Solo Parent ID")
+                      <span className="font-semibold text-blue-700 dark:text-blue-400">
+                        Solo Parent Financial Subsidy Program (₱1,000 / month)
+                      </span>
                     }
                   />
                   <Field
-                    label={app.applicationType === "new" ? (t("spLabelIdStatus") || "Solo parent ID status") : (t("spLabelIdNumber") || "Solo parent ID / QCID number")}
+                    label="Solo Parent ID (SPIC)"
                     value={
-                      app.applicationType === "new"
-                        ? (t("spStatusNoneNew") || "None yet (New application)")
-                        : app.soloParentIdNumber || app.assignedIdNumber || app.qcidNumber || (t("spLabelExistingVerified") || "Existing record verified")
+                      <span className="font-mono font-bold text-foreground">
+                        {app.soloParentIdNumber || app.assignedIdNumber || "—"}
+                      </span>
                     }
                   />
-                  {app.classification && (
+                  <Field
+                    label="Solo Parent Status"
+                    value={
+                      <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
+                        <Check className="h-3.5 w-3.5 stroke-[3]" />
+                        {app.soloParentStatus || "Active / Verified Solo Parent"}
+                      </span>
+                    }
+                  />
+                  <Field
+                    label="Employment Status"
+                    value={
+                      <span className="font-semibold text-foreground">
+                        {app.employmentStatus || "—"}
+                      </span>
+                    }
+                  />
+                  <div className="col-span-2">
+                    <Field
+                      label="Solo Parent Category / Reason"
+                      value={app.soloParentCategory || app.classification || "Solo Parent Beneficiary"}
+                    />
+                  </div>
+                  <Field
+                    label="Occupation"
+                    value={app.occupation || "—"}
+                  />
+                  <Field
+                    label="Employer / Source of Income"
+                    value={app.employerOrIncomeSource || app.companyAgency || "—"}
+                  />
+                  <Field
+                    label="Monthly Income"
+                    value={
+                      app.monthlyIncome
+                        ? (String(app.monthlyIncome).startsWith("₱") ? app.monthlyIncome : `₱${app.monthlyIncome}`)
+                        : "—"
+                    }
+                  />
+                  <Field
+                    label="Other Source of Income"
+                    value={app.otherSourceOfIncome || "None"}
+                  />
+                  <Field
+                    label="Dependents Info"
+                    value={`${app.numberOfDependents || "1"} dependent(s) (Youngest: ${app.ageOfYoungestDependent ? `${app.ageOfYoungestDependent} y/o` : "—"})`}
+                  />
+                  <Field
+                    label="Receiving Pension"
+                    value={app.receivingPension === "Yes" ? (app.pensionType || "Yes") : "None"}
+                  />
+                  {app.receivingGovAssistance === "Yes" && (
                     <div className="col-span-2">
-                      <Field label={t("spLabelCategoryReason") || "Solo parent category / reason"} value={app.classification} />
+                      <Field
+                        label="Other Government Assistance"
+                        value={`${app.govAssistanceProgramName || "Government Program"} ${app.govAssistanceAmountFreq ? `(${app.govAssistanceAmountFreq})` : ""}`}
+                      />
                     </div>
                   )}
                 </div>
@@ -2464,24 +2560,14 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                     <div>
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                          Confirm Solo Parent Approval
+                          Confirm Solo Parent Financial Subsidy Approval
                         </label>
-                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md">
-                          Official QC ID: {idNumber}
+                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md font-mono">
+                          Subsidy: ₱1,000 / mo (Quarterly ₱3,000)
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                        {String((app as any).applicationType || (app as any).type || "").toLowerCase().includes("renewal") ||
-                        String((app as any).applicationType || (app as any).type || "").toLowerCase().includes("loss") ||
-                        String((app as any).applicationType || (app as any).type || "").toLowerCase().includes("replacement") ? (
-                          <>
-                            Existing Official ID Number <strong className="font-mono text-foreground">{idNumber}</strong> has been retained from the verified record. Approving will confirm renewal/replacement without altering the ID number.
-                          </>
-                        ) : (
-                          <>
-                            Official ID Number <strong className="font-mono text-foreground">{idNumber}</strong> has been assigned. Approving will automatically connect this application to <strong>Appointments</strong> for claiming/pickup schedule.
-                          </>
-                        )}
+                        Approving will validate the citizen's eligibility for the <strong>Solo Parent Financial Subsidy Program</strong> (₱1,000/month statutory benefit). The 3-month quarterly accumulation period will begin, automatically recording this grant in <strong>Financial Aid Disbursement</strong> and connecting to <strong>Appointments</strong> for the upcoming payout cycle.
                       </p>
                     </div>
                     <div className="flex gap-3">
@@ -2495,12 +2581,12 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allSubmis
                       <button
                         type="button"
                         onClick={() => {
-                          onApprove(app.id, idNumber)
+                          onApprove(app.id, idNumber || "3000")
                           onClose()
                         }}
                         className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
                       >
-                        Confirm Approval &amp; Connect to Appointment
+                        Confirm Approval &amp; Schedule Subsidy
                       </button>
                     </div>
                   </div>
