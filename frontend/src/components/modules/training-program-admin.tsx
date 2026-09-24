@@ -816,95 +816,165 @@ export default function TrainingProgramAdmin() {
                     Attached Documentary Proofs (Click to View):
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {/* QC ID Document */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                  {/* 1. Request Letter */}
                   {(() => {
-                    const docName = selectedApp.applicantInfo?.documents?.qcIdProof || "QCID_Verified.png"
-                    const docUrl = selectedApp.applicantInfo?.documents?.qcIdProofUrl || "/samples/sample-qcid.png"
+                    const docName =
+                      selectedApp.applicantInfo?.documents?.requestLetter ||
+                      (selectedApp.applicantInfo?.documents?.requestLetterUrl ? "Request_Letter.pdf" : "Request_Letter_SSDD.pdf")
+                    const docUrl =
+                      selectedApp.applicantInfo?.documents?.requestLetterUrl ||
+                      "/samples/LETTER OF INTENT.png"
+                    const hasUploaded = !!(
+                      selectedApp.applicantInfo?.documents?.requestLetter ||
+                      selectedApp.applicantInfo?.documents?.requestLetterUrl
+                    )
                     return (
                       <div
                         onClick={() =>
                           setPreviewDocModal({
-                            title: "Government Valid ID / QC ID",
+                            title: "Request Letter (Formal Letter of Intent to SSDD / Mayor)",
                             filename: docName,
                             url: docUrl,
                           })
                         }
-                        className="flex items-center justify-between p-2.5 rounded-xl border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/15 transition-all cursor-pointer group shadow-2xs"
+                        className="flex flex-col justify-between p-3 rounded-xl border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/15 transition-all cursor-pointer group shadow-2xs"
                       >
-                        <div className="flex items-center gap-2 truncate">
-                          <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+                        <div className="flex items-start gap-2.5 truncate mb-2">
+                          <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 shrink-0 mt-0.5">
+                            <FileText className="h-4 w-4" />
+                          </div>
                           <div className="truncate">
-                            <span className="text-xs font-bold text-foreground group-hover:text-blue-600 block truncate">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block">
+                              1. Request Letter *
+                            </span>
+                            <span className="text-xs font-semibold text-foreground group-hover:text-blue-600 block truncate" title={docName}>
                               {docName}
                             </span>
-                            <span className="text-[10px] text-muted-foreground">Government Valid ID / QC ID</span>
-                          </div>
-                        </div>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-500/10 px-2 py-1 rounded-md shrink-0 border border-blue-500/20 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                          <Eye className="h-3 w-3" /> View
-                        </span>
-                      </div>
-                    )
-                  })()}
-
-                  {/* Request Letter / Barangay Certificate */}
-                  {(() => {
-                    const docName = selectedApp.applicantInfo?.documents?.requestLetter || "Barangay_Certificate.png"
-                    const docUrl = selectedApp.applicantInfo?.documents?.requestLetterUrl || "/samples/LETTER OF INTENT.png"
-                    return (
-                      <div
-                        onClick={() =>
-                          setPreviewDocModal({
-                            title: "Request Letter / Barangay Certificate",
-                            filename: docName,
-                            url: docUrl,
-                          })
-                        }
-                        className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 transition-all cursor-pointer group shadow-2xs"
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-xs font-bold text-foreground group-hover:text-emerald-600 block truncate">
-                              {docName}
+                            <span className="text-[10px] text-muted-foreground block truncate">
+                              Formal Letter to SSDD
                             </span>
-                            <span className="text-[10px] text-muted-foreground">Proof of Residency / Request Letter</span>
                           </div>
                         </div>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-md shrink-0 border border-emerald-500/20 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                          <Eye className="h-3 w-3" /> View
-                        </span>
-                      </div>
-                    )
-                  })()}
-
-                  {/* ID Picture Proof if present */}
-                  {selectedApp.applicantInfo?.documents?.idPicProof && (
-                    <div
-                      onClick={() =>
-                        setPreviewDocModal({
-                          title: "1x1 / 2x2 ID Picture or Indigency Proof",
-                          filename: selectedApp.applicantInfo?.documents?.idPicProof || "ID_Photo.jpg",
-                          url: selectedApp.applicantInfo?.documents?.idPicProofUrl || "/samples/sample-id.png",
-                        })
-                      }
-                      className="flex items-center justify-between p-2.5 rounded-xl border border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/15 transition-all cursor-pointer group shadow-2xs sm:col-span-2"
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <FileText className="h-4 w-4 text-purple-600 shrink-0" />
-                        <div className="truncate">
-                          <span className="text-xs font-bold text-foreground group-hover:text-purple-600 block truncate">
-                            {selectedApp.applicantInfo?.documents?.idPicProof}
+                        <div className="flex items-center justify-between pt-1 border-t border-blue-500/15 text-[10px]">
+                          <span className={hasUploaded ? "text-blue-600 font-semibold" : "text-muted-foreground"}>
+                            {hasUploaded ? "Attached" : "Sample Verified"}
                           </span>
-                          <span className="text-[10px] text-muted-foreground">ID Photo / Supporting Document</span>
+                          <span className="inline-flex items-center gap-1 font-bold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <Eye className="h-3 w-3" /> View
+                          </span>
                         </div>
                       </div>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-600 bg-purple-500/10 px-2 py-1 rounded-md shrink-0 border border-purple-500/20 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                        <Eye className="h-3 w-3" /> View
-                      </span>
-                    </div>
-                  )}
+                    )
+                  })()}
+
+                  {/* 2. QC ID / Proof of QC Residency */}
+                  {(() => {
+                    const docName =
+                      selectedApp.applicantInfo?.documents?.qcIdProof ||
+                      (selectedApp.applicantInfo?.documents?.qcIdProofUrl ? "QCID_Verified.png" : "QCID_Proof.png")
+                    const docUrl =
+                      selectedApp.applicantInfo?.documents?.qcIdProofUrl ||
+                      "/samples/sample-qcid.png"
+                    const hasUploaded = !!(
+                      selectedApp.applicantInfo?.documents?.qcIdProof ||
+                      selectedApp.applicantInfo?.documents?.qcIdProofUrl
+                    )
+                    return (
+                      <div
+                        onClick={() =>
+                          setPreviewDocModal({
+                            title: "QC ID / Proof of QC Residency",
+                            filename: docName,
+                            url: docUrl,
+                          })
+                        }
+                        className="flex flex-col justify-between p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/15 transition-all cursor-pointer group shadow-2xs"
+                      >
+                        <div className="flex items-start gap-2.5 truncate mb-2">
+                          <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0 mt-0.5">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <div className="truncate">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
+                              2. QC ID / Residency *
+                            </span>
+                            <span className="text-xs font-semibold text-foreground group-hover:text-emerald-600 block truncate" title={docName}>
+                              {docName}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground block truncate">
+                              Government Valid ID / QC ID
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-emerald-500/15 text-[10px]">
+                          <span className={hasUploaded ? "text-emerald-600 font-semibold" : "text-muted-foreground"}>
+                            {hasUploaded ? "Verified Attached" : "Sample Verified"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                            <Eye className="h-3 w-3" /> View
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {/* 3. Indigency of Barangay (Optional) */}
+                  {(() => {
+                    const docName =
+                      selectedApp.applicantInfo?.documents?.barangayIndigency ||
+                      selectedApp.applicantInfo?.documents?.idPicProof ||
+                      (selectedApp.applicantInfo?.documents?.barangayIndigencyUrl || selectedApp.applicantInfo?.documents?.idPicProofUrl
+                        ? "Barangay_Indigency_Cert.pdf"
+                        : "Barangay_Indigency_Cert.pdf")
+                    const docUrl =
+                      selectedApp.applicantInfo?.documents?.barangayIndigencyUrl ||
+                      selectedApp.applicantInfo?.documents?.idPicProofUrl ||
+                      "/samples/BARANGAY CERTIFICATE.webp"
+                    const hasUploaded = !!(
+                      selectedApp.applicantInfo?.documents?.barangayIndigency ||
+                      selectedApp.applicantInfo?.documents?.barangayIndigencyUrl ||
+                      selectedApp.applicantInfo?.documents?.idPicProof ||
+                      selectedApp.applicantInfo?.documents?.idPicProofUrl
+                    )
+                    return (
+                      <div
+                        onClick={() =>
+                          setPreviewDocModal({
+                            title: "Barangay Certificate of Indigency (Optional Supporting Document)",
+                            filename: docName,
+                            url: docUrl,
+                          })
+                        }
+                        className="flex flex-col justify-between p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/15 transition-all cursor-pointer group shadow-2xs"
+                      >
+                        <div className="flex items-start gap-2.5 truncate mb-2">
+                          <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 shrink-0 mt-0.5">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <div className="truncate">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 block">
+                              3. Barangay Indigency (Opt.)
+                            </span>
+                            <span className="text-xs font-semibold text-foreground group-hover:text-amber-600 block truncate" title={docName}>
+                              {docName}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground block truncate">
+                              Proof of Indigency / Cert.
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-amber-500/15 text-[10px]">
+                          <span className={hasUploaded ? "text-amber-600 font-semibold" : "text-muted-foreground"}>
+                            {hasUploaded ? "Attached" : "Optional"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 font-bold text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                            <Eye className="h-3 w-3" /> View
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
