@@ -941,7 +941,7 @@ exports.updateApplicationStatus = async (req, res) => {
     const { applicationId } = req.params;
     const { status, adminNotes, rejectionReason, assignedIdNumber, soloParentIdNumber, referenceNumber, reference_number } = req.body;
 
-    if (!['pending', 'approved', 'rejected', 'cancelled'].includes(status)) {
+    if (!['pending', 'approved', 'rejected', 'cancelled', 'released', 'for_release', 'completed', 'assistance_released'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 

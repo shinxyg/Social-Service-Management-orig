@@ -2481,14 +2481,32 @@ export default function MyApplications() {
               const appDate = extractAnyDateFromApp(app)
 
               const rawStatus = String(app.application_status || app.status || "pending").toLowerCase()
+
+              const rawDisbList = typeof window !== "undefined" ? localStorage.getItem("all_financial_disbursements") : null
+              const disbList: any[] = rawDisbList ? JSON.parse(rawDisbList) : []
+              const refNo = String(app.reference_number || app.referenceNumber || app.assigned_id_number || app.id || "").toLowerCase().trim()
+              const isDisbReleased =
+                rawStatus === "released" ||
+                rawStatus === "assistance_released" ||
+                rawStatus === "completed" ||
+                disbList.some((d: any) =>
+                  (d.status === "RELEASED" || isDisbursementManuallyReleased(d)) &&
+                  (
+                    String(d.applicationRef || "").toLowerCase().trim() === refNo ||
+                    (refNo.length >= 4 && String(d.applicationRef || "").toLowerCase().includes(refNo.slice(-4))) ||
+                    (refNo.length >= 4 && String(d.disbursementId || "").toLowerCase().includes(refNo.slice(-4))) ||
+                    (d.applicantName && `${app.first_name || app.firstName} ${app.last_name || app.lastName}`.toUpperCase().includes(d.applicantName.toUpperCase()))
+                  )
+                )
+
               const displayStatus =
-                rawStatus === "approved"
-                  ? "Approved"
-                  : rawStatus === "assistance_released" || rawStatus === "released" || rawStatus === "completed"
+                isDisbReleased
                   ? "Assistance Released"
+                  : rawStatus === "approved"
+                  ? "Approved"
                   : rawStatus === "for_distribution" || rawStatus === "for_release"
                   ? "For Distribution"
-                  : rawStatus === "interview_scheduled" || rawStatus === "scheduled"
+                  : rawStatus === "interview_scheduled" || rawStatus === "scheduled" || Boolean(app.interview_schedule || app.appointmentDate)
                   ? "Interview Scheduled"
                   : rawStatus === "for_approval" || rawStatus === "under_assessment"
                   ? "Under Assessment"
@@ -2902,10 +2920,18 @@ export default function MyApplications() {
           label: "For Release",
         }
       case "Released":
+      case "Assistance Released":
         return {
           bg: "bg-teal-50 text-teal-800 border-teal-200",
           icon: <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />,
-          label: "Released",
+          label: "Assistance Released",
+        }
+      case "Interview Scheduled":
+      case "Scheduled":
+        return {
+          bg: "bg-blue-50 text-blue-800 border-blue-200",
+          icon: <Clock className="w-3.5 h-3.5 text-blue-600" />,
+          label: "Interview Scheduled",
         }
       case "Rejected":
         return {
@@ -3630,12 +3656,14 @@ export default function MyApplications() {
             const selAppRefNo = String(selectedApp.applicationNo || selectedApp.id || "").toLowerCase().trim()
             const matchDisb = savedDisbs.find(
               (d) =>
-                (d.applicationRef && (d.applicationRef.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.applicationRef.toLowerCase().trim()))) ||
-                (d.disbursementId && (d.disbursementId.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.disbursementId.toLowerCase().trim())))
+                (d.applicationRef && (d.applicationRef.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.applicationRef.toLowerCase().trim()) || d.applicationRef.toLowerCase().includes(selAppRefNo))) ||
+                (d.disbursementId && (d.disbursementId.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.disbursementId.toLowerCase().trim()))) ||
+                (selAppRefNo.length >= 4 && String(d.applicationRef || d.disbursementId || "").toLowerCase().includes(selAppRefNo.slice(-4))) ||
+                (d.applicantName && String(selectedApp.applicantName || "").toUpperCase().includes(d.applicantName.toUpperCase()))
             )
 
-            const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
-            const isClaimed = isApprovedDecision && (selectedApp.status === "Released" || selectedApp.status === "Completed" || isDisbClaimed)
+            const isDisbClaimed = matchDisb ? (matchDisb.status === "RELEASED" || isDisbursementManuallyReleased(matchDisb)) : false
+            const isClaimed = selectedApp.status === "Assistance Released" || selectedApp.status === "Released" || selectedApp.status === "Completed" || isDisbClaimed
             const isGLIssued = isApprovedDecision || (isApprovedDecision && selectedApp.status === "For Release") || isClaimed
             const isAssessmentDone = isApprovedDecision || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment" || cachedAppt?.decision === "referred"
             const isMedicineApp =
@@ -4022,7 +4050,17 @@ export default function MyApplications() {
               isApptRejected ||
               app.status === "Rejected"
 
-            const effectiveAppStatus: ApplicationStatus = isAppApproved
+            const isReleasedApp =
+              app.status === "Assistance Released" ||
+              app.status === "Released" ||
+              app.status === "Completed" ||
+              (app.status as string) === "assistance_released" ||
+              (app.status as string) === "released" ||
+              (app.status as string) === "completed"
+
+            const effectiveAppStatus: ApplicationStatus = isReleasedApp
+              ? "Assistance Released"
+              : isAppApproved
               ? "Approved"
               : isApptScheduled
               ? "Scheduled"
@@ -4104,15 +4142,17 @@ export default function MyApplications() {
                     const matchDisb = savedDisbs.find(
                       (d) =>
                         (d.applicationRef && (d.applicationRef.toLowerCase().trim() === appRefNo || appRefNo.includes(d.applicationRef.toLowerCase().trim()) || d.applicationRef.toLowerCase().includes(appRefNo))) ||
-                        (d.disbursementId && (d.disbursementId.toLowerCase().trim() === appRefNo || appRefNo.includes(d.disbursementId.toLowerCase().trim())))
+                        (d.disbursementId && (d.disbursementId.toLowerCase().trim() === appRefNo || appRefNo.includes(d.disbursementId.toLowerCase().trim()))) ||
+                        (appRefNo.length >= 4 && String(d.applicationRef || d.disbursementId || "").toLowerCase().includes(appRefNo.slice(-4))) ||
+                        (d.applicantName && String(app.applicantName || "").toUpperCase().includes(d.applicantName.toUpperCase()))
                     )
 
-                    const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
+                    const isDisbClaimed = matchDisb ? (matchDisb.status === "RELEASED" || isDisbursementManuallyReleased(matchDisb)) : false
                     const isExplicitlyReleased =
-                      isApprovedDecision &&
-                      (app.status === "Released" ||
-                        app.status === "Completed" ||
-                        isDisbClaimed)
+                      app.status === "Assistance Released" ||
+                      app.status === "Released" ||
+                      app.status === "Completed" ||
+                      isDisbClaimed
 
 
                     const partnerHospital =
