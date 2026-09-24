@@ -647,12 +647,16 @@ function AppointmentCard({
 function getAppointmentDeduplicationKey(a: { id?: string; referenceNo?: string; applicantName?: string; concern?: string; module?: string }): string {
   const mod = String(a.module || "AICS").toUpperCase().trim()
   const c = String(a.concern || "").toLowerCase()
+  const refUpper = String(a.referenceNo || "").toUpperCase()
+  const isEdu = refUpper.includes("SP-EDU") || (c.includes("solo") && c.includes("education")) || (c.includes("education") && mod.includes("SOLO"))
+
   let cleanConcern = "general"
   if (c.includes("pwd") || c.includes("disability")) cleanConcern = "pwd"
   else if (c.includes("medical") || c.includes("gamot") || c.includes("hospital")) cleanConcern = "medical"
   else if (c.includes("senior")) cleanConcern = "senior"
   else if (c.includes("funeral") || c.includes("burial")) cleanConcern = "burial"
   else if (c.includes("food")) cleanConcern = "food"
+  else if (isEdu) cleanConcern = "solo_parent_education"
   else if (c.includes("education")) cleanConcern = "education"
   else if (c.includes("transport")) cleanConcern = "transport"
   else if (c.includes("livelihood")) cleanConcern = "livelihood"
@@ -1134,9 +1138,28 @@ export default function Appointments() {
             const st = String(sp.status || sp.application_status || "").toLowerCase()
             if (["rejected", "denied", "disapproved", "cancelled"].includes(st)) return
 
-            const ref = sp.referenceNumber || sp.reference_number || (sp.id ? (String(sp.id).startsWith("SP-") ? sp.id : `SP-${sp.id}`) : `SP-2026-0001`)
+            const isEdu =
+              Boolean(sp.isEducational || sp.isEdu) ||
+              String(sp.service || sp.service_name || sp.application_type || sp.type || "").toLowerCase().includes("educational") ||
+              String(sp.referenceNumber || sp.reference_number || sp.id || "").toUpperCase().includes("SP-EDU")
+
+            const ref = sp.referenceNumber || sp.reference_number || (sp.id ? (String(sp.id).startsWith("SP-") ? sp.id : `SP-${sp.id}`) : (isEdu ? `SP-EDU-2026-0001` : `SP-2026-0001`))
+
+            // If already in dataDb.appointments for Solo Parent, DO NOT synthesize a duplicate!
+            const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
+              const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
+              const dbid = String(dba.id || '').trim().toLowerCase()
+              const dbMod = String(dba.module || '').trim().toUpperCase()
+              const sameRef = (ref && dbr === String(ref).trim().toLowerCase()) || (sp.id && dbid === String(sp.id).trim().toLowerCase())
+              const sameMod = dbMod === 'SOLO PARENT' || dbMod === 'SOLO_PARENT' || dbMod === 'SOLO'
+              return sameRef && sameMod
+            })
+            if (existsInDb) return
+
             const apptId = `sp-appt-${sp.id || ref}`
-            const concern = "Solo Parent Financial Subsidy Payout"
+            const concern = isEdu
+              ? "Solo Parent Educational Assistance Payout (₱5,000)"
+              : "Solo Parent Financial Subsidy Payout"
             const fullName = [sp.firstName || sp.first_name, sp.middleName || sp.middle_name, sp.lastName || sp.last_name, sp.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "SOLO PARENT APPLICANT"
             const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`Solo Parent_${ref}`]
 
@@ -1174,6 +1197,15 @@ export default function Appointments() {
           const id = String(a.id || '').toLowerCase().trim()
           const rawId = id.replace(/^(db-appt-|aics-appt-|pwd-senior-appt-|cw-appt-|liv-appt-|sp-appt-)/, '')
           return !dismissedSet.has(ref) && !dismissedSet.has(id) && !dismissedSet.has(rawId)
+        })
+
+        // Normalize SP-EDU appointments to ensure consistent educational concern and avoid duplicate phantom subsidy entries
+        appts.forEach((a) => {
+          const refUpper = String(a.referenceNo || '').toUpperCase()
+          const isEduRef = refUpper.includes("SP-EDU") || String(a.concern || '').toLowerCase().includes("educational")
+          if (isEduRef && a.module === "Solo Parent") {
+            a.concern = "Solo Parent Educational Assistance Payout (₱5,000)"
+          }
         })
 
         const dedupedMap = new Map<string, AppointmentRequest>()
