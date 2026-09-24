@@ -24,6 +24,7 @@ import {
   pushUserNotification,
   type SyncedDisbursementRecord,
 } from "../../utils/financialAidSync"
+import { getApplicantPhotoUrl } from "./pwd-senior-citizen"
 import MaskedText from "../ui/masked-text"
 
 interface ApplicationDocument {
