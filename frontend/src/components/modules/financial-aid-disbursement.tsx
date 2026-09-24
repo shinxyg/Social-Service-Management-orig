@@ -211,6 +211,34 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       }
     } catch {}
 
+    try {
+      const solo = JSON.parse(localStorage.getItem("solo_parent_applications") || "[]")
+      if (Array.isArray(solo)) {
+        solo.forEach((app: any) => {
+          if (app.status === "approved" || app.status === "for_distribution" || app.status === "completed" || app.status === "released") {
+            const type = "Solo Parent Financial Subsidy"
+            const ref = app.referenceNumber || app.reference_number || (app.id ? (String(app.id).startsWith("SP-") ? app.id : `SP-${app.id}`) : "SP-QC-2026")
+            const key = `${ref}_${type}`
+            if (!seenKeys.has(key) && !deletedKeys.has(ref)) {
+              seenKeys.add(key)
+              records.push({
+                id: `remote-solo-${app.id || ref}`,
+                disbursementId: `DISB-2026-${String(app.id || ref).slice(-4).padStart(4, "0")}`,
+                applicationRef: ref,
+                applicantName: [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ").toUpperCase() || "SOLO PARENT BENEFICIARY",
+                assistanceType: type,
+                fixedAmount: resolveFixedAmount(type),
+                dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
+                status: String(app.status || "").toLowerCase() === "released" || String(app.status || "").toLowerCase() === "completed" ? "RELEASED" : "PENDING",
+                venue: "Quezon City Hall - SSDD Solo Parent Welfare Section",
+                remarks: "Automatically synced from Solo Parent Financial Subsidy application.",
+              })
+            }
+          }
+        })
+      }
+    } catch {}
+
     const processed = records.map((d) => {
       const appt = appointmentsMap[d.applicationRef]
       const cachedSched =
@@ -531,6 +559,7 @@ export default function FinancialAidDisbursement() {
           resLivSettled,
           resCwSettled,
           resApptsSettled,
+          resSoloSettled,
         ] = await Promise.allSettled([
           fetch(`${API_BASE}/api/financial-aid`),
           fetch(`${API_BASE}/api/aics/applications`),
@@ -543,6 +572,12 @@ export default function FinancialAidDisbursement() {
             },
           }),
           fetch(`${API_BASE}/api/appointments`),
+          fetch(`${API_BASE}/api/solo-parent/admin/all?limit=100`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          }),
         ])
 
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
@@ -792,6 +827,47 @@ export default function FinancialAidDisbursement() {
           } catch {}
         }
 
+        if (resSoloSettled.status === "fulfilled" && resSoloSettled.value.ok) {
+          try {
+            const dataSolo = await resSoloSettled.value.json()
+            const soloApps = Array.isArray(dataSolo) ? dataSolo : (Array.isArray(dataSolo?.applications) ? dataSolo.applications : [])
+            const approvedSolo = soloApps.filter((s: any) => {
+              const st = String(s.application_status || s.status).toLowerCase()
+              return st === "approved" || st === "for_release" || st === "for_distribution" || st === "released" || st === "completed"
+            })
+            approvedSolo.forEach((s: any) => {
+              const ref = s.referenceNumber || s.reference_number || (s.id ? (String(s.id).startsWith("SP-") ? s.id : `SP-${s.id}`) : "SP-QC-2026")
+              const idStr = `remote-solo-${s.id || ref}`
+              const disbId = `DISB-2026-${String(s.id || ref).slice(-4).padStart(4, "0")}`
+              if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId) || deletedKeys.has(String(s.id))) {
+                return
+              }
+
+              if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
+                const fullName = [s.firstName, s.middleName, s.lastName, s.suffix].filter(Boolean).join(" ").toUpperCase() || "SOLO PARENT BENEFICIARY"
+                const isReleased = String(s.status || "").toLowerCase() === "released" || String(s.status || "").toLowerCase() === "completed"
+                const type = "Solo Parent Financial Subsidy"
+                remoteRecords.push({
+                  id: idStr,
+                  disbursementId: disbId,
+                  applicationRef: ref,
+                  applicantName: fullName,
+                  assistanceType: type,
+                  fixedAmount: resolveFixedAmount(type),
+                  dateApproved: new Date(s.approvedDate || s.submittedAt || Date.now()).toLocaleDateString("en-PH", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  }),
+                  status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
+                  venue: "Quezon City Hall - SSDD Solo Parent Welfare Section",
+                  remarks: "Automatically generated from Solo Parent Financial Subsidy application.",
+                })
+              }
+            })
+          } catch {}
+        }
+
         if (resApptsSettled.status === "fulfilled" && resApptsSettled.value.ok) {
           try {
             const dataAppts = await resApptsSettled.value.json()
@@ -1034,6 +1110,7 @@ export default function FinancialAidDisbursement() {
 
     window.addEventListener("financial_disbursements_updated", handleStorageChange)
     window.addEventListener("appointments_updated", handleStorageChange)
+    window.addEventListener("solo_parent_applications_updated", handleStorageChange)
     window.addEventListener("storage", handleStorageChange)
 
     return () => {
@@ -1042,6 +1119,7 @@ export default function FinancialAidDisbursement() {
       unsubscribe()
       window.removeEventListener("financial_disbursements_updated", handleStorageChange)
       window.removeEventListener("appointments_updated", handleStorageChange)
+      window.removeEventListener("solo_parent_applications_updated", handleStorageChange)
       window.removeEventListener("storage", handleStorageChange)
     }
   }, [])

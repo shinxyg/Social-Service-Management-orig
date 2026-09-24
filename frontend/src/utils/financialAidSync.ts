@@ -277,6 +277,8 @@ export function isIdOrDocumentService(serviceOrConcern?: string): boolean {
     lower.includes("nutritional") ||
     lower.includes("child protection") ||
     lower.includes("emergency assistance") ||
+    lower.includes("solo parent") ||
+    lower.includes("subsidy") ||
     lower.includes("livelihood")
   ) {
     return false
